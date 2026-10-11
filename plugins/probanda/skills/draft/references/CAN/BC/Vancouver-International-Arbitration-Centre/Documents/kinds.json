@@ -1,0 +1,24 @@
+{
+  "kinds": [
+    {
+      "file": "submissions-package",
+      "name": "Submissions package",
+      "aliases": [
+        { "name": "submissions_package" }
+      ]
+    },
+    {
+      "file": "letter",
+      "name": "Letter to the tribunal",
+      "aliases": [
+        { "name": "letter to the arbitrator" },
+        { "name": "letter to the Centre" }
+      ]
+    },
+    {
+      "file": "unstructured",
+      "name": "Unstructured",
+      "aliases": []
+    }
+  ]
+}

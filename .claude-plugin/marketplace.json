@@ -8,7 +8,8 @@
   "plugins": [
     {
       "name": "probanda",
-      "source": "./plugins/probanda"
+      "source": "./plugins/probanda",
+      "description": "A litigation practice plugin for British Columbia lawyers"
     }
   ]
 }

@@ -1,0 +1,31 @@
+<!-- node id=draft/housekeeping title="Bookkeeping" parents=draft/session,draft/job/work when="A shelve, restore, delete, suppression or another session's release is applied as bookkeeping, then the position resumes." -->
+
+<!-- rule id=draft.shelve.intro provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+**Shelve and restore.** Shelving sets an angle aside until it is restored; restoring undoes that. Both arrive as chat requests, and the board carries no control that writes: its Restore link on a deleted job only copies `restore job #N` for the practitioner to paste into a session. Both are bookkeeping: permitted in every session, never counting as outlining, and never a licence to edit a job's title, intent or steps along the way. The scripts and their guards are `/drafting-data`'s, in `/drafting-data` §10a.
+
+<!-- rule id=draft.shelve.what provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **What can be shelved:** a Proposal, and a queued or in-progress job. Not a completed or superseded one. To stop a Proposal returning after its job completed, shelve the Proposal itself.
+
+<!-- rule id=draft.shelve.suppress provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **What cannot be shelved, but can be suppressed:** some requirements can be neither waived nor shelved. For now that is only 👤 on a fact (nobody is identified to prove it), which makes no Proposal. When the practitioner asks to shelve, waive, override or set one aside, never refuse outright. Offer instead to suppress that one item, naming it as the mockup prints it, and ask one decision in plain text. Only the practitioner's own explicit words in reply apply it. Never apply it from the session's inference, from a deadline or time pressure, or for an item they did not name. Several items take one decision each. Then record it through `/drafting-data`, with today's date and their words verbatim as counsel's note, quote their words verbatim in the reply as the record, and re-render. The line prints 🤫 in place of 👤, the Legend says what 🤫 replaces, and the Evidence criterion counts the item met and lists it as suppressed. A suppression is not a waiver and not shelving: the requirement stands. Rewording the fact lapses it. The record otherwise outlasts the work: a fact that gains proof and later loses it shows 🤫 again on the same words, so say so if it happens.
+
+<!-- rule id=draft.shelve.unsuppress provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **Unsuppress:** when the practitioner asks to unsuppress an item, have `/drafting-data` delete its suppression, quote their words in the reply (the only record of the reversal), and re-render, so 👤 prints again.
+
+<!-- rule id=draft.shelve.where provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **Where:** at any session's Opening, in an outlining session, and inside an assigned job's session, the job assigned to that session included.
+
+<!-- rule id=draft.shelve.release-own provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **A typed release applies only to the session's own job.** A job in progress in another session is shelved (below), taken over, or returned to Ready through the take-over form (`references/take-over.md`), never released by a typed instruction alone.
+
+<!-- rule id=draft.shelve.matching provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **Matching.** A typed `restore job #N` naming a job number takes `/drafting-data` §10a's state read first, and a deleted job is restored by that section's undelete. Everything else is matched against this Writing's `live` lane (`board_card(lanes: ["live"])`, read after its latest render) for a live job, and against `board_card(lanes: ["proposed", "rejected", "completed"])` for a Proposal or a shelved or completed job. A request made before the session has rendered waits for the render; a session with an assigned job that has written substance since its last render renders first, so it matches against a current board. On one exact match, apply it and report it in one line, naming the item as the board prints it — no write is ever silent. On no match, or several, ask which, in one decision form listing the matches.
+
+<!-- rule id=draft.shelve.proposal provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **A Proposal must be in the Proposed lane** to be shelved directly. One held by a job, which `board_card(key: …)` names, is answered by naming the holder and offering to shelve that job instead, never by shelving the held Proposal, which would put a row in the way of that job's own shelving. A Proposal already in Shelved is not offered for outlining either, and one picked or named anyway is refused as shelved until they ask to restore it (Branch B, "A picked key already held or shelved").
+
+<!-- rule id=draft.shelve.no-confirm provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **No confirmation,** with one exception. A typed instruction is the practitioner's own act, and a restore only undoes a shelving, so a confirm could only be answered yes. The exception is a job in progress in another session, never the session's own: one decision form, "Job #7 is in progress in another session. Shelve it anyway?", offering *Shelve it* and *Leave it in progress*. *Shelve it* clears that lock. It and the take-over form's *Return it to Ready* (`references/take-over.md`) are the only places a session clears a lock it does not hold.
+
+<!-- rule id=draft.shelve.after provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
+- **After applying** a shelve, restore or release, re-render per section 11 so the board shows it.

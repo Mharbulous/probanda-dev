@@ -1,0 +1,31 @@
+{
+  "kinds": [
+    {
+      "file": "stay-response-book",
+      "name": "Stay-response book",
+      "aliases": [
+        { "name": "bcca_stay_response" }
+      ]
+    },
+    {
+      "file": "respondent-factum",
+      "name": "Respondent's factum",
+      "aliases": [
+        { "name": "bcca_factum" }
+      ]
+    },
+    {
+      "file": "letter",
+      "name": "Letter to the court",
+      "aliases": [
+        { "name": "letter to the registry" },
+        { "name": "cover letter" }
+      ]
+    },
+    {
+      "file": "unstructured",
+      "name": "Unstructured",
+      "aliases": []
+    }
+  ]
+}

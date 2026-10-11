@@ -1,0 +1,12 @@
+{
+  "form-33": {
+    "name": "Application Response (Form 33)",
+    "rule": "",
+    "template": "templates/form-33.dotx",
+    "fill_script": "fill_plain.py",
+    "fill_form_arg": "form-33",
+    "workflow": null,
+    "sources_scope": "router_default",
+    "generate_only": true
+  }
+}
