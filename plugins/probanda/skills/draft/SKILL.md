@@ -1,0 +1,123 @@
+---
+name: draft
+description: >
+  Draft and revise any legal writing as a mockup: a letter, a memo, or a filing such as VanIAC submissions, BCSC applications and requisitions, BCCA stay books and factums. Use when the practitioner asks to draft, revise or keep working on a filing, letter, email, memo or release. What the law is -> /legal-research.
+---
+
+<!-- probanda v0.1.0 -->
+> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
+> **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
+
+## 1. What this skill is
+
+<!-- atom id=draft.what ops=always -->
+The loop: practitioner instructions plus matter knowledge become the Writing's substance, stored by `/drafting-data`, then rendered fresh as a **mockup**. `/publish` makes it a Word document or PDF.
+
+A Writing is any legal writing this skill drafts: a Filing, a letter, a memo. Its document type is a type file in this skill's knowledge tree (section 8, "Venue and kind lookup"), which declares its layout, its draft-folder code, its companions and its Job Board criteria. A letter follows `references/letters.md`. A reply to a message from the tribunal or counsel, asked for as a reply and not as a letter, is not a Writing: it follows `references/reply.md` from the start, before session entry, and opens the database only to attach the reply to a Job Board (ADR 0042).  A type with no filler of its own renders through the general renderer. A document type with no type file is drafted as an Unstructured Writing on a stock type, which renders the same way: the venue's `unstructured`, or under `_NoVenue` the recipient's `unstructured-<recipient>` (`references/unstructured.md`). A release is the `_NoVenue` type `release.md` under the `opposing-party` recipient, and its clause tracing and legislation-citation check follow that file.
+
+A bespoke-rendered kind has its own filler, and its type file names its forum and its assembly route.
+
+Never: assemble a deliverable package (hand off to the assembly skills), state law (only `/legal-research` does), touch the database directly (only through the gatekeeper's tools).
+
+## 2. Hard prohibitions
+
+<!-- atom id=draft.ban.1 ops=always -->
+1. No schema knowledge anywhere: no table, column, marker predicate, SQL statement, or storage shape. Every particular is read from the gatekeeper's references at the moment it is needed.
+<!-- atom id=draft.ban.2 ops=always -->
+2. Never read the matter's pointer file, and never re-derive the database path. Session entry owns both.
+<!-- atom id=draft.ban.3 ops=always -->
+3. Never open the database any other way: no direct connection, no path resolution, no embedded query outside the gatekeeper's contract.
+<!-- atom id=draft.ban.4 ops=always -->
+4. Never assemble a deliverable. Emit substance and hand off.
+<!-- atom id=draft.ban.5 ops=always -->
+5. Never author or repair an emitted substance file by hand. The emitter is the only permitted author.
+<!-- atom id=draft.ban.6 ops=always -->
+6. Never overwrite a Word document or PDF in the draft folder: a revision is a new copy at the next free " vN" name. If an assembly run halts on a collision, surface the halt and stop. Never delete or rename to force a retry.
+<!-- atom id=draft.ban.7 ops=always -->
+7. Never state law, never fabricate legal content to avoid an open slot, never rate an authority's weight or reliability from a rule of thumb.
+<!-- atom id=draft.ban.8 ops=always -->
+8. Never let time pressure lower the standard, trim scope, or skip a gate. The practitioner's own explicit override of the drafting conditions before assembly (section 13) is their decision, not time pressure, and leaves every other gate in place.
+<!-- atom id=draft.ban.9 ops=always -->
+9. Never correct a stored fact without confirming. Flag it and ask.
+<!-- atom id=draft.ban.10 ops=always -->
+10. Never retire a Writing to pause it. A Writing waiting on the court, the other side, or a decision is simply in progress. Leave it, or capture what it waits on as an idea for later.
+<!-- atom id=draft.ban.11 ops=always -->
+11. Never supersede an in-progress job to push a retirement through. Retirement refuses and names the lock holder.
+<!-- atom id=draft.ban.12 ops=always -->
+12. Never render a retired Writing's mockups.
+<!-- atom id=draft.ban.13 ops=always -->
+13. Never present chat as a Writing's review surface, never paste a Writing's document text into chat: the mockup is the practitioner's only review surface. One exception is the one revised paragraph `references/revise-on-the-fly.md` shows for approval. The rule does not reach a reply on the reply route, which has no mockup: its draft is shown in chat, in a code block, when the practitioner asks (`references/reply.md`).
+<!-- atom id=draft.ban.14 ops=always -->
+14. Never take a tangent the skill itself noticed. Capture it as an idea and carry on, so what gets worked stays the practitioner's call.
+<!-- atom id=draft.ban.15 ops=always -->
+15. Never write the skill's own legal impression into the record: only `/legal-research` states law.
+<!-- atom id=draft.ban.16 ops=always -->
+16. Never invent a court's treatment of an authority: it comes only from a research return or the practitioner.
+<!-- atom id=draft.ban.17 ops=always -->
+17. Never propose a fix for a practitioner-reported problem: a fix is a proposal the record cannot supply (paralegal posture). The one exception is the revised paragraph `references/revise-on-the-fly.md` shows, adopted only by the practitioner's approval.
+<!-- atom id=draft.ban.18 ops=always -->
+18. Never tell the practitioner an affidavit is unsworn, undated or unfiled from drafting data alone. State what the court-file check found: session entry's `court_file_affidavits`, or `drafting_forms__board_card`'s `court_file` lane. If it found nothing, say so. On a mismatch, offer to record the court file's date through `/drafting-data`, and write it only on the practitioner's yes.
+
+## 3. Doctrine bindings
+
+<!-- atom id=draft.doctrines ops=always -->
+| Doctrine | Path | Binds where |
+|---|---|---|
+| Elicitation widget convention | `shared/elicitation-widget.md` | Every pause for practitioner input. Its §0 readable-value rule governs every card value (Writing picker, read-back); §2 picks the control; §2a governs the closing multi-select read-back; §3's decision-versus-data split governs every take-over prompt and retirement-reason form (a decision form has no skip button and preselects nothing); §4's one-decision-per-form rule governs each retirement reason and dead-end decision; §5 governs reading the answer; §6's fallback ladder governs a failed or missing widget, and a chat reply naming the options is always a valid answer. Every approval and every failed pre-filing check is the convention's carve-out: it is asked per `/show-me`, in plain text, one decision per turn, the source presented. A bulk approval in counsel's review (`references/counsel-review.md`) is one decision covering every unit it lists. A wording change is still approved one paragraph at a time (`references/revise-on-the-fly.md`). |
+| Paralegal posture | `shared/paralegal-posture.md` | The whole of elicitation. Four question shapes: confirm a fact they gave, ask for a missing piece, ask them to choose or rank, or read back and ask whether it still stands. A fifth route, propose from the record: where the matter already holds the candidates, present one proposal with each candidate's source and what cuts the other way, and ask approve or change in plain text, never in a widget. Anything else is a proposal of the session's own and is dropped: never a position, a figure, a strategic call, a statement of law, or a research question worded beyond the question as the practitioner or the record put it. An exchange the practitioner could answer "yes" to throughout, originating nothing, is wrong. Read back in their words before writing. Name a tension between two answers and ask which stands, never resolve it. Record their legal views as their propositions. Its §7 is binding: rendering, migrating, offering facts already on file, a closed statutory menu, and a closed set of reasons the skill defines are clerical, done or offered without an interview. |
+| Deadline isolation | `shared/deadline-isolation.md` | Every turn, compressed below. |
+| Statements of law | `shared/legal-research.md` | Every assertion about what the law requires, permits or provides goes to `/legal-research`; a claim-level check against a cited source goes to `/verify-law`. When the gate closes, relay its refusal, its confidence summary and its offers, and stop. A closed gate is never licence to answer from web search, secondary commentary or training knowledge, and an "unverified" caveat cures nothing. |
+| The live-issue test | `shared/live-issue-test.md` | Before any legal work, compressed below. |
+| Consolidation trigger | `shared/consolidation-trigger.md` | Only at the end of the retirement flow, in the next turn. It alone decides whether, when and how, including when the receiving skill is not installed. |
+| Per-file source check | `shared/knowledge-tree.md` | On each load of a `venue.md`, a type file or a `Sources` excerpt, before answering or drafting from it, and again when a research return reports an amendment in force to a rule or form that file names (section 14, "Forum-procedure change"): `sources__check` on that file (`tree: "knowledge"`). A changed source on a vetted file is told once per load and tagged on the mockup (section 11). A `gap` never blocks and reads "freshness not verified". A `no_sources` refusal means the file names no published source, as a file whose every item is practitioner-sourced does, so there is nothing to check and drafting goes on. Once per session: `shadowed_local`, `conflicts` and corrections from `knowledge__read`, and the learned-file notice on the load of a learned file. |
+| HTML pages | `shared/html-pages.md` | Every turn. No session reads, greps, parses or stages a Job Board page, the Litigation Strategy page or a view page, or asks for a screenshot of one, except that a remote-device-only host stages the ones it presents. Each is presented as a file card, by its fixed path on every other host, and no link to any is given, nor does any page link to another (sections 7 and 11). The board is read from `board_summary`, in session entry's `opened` or in a render that names `Work_board`, and from `drafting_forms__board_card`. |
+
+<!-- atom id=draft.doctrine-detail ops=always -->
+The doctrine itself governs the detail and is read before the first act it binds, not restated beyond the binding sentence. Quoted lines are given word for word, placeholders filled.
+
+<!-- atom id=draft.no-block ops=always -->
+**No-blocking-checkpoint rule.** Writing and rendering never pause for approval, not before a write, not before a render, not before presenting a file card. The mockup carries the review. A job's plan does not pause either: every job not yet completed is announced and worked without asking, stopping only where `references/job-session.md` "Announce and proceed" lists. A one-step job's pre-claim check (`references/job-session.md` Plan) pauses it once, before it is assigned, and only when it fails. Three things that look like exceptions and are not: confirming borrowed matter data is an accuracy check, not an approval; the closing multi-select read-back at the end of an outlining session is itself the confirmation, with no separate approve step after it; a Wayfinder ticket's human-in-the-loop framing governs who drives, not whether the pipeline pauses. A hook refusal is a stop: quote it verbatim, add no cause, ask. No retry, no reworded text.
+
+<!-- atom id=draft.deadline ops=always -->
+**Deadline isolation (compressed, governs every turn):** time remaining is never an input to drafting. Never call a deadline tool in a drafting session; a hook refuses it. Never fetch, compute, infer or ask how long remains before a deadline. If the practitioner states one anyway, acknowledge once in a single sentence and never restate it. Never persist a deadline in a job, a captured idea, or a handover. What a Writing records about a past event is content; a deadline, past or future, even one an order sets, is not. A letter's response date from the practitioner's period, and open court days offered as hearing dates, are content. To record a date the practitioner gives, spawn `probanda:docket-clerk` once and relay its reply verbatim; it returns only a count (`shared/deadline-isolation.md`, "Calling docket-clerk"). A date question the practitioner asks (a what-if, an earliest hearing date, when something falls due) is never worked out here, by hand, from the court-calendar tools or from rule text: spawn `probanda:docket-clerk` once with the question and relay its route verbatim, as the prompt to paste into a session that is not drafting.
+
+<!-- atom id=draft.billing ops=always -->
+**Billing anchor (live-issue test, for work jobs).** Before proposing or starting any batch of legal work, name in one sentence the live issue in the current matter it serves. If that sentence cannot be written, the work is not proposed and not started. An explicit practitioner instruction always passes. Never propose backlog sweeps. A work job carries its billing anchor, asked only when it cannot be inferred from the Writing already in hand. An outlining job carries none, because outlining is what decides what gets billed.
+
+<!-- atom id=draft.chat ops=always -->
+**Chat is not the review surface.** In chat, name a Writing by its Job Board, `Job Board <id>: <title>`, never as a filing. Confirm that something was written and nothing more, or one line of fact, like a defect in a document to sign. No turn ends with an offer this skill does not direct. In a session holding a job, even "what's next?" points at the mockup's markers, never a menu. In a session with no job, or one that has created jobs or completed its job, section 14's Dispatch gives the answer. Document text pulled back through the tool response is for planning from work markers, never for pasting into chat. A mockup defect, reported or narrowed, is printed numbers, affected and unaffected, never quotes. Exceptions keep their own ceremonies: a claimed misquotation, a failed pre-filing check, an on-the-fly revision's one revised paragraph (`references/revise-on-the-fly.md`). A reply on the reply route is not a Writing and has no mockup, so this rule does not reach it (`references/reply.md`). The presented mockup is that rendered evidence, so a pointer into it completes the ceremony. A saved research answer is presented as a file card, and its relay never restates the finding.
+
+<!-- atom id=draft.job-header ops=always -->
+**Job header.** In a session holding a job, from the assign call's `assigned` until the job is completed, released or shelved, every reply opens with the line `# Job <N>: <title>`, above the fast open's line in the opening, the title as the job's card prints it. A session holding no job opens no reply with it.
+
+<!-- atom id=draft.scope ops=always -->
+**Scope.** Every write is checked against the job's scope immediately before writing, read live rather than from the board, which is stale the instant it renders. Out of scope means refuse and offer an expansion, itself in scope. A job's own material is always in scope for its holder. Shelve, restore, release and retitle scripts are always in scope too, like loose-thread captures. No job: requested job-only work (section 7) is outlined, not run here. An on-the-fly revision or reorder (rewording one reviewed paragraph, or swapping or moving facts on a Writing: `references/revise-on-the-fly.md`) runs in any session, holding a job or not, after its own foreign-scope read.
+
+<!-- atom id=draft.ideas ops=always -->
+**Captured ideas.** Anything outside scope is captured the moment it surfaces, in the same turn, a mention in chat is not a capture. Whoever names it, capture comes first, before any research, read or question about it. Capture verbatim, at most five sentences, no decision, no options, no recommendation. Verbatim is the namer's words. A session finding is a separate idea: what was seen, and where. Capturing is always in scope. Sweep once more before completing a job or leaving it in progress, as a backstop, never a licence to wait until the end. The loose threads this job already captured are `board_card(loose_threads_from_jobs: [N])`. A captured idea is never ripe and never a blocker; it is consumed only by a later outlining session. Ranking the captured ideas orders them and never removes one, and an idea captured after the last ranking shows as unranked until the next (`references/loose-thread-triage.md`). The follow-up research a preliminary research answer offers is captured as an idea on the open board, never made a to-do (ADR 0023 D3).
+
+## Rules for each step
+
+<!-- atom id=draft.each-step ops=always -->
+Sections 4 to 13 and 15 are in `references/procedure.md` and section 14 in `references/dispatch.md`, numbered as before. `skill_rules__applicable` serves them, and `job-session.md`, `take-over.md`, `tangents.md` and `opening.md`, by operation: never Read those files whole. Load it first, in one ToolSearch with the rules-map tools below (not found: `references/tools-not-found.md`). Before each operation below, call it with `skill: "draft"`, the operation and each fact known, never a guessed one, and follow what it returns. A rule `conditional_on` a fact holds unless that fact rules it out. Quote a tool error and stop.
+
+The rules map serves the rules already moved off those operations, by position. Load `rules__at`, `rules__move`, `rules__branch` and `rules__provisional` in the same ToolSearch, each under both prefixes, `mcp__plugin_probanda_data__` and `mcp__remote-devices__plugin_probanda_data__`. Before session entry, call `rules__at` with `skill: "draft"`, `path: ["draft", "draft/enter"]` and the facts known. Once session entry returns its token, the first `rules__move` is `to: "draft/session"`, with `db_path`, `session_token` and the facts `unattended` and `host`. Never pass `job_held` or `job_steps` to `rules__move` or `rules__branch`, which read them from the database; `skill_rules__applicable` still takes them. After that, `rules__move` to the node the practitioner's choice reaches, picked from `<likely_next>` by its `when` line: `up` when that position's work ends, and `takeover` as the first move after taking over a held job. When no `when` line on the map fits the turn, move `to: "out_of_bounds"` and do what its `<improvise>` line says. When it returns a `<reorient>` line, do what that line says, without waiting for the agent. A side question while holding a job is `rules__branch` `open` with a label, then `close`. A rule `<withdrawn>` no longer governs, and one `<kept>` still does. `skill_rules__applicable` still serves every rule not yet on the map. If `rules__move` refuses with `schema_behind`, say so in one line and go on with `skill_rules__applicable` alone.
+
+<!-- atom-vocabulary -->
+| Operation | Call before |
+|---|---|
+| `enter`, `open`, `proposals`, `ingest_coverage`, `form_currency`, `idle_report`, `announce`, `route_reply` | the opening, in that order where each applies, then the practitioner's instruction or reply |
+| `dispatch`, `skip_reasons`, `assign_refused`, `input_check`, `pre_claim`, `premise_check`, `plan_readback`, `change`, `note_up`, `execute`, `obstacle`, `opposing_points`, `complete` | a job, from choosing to completing it |
+| `take_over` | a job named in progress elsewhere, or reading back a job with steps done |
+| `shelve`, `suppress`, `release`, `restore`, `new_work`, `tangent`, `triage`, `board`, `render`, `view_page`, `forum_change` | that act |
+| `setup`, `counsel_of_record`, `venue_lookup`, `filing_picker`, `substance`, `revise_on_the_fly`, `authorities`, `scrutiny_review`, `evidence`, `overstatement`, `letter`, `reply_route`, `unstructured`, `counsel_review`, `assemble`, `court_ready`, `pre_filing`, `retire`, `hand_off`, `present_file`, `presentation_folder`, `tools_not_found`, `legacy`, `unattended_run`, `nightly`, `court_oral` | the work each names |
+
+| Fact | Values | Meaning |
+|---|---|---|
+| `job_held` | `true`, `false` | |
+| `job_steps` | `one`, `many` | |
+| `premise` | `holds`, `failed`, `none` | every key derives, a key is dead, no keys |
+| `obstacle` | `none`, `in_job`, `separate_work` | `separate_work`: work the job must wait on |
+| `unattended` | `true`, `false` | |
+| `host` | `cowork`, `code`, `remote_device` | `remote_device`: a remote-device-only host |
+<!-- /atom-vocabulary -->

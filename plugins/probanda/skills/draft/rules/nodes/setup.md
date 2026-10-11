@@ -1,0 +1,1 @@
+<!-- node id=draft/setup title="Setting up a filing" parents=draft/session when="No proceeding, or a new proceeding, filing, document type or letter is started: forum, parties, type, venue lookup, save first." -->

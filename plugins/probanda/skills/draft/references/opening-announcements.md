@@ -1,0 +1,8 @@
+Read when: the card's completion criteria (`board_card(lanes: ["criteria"])`) show every criterion above counsel-review met, or every gate step closed (SKILL.md section 14, "Opening announcements").
+Assumes SKILL.md is loaded. Rules are not restated here.
+
+## Section 14: The three Opening announcements
+
+- **The pre-review passes.** Every criterion above `counsel-review` is met and no counsel's review job (`/drafting-data` §3c) is still open: say so, name any shelved items off `board_card(lanes: ["criteria"])`, then run section 13's noting-up sweep, overstatement review and evidence-concerns pass, and proceed. Once they finish, re-render and read `board_card(lanes: ["criteria"])` again. If every criterion above `counsel-review` is still met, the passes left nothing open: create the two review jobs by §3c's guarded create and re-render. The review itself is `references/counsel-review.md`.
+- **The declaration.** Every drafting criterion is met, the gate line names no open job, and no gate step records a check run at the current revision: say that every drafting condition holds and that court-ready assembly is starting (section 13), and proceed.
+- **A stale gate.** Every gate step is closed but the checks ran before the latest changes: say so and ask once whether to re-run them. On yes, supersede the old gate job as `/drafting-data` §14 directs, and §14's creation rule then makes a fresh one. Waivers given on the old job must be given again. Never on the session's own initiative.

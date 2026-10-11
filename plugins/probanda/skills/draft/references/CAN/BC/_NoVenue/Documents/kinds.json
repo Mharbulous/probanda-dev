@@ -1,0 +1,113 @@
+{
+  "kinds": [
+    {
+      "file": "letter-to-opposing-counsel",
+      "name": "Letter to opposing counsel",
+      "aliases": [
+        { "name": "letter_to_opposing_counsel" },
+        { "name": "demand letter" }
+      ],
+      "recipient": "opposing-counsel"
+    },
+    {
+      "file": "letter-to-opposing-party",
+      "name": "Letter to opposing party",
+      "aliases": [
+        { "name": "letter_to_opposing_party" },
+        { "name": "demand letter" }
+      ],
+      "recipient": "opposing-party"
+    },
+    {
+      "file": "letter-to-witness",
+      "name": "Letter to witness",
+      "aliases": [
+        { "name": "letter_to_witness" }
+      ],
+      "recipient": "witness"
+    },
+    {
+      "file": "letter-to-expert",
+      "name": "Letter to expert",
+      "aliases": [
+        { "name": "letter_to_expert" }
+      ],
+      "recipient": "expert"
+    },
+    {
+      "file": "letter-to-public-body",
+      "name": "Letter to public body",
+      "aliases": [
+        { "name": "letter_to_public_body" }
+      ],
+      "recipient": "public-body"
+    },
+    {
+      "file": "letter-to-non-party",
+      "name": "Letter to non-party",
+      "aliases": [
+        { "name": "letter_to_non_party" }
+      ],
+      "recipient": "non-party"
+    },
+    {
+      "file": "internal-memo",
+      "name": "Internal memo",
+      "aliases": [
+        { "name": "internal_memo" }
+      ],
+      "recipient": "internal"
+    },
+    {
+      "file": "release",
+      "name": "Release",
+      "aliases": [
+        { "name": "settlement release" },
+        { "name": "full and final release" }
+      ],
+      "recipient": "opposing-party"
+    },
+    {
+      "file": "unstructured-opposing-counsel",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "opposing-counsel"
+    },
+    {
+      "file": "unstructured-opposing-party",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "opposing-party"
+    },
+    {
+      "file": "unstructured-witness",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "witness"
+    },
+    {
+      "file": "unstructured-expert",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "expert"
+    },
+    {
+      "file": "unstructured-public-body",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "public-body"
+    },
+    {
+      "file": "unstructured-non-party",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "non-party"
+    },
+    {
+      "file": "unstructured-internal",
+      "name": "Unstructured",
+      "aliases": [],
+      "recipient": "internal"
+    }
+  ]
+}
