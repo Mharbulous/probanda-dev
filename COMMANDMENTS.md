@@ -32,3 +32,5 @@
 2. However, a hash of User Data, such as one used for a uniqueness check, may be stored on Probanda's cloud only if it is keyed with a secret that never leaves the user's machine.
 
 3. However, rules that work better if run on the user's machine may be permitted as *Cross Data*.
+
+4. However, during pre-development, a machine that Probanda operates for its own development and testing counts as part of *Probanda's Cloud* for Commandments 4 and 5 only, so it may hold *Trade Secrets* and its local storage may encode the rulebook. It remains a *User's Machine* for Commandment 3, so *User Data* on it is never copied to any other part of *Probanda's Cloud*. Pre-development lasts only while the Probanda plugin is installed on no machine that Probanda does not operate and every repo holding the plugin is private; it ends the moment either condition fails. Each revision of the Probanda plugin should bring it closer to obeying Commandments 4 and 5 without this exception, and no revision may make it depend on this exception more than it already does. This exception is to be removed once it is no longer needed.
