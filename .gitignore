@@ -1,0 +1,21 @@
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Dependencies
+node_modules/
+
+# Secrets and local data
+.env*
+*.db
+*.sqlite*
+
+# Built plugin archives
+*.plugin
+
+# Editors
+.vscode/
+.idea/
+*.swp
