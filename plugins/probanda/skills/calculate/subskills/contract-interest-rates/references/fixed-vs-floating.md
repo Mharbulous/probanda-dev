@@ -59,7 +59,7 @@ temporal qualifier at all. Do not default silently to either reading:
    total could differ between the two readings, if the benchmark moved materially during the
    period, helps the practitioner decide how much the ambiguity actually matters here).
 
-## Worked example (this matter, L3816)
+## Worked example (this matter, L8816)
 
 Notice of Civil Claim para. 10: "It was an express term of the Fixed Price Contract that
 interest would accrue on any payments the Defendant failed to make when due, at 2% above the

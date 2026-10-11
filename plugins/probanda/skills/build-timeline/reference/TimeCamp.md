@@ -9,7 +9,7 @@ This skill aligns with TimeCamp's own concepts:
 - **Computer activities** — websites and applications tracked by the TimeCamp desktop app, each with an application name, window title, and duration
 - **Time entries** — recorded time segments on the timesheet, either auto-tracked or manually created
 - **Projects** — top-level containers in TimeCamp's hierarchy (e.g., "Client Matters", "Administration")
-- **Tasks** — children of Projects (e.g., "Smith v Jones (L3948)" under "Client Matters")
+- **Tasks** — children of Projects (e.g., "Smith v Jones (L8948)" under "Client Matters")
 - **Subtasks** — children of Tasks for finer granularity (available on Premium/Ultimate plans)
 - **Assign / Move** — TimeCamp's term for attributing computer activities to a Task
 - **Unassigned computer activities** — time tracked by the desktop app that hasn't been assigned to any Task; does not count toward the daily timesheet total

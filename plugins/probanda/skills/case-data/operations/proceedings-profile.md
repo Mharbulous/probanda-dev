@@ -66,7 +66,7 @@ A secondary entry point, reached with one or more already-registered `main.sourc
 
 Every write below is confirmation-gated exactly as §3 describes — this is authorized skill text, a designated decision point, not an unauthorized interruption.
 
-**Group the supplied sources** by the first path segment of `file_path` (the top-level folder, e.g. `5. COURT FILE #CA51722`); a source outside a `5.*` folder is handled on its own. For each group:
+**Group the supplied sources** by the first path segment of `file_path` (the top-level folder, e.g. `5. COURT FILE #CA59991`); a source outside a `5.*` folder is handled on its own. For each group:
 
 ### Read court identity directly
 

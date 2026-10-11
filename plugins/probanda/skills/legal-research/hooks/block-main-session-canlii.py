@@ -39,7 +39,7 @@ CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_probanda_canlii__(.+)$")
 SETUP_TOOLS = {"configure_status", "configure_credential"}
 CURRENCY_TOOL = "legislation_currency"
 CITATOR_TOOLS = {"get_case_citator", "get_case_citator_tease"}
-RESEARCH_AGENT_PREFIXES = ("litigation:", "legal-commons:")
+RESEARCH_AGENT_PREFIXES = ("probanda:",)
 
 BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside the research agents (research-agent or a superseding audit agent, citator only), never in the main session.
 A statute-currency check is the canlii legislation_currency tool, which runs here.

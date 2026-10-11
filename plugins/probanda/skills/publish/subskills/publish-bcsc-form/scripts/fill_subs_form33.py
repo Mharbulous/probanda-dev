@@ -5,8 +5,8 @@ from __future__ import annotations
 def _format_party_list(caption: str) -> str:
     """Convert ALL-CAPS newline-separated party list to natural language.
 
-    E.g. "F AS IN FRANK CLOTHING CORPORATION\nANDREW HEIFETZ\nJESSE HEIFETZ"
-      -> "F as in Frank Clothing Corporation, Andrew Heifetz and Jesse Heifetz"
+    E.g. "NORTHFIELD CLOTHING CORPORATION\nANDREW MARLOWE\nJESSE MARLOWE"
+      -> "Northfield Clothing Corporation, Andrew Marlowe and Jesse Marlowe"
     """
     parts = [p.strip() for p in caption.split('\n') if p.strip()]
     if not parts:

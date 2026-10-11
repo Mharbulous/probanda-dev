@@ -1,4 +1,4 @@
-// build-stamp: b34b9dfc9cd6
+// build-stamp: 81427adeccb6
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -79970,7 +79970,8 @@ import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync a
 import { homedir as homedir2 } from "node:os";
 import { dirname as dirname2, join as join6, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
-var MARKERS = [join6(".claude", "skills"), join6("plugins", "litigation", "mcp")];
+var SKILLS_MARKER = join6(".claude", "skills");
+var CHECKOUT_MARKERS = [join6("source", "probanda", "mcp"), join6("plugins", "dev-tools")];
 var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -79997,7 +79998,7 @@ function autoDetect(env, startDir) {
   if (cached2) return { root: cached2, tried };
   const walked = walkUp(startDir);
   if (walked) return remember(cacheKey, walked, tried);
-  tried.push(`walk-up from ${startDir} -- no ancestor holds both ${MARKERS.join(" and ")}`);
+  tried.push(`walk-up from ${startDir} -- no ancestor holds ${SKILLS_MARKER} with ${CHECKOUT_MARKERS.join(" or ")}`);
   const cfgPath = configPath(env);
   const declared = readConfigRepoRoot(cfgPath, tried);
   if (declared) return remember(cacheKey, declared, tried);
@@ -80015,13 +80016,7 @@ function remember(cacheKey, root, tried) {
   return { root, tried };
 }
 function isRepoRoot(dir) {
-  return MARKERS.every((marker) => {
-    try {
-      return statSync(join6(dir, marker)).isDirectory();
-    } catch {
-      return false;
-    }
-  });
+  return isDirectory(join6(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory(join6(dir, marker)));
 }
 function walkUp(startDir) {
   let cursor = resolve(startDir);
@@ -82424,7 +82419,7 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "exhibit-excerpt",
     title: "Quote the exhibit",
-    condition: "statement of fact with `exhibit_id` set \u2227 `exhibit_excerpt` \u2205 \u2014 the citation quotes the exhibit and cites through the instrument to it (*Affidavit #1 of A. Heifetz, para 3, Ex. A, s. 2.3*); also admissions past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `response` set \u2227 `response_excerpt` \u2205 where `method` is `notice_to_admit` \u2295 `pleading` (answers drafted by counsel); also a clause with `basis='express'` \u2227 `excerpt` \u2205 \u2014 the passage of the document the clause is taken from (the offer, the acceptance, a proposed form), captured verbatim; an implied clause never owes it, since the schema forbids its own `excerpt`. Unordered with \u{1F4CC} on the clause line",
+    condition: "statement of fact with `exhibit_id` set \u2227 `exhibit_excerpt` \u2205 \u2014 the citation quotes the exhibit and cites through the instrument to it (*Affidavit #1 of A. Marlowe, para 3, Ex. A, s. 2.3*); also admissions past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `response` set \u2227 `response_excerpt` \u2205 where `method` is `notice_to_admit` \u2295 `pleading` (answers drafted by counsel); also a clause with `basis='express'` \u2227 `excerpt` \u2205 \u2014 the passage of the document the clause is taken from (the offer, the acceptance, a proposed form), captured verbatim; an implied clause never owes it, since the schema forbids its own `excerpt`. Unordered with \u{1F4CC} on the clause line",
     history: "`statements_of_fact.exhibit_excerpt` shipped v25 (#774, design #502; the hop listed every existing `exhibit_id` row for the practitioner to sort \u2014 no blind move), render shipped #777 \u2014 VanIAC Written Arguments statement lines only; admissions v5 (#339); clause instance admitted #1158 (`clauses.excerpt`, v31), render shipped #1158"
   },
   {
@@ -82472,7 +82467,7 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "testimony-pinpoint",
     title: "Locate the testimony pinpoint",
-    condition: "statement of fact with `instrument` set \u2227 `pinpoint` \u2205 \u2014 the instrument's paragraph, on an exhibit-backed statement too (*Affidavit #1 of A. Heifetz, para 3*); no instrument (\u270D\uFE0F, oral): nothing to locate. Also admission past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `instrument`/`response` set \u2227 its pinpoint \u2205 where `method` is `interrogatories` \u2295 `oral`. Unordered with \u{1F4AC} \u2295 \u{1F4D1} and \u{1F4CC}",
+    condition: "statement of fact with `instrument` set \u2227 `pinpoint` \u2205 \u2014 the instrument's paragraph, on an exhibit-backed statement too (*Affidavit #1 of A. Marlowe, para 3*); no instrument (\u270D\uFE0F, oral): nothing to locate. Also admission past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `instrument`/`response` set \u2227 its pinpoint \u2205 where `method` is `interrogatories` \u2295 `oral`. Unordered with \u{1F4AC} \u2295 \u{1F4D1} and \u{1F4CC}",
     history: "v1; admissions v5; split off \u{1F4CD} (#511)"
   },
   {
@@ -84853,7 +84848,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "b34b9dfc9cd6";
+var BUILD_STAMP = false ? null : "81427adeccb6";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84876,7 +84871,7 @@ function buildStampStatus(env = process.env) {
   let current;
   try {
     const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked = join14(repoRoot, "plugins", "litigation", "mcp", "dist", "litigation-mcp.js");
+    const tracked = join14(repoRoot, "source", "probanda", "mcp", "dist", "litigation-mcp.js");
     current = STAMP_LINE.exec(readFileSync13(tracked, "utf-8"))?.[1] ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

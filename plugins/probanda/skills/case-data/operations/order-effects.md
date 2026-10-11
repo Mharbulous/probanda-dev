@@ -100,8 +100,8 @@ Otherwise present the proposed-changes table and **stop**:
 
 | # | Entity | Identifier | Field | Current value | Proposed value | Order term relied on |
 |---|---|---|---|---|---|---|
-| 1 | party | party_id 1 | name | Dr. L. Shahbazi and Dr. S. Keshmiri Inc. | Dr. S. Keshmiri and Dr. L. Shahbazi Inc. | p. 1, para. 1 |
-| 2 | proceeding | proceeding_id 1 | style_of_cause | Sodican (B.C.) Inc. v. Dr. L. Shahbazi and Dr. S. Keshmiri Inc. et al. | Sodican (B.C.) Inc. v. Dr. S. Keshmiri and Dr. L. Shahbazi Inc. et al. | p. 1, para. 1 |
+| 1 | party | party_id 1 | name | Dr. L. Abernethy and Dr. S. Lindqvist Inc. | Dr. S. Lindqvist and Dr. L. Abernethy Inc. | p. 1, para. 1 |
+| 2 | proceeding | proceeding_id 1 | style_of_cause | Larchmont (B.C.) Inc. v. Dr. L. Abernethy and Dr. S. Lindqvist Inc. et al. | Larchmont (B.C.) Inc. v. Dr. S. Lindqvist and Dr. L. Abernethy Inc. et al. | p. 1, para. 1 |
 
 Then collect approval one row at a time, per `/show-me`: the row's current and proposed values in full, the instrument presented with its operative term highlighted, and one plain-text question ending the turn. Present the next row only after the practitioner has answered.
 

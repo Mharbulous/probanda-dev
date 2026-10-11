@@ -788,7 +788,7 @@ def main(argv=None):
     ap.add_argument("--verified-citations", help="file with one citation string "
                     "per line (produced by delegating to the /case-data skill); "
                     "matching authorities are marked Text on file")
-    ap.add_argument("--label", help="title suffix, e.g. 'Moxa Smoke Complaints (L145)'")
+    ap.add_argument("--label", help="title suffix, e.g. 'Corvo Smoke Complaints (L8145)'")
     args = ap.parse_args(argv)
 
     input_dir = Path(args.input_dir)

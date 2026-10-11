@@ -42,9 +42,9 @@ The portal's Call Log export produces:
 
 ```
 "Type","Direction","From","To","Extension","Forwarded To","Name","Date","Time","Action","Action Result","Result Description","Duration"
-"Voice","Incoming","(778) 386-2608","(604) 969-0697","4 - Brahm Dorst","","Ronald Zhu","Thu 2026-05-28","2:08 PM","Phone Call","Accepted","The call connected to and was accepted by this number.","0:08:22"
-"","Outgoing","(778) 386-2608","","4 - Brahm Dorst","4","Ronald Zhu","Thu 2026-05-28","2:08 PM","VoIP Call","Call connected","The call connected to and was accepted by this number.","0:08:17"
-"","Outgoing","","","4 - Brahm Dorst","Brahm","Tyler Hatch","Thu 2026-05-28","2:08 PM","FindMe","Stopped","","0:00:05"
+"Voice","Incoming","(604) 555-0170","(604) 555-0171","4 - Brahm Dorst","","Peter Example","Thu 2026-05-28","2:08 PM","Phone Call","Accepted","The call connected to and was accepted by this number.","0:08:22"
+"","Outgoing","(604) 555-0170","","4 - Brahm Dorst","4","Peter Example","Thu 2026-05-28","2:08 PM","VoIP Call","Call connected","The call connected to and was accepted by this number.","0:08:17"
+"","Outgoing","","","4 - Brahm Dorst","Brahm","Robin Example","Thu 2026-05-28","2:08 PM","FindMe","Stopped","","0:00:05"
 ```
 
 Same encoding as the portal export (UTF-8 with BOM, all fields quoted). `Name`, `Date`, `Time`, `Action`, `Action Result`, `Result Description` and `Duration` have the same formats as the portal columns above. The archive adds:

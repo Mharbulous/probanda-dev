@@ -86,7 +86,7 @@ path only, proven before writing.
 ## Step 1 — identity and pointer
 
 1. Parse the matter folder name for the **matter reference** — the leading token,
-   either `{client}.{matter}` (`4165.L153`) or the matter alone (`L153`); the
+   either `{client}.{matter}` (`8165.L8153`) or the matter alone (`L8153`); the
    remainder is the short name (see the folder-name parsing in
    `../shared/conventions.md`). This is the value the `matter_id` metadata key
    stores; that key's name is historical and is never what the practitioner is
@@ -101,8 +101,8 @@ path only, proven before writing.
 
    The **matter number** the lookup returns (stored under `matter_no`) is not the
    matter reference. They are equal whenever the folder is named by the matter
-   alone (`L153 Example Matter`) and differ whenever it carries a client number
-   (`4165.L153 Example Matter` → reference `4165.L153`, number `L153`). Never
+   alone (`L8153 Example Matter`) and differ whenever it carries a client number
+   (`8165.L8153 Example Matter` → reference `8165.L8153`, number `L8153`). Never
    derive one from the other: the reference comes from the folder, the number from
    the practice database.
 3. **Confirm the extracted metadata with the user** before writing anything, and
@@ -116,7 +116,7 @@ path only, proven before writing.
    "correct" one of them. When equal, the matter number gets no line of its own:
 
    ```
-   Matter reference: L153 (matter number is the same)
+   Matter reference: L8153 (matter number is the same)
    Client no.:       4165
    Client name:      Example Client Ltd.
    Short name:       Example Matter
@@ -125,8 +125,8 @@ path only, proven before writing.
    When they differ, both lines appear:
 
    ```
-   Matter reference: 4165.L153
-   Matter number:    L153
+   Matter reference: 8165.L8153
+   Matter number:    L8153
    Client no.:       4165
    Client name:      Example Client Ltd.
    Short name:       Example Matter

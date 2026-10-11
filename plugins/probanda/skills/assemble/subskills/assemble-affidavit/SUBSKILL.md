@@ -62,7 +62,7 @@ Infer these parameters, asking the user for anything you can't infer:
   different date.
 
 Derive `{LastNameFirstInitial}` = the affiant's last whitespace-separated
-name token + first-name initial (e.g. "Stan Duckworth" → "DuckworthS").
+name token + first-name initial (e.g. "Glen Ashby" → "AshbyG").
 
 Show the derived output filename in your confirmation. Confirm per
 `/show-me`, as one plain-text question ending the turn: "Yes, proceed" /

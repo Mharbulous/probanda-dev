@@ -90,7 +90,7 @@ the four all-or-nothing `response_book_*` keys).
 
 | Key | Required | Value |
 |---|---|---|
-| `file_number` | yes | verbatim, e.g. `CA51722` |
+| `file_number` | yes | verbatim, e.g. `CA59991` |
 | `registry` | yes | verbatim, e.g. `Vancouver` |
 | `short_style` | yes | verbatim, already composed: `"[First Appellant] vs. [First Respondent]"` — the template's own separator is `vs.`, not `v.`; the emitter composes this from the party groups, the filler does not |
 | `under_appeal_judge` | no | verbatim judge name |
@@ -101,7 +101,7 @@ the four all-or-nothing `response_book_*` keys).
 | `response_book_title` | group | bold centred title line, already composed, e.g. `Respondents' Response Book` |
 | `boa_record_label` | yes | top-right short label for the BOA cover, e.g. `Book of Authorities` |
 | `boa_title` | yes | bold centred title line, already composed, e.g. `Respondents' Book of Authorities` |
-| `filing_party_phrase` | no | the "name of the filing party" line under the title, already composed (e.g. `"F as in Frank Clothing Corporation, Andrew Heifetz (a.k.a. Drew Heifetz), and Jesse Heifetz"`); omitted for a joint book with no single filing party |
+| `filing_party_phrase` | no | the "name of the filing party" line under the title, already composed (e.g. `"Northfield Clothing Corporation, Andrew Marlowe (a.k.a. Drew Marlowe), and Jesse Marlowe"`); omitted for a joint book with no single filing party |
 | `party_groups` | yes | JSON array, non-empty, order preserved: `[{"role": "Appellants", "names": ["...", "..."], "lower_court_role": "Plaintiffs"}, ...]`. `role` is the appeal-role label as it should render (already pluralized if needed — `"Appellant"`/`"Appellants"`); `lower_court_role` is optional per group (omit the key on a group with no confirmed value — the filler renders no bracketed line for that group, never a blank one) |
 | `contacts` | yes | JSON array, one entry per party_groups role, same order: `[{"role": "Appellants", "names": ["..."], "counsel_name": "...", "counsel_firm": "...", "address": "...", "phone": "...", "email": "..."}, ...]`. Every value nullable except `role`/`names` — a missing contact field renders as an empty table cell, not a placeholder string |
 | `response_book_toc` | group | JSON array of row objects (shape below) |
@@ -273,7 +273,7 @@ rejection. Codes (extend this table, never redefine one already listed):
 
 `fill_book.py --validate <path>` mirrors `harness.py validate32`'s role:
 no session, no output file, exit 0 on pass. It is the acceptance oracle
-for the emitter's own test suite (`plugins/litigation/mcp/test/`) —
+for the emitter's own test suite (`source/probanda/mcp/test/`) —
 proving the TypeScript emitter's output against this Python validator
 without coupling the two pipelines at runtime, the same decoupling
 `assembly-input-contract.md`'s `validate32`/`validate33` already

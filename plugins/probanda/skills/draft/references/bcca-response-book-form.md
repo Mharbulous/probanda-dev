@@ -154,7 +154,7 @@ Its Appendix, Example 2 ("More than one respondent or appellant") supplies the g
 > "Group multiple appellants and respondents by their role in the court below (e.g. in the example Blue Green and Black Grey are grouped together as appellants who were claimants in the court below, but Pink Yellow is listed separately as an appellant who was a respondent in the court below)."
 > "Do not change the order of appellants or respondents who had different roles in the court below."
 
-So one side of an appeal can occupy **more than one BETWEEN/AND block** where its members held different roles below, each block carrying its own bracketed lower-court role, and the relative order of those blocks is preserved from the original style. A generator that assumes exactly two blocks (one appellant, one respondent) is wrong in that case. Where every party on a side shared the same role below — as in CA51722 — one block per side is correct. The Appendix also covers a single party each side (Example 1), cross appeals and multiple dockets (Example 3), and non-adversarial proceedings preserving "In the Matter of…" preliminary text (Example 4).
+So one side of an appeal can occupy **more than one BETWEEN/AND block** where its members held different roles below, each block carrying its own bracketed lower-court role, and the relative order of those blocks is preserved from the original style. A generator that assumes exactly two blocks (one appellant, one respondent) is wrong in that case. Where every party on a side shared the same role below — as in CA59991 — one block per side is correct. The Appendix also covers a single party each side (Example 1), cross appeals and multiple dockets (Example 3), and non-adversarial proceedings preserving "In the Matter of…" preliminary text (Example 4).
 
 **Access restrictions.** The Publication Bans, Sealing Orders, and Anonymization Orders PD (issued and effective 2024-06-10):
 
@@ -243,7 +243,7 @@ Two consequences a generator must respect:
 - The TOC's page numbers can only be finalised once the combined PDF exists. A rendered mockup should carry the TOC's **structure** with page numbers pending, and the assembler fills them.
 - "Page searching must match page numbering" is a second, separate artifact from the printed stamp: where numbering starts after the TOC, Adobe **Page Labels** must be set so the viewer's page field agrees with the stamped number.
 
-The court's filed example in CA51722 (the appellants' 2026-08-27 application book) is **not** compliant on this point — its footer restarts at 1 after the index — which is a reminder that a filed book is a style reference, not an authority.
+The court's filed example in CA59991 (the appellants' 2026-08-27 application book) is **not** compliant on this point — its footer restarts at 1 after the index — which is a reminder that a filed book is a style reference, not an authority.
 
 ---
 
@@ -313,11 +313,11 @@ The governing conventions are therefore:
 2. The Style of Proceedings PD (2022-09-12) — appellants first, respondents second; roles in brackets; multiple parties grouped **by their role in the court below** (see §5, which sets out when a single side splits into more than one block), order preserved across groups.
 3. The template's own "APPELLANT(S)" / "RESPONDENT(S)" labels, which resolve to the plural where a group has more than one member.
 
-Worked forms, from the CA51722 response book (2 appellants, 3 respondents):
+Worked forms, from the CA59991 response book (2 appellants, 3 respondents):
 
-- Party block: "**ECOLOGYST OUTFITTERS INC. and FRANKIE COLLECTIVE INC.**" / *Appellants* / *(Plaintiffs)*; "**F AS IN FRANK CLOTHING CORPORATION, ANDREW HEIFETZ (also known as DREW HEIFETZ), and JESSE HEIFETZ**" / *Respondents* / *(Defendants)*.
-- Response line: "Response of: the **Respondents**, F as in Frank Clothing Corporation, Andrew Heifetz, and Jesse Heifetz".
-- Responded-to line: "THIS IS A RESPONSE TO the stay application of the **Appellants**, Ecologyst Outfitters Inc. and Frankie Collective Inc., filed and served [date], returnable [date] at [time]."
+- Party block: "**BRIGHTWATER OUTFITTERS INC. and THISTLE COLLECTIVE INC.**" / *Appellants* / *(Plaintiffs)*; "**NORTHFIELD CLOTHING CORPORATION, ANDREW MARLOWE (also known as DREW MARLOWE), and JESSE MARLOWE**" / *Respondents* / *(Defendants)*.
+- Response line: "Response of: the **Respondents**, Northfield Clothing Corporation, Andrew Marlowe, and Jesse Marlowe".
+- Responded-to line: "THIS IS A RESPONSE TO the stay application of the **Appellants**, Brightwater Outfitters Inc. and Thistle Collective Inc., filed and served [date], returnable [date] at [time]."
 
 The set of names in each phrase is **every party sharing that role**, in the order they appear in the notice of appeal. Nothing in the instruments contemplates naming only the first party of a side outside the top-right short style ("[First Appellant] vs. [First Respondent]"), which is expressly a short form for the identification block alone.
 

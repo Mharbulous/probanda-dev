@@ -88,7 +88,7 @@ Google Calendar events have a start and end and are stored as **activities** in 
 > without consuming any of the practitioner's time; an all-day one marked `Busy`
 > would claim 24 hours as an interval). But **guest structure alone does not
 > discriminate** — a self-blocked work slot has the same shape as a marker, and
-> `Work on letter for Joe Dart` 11:00-13:00 on 2026-02-02 is a real work block
+> `Work on letter for Joe Lindale` 11:00-13:00 on 2026-02-02 is a real work block
 > that no structural test separates from a marker.
 >
 > That judgment is classification and does not belong in this skill: per SKILL.md

@@ -1,6 +1,6 @@
 # Pre-filing consistency checks
 
-Owned by `/drafting-data`. Run by `drafting_forms__pre_filing_check({ db_path, filing_id, package_dir })` — deterministic, read-only, no model call in its path — and consumed by `/draft` step 9, which presents the results and records the outcome on the gate job (`.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations" §14). Origin: the L4212 Claimant Opening Submissions package, 2026-09-14, where the exhibit cross-check was done by hand and a signed witness statement was found still carrying template placeholders ([#615](https://github.com/Mharbulous/CoClerk/issues/615), ADR 0016).
+Owned by `/drafting-data`. Run by `drafting_forms__pre_filing_check({ db_path, filing_id, package_dir })` — deterministic, read-only, no model call in its path — and consumed by `/draft` step 9, which presents the results and records the outcome on the gate job (`.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations" §14). Origin: the L8212 Claimant Opening Submissions package, 2026-09-14, where the exhibit cross-check was done by hand and a signed witness statement was found still carrying template placeholders ([#615](https://github.com/Mharbulous/CoClerk/issues/615), ADR 0016).
 
 The gate sits **beside** the Writing lifecycle (`filing-checklists.md` §11), not inside it: no lifecycle state, no CHECK constraint. It is a precondition to the drafting → filed write of `filings.filed_on`, enforced by prose in `/draft`. **The gate reports; it never edits a document** (decision D4). A finding is fixed by a job the practitioner outlines, or waived with a one-line reason (§14).
 
@@ -65,7 +65,7 @@ C3, C4 and C5 ([#624](https://github.com/Mharbulous/CoClerk/issues/624)) compare
 - **Scans:** every `Exhibit N - …` file.
 - **Pass:** each opens and reports a page count above zero (a DOCX counts as one page).
 - **Evidence:** `files: [{ file, pages }]` per exhibit; a finding names the file and quotes the reader's error (`file is empty (0 bytes)`, an unreadable PDF, a non-document extension).
-- **`package_total_pages`** is the sum of page counts over **every PDF in the package folder**, exhibits and signed statements alike — on L4212 that is 143 pages across 18 files.
+- **`package_total_pages`** is the sum of page counts over **every PDF in the package folder**, exhibits and signed statements alike — on L8212 that is 143 pages across 18 files.
 
 ## Presenting a failed check
 

@@ -137,8 +137,8 @@ gate AS (
 standing_facts AS (
   -- Telus contact directory. One row per distinct (number, name) PAIR, over
   -- the whole call history rather than the target date. phone_number is
-  -- E.164 as stored ('+16043499839'), so a session matching it against a
-  -- number written elsewhere in another format ('+1 604-349-9839' in a
+  -- E.164 as stored ('+16045550172'), so a session matching it against a
+  -- number written elsewhere in another format ('+1 604-555-0172' in a
   -- calendar description) normalizes on its side -- the query does not
   -- guess at formats, because every format it failed to anticipate would
   -- silently reproduce the defect this branch exists to fix.

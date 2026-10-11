@@ -73,7 +73,7 @@ def sanitize_short_name(name):
 def parse_folder_name(matter_folder):
     """Fallback identity from the matter folder name.
 
-    Patterns like "4165.L153 Example Matter" or "L153 Example Matter": the
+    Patterns like "8165.L8153 Example Matter" or "L8153 Example Matter": the
     leading token (client.matter or matter-only) is the matter reference,
     stored under the `matter_id` metadata key; the remainder is the short
     name. Returns (matter_id, short_name).

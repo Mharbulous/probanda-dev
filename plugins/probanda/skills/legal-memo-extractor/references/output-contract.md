@@ -65,7 +65,7 @@ structurally:
 
 ## Regression baseline
 
-L145 (`6. LAW\AI memos (Westlaw)`): 22 memos / 48 questions / 491 distinct
+L8145 (`6. LAW\AI memos (Westlaw)`): 22 memos / 48 questions / 491 distinct
 authorities by name (497 by name+detail). Material drift on a re-run means a
 parser regression. (The pre-refactor 2026-07 baseline index had two known
 defects, deliberately not reproduced: six authorities counted in its summary

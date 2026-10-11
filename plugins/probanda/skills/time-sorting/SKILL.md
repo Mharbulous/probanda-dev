@@ -6,7 +6,7 @@ dependencies:
   - practice-data      # matter list (matter numbers + client names) for task assignment
 ---
 
-<!-- probanda v0.1.0 -->
+<!-- probanda v0.1.1 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -128,9 +128,9 @@ Note: `config:timecamp_token` lives in the `timeline` namespace (build-timeline 
       "activity_type": "screen_work | phone_call | meeting | court | untracked",
       "activity_source": "telus | syncopaid | timecamp | chrometa | gcal | icloud | none",
       "task_id": "TimeCamp task_id or null",
-      "task_name": "Smith v Jones (L3948) or null",
+      "task_name": "Smith v Jones (L8948) or null",
       "project_name": "Client Matters or null",
-      "matter": "L3948 or null",
+      "matter": "L8948 or null",
       "category": "admin | billing | training | professional_development | business_development | tech_troubleshooting | onboarding | bookkeeping | null",
       "confidence": "high | medium | low",
       "attribution": {
@@ -144,7 +144,7 @@ Note: `config:timecamp_token` lives in the `timeline` namespace (build-timeline 
     "total_hours": 8.2,
     "assigned_hours": 7.5,
     "unassigned_hours": 0.7,
-    "by_matter": {"L3948": 3.2},
+    "by_matter": {"L8948": 3.2},
     "by_category": {"admin": 1.5}
   }
 }
@@ -313,7 +313,7 @@ Build a combined lookup: matter numbers → TimeCamp Task IDs + client names. Wh
 
 For each activity, analyze the attribution signals:
 
-1. **Window title matching** — Look for matter numbers (e.g. "L3948"), client names (e.g. "Smith"), or matter descriptions in window titles. LEAP windows typically contain the client/matter name.
+1. **Window title matching** — Look for matter numbers (e.g. "L8948"), client names (e.g. "Smith"), or matter descriptions in window titles. LEAP windows typically contain the client/matter name.
 
 2. **Application context** — LEAP indicates client work. Gmail/Outlook likely admin unless the subject line indicates a specific matter. Chrome depends on the URL/page title.
 
@@ -345,9 +345,9 @@ For each activity, analyze the attribution signals:
 
 **Example 1 (HIGH Confidence)**
 
-Activity: Screen work in LEAP window titled "Smith v Jones (L3948) - Settlement Memo" (45 min)
+Activity: Screen work in LEAP window titled "Smith v Jones (L8948) - Settlement Memo" (45 min)
 
-Signals: Matter number L3948 in title + LEAP application + practice matter list confirmation
+Signals: Matter number L8948 in title + LEAP application + practice matter list confirmation
 
 → **Confidence: HIGH** — Explicit matter identification. No competing interpretation.
 
@@ -416,8 +416,8 @@ After storing, present the classified timeline as a table:
 
 ```
 Time         Duration  Type         Task/Category              Confidence  Source
-09:02-09:47  0:45      Screen work  Smith v Jones (L3948)       High       TimeCamp
-09:47-10:05  0:18      Phone call   Smith v Jones (L3948)       Medium     Telus + TimeCamp
+09:02-09:47  0:45      Screen work  Smith v Jones (L8948)       High       TimeCamp
+09:47-10:05  0:18      Phone call   Smith v Jones (L8948)       Medium     Telus + TimeCamp
 10:05-10:30  0:25      Screen work  Admin                       High       TimeCamp
 10:30-10:32  0:02      Untracked    — (unassigned)              —          —
 ...

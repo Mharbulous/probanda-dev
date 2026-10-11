@@ -4,7 +4,7 @@ Owned by `/drafting-data`. `documents.file_path` names the copy of a document on
 
 ## The stored form
 
-`documents.file_path` is **relative to the matter root, with backslash separators**: `5. COURT FILE#S-261104\2026-01-05 AFF Smith #1.pdf`. No drive letter, no leading `\` or `.\`, no forward slash. Every write of `documents.file_path` uses this form. Rows written before 2026-09-24 may hold an absolute path; readers accept both.
+`documents.file_path` is **relative to the matter root, with backslash separators**: `5. COURT FILE#S-290001\2026-01-05 AFF Smith #1.pdf`. No drive letter, no leading `\` or `.\`, no forward slash. Every write of `documents.file_path` uses this form. Rows written before 2026-09-24 may hold an absolute path; readers accept both.
 
 Convert a path with this helper, never by hand. `root` is the matter folder the path was taken from: `matter_root` from `drafting_forms__open_session` for a host path, or the session's own view of the folder for a path it listed.
 

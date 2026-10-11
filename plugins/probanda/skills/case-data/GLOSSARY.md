@@ -10,11 +10,11 @@ For the schema table/column/view that backs each term below, see `references/ter
 
 **Proceeding** — one court-filed case within a matter: identified by court, registry, and file number, with a style of cause, parties, and a status (active, stayed, concluded). Facts, sources, causes of action, and issues are generally scoped to a proceeding, not the matter as a whole.
 
-**Matter reference** — the token that names the matter's folder and identifies the matter wherever our own systems point at one: either a client number, a dot, and the matter (`2575.L4443`), or the matter alone (`L3470`). It is read off the folder name, not assigned here.
+**Matter reference** — the token that names the matter's folder and identifies the matter wherever our own systems point at one: either a client number, a dot, and the matter (`8575.L8443`), or the matter alone (`L8470`). It is read off the folder name, not assigned here.
 
-**Matter number** — the firm's number for the matter by itself (`L4443`), as the practice database records it. Where a matter reference carries a client number in front, the matter number is the part after the dot; the dot is a separator, never part of the value.
+**Matter number** — the firm's number for the matter by itself (`L8443`), as the practice database records it. Where a matter reference carries a client number in front, the matter number is the part after the dot; the dot is a separator, never part of the value.
 
-The two coincide whenever a folder is named by the matter alone, and are still different fields: `L3470 Abandonment of Premises` has both equal; `2575.L4443 Duckworth v Pathfinder Construction Ltd` does not. The reference comes from the folder and the number from the practice database — neither is ever derived from the other, and where they are equal a practitioner is told so once rather than shown two matching lines.
+The two coincide whenever a folder is named by the matter alone, and are still different fields: `L8470 Abandonment of Premises` has both equal; `8575.L8443 Ashby v Waypoint Construction Ltd` does not. The reference comes from the folder and the number from the practice database — neither is ever derived from the other, and where they are equal a practitioner is told so once rather than shown two matching lines.
 
 ## Source vs Authority
 

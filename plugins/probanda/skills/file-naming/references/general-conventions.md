@@ -77,8 +77,8 @@ To stay consistent with Casemap and keep keyword search reliable, names are
 For a **multi-word given name**, take the initial from the **first word only**
 — same as the single-given-name rule, not both syllables:
 
-- "Shi Cong Zhou" → `ZhouS` (not `ZhouSC`)
-- "Yang Qing Zheng" → `ZhengY` (not `ZhengYQ`)
+- "Mei Lin Tan" → `ZhouS` (not `ZhouSC`)
+- "Wen Li Hao" → `ZhengY` (not `ZhengYQ`)
 
 For **corporations, banks, and government bodies**, use the entity's accepted
 initialism or short-form name — not the `LastnameFirstInitial` pattern, which

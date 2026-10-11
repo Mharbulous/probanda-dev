@@ -395,7 +395,7 @@ Client emails from this practice are direct, practical, and analytical. They rea
 - **Don't make decisions unilaterally.** Present options with their tradeoffs and ask for instructions.
 - **Don't be vague about risks.** If there's a downside, say it plainly: "The risk here is that this might cause them to stop making the $10,000 monthly payments."
 - **Don't add unnecessary pleasantries.** Skip "I hope this email finds you well."
-- **Don't use formal salutations with long-standing clients.** "Hi Stan" beats "Dear Mr. Duckworth."
+- **Don't use formal salutations with long-standing clients.** "Hi Glen" beats "Dear Mr. Ashby."
 - Don't sound AI-generated. See `references/style-examples/ai-to-lawyer-style.md` for the tells and before/after examples.
 
 ### Examples
@@ -404,7 +404,7 @@ These are patterns to adapt, not fixed text.
 
 #### Presenting next steps after a development
 
-> Hi Stan,
+> Hi Glen,
 >
 > Next steps:
 > 1. It's been 21 days since we served the Notice of Civil Claim, so you can now apply for default judgment. It takes about a week for the court to process the application, and if the court processes the application before the Defendants file their response, then you would get default judgment. At the very least, it forces the Defendants to file their reply and move the case forward faster.
@@ -419,7 +419,7 @@ These are patterns to adapt, not fixed text.
 
 #### Explaining a nuanced decision with tradeoffs
 
-> Hi Stan,
+> Hi Glen,
 >
 > No significant updates to speak of. Really, it is a question of whether you want to apply for a pre-judgment garnishment order at the risk of jeopardizing the ongoing $10,000 payment that they seem to be continuing to make.
 >
@@ -434,7 +434,7 @@ These are patterns to adapt, not fixed text.
 
 #### Responding to a client forwarding a non-party's request
 
-> Hi Stan,
+> Hi Glen,
 >
 > Thanks for sending this over. [Brief summary of what you're doing in response and the relevant figures.]
 >

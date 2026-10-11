@@ -13,7 +13,7 @@ schema:
   - statement_paragraphs / paragraph_statements_of_fact (the link that moves a fact out of the subsection)
   - documents (instrument='witness_statement', execution — the statement's own sign-it column)
 machinery:
-  - renderer: renderWitnessStatements (plugins/litigation/mcp/src/submission/forms/render-vaniac-submissions.ts) — the statement-level 🧩 and the trailing "Facts attributed to this witness, not yet in this statement" subsection (build #329)
+  - renderer: renderWitnessStatements (source/probanda/mcp/src/submission/forms/render-vaniac-submissions.ts) — the statement-level 🧩 and the trailing "Facts attributed to this witness, not yet in this statement" subsection (build #329)
 work_markers: 🧩 no facts attributed to this witness (statement-level, derived) · 🗣️ talk to witness · ✍️ draft it · 📌 exhibit pinpoint missing — never 🖋️ and never 🧷 on an unlinked fact (build #329, decision #320; pinpoint split by basis #511)
 documents: VanIAC witness-statement mockups (one per witness)
 source: issue 329 build, 2026-08-23 (implements issue #320's ratified decision)
@@ -40,4 +40,4 @@ status: ratified
 
 ## What would break if this were deleted
 
-Without the statement-level 🧩 and the corrected 🖋️ predicate, an empty witness statement — no facts attributed, nothing drafted — renders "sign it," which asks the witness to swear to a document with no content. That was the actual live-matter bug this journey fixes: on the VanIAC L4212 file, the Andrew and Jesse Heifetz witness statements had zero paragraphs and rendered 🖋️ anyway, misdirecting the practitioner's next action from "find out what this witness knows" to "get this signed."
+Without the statement-level 🧩 and the corrected 🖋️ predicate, an empty witness statement — no facts attributed, nothing drafted — renders "sign it," which asks the witness to swear to a document with no content. That was the actual live-matter bug this journey fixes: on the VanIAC L8212 file, the Andrew and Jesse Marlowe witness statements had zero paragraphs and rendered 🖋️ anyway, misdirecting the practitioner's next action from "find out what this witness knows" to "get this signed."

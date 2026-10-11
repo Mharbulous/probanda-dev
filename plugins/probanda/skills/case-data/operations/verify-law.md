@@ -46,7 +46,7 @@ below unchanged, and state in the report that no hash identity exists for it.
 Per the protocol's locating rule, for each authority in the worklist:
 
 1. Read `law.authorities.file_path` and `file_hash`. Try the recorded path; accept it **only if** the file's sha256 equals `file_hash`.
-2. On a path miss or hash mismatch, **fall back to a hash search** over the matter tree. Paths go stale when files are renamed after ingestion (a housekeeping rename staled 21 of 47 in the L142 pilot, with 0 hash mismatches); `file_hash` is the durable identity.
+2. On a path miss or hash mismatch, **fall back to a hash search** over the matter tree. Paths go stale when files are renamed after ingestion (a housekeeping rename staled 21 of 47 in the L8142 pilot, with 0 hash mismatches); `file_hash` is the durable identity.
 3. **Unresolvable either way** → do not dispatch a verifier for that authority. Escalate **every** edge citing it per §4 with reason class `source_unresolvable`, and continue to the next authority. An edge nothing can check must say so.
 
 [`../references/scripts/resolve_authority_source.py`](../references/scripts/resolve_authority_source.py) is the executable form of this rule for one authority, spawned by the drafting runtime for a scrutiny review (`../references/design-decisions.md` #61).

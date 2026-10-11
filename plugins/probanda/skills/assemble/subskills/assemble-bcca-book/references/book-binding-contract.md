@@ -124,7 +124,7 @@ or an error envelope in the validator's shape.
 ## Book checker (`subskills/assemble-bcca-book/scripts/check_book.py`)
 
 Checks a response book against the two defects the registry returned on
-CA51722 (01-SEP-2026 Courtesy Correction, package 4377594): a written argument
+CA59991 (01-SEP-2026 Courtesy Correction, package 4999901): a written argument
 over the completion instructions' page cap, and pages that are not numbered
 consecutively. Both are read from PDFs, so the script needs PyMuPDF and runs
 on the PC only (`missing_dependency` elsewhere, same envelope as the

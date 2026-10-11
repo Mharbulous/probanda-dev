@@ -13,7 +13,7 @@ numbers, dates, amounts, citations, statutory references, defined terms, and
 any operative wording. A misspelled party name is substantive: it can be the
 difference between naming a party and naming nobody.
 
-The Keshmiri spelling is the worked example. It may look like a typo, but only
+The Lindqvist spelling is the worked example. It may look like a typo, but only
 the corporate registry and filed record can settle it, so it is not corrected
 without confirmation.
 

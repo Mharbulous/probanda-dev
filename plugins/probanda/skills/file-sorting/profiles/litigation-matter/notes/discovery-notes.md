@@ -15,7 +15,7 @@ notices to admit and their replies, and document-disclosure materials.
   `general-conventions.md` to the operative language.
 - **`LOD` numbering:** append `#1`, `#2`, etc. for sequential lists. The
   author/recipient is the party whose list it is. Schedule attachments follow
-  the same prefix (e.g. `LOD#1 DuckworthS Schedule A.pdf`).
+  the same prefix (e.g. `LOD#1 AshbyG Schedule A.pdf`).
 - **Amended lists of documents:** a List of Documents that formally *amends*
   an earlier LOD (rather than replacing it with a new sequential list) uses
   the code `ALOD#<n>`, where `<n>` matches the LOD number it amends (so a
@@ -94,7 +94,7 @@ scoped future work; do not propose renames for them on a routine housekeeping
 pass.
 
 Do not carry the file's original Bates-numbered name (e.g.
-`Duckworth0067.pdf`) or a generic description forward — the LOD position is
+`Ashby0067.pdf`) or a generic description forward — the LOD position is
 the canonical identifier once a LOD has been served, because it's what gets
 cited in pleadings, affidavits, and at trial.
 

@@ -85,8 +85,8 @@ or falls inside one party's name:
    infer.
 
 For example, one registered company followed by two individual parties renders
-as `DR. S. KESHMIRI AND DR. L. SHAHBAZI INC., SHAHAB KESHMIRI and LEILA
-SHAHBAZI`.
+as `DR. S. LINDQVIST AND DR. L. ABERNETHY INC., SAMUEL LINDQVIST and LAURA
+ABERNETHY`.
 
 ## Physical handling
 
@@ -108,13 +108,13 @@ commissioner's stamp.
 ## Example
 
 ```text
-No. S-256622 Vancouver Registry
+No. S-290004 Vancouver Registry
 In the Supreme Court of British Columbia
 Between
-STAN DUCKWORTH
+GLEN ASHBY
 Plaintiff
 and
-PATHFINDER VENTURES INC. and PACIFIC FRONTIER INVESTMENTS INC.
+WAYPOINT VENTURES INC. and HARBOUR CREST INVESTMENTS INC.
 Defendants
 ```
 

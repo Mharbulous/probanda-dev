@@ -6,7 +6,7 @@ trigger: the last substance job on a Writing completes and the package exists as
 outcome: every check has passed, is not applicable, or is waived with the practitioner's one-line reason, recorded on the job — and only then is the filing presented as ready for the practitioner's final approval to file
 path: happy, with one failure handled
 status: aspirational (desired UX — not yet verified against the implementation)
-source: L4212 Cowork session, 2026-09-14, Claimant Opening Submissions package (issue #615); ADR 0016
+source: L8212 Cowork session, 2026-09-14, Claimant Opening Submissions package (issue #615); ADR 0016
 ---
 
 # Gate before filing

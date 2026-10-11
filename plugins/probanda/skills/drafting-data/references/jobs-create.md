@@ -19,7 +19,7 @@ A job the practitioner wants worked before everything queued takes one above the
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created, session_proposed, created_by)
-  VALUES (1, 1, 'reply to their attornment argument', 'I want to reply to their attornment argument once the memos are audited.', 'work', 4, 'L4212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 0, 'sess-a1');
+  VALUES (1, 1, 'reply to their attornment argument', 'I want to reply to their attornment argument once the memos are audited.', 'work', 4, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 0, 'sess-a1');
 ```
 
 `session_proposed` is `1` only when the `title` and `intent` are a session proposal the practitioner approved word for word, and `0` otherwise.
@@ -32,7 +32,7 @@ Outside five fixed-text exceptions — §14's gate job, the fast-path job, §3b'
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created, created_by)
-  VALUES (1, NULL, 'Note up: Smith v. Jones, 2023 BCCA 182', 'Note up: Smith v. Jones, 2023 BCCA 182', 'work', 4, 'L4212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'sess-a1');
+  VALUES (1, NULL, 'Note up: Smith v. Jones, 2023 BCCA 182', 'Note up: Smith v. Jones, 2023 BCCA 182', 'work', 4, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'sess-a1');
 DELETE FROM tickets WHERE id = last_insert_rowid()
   AND EXISTS (
     SELECT 1 FROM ticket_proposals p JOIN tickets t ON t.id = p.ticket_id

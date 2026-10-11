@@ -1,6 +1,6 @@
 # Work markers
 
-This document is the SSOT for the rules governing the work-marker emojis that I want mockup projection engine to generate; each emoji's own row (its meaning, its predicate and its history) lives in `plugins/litigation/mcp/src/submission/forms/symbol-table.ts`, the single source for the rows. Every marker whose predicate holds renders immediately after its component. While this is the canonical document and most definitive record of my intentions for the /draft skill, it is also a work in progress and remains open for discussion with me when problems are found, or when new features/functionality are being added.  No changes to this document may be made without discussion with and express approval from both me and a Fable agent.
+This document is the SSOT for the rules governing the work-marker emojis that I want mockup projection engine to generate; each emoji's own row (its meaning, its predicate and its history) lives in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, the single source for the rows. Every marker whose predicate holds renders immediately after its component. While this is the canonical document and most definitive record of my intentions for the /draft skill, it is also a work in progress and remains open for discussion with me when problems are found, or when new features/functionality are being added.  No changes to this document may be made without discussion with and express approval from both me and a Fable agent.
 
 ## Reading rules
 
@@ -28,15 +28,15 @@ A marker is a **to-do on that line**, never a status label. (1) Each **work** ma
 
 ### 1a. Work emojis — 31
 
-The 31 work rows live in `plugins/litigation/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
+The 31 work rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
 
 ### 1b. Event emojis — 14
 
-The 14 event rows live in `plugins/litigation/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work the event routes and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
+The 14 event rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work the event routes and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
 
 ### 1c. Hold emojis — 3
 
-The 3 hold rows live in `plugins/litigation/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, and `condition` (the predicate; a hold has no `history`). That file is the single source.
+The 3 hold rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, and `condition` (the predicate; a hold has no `history`). That file is the single source.
 
 Crossed out is **not** a hold emoji — strikethrough styling is its rendering (terms-and-symbols → Deployment).
 
@@ -61,7 +61,7 @@ Seams evident from table 1 omitted; a pair not listed here is decided by its own
 - 🖋️⊕✒️ vs 💬 ⊕ 📑 / vs 🏆 — different objects/axes, both render; signing raises "best", so clearing 🖋️/✒️ often clears 🏆 (either holds alone)
 - 📖 vs 🔬 — nothing counted: research / a lead in hand: scrutinize it; exclusive per proposition; a failed statement is neither — it counts as none, so a proposition left with only failed statements reads 📖 (§1 → Failed); a settled statement counts as a verified one does (§1 → Settled)
 - 🔬 vs 👃 — routine verification of a lead / doubt about any statement, verified, lead or failed; can co-hold; a failed scrutiny ends 🔬 and seats its finding under 👃, whose work there is the statement's review job (§1 → Failed); a settled statement keeps the finding and raises neither (§1 → Settled)
-- 📍 vs 📌 vs 🧷 — locator into an authority / a document / the witness's instrument; ⊕ per locator, ∨ per line: an exhibit-backed statement of fact can owe 📌 and 🧷 at once (*Affidavit #1 of A. Heifetz, para 3, Ex. A, s. 2.3*)
+- 📍 vs 📌 vs 🧷 — locator into an authority / a document / the witness's instrument; ⊕ per locator, ∨ per line: an exhibit-backed statement of fact can owe 📌 and 🧷 at once (*Affidavit #1 of A. Marlowe, para 3, Ex. A, s. 2.3*)
 - 🚩 vs ↩️ — ours-predicted, no served document / theirs-said, a served document, unanswered; when the prediction materializes, open the `opposing_points` row and delete the spent `anticipated_points` row — anticipation spent, no link kept, ordinary CRUD
 
 ## 3. Symmetries

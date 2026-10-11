@@ -36,7 +36,7 @@ BIGRAMS = ["more stringent", "more onerous", "more demanding", "more exacting", 
            "more deferential", "less deferential"]
 
 # Curial usage, not a ranking gloss: "the lower courts", "a higher court". Calibrated on
-# the first full L142 run, where 2 of 3 flags were exactly this. A term is only flagged
+# the first full L8142 run, where 2 of 3 flags were exactly this. A term is only flagged
 # when it occurs OUTSIDE these contexts -- so a genuine "lower standard" still flags.
 CONTEXT_EXEMPT = {
     "lower": r"(?:court|courts|appellate|tribunal|judge|judges)",

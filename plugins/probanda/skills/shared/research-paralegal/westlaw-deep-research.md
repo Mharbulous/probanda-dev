@@ -15,7 +15,7 @@ exactly, never proceeding from a remembered procedure.
   not try.
 - `client_matter_id` — the Westlaw client ID for this run, and the
   fail-closed scoping gate value: either the matter's `{client}.{matter}` ID
-  (e.g. `2575.L4443`) or the literal `PERSONAL`. The caller chooses: a run
+  (e.g. `8575.L8443`) or the literal `PERSONAL`. The caller chooses: a run
   serving a client matter uses that matter's ID, and `PERSONAL` is only for
   a run the caller states is testing or authorized unbilled firm work. Use
   the value as given; never switch between a matter ID and `PERSONAL`.

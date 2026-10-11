@@ -91,7 +91,7 @@ only -- see Error handling.
 4. **Check the written argument against the page cap, before binding.**
    Response Book only -- a factum's book has no written argument part, so
    skip this step when step 3 found no `response_book_*` keys. The
-   registry returned the CA51722 response book for a written argument over the
+   registry returned the CA59991 response book for a written argument over the
    cap, and a book already bound is too late to find that out. Run
    `subskills/assemble-bcca-book/scripts/check_book.py` on the written
    argument's PDF from step 3 — the converted PDF, never the `.docx`, because

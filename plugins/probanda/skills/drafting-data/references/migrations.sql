@@ -790,7 +790,7 @@ UPDATE db_meta SET value = '2' WHERE key = 'schema_version';
 -- creating it is a substantial independent decision (party/method/ladder)
 -- better left to its own ticket.
 --
--- L4212-specific data correction (Submission 2 was actually a postulate
+-- L8212-specific data correction (Submission 2 was actually a postulate
 -- mis-stored in arguments.proposition, per terms-and-symbols.md's Renames
 -- section and this ticket's row-migration note) is NOT baked into this
 -- generic hop -- it is a one-off `execute` script run once against that one
@@ -831,7 +831,7 @@ FROM documents_v2 dv2;
 -- to follow the documents->documents_v2 rename, so any row still pointing
 -- at documents_v2 blocks that DROP with a FOREIGN KEY constraint failure
 -- until filing_documents itself is rebuilt against the new `documents`
--- (see the ordering note above; confirmed empirically against L4212's own
+-- (see the ordering note above; confirmed empirically against L8212's own
 -- 5 filing_documents rows while drafting this hop).
 ALTER TABLE filing_documents RENAME TO filing_documents_v2;
 CREATE TABLE filing_documents (
@@ -1051,7 +1051,7 @@ SELECT argument_id, id FROM argument_authorities;
 -- filing_arguments -> filing_submissions, and opposing_points' FK rename,
 -- both rebuilt *before* dropping arguments_v2/argument_authorities/excerpts
 -- below -- same ordering reason as the documents/filing_documents note
--- above: filing_arguments (7 live rows on L4212) has its FK auto-rewritten
+-- above: filing_arguments (7 live rows on L8212) has its FK auto-rewritten
 -- to arguments_v2 by the RENAME above, and dropping arguments_v2 first
 -- fails with FOREIGN KEY constraint failed until filing_arguments no
 -- longer points at it.

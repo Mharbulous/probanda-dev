@@ -137,9 +137,9 @@ Creating this pair, like §14's gate job, is a fixed-text create and not outlini
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 7, 'Prepare the review pages', 'Extract the source pages each paragraph of this Writing relies on into the presentation folder, ready for counsel''s review.', 'work', 10, 'L4212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 7, 'Prepare the review pages', 'Extract the source pages each paragraph of this Writing relies on into the presentation folder, ready for counsel''s review.', 'work', 10, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 7, 'Counsel''s review of Notice of Application', 'Counsel reviews every paragraph of this Writing, in document order, against its source pages.', 'work', 10, 'L4212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 7, 'Counsel''s review of Notice of Application', 'Counsel reviews every paragraph of this Writing, in document order, against its source pages.', 'work', 10, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 DELETE FROM tickets WHERE filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
   AND title IN ('Prepare the review pages', 'Counsel''s review of Notice of Application')
   AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = tickets.id)

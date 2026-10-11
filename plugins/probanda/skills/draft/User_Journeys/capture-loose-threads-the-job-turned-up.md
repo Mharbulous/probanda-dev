@@ -6,7 +6,7 @@ trigger: while a claimed job's approved work runs, that work turns up something 
 outcome: each surfaced item is recorded on the Job Board as a loose thread in the same turn it surfaces, acknowledged in one line, and found by a later outlining session under "Loose Threads" — nothing lives only in chat
 path: happy
 status: aspirational (desired UX — not yet verified against the implementation)
-source: practitioner instruction at `/reflect` on the L4212 `/draft-submission` session (Job #17), 2026-09-13; E2E report `docs/E2E-tests/2026-09-13-2227 draft-submission-e2e-test.md`, findings 4.1 and 4.5
+source: practitioner instruction at `/reflect` on the L8212 `/draft-submission` session (Job #17), 2026-09-13; E2E report `docs/E2E-tests/2026-09-13-2227 draft-submission-e2e-test.md`, findings 4.1 and 4.5
 ---
 
 # Capture the loose threads the job turned up

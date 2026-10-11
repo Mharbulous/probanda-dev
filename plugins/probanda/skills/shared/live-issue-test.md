@@ -78,7 +78,7 @@ frequency: about zero in a typical session.
 Suppression — state lives in the transcript, per session (live issues move week to week;
 durable suppression would silence nudges that should fire once the landscape shifts):
 
-- On confirmation, state a one-line issue key — e.g. "(L4212) whether attornment defeats the
+- On confirmation, state a one-line issue key — e.g. "(L8212) whether attornment defeats the
   stay" — and raise nothing that confirmation fairly covers again that session. A genuinely
   distinct doctrine or a different target matter is a new key: one fresh nudge.
 - "I know it's off-matter — continue" suppresses all lawyer-directed nudging for the

@@ -226,7 +226,7 @@ def _iso_date(value: str) -> str | None:
 
 
 def _deponent_tag(name: str) -> str:
-    """'Monnie Chen' -> 'ChenM', the firm's file-naming short form."""
+    """'Morgan Chen' -> 'ChenM', the firm's file-naming short form."""
     parts = str(name).split()
     if len(parts) < 2:
         return "".join(parts)

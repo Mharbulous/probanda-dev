@@ -10,7 +10,7 @@ dependencies:
   - time-sorting             # first-run handoff; reuses its TimeCamp task-tree sync rather than refetching
 ---
 
-<!-- probanda v0.1.0 -->
+<!-- probanda v0.1.1 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -336,9 +336,9 @@ time-ordered lines — facts a source establishes that belong to no particular
 day, today the Telus contact directory (which person owns a phone number).
 They are not events: they carry no timestamps, they are identical for every
 target date, and a standing fact is never treated as something that happened
-on the target day. A number is stored E.164 (`+16043499839`), so normalize a
+on the target day. A number is stored E.164 (`+16045550172`), so normalize a
 number written in another format elsewhere — a calendar description's
-`+1 604-349-9839` — before matching it against the directory. A source whose
+`+1 604-555-0172` — before matching it against the directory. A source whose
 own rows all fall outside the target day, and whose status for the day is
 therefore `skipped`, still contributes here: `skipped` means "no events this
 day," never "contributes nothing."
@@ -408,7 +408,7 @@ carries):
   relation is the test**: does it name something the practitioner *does*
   (`Work on…`, `Meeting with…`, `Draft…`) or something that *happens to a
   file* (`… Due`, `DEADLINE:`)? Guest structure corroborates and never
-  decides — `Work on letter for Joe Dart` 11:00–13:00 is structurally
+  decides — `Work on letter for Joe Lindale` 11:00–13:00 is structurally
   identical to a deadline marker and is real work, so a structural test
   discards real client time. A marker carries zero duration, and an all-day
   extent is never converted into 24 hours or any other figure; resolve its

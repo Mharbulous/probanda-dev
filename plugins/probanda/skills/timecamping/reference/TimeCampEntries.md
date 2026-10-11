@@ -58,7 +58,7 @@ Each entry in the JSON array contains, **confirmed against a real response**
 - `start_time` / `end_time` — `"HH:MM:SS"`, local 24-hour time
 - `date` — `"YYYY-MM-DD"`, local date
 - `task_id` — the existing project/task assignment (TimeCamp's internal id, string; `"0"` would mean unassigned, though every entry observed carries a real task_id — TimeCamp entries are always under *some* task, even a placeholder one like "Phone calls (to be sorted)")
-- `name` — the assigned task's **display name**, already resolved inline (e.g. `"ZhuP - L145 - 1500746 B.C. LTD."`, `"Phone calls (to be sorted)"`) — **no separate `/third_party/api/tasks/` call is needed** to resolve this; it was a planned extra fetch that a live check showed unnecessary
+- `name` — the assigned task's **display name**, already resolved inline (e.g. `"ExampleP - L8145 - 0999999 B.C. LTD."`, `"Phone calls (to be sorted)"`) — **no separate `/third_party/api/tasks/` call is needed** to resolve this; it was a planned extra fetch that a live check showed unnecessary
 - `color` — the assigned task's hex colour, also already resolved inline (e.g. `"#E5C947"` amber, `"#5CCB72"` green) — see below for the colour convention
 - `billable` — `0`/`1`, already an integer
 - `locked` — `"0"`/`"1"` as a string — set once an entry is invoiced; a locked entry should not normally be write-backed (see `SKILL.md` Step 7)

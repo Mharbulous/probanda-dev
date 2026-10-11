@@ -39,7 +39,7 @@ All delivery/direction codes (incoming and outgoing). Look up definitions in
   the file lawyer's behalf. If no lawyer is cc'd, or the email's own content
   is administrative only (e.g. scheduling, transmittal with no substantive
   authorship), attribute to the literal sender instead.
-  Example: email from `clinag@firm.com` (assistant), cc `aswabuk@firm.com`
+  Example: email from `assistant@firm.example` (assistant), cc `lawyer@firm.example`
   (lawyer), transmitting a substantive letter → Author/Recipient is
   `SwabukA`, not `LinagC`.
 - **Institutional / government senders.** When the sender/recipient is an

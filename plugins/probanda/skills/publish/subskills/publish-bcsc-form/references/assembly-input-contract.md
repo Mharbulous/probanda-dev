@@ -190,7 +190,7 @@ numbered from page 1.
 
 Written by `drafting_forms__emit_affidavit` for a supporting affidavit of a
 Form 32 or 33 `/draft` holds (golden:
-`plugins/litigation/mcp/test/fixtures/affidavit-emitted.md`). Parser:
+`source/probanda/mcp/test/fixtures/affidavit-emitted.md`). Parser:
 `scripts/steps/asmaff/common.py::parse_affidavit`.
 
 Frontmatter — exactly these three keys, each once, `key: value` with the

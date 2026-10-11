@@ -340,7 +340,7 @@ notes file. Their shape is unchanged.
    hold no browser tools, so return a **hand-off packet** to the caller: the research
    question(s) drafted to westlaw-query-optimizer discipline (1–2 sentences,
    jurisdiction in text, anonymized), the verified client-matter ID (e.g.
-   `2575.L4443`, not the bare matter number), an existing target
+   `8575.L8443`, not the bare matter number), an existing target
    `6. LAW\<issue>\` subfolder, jurisdiction, report type. You choose that
    client ID from the matter's data; the practitioner does not choose it at
    dispatch and `research-paralegal` never changes it. Research serving a
