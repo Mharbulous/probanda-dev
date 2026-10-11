@@ -1,0 +1,22 @@
+{
+  "why": "Known reference-resolution hits (`rel -> ref`) in the shipped skill sources. Each cites a CoClerk workshop document (docs/, Engineering/, plugins/CLAUDE.md, the legal-commons ADRs) that stayed in CoClerk when the plugin source moved here (phase 2, 2026-10-11). None is read at run time. This list may only shrink.",
+  "known_unshipped": [
+    "build-timeline/SKILL.md -> docs/agents/context-optimization.md",
+    "case-data/references/design-decisions.md -> Engineering/decisions/2026-08-03_desk-order-D4-D5.md",
+    "case-data/references/design-decisions.md -> plugins/CLAUDE.md",
+    "draft/User_Journeys/hold-it-in-reserve.md -> docs/adr/0004-submission-single-database-privilege-by-kind.md",
+    "draft/references/bcca-response-book-form.md -> Engineering/bcca-appeal-books-inputs/bcca-rules-120-2022-bclaws-with-forms.txt",
+    "draft/references/bcca-response-book-form.md -> Engineering/bcca-appeal-books-inputs/bcca-rules-120-2022.txt",
+    "draft/references/bcca-response-book-form.md -> Engineering/bcca-response-inputs/coa_filing_directive.txt",
+    "drafting-data/SKILL.md -> docs/adr/0008-mockup-presentation-copy-relocated-to-draft-folder.md",
+    "drafting-data/SKILL.md -> docs/infra/fuse-mount-staleness-investigation.md",
+    "drafting-data/references/filing-checklists.md -> Engineering/bcca-appeal-books-inputs/research-findings-647.md",
+    "file-naming/SKILL.md -> docs/agents/context-optimization.md",
+    "file-sorting/SKILL.md -> docs/agents/context-optimization.md",
+    "legal-commons/SKILL.md -> plugins/legal-commons/docs/ADR-002-key-delivery.md",
+    "publish/subskills/publish-bcsc-form/references/form-update.md -> Engineering/bcsc-rules-inputs/oic-264-2026.txt",
+    "show-me/SKILL.md -> docs/agents/context-optimization.md",
+    "task-prioritization/SKILL.md -> docs/agents/context-optimization.md",
+    "time-sorting/SKILL.md -> docs/agents/context-optimization.md"
+  ]
+}

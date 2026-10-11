@@ -1,0 +1,128 @@
+# Runs the Probanda data server suite (source/probanda/mcp, the Node tiered runner) on a clean
+# Windows checkout. Ported from CoClerk's litigation-mcp-tests.yml (shape settled there on #696 and #701). Windows only: the runtime resolves paths with
+# path.win32. Since 2026-09-24 this is the only place the suite runs before packaging: the packager
+# builds the bundle but no longer runs the tests. The daily run files each failing test file as a
+# issue.
+#
+# Hygiene rules (#701): first-party actions only, shallow checkout so git history stays off the
+# runner, no uploaded artifacts, and no step added here that prints file contents. The token may
+# write issues (for the daily report) and is otherwise read-only. Filed issues carry test names and
+# a run link, never test output. The runner itself prints a failing file's test output, so a red
+# run can show fixture text.
+# This workflow runs the Node suite only and must never call a Python test runner.
+name: data-mcp-tests
+
+# Nightly and manual only. The per-push trigger was removed on 2026-09-30 because Windows runs on
+# every push exhausted the account's monthly Actions minutes; a regression now surfaces the next
+# morning, or on a manual run before packaging.
+on:
+  schedule:
+    - cron: "0 10 * * *" # 03:00 Pacific (PDT)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  # A scheduled run tests only when the suite's inputs (the sparse checkout below, plus this file)
+  # changed since the last commit the suite tested. If the gate itself fails, the suite runs.
+  changed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: .github/scripts
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash .github/scripts/changed-since-tested.sh data-mcp-tests.yml
+          '^(\.claude/skills/|source/probanda/|\.github/workflows/data-mcp-tests\.yml$)'
+
+  test:
+    needs: changed
+    if: ${{ !cancelled() && (needs.changed.result != 'success' || needs.changed.outputs.run == 'true') }}
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: source/probanda/mcp
+    steps:
+      - name: Allow long paths
+        run: git config --global core.longpaths true
+        working-directory: ${{ runner.temp }}
+
+      # Migrations load their SQL from .claude/skills over PYTHONPATH, and one test reads the
+      # sibling canlii-mcp package. Nothing else in the tree is needed.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .claude/skills
+            source/probanda
+
+      - uses: actions/setup-node@v4
+        with:
+          # The Job Board browser test uses the global WebSocket, which arrived in Node 22.
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # The pre-filing check treats a missing pypdf as a hard error; the factum validator imports lxml;
+      # the general binder (assemble_general) imports pymupdf before it refuses anything.
+      - run: pip install pypdf lxml pymupdf
+
+      - run: npm ci --ignore-scripts
+
+      - run: npx tsc
+
+      - run: node scripts/bundle.mjs
+
+      # Budgets are tuned to the practitioner's machine; here they are reported, not enforced.
+      # The log feeds the issue step below. bash runs with pipefail, so tee keeps the runner's exit code.
+      - run: node scripts/test.mjs 2>&1 | tee "$RUNNER_TEMP/test.log"
+        shell: bash
+        env:
+          COCLERK_TEST_NO_BUDGETS: "1"
+          # The default temp folder sits under the short name RUNNER~1, which the file tools resolve
+          # to its long form, so path-equality assertions fail there.
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+
+      # One issue per failing test file, reused while it stays open: a still-red file gets a comment,
+      # not a new issue. A failure before any test file ran is filed under one fixed title.
+      - name: File failures as triage issues
+        if: failure() && github.event_name == 'schedule'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          log="$RUNNER_TEMP/test.log"
+          files="" tests=""
+          [ -f "$log" ] && files=$(sed -n 's/^--- \(.*\) failed (exit .*) ---\r\?$/\1/p' "$log")
+          [ -n "$files" ] || files="(no test file: the run failed outside the suite)"
+          while IFS= read -r file; do
+            title="Daily data-mcp test failing: $file"
+            [ -f "$log" ] && tests=$(awk -v f="$file" '
+              /^--- .* failed \(exit / { on = index($0, "--- " f " failed") == 1; next }
+              on && /^not ok [0-9]+ - / { sub(/^not ok [0-9]+ - /, "- "); print }' "$log")
+            body=$(printf 'Failed in the daily run on %s: %s\n\nFailing tests:\n%s\n' \
+              "$(date -u +%Y-%m-%d)" "$RUN_URL" "${tests:-- (none named; see the run)}")
+            number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
+              --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
+            if [ -n "$number" ]; then
+              gh issue comment "$number" --body "$body"
+            else
+              gh issue create --title "$title" --body "$body"
+            fi
+          done <<< "$files"

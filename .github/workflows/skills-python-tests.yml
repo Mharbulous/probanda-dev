@@ -1,0 +1,144 @@
+# Runs every Python test in this repo (.claude/skills/**, source/probanda/tests, scripts/tests) on a
+# clean Windows checkout. Ported from CoClerk's skills-python-tests.yml (shape settled there on #1038).
+# Windows only, like data-mcp-tests.yml: the skills resolve Windows paths.
+#
+# Each test folder runs as its own pytest call. Test files in different skills share basenames
+# (test_contract.py, test_migrate_engine.py), and one pytest call over the
+# whole tree fails collection on them. --import-mode=importlib is no fix: tests import helpers that
+# sit beside them. A folder that fails collection or a test exits non-zero and turns the run red.
+#
+# Daily plus manual only: a private-repo Windows run bills at 2x, budgeted at about 15 minutes a
+# run, against the 3,000-minute monthly cap tracked on #701. A push trigger would run on most
+# sibling pushes.
+#
+# The daily run files each failing test folder as a issue.
+#
+# Hygiene rules (#701): first-party actions only, shallow checkout so git history stays off the
+# runner, no uploaded artifacts, and no step added here that prints file contents. The token may
+# write issues (for the daily report) and is otherwise read-only. Filed issues carry test ids and a
+# run link, never test output. pytest prints a failing test's assertion output, so a red run can
+# show fixture text.
+name: skills-python-tests
+
+on:
+  schedule:
+    - cron: "0 11 * * *" # 04:00 Pacific (PDT), an hour after data-mcp-tests
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  # A scheduled run tests only when the suite's inputs (what the tests read: the skills tree,
+  # source/, scripts/, plugins/, plus this file) changed since the last commit the suite
+  # tested. If the gate itself fails, the suite runs.
+  changed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: .github/scripts
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash .github/scripts/changed-since-tested.sh skills-python-tests.yml
+          '^(\.claude/skills/|source/|scripts/|plugins/|\.github/workflows/skills-python-tests\.yml$)'
+
+  test:
+    needs: changed
+    if: ${{ !cancelled() && (needs.changed.result != 'success' || needs.changed.outputs.run == 'true') }}
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Allow long paths
+        run: git config --global core.longpaths true
+        working-directory: ${{ runner.temp }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          # Not sparse: tests read source/, scripts/ and plugins/.
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # The third-party imports the tests, and the scripts they run, load. fitz (pymupdf) and lxml are
+      # used throughout. assemble-affidavit's assemble.py and match_exhibits.py refuse with
+      # missing_dependency without numpy and scipy. assemble-general's tests import docx
+      # (python-docx). show-me's tests and highlight_pages.py import pdfplumber, pypdf and reportlab.
+      # verify-law's tests skip their pypdf cases when pypdf is absent, so pypdf also runs those.
+      # Windows ships no IANA timezone database, so zoneinfo needs tzdata.
+      - run: pip install pytest pymupdf lxml numpy scipy python-docx pdfplumber pypdf reportlab tzdata
+
+      # The log feeds the issue step below. bash runs with pipefail, so `|| code=$?` keeps pytest's
+      # exit code through tee.
+      - name: Run each test folder
+        shell: bash
+        env:
+          # The default temp folder sits under the short name RUNNER~1; see data-mcp-tests.yml.
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: |
+          log="$RUNNER_TEMP/test.log"
+          status=0 count=0
+          while IFS= read -r dir; do
+            count=$((count + 1))
+            echo "--- $dir ---" | tee -a "$log"
+            code=0
+            python -m pytest "$dir" -q 2>&1 | tee -a "$log" || code=$?
+            if [ "$code" -ne 0 ]; then
+              echo "--- $dir failed (exit $code) ---" | tee -a "$log"
+              status=1
+            fi
+          done < <(find .claude/skills source/probanda/tests scripts/tests -name 'test_*.py' | sed 's#/[^/]*$##' | sort -u)
+          [ "$count" -gt 0 ] || { echo "no test folders found"; exit 1; }
+          exit $status
+
+      # One issue per failing test folder, reused while it stays open: a still-red folder gets a
+      # comment, not a new issue. A failure before any folder ran is filed under one fixed title.
+      # Test ids come from pytest's FAILED summary lines, with the message after the id dropped, and
+      # from its SUBFAILED lines, which name the subtest before the id: "SUBFAILED[msg] (k=v) <id>",
+      # either part optional, or "SUBFAILED(<subtest>) <id>" when both are absent.
+      # Both the message and the parameters can hold spaces, so that id is found by its folder path.
+      - name: File failures as triage issues
+        if: failure() && github.event_name == 'schedule'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          log="$RUNNER_TEMP/test.log"
+          dirs="" tests=""
+          [ -f "$log" ] && dirs=$(sed -n 's/^--- \(.*\) failed (exit .*) ---\r\?$/\1/p' "$log")
+          [ -n "$dirs" ] || dirs="(no test folder: the run failed outside the suite)"
+          while IFS= read -r dir; do
+            title="Daily skills-python test failing: $dir"
+            [ -f "$log" ] && tests=$(awk -v d="$dir" '
+              function nodeid(rest,  id, e) {
+                id = rest; sub(/ .*/, "", id)
+                if (index(id, "[") && !index(id, "]")) { e = index(rest, "] - "); id = e ? substr(rest, 1, e) : rest }
+                return id }
+              { sub(/\r$/, "") }
+              /^--- .* ---$/ { on = ($0 == "--- " d " ---"); next }
+              on && /^FAILED / { print "- " nodeid(substr($0, 8)) }
+              on && /^SUBFAILED/ && (k = index($0, " " d "/")) {
+                print "- " nodeid(substr($0, k + 1)) " " substr($0, 10, k - 10) }' "$log")
+            body=$(printf 'Failed in the daily run on %s: %s\n\nFailing tests:\n%s\n' \
+              "$(date -u +%Y-%m-%d)" "$RUN_URL" "${tests:-- (none named; see the run)}")
+            number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
+              --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
+            if [ -n "$number" ]; then
+              gh issue comment "$number" --body "$body"
+            else
+              gh issue create --title "$title" --body "$body"
+            fi
+          done <<< "$dirs"
