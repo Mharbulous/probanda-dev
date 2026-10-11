@@ -1,0 +1,129 @@
+{
+  "date": "2026-04-14",
+  "sorted_at": "2026-04-14T17:30:00-07:00",
+  "sources_present": ["timecamp", "telus"],
+  "sources_absent": ["gcal"],
+  "activities": [
+    {
+      "id": "a1",
+      "timeline_ids": ["timecamp:tc001"],
+      "start": "09:02",
+      "end": "09:48",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["CanLII - Limitation Act SBC 2012 c 13 - Google Chrome", "CanLII - Geric v BC (Minister of Forests) - Google Chrome", "CanLII - Limitation periods personal injury - Google Chrome"]
+      }
+    },
+    {
+      "id": "a2",
+      "timeline_ids": ["timecamp:tc002"],
+      "start": "09:48",
+      "end": "10:15",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Statement of Claim - Smith v Jones.docx - Microsoft Word"]
+      }
+    },
+    {
+      "id": "a3",
+      "timeline_ids": ["telus:call001"],
+      "start": "10:20",
+      "end": "10:33",
+      "activity_type": "phone_call",
+      "activity_source": "telus",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "telus",
+        "assigned_from": "phone_number_match",
+        "signals": ["Outgoing call to 604-555-0142 (John Smith - client)", "Duration: 13 min"]
+      }
+    },
+    {
+      "id": "a4",
+      "timeline_ids": ["timecamp:tc003"],
+      "start": "10:33",
+      "end": "11:15",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890456",
+      "task_name": "Lee v Pacific Holdings (L4102)",
+      "project_name": "Client Matters",
+      "matter": "L4102",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Reply to Application to Dismiss - Lee.docx - Microsoft Word", "LEAP - Lee v Pacific Holdings - L4102"]
+      }
+    },
+    {
+      "id": "a5",
+      "timeline_ids": ["timecamp:tc004"],
+      "start": "11:15",
+      "end": "11:45",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": null,
+      "task_name": null,
+      "project_name": null,
+      "matter": null,
+      "category": "admin",
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "category_rule",
+        "signals": ["Microsoft Outlook - Inbox", "Microsoft Outlook - Calendar"]
+      }
+    },
+    {
+      "id": "a6",
+      "timeline_ids": ["timecamp:tc005"],
+      "start": "13:00",
+      "end": "14:30",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Statement of Claim - Smith v Jones.docx - Microsoft Word", "Westlaw - Quantum non-pecuniary damages ankle injury - Google Chrome", "CanLII - Andrews v Grand & Toy Alberta Ltd - Google Chrome"]
+      }
+    }
+  ],
+  "summary": {
+    "total_hours": 4.38,
+    "assigned_hours": 4.38,
+    "unassigned_hours": 0.0,
+    "by_matter": {"L8948": 2.95, "L4102": 0.7},
+    "by_category": {"admin": 0.5}
+  }
+}

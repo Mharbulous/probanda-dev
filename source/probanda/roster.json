@@ -1,0 +1,93 @@
+{
+  "apply-to-facts": [],
+  "ar-follow-up": [],
+  "assemble": [
+    "subskills/assemble-affidavit/scripts",
+    "subskills/assemble-affidavit/assets",
+    "subskills/assemble-bcca-book/scripts",
+    "subskills/assemble-vaniac-package/scripts",
+    "subskills/assemble-boc/scripts",
+    "subskills/assemble-general/scripts"
+  ],
+  "bill-client": [],
+  "build-timeline": [
+    "scripts"
+  ],
+  "calculate": [
+    "subskills/court-interest-calculator/scripts",
+    "subskills/contract-interest-rates/scripts",
+    "subskills/calculate-boc/scripts"
+  ],
+  "case-brief": [],
+  "case-data": [],
+  "drafting-data": [
+    "hooks"
+  ],
+  "draft": [
+    "scripts"
+  ],
+  "executive-assistant": [],
+  "file-naming": [
+    "scripts"
+  ],
+  "file-review-prep": [],
+  "file-sorting": [],
+  "find-document": [],
+  "housekeeping": [],
+  "ingest": [],
+  "invoice-reviewing": [],
+  "invoice-tracking": [],
+  "legal-citation": [],
+  "legal-memo-extractor": [],
+  "legal-research": [
+    "hooks"
+  ],
+  "litigation-fact-extractor": [],
+  "localize": [],
+  "matter-status-tracking": [],
+  "plugin-fix": [],
+  "polish-substance": [],
+  "practice-data": [],
+  "prepare": [],
+  "proof-read": [],
+  "publish": [
+    "scripts",
+    "templates",
+    "subskills/publish-bcsc-form/scripts",
+    "subskills/publish-bcsc-form/templates",
+    "subskills/publish-bcca-factum/scripts",
+    "subskills/publish-bcca-factum/templates",
+    "subskills/publish-vaniac-package/scripts",
+    "subskills/publish-vaniac-package/templates",
+    "subskills/publish-small-claims-form/assets",
+    "subskills/publish-boc/scripts",
+    "subskills/publish-boc/templates",
+    "subskills/publish-general/scripts"
+  ],
+  "reflect": [],
+  "retainer-tracking": [],
+  "review-proposition": [],
+  "route-accounting": [],
+  "rule-migrate": [],
+  "rule-update": [],
+  "safe-file-deletion": [
+    "hooks"
+  ],
+  "show-me": [
+    "hooks",
+    "scripts"
+  ],
+  "step-widget": [],
+  "task-prioritization": [],
+  "time-entry-drafting": [],
+  "time-pipeline-data": [],
+  "time-sorting": [],
+  "timecamping": [],
+  "timecamping-data": [
+    "scripts"
+  ],
+  "verify-law": [
+    "scripts"
+  ],
+  "wip-tracker": []
+}

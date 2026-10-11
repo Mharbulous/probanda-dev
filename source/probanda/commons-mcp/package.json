@@ -1,0 +1,25 @@
+{
+  "name": "legal-commons-mcp",
+  "version": "0.5.0",
+  "description": "MCP server serving the shared legal-commons pool (Supabase) and local-backed practice_data / case_data tools",
+  "type": "module",
+  "main": "dist/legal-commons-mcp.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle": "node scripts/bundle.mjs",
+    "test": "npm run build && npm run bundle && node --test test/*.test.mjs",
+    "start": "node dist/legal-commons-mcp.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

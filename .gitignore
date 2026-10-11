@@ -7,6 +7,13 @@ Desktop.ini
 # Dependencies
 node_modules/
 
+# TypeScript output of the MCP runtimes (the bundles in dist/ are tracked)
+source/probanda/*/build/
+
+# Python caches
+__pycache__/
+.pytest_cache/
+
 # Secrets and local data
 .env*
 *.db

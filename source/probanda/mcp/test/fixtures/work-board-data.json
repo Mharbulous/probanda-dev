@@ -1,0 +1,837 @@
+{
+  "meta": {
+    "revision": 1,
+    "matter": "L4801",
+    "client": "Ashbourne",
+    "file": "",
+    "filing": "Opening Submissions Package",
+    "filing_id": 1,
+    "proceeding_id": 1,
+    "rendered": "0000-00-00 00:00",
+    "state": "drafting",
+    "state_label": "Drafting",
+    "state_since": null,
+    "ready_to_retire": false
+  },
+  "tickets": [
+    {
+      "id": 1,
+      "title": "Audit the three Westlaw memos",
+      "intent": "Verify the propositions with pinpoints.",
+      "kind": "work",
+      "priority": 5,
+      "status": "completed",
+      "category": "completed",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": "2026-09-02T09:00",
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [
+        {
+          "id": 5,
+          "status": "superseded",
+          "rejected": false
+        }
+      ],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 2,
+      "title": "Draft the reply on attornment",
+      "intent": "Write the reply submission once the memos are audited.",
+      "kind": "work",
+      "priority": 4,
+      "status": "queued",
+      "category": "ready",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [
+        "facts",
+        "statements_of_law:12"
+      ],
+      "blocked_by": [
+        {
+          "id": 1,
+          "status": "completed",
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [
+        "factual-basis:submissions:1"
+      ],
+      "proposal_items": {
+        "factual-basis:submissions:1": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement."
+      },
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_one_step",
+        "reworded",
+        "marker_not_eligible"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 3,
+      "title": "Cite-check the reply",
+      "intent": "Confirm every citation in the reply once it is drafted.",
+      "kind": "work",
+      "priority": 3,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 2,
+          "status": "queued",
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 4,
+      "title": "Rebuild the evidence index",
+      "intent": "Reconcile the exhibit list against the disclosure log.",
+      "kind": "work",
+      "priority": 2,
+      "status": "wip",
+      "category": "wip",
+      "locked_by": "sess-a1",
+      "locked_at": "2026-09-02T10:05",
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [],
+      "circular": false,
+      "steps": [
+        {
+          "ordinal": 1,
+          "text": "Audit the exhibit list",
+          "done_at": "2026-09-02T10:10"
+        },
+        {
+          "ordinal": 2,
+          "text": "Reconcile against the disclosure log",
+          "done_at": null
+        }
+      ],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": "2026-09-02T10:12"
+    },
+    {
+      "id": 5,
+      "title": "Old approach to the stay argument",
+      "intent": "Superseded by ticket 1's revised approach.",
+      "kind": "work",
+      "priority": 1,
+      "status": "superseded",
+      "category": "superseded",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": {
+        "id": 1,
+        "status": "completed",
+        "rejected": false
+      },
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [
+        {
+          "id": 1,
+          "status": "completed",
+          "rejected": false
+        }
+      ],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 6,
+      "title": "Follow-on task from the old approach",
+      "intent": "Depends on the now-superseded ticket 5.",
+      "kind": "work",
+      "priority": 1,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 5,
+          "status": "superseded",
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 7,
+      "title": "Proceeding-wide filing tracker check",
+      "intent": "Confirm every filing in the proceeding is accounted for.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "ready",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 8,
+      "title": "Chart the outstanding research",
+      "intent": "Turn the remaining open questions into tickets.",
+      "kind": "charting",
+      "priority": 0,
+      "status": "queued",
+      "category": "ready",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 9,
+      "title": "Circular A",
+      "intent": "Depends on Circular B.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 10,
+          "status": "queued",
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": true,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 10,
+      "title": "Circular B",
+      "intent": "Depends on Circular A.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 9,
+          "status": "queued",
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": true,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 11,
+      "title": "Cross-proceeding blocker test",
+      "intent": "Blocked by a ticket the renderer never loads for this proceeding.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 99,
+          "status": null,
+          "rejected": false
+        }
+      ],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 13,
+      "title": "Serve the August notice to admit",
+      "intent": "Serve it and diarise the response period.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "rejected",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": "2026-09-03T09:00",
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [
+        "serve-it:documents:10"
+      ],
+      "proposal_items": {
+        "serve-it:documents:10": "Notice to Admit dated 2026-08-01"
+      },
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "reworded",
+        "marker_not_eligible"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    },
+    {
+      "id": 14,
+      "title": "Tender the admitted diary entries",
+      "intent": "Enter the admission once the notice is served.",
+      "kind": "work",
+      "priority": 0,
+      "status": "queued",
+      "category": "waiting",
+      "locked_by": null,
+      "locked_at": null,
+      "completed_at": null,
+      "rejected_at": null,
+      "superseded_by": null,
+      "scope": [],
+      "blocked_by": [
+        {
+          "id": 13,
+          "status": "queued",
+          "rejected": true
+        }
+      ],
+      "conflicts": [],
+      "circular": false,
+      "steps": [],
+      "proposal_keys": [],
+      "proposal_items": {},
+      "superseded_reason": null,
+      "subtitle": null,
+      "eligible": false,
+      "ineligible_reasons": [
+        "not_ready",
+        "not_one_step",
+        "no_proposal_keys"
+      ],
+      "dispatch_skips": [],
+      "lock_note": null,
+      "answers": [],
+      "last_activity_at": null
+    }
+  ],
+  "seeds": [
+    {
+      "id": 1,
+      "idea": "Consider a standing exhibit-numbering convention for future filings in this proceeding.",
+      "surfaced_by": "noticed while reconciling the exhibit list",
+      "created": "2026-09-02T10:12",
+      "filing_id": 1,
+      "origin_ticket_id": 4,
+      "rank": null,
+      "rank_group": null,
+      "rank_reason": null,
+      "rank_job": null,
+      "deferred_at": null,
+      "from_filing": null
+    }
+  ],
+  "deleted": [],
+  "attachments": [],
+  "proposals": [
+    {
+      "key": "doctrinal-basis:law_assertions:4",
+      "slug": "doctrinal-basis",
+      "marker": "📖",
+      "table": "law_assertions",
+      "id": 4,
+      "item": "a second point of law also not yet researched",
+      "title": "Find doctrinal authority: a second point of law also not yet researched",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "primary-authority:law_assertions:2",
+      "slug": "primary-authority",
+      "marker": "🥈",
+      "table": "law_assertions",
+      "id": 2,
+      "item": "second point of law",
+      "title": "Find primary authority: second point of law",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "primary-authority:law_assertions:3",
+      "slug": "primary-authority",
+      "marker": "🥈",
+      "table": "law_assertions",
+      "id": 3,
+      "item": "point of law not yet researched",
+      "title": "Find primary authority: point of law not yet researched",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "jurisdictional-basis:order_sought:2",
+      "slug": "jurisdictional-basis",
+      "marker": "🏛️",
+      "table": "order_sought",
+      "id": 2,
+      "item": "a reserved fallback order",
+      "title": "Find jurisdictional basis: a reserved fallback order",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "jurisdictional-basis:order_sought:3",
+      "slug": "jurisdictional-basis",
+      "marker": "🏛️",
+      "table": "order_sought",
+      "id": 3,
+      "item": "an order whose only basis cites a killed authority",
+      "title": "Find jurisdictional basis: an order whose only basis cites a killed authority",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "authority-excerpt:statements_of_law:7",
+      "slug": "authority-excerpt",
+      "marker": "📜",
+      "table": "statements_of_law",
+      "id": 7,
+      "item": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+      "title": "Quote the authority: Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "authority-pinpoint:statements_of_law:9",
+      "slug": "authority-pinpoint",
+      "marker": "📍",
+      "table": "statements_of_law",
+      "id": 9,
+      "item": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+      "title": "Locate the authority pinpoint: Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "scrutinize:statements_of_law:4",
+      "slug": "scrutinize",
+      "marker": "🔬",
+      "table": "statements_of_law",
+      "id": 4,
+      "item": "Reserved Authority v. X, 2020 BCSC 1",
+      "title": "Scrutinize: Reserved Authority v. X, 2020 BCSC 1",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "note-up:authorities:6",
+      "slug": "note-up",
+      "marker": "📇",
+      "table": "authorities",
+      "id": 6,
+      "item": "Fully Captured v. Westmount, 2021 BCCA 77",
+      "title": "Note up: Fully Captured v. Westmount, 2021 BCCA 77",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "authority-rating:authorities:1",
+      "slug": "authority-rating",
+      "marker": "🏅",
+      "table": "authorities",
+      "id": 1,
+      "item": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+      "title": "Rate the authority: Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-excerpt:admissions:1",
+      "slug": "exhibit-excerpt",
+      "marker": "📑",
+      "table": "admissions",
+      "id": 1,
+      "item": "Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
+      "title": "Quote the exhibit: Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "testimony-excerpt:statements_of_fact:8",
+      "slug": "testimony-excerpt",
+      "marker": "💬",
+      "table": "statements_of_fact",
+      "id": 8,
+      "item": "K. Bell: The change order for the final week was counter-signed before the work began.",
+      "title": "Quote the testimony: K. Bell: The change order for the final week was counter-signed before the work began.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-pinpoint:admissions:5",
+      "slug": "exhibit-pinpoint",
+      "marker": "📌",
+      "table": "admissions",
+      "id": 5,
+      "item": "Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
+      "title": "Locate the exhibit pinpoint: Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-pinpoint:statements_of_fact:7",
+      "slug": "exhibit-pinpoint",
+      "marker": "📌",
+      "table": "statements_of_fact",
+      "id": 7,
+      "item": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+      "title": "Locate the exhibit pinpoint: M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "testimony-pinpoint:statements_of_fact:8",
+      "slug": "testimony-pinpoint",
+      "marker": "🧷",
+      "table": "statements_of_fact",
+      "id": 8,
+      "item": "K. Bell: The change order for the final week was counter-signed before the work began.",
+      "title": "Locate the testimony pinpoint: K. Bell: The change order for the final week was counter-signed before the work began.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "interview:witnesses:3",
+      "slug": "interview",
+      "marker": "🗣️",
+      "table": "witnesses",
+      "id": 3,
+      "item": "M. Reyes",
+      "title": "Interview: M. Reyes",
+      "lane": "proposed",
+      "holder": null,
+      "count": 1
+    },
+    {
+      "key": "sign-it:documents:3",
+      "slug": "sign-it",
+      "marker": "🖋️",
+      "table": "documents",
+      "id": 3,
+      "item": "Witness Statement of A. Renwick",
+      "title": "Get it signed: Witness Statement of A. Renwick",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "enter-it:documents:9",
+      "slug": "enter-it",
+      "marker": "🕹️",
+      "table": "documents",
+      "id": 9,
+      "item": "Response to Notice to Admit dated 2026-06-15",
+      "title": "Enter the admission; pleading route: Requisition default judgment: Response to Notice to Admit dated 2026-06-15",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "enter-it:documents:14",
+      "slug": "enter-it",
+      "marker": "🕹️",
+      "table": "documents",
+      "id": 14,
+      "item": "Notice to Admit dated 2020-01-01",
+      "title": "Enter the admission; pleading route: Requisition default judgment: Notice to Admit dated 2020-01-01",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "factual-basis:submissions:1",
+      "slug": "factual-basis",
+      "marker": "🧾",
+      "table": "submissions",
+      "id": 1,
+      "item": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+      "title": "Link or draft the factual basis: The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+      "lane": "held",
+      "holder": {
+        "ticket_id": 2,
+        "ticketed_on": null
+      }
+    },
+    {
+      "key": "factual-basis:submissions:3",
+      "slug": "factual-basis",
+      "marker": "🧾",
+      "table": "submissions",
+      "id": 3,
+      "item": "A reserved fallback argument, held for reply.",
+      "title": "Link or draft the factual basis: A reserved fallback argument, held for reply.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "proposition:submissions:3",
+      "slug": "proposition",
+      "marker": "📚",
+      "table": "submissions",
+      "id": 3,
+      "item": "A reserved fallback argument, held for reply.",
+      "title": "Link or draft the proposition it requires: A reserved fallback argument, held for reply.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "unserved-petitum:order_sought:2",
+      "slug": "unserved-petitum",
+      "marker": "🦵",
+      "table": "order_sought",
+      "id": 2,
+      "item": "a reserved fallback order",
+      "title": "Draft a submission for the order: a reserved fallback order",
+      "lane": "rejected",
+      "holder": null
+    },
+    {
+      "key": "unserved-petitum:order_sought:3",
+      "slug": "unserved-petitum",
+      "marker": "🦵",
+      "table": "order_sought",
+      "id": 3,
+      "item": "an order whose only basis cites a killed authority",
+      "title": "Draft a submission for the order: an order whose only basis cites a killed authority",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "not-recorded:documents:2",
+      "slug": "not-recorded",
+      "marker": "🏷️",
+      "table": "documents",
+      "id": 2,
+      "item": "Undescribed exhibit",
+      "title": "Record label, date or description: Undescribed exhibit",
+      "lane": "held",
+      "holder": {
+        "ticket_id": 12,
+        "ticketed_on": "Reply Submissions Package"
+      }
+    }
+  ],
+  "lapsed_keys": [
+    "doctrinal-basis:law_assertions:4"
+  ],
+  "goal": {
+    "sentence": "Completion Criteria",
+    "state": "pending",
+    "text": "No completion criteria are declared for this type of Writing."
+  },
+  "criteria": []
+}

@@ -1,0 +1,23 @@
+{
+  "skill_name": "verify-law",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a stored verbatim excerpt for an authority we are relying on, and a practitioner's paraphrase of the same proposition. The excerpt text is in tests/fixtures/excerpt_wrapped.txt and the paraphrase is in tests/fixtures/excerpt_paraphrase.txt. The reasons themselves are at tests/fixtures/source.md. Is our quote accurate? Also, the authority's own text for the other authority we cite is not in the matter's law folder — what do we do about that one?",
+      "expected_output": "Runs scripts/diff_excerpt.py FIRST for the exact-quote claim, before any reading or LLM comparison, and reports identical=true (ratio 1.0, exit 0) for the stored excerpt against source.md — the line-wrap hyphenation is normalised away, not treated as a difference. States no verbatim / not-verbatim verdict without the script's JSON in hand. Does NOT run the excerpt check as a proposition-level question for the research verifier. Treats excerpt_paraphrase.txt as a paraphrase, not a quotation: never calls it a misquotation and never reports it as a failed verbatim check, because a paraphrase was never claimed to be verbatim; if a diff is run on it at all, the low ratio is reported as 'this is a paraphrase, not the stored excerpt', not as a quoting error. For the authority whose authority's own text is absent, discloses that before anything else, relays only the resolution evidence case-data reported (the recorded path tried and the hash-search outcome, or for a caller-named file the named path and why it could not be read) and never invents a folder or filename pattern, and offers retrieval via research-paralegal. If the caller points to a secondhand reproduction of that authority in another judgment on file, runs the diff against that document and labels the result 'matches the reproduction in <case> at para N — authority's own text not verified', never presenting it as verification of the authority's own text. Renders any diff output in a fenced block rather than describing it. Writes nothing to any stored row.",
+      "files": [
+        "tests/fixtures/source.md",
+        "tests/fixtures/excerpt_wrapped.txt",
+        "tests/fixtures/excerpt_paraphrase.txt"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Dispatch the verify-claim agent twice against evals/fixtures/appeal_recital.md (a synthetic appeal decision). Claim A: '2031 XXCA 412 at para. 14 supports this proposition: on an application to extend time, the applicant must show a bona fide intention to proceed formed within the period, a reasonable explanation for the delay, and that the respondent would suffer no prejudice that cannot be compensated.' Claim B: 'An extension of time should be granted whenever the applicant shows a bona fide intention to proceed, without regard to prejudice to the respondent.'",
+      "expected_output": "Claim A: verdict confirmed, anchored at para. 14 read with para. 22. Para. 14 recites the chambers judge, who followed an earlier appellate holding; para. 22 upholds that statement of the test undisturbed, so the recital is adopted on review and is support. It is never rejected as a recital, as a merely quoted authority, or for a wrong pinpoint. (The pre-fix prompt rejected exactly this claim as wrongly sourced.) Claim B: verdict rejected. Para. 12 is counsel's submission, and para. 22 rejects it, so it is never support even though the appeal court recites it.",
+      "files": [
+        "evals/fixtures/appeal_recital.md"
+      ]
+    }
+  ]
+}

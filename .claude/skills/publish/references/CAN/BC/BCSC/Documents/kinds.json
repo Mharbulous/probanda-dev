@@ -1,0 +1,86 @@
+{
+  "kinds": [
+    {
+      "file": "notice-of-application",
+      "name": "Notice of Application (Form 32)",
+      "aliases": [
+        {
+          "name": "notice_of_application"
+        },
+        {
+          "name": "form-32"
+        }
+      ]
+    },
+    {
+      "file": "application-response",
+      "name": "Application Response (Form 33)",
+      "aliases": [
+        {
+          "name": "application_response"
+        },
+        {
+          "name": "form-33"
+        }
+      ]
+    },
+    {
+      "file": "requisition-default-judgment",
+      "name": "Requisition for default judgment (Form 17)",
+      "aliases": [
+        {
+          "name": "requisition_default_judgment"
+        }
+      ]
+    },
+    {
+      "file": "requisition-consent",
+      "name": "Requisition for consent order (Form 17)",
+      "aliases": [
+        {
+          "name": "requisition_consent"
+        }
+      ]
+    },
+    {
+      "file": "form-1",
+      "name": "Notice of Civil Claim (Form 1)",
+      "aliases": []
+    },
+    {
+      "file": "form-4",
+      "name": "Response to Counterclaim (Form 4)",
+      "aliases": []
+    },
+    {
+      "file": "form-8",
+      "name": "Default Judgment (Form 8)",
+      "aliases": []
+    },
+    {
+      "file": "form-15",
+      "name": "Affidavit of Personal Service (Form 15)",
+      "aliases": []
+    },
+    {
+      "file": "form-16",
+      "name": "Affidavit of Ordinary Service (Form 16)",
+      "aliases": []
+    },
+    {
+      "file": "form-66",
+      "name": "Petition (Form 66)",
+      "aliases": []
+    },
+    {
+      "file": "form-123",
+      "name": "Offer to Settle Costs (Form 123)",
+      "aliases": []
+    },
+    {
+      "file": "affidavit",
+      "name": "Affidavit (Form 109)",
+      "aliases": []
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "date": "2026-04-15",
+  "sorted_at": "2026-04-15T17:00:00-07:00",
+  "sources_present": ["timecamp"],
+  "sources_absent": ["telus", "gcal"],
+  "activities": [
+    {
+      "id": "a1",
+      "timeline_ids": ["timecamp:tc010"],
+      "start": "09:00",
+      "end": "09:45",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "medium",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "manual_timecamp",
+        "signals": ["Document1 - Microsoft Word"]
+      }
+    },
+    {
+      "id": "a2",
+      "timeline_ids": ["timecamp:tc011"],
+      "start": "09:45",
+      "end": "10:00",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "low",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "manual_timecamp",
+        "signals": ["Google - Google Chrome", "New Tab - Google Chrome"]
+      }
+    },
+    {
+      "id": "a3",
+      "timeline_ids": ["timecamp:tc012"],
+      "start": "10:15",
+      "end": "11:00",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890456",
+      "task_name": "Lee v Pacific Holdings (L4102)",
+      "project_name": "Client Matters",
+      "matter": "L4102",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Affidavit of John Lee - FINAL.docx - Microsoft Word", "LEAP - Lee v Pacific Holdings - L4102"]
+      }
+    },
+    {
+      "id": "a4",
+      "timeline_ids": ["timecamp:tc013"],
+      "start": "11:00",
+      "end": "11:30",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": null,
+      "task_name": null,
+      "project_name": null,
+      "matter": null,
+      "category": null,
+      "confidence": "low",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "none",
+        "signals": ["Desktop - Windows Explorer", "File Explorer"]
+      }
+    }
+  ],
+  "summary": {
+    "total_hours": 2.25,
+    "assigned_hours": 1.75,
+    "unassigned_hours": 0.5,
+    "by_matter": {"L8948": 1.0, "L4102": 0.75},
+    "by_category": {}
+  }
+}

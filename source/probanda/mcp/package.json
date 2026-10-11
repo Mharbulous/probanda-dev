@@ -1,0 +1,26 @@
+{
+  "name": "litigation-mcp",
+  "version": "1.0.0",
+  "description": "Litigation data runtime: local-backed data and file tools (SQLite via host Python). No Supabase.",
+  "type": "module",
+  "main": "dist/litigation-mcp.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle": "node scripts/bundle.mjs",
+    "test": "npm run build && npm run bundle && node scripts/test.mjs",
+    "start": "node dist/litigation-mcp.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "pdfjs-dist": "5.1.91"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.27.2",
+    "typescript": "^5.7.0"
+  }
+}

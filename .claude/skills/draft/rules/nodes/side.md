@@ -1,0 +1,1 @@
+<!-- node id=draft/side title="A side question" parents=draft/session,draft/job/work when="A read-only question or look outside the held job's scope or outside any job. The third in a row brings an offer." -->

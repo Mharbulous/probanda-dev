@@ -1,0 +1,14 @@
+{
+  "date": "2026-04-17",
+  "sorted_at": null,
+  "sources_present": [],
+  "sources_absent": ["timecamp", "telus", "gcal"],
+  "activities": [],
+  "summary": {
+    "total_hours": 0,
+    "assigned_hours": 0,
+    "unassigned_hours": 0,
+    "by_matter": {},
+    "by_category": {}
+  }
+}

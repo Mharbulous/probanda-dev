@@ -1,0 +1,281 @@
+// The page API (page-api/server.ts): the localhost listener through which the Loose Threads page's
+// Defer button writes seeds.deferred_at (schema v68). It answers /health, Chrome's preflight for a
+// file:// page, refuses a missing or wrong token, writes only an open loose thread of the token's
+// proceeding, and never throws when its port is busy: it retries, and takes the port when the
+// holder lets go. The page's own script, run against stand-in elements, draws a deferred loose
+// thread collapsed with no button and defers an open one through the real listener.
+
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { request } from "node:http";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
+import { runInNewContext } from "node:vm";
+
+const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
+const { startPageApi } = await import("../build/page-api/server.js");
+const { pageApiToken } = await import("../build/page-api/token.js");
+const { buildLooseIdeasData, LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
+const { renderViewPageHtml } = await import("../build/submission/view-pages.js");
+
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const probe = createServer();
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
+/** A drafting database and a coclerk.json naming a free port, read through COCLERK_CONFIG_PATH. */
+async function fixture(t) {
+  const dir = mkdtempSync(join(tmpdir(), "coclerk-page-api-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+  const port = await freePort();
+  const configPath = join(dir, "coclerk.json");
+  writeFileSync(configPath, JSON.stringify({ version: 1, page_api_port: port }));
+  const env = { ...process.env, COCLERK_CONFIG_PATH: configPath };
+  const dbPath = join(dir, "submission.sqlite");
+  await freshSubmissionDb(dbPath);
+  await submissionDataExecute(
+    dbPath,
+    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL), (2, 'L8470 - Larchmont', NULL);
+     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (10, 1, 'Live job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
+     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, deleted_at) VALUES (11, 1, 'Deleted job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-02T09:00');
+     INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea, charted_into) VALUES
+       (1, 1, '2026-10-01T10:00', 'noticed', 'An open thread.', NULL),
+       (2, 2, '2026-10-01T10:01', 'noticed', 'Another proceeding''s thread.', NULL),
+       (3, 1, '2026-10-01T10:02', 'noticed', 'Outlined into a live job.', 10),
+       (4, 1, '2026-10-01T10:03', 'noticed', 'Outlined into a deleted job.', 11);`
+  );
+  return { dir, port, env, dbPath };
+}
+
+async function listening(t, f, options = {}) {
+  const lines = [];
+  const api = await startPageApi(f.env, { log: (line) => lines.push(line), ...options });
+  t.after(() => api.close());
+  return { api, lines };
+}
+
+/** One HTTP exchange with the listener, with any headers (fetch drops Origin). */
+function exchange(port, method, path, { headers = {}, body } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = request({ host: "127.0.0.1", port, method, path, headers }, (res) => {
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => {
+        const text = Buffer.concat(chunks).toString("utf-8");
+        resolve({ status: res.statusCode, headers: res.headers, body: text ? JSON.parse(text) : null });
+      });
+    });
+    req.on("error", reject);
+    if (body !== undefined) req.write(JSON.stringify(body));
+    req.end();
+  });
+}
+
+const post = (f, seedId, action, body) => exchange(f.port, "POST", `/seeds/${seedId}/${action}`, { headers: { "Content-Type": "application/json", Origin: "null" }, body });
+const valid = (f, proceedingId = 1) => ({ db_path: f.dbPath, proceeding_id: proceedingId, token: pageApiToken(f.dbPath, proceedingId, f.env) });
+const deferredAt = (f, id) => submissionDataQuery(f.dbPath, "SELECT deferred_at FROM seeds WHERE id = ?", [id]).rows[0].deferred_at;
+const revision = (f) => Number(submissionDataQuery(f.dbPath, "SELECT value FROM db_meta WHERE key = 'revision'").rows[0].value);
+
+async function until(check, ms = 3000) {
+  const end = Date.now() + ms;
+  while (!check()) {
+    if (Date.now() > end) throw new Error("timed out waiting");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+test("GET /health answers ok, this process's pid, the start time and the plugin version", async (t) => {
+  const f = await fixture(t);
+  await listening(t, f);
+  const res = await exchange(f.port, "GET", "/health");
+  assert.equal(res.status, 200);
+  assert.deepEqual(Object.keys(res.body), ["ok", "pid", "started_at", "plugin_version"]);
+  assert.equal(res.body.ok, true);
+  assert.equal(res.body.pid, process.pid);
+  assert.ok(!Number.isNaN(Date.parse(res.body.started_at)));
+  assert.ok(res.body.plugin_version === null || typeof res.body.plugin_version === "string");
+  assert.equal(res.headers["access-control-allow-origin"], undefined, "no Origin, no Allow-Origin");
+});
+
+test("OPTIONS from a file:// page answers 204 with the CORS and Private Network Access headers", async (t) => {
+  const f = await fixture(t);
+  await listening(t, f);
+  const res = await exchange(f.port, "OPTIONS", "/seeds/1/defer", {
+    headers: { Origin: "null", "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type", "Access-Control-Request-Private-Network": "true" },
+  });
+  assert.equal(res.status, 204);
+  assert.equal(res.headers["access-control-allow-origin"], "null");
+  assert.equal(res.headers["access-control-allow-methods"], "GET, POST");
+  assert.equal(res.headers["access-control-allow-headers"], "Content-Type");
+  assert.equal(res.headers["access-control-allow-private-network"], "true");
+  assert.equal(res.headers.vary, "Origin");
+  const health = await exchange(f.port, "GET", "/health", { headers: { Origin: "null" } });
+  assert.equal(health.headers["access-control-allow-origin"], "null");
+  assert.equal(health.headers["access-control-allow-private-network"], "true");
+  const other = await exchange(f.port, "OPTIONS", "/health", { headers: { Origin: "https://example.com" } });
+  assert.equal(other.headers["access-control-allow-origin"], undefined, "only Origin: null is echoed");
+});
+
+test("a missing or wrong token is refused 403, and a db_path that is not there 400, writing nothing", async (t) => {
+  const f = await fixture(t);
+  await listening(t, f);
+  const before = revision(f);
+  const { token, ...noToken } = valid(f);
+  assert.equal((await post(f, 1, "defer", noToken)).status, 403);
+  assert.equal((await post(f, 1, "defer", { ...noToken, token: "0".repeat(64) })).status, 403);
+  assert.equal((await post(f, 1, "defer", { ...noToken, token: token.slice(0, 10) })).status, 403);
+  assert.equal((await post(f, 1, "defer", { ...valid(f), proceeding_id: 2 })).status, 403, "a token is for one proceeding");
+  const missing = join(f.dir, "missing.sqlite");
+  assert.equal((await post(f, 1, "defer", { db_path: missing, proceeding_id: 1, token: pageApiToken(missing, 1, f.env) })).status, 400);
+  assert.equal((await post(f, 1, "defer", { db_path: "submission.sqlite", proceeding_id: 1, token: pageApiToken("submission.sqlite", 1, f.env) })).status, 400);
+  assert.equal(deferredAt(f, 1), null);
+  assert.equal(revision(f), before);
+});
+
+test("a loose thread of another proceeding is 409, one outlined into a live job is 409, and no such thread is 404", async (t) => {
+  const f = await fixture(t);
+  await listening(t, f);
+  const wrong = await post(f, 2, "defer", valid(f));
+  assert.equal(wrong.status, 409);
+  assert.equal(wrong.body.outcome, "wrong_proceeding");
+  const outlined = await post(f, 3, "defer", valid(f));
+  assert.equal(outlined.status, 409);
+  assert.equal(outlined.body.outcome, "not_open");
+  const none = await post(f, 99, "defer", valid(f));
+  assert.equal(none.status, 404);
+  assert.equal(none.body.outcome, "not_found");
+  assert.equal(deferredAt(f, 2), null);
+  assert.equal(deferredAt(f, 3), null);
+});
+
+test("defer then undefer round-trips deferred_at, a repeat is 409 already, and no revision moves", async (t) => {
+  const f = await fixture(t);
+  await listening(t, f);
+  const before = revision(f);
+  const deferred = await post(f, 1, "defer", valid(f));
+  assert.equal(deferred.status, 200);
+  assert.equal(deferred.body.outcome, "deferred");
+  assert.match(deferredAt(f, 1), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  assert.equal(deferred.body.deferred_at, deferredAt(f, 1));
+  assert.equal((await post(f, 1, "defer", valid(f))).body.outcome, "already");
+  const undeferred = await post(f, 1, "undefer", valid(f));
+  assert.equal(undeferred.status, 200);
+  assert.equal(undeferred.body.outcome, "undeferred");
+  assert.equal(deferredAt(f, 1), null);
+  const again = await post(f, 1, "undefer", valid(f));
+  assert.equal(again.status, 409);
+  assert.equal(again.body.outcome, "already");
+  assert.equal((await post(f, 4, "defer", valid(f))).status, 200, "a thread outlined into a deleted job is open");
+  assert.equal(revision(f), before);
+});
+
+test("a busy port never throws: the second listener logs once, retries, and binds when the first closes", async (t) => {
+  const f = await fixture(t);
+  const first = await listening(t, f);
+  assert.equal(first.api.listening(), true);
+  const second = await listening(t, f, { retryMs: 50 });
+  assert.equal(second.api.listening(), false);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  assert.deepEqual(second.lines, [`[page-api] port ${f.port} busy, retrying`], "one line however many tries");
+  await first.api.close();
+  await until(() => second.api.listening());
+  assert.equal((await exchange(f.port, "GET", "/health")).body.ok, true);
+  assert.deepEqual(first.lines, []);
+});
+
+/** Runs the Loose Threads page's own script from the rendered file against stand-in elements. */
+function drawLooseThreads(html, fetchImpl) {
+  class Node {
+    constructor(tag) {
+      Object.assign(this, { tag, children: [], attrs: {}, className: "", text: "", listeners: {}, parent: null });
+      const node = this;
+      this.classList = { add: (c) => { node.className = `${node.className} ${c}`.trim(); } };
+    }
+    set textContent(value) {
+      this.text = String(value);
+      this.children = [];
+    }
+    get textContent() {
+      return this.text + this.children.map((c) => c.textContent).join("");
+    }
+    get childNodes() {
+      return this.children;
+    }
+    appendChild(child) {
+      child.parent = this;
+      this.children.push(child);
+      return child;
+    }
+    removeChild(child) {
+      this.children = this.children.filter((c) => c !== child);
+      return child;
+    }
+    setAttribute(key, value) {
+      this.attrs[key] = String(value);
+    }
+    getAttribute(key) {
+      return this.attrs[key] ?? null;
+    }
+    addEventListener(type, fn) {
+      this.listeners[type] = fn;
+    }
+    all() {
+      return this.children.flatMap((c) => [c, ...c.all()]);
+    }
+    querySelector(selector) {
+      return this.all().find((n) => n.className.split(" ").includes(selector.slice(1))) ?? null;
+    }
+  }
+  const header = new Node("header");
+  const board = new Node("div");
+  const document = {
+    querySelector: (selector) => (selector === "header" ? header : selector === ".board" ? board : null),
+    createElement: (tag) => new Node(tag),
+    createTextNode: (text) => Object.assign(new Node("#text"), { text: String(text) }),
+  };
+  const line = /^window\.VIEW_PAGE = (.*);$/m.exec(html)[1];
+  const script = html.split("<script>")[3].split("</script>")[0];
+  runInNewContext(script, { window: { VIEW_PAGE: JSON.parse(line) }, document, fetch: fetchImpl, AbortController, setTimeout, clearTimeout, JSON, String });
+  const cards = board.all().filter((n) => n.tag === "article");
+  const card = (id) => cards.find((n) => n.all().some((c) => c.className === "where" && c.textContent.startsWith(`Loose thread ${id} `)));
+  return { header, card };
+}
+
+test("the Loose Threads page carries deferred_at and the api block; a deferred thread draws collapsed with no button, an open one defers through the listener", async (t) => {
+  const f = await fixture(t);
+  await submissionDataExecute(f.dbPath, "UPDATE seeds SET deferred_at = '2026-10-08T09:00' WHERE id = 4;");
+  const data = buildLooseIdeasData(f.dbPath, { id: 1, proceeding_id: 1 }, f.env);
+  assert.deepEqual(data.ideas.map((i) => [i.id, i.deferred_at]), [[1, null], [4, "2026-10-08T09:00"]]);
+  assert.deepEqual(data.api, { port: f.port, db_path: f.dbPath, proceeding_id: 1, token: pageApiToken(f.dbPath, 1, f.env) });
+  const html = renderViewPageHtml(LOOSE_IDEAS_PAGE, { filing: "", matter: "L8470", client: "", revision: 1, rendered: "2026-10-08 09:00" }, data);
+  writeFileSync(join(f.dir, "Loose Threads - filing 1.html"), html);
+
+  // No listener: the buttons stay disabled and one line says why.
+  const off = drawLooseThreads(html, () => Promise.reject(new Error("connection refused")));
+  await until(() => off.header.all().some((n) => n.className === "api-off"));
+  assert.equal(off.header.all().find((n) => n.className === "api-off").textContent, "Buttons need the Claude desktop app running.");
+  assert.equal(off.card(1).all().find((n) => n.className === "defer").disabled, true);
+
+  // A listener: the open thread's button is enabled, and a click defers it in place.
+  await listening(t, f);
+  const on = drawLooseThreads(html, fetch);
+  assert.equal(on.card(4).className, "idea deferred");
+  assert.equal(on.card(4).all().some((n) => n.className === "defer"), false, "a deferred thread has no button");
+  const button = on.card(1).all().find((n) => n.className === "defer");
+  assert.equal(button.title, "Defer indefinitely");
+  await until(() => button.disabled === false);
+  button.listeners.click();
+  await until(() => on.card(1).className === "idea deferred");
+  assert.equal(on.card(1).all().some((n) => n.className === "defer"), false);
+  assert.match(deferredAt(f, 1), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  assert.equal(on.header.all().some((n) => n.className === "api-off"), false);
+});

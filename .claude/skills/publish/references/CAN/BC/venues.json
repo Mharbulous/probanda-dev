@@ -1,0 +1,24 @@
+{
+  "jurisdiction": "BC",
+  "name": "British Columbia",
+  "venues": [
+    {
+      "code": "Vancouver-International-Arbitration-Centre",
+      "name": "Vancouver International Arbitration Centre",
+      "aliases": [
+        { "name": "VanIAC" }
+      ]
+    },
+    {
+      "code": "BCSC",
+      "name": "Supreme Court of British Columbia",
+      "aliases": []
+    },
+    {
+      "code": "BCCA",
+      "name": "Court of Appeal for British Columbia",
+      "aliases": []
+    }
+  ],
+  "not_venues": []
+}

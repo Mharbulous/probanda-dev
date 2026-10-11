@@ -1,0 +1,23 @@
+{
+  "record_id": "5f0c2a8e-3b1d-4c6e-9a7f-2d4b6e8a0c13",
+  "jurisdiction": "CA-BC",
+  "enactment": { "name": "Supreme Court Civil Rules", "citation": "B.C. Reg. 168/2009", "civix_id": "168_2009" },
+  "amending_instrument": { "reg": "B.C. Reg. 105/2026", "oic": "OIC 264/2026", "commencement": "2026-10-01" },
+  "deadline_type": "notice_of_hearing_service",
+  "anchor_type": "application_hearing_date",
+  "base": "application_hearing_date",
+  "rule_ref": "Rule 8-1(14.5)(a)",
+  "offset": { "value": 4, "unit": "business_days", "direction": "before", "clear": true },
+  "counting": "backward_n_business_days",
+  "semantics": "mandatory",
+  "description": "File the notice of hearing of application and serve a filed copy on each application respondent at least 4 business days before the hearing date (application of 2 hours or less).",
+  "verbatim": "subject to paragraph (b) of this subrule, at least 4 business days before the date set for the hearing of the application",
+  "source": { "url": "https://www.bclaws.gov.bc.ca/civix/document/id/oic/oic_cur/0264_2026", "fetched_at": "2026-10-05", "kind": "oic_pdf" },
+  "effective_from": "2026-10-01",
+  "effective_to": null,
+  "supersedes": ["shipped:application_hearing_earliest"],
+  "open_questions": ["s. 25.2(3) added day for business-day periods (#740)"],
+  "status": "verified",
+  "verified_by": "practitioner",
+  "verified_at": "2026-10-05"
+}

@@ -1,0 +1,153 @@
+{
+  "skill_name": "time-entry-drafting",
+  "evals": [
+    {
+      "id": 1,
+      "name": "clear-signals",
+      "prompt": "You are testing the time-entry-drafting skill. The timesort day data for 2026-04-14 is provided in the file at evals/files/timesort-clear-signals.json (relative to the skill directory). Read the SKILL.md at the skill directory root, then follow its workflow using the data in the file as if it were returned by `cowork-db get timesort 'day:2026-04-14'`. Since cowork-db is not available in this environment, work directly with the file data — skip cowork-db read/write commands but follow all other workflow steps. Assume the pattern database is empty (no prior patterns). Save the draft entries JSON array to outputs/draft.json and a formatted summary table (matching the SKILL.md presentation format) to outputs/summary.txt.",
+      "expected_output": "A JSON array of draft time entries covering all 6 activities in the input, with professional narrative descriptions, correct UTBMS codes, proper aggregation of consecutive same-matter activities, and a summary table showing billable/admin breakdown.",
+      "files": ["evals/files/timesort-clear-signals.json"],
+      "expectations": [
+        {
+          "text": "Each billable draft entry has a description that follows the legal billing pattern: verb phrase + subject + context (e.g., 'Research law regarding...', 'Draft statement of claim...')",
+          "rationale": "Vision principle 3.4: Structured descriptions follow legal billing conventions. Descriptions may appear on client invoices."
+        },
+        {
+          "text": "Each billable draft entry with a non-insufficient description has both a utbms_task (L-series) and utbms_activity (A-series) code assigned",
+          "rationale": "UTBMS assignment is a core skill function — every entry with a confident description should get codes."
+        },
+        {
+          "text": "The CanLII research activities (a1) produce a description referencing legal research or limitation periods, not a generic description like 'working on file'",
+          "rationale": "Clear CanLII + Limitation Act signals should produce a specific research description, testing signal interpretation quality."
+        },
+        {
+          "text": "Activities a1 and a2 (same matter L8948, consecutive with 0-min gap at 09:48) are aggregated into a single time entry",
+          "rationale": "SKILL.md Step 1: Activities for the same matter with gap <= 5 min should merge into one billable block."
+        },
+        {
+          "text": "Activity a6 (13:00-14:30, L8948) is a separate entry from the morning L8948 block because the gap exceeds 5 minutes",
+          "rationale": "SKILL.md Step 1: Gaps > 5 minutes produce separate entries even for the same matter."
+        },
+        {
+          "text": "The admin entry (a5, Outlook) does not have UTBMS codes assigned",
+          "rationale": "SKILL.md Step 3: Non-billable entries skip UTBMS assignment entirely."
+        },
+        {
+          "text": "The summary output shows separate counts for billable entries, admin entries, and entries needing input",
+          "rationale": "SKILL.md Step 5: Summary must show 'Billable: X hrs across Y entries | Admin: Z hrs | Needs input: N entry'."
+        },
+        {
+          "text": "Each entry's billed_hours is rounded up to the nearest 0.1 hour increment",
+          "rationale": "SKILL.md Step 4: Default billing increment is 0.1 (6-minute increments), round up."
+        },
+        {
+          "text": "Activity a3 (phone call, starts 10:20) is merged into the same entry as a1+a2 because the gap between a2 (ends 10:15) and a3 (starts 10:20) is exactly 5 minutes, which satisfies the <= 5 min rule",
+          "rationale": "Boundary condition: SKILL.md says gap <= 5 min merges. Exactly 5 min is the sharpest behavioral decision point in this dataset."
+        },
+        {
+          "text": "The total number of draft entries is exactly 4 (one merged L8948 morning block, one L4102, one admin, one L8948 afternoon)",
+          "rationale": "Correct aggregation of 6 activities with the gap rules should produce exactly 4 entries."
+        },
+        {
+          "text": "The merged a1+a2+a3 entry's description references work elements from multiple activity types — at minimum legal research and either drafting or a telephone call",
+          "rationale": "SKILL.md Step 1: Collected attribution.signals from all activities. The merged entry must synthesize signals from research (a1), drafting (a2), and phone call (a3)."
+        },
+        {
+          "text": "The merged a1+a2+a3 entry references a telephone call or phone call in its description, reflecting activity a3 (a phone call to the client)",
+          "rationale": "SKILL.md signal interpretation: Phone call + matter context should produce a description element referencing the call. Omitting the phone call from a merged description loses billable work."
+        },
+        {
+          "text": "The billable hours total in the summary is arithmetically consistent with the sum of billed_hours from billable draft entries",
+          "rationale": "Tightens the summary validation beyond label presence — the numbers must add up correctly."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "insufficient-signals",
+      "prompt": "You are testing the time-entry-drafting skill. The timesort day data for 2026-04-15 is provided in the file at evals/files/timesort-insufficient-signals.json (relative to the skill directory). Read the SKILL.md at the skill directory root, then follow its workflow using the data in the file as if it were returned by `cowork-db get timesort 'day:2026-04-15'`. Since cowork-db is not available in this environment, work directly with the file data — skip cowork-db read/write commands but follow all other workflow steps. Assume the pattern database is empty. Save the draft entries JSON array to outputs/draft.json and a formatted summary table to outputs/summary.txt.",
+      "expected_output": "Draft entries where activities with ambiguous signals (Document1, Google, File Explorer) have description_source 'insufficient' and show raw signals instead of fabricated descriptions, while the clearly-signaled affidavit activity gets a proper description.",
+      "files": ["evals/files/timesort-insufficient-signals.json"],
+      "expectations": [
+        {
+          "text": "The entry covering activity a1 (Document1 - Microsoft Word) has description_source set to 'insufficient', not 'generated' or 'pattern_match'",
+          "rationale": "Vision principle 3.1: Never fabricate from insufficient signals. 'Document1' is the canonical example of an ambiguous window title."
+        },
+        {
+          "text": "The entry covering activity a1 does NOT contain a fabricated narrative description like 'Drafting correspondence' or 'Drafting documents' — it instead shows the raw signals",
+          "rationale": "Vision principle 3.1: Surface raw signals and ask the practitioner. A fabricated description on a client invoice is a professional conduct issue."
+        },
+        {
+          "text": "The entry covering activity a3 (Affidavit of John Lee - FINAL.docx) has description_source 'generated' with a specific description referencing the affidavit",
+          "rationale": "This activity has clear signals — the window title explicitly names the document type. It should get a confident description."
+        },
+        {
+          "text": "Activity a4 (unassigned — null matter, null category) is flagged as needing practitioner input, not silently omitted",
+          "rationale": "SKILL.md: Unassigned activities become standalone entries with description_source 'insufficient'. Never silently omit periods."
+        },
+        {
+          "text": "Entries with description_source 'insufficient' have null UTBMS codes",
+          "rationale": "SKILL.md Step 3: For insufficient entries, leave UTBMS codes as null — they will be assigned when the practitioner provides the description."
+        },
+        {
+          "text": "The output warns the practitioner about unassigned hours before presenting draft entries",
+          "rationale": "SKILL.md Step 0: If unassigned_hours > 20% of total_hours, warn before proceeding. The test data has 0.5/2.25 = 22% unassigned."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "aggregation-rules",
+      "prompt": "You are testing the time-entry-drafting skill. The timesort day data for 2026-04-16 is provided in the file at evals/files/timesort-aggregation.json (relative to the skill directory). Read the SKILL.md at the skill directory root, then follow its workflow using the data in the file as if it were returned by `cowork-db get timesort 'day:2026-04-16'`. Since cowork-db is not available in this environment, work directly with the file data — skip cowork-db read/write commands but follow all other workflow steps. Assume the pattern database is empty. Save the draft entries JSON array to outputs/draft.json and a formatted summary table to outputs/summary.txt.",
+      "expected_output": "Draft entries demonstrating correct aggregation: a1+a2 merged (3-min gap), a3 separate (8-min gap from a2), a4+a5 merged (0-min gap, different matter), a6 separate (afternoon, large gap). Should produce 4 entries total.",
+      "files": ["evals/files/timesort-aggregation.json"],
+      "expectations": [
+        {
+          "text": "Activities a1 and a2 (both L8948, 3-minute gap between 09:30 and 09:33) are combined into a single draft entry",
+          "rationale": "SKILL.md Step 1: Same matter with gap <= 5 minutes should merge."
+        },
+        {
+          "text": "Activity a3 (L8948, starts 10:08) is a separate entry from the a1+a2 block (ends 10:00), because the 8-minute gap exceeds 5 minutes",
+          "rationale": "SKILL.md Step 1: Gaps > 5 minutes produce separate entries."
+        },
+        {
+          "text": "Activities a4 and a5 (both L4102, 0-minute gap at 10:52) are combined into a single draft entry",
+          "rationale": "SKILL.md Step 1: Same matter with gap <= 5 minutes should merge. a4 is phone_call and a5 is screen_work — both L4102."
+        },
+        {
+          "text": "Activity a6 (L8948, 13:00-13:30) is a separate entry from any morning L8948 entries",
+          "rationale": "Large gap between morning and afternoon blocks. Even though same matter, the 2+ hour gap clearly exceeds the 5-minute threshold."
+        },
+        {
+          "text": "The total number of draft entries is exactly 4",
+          "rationale": "Correct aggregation of 6 activities should produce: (a1+a2), (a3), (a4+a5), (a6) = 4 entries."
+        },
+        {
+          "text": "The merged a1+a2 entry's source_activities list contains both 'a1' and 'a2'",
+          "rationale": "SKILL.md Step 1: Record all source activity_ids for traceability."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "empty-date",
+      "prompt": "You are testing the time-entry-drafting skill. The timesort day data for 2026-04-17 is provided in the file at evals/files/timesort-empty.json (relative to the skill directory). Read the SKILL.md at the skill directory root, then follow its workflow using the data in the file as if it were returned by `cowork-db get timesort 'day:2026-04-17'`. Since cowork-db is not available in this environment, work directly with the file data — skip cowork-db read/write commands but follow all other workflow steps. Save any output to outputs/summary.txt.",
+      "expected_output": "The skill should detect that the timesort data has no activities and inform the practitioner that no sorted time was found, instructing them to run time-sorting first. It should NOT produce draft entries or an empty table.",
+      "files": ["evals/files/timesort-empty.json"],
+      "expectations": [
+        {
+          "text": "The output tells the practitioner that no sorted time was found for the date",
+          "rationale": "SKILL.md Step 0: If key is absent or empty, tell practitioner 'No sorted time found for {date}.'"
+        },
+        {
+          "text": "The output instructs the practitioner to run time-sorting first",
+          "rationale": "SKILL.md Step 0: Tell practitioner to 'Run time-sorting for that date first.' Do not proceed."
+        },
+        {
+          "text": "No draft entries JSON file is created (no outputs/draft.json)",
+          "rationale": "SKILL.md Step 0: 'Do not proceed.' An empty draft would be misleading."
+        }
+      ]
+    }
+  ]
+}

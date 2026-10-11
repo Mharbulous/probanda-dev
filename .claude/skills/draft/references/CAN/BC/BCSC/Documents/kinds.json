@@ -1,0 +1,46 @@
+{
+  "kinds": [
+    {
+      "file": "notice-of-application",
+      "name": "Notice of Application",
+      "aliases": [
+        { "name": "notice_of_application" }
+      ]
+    },
+    {
+      "file": "application-response",
+      "name": "Application Response",
+      "aliases": [
+        { "name": "application_response" }
+      ]
+    },
+    {
+      "file": "requisition-default-judgment",
+      "name": "Requisition for default judgment",
+      "aliases": [
+        { "name": "requisition_default_judgment" }
+      ]
+    },
+    {
+      "file": "requisition-consent",
+      "name": "Requisition for consent order",
+      "aliases": [
+        { "name": "requisition_consent" }
+      ]
+    },
+    {
+      "file": "letter",
+      "name": "Letter to the court",
+      "aliases": [
+        { "name": "letter to the registry" },
+        { "name": "availability letter" },
+        { "name": "cover letter" }
+      ]
+    },
+    {
+      "file": "unstructured",
+      "name": "Unstructured",
+      "aliases": []
+    }
+  ]
+}

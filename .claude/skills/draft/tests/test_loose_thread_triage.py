@@ -1,0 +1,99 @@
+import unittest
+from pathlib import Path
+
+
+DRAFT = Path(__file__).resolve().parents[1]
+DISPATCH = DRAFT / "references" / "dispatch.md"
+PROCEDURE = DRAFT / "references" / "procedure.md"
+TRIAGE = DRAFT / "references" / "loose-thread-triage.md"
+JOB_SESSION = DRAFT / "references" / "job-session.md"
+JOBS_RUN = DRAFT.parent / "drafting-data" / "references" / "jobs-run.md"
+
+
+def paragraph(text, opening):
+    start = text.index(opening)
+    end = text.find("\n", start)
+    return text[start:end if end != -1 else None]
+
+
+def section(text, opening, closing):
+    start = text.index(opening)
+    return text[start:text.index(closing, start)]
+
+
+class LooseThreadTriageTest(unittest.TestCase):
+    """Dispatch with no job offers loose-thread triage on a large backlog."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = DISPATCH.read_text(encoding="utf-8")
+        cls.procedure = PROCEDURE.read_text(encoding="utf-8")
+        cls.triage = TRIAGE.read_text(encoding="utf-8")
+
+    def test_dispatch_offers_triage_at_twenty_or_more(self):
+        choose = paragraph(self.text, "1. **Choose.**")
+        self.assertIn(
+            "When the `live` lane's `## Loose Threads (n)` count is 20 or more, "
+            "add one line offering to triage them (`references/loose-thread-triage.md`); "
+            "otherwise wait with no prompt.",
+            choose,
+        )
+
+    def test_opening_still_waits_with_no_invitation(self):
+        opening = paragraph(self.text, "**Opening.**")
+        self.assertIn("When nothing was dispatched, wait, with no line inviting a reply", opening)
+
+    def test_references_table_names_the_triage_file(self):
+        table = self.procedure[self.procedure.index("## 15. References"):]
+        self.assertIn(
+            "| Dispatch found no job and the Loose Threads count is 20 or more, "
+            "or the practitioner asks to triage the loose threads (section 14, Dispatch) "
+            "| `references/loose-thread-triage.md` |",
+            table,
+        )
+
+    def test_branch_b_three_way_choice_is_unchanged(self):
+        captured = paragraph(JOB_SESSION.read_text(encoding="utf-8"), "- Captured ideas:")
+        self.assertIn(
+            "offer a three-way choice, outline it now, leave it, or drop it, "
+            "with no recommendation and no ranking",
+            captured,
+        )
+
+    def test_reference_carries_steps_one_to_five(self):
+        for n in range(1, 6):
+            self.assertIn(f"**Step {n}.", self.triage)
+
+    def test_reference_carries_the_rules(self):
+        self.assertIn("sorts by what each thread says, not by merit", self.triage)
+        self.assertIn("only on their yes", self.triage)
+        self.assertIn(
+            "A queued job counts as open work against the filing's `gate` criterion "
+            "until it is completed or shelved.",
+            self.triage,
+        )
+
+    def test_reference_holds_nothing_untested(self):
+        lowered = self.triage.lower()
+        for phrase in (
+            "merge",
+            "bulk",
+            "before it is filed",
+            "rule change",
+            "housekeeping job",
+            "closing multi-select",
+        ):
+            self.assertNotIn(phrase, lowered)
+
+    def test_jobs_run_carries_the_batch_drop(self):
+        drop = section(
+            JOBS_RUN.read_text(encoding="utf-8"),
+            "## 8. Loose-thread capture",
+            "## 9. Complete",
+        )
+        self.assertIn("DELETE FROM seeds WHERE id IN (", drop)
+        self.assertIn("never `NOT IN`", drop)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,1 @@
+<!-- node id=draft/finish title="Finishing a filing" parents=draft/session,draft/job/work when="Drafting conditions hold, the filing is declared ready, or a court-ready document is asked for despite an unmet criterion: passes, assembly, pre-filing gate." -->

@@ -1,0 +1,261 @@
+{
+  "meta": {
+    "revision": 1,
+    "matter": "L4801",
+    "client": "Ashbourne",
+    "file": "",
+    "filing": "Opening Submissions Package",
+    "filing_id": 1,
+    "proceeding_id": 1,
+    "rendered": "0000-00-00 00:00",
+    "state": "drafting",
+    "state_label": "Drafting",
+    "state_since": null,
+    "ready_to_retire": false
+  },
+  "tickets": [],
+  "seeds": [],
+  "deleted": [],
+  "attachments": [],
+  "proposals": [
+    {
+      "key": "doctrinal-basis:law_assertions:4",
+      "slug": "doctrinal-basis",
+      "marker": "📖",
+      "table": "law_assertions",
+      "id": 4,
+      "item": "a second point of law also not yet researched",
+      "title": "Find doctrinal authority: a second point of law also not yet researched",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "primary-authority:law_assertions:2",
+      "slug": "primary-authority",
+      "marker": "🥈",
+      "table": "law_assertions",
+      "id": 2,
+      "item": "second point of law",
+      "title": "Find primary authority: second point of law",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "primary-authority:law_assertions:3",
+      "slug": "primary-authority",
+      "marker": "🥈",
+      "table": "law_assertions",
+      "id": 3,
+      "item": "point of law not yet researched",
+      "title": "Find primary authority: point of law not yet researched",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "jurisdictional-basis:order_sought:2",
+      "slug": "jurisdictional-basis",
+      "marker": "🏛️",
+      "table": "order_sought",
+      "id": 2,
+      "item": "a reserved fallback order",
+      "title": "Find jurisdictional basis: a reserved fallback order",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "jurisdictional-basis:order_sought:3",
+      "slug": "jurisdictional-basis",
+      "marker": "🏛️",
+      "table": "order_sought",
+      "id": 3,
+      "item": "an order whose only basis cites a killed authority",
+      "title": "Find jurisdictional basis: an order whose only basis cites a killed authority",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "scrutinize:statements_of_law:4",
+      "slug": "scrutinize",
+      "marker": "🔬",
+      "table": "statements_of_law",
+      "id": 4,
+      "item": "Reserved Authority v. X, 2020 BCSC 1",
+      "title": "Scrutinize: Reserved Authority v. X, 2020 BCSC 1",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "authority-rating:authorities:1",
+      "slug": "authority-rating",
+      "marker": "🏅",
+      "table": "authorities",
+      "id": 1,
+      "item": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+      "title": "Rate the authority: Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-excerpt:admissions:1",
+      "slug": "exhibit-excerpt",
+      "marker": "📑",
+      "table": "admissions",
+      "id": 1,
+      "item": "Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
+      "title": "Quote the exhibit: Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-pinpoint:admissions:5",
+      "slug": "exhibit-pinpoint",
+      "marker": "📌",
+      "table": "admissions",
+      "id": 5,
+      "item": "Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
+      "title": "Locate the exhibit pinpoint: Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "exhibit-pinpoint:statements_of_fact:7",
+      "slug": "exhibit-pinpoint",
+      "marker": "📌",
+      "table": "statements_of_fact",
+      "id": 7,
+      "item": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+      "title": "Locate the exhibit pinpoint: M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "interview:witnesses:3",
+      "slug": "interview",
+      "marker": "🗣️",
+      "table": "witnesses",
+      "id": 3,
+      "item": "M. Reyes",
+      "title": "Interview: M. Reyes",
+      "lane": "proposed",
+      "holder": null,
+      "count": 1
+    },
+    {
+      "key": "sign-it:documents:3",
+      "slug": "sign-it",
+      "marker": "🖋️",
+      "table": "documents",
+      "id": 3,
+      "item": "Witness Statement of A. Renwick",
+      "title": "Get it signed: Witness Statement of A. Renwick",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "serve-it:documents:10",
+      "slug": "serve-it",
+      "marker": "🎾",
+      "table": "documents",
+      "id": 10,
+      "item": "Notice to Admit dated 2026-08-01",
+      "title": "Serve: Notice to Admit dated 2026-08-01",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "enter-it:documents:9",
+      "slug": "enter-it",
+      "marker": "🕹️",
+      "table": "documents",
+      "id": 9,
+      "item": "Response to Notice to Admit dated 2026-06-15",
+      "title": "Enter the admission; pleading route: Requisition default judgment: Response to Notice to Admit dated 2026-06-15",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "enter-it:documents:14",
+      "slug": "enter-it",
+      "marker": "🕹️",
+      "table": "documents",
+      "id": 14,
+      "item": "Notice to Admit dated 2020-01-01",
+      "title": "Enter the admission; pleading route: Requisition default judgment: Notice to Admit dated 2020-01-01",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "factual-basis:submissions:1",
+      "slug": "factual-basis",
+      "marker": "🧾",
+      "table": "submissions",
+      "id": 1,
+      "item": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+      "title": "Link or draft the factual basis: The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "factual-basis:submissions:3",
+      "slug": "factual-basis",
+      "marker": "🧾",
+      "table": "submissions",
+      "id": 3,
+      "item": "A reserved fallback argument, held for reply.",
+      "title": "Link or draft the factual basis: A reserved fallback argument, held for reply.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "proposition:submissions:3",
+      "slug": "proposition",
+      "marker": "📚",
+      "table": "submissions",
+      "id": 3,
+      "item": "A reserved fallback argument, held for reply.",
+      "title": "Link or draft the proposition it requires: A reserved fallback argument, held for reply.",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "unserved-petitum:order_sought:2",
+      "slug": "unserved-petitum",
+      "marker": "🦵",
+      "table": "order_sought",
+      "id": 2,
+      "item": "a reserved fallback order",
+      "title": "Draft a submission for the order: a reserved fallback order",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "unserved-petitum:order_sought:3",
+      "slug": "unserved-petitum",
+      "marker": "🦵",
+      "table": "order_sought",
+      "id": 3,
+      "item": "an order whose only basis cites a killed authority",
+      "title": "Draft a submission for the order: an order whose only basis cites a killed authority",
+      "lane": "proposed",
+      "holder": null
+    },
+    {
+      "key": "not-recorded:documents:2",
+      "slug": "not-recorded",
+      "marker": "🏷️",
+      "table": "documents",
+      "id": 2,
+      "item": "Undescribed exhibit",
+      "title": "Record label, date or description: Undescribed exhibit",
+      "lane": "proposed",
+      "holder": null
+    }
+  ],
+  "lapsed_keys": [],
+  "goal": {
+    "sentence": "Completion Criteria",
+    "state": "pending",
+    "text": "No completion criteria are declared for this type of Writing."
+  },
+  "criteria": []
+}

@@ -1,0 +1,129 @@
+{
+  "date": "2026-04-16",
+  "sorted_at": "2026-04-16T17:00:00-07:00",
+  "sources_present": ["timecamp", "telus"],
+  "sources_absent": ["gcal"],
+  "activities": [
+    {
+      "id": "a1",
+      "timeline_ids": ["timecamp:tc020"],
+      "start": "09:00",
+      "end": "09:30",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Statement of Claim - Smith v Jones.docx - Microsoft Word"]
+      }
+    },
+    {
+      "id": "a2",
+      "timeline_ids": ["timecamp:tc021"],
+      "start": "09:33",
+      "end": "10:00",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Statement of Claim - Smith v Jones.docx - Microsoft Word", "LEAP - Smith v Jones - L8948"]
+      }
+    },
+    {
+      "id": "a3",
+      "timeline_ids": ["timecamp:tc022"],
+      "start": "10:08",
+      "end": "10:45",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Statement of Claim - Smith v Jones.docx - Microsoft Word"]
+      }
+    },
+    {
+      "id": "a4",
+      "timeline_ids": ["telus:call010"],
+      "start": "10:45",
+      "end": "10:52",
+      "activity_type": "phone_call",
+      "activity_source": "telus",
+      "task_id": "890456",
+      "task_name": "Lee v Pacific Holdings (L4102)",
+      "project_name": "Client Matters",
+      "matter": "L4102",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "telus",
+        "assigned_from": "phone_number_match",
+        "signals": ["Incoming call from 604-555-0198 (Jane Lee - client)", "Duration: 7 min"]
+      }
+    },
+    {
+      "id": "a5",
+      "timeline_ids": ["timecamp:tc023"],
+      "start": "10:52",
+      "end": "11:20",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890456",
+      "task_name": "Lee v Pacific Holdings (L4102)",
+      "project_name": "Client Matters",
+      "matter": "L4102",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["Email to Jane Lee re settlement offer - Microsoft Outlook", "LEAP - Lee v Pacific Holdings - L4102"]
+      }
+    },
+    {
+      "id": "a6",
+      "timeline_ids": ["timecamp:tc024"],
+      "start": "13:00",
+      "end": "13:30",
+      "activity_type": "screen_work",
+      "activity_source": "timecamp",
+      "task_id": "890123",
+      "task_name": "Smith v Jones (L8948)",
+      "project_name": "Client Matters",
+      "matter": "L8948",
+      "category": null,
+      "confidence": "high",
+      "attribution": {
+        "activity_from": "timecamp",
+        "assigned_from": "window_title_match",
+        "signals": ["CanLII - Contributory negligence BC - Google Chrome", "Westlaw - Apportionment of liability - Google Chrome"]
+      }
+    }
+  ],
+  "summary": {
+    "total_hours": 3.23,
+    "assigned_hours": 3.23,
+    "unassigned_hours": 0.0,
+    "by_matter": {"L8948": 2.42, "L4102": 0.58},
+    "by_category": {}
+  }
+}

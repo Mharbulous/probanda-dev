@@ -1,0 +1,27 @@
+From: Jane Counsel <jane@examplefirm.test>
+To: John Client <john@example.test>
+Date: Mon, 01 Jun 2026 09:30:00 -0700
+Subject: Re: Settlement offer
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7552341736996676547=="
+
+--===============7552341736996676547==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please see the attached settlement offer for your review.
+
+Let me know if you have questions.
+
+Regards,
+Jane
+
+--===============7552341736996676547==
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="offer.txt"
+MIME-Version: 1.0
+
+T0ZGRVIgVEVSTVMK
+
+--===============7552341736996676547==--

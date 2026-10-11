@@ -1,0 +1,35 @@
+{
+  "skill_name": "time-sorting",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Sort today's time. I have TimeCamp activities, calendar events, and maybe some Telus calls. Just give me the full breakdown by matter and category.",
+      "expected_output": "A sorted timeline table showing all activities with times, durations, task/category assignments, confidence levels, and a summary of hours by matter and category",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Sort time for April 7th. I know there's some overlap between my calendar (I have a 2pm client call with Smith) and Telus data (call log shows a call at 2:15pm). Also had LEAP open for the Jones file at that same time. Figure out what actually happened.",
+      "expected_output": "Reconciled timeline that resolves the conflicting signals, showing how the overlapping data was merged and what task it was assigned to, with source attribution for each activity",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I sorted last Tuesday (April 1st) and changed a few activities. Now re-sort that day with fresh data from all sources. What changed, and did my old corrections stick?",
+      "expected_output": "A report showing the re-sorted day, noting which corrections from the previous sort were re-applied vs. skipped, and highlighting any new activities or changes in source data",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "How much time did I spend on the Smith v Jones file (L8948) in the past week? Break it down by day.",
+      "expected_output": "A summary by day showing hours on the Smith file, calculated from stored sorted days across the week",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Sort time for March 15th, but TimeCamp and Google Calendar are unavailable. Use whatever data I can get from Telus Connect CSV at /tmp/telus_march.csv.",
+      "expected_output": "Sorted timeline using only Telus data, with clear notes about which sources failed and what data is missing (no TimeCamp screen activities, no calendar meetings)",
+      "files": []
+    }
+  ]
+}
