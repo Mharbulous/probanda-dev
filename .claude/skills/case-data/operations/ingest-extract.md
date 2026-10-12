@@ -348,6 +348,19 @@ This step never derives a deadline, never states time remaining, and never calls
 
 ---
 
+## Outgoing correspondence: delivery check (after completion)
+
+After the date-setting check, test whether the just-registered top-level `main.sources` row is a letter the firm sent: its `category` is `correspondence`, and the document's own face shows the firm as its author (its letterhead or signature block, never the folder or the filename) writing to someone outside the firm. An email, a letter received, a privileged source and a file under the solicitor-client folder rule never match.
+
+When it matches, in an attended ingest:
+
+1. Dispatch the read-only `probanda:delivery-checker` agent once for the letter, with `matter_root`, the file's path, name and size in bytes, and the practitioner's environment notes (`practice_data__firm_profile`, `practice_quirks`). Pass no draft: an ingest holds no Writing.
+2. Add one line to the completion report for each stated method: the method, whether it was confirmed sent and confirmed delivered, and for anything not confirmed what was searched. A method the checker could not check is reported as not checked, with its reason, never as not sent.
+
+Ask the practitioner nothing here, and write nothing: the checker's result goes into the report and is kept nowhere, in no table, source row, note or file. A letter ingested again is checked again. The report line is the whole result, and no question about whether the letter went out is put before or after it. This step never derives a deadline or a deemed date of service from a sent or delivered time. An unattended ingest skips this step and its report says the letter's delivery was not checked.
+
+---
+
 ## Name check (after completion)
 
 Once the document is registered and `ingestion_status = 'complete'`, check its filename against the firm's naming convention and offer a single interactive rename. Applies to documents in `main.sources` (Paths A–C). Legal authorities (Path D, in `law.authorities`) keep their own naming and are not renamed here.
