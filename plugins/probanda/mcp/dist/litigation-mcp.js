@@ -1,4 +1,4 @@
-// build-stamp: 81427adeccb6
+// build-stamp: e324e3d87222
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -78031,7 +78031,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("assign_job"),
-      description: "Assign a job (a tickets row) to this session in one call: the guarded assigning write followed by its confirm-read. By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL). takeover: true admits a wip job held by another session; pass it only after the practitioner's explicit yes to the take-over prompt. takeover: true needs expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with jobs), and the write lands only while that holder is still on the row. A shelved, completed or superseded job is never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it created, by take-over or otherwise. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and ask afresh), not_created_here (this session created jobs and this is not one of them: nothing was written; say so in one line), no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at and a note.",
+      description: "Assign a job (a tickets row) to this session in one call: the guarded assigning write followed by its confirm-read. By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL). takeover: true admits a wip job held by another session; pass it only after the practitioner's explicit yes to the take-over prompt. takeover: true needs expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with jobs), and the write lands only while that holder is still on the row. A shelved, completed or superseded job is never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date and never a deadline; a take-over does not read it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and ask afresh), not_created_here (this session created jobs and this is not one of them: nothing was written; say so in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; say so in one line, and never propose changing or clearing the date, which only the practitioner does), no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, bf_on and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78175,7 +78175,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -84424,6 +84424,13 @@ function createdByHeld(dbPath) {
   if (held) createdByHeldDbs.add(dbPath);
   return held;
 }
+var bfOnHeldDbs = /* @__PURE__ */ new Set();
+function bfOnHeld(dbPath) {
+  if (bfOnHeldDbs.has(dbPath)) return true;
+  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'bf_on'")[0].n > 0;
+  if (held) bfOnHeldDbs.add(dbPath);
+  return held;
+}
 var exhibitLettersHeldDbs = /* @__PURE__ */ new Set();
 function exhibitLettersHeld(dbPath) {
   if (exhibitLettersHeldDbs.has(dbPath)) return true;
@@ -84651,7 +84658,7 @@ function withPartiesDriftLines(markdown, rows21) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 73;
+var BAKED_SCHEMA_VERSION = false ? null : 74;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -84848,7 +84855,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "81427adeccb6";
+var BUILD_STAMP = false ? null : "e324e3d87222";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -89828,11 +89835,12 @@ function latestStamp(stamps) {
   for (const s3 of stamps) if (s3 !== null && (latest === null || s3.replace(" ", "T") > latest.replace(" ", "T"))) latest = s3;
   return latest;
 }
-function classify(ticket, blockers, conflictPartners) {
+function classify(ticket, blockers, conflictPartners, today2) {
   if (ticket.rejected_at !== null) return "rejected";
   if (ticket.status === "completed") return "completed";
   if (ticket.status === "superseded") return "superseded";
   if (ticket.status === "wip") return "wip";
+  if (ticket.bf_on != null && ticket.bf_on > today2) return "bring_forward";
   if (blockers.some((b3) => b3.status !== "completed")) return "waiting";
   if (conflictPartners.some((p3) => p3.status === "wip")) return "waiting";
   return "ready";
@@ -89852,7 +89860,11 @@ function groupBy(items, key) {
   }
   return map;
 }
-function buildProceedingBoard(dbPath, proceedingId) {
+function localToday() {
+  const d3 = /* @__PURE__ */ new Date();
+  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+}
+function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
   const ticketById = new Map(proceedingTickets.map((t3) => [t3.id, t3]));
   const proceedingIds = proceedingTickets.map((t3) => t3.id);
@@ -89893,7 +89905,7 @@ function buildProceedingBoard(dbPath, proceedingId) {
   const tickets = proceedingTickets.map((t3) => {
     const blockedBy = (blockersOf.get(t3.id) ?? []).map(edge);
     const conflictPartners = (conflictsOf.get(t3.id) ?? []).map(edge);
-    const category = classify(t3, blockedBy, conflictPartners);
+    const category = classify(t3, blockedBy, conflictPartners, today2);
     const ticket = {
       id: t3.id,
       title: t3.title,
@@ -89906,6 +89918,7 @@ function buildProceedingBoard(dbPath, proceedingId) {
       locked_at: t3.locked_at,
       completed_at: t3.completed_at,
       rejected_at: t3.rejected_at,
+      bf_on: t3.bf_on ?? null,
       // A stale gate job pointed at a deleted replacement reads as superseded with no pointer.
       superseded_by: t3.superseded_by === null || deletedIds.has(t3.superseded_by) ? null : edge(t3.superseded_by),
       scope: (scopeByTicket.get(t3.id) ?? []).map((s3) => s3.entity_id === null ? s3.entity : `${s3.entity}:${s3.entity_id}`),
@@ -90383,7 +90396,7 @@ function withIdleFlag(t3, rendered, hours) {
   return { ...t3, idle_flag: `idle past ${hours} h` };
 }
 function buildWorkBoardData(ctx, deadlines3 = []) {
-  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id);
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
   const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e3) => e3.generating ? [proposalKey(e3)] : []));
   const { proposals, lapsed_keys, shelved, current } = proposalsFor(ctx, board);
@@ -90431,7 +90444,7 @@ function preFilingLabel(proceeding) {
   return proceeding.forum === null ? "Forum not yet chosen" : "No filing yet";
 }
 function buildPreFilingBoardData(dbPath, proceeding, meta2) {
-  const board = buildProceedingBoard(dbPath, proceeding.id);
+  const board = buildProceedingBoard(dbPath, proceeding.id, meta2.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
   return {
     meta: {
@@ -90755,6 +90768,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
 // src/submission/forms/assign-job.ts
 var TOOL4 = "drafting_data__assign_job";
 var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL4}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
@@ -90770,17 +90784,20 @@ async function submissionDataAssignJob(args, env = process.env) {
   const live = liveTicketClause(args.db_path);
   const creatorHeld = createdByHeld(args.db_path);
   const creator = creatorHeld ? " AND (created_by = ? OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = ?))" : "";
-  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}`) + creator;
+  const bfHeld = bfOnHeld(args.db_path);
+  const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
+  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const params = [args.session_token, args.ticket_id, ...takeover ? [args.expected_holder.trim()] : [], ...creatorHeld ? [args.session_token, args.session_token] : []];
   const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW2} WHERE id = ? AND ${guard}`, params }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
-  const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read2] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
   if (read2 === void 0) throw new NotFoundError(`${TOOL4}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
-  const otherwiseEligible = read2.rejected_at === null && !read2.deleted_at && (takeover ? (read2.status === "queued" || read2.status === "wip") && read2.locked_by !== null && read2.locked_by.slice(-8) === args.expected_holder.trim() : read2.status === "queued" && read2.locked_by === null);
+  const beforeBf = !takeover && read2.before_bf === 1;
+  const otherwiseEligible = read2.rejected_at === null && !read2.deleted_at && !beforeBf && (takeover ? (read2.status === "queued" || read2.status === "wip") && read2.locked_by !== null && read2.locked_by.slice(-8) === args.expected_holder.trim() : read2.status === "queued" && read2.locked_by === null);
   if (read2.locked_by === args.session_token) {
     outcome = "assigned";
     note = changes === 1 ? `Job ${id} is assigned to this session.` : `Job ${id} already carried this session's token; nothing was written.`;
@@ -90796,6 +90813,9 @@ async function submissionDataAssignJob(args, env = process.env) {
   } else if (read2.deleted_at) {
     outcome = "no_match";
     note = `Job ${id} was not assigned: it is deleted (deleted_at=${read2.deleted_at}), so the guards matched nothing. Re-render; never re-run to win.`;
+  } else if (beforeBf && read2.status === "queued" && read2.rejected_at === null) {
+    outcome = "before_bf";
+    note = `Job ${id} was not assigned: it is held until its bring-forward date (bf_on=${read2.bf_on}), so nothing was written. Say so in one line. Only the practitioner changes or clears that date; never propose it, and never re-run to win.`;
   } else {
     outcome = "no_match";
     note = `Job ${id} was not assigned: its row is status=${read2.status}, rejected_at=${read2.rejected_at ?? "NULL"}, so the guards matched nothing. Re-render; never re-run to win.`;
@@ -90808,6 +90828,7 @@ async function submissionDataAssignJob(args, env = process.env) {
     locked_at: read2.locked_at,
     status: read2.status,
     rejected_at: read2.rejected_at,
+    bf_on: read2.bf_on ?? null,
     note,
     ...written.warning ? { warning: written.warning } : {}
   };
@@ -95019,6 +95040,7 @@ var TAIL2 = String.raw`</script>
     var CHIPS = {
       ready: ["ready", "Ready"],
       wip: ["wip", "In Progress"],
+      bring_forward: ["bring-forward", "Bring Forward"],
       waiting: ["waiting", "Blocked"],
       superseded: ["superseded", "Superseded"],
       completed: ["done", "Completed"],
@@ -95047,6 +95069,8 @@ var TAIL2 = String.raw`</script>
       if (t.lock_note) summary.appendChild(el("span", "subtitle", t.lock_note));
       // Idle past the firm's threshold, finished on the server and drawn as given.
       if (t.idle_flag) summary.appendChild(el("span", "subtitle", t.idle_flag));
+      // The job's start date as a plain date: never a deadline, and never a day count.
+      if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
       var progress = el("span", "progress");
       progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
       // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
@@ -95422,6 +95446,7 @@ var TAIL2 = String.raw`</script>
     }
     jobSection("ready", "ready", "Ready", "Nothing ready to assign.");
     jobSection("wip", "in-progress", "In Progress", "Nothing in progress.");
+    jobSection("bring_forward", "bring-forward", "Bring Forward", "Nothing held for a bring-forward date.");
     jobSection("waiting", "waiting-on", "Blocked", "Nothing blocked.");
     jobSection("completed", "completed", "Completed", "Nothing completed.");
     // Shelved holds shelved tickets and the Proposals shelved directly. A Proposal hidden
@@ -96637,6 +96662,7 @@ var CRITERION_GLYPH = { met: "\u2705", unmet: "\u274C", pending: "\u23F3" };
 var CHIP_LABELS = {
   ready: "Ready",
   wip: "In Progress",
+  bring_forward: "Bring Forward",
   waiting: "Blocked",
   superseded: "Superseded",
   completed: "Completed",
@@ -96645,10 +96671,11 @@ var CHIP_LABELS = {
 var LANES = [
   ["ready", "Ready"],
   ["wip", "In Progress"],
+  ["bring_forward", "Bring Forward"],
   ["waiting", "Blocked"],
   ["superseded", "Superseded"]
 ];
-var LIVE = /* @__PURE__ */ new Set(["ready", "wip", "waiting"]);
+var LIVE = /* @__PURE__ */ new Set(["ready", "wip", "bring_forward", "waiting"]);
 var IDLE_AFTER_MINUTES = 15;
 function counted(n3, noun) {
   return `${n3} ${noun}${n3 === 1 ? "" : "s"}`;
@@ -96700,6 +96727,7 @@ function tagTail(t3, rendered) {
     const dispatch = t3.dispatch_skips.length === 0 ? "ok" : `skip (${t3.dispatch_skips.map(skipText).join("; ")})`;
     return ` \xB7 eligible: ${eligible} \xB7 dispatch: ${dispatch}`;
   }
+  if (t3.category === "bring_forward") return ` \xB7 BF ${t3.bf_on}`;
   if (t3.category !== "wip") return "";
   const idle = idleTag(t3, rendered);
   return (idle === null ? "" : ` \xB7 ${idle}`) + (t3.idle_flag ? ` \xB7 ${t3.idle_flag}` : "");
@@ -96720,6 +96748,7 @@ function jobCardLines(t3, derived, seeds) {
   const own = seeds.filter((s3) => s3.origin_ticket_id === t3.id);
   if (own.length > 0) lines2.push(`  loose threads: ${own.map((s3) => `loose thread ${s3.id}: ${JSON.stringify(s3.idea)} (${s3.created})`).join("; ")}`);
   if (t3.answers.length > 0) lines2.push(`  answers: ${t3.answers.map((a3) => `${a3.file_path} (${a3.saved_at})`).join("; ")}`);
+  if (t3.category === "bring_forward") lines2.push(`  bring forward: ${t3.bf_on}`);
   if (t3.category === "completed") lines2.push(`  completed: ${t3.completed_at ?? "(unknown time)"}`);
   if (t3.category === "rejected") lines2.push(`  shelved: ${t3.rejected_at ?? "(unknown time)"}`);
   return lines2;

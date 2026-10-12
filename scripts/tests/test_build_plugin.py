@@ -31,9 +31,9 @@ class BuildPluginTest(unittest.TestCase):
         cls.tmp.cleanup()
 
     def test_roster_skill_is_stamped(self):
-        self.assertEqual(self.version, "0.1.1")
+        self.assertEqual(self.version, "0.1.3")
         text = (self.out / "skills" / "draft" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("\n<!-- probanda v0.1.1 -->\n> **Installed copy.**", text)
+        self.assertIn("\n<!-- probanda v0.1.3 -->\n> **Installed copy.**", text)
 
     def test_no_tests_or_bytecode_ship(self):
         shipped = [p.relative_to(self.out).parts for p in self.out.rglob("*")]
