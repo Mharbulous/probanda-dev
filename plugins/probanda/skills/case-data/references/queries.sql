@@ -26,6 +26,11 @@
 -- privilege_status = 'pending'. The verification backlogs (review_queue,
 -- 05a/05b/05d, 12), the history reads (09a/09b) and the integrity reads (06)
 -- deliberately still see them.
+--
+-- Bare rows (design-decisions #67): a Fact known only from a privileged source
+-- is a main.facts row with description = '' and nothing else. v_fact_status,
+-- 05a and 05b skip it, which also keeps it out of get_facts_for_drafting.py.
+-- Only 10 and 22 show what a bare row means, by reading the privileged side.
 -- =========================================================================
 
 -- =========================================================================
@@ -79,8 +84,13 @@ WHERE   p.valid_to IS NULL
 -- A fact whose source is pending privilege review is held back (v8.7). The
 -- predicate reads main.sources only: a main view cannot read the privileged
 -- database. A fact with no source_id stays in.
+-- A bare row (description = '', design-decisions #67) is held back too: it is
+-- a Fact known only from a privileged source and holds nothing to show. The
+-- view is dropped and created on every run, so this exclusion reaches a matter
+-- whose views predate it.
 -- -----------------------------------------------------------------
-CREATE VIEW IF NOT EXISTS v_fact_status AS
+DROP VIEW IF EXISTS v_fact_status;
+CREATE VIEW v_fact_status AS
 SELECT
     f.fact_id,
     f.description,
@@ -110,6 +120,7 @@ SELECT
 FROM facts f
 WHERE f.verified >= 0
   AND f.pending_reverification = 0
+  AND f.description <> ''
   AND NOT EXISTS (
     SELECT 1 FROM sources ps
     WHERE ps.source_id = f.source_id AND ps.privilege_status = 'pending'
@@ -377,10 +388,11 @@ ORDER BY facts_solely_proven DESC;
 
 -- -----------------------------------------------------------------
 -- @query_05a_verification_backlog_unverified
--- All unverified rows (verified = 0) across tables.
+-- All unverified rows (verified = 0) across tables. A bare row (description
+-- = '', #67) holds no content to verify and is left out.
 -- -----------------------------------------------------------------
 SELECT 'facts' AS table_name, fact_id AS row_id, description AS summary
-FROM facts WHERE verified = 0 AND pending_reverification = 0
+FROM facts WHERE verified = 0 AND pending_reverification = 0 AND description <> ''
 UNION ALL
 SELECT 'sources', source_id, title FROM sources WHERE verified = 0
 UNION ALL
@@ -394,10 +406,11 @@ ORDER BY table_name, row_id;
 
 -- -----------------------------------------------------------------
 -- @query_05b_verification_needs_human
--- Rows flagged for human review (verified = 2).
+-- Rows flagged for human review (verified = 2). A bare row (description = '',
+-- #67) is left out.
 -- -----------------------------------------------------------------
 SELECT 'facts' AS table_name, fact_id AS row_id, description AS summary
-FROM facts WHERE verified = 2
+FROM facts WHERE verified = 2 AND description <> ''
 UNION ALL
 SELECT 'sources', source_id, title FROM sources WHERE verified = 2
 UNION ALL
@@ -556,11 +569,33 @@ ORDER BY el.valid_from DESC;
 -- @query_10_facts_only_privileged_sources
 -- Facts that have provenance in privileged sources but no admissible
 -- evidence link — trial-prep gaps.
+-- A bare row (description = '', #67) is the usual case here. Its Statement of
+-- Fact and category are read from the privileged side: the STATEMENT: and
+-- CATEGORY: lines of its fact_provenance.source_note, taking the lowest
+-- source_id that has one. This is the read that shows a bare row's meaning.
+-- It reads privileged.sqlite, so its output is the practitioner's and never
+-- goes into a draft, list, book or page.
 -- -----------------------------------------------------------------
 SELECT
     f.fact_id,
-    f.description,
-    f.category
+    CASE WHEN f.description = '' THEN (
+        SELECT CASE WHEN instr(r.rest, char(10)) > 0
+                    THEN substr(r.rest, 1, instr(r.rest, char(10)) - 1)
+                    ELSE r.rest END
+        FROM (SELECT substr(fp.source_note, instr(fp.source_note, 'STATEMENT: ') + 11) AS rest
+              FROM privileged.fact_provenance fp
+              WHERE fp.fact_id = f.fact_id AND instr(fp.source_note, 'STATEMENT: ') > 0
+              ORDER BY fp.source_id LIMIT 1) r)
+         ELSE f.description END AS description,
+    CASE WHEN f.description = '' THEN (
+        SELECT CASE WHEN instr(r.rest, char(10)) > 0
+                    THEN substr(r.rest, 1, instr(r.rest, char(10)) - 1)
+                    ELSE r.rest END
+        FROM (SELECT substr(fp.source_note, instr(fp.source_note, 'CATEGORY: ') + 10) AS rest
+              FROM privileged.fact_provenance fp
+              WHERE fp.fact_id = f.fact_id AND instr(fp.source_note, 'CATEGORY: ') > 0
+              ORDER BY fp.source_id LIMIT 1) r)
+         ELSE f.category END AS category
 FROM facts f
 WHERE f.verified >= 0
   AND f.pending_reverification = 0
@@ -818,13 +853,29 @@ ORDER BY date, source_id;
 -- investigation concluded it likely untrue — terminal; the verifier FAILs an
 -- argument resting on it as `dismissed_fact`). A fact ceases to appear here by
 -- construction the moment a real evidence_link lands (the NOT EXISTS below).
+-- A theorized fact is a bare row (#67, #23): its wording and category are the
+-- STATEMENT: and CATEGORY: lines of the theory provenance row's source_note,
+-- read here from the privileged side. A row not yet emptied still answers from
+-- its own columns. This read is the practitioner's and never goes into a draft.
 -- No parameter: returns every theorized fact in the matter. The stage-9 caller
 -- and the convergence summary both read this once and key per-fact status off it.
 -- -----------------------------------------------------------------
 SELECT
     f.fact_id,
-    f.description,
-    f.category,
+    CASE WHEN f.description = '' THEN (
+        SELECT CASE WHEN instr(r.rest, char(10)) > 0
+                    THEN substr(r.rest, 1, instr(r.rest, char(10)) - 1)
+                    ELSE r.rest END
+        FROM (SELECT substr(fp.source_note, instr(fp.source_note, 'STATEMENT: ') + 11) AS rest) r
+        WHERE instr(fp.source_note, 'STATEMENT: ') > 0)
+         ELSE f.description END AS description,
+    CASE WHEN f.description = '' THEN (
+        SELECT CASE WHEN instr(r.rest, char(10)) > 0
+                    THEN substr(r.rest, 1, instr(r.rest, char(10)) - 1)
+                    ELSE r.rest END
+        FROM (SELECT substr(fp.source_note, instr(fp.source_note, 'CATEGORY: ') + 10) AS rest) r
+        WHERE instr(fp.source_note, 'CATEGORY: ') > 0)
+         ELSE f.category END AS category,
     fp.disposition,
     ps.title AS theory_source_title
 FROM facts f

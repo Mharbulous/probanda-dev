@@ -2,7 +2,7 @@
 
 Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3. Every write here goes through one `case_data__execute` call (§2.3), which loads the cross-database FK layer itself. It must load, because `fact_provenance.fact_id` and `privileged_sources.proceeding_id` are trigger-enforced.
 
-A **theorized fact** is a fact theorized for investigation — it cannot be derived from anything, so it is recorded, but it is not a party position and not a posture. Its provenance is the **case theory itself**, modelled as a well-known placeholder source. See GLOSSARY.md ("Theorized Fact", "Dismissed") and design-decisions.md #23. Two write paths live here: **mint** and **dismiss** (terminal). Minting is never called "postulating" — see design-decisions.md #23 on that word. Reading which facts are still theorized is [`query.md`](query.md)'s `@query_22_theorized_facts`, not this operation.
+A **theorized fact** is a fact theorized for investigation — it cannot be derived from anything, so it is recorded, but it is not a party position and not a posture. Its provenance is the **case theory itself**, modelled as a well-known placeholder source. It is privileged work product, so its row in `main.facts` is a **bare row**: an ID and nothing else (design-decisions.md #67, [`bare-privileged-facts.md`](bare-privileged-facts.md) §1). Its wording, category and the caller's note live on the privileged side, and no drafting step reads it from `main`. See GLOSSARY.md ("Theorized Fact", "Dismissed") and design-decisions.md #23. Two write paths live here: **mint** and **dismiss** (terminal). Minting is never called "postulating" — see design-decisions.md #23 on that word. Reading which facts are still theorized is [`query.md`](query.md)'s `@query_22_theorized_facts`, not this operation.
 
 The placeholder-source convention (one per application, created lazily):
 
@@ -30,13 +30,21 @@ WHERE NOT EXISTS (
     AND title = 'Theory of the case — <app_id>'
 );
 
--- 2. Insert the theorized fact: source_id NULL (no evidentiary source), verified 0.
-INSERT INTO main.facts (description, category, source_id, verified, created_date)
-VALUES ('<description>', '<category>', NULL, 0, date('now','localtime'));
+-- 2. Insert the theorized fact as a bare row: an ID and nothing else. The
+--    description is empty text, not the wording. created_date is NULL on purpose
+--    (its default is today's date). Every other column takes its NULL or 0
+--    default (bare-privileged-facts.md §1).
+INSERT INTO main.facts (description, created_date)
+VALUES ('', NULL);
 
--- 3. Link its provenance to the theory source. last_insert_rowid() is the fact
---    just inserted in statement 2 (the most recent INSERT on the connection;
---    statement 1's conditional insert, if it fired, ran earlier).
+-- 3. Link its provenance to the theory source, and put the wording there.
+--    last_insert_rowid() is the fact just inserted in statement 2 (the most
+--    recent INSERT on the connection; statement 1's conditional insert, if it
+--    fired, ran earlier). The record format is bare-privileged-facts.md §2:
+--    STATEMENT: first, then CATEGORY:, then the caller's note unchanged when
+--    there is one (append `|| char(10) || '<source_note>'`; with no note, stop
+--    after the CATEGORY line). Line breaks in any value are written as a
+--    single space.
 INSERT INTO privileged.fact_provenance
   (fact_id, source_id, source_note, disposition, verified)
 VALUES (
@@ -44,14 +52,16 @@ VALUES (
   (SELECT source_id FROM privileged.privileged_sources
    WHERE category = 'privileged_work_product'
      AND title = 'Theory of the case — <app_id>'),
-  <source_note-or-NULL>, 'active', 0
+  'STATEMENT: <description>' || char(10) || 'CATEGORY: <category>',
+  'active', 0
 );
 ```
 
 Why these values:
 
+- **A bare row** — a theorized fact is the case theory's own statement, so it is privileged work product by the same reasoning as the Theory of the Case, and a rewording would be another privileged statement. The non-privileged store therefore holds only the ID, which is all an argument's `facts` frontmatter needs to cite. Its row gains wording only when a non-privileged source states the same Fact ([`bare-privileged-facts.md`](bare-privileged-facts.md) §5). Never draft a non-privileged sentence from the wording.
 - **`source_id NULL`** on the fact — a theorized fact has no evidentiary source. The theory is *provenance*, not evidence; it lives only on the `fact_provenance` link (decision #4: provenance ≠ evidence).
-- **`verified 0`** — a theorized fact is not a source extraction, so it is never extraction-verified; `0` (unverified) is the honest state and keeps it visible in the views (`verified >= 0`). Do not set `1` — nothing verified it. Do not write a `notes` prefix (that would force `verified = 2` and misroute it to the lawyer queue).
+- **`verified 0`** — a theorized fact is not a source extraction, so it is never extraction-verified; `0` (unverified) is the honest state. Do not set `1` — nothing verified it. The row does not appear in `v_fact_status` or the verification backlogs either way, because it is bare. `notes` stays NULL.
 - **`disposition 'active'`** — the open investigative state. The stage-9 verifier tolerates such a fact as `theorized_only`.
 
 Return the new `fact_id` (query it back if the harness does not surface `last_insert_rowid()`), so the caller can cite it in an argument's `facts` frontmatter — fact ids stay opaque integers, no grammar change.
@@ -80,9 +90,9 @@ WHERE fact_id = <fact_id>
   );
 ```
 
-`DISMISSED (...)` is plain human-readable context, deliberately **not** one of the machine-detected `notes` prefixes (§5) — `fact_provenance.source_note` is not a `review_queue` surface, and the load-bearing marker is the `disposition` column, not the note.
+`DISMISSED (...)` is plain human-readable context, deliberately **not** one of the machine-detected `notes` prefixes (§5) — `fact_provenance.source_note` is not a `review_queue` surface, and the load-bearing marker is the `disposition` column, not the note. It is prepended ahead of the `STATEMENT:` line, which readers find by its label ([`bare-privileged-facts.md`](bare-privileged-facts.md) §2).
 
-Once a real `evidence_link` lands for a theorized fact, it ceases to be theorized **by construction** (`@query_22` excludes it) — no "evidenced" marker exists or is needed. The theory provenance stays as the history of how the fact entered. Do not dismiss such a fact; it graduated, it was not disproven.
+A theorized fact graduates in two steps. First a non-privileged source states the same Fact and the practitioner names the bare ID, so the row takes that source's own Statement of Fact ([`bare-privileged-facts.md`](bare-privileged-facts.md) §5). Only then may a real `evidence_link` land, because nothing links to a bare row (#67). Once it lands, the fact ceases to be theorized **by construction** (`@query_22` excludes it) — no "evidenced" marker exists or is needed. The theory provenance stays as the history of how the fact entered. Do not dismiss such a fact; it graduated, it was not disproven.
 
 ---
 

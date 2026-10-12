@@ -140,17 +140,17 @@ The `research-agent` plugin agent (`source/probanda/agents/research-agent.md`) i
 
 ## 23. Theorized facts are provenance-level placeholders (v7.4)
 
-A **theorized fact** is a fact theorized for investigation — the case theory needs it, but no source yet evidences it. At round 1 of an application's argument loop, pre-affidavit, "not yet evidenced" is the *expected* state, not a defect: a litigator works forward from theorized facts, then investigates. This is modelled with **no new table and no `main`-side change** — the privilege firewall (#1) and the deliberate `fact_provenance` ≠ `evidence_links` split (#4) already carry the whole design:
+A **theorized fact** is a fact theorized for investigation — the case theory needs it, but no source yet evidences it. At round 1 of an application's argument loop, pre-affidavit, "not yet evidenced" is the *expected* state, not a defect: a litigator works forward from theorized facts, then investigates. This is modelled with **no new table** — the privilege firewall (#1) and the deliberate `fact_provenance` ≠ `evidence_links` split (#4) already carry the whole design. Revised by #67 (2026-10-12): the `main.facts` row is a bare ID, and the wording, category and note live on the privileged side:
 
-- A theorized fact is an ordinary `main.facts` row with **`source_id NULL`** (no evidentiary source) and **`verified 0`** (theorizing is not a source extraction; nothing verified it, and `0` keeps it visible in the `verified >= 0` views). Never `verified 1` — that would assert a verification that did not happen — and never a `notes` prefix (which would force `verified = 2` and misroute it to the lawyer queue, §5).
+- A theorized fact is a **bare** `main.facts` row (#67) with **`source_id NULL`** (no evidentiary source), **`verified 0`** (theorizing is not a source extraction; nothing verified it) and no content. Never `verified 1` — that would assert a verification that did not happen — and never a `notes` prefix. Its wording and category are the labelled lines of the theory provenance row's `source_note` (`operations/bare-privileged-facts.md` §2). A theorized fact is the case theory's own statement and is privileged work product for the same reason the Theory of the Case is, so no non-privileged sentence is drafted from it and no drafting step reads it from `main`.
 - Its only provenance is a **placeholder source**: one `privileged_sources` row per application, `category = 'privileged_work_product'`, `title = 'Theory of the case — <app-id>'` (em dash, exactly), created lazily on the first theorized fact. The fact links to it through `fact_provenance`. The **provenance is the case theory itself**.
-- The lifecycle has **two markers, not three**: `active` → (evidence lands) an ordinary evidenced fact, *by construction*, because a real `evidence_link` makes `@query_22` stop matching it — there is no "evidenced" disposition and none is needed; the theory provenance stays as history. Or `active` → `dismissed`, the terminal "our investigation concluded this likely untrue" state.
+- The lifecycle has **two markers, not three**: `active` → (a non-privileged source states it, so the row takes that source's own Statement of Fact per #67, and evidence lands) an ordinary evidenced fact, *by construction*, because a real `evidence_link` makes `@query_22` stop matching it — there is no "evidenced" disposition and none is needed; the theory provenance stays as history. Or `active` → `dismissed`, the terminal "our investigation concluded this likely untrue" state.
 
 **Why a `disposition` column, not a `source_note` prefix.** Dispositions are load-bearing for the stage-9 verifier (`theorized_only` tolerated inside the loop; `dismissed_fact` fails a check), and prefix-parsing is fragile. The column takes `CHECK(disposition IN ('active','dismissed')) DEFAULT 'active'`, `NOT NULL`; every existing row backfills to `active` on the ALTER. This is the **one** structural addition — `privileged` is still **2 tables**.
 
 **Why not the rejected alternatives** (they resurface, so they are recorded here): a `theorized`/`dismissed` *position* value is wrong — positions are on-record stances each carrying a `source_id` to a pleading, and storing private case-theory conclusions in `main.sqlite` would breach the firewall (#1). A *posture* value is wrong — posture is derived-never-stored (#9), and nothing exists to derive `theorized` from. A separate privileged stance table is strictly more machinery than reusing `privileged_sources` + `fact_provenance`.
 
-**`v_fact_status` must not read privileged data.** A posture view cannot and should not read the privileged database (#1); a theorized fact with no positions honestly derives `unaddressed`. That is correct, not a gap — the theorization state lives on the privileged side and is read only by `@query_22`, never folded into posture.
+**`v_fact_status` must not read privileged data.** A posture view cannot and should not read the privileged database (#1). A theorized fact is a bare row, so the view skips it (#67) and it has no posture. The theorization state lives on the privileged side and is read only by `@query_22`, never folded into posture.
 
 **`dismissed` is our-side-only and terminal.** It records what *our* investigation rejected; there is no way to know what the opposing side privately dismissed. It is never deleted (mirror of #3 promotion-never-deletes / #2's append-only audit posture): the record of a considered-and-rejected premise is the point. `operations/theorize-fact.md` owns both write paths; the practitioner authorizes every dismissal (the calling pipeline never dismisses autonomously — mirror of the authority-gap "AI dismisses only for mootness" rule). The identifying convention is **title-based** (`LIKE 'Theory of the case —%'`); that fragility is accepted deliberately in exchange for zero new schema surface.
 
@@ -366,7 +366,7 @@ Its read discipline, all deliberate:
 - **Version-guarded via `resolve_paths.EXPECTED_USER_VERSION`**, imported lazily from
   `references/scripts/` so the version is never restated (#29's most-missed surface).
 - **`privileged.sqlite` is never opened.** Nothing the report needs lives there; theorized facts
-  are ordinary `main.facts` rows (#23).
+  were ordinary `main.facts` rows (#23) when this was written, and are bare rows since #67.
 - **Fail-visible, per section**: a missing/old-version database degrades to
   `{"available": false, "reason": ...}` and the renderer prints an explicit unavailable
   placeholder — never a silently empty section.
@@ -923,9 +923,10 @@ never deletes" governs privileged → producible, where the privileged row is th
 permanent record of how a document was once treated. A pending main row is a
 holding state, not a record of a decided treatment, and #1 keeps main for
 non-privileged sources only. So a Privileged outcome deletes it. Its facts stay
-in main with `source_id` cleared, and each gains a `fact_provenance` row pointing
-at the new privileged source (#4: where a fact was learned is provenance, not
-proof). The lineage survives in the privileged row's `notes` and in the
+in main as bare rows (#67): `source_id` cleared and the content emptied once it
+is copied to the privileged record, and each gains a `fact_provenance` row
+pointing at the new privileged source (#4: where a fact was learned is
+provenance, not proof). The lineage survives in the privileged row's `notes` and in the
 matching `file_hash`, the same join key #3 uses. The operation stops instead of
 deleting when anything other than facts references the source (evidence links,
 positions, admissions, relief rows, source references, sought orders, an expert
@@ -942,10 +943,11 @@ waits. The history reads (09a/09b) and the integrity reads (06,
 `verify_sources.py`, `dump.py`, the ingest dedupe probes) are unchanged for the
 same reason.
 
-**Observation, no change made.** A fact from a decided-privileged source already
-reaches drafting without a citation. Its `source_id` is NULL, so `v_fact_status`
-includes it as it includes a theorized fact (#23). That was true before this
-decision and a Privileged outcome here produces the same shape.
+**Superseded by #67 (2026-10-12).** This paragraph first observed that a fact
+from a decided-privileged source reached drafting without a citation, because
+its `source_id` is NULL and `v_fact_status` included it as it included a
+theorized fact (#23). That is no longer true. A Privileged outcome now leaves the
+fact as a bare row, and `v_fact_status` skips it.
 
 No table is added: `main` stays at 23.
 
@@ -1165,6 +1167,36 @@ Purely additive. `main` moves from 23 to 25 tables.
 **The result is an interface.** `role` is one of `party`, `counsel`, `witness`, `expert`, `tribunal`; `capacity` carries a tribunal member's capacity or a party's proceeding roles; `search_terms` lists every name, alias and code to search. The inbound-correspondence notice depends on `role: "tribunal"` and `capacity`, so widen these values only with a new entry here.
 
 **Its read discipline is #56's:** a temp copy of `main.sqlite` only, no lock (#28), version-guarded through `resolve_paths.EXPECTED_USER_VERSION`, and fail-visible with three statuses, `ok`, `not_found` and `unavailable`, each non-`ok` status carrying its reason. `not_found` is not an error: the caller searches the name as given and says so.
+
+## 67. A Fact known only from a privileged source is a bare ID in the non-privileged store (2026-10-12)
+
+If the non-privileged store points at a Fact that is known only through privileged sources, the pointer is a **bare ID**: it holds no information about the content or the nature of that Fact. Only the privileged store knows what the ID means. The owner's words (2026-10-11): "they must be bare IDs that contain no information about the content or nature of the fact that they point to."
+
+**Why.** REQ-0002: privilege attaches to a Statement of Fact by its source and never to a Fact. A Statement of Fact points at a Fact and is never the Fact, so anything derived from a privileged statement by summary, paraphrase or abridgement is another statement pointing at the same Fact, and it carries the privilege. A `main.facts` row holding the privileged document's wording, or a "neutral" rewording of it, is privileged material in the non-privileged store. The remedy is the pointer. A better rewording cannot be one.
+
+**The bare row.** `description = ''` (the column is `NOT NULL`, so empty text), `created_date = NULL` (set explicitly, because its default is a date), `category`, `date_of_fact`, `source_id`, `source_locator`, `notes`, `basis_of_knowledge` and `informant` NULL, and `verified`, `human_reviewed` and `pending_reverification` 0. The exact state, the record and the moves are `operations/bare-privileged-facts.md`.
+
+**The record stays privileged.** `privileged.fact_provenance.source_note` carries the Statement of Fact on a `STATEMENT: ` line, with the row's other content on labelled lines. Nothing is drafted from it at any step: not a neutral proposition, not a summary, not a placeholder sentence.
+
+**Nothing links to a bare row, and readers skip it.** A position, evidence link, admission, criterion link or issue link to a bare row would say what kind of Fact it is, which is information about its nature. So none is written, and Step 4b of `operations/resolve-privilege.md` stops when a link to a fact of the document already exists. `v_fact_status` (and with it `get_facts_for_drafting.py`), `@query_05a` and `@query_05b` exclude `description = ''`, so a bare row never reaches a draft, list, book or page as a blank line or a placeholder. Only `@query_10` and `@query_22` show what an ID means, to the practitioner, by reading the privileged side.
+
+**Filling.** When a non-privileged source later states the same Fact, the row's `description` takes that source's own Statement of Fact, never the privileged wording and never a blend. From then on it is an ordinary fact row and may be linked. The practitioner names the pair. No similarity, text comparison or embedding decides a match.
+
+**Theorized facts are bare rows too** (ruling 2026-10-12). "A theorized fact is a statement of fact without any source", and it is privileged "for the same reason that the Theory of the Case is privileged". It exists "as tool to give direction to investigations" and is never argued, so it never reaches a draft. Its row gains wording only when non-privileged evidence states it, as above. Decision #23 is revised accordingly.
+
+**Why a bare row, not no row.** The `main.facts` row is what hands out `fact_id` values, and `fact_provenance.fact_id` is trigger-enforced against it (#12). No row would need the privileged side to mint IDs that cannot collide with main's, would remove a trigger pair and a delete guard, and would rewrite #12. A bare row changes no table, and #4 needs only the ID to join on.
+
+**Sequential IDs stay.** The order in which rows were created reveals nothing about the content of any privileged communication, and neither does the number of privileged statements about the content of any one of them. A count may be shown. Nothing else about a bare row is.
+
+**Rejected, because each resurfaces:**
+
+- *A neutral proposition drafted from the privileged wording, for the lawyer to review.* It is a statement derived from a privileged statement. "Neutral" means attributed to no one, and it does not mean not privileged.
+- *An embedding, full-text or similarity index over the privileged wording for use on the non-privileged side.* An embedding is derived from the content, and comparing it with a non-privileged statement's embedding reveals how close the two are.
+- *A randomized `fact_id`.* Sequential IDs reveal nothing here (above), and the order is useful.
+
+**Existing data.** Every matter where Path B "Yes" or `resolve-privilege` ran holds rows carrying the privileged document's wording, and every theorized fact minted before this holds its wording. `operations/bare-privileged-facts.md` §3 and §4 count them and empty them after the practitioner approves the counts. A row is emptied only after its record is on the privileged side, and no row is ever deleted.
+
+**What does not change.** The two-store split and its firewall (#1, #2): no cross-store foreign-key path, and no schema rule that classifies privilege. The practitioner makes every privilege call, and this decision applies the consequence of one already made. `main` keeps its 25 tables and `privileged` its 3. No schema change.
 
 ---
 

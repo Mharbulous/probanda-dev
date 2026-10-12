@@ -11,12 +11,12 @@ A fact that has a `fact_provenance` row but no `evidence_links` row is not an er
 ## Steps
 
 1. Resolve the pointer and read `shared/conventions.md` first.
-2. Identify the fact (`main.facts.fact_id`) that was learned from the privileged source, and the privileged source (`privileged.privileged_sources.source_id`).
+2. Identify the fact (`main.facts.fact_id`) that was learned from the privileged source, and the privileged source (`privileged.privileged_sources.source_id`). When no non-privileged source states the fact, its `main.facts` row is a **bare row**: an ID and nothing else, and the privileged statement's wording goes into `source_note` below, never into `main` (`design-decisions.md` #67; `../../operations/bare-privileged-facts.md`).
 3. Insert a row into `privileged.fact_provenance`:
    - `fact_id` = the `main.facts` id (cross-database trigger-FK enforces the target exists in `main.facts`).
    - `source_id` = the `privileged.privileged_sources` id.
    - `source_locator` = where in the privileged source the fact appears.
-   - `source_note` = any explanatory note — this is also where a privileged informant's identity is recorded when `main.facts.informant` had to be NULLed out to protect privilege (see `shared/conventions.md` and the compound-document informant rule).
+   - `source_note` = the Statement of Fact on a `STATEMENT: ` line when the fact is a bare row (record format: `../../operations/bare-privileged-facts.md` §2), then any explanatory note — this is also where a privileged informant's identity is recorded when `main.facts.informant` had to be NULLed out to protect privilege (see `shared/conventions.md` and the compound-document informant rule).
    - `verified` = 0 (or 2 if a prefixed note applies — `shared/conventions.md` §5).
 4. **Never write to `main.evidence_links` from this playbook.** If the fact also happens to be provable by non-privileged material, that is a separate evidence-linking action, not part of recording provenance.
 5. Run the dump (`shared/conventions.md` §8) after the mutation.
