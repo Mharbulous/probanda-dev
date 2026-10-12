@@ -1,6 +1,6 @@
 # Operation: participants (resolve a name; record an alias or a tribunal member)
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2; halt on any tool error per §2.3. A **participant** is a party, a party's counsel, a witness (an expert is a witness) or a tribunal member, and an **alias** is another recorded spelling or a file code (`../GLOSSARY.md`, "Participant, Tribunal Member, Alias"). Design: `../references/design-decisions.md` #65, #66.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2; halt on any tool error per §2.3. A **participant** is a party, a party's counsel, a witness (an expert is a witness) or a tribunal member, and an **alias** is another recorded spelling or a file code. Design: `../references/design-decisions.md` #65, #66.
 
 Two paths: **resolve** (read-only, any caller) and **record** (a write, only on the practitioner's approval).
 

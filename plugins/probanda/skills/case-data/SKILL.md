@@ -27,8 +27,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 2. Read **only** the identified operation file under `operations/`.
 3. Every operation begins by reading `shared/conventions.md` (pointer resolution, environment contract, cross-cutting conventions) — that is always the first step.
 4. Before composing any SQL, read `references/schema.sql`. Never guess a table or column name.
-5. Read `GLOSSARY.md` only when a terminology or ambiguity question arises (it is the domain glossary).
-6. Before modifying this skill itself, read `references/design-decisions.md` — it records load-bearing design decisions.
+5. Before modifying this skill itself, read `references/design-decisions.md` — it records load-bearing design decisions.
 
 **This works from any originating skill.** If you arrived here mid-task from another skill's workflow rather than from `/case-data` itself, nothing further is required: following steps 1–4 above *is* what the `case_data__*` tools mean by "Only the /case-data skill may call this tool." Read the operation file the routing table names and do exactly what it says — for most operations that means calling `case_data__query` / `case_data__execute` yourself; `operations/migrate.md` is the exception and routes through the `migration-runner` subagent.
 
