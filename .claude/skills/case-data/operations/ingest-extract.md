@@ -161,10 +161,22 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    - Every response `fact_position.target_fact_key` must resolve to
      `ANSWERED_FACTS`, except a `claim` that targets a genuinely new fact from
      this same extraction. Every relief position must likewise resolve.
-   - Reject any proposed fact whose substance merely says a party admits,
-     denies, does not admit, lacks knowledge, requires proof, takes no position,
-     consents, opposes, incorporates, adopts, or refers to a paragraph. Report
-     the offending locator and abort rather than silently dropping it.
+   - Reject any proposed fact that is plainly a stance on a pleading paragraph:
+     a party admits, denies, does not admit, takes no position on, consents to,
+     opposes, incorporates or adopts a numbered paragraph ("admits paragraph
+     4", "consents to the relief in paragraph 2", "paragraphs 9 to 20 are
+     denied"). Report the offending locator and abort rather than silently
+     dropping it.
+   - A fact that only might be a stance is kept, never dropped and never an
+     abort: a bare paragraph reference, non-admission wording with no numbered
+     paragraph (does not admit, no knowledge, outside its knowledge, strict
+     proof, takes no position), or one of those verbs with a pleading or an
+     allegation as its object. The helper sets that fact's `notes` to an
+     `UNCONFIRMED:` note and its `verified` to 2. Step 4 writes both as set, so
+     the fact goes to the human queue. Report each such locator.
+   - The same words used any other way pass untouched: a proper noun ("a
+     Consent Order was made") or a verb with another object ("asked to consent
+     to an injunction", "opposes the adjournment").
    - **When `extract-sought-orders.md` was dispatched**, validate its output
      inline (no `pleading_positions.py` change): the `sought_orders` array must
      be present (possibly empty); every `order_number` and `order_text` must be
