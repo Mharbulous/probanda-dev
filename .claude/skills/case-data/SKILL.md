@@ -55,6 +55,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 | "Which documents are awaiting a privilege call?" | operations/query.md (`@query_28_pending_privilege_review`) |
 | "Which held authority carries this instrument's full text?" (a statute or regulation, by citation or title; a bundled copy returns the book's path and its `bundled_pages`) | operations/query.md (`@query_30_instrument_text_source`) |
 | "Decide privilege for this document" / "resolve privilege review" | operations/resolve-privilege.md |
+| "Empty the privileged wording out of the facts" / "make the facts known only from privileged sources bare rows" / a non-privileged source now states a fact that is a bare row (fill it) | operations/bare-privileged-facts.md |
 | "Review unverified rows" / "what needs my review" | operations/review.md |
 | "Re-check corrected rows" / "clear the re-verification backlog" | operations/ingest-verify.md (`@query_05d_pending_reverification`) |
 | "Correct/amend a legal proposition, finding, or criterion" / apply a verifier or lint finding to law-side text | operations/amend-law.md |

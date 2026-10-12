@@ -36,10 +36,15 @@ SELECT
   (SELECT COUNT(*) FROM main.sought_orders     WHERE source_id = ?1) AS sought_orders,
   (SELECT COUNT(*) FROM main.witnesses         WHERE report_source_id = ?1) AS expert_reports,
   (SELECT COUNT(*) FROM main.causes_of_action  WHERE source_id = ?1) AS causes_of_action,
-  (SELECT COUNT(*) FROM main.sources           WHERE parent_source_id = ?1) AS child_sources;
+  (SELECT COUNT(*) FROM main.sources           WHERE parent_source_id = ?1) AS child_sources,
+  (SELECT COUNT(*) FROM main.positions         WHERE fact_id IN (SELECT fact_id FROM main.facts WHERE source_id = ?1)) AS fact_positions,
+  (SELECT COUNT(*) FROM main.evidence_links    WHERE fact_id IN (SELECT fact_id FROM main.facts WHERE source_id = ?1)) AS fact_evidence_links,
+  (SELECT COUNT(*) FROM main.admissions        WHERE fact_id IN (SELECT fact_id FROM main.facts WHERE source_id = ?1)) AS fact_admissions,
+  (SELECT COUNT(*) FROM main.criteria_facts    WHERE fact_id IN (SELECT fact_id FROM main.facts WHERE source_id = ?1)) AS fact_criteria_links,
+  (SELECT COUNT(*) FROM main.issue_facts       WHERE fact_id IN (SELECT fact_id FROM main.facts WHERE source_id = ?1)) AS fact_issue_links;
 ```
 
-Count every row, closed and rejected ones included: each is a foreign key a delete would have to clear. Every column except `facts` is an **other reference**, and any non-zero other reference blocks the Privileged outcome in Step 4b.
+Count every row, closed and rejected ones included: each is a foreign key a delete would have to clear. Every column except `facts` is an **other reference**, and any non-zero other reference blocks the Privileged outcome in Step 4b. The last five columns count links *to this document's facts* from any source: a Privileged outcome leaves those facts as bare rows, and nothing in the non-privileged store links to a bare row (`../references/design-decisions.md` #67).
 
 Then read the facts for the presentation:
 
@@ -85,7 +90,7 @@ Nothing else changes. `listed` stays 0 (listing is [`../references/playbooks/lod
 
 **First, the stop rule.** If Step 2 found any other reference, **stop**. Report each table and its row count to the practitioner and write nothing. Do not close, delete, or re-point those rows to clear the way: each one is a stance, a proof link, or a record someone relied on, and deciding what becomes of it is a separate instruction from the practitioner.
 
-Otherwise ask with `AskUserQuestion` for the privileged category: `solicitor_client`, `privileged_correspondence`, `privileged_work_product`, or `other`. Then run **one** `case_data__execute` script, the four statements in this order:
+Otherwise ask with `AskUserQuestion` for the privileged category: `solicitor_client`, `privileged_correspondence`, `privileged_work_product`, or `other`. Then run **one** `case_data__execute` script, the four statements in this order. The document's facts stay in `main.facts` only as **bare rows**: statement 2 copies each Statement of Fact and its other content to the privileged side before statement 3 empties the row (`bare-privileged-facts.md` §1 and §2; `../references/design-decisions.md` #67). Rewording a privileged statement does not make it non-privileged, so no step drafts a replacement.
 
 ```sql
 -- 1. Register the document on the privileged side, recording its lineage.
@@ -101,26 +106,53 @@ FROM main.sources
 WHERE source_id = <source_id>
   AND privilege_status = 'pending';
 
--- 2. Each fact keeps where it was learned, as privileged provenance. The new
---    privileged row is found by its lineage note; MAX picks this run's row if
---    an earlier re-home reused the same main source_id. Statements 1-4 each
---    re-check that the source is still pending, so if another session decided
---    it after Step 1, the whole script is a no-op.
+-- 2. Each fact keeps where it was learned, as privileged provenance, and its
+--    Statement of Fact goes with it (the record format is
+--    bare-privileged-facts.md §2). The new privileged row is found by its
+--    lineage note; MAX picks this run's row if an earlier re-home reused the
+--    same main source_id. Statements 1-4 each re-check that the source is
+--    still pending, so if another session decided it after Step 1, the whole
+--    script is a no-op.
 INSERT INTO privileged.fact_provenance
-  (fact_id, source_id, source_locator, verified)
+  (fact_id, source_id, source_locator, source_note, verified)
 SELECT f.fact_id,
        (SELECT MAX(ps.source_id) FROM privileged.privileged_sources ps
         WHERE ps.notes LIKE 'Re-homed from main.sources source_id <source_id> on %'),
        f.source_locator,
+       'STATEMENT: ' || replace(replace(f.description, char(13), ' '), char(10), ' ')
+         || CASE WHEN f.category IS NOT NULL
+                 THEN char(10) || 'CATEGORY: ' || f.category ELSE '' END
+         || CASE WHEN f.date_of_fact IS NOT NULL
+                 THEN char(10) || 'DATE OF FACT: ' || f.date_of_fact ELSE '' END
+         || CASE WHEN f.basis_of_knowledge IS NOT NULL
+                 THEN char(10) || 'BASIS OF KNOWLEDGE: ' || f.basis_of_knowledge ELSE '' END
+         || CASE WHEN f.informant IS NOT NULL
+                 THEN char(10) || 'INFORMANT: '
+                      || replace(replace(f.informant, char(13), ' '), char(10), ' ') ELSE '' END
+         || CASE WHEN f.notes IS NOT NULL
+                 THEN char(10) || 'NOTES: '
+                      || replace(replace(f.notes, char(13), ' '), char(10), ' ') ELSE '' END
+         || CASE WHEN f.source_locator IS NOT NULL
+                 THEN char(10) || 'LOCATOR: '
+                      || replace(replace(f.source_locator, char(13), ' '), char(10), ' ') ELSE '' END
+         || CASE WHEN f.created_date IS NOT NULL
+                 THEN char(10) || 'CREATED: ' || f.created_date ELSE '' END
+         || CASE WHEN f.human_reviewed = 1
+                 THEN char(10) || 'HUMAN REVIEWED: 1' ELSE '' END,
        f.verified
 FROM main.facts f
 WHERE f.source_id = <source_id>
   AND EXISTS (SELECT 1 FROM main.sources
               WHERE source_id = <source_id> AND privilege_status = 'pending');
 
--- 3. The facts stay in main, cut loose from the main-store source.
+-- 3. The facts stay in main as bare rows: cut loose from the main-store source
+--    and emptied to the state in bare-privileged-facts.md §1. Their content is
+--    on the privileged side from statement 2, so nothing is lost.
 UPDATE main.facts
-SET source_id = NULL, source_locator = NULL
+SET description = '', category = NULL, date_of_fact = NULL, source_id = NULL,
+    source_locator = NULL, created_date = NULL, notes = NULL,
+    basis_of_knowledge = NULL, informant = NULL,
+    verified = 0, human_reviewed = 0, pending_reverification = 0
 WHERE source_id = <source_id>
   AND EXISTS (SELECT 1 FROM main.sources
               WHERE source_id = <source_id> AND privilege_status = 'pending');
@@ -131,7 +163,7 @@ WHERE source_id = <source_id>
   AND privilege_status = 'pending';
 ```
 
-Never set `human_reviewed`, and never change a fact's `verified` value: the provenance row copies it. Afterwards, confirm with `case_data__query` that the `main.sources` row is gone and that the new privileged source has one `fact_provenance` row per re-homed fact. Do this before any retry (conventions §2.3).
+Never set `human_reviewed`, and never change a fact's `verified` value yourself: statement 2 copies it to the provenance row and records a human review on the `HUMAN REVIEWED:` line, and only then does statement 3 reset both on the now-bare main row. Afterwards, confirm with `case_data__query` that the `main.sources` row is gone, that the new privileged source has one `fact_provenance` row per re-homed fact and that each note begins with `STATEMENT: `, and that the re-homed facts have `description = ''`. Compare counts only. Do this before any retry (conventions §2.3).
 
 **Why the main row is deleted, when promotion never deletes.** Decision #1 keeps the main store for non-privileged sources only, and a practitioner has now decided this one is privileged. Decision #3's "promotion never deletes" governs the opposite direction, privileged to producible. There the privileged row is the permanent record of how a document was once treated. A pending main row is a holding state, not such a record. A tombstone left behind would keep a privileged document registered on the non-privileged side, and every reader would have to exclude it forever. The lineage survives on the privileged side instead, in the new row's `notes` and in the matching `file_hash`.
 

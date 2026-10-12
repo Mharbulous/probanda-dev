@@ -175,7 +175,7 @@ Applies to `positions` and `evidence_links`. **Never UPDATE or DELETE the substa
 2. Insert the successor: `valid_from = date('now','localtime')`, `prior_id` = the old row's id.
 
 The current row is the one where `valid_to IS NULL`. Views filter `valid_to IS NULL`
-plus `verified >= 0`; factual views also require `pending_reverification = 0`.
+plus `verified >= 0`; factual views also require `pending_reverification = 0`. Every read of facts that serves drafting, a list or a page also skips a **bare row** (`description = ''`, a Fact known only from a privileged source: design-decisions #67). That applies to an ad-hoc read as much as to a view.
 
 ---
 

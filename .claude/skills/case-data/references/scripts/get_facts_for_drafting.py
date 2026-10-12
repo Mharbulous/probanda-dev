@@ -117,7 +117,8 @@ def main(argv=None):
 
 
 def _ensure_views(con):
-    """Create the views from the shipped queries.sql if absent (idempotent).
+    """Create the views from the shipped queries.sql (idempotent; v_fact_status
+    is dropped and created each run, so its bare-row exclusion, #67, always holds).
 
     NOTE: splitting on ';' and filtering by startswith('CREATE VIEW') does NOT
     work here -- each split chunk starts with the *preceding* comment block,
