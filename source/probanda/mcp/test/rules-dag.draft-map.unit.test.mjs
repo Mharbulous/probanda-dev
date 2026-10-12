@@ -10,7 +10,7 @@ import test from "node:test";
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 process.env.COCLERK_REPO_ROOT = REPO;
 const { loadRulesDag } = await import("../build/files/rules-dag.js");
-const { skillRulesCoverage } = await import("../build/files/skill-rules.js");
+const { skillRulesApplicable, skillRulesCoverage } = await import("../build/files/skill-rules.js");
 
 test("the real /draft map loads with no lint error, one node per file, and leaves no SKILL.md line unmapped", () => {
   const dag = loadRulesDag("draft");
@@ -20,4 +20,9 @@ test("the real /draft map loads with no lint error, one node per file, and leave
     skillRulesCoverage("draft").files.filter((f) => f.lines_unmapped > 0).map((f) => f.path),
     []
   );
+});
+
+test("the file-card rule is always on for /draft", () => {
+  const result = skillRulesApplicable("draft", "enter", {});
+  assert.ok(result.always_on.includes("draft.document-question"));
 });
