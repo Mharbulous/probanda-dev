@@ -44,7 +44,7 @@ Do these in order. Nothing in this section asks the practitioner anything.
 
 ## 5. The question, when one is still needed
 
-Ask only when the result's `could_not_determine` is not empty, one question per `/show-me`, with the letter's file card. The question says what was checked, what could not be checked and why, and asks only for that. For example: the firm account's sent folder was searched for the week after the letter's date and nothing was found, and the fax log could not be opened, so was the letter faxed?
+Ask only when the result's `could_not_determine` is not empty, one question per `/show-me`, with the letter's file card. The question says what was checked, what could not be checked and why, and asks only for that. For example: the firm account's sent folder was searched for the letter's date and the 2 weekdays after it and nothing was found, and the fax log could not be opened, so was the letter faxed?
 
 Never ask about a method the result holds as confirmed, and never ask before the check has run.
 
