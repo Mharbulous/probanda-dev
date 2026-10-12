@@ -582,6 +582,19 @@ export function createdByHeld(dbPath: string): boolean {
   return held;
 }
 
+/** Databases known to hold `tickets.bf_on` (schema v74). Only a present column is remembered, as
+ * for `deleted_at`. */
+const bfOnHeldDbs = new Set<string>();
+
+/** Whether `tickets.bf_on` exists. Before v74 no job carries a bring-forward date, so the date
+ * guard on assigning a job is left off. */
+export function bfOnHeld(dbPath: string): boolean {
+  if (bfOnHeldDbs.has(dbPath)) return true;
+  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'bf_on'")[0].n > 0;
+  if (held) bfOnHeldDbs.add(dbPath);
+  return held;
+}
+
 /** Databases known to hold `documents.exhibit_letters` (schema v56). Only a present column is
  * remembered, as for `deleted_at`. */
 const exhibitLettersHeldDbs = new Set<string>();

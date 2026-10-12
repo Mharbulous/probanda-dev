@@ -4,16 +4,20 @@
 // writes only while that holder is still on the row. The outcome is read off the confirm-read
 // exactly as a session reads the hand-run SELECT: its own token is assigned, another token is a
 // lost race (a changed holder on a take-over), no token means the guards matched nothing. A session
-// that created any job (tickets.created_by, schema v72) is assigned only a job it created. One
-// write, one read, never a retry. The job tables carry no revision triggers, so the revision does
+// that created any job (tickets.created_by, schema v72) is assigned only a job it created. A job is
+// not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date the
+// practitioner alone sets, changes and clears; a take-over, which matches only a wip job, does not
+// read it. One write, one read, never a retry. The job tables carry no revision triggers, so the revision does
 // not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
+import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
 const TOOL = "drafting_data__assign_job";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+/** True of a job with no bring-forward date, or one whose date is the local date or earlier. */
+const ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 
 export interface AssignJobArgs {
   db_path: string;
@@ -28,7 +32,7 @@ export interface AssignJobArgs {
 
 export interface AssignJobResult {
   ticket_id: number;
-  outcome: "assigned" | "lost_race" | "holder_changed" | "not_created_here" | "no_match";
+  outcome: "assigned" | "lost_race" | "holder_changed" | "not_created_here" | "before_bf" | "no_match";
   /** Rows the UPDATE changed: 1 when this call assigned the job, 0 otherwise. */
   changes: number;
   /** The confirm-read, as the hand-run SELECT returned it. */
@@ -36,6 +40,8 @@ export interface AssignJobResult {
   locked_at: string | null;
   status: string;
   rejected_at: string | null;
+  /** The job's bring-forward date, a start date; null when none is set or the database is below v74. */
+  bf_on: string | null;
   note: string;
   warning?: string;
 }
@@ -49,6 +55,10 @@ interface ConfirmRow {
   deleted_at?: string | null;
   /** Read only on a database at schema v72 or later. */
   created_by?: string | null;
+  /** Read only on a database at schema v74 or later. */
+  bf_on?: string | null;
+  /** Whether bf_on is later than the local date, by the same SQLite clock as the guard. */
+  before_bf?: number;
 }
 
 /** drafting_data__assign_job. Every refusal writes nothing. */
@@ -69,18 +79,23 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   // A session that created any job is assigned only a job it created (jobs-run.md §4).
   const creatorHeld = createdByHeld(args.db_path);
   const creator = creatorHeld ? " AND (created_by = ? OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = ?))" : "";
-  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}`) + creator;
+  // A job is not assigned before its bring-forward date (jobs-run.md §4). A take-over holds a wip job, which the date does not move.
+  const bfHeld = bfOnHeld(args.db_path);
+  const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
+  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const params = [args.session_token, args.ticket_id, ...(takeover ? [(args.expected_holder as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
   const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW} WHERE id = ? AND ${guard}`, params }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
-  const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome: AssignJobResult["outcome"];
   let note: string;
+  // The date guard refused it, whatever the creator guard would have said.
+  const beforeBf = !takeover && read.before_bf === 1;
   // The creator guard alone refused it: every other guard would have matched the row.
-  const otherwiseEligible = read.rejected_at === null && !read.deleted_at
+  const otherwiseEligible = read.rejected_at === null && !read.deleted_at && !beforeBf
     && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() : read.status === "queued" && read.locked_by === null);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
@@ -97,6 +112,9 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   } else if (read.deleted_at) {
     outcome = "no_match";
     note = `Job ${id} was not assigned: it is deleted (deleted_at=${read.deleted_at}), so the guards matched nothing. Re-render; never re-run to win.`;
+  } else if (beforeBf && read.status === "queued" && read.rejected_at === null) {
+    outcome = "before_bf";
+    note = `Job ${id} was not assigned: it is held until its bring-forward date (bf_on=${read.bf_on}), so nothing was written. Say so in one line. Only the practitioner changes or clears that date; never propose it, and never re-run to win.`;
   } else {
     outcome = "no_match";
     note = `Job ${id} was not assigned: its row is status=${read.status}, rejected_at=${read.rejected_at ?? "NULL"}, so the guards matched nothing. Re-render; never re-run to win.`;
@@ -109,6 +127,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     locked_at: read.locked_at,
     status: read.status,
     rejected_at: read.rejected_at,
+    bf_on: read.bf_on ?? null,
     note,
     ...(written.warning ? { warning: written.warning } : {}),
   };

@@ -500,6 +500,7 @@ const CRITERION_GLYPH: Record<GoalState, string> = { met: "✅", unmet: "❌", p
 const CHIP_LABELS: Record<Category, string> = {
   ready: "Ready",
   wip: "In Progress",
+  bring_forward: "Bring Forward",
   waiting: "Blocked",
   superseded: "Superseded",
   completed: "Completed",
@@ -511,11 +512,12 @@ const CHIP_LABELS: Record<Category, string> = {
 const LANES: [Category, string][] = [
   ["ready", "Ready"],
   ["wip", "In Progress"],
+  ["bring_forward", "Bring Forward"],
   ["waiting", "Blocked"],
   ["superseded", "Superseded"],
 ];
 
-const LIVE: ReadonlySet<Category> = new Set(["ready", "wip", "waiting"]);
+const LIVE: ReadonlySet<Category> = new Set(["ready", "wip", "bring_forward", "waiting"]);
 
 /** The idle report's threshold (draft/SKILL.md): a job that moved this recently gets no idle tag. */
 const IDLE_AFTER_MINUTES = 15;
@@ -587,13 +589,15 @@ function idleTag(t: WorkBoardTicket, rendered: string): string | null {
 }
 
 /** The tags only the model sees after a `live` lane job line: Dispatch's on a Ready job, the idle
- * report's on an In progress one, then its idle flag past the firm's threshold. */
+ * report's on an In progress one, then its idle flag past the firm's threshold, and `BF <date>` on
+ * a Bring Forward one: its start date as a plain date, never a deadline and never a day count. */
 function tagTail(t: WorkBoardTicket, rendered: string): string {
   if (t.category === "ready") {
     const eligible = t.eligible ? "yes" : `no (${t.ineligible_reasons.join(", ")})`;
     const dispatch = t.dispatch_skips.length === 0 ? "ok" : `skip (${t.dispatch_skips.map(skipText).join("; ")})`;
     return ` · eligible: ${eligible} · dispatch: ${dispatch}`;
   }
+  if (t.category === "bring_forward") return ` · BF ${t.bf_on}`;
   if (t.category !== "wip") return "";
   const idle = idleTag(t, rendered);
   return (idle === null ? "" : ` · ${idle}`) + (t.idle_flag ? ` · ${t.idle_flag}` : "");
@@ -623,6 +627,7 @@ function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | 
   const own = seeds.filter((s) => s.origin_ticket_id === t.id);
   if (own.length > 0) lines.push(`  loose threads: ${own.map((s) => `loose thread ${s.id}: ${JSON.stringify(s.idea)} (${s.created})`).join("; ")}`);
   if (t.answers.length > 0) lines.push(`  answers: ${t.answers.map((a) => `${a.file_path} (${a.saved_at})`).join("; ")}`);
+  if (t.category === "bring_forward") lines.push(`  bring forward: ${t.bf_on}`);
   if (t.category === "completed") lines.push(`  completed: ${t.completed_at ?? "(unknown time)"}`);
   if (t.category === "rejected") lines.push(`  shelved: ${t.rejected_at ?? "(unknown time)"}`);
   return lines;
@@ -741,7 +746,8 @@ export function renderBoardSummary(section: WorkBoardData, client: ClientContext
  * board_card's `live` lane: every lane with its count, an empty one its heading alone. A job line is
  * the page's collapsed card text (collapsedText), then its tag tail: `eligible:` and `dispatch:` on a
  * Ready job, `idle` on an In progress job with no recorded activity for more than 15 minutes, measured
- * to the section's Rendered minute, then `idle past <N> h` past the firm's idle_flag_hours. Ready
+ * to the section's Rendered minute, then `idle past <N> h` past the firm's idle_flag_hours, and
+ * `BF <date>` on a Bring Forward job, a lane printed between In Progress and Blocked. Ready
  * closes with `dispatch choice:`. Completed and Shelved print their counts alone between Blocked and
  * Superseded, Loose Threads and Proposed theirs after Superseded, a pre-filing section has no
  * Proposed, and `🧹 lapsed keys:` closes the lane when any.

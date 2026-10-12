@@ -1429,15 +1429,18 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "prompt. takeover: true needs expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with " +
         "jobs), and the write lands only while that holder is still on the row. A shelved, completed or superseded job is " +
         "never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
-        "created, by take-over or otherwise. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
+        "created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema " +
+        "v74), a start date and never a deadline; a take-over does not read it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
         "tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes " +
         "is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just " +
         "taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and " +
         "ask afresh), not_created_here (this session created jobs and this is not one of them: nothing was written; say so " +
-        "in one line), no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +
+        "in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; " +
+        "say so in one line, and never propose changing or clearing the date, which only the practitioner does), " +
+        "no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +
         "Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, " +
-        "invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at " +
-        "and a note.",
+        "invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
+        "bf_on and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1777,9 +1780,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met " +
         "counts the items the practitioner shelved or suppressed (🤫) and total the items still flagged, shelved or suppressed, since an item " +
         "fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, " +
-        "`## <lane> (n)` for Ready, In Progress, Blocked and Superseded, " +
+        "`## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, " +
         "each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, " +
-        "`idle …` on an In Progress one, measured to this call's rendered_at), `dispatch choice: …` after Ready, " +
+        "`idle …` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the " +
+        "day its work may start and never a deadline), `dispatch choice: …` after Ready, " +
         "the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and " +
         "Proposed (a filing's only), then `🧹 lapsed keys: …` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` " +
         "and `  key: … · item: … · lane: …`, then, on a note-up of a statute, regulation or rule, `  step <n>: " +

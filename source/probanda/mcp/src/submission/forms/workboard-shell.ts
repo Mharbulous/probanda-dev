@@ -212,6 +212,7 @@ const TAIL = String.raw`</script>
     var CHIPS = {
       ready: ["ready", "Ready"],
       wip: ["wip", "In Progress"],
+      bring_forward: ["bring-forward", "Bring Forward"],
       waiting: ["waiting", "Blocked"],
       superseded: ["superseded", "Superseded"],
       completed: ["done", "Completed"],
@@ -240,6 +241,8 @@ const TAIL = String.raw`</script>
       if (t.lock_note) summary.appendChild(el("span", "subtitle", t.lock_note));
       // Idle past the firm's threshold, finished on the server and drawn as given.
       if (t.idle_flag) summary.appendChild(el("span", "subtitle", t.idle_flag));
+      // The job's start date as a plain date: never a deadline, and never a day count.
+      if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
       var progress = el("span", "progress");
       progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
       // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
@@ -615,6 +618,7 @@ const TAIL = String.raw`</script>
     }
     jobSection("ready", "ready", "Ready", "Nothing ready to assign.");
     jobSection("wip", "in-progress", "In Progress", "Nothing in progress.");
+    jobSection("bring_forward", "bring-forward", "Bring Forward", "Nothing held for a bring-forward date.");
     jobSection("waiting", "waiting-on", "Blocked", "Nothing blocked.");
     jobSection("completed", "completed", "Completed", "Nothing completed.");
     // Shelved holds shelved tickets and the Proposals shelved directly. A Proposal hidden

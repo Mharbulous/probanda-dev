@@ -64,6 +64,8 @@ interface TicketRow {
   superseded_marker_gone_at: string | null;
   /** Schema v54; absent on a database held below it. */
   deleted_at?: string | null;
+  /** Schema v74; absent on a database held below it. */
+  bf_on?: string | null;
 }
 
 /** A deleted job (schema v54, jobs-closeout.md §10a): drawn only as a struck line on the page. */
@@ -161,7 +163,7 @@ export interface WorkBoardAttachment {
   attached_on: string;
 }
 
-export type Category = "ready" | "wip" | "waiting" | "superseded" | "completed" | "rejected";
+export type Category = "ready" | "wip" | "bring_forward" | "waiting" | "superseded" | "completed" | "rejected";
 
 /** An edge to another ticket (blocker, conflict partner, superseding ticket). `status` is null when
  * that ticket is outside this proceeding's own fetch -- discipline forbids such an edge
@@ -196,6 +198,9 @@ export interface WorkBoardTicket {
   completed_at: string | null;
   /** When the practitioner rejected the angle this ticket was outlined from; null on a live ticket. */
   rejected_at: string | null;
+  /** The job's bring-forward date (`YYYY-MM-DD`, schema v74): the first day it may be worked, a
+   * start date and never a deadline. Null when none is set, and on a database held below v74. */
+  bf_on: string | null;
   superseded_by: WorkBoardEdge | null;
   /** `entity` for a whole-table grant, `entity:id` for a row. Stale the instant it renders; a write gate reads live. */
   scope: string[];
@@ -487,13 +492,16 @@ function latestStamp(stamps: readonly (string | null)[]): string | null {
  * blocker -- it can never silently read as "completed" or "no blocker at all" the way
  * filtering it out of the list would. A wip job is In Progress whether or not its steps are all
  * stamped, so Dispatch never claims a job another session still holds. A queued job whose blocker
- * was superseded or shelved is Blocked until it is outlined afresh. */
-function classify(ticket: TicketRow, blockers: WorkBoardEdge[], conflictPartners: WorkBoardEdge[]): Category {
+ * was superseded or shelved is Blocked until it is outlined afresh. A queued job whose bring-forward
+ * date (bf_on) is later than `today`, the local date, is in Bring Forward whatever its blockers;
+ * from that date on it reads as Blocked or Ready, with no write. */
+function classify(ticket: TicketRow, blockers: WorkBoardEdge[], conflictPartners: WorkBoardEdge[], today: string): Category {
   if (ticket.rejected_at !== null) return "rejected";
   if (ticket.status === "completed") return "completed";
   if (ticket.status === "superseded") return "superseded";
   if (ticket.status === "wip") return "wip";
   // queued
+  if (ticket.bf_on != null && ticket.bf_on > today) return "bring_forward";
   if (blockers.some((b) => b.status !== "completed")) return "waiting";
   if (conflictPartners.some((p) => p.status === "wip")) return "waiting";
   return "ready";
@@ -534,7 +542,15 @@ export interface ProceedingBoard {
   deleted: DeletedTicket[];
 }
 
-export function buildProceedingBoard(dbPath: string, proceedingId: number): ProceedingBoard {
+/** Today's local date, `YYYY-MM-DD`, which a bring-forward date reads against as a string. */
+function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** `today` is the local date the Bring Forward lane reads against: a section builder passes its
+ * Rendered minute's date, so the lane agrees with the stamp the section prints. */
+export function buildProceedingBoard(dbPath: string, proceedingId: number, today: string = localToday()): ProceedingBoard {
   const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
   const ticketById = new Map(proceedingTickets.map((t) => [t.id, t]));
   const proceedingIds = proceedingTickets.map((t) => t.id);
@@ -599,7 +615,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number): Proc
   const tickets = proceedingTickets.map((t) => {
     const blockedBy = (blockersOf.get(t.id) ?? []).map(edge);
     const conflictPartners = (conflictsOf.get(t.id) ?? []).map(edge);
-    const category = classify(t, blockedBy, conflictPartners);
+    const category = classify(t, blockedBy, conflictPartners, today);
     const ticket: WorkBoardTicket = {
       id: t.id,
       title: t.title,
@@ -612,6 +628,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number): Proc
       locked_at: t.locked_at,
       completed_at: t.completed_at,
       rejected_at: t.rejected_at,
+      bf_on: t.bf_on ?? null,
       // A stale gate job pointed at a deleted replacement reads as superseded with no pointer.
       superseded_by: t.superseded_by === null || deletedIds.has(t.superseded_by) ? null : edge(t.superseded_by),
       scope: (scopeByTicket.get(t.id) ?? []).map((s) => (s.entity_id === null ? s.entity : `${s.entity}:${s.entity_id}`)),
@@ -1405,7 +1422,7 @@ function withIdleFlag(t: WorkBoardTicket, rendered: string, hours: number | null
 /** `deadlines` are the dateless Goal criteria of the anchors linked to this filing in practice data
  * (matter-dates.ts deadlineCriteria); they print after `gate` and `hearing-date`. */
 export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly GoalCriterion[] = []): WorkBoardData {
-  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id);
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
   const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e) => (e.generating ? [proposalKey(e)] : [])));
   const { proposals, lapsed_keys, shelved, current } = proposalsFor(ctx, board);
@@ -1473,7 +1490,7 @@ export function buildPreFilingBoardData(
   proceeding: ProceedingRow,
   meta: { revision: number; matter: string; client: string; rendered: string }
 ): WorkBoardData {
-  const board = buildProceedingBoard(dbPath, proceeding.id);
+  const board = buildProceedingBoard(dbPath, proceeding.id, meta.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
   return {
     meta: {
