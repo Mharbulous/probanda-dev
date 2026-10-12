@@ -10,10 +10,13 @@ This write and its confirm-read run as one call, `drafting_data__assign_job` (`t
 ```sql
 UPDATE tickets SET status = 'wip', locked_by = 'sess-a1', locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
   WHERE id = 2 AND status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND deleted_at IS NULL
+    AND (bf_on IS NULL OR bf_on <= date('now', 'localtime'))
     AND (created_by = 'sess-a1' OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = 'sess-a1'));
 ```
 
 The `created_by` clause is the creator guard. It rides the take-over variant below too. On a database before v72, which has no `created_by`, the tool leaves it out.
+
+The `bf_on` clause is the bring-forward guard (schema v74, `jobs-closeout.md` §10b): a job is not assigned before its BF date, the first day the practitioner said it may be worked. The date is a start date, never a deadline. The guard has no override: the practitioner changes or clears the date, and a session never proposes that. It does not ride the take-over variant, which matches only a `wip` job, and a `wip` job is not moved by a date. On a database before v74, which has no `bf_on`, the tool leaves it out.
 
 `'sess-a1'` stands in for your own `session_token` (§1) — write that value, never a name you invented.
 
@@ -25,6 +28,7 @@ Then run the confirm-read (§2). Three failures, and they are not the same failu
 
 - **Another session's token on the returned row** — the assigning write lost a race (single-practitioner use makes this rare, not impossible). Re-render and restate the Opening, with one line saying the job was just taken. Never proceed as if the job had been assigned, and never convert it into a take-over on your own initiative. **With nobody to present the Opening to** (the unattended run, the 2026-09-21 design §5.4): stop and report the lost race, naming the job and the token now on it. Never retry, whether on that job or the next eligible one.
 - **`not_created_here`** — `locked_by` NULL, this session created jobs, and the returned row's `created_by` is not this session's token: the creator guard refused it. Nothing was written. Say in one line that this session created jobs and may be assigned only one of those, and that a new `/draft` session takes this one. Never retry.
+- **`before_bf`** — `locked_by` NULL on a `queued`, unshelved job whose returned `bf_on` is later than the local date: the bring-forward guard refused it. Nothing was written. Say in one line that the job is held until its BF date, giving the date as a plain date with no day count. Never offer to change or clear the date, and never retry. **With nobody present**, stop and report it.
 - **`locked_by` NULL on the returned row** otherwise — not a race for the lock. Two writes clear a `wip` lock: §10's release, which the holding session runs on its own job and another session runs only on the practitioner's "Return it to Ready" (ADR 0037), and §10a's in-progress shelving, which clears the lock and stamps `rejected_at` in the same `UPDATE`, and runs on another session's job only on the practitioner's own answer. Short of one of those landing between the assigning write and this read, a NULL here means the `UPDATE` matched no row at all: a wrong id, or a job already `wip` or shelved when the card was composed. That is a composition bug in this session's own script. This read cannot tell the two apart, because a job shelved before the card was composed carries `rejected_at` too, and a release landing in between leaves the same row as a wrong id. Either way, stop and report it, naming the id written and what the read returned.
 
 **Take-over variant** (design §5.2 — a `wip` job started in another session, possibly still open): the same `UPDATE` with no `locked_by IS NULL` guard and a widened status clause, only after the practitioner has explicitly said yes to the take-over prompt:

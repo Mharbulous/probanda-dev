@@ -192,6 +192,35 @@ SELECT t.id, t.title, p.proposal_key FROM ticket_proposals p JOIN tickets t ON t
 
 After a restore that landed, re-render.
 
+## 10b. Bring forward (bookkeeping)
+
+A job the practitioner wants held until a set day carries that day in `tickets.bf_on` (schema v74), a `YYYY-MM-DD` by CHECK. Until then the job shows in the Job Board's Bring Forward lane, tagged `BF <date>` on `board_card`'s `live` lane, and `drafting_data__assign_job` refuses it with `before_bf` (`jobs-run.md` §4). From that day on it reads as Blocked or Ready with no write: the lane is derived at each render from the local date, and nothing is stored but the date. Bring Forward waits on a date, Blocked waits on another job, and a job held by both shows in Bring Forward first.
+
+**A BF date is a start date, never a deadline** (`shared/deadline-isolation.md`). It is printed as a plain date, with no day count, no overdue marking and no "due". Never label, compute or reason about it as a deadline or a limitation date, and never send it to `probanda:docket-clerk`.
+
+**Only on the practitioner's word.** A session sets, changes or clears a BF date only when the practitioner says so and names the date. It is never proposed, offered, inferred from a document or computed from another date. The date is the one job value typed as the practitioner gave it and not computed in SQL (`jobs-common.md` §0). Like a shelving, the write is bookkeeping: permitted in every session, and never a licence to edit the job's title, intent or steps.
+
+**Setting or changing the date** — a `queued`, unshelved job only. A `wip` job is not moved by a date, so release it first (`jobs-run.md` §10) if the practitioner wants it held; a shelved one is restored first (§10a):
+
+```sql
+UPDATE tickets SET bf_on = '2026-11-02'
+  WHERE id = 42 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL;
+```
+
+**Clearing the date** — which is also how the practitioner has a job worked before its date: there is no override on the assigning write.
+
+```sql
+UPDATE tickets SET bf_on = NULL WHERE id = 42 AND bf_on IS NOT NULL AND deleted_at IS NULL;
+```
+
+Then, after either, run the confirm-read:
+
+```sql
+SELECT status, rejected_at, deleted_at, bf_on FROM tickets WHERE id = 42;
+```
+
+`changes` 1 with `bf_on` as written means it landed. `changes` 0 means the guard matched nothing and the row says why: a status other than `queued`, `rejected_at` or `deleted_at` stamped, or, on a clear, no date to clear. A date that is not a `YYYY-MM-DD` is refused by the CHECK. Report which it was and stop. No revision bump. After a write that landed, re-render.
+
 ## 13. Clearing the retired Work Board keys
 
 The hosted Work Board artifact is retired (`docs/design/2026-09-14 work-board-local-only-design.md`, ADR 0015): the board is a local file only, and nothing in this file is mirrored anywhere. A matter that published one under the retired design still holds two `db_meta` keys, and `drafting_forms__bootstrap` reports the first as `legacy_workboard_artifact_url`. Two scripts, run only from `/draft` step 2, at most one of them ever per matter. Like every script in this file except §9a's retirement script, they touch only exempt tables, so §8's revision bump never fires for them.
