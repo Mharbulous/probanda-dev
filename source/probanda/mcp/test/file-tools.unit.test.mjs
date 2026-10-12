@@ -75,12 +75,12 @@ test("skill_source__read returns content, size, sha256, and the containing dir",
 
 test("skill_source__read round-trips a real repo file byte-for-byte", () => {
   const env = { COCLERK_REPO_ROOT: REPO_ROOT };
-  const result = skillSourceRead("plugin-packager/references/direct_mode.py", env);
-  const onDisk = readFileSync(join(REPO_ROOT, ".claude", "skills", "plugin-packager", "references", "direct_mode.py"));
+  const result = skillSourceRead("case-data/references/scripts/compute_hash.py", env);
+  const onDisk = readFileSync(join(REPO_ROOT, ".claude", "skills", "case-data", "references", "scripts", "compute_hash.py"));
   assert.equal(result.content, onDisk.toString("utf-8"));
   assert.equal(result.size, onDisk.byteLength);
   assert.equal(result.sha256, createHash("sha256").update(onDisk).digest("hex"));
-  assert.equal(result.dir, "plugin-packager/references");
+  assert.equal(result.dir, "case-data/references/scripts");
 });
 
 // A `match` read is a slice, so it earns its place only if the slice is whole.

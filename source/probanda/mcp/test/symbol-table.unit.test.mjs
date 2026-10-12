@@ -36,10 +36,10 @@ test("the table has one row per glyph in ALL_MARKER_GLYPHS, and no duplicates", 
   assert.deepEqual([...glyphs].sort(), [...ALL_MARKER_GLYPHS].sort());
 });
 
-test("the work rows are WORK_MARKER_GLYPHS, and the groups count 31 work, 13 event, 3 hold", () => {
+test("the work rows are WORK_MARKER_GLYPHS, and the groups count 31 work, 14 event, 3 hold", () => {
   const of = (group) => SYMBOLS.filter((s) => s.group === group).map((s) => s.glyph);
   assert.deepEqual([...of("work")].sort(), [...WORK_MARKER_GLYPHS].sort());
-  assert.deepEqual([of("work").length, of("event").length, of("hold").length], [31, 13, 3]);
+  assert.deepEqual([of("work").length, of("event").length, of("hold").length], [31, 14, 3]);
 });
 
 test("WORK_NAMES and GLYPH_SLUGS, derived from the table, equal the hand-written constants they replaced", () => {
