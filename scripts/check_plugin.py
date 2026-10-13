@@ -29,6 +29,9 @@ SHIPPED_DIR = ("plugins", "probanda")    # the built plugin
 COMMONS_SKILL = "legal-commons"
 # Skill trees that ship beside the roster skills, unstamped.
 EXTRA_TREES = ("shared", COMMONS_SKILL)
+# Skills already free of Trade Secrets live here, the source of the public repository,
+# and ship whole and unstamped. A skill lives here or under .claude/skills/, never both.
+PUBLIC_SKILLS_DIR = ("public", "plugins", "probanda", "skills")
 # The agents merged in from legal-commons' read side.
 COMMONS_AGENTS = ("law-librarian", "troubleshooter")
 
@@ -183,13 +186,23 @@ def packaged_assets(repo):
     return {s: tuple(d) for s, d in roster(repo).items() if d}
 
 
+def public_skills_root(repo):
+    return os.path.join(repo, *PUBLIC_SKILLS_DIR)
+
+
+def public_skills(repo):
+    root = public_skills_root(repo)
+    return sorted(d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))) if os.path.isdir(root) else []
+
+
 def skill_names(repo):
-    """Every skill whose SKILL.md ships: the roster keys plus legal-commons."""
-    return sorted(roster(repo)) + [COMMONS_SKILL]
+    """Every skill whose SKILL.md ships: the roster keys, legal-commons and the public skills."""
+    return sorted(roster(repo)) + [COMMONS_SKILL] + public_skills(repo)
 
 
 def skill_md(repo, skill):
-    return os.path.join(skills_root(repo), skill, "SKILL.md")
+    root = public_skills_root(repo) if skill in public_skills(repo) else skills_root(repo)
+    return os.path.join(root, skill, "SKILL.md")
 
 
 # --- frontmatter ---------------------------------------------------------------------
@@ -797,11 +810,24 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
     tops = set(roster_names) | set(EXTRA_TREES)
     hits = []
     shipped = set()
+    public_root, public = public_skills_root(repo), set(public_skills(repo))
+    for top in sorted(public & (tops | set(os.listdir(root) if os.path.isdir(root) else ()))):
+        hits.append(f"skill in both public/ and .claude/skills/: {top}")
+    public_shipped = set()
     for sha, arcname in manifest:
         if not arcname.startswith(SHIPPED_PREFIX):
             continue
         rel = arcname[len(SHIPPED_PREFIX):]
         parts = rel.split("/")
+        if parts[0] in public:
+            # A public skill ships whole and byte for byte, with no preamble.
+            public_shipped.add(rel)
+            source = os.path.join(public_root, *parts)
+            if not os.path.isfile(source):
+                hits.append(f"no public source file: {arcname}")
+            elif sha256_file(source) != sha:
+                hits.append(f"differs from its public source: {arcname}")
+            continue
         shipped.add(rel)
         if any(p in TREE_EXCLUDE_DIRS for p in parts[:-1]) or parts[-1].endswith(".pyc"):
             hits.append(f"excluded path shipped: {arcname}")
@@ -830,6 +856,12 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
             hits.append(f"differs from source: {arcname}")
     for rel in sorted(skill_source_expected(root, roster_names, assets) - shipped):
         hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
+    for top in sorted(public):
+        for dirpath, _dirs, files in os.walk(os.path.join(public_root, top)):
+            for fn in files:
+                rel = os.path.relpath(os.path.join(dirpath, fn), public_root).replace(os.sep, "/")
+                if rel not in public_shipped:
+                    hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
 
     # VISION.md ships at the plugin root, byte for byte.
     vision_shas = [sha for sha, arcname in manifest if arcname == VISION_FILE]

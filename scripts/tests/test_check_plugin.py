@@ -495,6 +495,44 @@ class TestShippedTreePurity(FixtureTest):
         self.assertEqual(hits, [])
 
 
+class TestPublicSkill(FixtureTest):
+    """A skill under public/ ships whole and unstamped, and lives in one place only."""
+
+    PUBLIC = "public/plugins/probanda/skills/"
+
+    def setUp(self):
+        super().setUp()
+        self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "A public skill."))
+        self.fixture.write(self.PUBLIC + "beta/references/style.md", "style\n")
+        for rel in ("beta/SKILL.md", "beta/references/style.md"):
+            self.fixture.write("plugins/probanda/skills/" + rel, read(self.fixture.root, self.PUBLIC + rel))
+
+    def test_public_skill_shipped_as_it_is_passes_every_check(self):
+        self.assertEqual({n: d for n, (ok, d) in self.fixture.results().items() if not ok}, {})
+        self.assertIn("beta", check_plugin.skill_names(self.fixture.root))
+
+    def test_stamped_or_edited_copy_fails(self):
+        self.fixture.write("plugins/probanda/skills/beta/SKILL.md", skill_md("beta", "Edited."))
+        self.assertOnlyFails("shipped-tree-purity", "differs from its public source: skills/beta/SKILL.md")
+
+    def test_public_file_missing_from_the_build_fails(self):
+        os.remove(os.path.join(self.fixture.root, "plugins", "probanda", "skills", "beta", "references", "style.md"))
+        self.assertOnlyFails("shipped-tree-purity", "missing from payload: skills/beta/references/style.md")
+
+    def test_shipped_file_with_no_public_source_fails(self):
+        self.fixture.write("plugins/probanda/skills/beta/extra.md", "x\n")
+        self.assertOnlyFails("shipped-tree-purity", "no public source file: skills/beta/extra.md")
+
+    def test_skill_in_both_places_fails(self):
+        self.fixture.write(".claude/skills/beta/SKILL.md", skill_md("beta", "A private copy."))
+        self.assertOnlyFails("shipped-tree-purity", "skill in both public/ and .claude/skills/: beta")
+
+    def test_overlong_public_description_fails(self):
+        self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "x" * 1100))
+        self.fixture.write("plugins/probanda/skills/beta/SKILL.md", read(self.fixture.root, self.PUBLIC + "beta/SKILL.md"))
+        self.assertOnlyFails("description-length", "beta: 1100 chars")
+
+
 class TestReferenceToUnshippedFile(FixtureTest):
     """reference-resolution: a target inside the skills tree must also ship, because an
     install reads the shipped tree and has nothing else."""

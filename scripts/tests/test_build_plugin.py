@@ -87,6 +87,28 @@ class BuildPluginTest(unittest.TestCase):
             self.assertIn("1024", result.stderr)
             self.assertFalse(out.exists())
 
+    def test_public_skill_ships_unstamped_and_may_not_also_be_private(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            skip = shutil.ignore_patterns("tests", "__pycache__", "node_modules")
+            shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
+            shutil.copytree(SOURCE, repo / "source" / "probanda", ignore=skip)
+            text = "---\nname: zz-public\ndescription: A public skill.\n---\n\nBody.\n"
+            public = repo / "public" / "plugins" / "probanda" / "skills" / "zz-public"
+            (public / "references").mkdir(parents=True)
+            (public / "SKILL.md").write_bytes(text.encode("utf-8"))
+            (public / "references" / "notes.txt").write_bytes(b"shipped whole\n")
+            out = repo / "out"
+            result = build("--repo", str(repo), "--out", str(out))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((out / "skills" / "zz-public" / "SKILL.md").read_bytes(), text.encode("utf-8"))
+            self.assertTrue((out / "skills" / "zz-public" / "references" / "notes.txt").is_file())
+
+            (repo / ".claude" / "skills" / "zz-public").mkdir()
+            result = build("--repo", str(repo), "--out", str(repo / "out2"))
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("skill in both public/ and .claude/skills/", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

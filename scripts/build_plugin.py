@@ -7,8 +7,8 @@ Usage:
   python scripts/build_plugin.py --out <dir>  build into <dir> instead (replaced wholesale)
 
 Sources: the skill trees under .claude/skills/ (every key of
-source/probanda/roster.json, plus shared/ and legal-commons/) and the plugin
-files under source/probanda/. The skill selection and the SKILL.md stamp are
+source/probanda/roster.json, plus shared/ and legal-commons/), every skill under
+public/plugins/probanda/skills/, and the plugin files under source/probanda/. The skill selection and the SKILL.md stamp are
 ported from CoClerk's plugin-packager build_plugin.py (native-tree path).
 
 Exit codes: 0 built or identical, 1 --check found differences, 2 a gate stopped
@@ -28,6 +28,10 @@ REPO = Path(__file__).resolve().parent.parent
 # Shipped skill trees beside the roster skills. They are not stamped: shared/ is
 # not a skill, and legal-commons shipped unstamped in phase 1.
 EXTRA_TREES = ("shared", "legal-commons")
+# Skills already free of Trade Secrets live under public/, the source of the public
+# repository. They ship as they are, unstamped and whole, so the development plugin
+# runs the published bytes. A skill lives here or under .claude/skills/, never both.
+PUBLIC_SKILLS = ("public", "plugins", "probanda", "skills")
 TREE_EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 # Text ships by extension; anything else ships only inside a roster-declared
 # asset dir. Office lock files (~$*) are never wanted, even there.
@@ -220,6 +224,17 @@ def collect_tree(skills_root, top, declared_dirs, version, stamp):
     return files
 
 
+def collect_public_skills(repo, private_tops):
+    root = repo.joinpath(*PUBLIC_SKILLS)
+    tops = sorted(p.name for p in root.iterdir() if p.is_dir()) if root.is_dir() else []
+    both = [t for t in tops if t in private_tops or (repo / ".claude" / "skills" / t).exists()]
+    if both:
+        stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
+    check_skills(root, tops)
+    return {f"skills/{path.relative_to(root).as_posix()}": path.read_bytes()
+            for top in tops for path in sorted((root / top).rglob("*")) if path.is_file()}
+
+
 def collect(repo):
     """Every output file as {relative path: bytes}. Stops on a gate failure."""
     src = repo / "source" / "probanda"
@@ -242,6 +257,7 @@ def collect(repo):
         files.update(collect_tree(skills_root, top, roster[top], version, stamp=True))
     for top in EXTRA_TREES:
         files.update(collect_tree(skills_root, top, (), version, stamp=False))
+    files.update(collect_public_skills(repo, set(roster) | set(EXTRA_TREES)))
     for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.
