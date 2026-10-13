@@ -22,6 +22,9 @@ __pycache__/
 # Built plugin archives
 *.plugin
 
+# Soft-deleted files (the delete guard moves them here)
+TRASH/
+
 # Folders build_plugin.py holds only while a build runs
 plugins/.probanda.building/
 plugins/.probanda.replaced/
