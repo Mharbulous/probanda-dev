@@ -3,7 +3,11 @@
   "README.md": "77ce85f625a32f3cae8913f5636331905a46cdc91b59f741149de5acda0388e6",
   "plugins/probanda/.claude-plugin/plugin.json": "60f75af95be67ce0e07c2d56ec141b4c63f39ecb18a3e269091132430aeba8a7",
   "plugins/probanda/skills/TLDR/SKILL.md": "d8d5585b33bd1faa0d0d0d9ec0114b9b0de914587e49ab8a3195869722c57440",
+  "plugins/probanda/skills/dyu/SKILL.md": "d7ffb8926dbdfe037696a369c7a923a3bc4ff3c4f3def04f824ea8aac191d122",
+  "plugins/probanda/skills/dyu/hooks/trailing-dyu.py": "9fa782b27da609be9805a189879b3d3f8efe3276f2d41e95545f68fd48265af5",
   "plugins/probanda/skills/legal-citation/SKILL.md": "67ffd228803d8fc2de83e56f8f6108614c67f27f106f059d8a202597cb9d5a9d",
+  "plugins/probanda/skills/litigation-fact-extractor/SKILL.md": "9df7eb5b48f1698f76cd8391f9ca00f99571fda08013302647dc86b6b827d446",
+  "plugins/probanda/skills/litigation-fact-extractor/agents/extract.md": "50ef521ae2adce95e50fd29f9eb82d7bdcaceb28b7acca6ee5ebe89af7f90e69",
   "plugins/probanda/skills/proof-read/SKILL.md": "d2b9dc1126ade47c8fc32d901d3dce4be9674036becc0ad3470a22c4025cfa3f",
   "plugins/probanda/skills/proof-read/references/trial-lawyer-style.md": "85f723ee650f3d1d5a09885d92461a007e8d6fdee8c23845dbcab6121b0b77bc"
 }
