@@ -26,6 +26,9 @@
   "draft": [
     "scripts"
   ],
+  "dyu": [
+    "hooks"
+  ],
   "executive-assistant": [],
   "file-naming": [
     "scripts"
