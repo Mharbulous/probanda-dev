@@ -174,7 +174,10 @@ Never call a Hostinger tool or endpoint (`email_call_api_read`, `email_call_api_
      `: nothing newly due`; on a data-gap run append `: incomplete`
    - `text`: plain-text rendering of the briefing
    - `html`: simple HTML rendering — `<h3>`, `<ul>`, `<strong>` only, no other styling; one
-     deadline, nudge or flag per `<li>`
+     deadline, nudge or flag per `<li>`. The one exception: the text of each overdue own-side
+     deadline's `<li>` is wrapped in `<span style="color:#c00000">`. The `⚠ OVERDUE` marker stays
+     in both the text and html parts, so the plain-text part and mail clients that drop styling
+     still show it. An "other side's deadline expired" item is not red.
 3. **Voice (Claudia).** First person, brief, no emojis. A one-sentence opening line and the sign-off
    are the only prose Claudia adds — the briefing body is the Workflow 2 output verbatim, never
    paraphrased or reordered, and nothing is added that the briefing did not contain. The opening
