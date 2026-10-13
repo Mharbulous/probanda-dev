@@ -9,7 +9,7 @@ Read this after steps 1 to 3 of `SKILL.md` when rule 3 selects fan-out mode. The
 **b. Gather evidence** per rule 7: at most three lookups per defect.
 
 **c. Target design folder.**
-- For a defect in the `litigation` or `legal-commons` plugin, it is the Coclerk repo's `Engineering/1. Design/` folder.
+- For a defect in the `probanda` plugin, it is the Coclerk repo's `Engineering/1. Spec/` folder.
 - For any other plugin, ask once which folder. Never guess.
 - Make one `device_request_folder_access` call for the repo's planning folder only, with a reason that names the spec files about to be written.
 - Read the newest spec in that folder and match its format: header lines, heading style and cross-reference style.
@@ -31,7 +31,7 @@ Read this after steps 1 to 3 of `SKILL.md` when rule 3 selects fan-out mode. The
 
 **f. Return exactly one code block**, in this order:
 1. The first line: `FIXES: <spec title>; <spec title>; ...`, so the session can be told apart from the top.
-2. The orchestrator line, verbatim: "You are the orchestrator in a Claude Code session. Launch N subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. Version control is yours to decide: never ask Brahm about it."
+2. The orchestrator line, verbatim: "You are the orchestrator in a Claude Code session. Launch N subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. After the last spec lands, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, and commit `plugins/probanda/` by pathspec. Version control is yours to decide: never ask Brahm about it."
 3. One line per spec: `spec path`.
 4. The kickoff prompt template, once, to be used for every subagent.
 5. The coordination rules from e.
@@ -64,7 +64,7 @@ Sections, in this order and numbering. Cross-reference them as §N.
 5. Constraints that must still hold
 6. Options considered (one marked recommended)
 7. Implementation plan. Step 1 is always "Verify against HEAD (§10) and append a verification table to this spec". The last step is always "Commit on `main` by explicit pathspec and push. Finish with one line: `Implementation of <title> complete!`, and nothing after it."
-8. Implementation criteria (a numbered list, each checkable in the source by the implementing session), then this scope rule, verbatim, which overrides any standing instruction in the implementing session: "Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/repackage` does it in the cloud from origin/main: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin packager or build_plugin.py, version bumps, *-latest.plugin files, and running `/repackage`. Out of scope, because valid testing happens only in Cowork after `/repackage`: writing, updating or running any test, suite, golden or E2E run in Claude Code. A type-check of edited TypeScript is allowed; it is not a test."
+8. Implementation criteria (a numbered list, each checkable in the source by the implementing session), then this scope rule, verbatim, which overrides any standing instruction in the implementing session: "Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/repackage` does it in the cloud from origin/main: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin packager, version bumps, *-latest.plugin files, and running `/repackage`. Out of scope, because the orchestrating session runs it once after every spec lands: `build_plugin.py`. Out of scope, because valid testing happens only in Cowork after `/repackage`: writing, updating or running any test, suite, golden or E2E run in Claude Code. A type-check of edited TypeScript is allowed; it is not a test."
 9. Open questions
 10. Verify against HEAD before building
 
@@ -74,7 +74,7 @@ Block template:
 
     FIXES: <spec title>; <spec title>
 
-    You are the orchestrator in a Claude Code session. Launch N subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. Version control is yours to decide: never ask Brahm about it.
+    You are the orchestrator in a Claude Code session. Launch N subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. After the last spec lands, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, and commit `plugins/probanda/` by pathspec. Version control is yours to decide: never ask Brahm about it.
 
     SPECS
     - <spec path>
@@ -110,7 +110,7 @@ Worked example, shape only, from the 2026-10-05 run:
 
     FIXES: rule-freshness commencement gate; deadline rule overlay; legal-commons court rule sharing
 
-    You are the orchestrator in a Claude Code session. Launch 3 subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. Version control is yours to decide: never ask Brahm about it.
+    You are the orchestrator in a Claude Code session. Launch 3 subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. After the last spec lands, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, and commit `plugins/probanda/` by pathspec. Version control is yours to decide: never ask Brahm about it.
 
     SPECS
     - A: <design folder>/2026-10-05_rule-freshness-commencement-gate-spec.md
