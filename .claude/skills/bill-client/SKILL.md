@@ -33,11 +33,10 @@ Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`).
 
 - Invoke the `case-data` skill's `profile` operation for the matter. It reports the client number, client name, matter number and short name.
 - If the matter has never been initialized in case-data, the `case-data` skill's `initialize` operation will look up the client/matter via `practice-data` `matter-lookup` and seed it — do this before continuing.
-- If the `case-data` skill is not available in this session, the `litigator` plugin is not installed: get the client number from the `practice-data` skill's `matter-lookup` operation instead.
 
 ## Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names
 
-Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`. This check needs the `litigator` plugin, which holds the housekeeping record. If the `case-data` skill is not available in this session, skip the check and tell the practitioner in one line that the folder's file names were not checked because that needs the `litigator` plugin.
+Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`:
 
 1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
 2. Invoke the `case-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.

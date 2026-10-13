@@ -30,12 +30,6 @@ sweep a plain draft file for statements of law that have no citation or research
 read `subskills/sweep-draft/SUBSKILL.md` and follow it as the active workflow. It states no
 law and writes nothing.
 
-**Needs the `litigator` plugin, except the plain-draft sweep.** Mode A, Mode B and document
-mode each resolve the source document through `/case-data`, which ships in `litigator`. If
-the `case-data` skill is not available in this session, stop at that step and tell the
-practitioner that the step needs the `litigator` plugin. Do not carry on without the step, and
-do not resolve or read the document another way.
-
 **Not for "what is the law"** — that is `/legal-research`. This boundary is load-bearing routing,
 not a stylistic preference.
 

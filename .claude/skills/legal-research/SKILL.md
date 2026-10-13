@@ -69,9 +69,7 @@ permitted to make statements of law.
    the same run. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
-   files nothing for, ask `/case-data` for a held copy before marking it unread (when the
-   `case-data` skill is not available in this session, the `litigator` plugin is not
-   installed and there is no held copy: mark it unread). A
+   files nothing for, ask `/case-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders.
@@ -91,7 +89,7 @@ permitted to make statements of law.
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then relay the agent's answer (its finding verbatim or as its file card, never in your own words), save it to the matter's `6. LAW\<issue>\` folder
    (`6. LAW\` itself when the question spans issues), and ingest what it cites. The doctrine's "After the answer" rule carries the
-   mechanics. Ingesting needs the `litigator` plugin: when the `ingest` skill is not available in this session, save the answer, ingest nothing, and say so in the relay. If its disclosure gate is closed after any loop — it declines, reports
+   mechanics. If its disclosure gate is closed after any loop — it declines, reports
    layers unavailable, or offers only a preliminary impression — relay its
    confidence summary and research offers verbatim and stop. Nothing is saved
    until the practitioner chooses. A closed gate is

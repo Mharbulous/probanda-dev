@@ -43,7 +43,7 @@ EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "eval
 SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
 # The data server ships in practice, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
-LITIGATOR_TOOL_FAMILIES = ("case_data__", "drafting_data__", "drafting_forms__", "rules__")
+LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
 # Tool families of the research servers, for a name written without its plugin prefix.
 SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__")}
 # A family name starts a tool name or follows the server key (data__rules__at), so

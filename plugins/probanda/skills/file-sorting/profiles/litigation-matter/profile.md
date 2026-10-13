@@ -80,11 +80,6 @@ flagged token surfaces regardless of verdict.
 The review record lives in the matter's case database, reached **only** by
 invoking the `/case-data` skill — never queried directly.
 
-This profile needs the `litigator` plugin, which ships `/case-data` and
-`/housekeeping`. If the `case-data` skill is not available in this session,
-stop and say that filing a litigation matter's folder needs the `litigator`
-plugin.
-
 Invoke `/case-data` and ask whether this matter has a case database. It owns
 locating and validating the matter pointer; do not go looking for pointer
 files yourself, and do not assume where they live.

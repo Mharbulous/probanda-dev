@@ -75,8 +75,7 @@ Output the optimized query in this exact format — use the horizontal rules and
 
 A dispatch that follows carries an existing `6. LAW\` subfolder and a verified
 client-matter ID. The caller chooses that ID: the matter's `{client}.{matter}`
-ID (client number from `/case-data` when the folder name lacks it, or from
-`practice-data`'s `matter-lookup` when the `case-data` skill is not available) for research
+ID (client number from `/case-data` when the folder name lacks it) for research
 serving a client matter, or `PERSONAL` only for research it states is testing
 or authorized unbilled firm work.
 

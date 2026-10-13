@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter — walks through locating the last invoice, checking case-data, pulling unbilled TimeCamp time, cross-referencing phone call logs to catch missed billable time, and building a billing chart in Excel."
 ---
 
-<!-- probanda v0.1.7 -->
+<!-- probanda v0.1.8 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -37,11 +37,10 @@ Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`).
 
 - Invoke the `case-data` skill's `profile` operation for the matter. It reports the client number, client name, matter number and short name.
 - If the matter has never been initialized in case-data, the `case-data` skill's `initialize` operation will look up the client/matter via `practice-data` `matter-lookup` and seed it — do this before continuing.
-- If the `case-data` skill is not available in this session, the `litigator` plugin is not installed: get the client number from the `practice-data` skill's `matter-lookup` operation instead.
 
 ## Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names
 
-Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`. This check needs the `litigator` plugin, which holds the housekeeping record. If the `case-data` skill is not available in this session, skip the check and tell the practitioner in one line that the folder's file names were not checked because that needs the `litigator` plugin.
+Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`:
 
 1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
 2. Invoke the `case-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.

@@ -67,10 +67,7 @@ your tools as follows:
 
 a. **Tier 1 — the matter's ingested layer.** Invoke the `case-data` skill (query
    operation) for ingested legal authorities, concepts, and criteria. This runs
-   first, always: it is local and free, and its authority text is on file. It ships
-   in the `litigator` plugin: when the `case-data` skill is not available in this
-   session, the matter has no ingested layer, so skip this tier and report it as
-   `case data: NOT AUDITED: litigator plugin not installed`.
+   first, always: it is local and free, and its authority text is on file.
 b. **Tier 2 — the shared pooled layer (Layer 3 in the old numbering).** If pool
    read tools are in your tool list, audit it directly (`find_candidates` /
    `lookup_by_citation` for candidates, `resolve_by_id` and `treatment_chain` for
@@ -348,8 +345,7 @@ notes file. Their shape is unchanged.
    client ID from the matter's data; the practitioner does not choose it at
    dispatch and `research-paralegal` never changes it. Research serving a
    client matter uses that matter's `{client}.{matter}` ID, taking the client
-   number from `/case-data` when the folder name lacks it (or from `practice-data`'s
-   `matter-lookup` when the `case-data` skill is not available); `PERSONAL` is only
+   number from `/case-data` when the folder name lacks it; `PERSONAL` is only
    for research stated to be testing or authorized unbilled firm work, and its
    subfolder may sit outside any matter under a `6. LAW` folder. The caller runs
    `/legal-research` with `westlaw-query-optimizer`, then spawns

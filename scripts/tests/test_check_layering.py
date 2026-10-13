@@ -68,11 +68,11 @@ class ScanTest(unittest.TestCase):
     def test_tool_of_a_higher_plugin(self):
         self.assertEqual(
             self.pairs({"show-me/SKILL.md": "x\n"},
-                       agents={"docket-clerk": "- mcp__plugin_probanda_data__case_data__query\n"
+                       agents={"docket-clerk": "- mcp__plugin_probanda_data__drafting_data__query\n"
                                                "- mcp__plugin_probanda_commons__legal_commons__browse\n"
                                                "- mcp__plugin_probanda_data__skill_rules__applicable\n"}),
-            [("source/probanda/agents/docket-clerk.md", "case_data__*"),
-             ("source/probanda/agents/docket-clerk.md", "commons server")])
+            [("source/probanda/agents/docket-clerk.md", "commons server"),
+             ("source/probanda/agents/docket-clerk.md", "drafting_data__*")])
 
     def test_at_cutover_agents_are_read_from_each_plugin_folder_and_skills_from_any_public_plugin(self):
         with tempfile.TemporaryDirectory() as tmp:

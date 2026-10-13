@@ -39,8 +39,7 @@ Before briefing, check whether the decision is already held as an authority, in
 the order `shared/research-priority.md` sets: tier 1, the matter's ingested layer
 via ``case-data``; then tier 2, the shared pooled layer by exact public citation
 where this runtime can reach it (that file says how, and what to do when it
-cannot). Tier 1 needs the `litigator` plugin: if the ``case-data`` skill is not
-available in this session, there is no ingested layer, so go straight to tier 2. Where either returns propositions already derived from this decision,
+cannot). Where either returns propositions already derived from this decision,
 say so and cite them alongside your own Section 4 — a proposition someone has
 already stated and noted up is worth more than a fresh paraphrase of it, and a
 divergence between the two is itself worth the reader's attention. This never
@@ -127,7 +126,7 @@ When briefing multiple decisions, structure the response with clear headings per
 
 ## Optional Persistence
 
-After delivering the brief, offer to persist the decision as a legal authority in the case database. This is optional — many briefs are read-and-discard. The case database ships in the `litigator` plugin: if the ``case-data`` skill is not available in this session, make no offer.
+After delivering the brief, offer to persist the decision as a legal authority in the case database. This is optional — many briefs are read-and-discard.
 
 **Prompt:** "Would you like me to save this decision as a legal authority in the case database?"
 

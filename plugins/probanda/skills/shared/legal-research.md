@@ -297,12 +297,6 @@ complete before the session ends: never leave a session with a cited decision un
    `legislation-fetcher` filed in this run. A Point in Time page or bulletin it
    filed beside a consolidation is a currency record, not an authority: never ingest it.
 
-**Without the `litigator` plugin.** `/case-data` and `/ingest` ship in `litigator`. When
-the `case-data` skill is not available in this session, nothing in this file that asks
-`/case-data` or runs `/ingest` applies: there is no held copy to ask for, nothing is
-ingested, a cited decision is accounted for as "not ingested: needs the `litigator`
-plugin", and a `case-data:` flag is relayed with no offer to record it.
-
 In your relay, account for every court decision the answer cites -- already held,
 ingested now, or "not on disk, not ingested" -- and for cited legislation. A decision
 never dispatched is reported the same way as one whose download failed: a decision you

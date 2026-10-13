@@ -9,12 +9,14 @@
         "ar-follow-up",
         "bill-client",
         "build-timeline",
+        "case-data",
         "dyu",
         "executive-assistant",
         "file-naming",
         "file-review-prep",
         "file-sorting",
         "find-document",
+        "ingest",
         "invoice-reviewing",
         "invoice-tracking",
         "localize",
@@ -37,10 +39,20 @@
         "wip-tracker"
       ],
       "agents": [
+        "delivery-checker",
         "docket-clerk",
+        "extract-affidavit",
+        "extract-caselaw",
+        "extract-facts",
+        "extract-provision",
+        "extract-sought-orders",
         "housekeeping-namer",
         "housekeeping-reviewer",
-        "localize-helper"
+        "localize-helper",
+        "migration-runner",
+        "verify-caselaw",
+        "verify-edges",
+        "verify-source"
       ],
       "hooks": {
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
@@ -94,11 +106,9 @@
         "apply-to-facts",
         "assemble",
         "calculate",
-        "case-data",
         "draft",
         "drafting-data",
         "housekeeping",
-        "ingest",
         "litigation-fact-extractor",
         "polish-substance",
         "prepare",
@@ -106,19 +116,9 @@
         "rule-migrate"
       ],
       "agents": [
-        "delivery-checker",
-        "extract-affidavit",
-        "extract-caselaw",
-        "extract-facts",
-        "extract-provision",
-        "extract-sought-orders",
         "marshal-facts",
-        "migration-runner",
         "rules-improviser",
-        "rules-reorienter",
-        "verify-caselaw",
-        "verify-edges",
-        "verify-source"
+        "rules-reorienter"
       ],
       "hooks": {
         "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",

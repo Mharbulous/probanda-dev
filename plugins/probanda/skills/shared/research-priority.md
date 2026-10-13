@@ -26,11 +26,6 @@ Judicial consideration of legislation is answering (`statute-currency.md`).
 |---|---|---|---|
 | Note-up (citator) only | CanLII | CanLII's API returns no decision text. It cannot tell you what a case says. Never use it to find, read or summarize a decision. Its citator (citing and cited cases) notes up an authority whose text was read at tiers 1–4. | free, needs a key |
 
-**Tier 1 and `/ingest` need the `litigator` plugin.** When the `case-data` skill is
-not available in the session, the lookup starts at tier 2, tier 1 is reported as
-`case data: NOT AUDITED: litigator plugin not installed`, and nothing found at
-tier 3 is ingested.
-
 **Westlaw unreachable is a hard stop, never a descent to CanLII.** When Chrome is
 not connected or Westlaw is not signed in, research stops and the practitioner is
 told (`shared/legal-research.md`). Nothing continues on CanLII in its place.
