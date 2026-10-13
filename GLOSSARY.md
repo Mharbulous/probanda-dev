@@ -159,9 +159,69 @@ Synonyms for the case-data terms:
 | Legal Citation | Reported Citation |
 | Fact Posture | Derived Position Outcome |
 
-### Shared legal knowledge (three-layer re-architecture)
+### Legal taxonomy (2026-10-12)
+
+The words for kinds and parts of legal norms, in their natural common-law sense. Use them this way in prose, schemas and rules that govern how law is stored. How they fit: principles justify doctrines; doctrines organize rules; a rule has conditions (formulated by a test of elements and factors) and a consequence, subject to exceptions and bounded by limits; propositions are the citable statements about any of these, labelled ratio or obiter by role. Audit behind these entries: CoClerk `Engineering/3. Staging/2026-10-12_legal-taxonomy-terminology-audit-findings.md`.
 
 **Principle**:
+A foundational normative standard that explains and justifies rules. It has weight and is balanced, not applied all-or-nothing. It is outweighed or qualified, not subject to exceptions in the strict sense.
+_Avoid_: principle for a rule, a test or a single proposition. Not the shared pool's **Principle (shared pool)** below, which is a storage unit and a frozen code name.
+
+**Doctrine**:
+A named body of law organizing rules, tests and exceptions under one or more principles (e.g. promissory estoppel). Used without an article ("legal doctrine"), it means the body of law generally.
+_Avoid_: doctrine for scholarly writing about the law (the civilian sense) — write "secondary authority". The drafting database's authority kind `doctrine` and the pool's `doctrine_tag` are frozen code names, not this sense.
+
+**Rule**:
+A prescriptive norm linking conditions to a legal consequence, applied all-or-nothing when its conditions are met, subject to exceptions. It describes character, not size: "the rule in [Case]" can be proposition-, test- or doctrine-sized.
+_Avoid_: bare "rule" where the same file also means a **Court Rule** or one of the plugin's own working rules — say which.
+
+**Proposition**:
+A statement about the law that can be true or false, advanced as law and for which authority is cited ("stands for the proposition that..."). It is the unit of citation and can state a principle, rule, test, element or exception. The application-response entry below describes the same thing as it appears in a draft.
+_Avoid_: proposition for a factual assertion (that is a **Postulate**); proposition to mean proposal.
+
+**Condition**:
+What must be true for a rule's consequence to follow. A generic analytical term; lawyers usually say requirements, elements or criteria.
+_Avoid_: confusing it with the contractual "condition precedent".
+
+**Consequence**:
+The legal result a rule attaches when its conditions are met.
+
+**Test**:
+An authority's formulation of a rule's conditions, and the structured inquiry for deciding whether they are met. It is a component of a rule or doctrine, not a peer of rule, principle, doctrine or proposition. It consists of elements and/or factors, and may include a negative stage where courts build one in (e.g. the residual-policy stage of Anns/Cooper).
+_Avoid_: defining a test as conditions plus exceptions (factor tests are not conditions, and it hides who bears the burden).
+
+**Element**:
+A cumulative requirement of a cause of action, defence or test; all must be met. How case data stores one: **Element** under Case data, above.
+
+**Factor**:
+A consideration weighed with others; it yields a judgment, not a checklist. How case data stores one: **Factor** under Case data, above.
+
+**Limb**:
+One branch of a multi-part test, which may be cumulative or alternative.
+
+**Exception**:
+Itself a rule with its own conditions (and possibly its own test). When those conditions are met, it displaces or modifies another rule's consequence even though the main rule's conditions are satisfied. It attaches to a rule, not to a test or an element, and the burden is usually on the party relying on it.
+
+**Defence**:
+A matter raised by the responding party that defeats liability or relief, often with the burden on that party.
+
+**Limit**:
+A boundary on a rule's scope; outside it, the rule never applied.
+_Avoid_: limitation (reserved for limitation periods and the Limitation Act).
+
+**Court Rule**:
+A provision of the procedural rules of a court or tribunal. Rules of court are delegated legislation; an arbitral institution's rules bind by the parties' agreement. The term marks source, not character or size: a Court Rule's content can be a rule, a factor test or a principle in rule form (e.g. the object of the BC Supreme Court Civil Rules, Rule 1-3). The enacted or adopted text governs.
+
+**Ratio decidendi**:
+A proposition necessary to the decision; the part of a decision capable of binding. Whether it binds a given forum is a separate question of law.
+_Avoid_: ratio for "the court's own words" (obiter is also the court's own words), or for a text-similarity score.
+
+**Obiter dictum**:
+A proposition stated but not necessary to the decision; persuasive only.
+
+### Shared legal knowledge (three-layer re-architecture)
+
+**Principle** (shared pool):
 A generalized, matter-free statement of law — the atomic unit of the shared knowledge pool: the thing that is embedded, deduped, merged, variant-linked, and up-pointed. Authorities attach to it as supporting evidence.
 _Avoid_: concept, doctrine (as the stored entity)
 
