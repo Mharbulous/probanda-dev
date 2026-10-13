@@ -29,6 +29,8 @@ create extension if not exists vector with schema extensions;
 -- tab, line feed, vertical tab, form feed, carriage return, space, U+00A0,
 -- U+1680, U+2000 to U+200A, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 -- Postgres's own `\s` and `trim()` cover fewer characters and follow the locale.
+-- The set is written as \u escapes, not as the characters themselves, because a
+-- paste into the SQL editor garbled the characters (2026-10-13).
 -- Where the two versions differ on a string, rank.ts is the rule.
 -- -----------------------------------------------------------------------------
 create function legal_commons.tidy_clause_text(p_text text)
@@ -43,7 +45,7 @@ as $$
     select btrim(
       regexp_replace(
         normalize(p_text, NFC),
-        E'[\t\n\u000B\f\r    -     　﻿]+',
+        E'[\t\n\u000B\f\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+',
         ' ', 'g'),
       ' ') as t
   ) s;

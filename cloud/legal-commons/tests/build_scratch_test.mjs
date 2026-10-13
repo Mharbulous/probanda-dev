@@ -102,6 +102,11 @@ from lc_snapshot s;`,
 
 if (new RegExp(LIVE, "i").test(script)) throw new Error("the live schema's name is still in the script");
 if (/[^\x00-\x7f]/.test(read("tests", "scratch_test.template.sql"))) throw new Error("the template is not plain ASCII");
+// A character outside ASCII can be garbled between the file and the SQL editor,
+// which changes what the statement means. Write it as a \u escape instead.
+for (const file of [["migrations", "0001_consequence_structure.sql"], ["consequence_functions.sql"], ["migrations", "0001_down.sql"]]) {
+  if (/[^\x00-\x7f]/.test(read(...file))) throw new Error(`${file.join("/")} is not plain ASCII`);
+}
 
 fs.writeFileSync(out, script + "\n");
 console.log(`wrote ${out}: ${cases.length} tidying cases, scratch schema ${scratch}`);
