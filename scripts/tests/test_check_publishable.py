@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""
+check_publishable's --new-since comparison: a change fails only for a problem its base lacks.
+
+Run: python -m pytest -q scripts/tests/test_check_publishable.py
+"""
+
+import importlib.util
+import os
+import unittest
+from pathlib import Path, PurePosixPath
+
+SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_spec = importlib.util.spec_from_file_location("check_publishable", os.path.join(SCRIPTS, "check_publishable.py"))
+check_publishable = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(check_publishable)
+
+# Built from parts so this file holds no line the scan itself reports.
+DDL_A = "CREATE" + " TABLE a (id)"
+DDL_B = "CREATE" + " TABLE b (id)"
+
+
+def problems(files):
+    found = []
+    for name, text in files.items():
+        found += check_publishable.file_problems(PurePosixPath(name), text.encode("utf-8"))
+    return found
+
+
+class NewProblemsTest(unittest.TestCase):
+    def new(self, base, head):
+        return [(str(p[0]), p[1], p[2]) for p in check_publishable.new_problems(problems(base), problems(head))]
+
+    def test_unchanged_problems_are_not_new(self):
+        files = {"a.md": f"x\n{DDL_A}\n"}
+        self.assertEqual(self.new(files, files), [])
+
+    def test_added_line_is_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\n"}, {"a.md": f"{DDL_A}\n{DDL_B}\n"}),
+                         [("a.md", 2, "contains schema DDL")])
+
+    def test_second_copy_of_an_existing_line_is_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\n"}, {"a.md": f"{DDL_A}\n", "b.md": f"{DDL_A}\n"}),
+                         [("b.md", 1, "contains schema DDL")])
+
+    def test_line_moved_within_a_file_is_not_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\nx\n"}, {"a.md": f"x\ny\n  {DDL_A}\r\n"}), [])
+
+    def test_renamed_file_is_not_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\n", "s.sql": "x"}, {"b.md": f"{DDL_A}\n", "t.sql": "x"}), [])
+
+    def test_edited_problem_line_is_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\n"}, {"a.md": f"{DDL_B}\n"}),
+                         [("a.md", 1, "contains schema DDL")])
+
+    def test_forbidden_file_with_other_bytes_is_new(self):
+        self.assertEqual(self.new({"s.sql": "x"}, {"t.sql": "y"}), [("t.sql", 1, "forbidden file type")])
+
+    def test_removed_problem_is_not_new(self):
+        self.assertEqual(self.new({"a.md": f"{DDL_A}\n{DDL_B}\n"}, {"a.md": f"{DDL_B}\n"}), [])
+
+    def test_head_commit_matches_a_clean_worktree(self):
+        root = os.path.dirname(SCRIPTS)
+        if check_publishable.git(root, "status", "--porcelain", "--untracked-files=no"):
+            self.skipTest("tracked files differ from HEAD")
+        _, worktree = check_publishable.worktree_problems(Path(root))
+        self.assertEqual(check_publishable.new_problems(check_publishable.commit_problems(root, "HEAD"), worktree), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

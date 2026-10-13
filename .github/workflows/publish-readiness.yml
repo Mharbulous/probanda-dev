@@ -1,6 +1,12 @@
 name: publish-readiness
 
+# A pull request or a push to main fails only for a problem the change adds (--new-since).
+# A run started by hand from the Actions tab does the full scan, which fails while the
+# repo is not publishable.
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,4 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: python3 scripts/check_publishable.py
+      - if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/check_publishable.py
+      # The checkout is shallow, so the commit to compare against is fetched on its own.
+      - if: github.event_name != 'workflow_dispatch'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          git fetch --depth=1 origin "$BASE"
+          python3 scripts/check_publishable.py --new-since "$BASE"
