@@ -14,6 +14,7 @@ PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/practitioner
 STOCK_MD = Path(__file__).parents[1] / "references" / "jobs-stock.md"
 GATE_MD = Path(__file__).parents[1] / "references" / "jobs-gate.md"
 REVISION_MD = Path(__file__).parents[1] / "references" / "paragraph-revision.md"
+CHECKLISTS_MD = Path(__file__).parents[1] / "references" / "filing-checklists.md"
 
 # #758's fixture pair.
 TURN = "I want an order for a list of documents, verified by affidavit."
@@ -298,6 +299,44 @@ def group_create():
         + [f"INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (2, 'statements_of_fact', {k.rsplit(':', 1)[1]});"
            for k in GROUP_KEYS])
     return call1, call3
+
+
+# Counsel's suppression of the 👤 on fact 12, and its removal, as filing-checklists.md §6 writes them.
+SUPPRESS_MD = ("INSERT INTO marker_suppressions (marker, keyed_table, keyed_id, item, suppressed_on, note) "
+               "SELECT '👤', 'facts', id, postulate, '<YYYY-MM-DD>', '<counsel''s words verbatim>' FROM facts WHERE id = N")
+UNSUPPRESS_MD = "DELETE FROM marker_suppressions WHERE marker = '👤' AND keyed_table = 'facts' AND keyed_id = N"
+SUPPRESS_ASK = "Set the witness requirement aside for fact 12: the other side agreed the delivery date at the CPC."
+NOTE = "the other side agreed the delivery date at the CPC"
+COMPOSED_NOTE = "Counsel says the delivery date is agreed, so no witness is needed"
+
+
+def suppress(note, values=False):
+    """§6's suppression write with `note` (SQL) as its note, or the same row by VALUES."""
+    if values:
+        return ("INSERT INTO marker_suppressions (marker, keyed_table, keyed_id, item, suppressed_on, note)\n"
+                f"  VALUES ('👤', 'facts', 12, {sql_text(OLD)}, '2026-10-08', {note});")
+    return (SUPPRESS_MD.replace("<YYYY-MM-DD>", "2026-10-08").replace("'<counsel''s words verbatim>'", note)
+            .replace("id = N", "id = 12") + ";")
+
+
+def resuppress(assignment, head="UPDATE marker_suppressions"):
+    """An existing suppression's note rewritten in place."""
+    return (f"{head} SET {assignment}, suppressed_on = '2026-10-09'\n"
+            "  WHERE marker = '👤' AND keyed_table = 'facts' AND keyed_id = 12;")
+
+
+def answer_lines(question, answer):
+    """An AskUserQuestion call and its answer: a tool result in a `user` record that carries no
+    promptSource and no origin, the answers also in toolUseResult."""
+    asked = [{"question": question, "header": "Approve", "multiSelect": False,
+              "options": [{"label": answer, "description": ""}, {"label": "No", "description": ""}]}]
+    return [{"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "q1", "name": "AskUserQuestion", "input": {"questions": asked}}]}},
+            {"type": "user", "toolUseResult": {"questions": asked, "answers": {question: answer}},
+             "message": {"role": "user", "content": [
+                 {"type": "tool_result", "tool_use_id": "q1",
+                  "content": f'Your questions have been answered: "{question}"="{answer}". '
+                             "You can now continue with these answers in mind."}]}}]
 
 
 class PractitionerWordsGateTest(unittest.TestCase):
@@ -988,6 +1027,90 @@ class PractitionerWordsGateTest(unittest.TestCase):
     def test_a_move_whose_entity_id_is_not_a_literal_fails_closed(self):
         self.assertRefused(self.run_hook(self.moved(self.A_ROW.replace(" 31,", " (SELECT 31),"))),
                            "cannot read the paragraph revision", "entity_id of a fact move")
+
+    def test_an_ask_user_question_answer_does_not_approve_a_revision(self):
+        # The answer is no practitioner turn, so the reply showing the paragraph is still unanswered.
+        self.write_transcript(turn_line(ASK), reply_line(shown(ALTERNATIVE)), *answer_lines("Approve it?", "Yes"))
+        self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
+                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 0")
+
+    def test_only_literals_appended_to_a_steps_own_text_pass_unchecked(self):
+        self.assertEqual(self.run_hook(step_update("text || ' — WAIVED: ' || 'not needed'"), transcript="").returncode, 0)
+        for value in ("'WAIVED: ' || text", "text || upper('x')", "text || 'a' || text"):
+            with self.subTest(value=value):
+                self.assertRefused(self.run_hook(step_update(value)), "cannot read the practitioner's wording",
+                                   "ticket_steps.text is set to something other than one string literal")
+
+    # Counsel's suppression of a 👤 (filing-checklists.md §6): the note is counsel's own words.
+    def suppressing(self, *after):
+        self.write_transcript(turn_line(SUPPRESS_ASK), *after)
+
+    def test_a_suppression_note_cut_from_the_turn_passes_as_filing_checklists_md_writes_it(self):
+        text = CHECKLISTS_MD.read_text(encoding="utf-8")
+        self.assertIn(SUPPRESS_MD, text)
+        self.assertIn(UNSUPPRESS_MD, text)
+        self.suppressing()
+        self.assertEqual(self.run_hook(suppress(sql_text(NOTE))).returncode, 0)
+        self.assertEqual(self.run_hook(suppress(sql_text(NOTE), values=True)).returncode, 0)
+        self.assertEqual(self.run_hook(UNSUPPRESS_MD.replace("id = N", "id = 12") + ";", transcript="").returncode, 0)
+
+    def test_a_composed_suppression_note_is_refused(self):
+        self.suppressing()
+        second_row = suppress(sql_text(NOTE), values=True).replace(
+            ");", f"),\n  ('👤', 'facts', 13, 'x', '2026-10-08', {sql_text(COMPOSED_NOTE)});")
+        for sql in (suppress(sql_text(COMPOSED_NOTE)), suppress(sql_text(COMPOSED_NOTE), values=True), second_row):
+            with self.subTest(sql=sql):
+                self.assertRefused(self.run_hook(sql), "marker_suppressions.note is not an unbroken run",
+                                   "field: marker_suppressions.note", f"wrote: {COMPOSED_NOTE}",
+                                   f"nearest turn: {SUPPRESS_ASK}")
+
+    def test_a_suppression_note_that_is_not_one_literal_fails_closed(self):
+        self.suppressing()
+        for sql in (suppress(f"{sql_text(NOTE[:9])} || {sql_text(NOTE[9:])}"),
+                    suppress(f"upper({sql_text(NOTE)})"),
+                    suppress("postulate"),
+                    suppress("(SELECT note FROM marker_suppressions WHERE keyed_id = 11)"),
+                    suppress(f"{sql_text(NOTE[:9])} || {sql_text(NOTE[9:])}", values=True),
+                    suppress(sql_text(NOTE)).replace(";", f" UNION SELECT '👤', 'facts', 13, 'x', '2026-10-08', "
+                                                          f"{sql_text(COMPOSED_NOTE)};"),
+                    f"INSERT INTO marker_suppressions VALUES ('👤', 'facts', 12, 'x', '2026-10-08', {sql_text(NOTE)});"):
+            with self.subTest(sql=sql):
+                self.assertRefused(self.run_hook(sql), "cannot read the practitioner's wording")
+        self.assertRefused(self.run_hook(suppress("postulate")),
+                           "marker_suppressions.note is set to something other than one string literal")
+
+    def test_a_printed_proposal_title_is_not_a_suppression_note(self):
+        self.write_transcript(turn_line("Take the note-up."),
+                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__render", RENDER))
+        self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
+        for sql in (suppress(sql_text(PROPOSAL)), suppress(sql_text(PROPOSAL), values=True),
+                    resuppress(f"note = {sql_text(PROPOSAL)}")):
+            with self.subTest(sql=sql):
+                self.assertRefused(self.run_hook(sql), "marker_suppressions.note is not an unbroken run",
+                                   "field: marker_suppressions.note", f"wrote: {PROPOSAL}")
+
+    def test_a_bare_yes_does_not_adopt_a_proposed_suppression_note(self):
+        self.suppressing(reply_line(f"I can record the suppression with this note.\n\n{COMPOSED_NOTE}\n\nRecord it?"),
+                         turn_line("Yes"))
+        self.assertRefused(self.run_hook(suppress(sql_text(COMPOSED_NOTE))),
+                           "marker_suppressions.note is not an unbroken run", "field: marker_suppressions.note")
+
+    def test_a_suppression_note_rewritten_in_place_is_checked(self):
+        self.suppressing()
+        for head in ("UPDATE marker_suppressions", "UPDATE OR REPLACE main.marker_suppressions AS s"):
+            with self.subTest(head=head):
+                self.assertEqual(self.run_hook(resuppress(f"note = {sql_text(NOTE)}", head)).returncode, 0)
+                self.assertRefused(self.run_hook(resuppress(f"note = {sql_text(COMPOSED_NOTE)}", head)),
+                                   "field: marker_suppressions.note", f"wrote: {COMPOSED_NOTE}")
+        self.assertEqual(self.run_hook(resuppress("item = 'x'"), transcript="").returncode, 0)
+
+    def test_a_suppression_note_update_that_is_not_one_literal_fails_closed(self):
+        # `note || '<literal>'` is refused too: only a step's text may be appended to unchecked.
+        self.suppressing()
+        for assignment in (f"note = note || {sql_text(' ' + NOTE)}", f"note = upper({sql_text(NOTE)})",
+                           f"(note, item) = ({sql_text(NOTE)}, 'x')"):
+            with self.subTest(assignment=assignment):
+                self.assertRefused(self.run_hook(resuppress(assignment)), "cannot read the practitioner's wording")
 
 
 class PluginRegistrationTests(unittest.TestCase):
