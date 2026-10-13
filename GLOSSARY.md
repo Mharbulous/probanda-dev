@@ -195,7 +195,7 @@ A part of a Mockup — caption (style of proceeding), orders, paragraphs, excerp
 _Avoid_: section (a schema term); part (Form 32's own word).
 
 **Consequence**:
-The clause a test entails: the legal outcome. The hub of a **Rule**, and the entry a search looks for. It records its actor and whether it is discretionary (true, as with "may", or false) as fields, because similarity search blurs them. Tests point at it. It points at nothing. Two consequences judged to mean the same are both kept and linked, never merged.
+The legal outcome a test produces: what may, must or does follow. In the pool it is the clause a test points at as its outcome. A clause is a consequence only because some test points at it that way, and one clause may be the consequence of several tests. It may be compound: where the prose makes a second outcome depend on the first, both stay in one consequence, as two parts. Each part records three reading aids: its actor, whether it is discretionary (true, as with "may", or false) and its polarity (negative when the part says something does not happen or may not be done, otherwise affirmative). A consequence that is not compound has one part. The aids are shown beside a search result because similarity search blurs them. A consequence is the hub of a **Rule** and the entry a search looks for. Two consequences judged to mean the same are both kept and linked, never merged.
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
@@ -221,7 +221,7 @@ A `ticket_proposals` key whose Proposal no longer derives from the render's inve
 _Avoid_: stale job (the job may hold other live keys); moved item (a reworded item is reported separately).
 
 **Defence**:
-A matter raised by the responding party that defeats liability or relief, often with the burden on that party.
+A matter the responding party raises that defeats liability or relief, often with the burden on that party. The pool has no type for it, and how a defence is stored follows the prose. Stated as a carve-out from a test ("unless", "except"), it is an **Exception** to that test, which may point at another test that sets out the defence's own conditions. Stated as a rule of its own ("relief does not follow where"), it is a **Test** whose consequence has negative polarity.
 
 **Dismissed**:
 The **terminal** disposition on a theorized fact's provenance: our own investigation concluded the fact is **likely untrue**. Recorded on the provenance row, never by deletion — the record of what was considered and rejected is the point. An argument may not rest on a dismissed fact. "Dismissed" is a fact-investigation disposition, **not** a party position and **not** a posture, and it is knowable only for **our own** side — there is no way to know what an opposing party has privately dismissed. (Distinct from a *proceeding* status or an *issue* status — see **Fact Posture**.)
@@ -247,7 +247,7 @@ Every criterion of a Writing kind except the Gate criterion.
 _Avoid_: all criteria.
 
 **Element**:
-The clause type a test requires. It is met or not met. A test is met only when every one of its elements is met. The party relying on the test establishes it. Case data stores elements under the frozen code name `legal_criteria`.
+A requirement that must be satisfied for a test's consequence to follow. In the pool it is a clause linked to a test with the type element. It is met or not met, and a test is met only when every one of its elements is met. The party relying on the test establishes it. Case data stores elements under the frozen code name `legal_criteria`.
 _Avoid_: criterion, condition, requirement (name the clause type: element, exception or factor).
 
 **Eligible**:
@@ -258,7 +258,7 @@ _Avoid_: one-step (necessary, not sufficient); ripe (every Ready job is ripe).
 Non-privileged material linked to a fact as support (or contradiction) for it.
 
 **Exception**:
-The clause type that suppresses a test. It is met or not met. When it is met, the consequence does not follow even though every element is met. In place of a clause it may be a pointer to another test. The party resisting the test raises it. It attaches to a test.
+A circumstance that takes a case out of a test: when it is present, the consequence does not follow even though every element is met. In the pool it is a clause linked to a test with the type exception, or, in place of a clause, a pointer to another test whose conditions set the exception out. It attaches to a test and never to one element, exception or factor. The party resisting the test raises it.
 _Avoid_: exception for a negative element (an absence the relying party must establish is an **Element**); **Limit**; criterion, condition (name the clause type).
 
 **Exhibit**:
@@ -273,7 +273,7 @@ The practical state of a fact given all current positions on it — **derived, n
 _Avoid_: status. **"Status" is a lifecycle word and must never be used for posture.** Status describes the state of a proceeding or a source's ingestion; posture describes where a fact currently stands between the parties. Do not conflate the two, and do not invent a "fact status" term.
 
 **Factor**:
-The clause type a test weighs. It is a matter of degree. It is weighed with the test's other factors to reach a judgment, and is never met or unmet alone. Case data stores factors under the frozen code name `legal_criteria`.
+A consideration weighed in deciding whether a consequence follows. In the pool it is a clause linked to a test with the type factor. It is a matter of degree, weighed with the test's other factors to reach a judgment, and is never met or unmet alone. Case data stores factors under the frozen code name `legal_criteria`.
 _Avoid_: criterion, consideration (name the clause type: element, exception or factor).
 
 **Fast-path job**:
@@ -343,7 +343,7 @@ Derived, never stored: drafting → filed → heard → decided → appeal expir
 _Avoid_: status (an enum stored beside the dates — the thing this design refuses); archived (the renderer's word for revision-archive copies of a mockup).
 
 **Limit**:
-A boundary on a rule's scope; outside it, the rule never applied.
+A boundary on a rule's scope. Outside it, the rule never applied, where an exception displaces a rule that did apply. The pool has no link or type for it, and how a limit is stored follows the prose: as wording inside the clause it bounds, as an **Element** where the prose states it as a condition the relying party meets, or as an **Exception** where the prose states it as a carve-out.
 _Avoid_: limitation (reserved for limitation periods and the Limitation Act).
 
 **Litigation Strategy**:
@@ -387,7 +387,7 @@ Vet an authority's subsequent treatment before relying on it — routine, mandat
 _Avoid_: suspicious, dubious (those are Doubt); treatment (the outcome, not the act); check (as a column name); verify (that is whether a lead has been confirmed in hand).
 
 **Obiter dictum**:
-A proposition stated but not necessary to the decision; persuasive only.
+A proposition stated but not necessary to the decision, and so persuasive only. It is the other value of the mark described under **Ratio decidendi**, recorded in the same place. A principle taken from legislation carries neither value.
 
 **Oral reasons**:
 A decision pronounced orally with no transcript, recorded in case-data as an authority of type `oral_reasons` whose citation names court, file number, judge and date — never a style of cause — and pooled as treatment notes only: which cited authorities the court followed, distinguished, declined to follow, or did not consider, from the practitioner's own account. No text, excerpt, or note crosses. A later transcript upgrades the same authority.
@@ -423,7 +423,7 @@ A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL)
 _Avoid_: pre-litigation matter (the matter exists either way); undecided forum as a stored value (it is NULL, not a sentinel); pre-filing for a proceeding whose only Writing is a demand letter (nothing has gone to a forum, but it has a Writing, so it is not one).
 
 **Principle**:
-The prose in which an authority states law, kept as stated and matter-free, with its authority and pinpoint. Tests are decomposed from it, and each test records the principle that states it. One principle may state several propositions.
+A statement of law in the words an authority uses. In the pool it is a record holding that prose, kept as stated and matter-free, and linked to each **Authority** that supports it. That link carries the pinpoint: where in the authority the prose is found. Tests are decomposed from a principle, and each test records each principle that states it. One principle may state several propositions, and one proposition may be stated by several principles.
 _Avoid_: principle for a rule, a test or a proposition; principle for a foundational norm that justifies rules (name the norm); concept, doctrine (as the stored entity).
 
 **Privileged Source**:
@@ -444,7 +444,7 @@ One work marker's remaining work, on the database row that work is done on, list
 _Avoid_: seed; offer; suggestion; candidate; draft job.
 
 **Proposition**:
-A test together with the consequence it entails: if this test is met, then this consequence. It is what an authority asserts, so authority, pinpoint, later treatment and verification attach to it. In a draft, it is the one sentence that states this, and each **Statement of law** hangs from it. Its fact-domain twin is a **Postulate**.
+What an authority asserts as law: if these conditions are met, this consequence follows. In the pool it has no record of its own. It is one **Test** read with its links: the clause that is its **Consequence** and the clauses that are its conditions, each an **Element**, an **Exception** or a **Factor**. A test has one consequence, so one test is one proposition, however many principles state it. A **Rationale** is the "because" beside a proposition and is not part of it. A proposition's authority and pinpoint are reached through each **Principle** that states its test. In a draft, a proposition is the one sentence that states this, and each **Statement of law** hangs from it. Its fact-domain twin is a **Postulate**.
 _Avoid_: proposition for a factual assertion (a **Postulate**); proposition to mean proposal; holding; principle.
 
 **Provenance**:
@@ -454,7 +454,7 @@ Where a fact was learned; this may be privileged (e.g. a client interview) even 
 A single **admit** position where the limiting language is recorded verbatim (never split into a separate admit row and a separate deny row, and never paraphrased).
 
 **Ratio decidendi**:
-A proposition necessary to the decision; the part of a decision capable of binding. Whether it binds a given forum is a separate question of law.
+A proposition necessary to the decision, and so the part of a decision capable of binding. Whether it binds a given forum is a separate question of law. In the pool it is recorded on the link between a test and a principle that states it, so that two propositions drawn from one principle can be marked apart. The pool's older `obiter` field, on the link from a principle to its authority, marks a whole principle at once and is not changed.
 _Avoid_: ratio for "the court's own words" (obiter is also the court's own words), or for a text-similarity score.
 
 **Rationale**:
@@ -474,11 +474,11 @@ Clearing `retired_on` and its reason so a retired Writing drafts again. Offered 
 _Avoid_: restore, reopen, un-retire.
 
 **Redirect**:
-The permanent `old ID → canonical ID` record left when a merge repair deletes a duplicate principle row. Kept in a separate redirect table (main table holds only live rows), flattened to depth 1, resolved invisibly by the lookup tool.
+The permanent record that sends an old principle id to the id that replaced it, so that every id ever issued still resolves. In the pool it is a row in a separate table, one hop deep, and the lookup tool follows it without showing it. Existing redirects are kept. The revised structure makes none, because it links and never merges.
 _Avoid_: tombstone
 
 **Representative**:
-The principle anchoring a variant cluster, chosen by canonical-phrasing rule (shortest, alphabetical tiebreak). A query anchor, not a ranking — lookups return the whole cluster.
+The principle a **Variant** points at. In the pool it is a principle whose `variant_of` field is empty, and its cluster is that principle with every variant that points at it, one level deep. The word matters only where a variant points at the principle.
 
 **Reserve**:
 Whether a postulate, statement, authority, argument or order sought is held back — stored and drafted, rendered only in the Mockup's trailing "Held in reserve" section, marked 🂡, never in the filed face — or deployed into the body. How held-in-reserve material lives in the same database as delivered material. A reserved row is still work (deploy-or-abandon is deferred, not absent).
@@ -500,7 +500,7 @@ A job that is `queued`, unlocked, every blocker completed, and (if it has one) n
 _Avoid_: available (generic English — "ready" here means specifically classified so by the renderer, per the CHECK-and-conflict logic above).
 
 **Rule**:
-One consequence together with every test that points at it.
+A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Test** that points at any of them. A consequence with no such link is a rule on its own.
 _Avoid_: bare "rule" where the same file also means a **Court Rule** or one of the plugin's own working rules. Say which.
 
 **Scope**:
@@ -549,7 +549,7 @@ To **adduce** is to put evidence into the trial record at trial. Two forms: **el
 _Avoid_: enter (say tender); file, serve (different acts); adduce for a document alone (the genus — say tender).
 
 **Test**:
-One route to a consequence: a set of clauses, each an element, an exception or a factor, that entails exactly one consequence when met. It records the principle that states it. A test may have no clauses (a definition, or a bare norm). A test may also carry a **Rationale**, which explains it and is not one of its conditions.
+One way of reaching a legal outcome: the conditions that produce it when they are satisfied. In the pool it is a record that points at exactly one clause as its **Consequence** and at any number of clauses as its conditions, each link typed **Element**, **Exception** or **Factor**. It may have no conditions (a definition, or a bare norm). It records each **Principle** that states it, and one test may be stated by several principles. A **Rationale** reaches it through a separate link, which is never read when two tests are compared.
 _Avoid_: limb (an alternative limb is a test of its own; a cumulative limb is an element); test for a whole rule.
 
 **Theorized Fact**:
@@ -578,7 +578,7 @@ _Avoid_: free-form (a different axis: a court form with no generator is Unstruct
 The one-way, local-only record "my local principle = cloud principle #N". The cloud holds no reciprocal pointer; a cloud ID, once minted, must resolve forever.
 
 **Variant**:
-A meaning-bearing near-duplicate principle (a judge's different spin on a doctrine) kept as its own full entry — own ID, own embedding — linked to its cluster representative rather than merged. Clusters are rooted stars, never chains.
+A principle recorded, under the pool's earlier design, as another judge's wording of a point that a different principle already makes. In the pool it is a principle whose `variant_of` field names that other principle, with a note on the difference. Existing variants are kept, and a lookup of any member returns the whole cluster. The revised structure adds none: sameness of meaning is recorded between clauses instead.
 
 **Verified**:
 Describes whether the *extraction or classification* of a row has been quality-checked — nothing more. It does NOT mean the underlying fact is true, proven, admitted, or accepted by a court. A fact can be fully verified (the extraction accurately reflects what the source document says) while still being hotly disputed on the merits.
