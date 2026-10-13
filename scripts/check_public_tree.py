@@ -34,7 +34,7 @@ SCRIPTS = Path(__file__).resolve().parent
 
 PUBLIC = "public"
 # The human-approved list of public files: {path under public/: sha256}. Written
-# only by approve_public.py, run by a person.
+# only by approve_public.py.
 APPROVED = "public-approved.json"
 # Where the fingerprints are read from.
 PRIVATE_ROOTS = (".claude/skills", "source/probanda", "cloud")
