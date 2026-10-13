@@ -1,16 +1,24 @@
 # Plan: restructure the legal-commons pool for the revised structure
 
-Written 2026-10-13, revised the same day after a review against the files and Supabase's documentation. This is the build plan for the database. The reasons for the design, and the evidence behind it, are in the schema plan ("Plan: consequence-first structure for the legal-commons pool", revision 3, kept in the maintainer's plans folder). This file does not repeat them. Where the two differ, this file is the later one and says so.
+Written 2026-10-13, revised the same day after a review against the files and Supabase's documentation, and again on 2026-10-13 after a second review (plain language, untested assumptions, and the open findings at the end). This is the build plan for the database. The reasons for the design, and the evidence behind it, are in the schema plan ("Plan: consequence-first structure for the legal-commons pool", revision 3, kept in the maintainer's plans folder). This file does not repeat them. Where the two differ, this file is the later one and says so.
 
-Terms are used as the root `GLOSSARY.md` defines them. A few database words recur, and each is defined here once:
+The pool is a Postgres database hosted by Supabase, on the free plan. The plugin reads and writes it through Supabase's web interface. This plan adds nine tables, one field, six database functions and three Edge Functions to it, and then fills the new tables from the 16 principles the pool holds today.
 
+Terms are used as the root `GLOSSARY.md` defines them. The database words below recur, and each is defined here once:
+
+- A **schema** is a named group of tables and functions inside one database. Everything the pool holds sits in the schema named `legal_commons`. A **scratch schema** is a throwaway copy made for a test and dropped afterwards.
 - A **migration** is a SQL script applied once to change a database's structure.
+- A **transaction** is a group of changes that either all take effect or none do.
 - A **foreign key** is a rule that a value in one table must exist in another, so a link can never point at nothing.
 - A **view** is a saved query that reads like a table.
+- A **generated column** is a column the database fills in itself from other columns of the same row.
 - A **uuid** is a random 128-bit number used as an id. A **timestamptz** is a date and time with its time zone.
 - An **embedding** is the list of 384 numbers the `gte-small` model makes from a text, placed so that texts with similar meaning get nearby numbers. **Cosine similarity** is the nearness score between two embeddings, from 0 to 1, with 1 for identical.
-- An **Edge Function** is a small program that Supabase runs on its own servers, outside the database. Only an Edge Function can run the embedding model.
-- **PostgREST** is the web interface through which the plugin reads and writes the pool's tables. **`service_role`** is the database role the plugin's key acts as. A **grant** gives a role the right to use a table or function.
+- An **Edge Function** is a small program that Supabase runs on its own servers, outside the database. Within Supabase, only an Edge Function can run the embedding model.
+- **PostgREST** is the web interface through which the plugin reads and writes the pool's tables and calls its functions. A **role** is a named set of database permissions. **`service_role`** is the role the pool's secret key acts as. A **grant** gives a role the right to use a table or function.
+- The pool's **secret key** is the project's `sb_secret_` key, held by the plugin and never shown. A **JWT** is a different kind of signed token, which Supabase uses for logged-in users. The pool has no users and uses no JWTs.
+- The **SQL editor** is the page in Supabase's dashboard where a person pastes and runs SQL against the live project.
+- The **command-line tool** is Supabase's program for a developer's machine (`supabase`), used here only to deploy Edge Functions.
 
 ## What changes and what does not
 
@@ -27,7 +35,7 @@ One consequence of the last row: a principle pushed after phase 5 arrives with `
 
 ## The new tables
 
-All sit in the `legal_commons` schema. Every table has `created_at`. Names below are the names to build.
+All sit in the `legal_commons` schema. Every table has `created_at`. Names below are the names to build. The legal terms (clause, test, consequence, element, exception, factor, rationale, principle) are as `GLOSSARY.md` defines them.
 
 ### `clause`: one self-contained statement
 
@@ -35,14 +43,14 @@ All sit in the `legal_commons` schema. Every table has `created_at`. Names below
 |---|---|---|
 | `clause_id` | uuid | Key |
 | `text` | text | Required |
-| `text_key` | text | The tidied text. Generated from `text` by `tidy_clause_text`. Unique |
+| `text_key` | text | The tidied text. A generated column, filled from `text` by `tidy_clause_text`. Unique |
 | `embedding` | `vector(384)` | Required |
 
 No jurisdiction, no contributor and no type. A clause gets its type from the link that uses it.
 
-Two points of mechanics. `text_key` is a stored generated column, and Postgres accepts a user function there only when the function is declared `immutable` (always the same result for the same input), which `tidy_clause_text` must be. The `vector` type comes from the `vector` extension, which Supabase installs into its `extensions` schema, so the column is declared as `extensions.vector(384)` unless the migration's search path includes that schema, as `functions.sql` already does.
+Two points of mechanics. Postgres fills a generated column with a user-written function only when the function is declared `immutable` (always the same result for the same input), which `tidy_clause_text` is. The `vector` type comes from the `vector` extension, which Supabase installs into its `extensions` schema, so the column is declared as `extensions.vector(384)`.
 
-### `clause_part`: the reading aids for one outcome inside a clause
+### `clause_part`: the reading aids for one outcome inside a consequence
 
 | Field | Type | Rule |
 |---|---|---|
@@ -52,7 +60,7 @@ Two points of mechanics. `text_key` is a stored generated column, and Postgres a
 | `discretionary` | boolean | Required |
 | `polarity` | text | `affirmative` or `negative` |
 
-A simple consequence has one part. A compound consequence has one part for each linked outcome. A clause used only as a condition or a rationale has no parts. This departs from the schema plan's Design table, which put the three aids on the clause. See default 1.
+The three reading aids are the ones `GLOSSARY.md` describes under Consequence. A simple consequence has one part. A compound consequence has one part for each linked outcome. A clause used only as a condition or a rationale has no parts. This departs from the schema plan's Design table, which put the three aids on the clause. See default 1.
 
 ### `test`: one route to one consequence
 
@@ -73,7 +81,7 @@ A simple consequence has one part. A compound consequence has one part for each 
 | `clause_id` | uuid | Foreign key to `clause` |
 | `points_to_test_id` | uuid | Foreign key to `test` |
 
-Rules the table enforces itself: exactly one of `clause_id` and `points_to_test_id` is filled, `points_to_test_id` is allowed only on an exception, and one clause appears at most once in a test. Rules the write function enforces, because a table cannot: a test's condition is never its own consequence clause, and a chain of exceptions that point at tests never leads back to where it started.
+Rules the table enforces itself: exactly one of `clause_id` and `points_to_test_id` is filled, `points_to_test_id` is allowed only on an exception, and one clause appears at most once in a test. Rules the write function enforces, because a table cannot: a test's condition is never its own consequence clause, and a chain of exceptions that point at tests never leads back to where it started. Example of the second: test A has an exception pointing at test B, and B has an exception pointing back at A. Neither can be stored first, so the write is refused.
 
 Nothing here lets a clause attach to another clause, which is how "exceptions attach to tests only" is kept.
 
@@ -112,7 +120,7 @@ All three fields form the key. The pair (`test_id`, `principle_id`) is a foreign
 
 A pair may have many verdicts. A verdict that says "different" is stored like any other.
 
-A view, `clause_pair_state`, gives each pair one state from its live verdicts. If a person has judged the pair, the latest person's verdict decides. Otherwise the state is `equivalent` when every verdict says both directions hold, `different` when none does, and `conflict` when they disagree. The count of contributors is never used.
+A view, `clause_pair_state`, gives each pair one state from its live verdicts. If a person has judged the pair, the latest person's verdict decides. Otherwise the state is `equivalent` when every verdict says both directions hold, `different` when none does, and `conflict` when they disagree. Example: two model verdicts say A and B mean the same, a third says they do not, and no person has judged the pair: the pair is in `conflict` until a person's verdict settles it. The count of contributors is never used.
 
 ### `embedding_fingerprint`: which model made the embeddings
 
@@ -122,6 +130,7 @@ One row: the model's name, one fixed sentence and that sentence's embedding. Eve
 
 | Field | Type | Rule |
 |---|---|---|
+| `record_id` | uuid | Key |
 | `principle_id` | uuid | Required |
 | `criterion_id` | uuid | Empty for a record about the principle as a whole |
 | `test_id`, `clause_id` | uuid | What the old row became |
@@ -135,16 +144,16 @@ Either a target or a reason is filled. This is the home the mapping asked for. I
 
 ## Database functions
 
-Each write function replies in one of two shapes: the write was saved, or it was not and here is a question about the item (Commandment 6). The one read function, `clause_search`, returns stored statements with their tests, as `resolve_principle` returns principles with their criteria today. Both readers rest on Exception 4 of the Commandments, and what the plugin shows of a reply is Brahm's call at phase 7.
+Each write function replies in one of two shapes: the write was saved, or it was not and here is a question about the item (Commandment 6). A refused write leaves no row behind. The one read function, `clause_search`, returns stored statements with their tests, as `resolve_principle` returns principles with their criteria today. Both readers rest on Exception 4 of the Commandments, and what the plugin shows of a reply is Brahm's call at phase 7.
 
 | Function | What it does |
 |---|---|
-| `tidy_clause_text(text)` | Kept in the migration file and not in `consequence_functions.sql`, because the `clause` table is built on it. The tidying rule of `normalize` in `source/probanda/mcp/src/phrases/rank.ts`, written in SQL: Unicode NFC (one fixed way of writing accented letters), trimmed, runs of white space made one space, one trailing period removed, case kept. Declared `immutable`. Postgres's `normalize()` needs the database encoding to be UTF8, which Supabase's is. Postgres's `trim()` removes only the plain space and its `\s` depends on the database's locale, while JavaScript's `trim()` and `\s` cover every Unicode space, so the SQL spells out the set of white-space characters instead of relying on either default. Both versions are tested against one shared list of strings that includes a tab, a line break, a no-break space (U+00A0) and a line separator (U+2028). Where they differ, `rank.ts` is the rule and the SQL is corrected |
+| `tidy_clause_text(text)` | Kept in the migration file and not in `consequence_functions.sql`, because the `clause` table is built on it. The tidying rule of `normalize` in `source/probanda/mcp/src/phrases/rank.ts`, written in SQL: Unicode NFC (one fixed way of writing accented letters), trimmed, runs of white space made one space, one trailing period removed, case kept. Declared `immutable`. Postgres's `normalize()` needs the database encoding to be UTF8, which the pool's is (phase 1). Postgres's `trim()` removes only the plain space and its `\s` depends on the database's locale, while JavaScript's `trim()` and `\s` cover every Unicode space, so the SQL spells out the set of white-space characters instead of relying on either default. Both versions are tested against one shared list of strings that includes a tab, a line break, a no-break space (U+00A0) and a line separator (U+2028). Where they differ, `rank.ts` is the rule and the SQL is corrected |
 | `clause_search(text, embedding, role, limit)` | Read only. First the clause whose `text_key` equals the tidied query, then the nearest clauses by cosine similarity among clauses in the role asked for (`consequence`, `element`, `exception`, `factor`, `rationale` or `any`), 10 unless told otherwise. For each hit: its text and parts, every live test it belongs to with that test's conditions, rationales, stating principles and stale mark, every clause reachable from it through `equivalent` pairs, and separately any pair in `conflict`. No similarity score is returned, because the trial showed the score cannot tell a rewording from a changed meaning |
 | `contribute_decomposition(payload, contributor)` | Writes one principle's whole decomposition, with its `conversion_record` rows, or none of it. Reuses a clause whose `text_key` already exists. Reuses a test whose consequence clause and conditions are identical by id, adding only the stated-in link. Refuses an unknown principle, a principle id that `principle_redirects` lists as merged away, a failed or missing fingerprint and any broken rule of `test_clause` |
-| `contribute_verdicts(verdicts, contributor)` | Stores verdicts, putting each pair in its one form |
+| `contribute_verdicts(verdicts, contributor)` | Stores verdicts, putting each pair in its one form. All or none |
 | `retire(kind, id, note, contributor)` | Sets the retired date on a test or a verdict. Deletes nothing |
-| `set_clause_embeddings(rows, fingerprint)` | Replaces every clause's embedding and the fingerprint together, in one transaction, for a change of model. It takes all rows in one call and refuses a call that leaves any clause out, because a pool with embeddings from two models under one fingerprint would return wrong neighbours without saying so |
+| `set_clause_embeddings(rows, fingerprint)` | Replaces every clause's embedding and the fingerprint together, in one transaction, for a change of model. It also stores the first fingerprint while the pool has no clause. It takes all rows in one call and refuses a call that leaves any clause out, because a pool with embeddings from two models under one fingerprint would return wrong neighbours without saying so. See open finding 1 for the limit this one-call rule runs into |
 
 "Is this test already pooled" is answered in two layers. The write function matches by id only, which is exact. The search groups tests by meaning, by following `equivalent` pairs between their consequences and between their conditions. Two tests that mean the same are both kept.
 
@@ -158,11 +167,13 @@ There is no vector index. The search compares the query with every clause, which
 | `commons-contribute` | Embeds each clause text and the fixed sentence, calls `contribute_decomposition` |
 | `commons-reembed` | Embeds every clause and the fixed sentence, calls `set_clause_embeddings` once |
 
-Each creates the model as `new Supabase.ai.Session('gte-small')` and runs it with `mean_pool: true, normalize: true`, the settings Supabase's documentation gives for embeddings, and logs no text it receives. The client sends text and ids and never names a table. Only `commons-search` is ever reached from the plugin. The other two are run from Probanda's development machine by scripts kept under `cloud/legal-commons/`, with the key supplied in an environment variable by the person running them. No script reads the stored credential file.
+Each creates the model as `new Supabase.ai.Session('gte-small')` and runs it with `mean_pool: true, normalize: true`, the settings Supabase's documentation gives for embeddings, and logs no text it receives. The client sends text and ids and never names a table. Only `commons-search` is ever reached from the plugin. The other two are run from Probanda's development machine, with the key supplied in an environment variable by the person running them. No script reads the stored credential file.
 
-How a caller is admitted, from Supabase's documentation read 2026-10-13. By default an Edge Function accepts only a caller whose `Authorization` header carries a JWT (a signed token). The pool's `sb_secret_` keys are not JWTs, so each of the three functions is deployed with JWT verification off (`verify_jwt = false` in `supabase/config.toml`, or `--no-verify-jwt`) and checks for itself that the `apikey` header holds a secret key of the project, refusing every other request before it reads the body. It makes the check against `SUPABASE_SECRET_KEYS`, the list of the project's secret keys that Supabase gives every Edge Function, and it then uses the caller's own key for the database call, so no key is stored with the function. The plugin's client already sends the key in the `apikey` header on every call. Inside the function, the project's URL and secret key arrive as environment variables Supabase sets, and the function calls the database function through PostgREST with the `legal_commons` schema named in the request, which works because that schema is already exposed for the existing tools.
+How a caller is admitted, from Supabase's documentation read 2026-10-13. By default an Edge Function accepts only a caller whose `Authorization` header carries a JWT. The pool's secret key is not a JWT, so each of the three functions is deployed with JWT verification off (`verify_jwt = false` in `supabase/config.toml`) and checks for itself that the `apikey` header holds a secret key of the project, refusing every other request before it reads the body. This is the pattern Supabase's own documentation gives for a function called with a secret key. The function makes the check against `SUPABASE_SECRET_KEYS`, a list of the project's secret keys that Supabase places in every Edge Function's environment, and then uses the caller's own key for the database call, so no key is stored with the function. Inside the function, the project's address arrives the same way (`SUPABASE_URL`), and the function calls the database function through PostgREST with the `legal_commons` schema named in the request, which works because that schema is already exposed for the existing tools.
 
-`commons-reembed` must finish inside one function run. A few thousand short clauses embed in well under the run limit. If the pool outgrows that, the function is split then, and not before.
+One point for phase 7, from the same documentation: a secret key is to be sent in the `apikey` header only. The Edge Function platform treats a value in the `Authorization: Bearer` header as a JWT and rejects a secret key sent there with "Invalid JWT". The plugin's client today sends the key in both headers on every PostgREST call, and those calls work. Whether an Edge Function call carrying both headers also works is settled by a phase 4 check, so that the phase 7 tool knows which headers to send.
+
+Limits that bear on this, from Supabase's documentation read 2026-10-13: an Edge Function may use 2 seconds of CPU time per request, 256 MB of memory, and on the free plan may run for 150 seconds in all before it is shut down. Embedding is CPU work. `commons-search` and `commons-contribute` embed a handful of texts per call and are expected to fit. `commons-reembed` must finish inside one run, and whether it does depends on how many clauses the pool holds and how much CPU time each embedding costs, which nobody has measured. Phase 4 measures it. Open finding 1 says what to do if it does not fit.
 
 ## Defaults taken, each of which Brahm can reverse
 
@@ -171,9 +182,20 @@ How a caller is admitted, from Supabase's documentation read 2026-10-13. By defa
 3. **The six `criterion` fields with no place get no new field** (`burden_of_proof`, `authority_id`, `in_force_date`, `repeal_date`, `treatment`, `treated_by_authority_id`). They stay on the old row, reachable through `conversion_record`. `repeal_date` is never turned into a retired date, because a retired date marks a mistake and a repeal does not.
 4. **Nesting is not given a pointer.** `criterion.determined_by_principle_id` is recorded in `conversion_record` as its old row. The link between an outer test's element and an inner test's consequence comes from the shared clause or a meaning verdict.
 5. **A principle that has tests cannot be deleted.** The foreign key from `test_principle` refuses it. The client code deletes rows only from `principle_authority` and `authority`, so no plugin tool deletes a principle today. A merge of two principles, which would write `principle_redirects` and remove a row, exists in no tool and could only be done by hand in the SQL editor. Phase 1's dump confirms that no database function or policy deletes one either.
-6. **Testing uses a scratch schema in the live project.** This machine has neither Docker nor the Supabase command-line tool (both checked 2026-10-13), so a local copy of Supabase cannot run here. The scratch schema holds empty copies of the existing tables and the new objects, touches no pool row, and is dropped afterwards. It is still a write to the live project and waits for the phase 2 go-ahead. The alternative is installing Docker Desktop and testing locally. Embeddings in the scratch tests are any 384 numbers, since the Edge Functions are not deployed until phase 4.
+6. **Testing uses a scratch schema in the live project.** This machine has neither Docker nor the Supabase command-line tool (both checked 2026-10-13), so a local copy of Supabase cannot run here. The scratch schema holds empty copies of the existing tables and the new objects, touches no pool row, and is dropped afterwards. It is still a write to the live project and waits for the phase 2 go-ahead. The alternative is installing Docker Desktop and testing locally. Embeddings in the scratch tests are any 384 numbers, since the Edge Functions are not deployed until phase 4. Since this default was written, the same tests have passed in PGlite on the development machine (phase 2 below), which changes what the scratch run adds. The phase 2 gate puts that choice to Brahm.
+
+## Needed from outside the repository
+
+The remaining phases rest on four things that are not in this repository. None may be committed here under a path from the maintainer's machine. The executing session confirms each is at hand before the phase that needs it.
+
+- **The trial's files** (`results.json`, `report.md` and `trial.mjs`, in the maintainer's `gte-small-trial` working folder): the 681 rewordings, the 443 of them that reword consequences, which principle each test clause came from, and the local model setup. Needed at phase 4 (the 20-string embedding check runs the model locally) and phase 5 (the recall check).
+- **The 16 pilot decompositions**, produced by the schema plan's step 3. Nothing in this repository records where they are or whether Brahm has approved them. Needed at phase 5.
+- **The PGlite runner** used for phase 2's test run. It is a few lines in a temporary folder: install `@electric-sql/pglite` 0.3.16, open a database with the `vector` and `pg_trgm` extensions, create a `service_role` role, run the built script and print the result rows. It is re-created when the tests are re-run after a fix.
+- **Node 22.18 or later** on the machine that builds the test script, because `tests/build_scratch_test.mjs` imports a TypeScript file directly. The development machine has 22.23.2.
 
 ## Phases, in order, each with its check
+
+A "gate" is a point where Brahm decides whether and how to go on. Each gate below says what he is deciding.
 
 ### Phase 1. Learn the live pool's state (done 2026-10-13)
 
@@ -199,46 +221,74 @@ Counts: 16 `principle`, 35 `criterion`, 3 `authority`, 14 `principle_authority`,
 
 `criterion.requirement_type` holds `element` on 29 rows and `factor` on 6. No row holds `exception` and no row holds a value outside the three clause types, so the conversion needs no extra rule.
 
-### Phase 2. Write and test the migration (gate: Brahm's go-ahead for the scratch schema)
+### Phase 2. Write and test the migration (files done; gate: Brahm's decision on the scratch schema)
 
-- Files under `cloud/legal-commons/`: `migrations/0001_consequence_structure.sql` (`create extension if not exists` for `vector`, which does nothing on the pool because phase 1 found it installed, the nine tables, the view, the `pinpoint` field, indexes on every foreign key, grants to `service_role`, and `notify pgrst, 'reload schema'`, which tells PostgREST to notice the new objects), `migrations/0001_down.sql` (removes exactly what the first adds, and so leaves the `vector` extension, which was there before), `consequence_functions.sql` (each function granted to `service_role`, with the default right of every role to run it withdrawn), and `supabase/functions/` for the three Edge Functions with `supabase/config.toml` setting `verify_jwt = false`. The folder is named `supabase/` because the Supabase command-line tool deploys only from a folder of that name.
+- Files under `cloud/legal-commons/`: `migrations/0001_consequence_structure.sql` (`create extension if not exists` for `vector`, which does nothing on the pool because phase 1 found it installed, the nine tables, the view, the `pinpoint` field, indexes on every foreign key, grants to `service_role`, and `notify pgrst, 'reload schema'`, which tells PostgREST to notice the new objects), `migrations/0001_down.sql` (removes exactly what the first adds, and so leaves the `vector` extension, which was there before), `consequence_functions.sql` (each function granted to `service_role`, with the default right of every role to run it withdrawn), and `supabase/functions/` for the three Edge Functions with `supabase/config.toml` setting `verify_jwt = false`. The folder is named `supabase/` because the command-line tool reads its settings from a folder of that name.
 - Test files under `cloud/legal-commons/tests/`: `scratch_test.template.sql` holds the tests, `tidy_cases.json` the shared list of strings, and `build_scratch_test.mjs` joins them with the shipped SQL files into one script that makes the scratch schema, applies the migration and functions, runs the tests, runs the down script, compares the schema with its state before, and drops the scratch schema, all in one transaction. The expected results of the tidying rule are computed by `rank.ts` itself when the script is built.
 - Tests, each of which can fail: the tidying rule gives the same result in SQL and in `rank.ts` for every string in the shared list. A decomposition with an exception chain that loops is refused. A test whose condition is its own consequence is refused. Contributing the same decomposition twice leaves the row counts unchanged. A rationale for a test its principle does not state is refused. A write with a wrong fingerprint, or with none stored, is refused. A `set_clause_embeddings` call that leaves one clause out is refused. A search reaches a test through two `equivalent` pairs in a row, and does not follow a pair in `conflict`. A person's verdict overrides two model verdicts. Amending a principle's text marks its tests stale. Running the down script leaves the schema as it was before, shown by comparing a dump of the scratch schema taken before the migration with one taken after the down script.
-- Check: all of the above pass in the scratch schema, and `python scripts/check_publishable.py --new-since origin/main` reports no new problem.
-- Before the gate, 2026-10-13: the built script was run on the development machine in PGlite 0.3.16 (Postgres 17.5 compiled to run inside Node, with the `vector` and `pg_trgm` extensions), which writes nothing to the live project. All 32 tests passed. Each of nine deliberate faults put into the SQL, one at a time, made at least one test fail. PGlite is not Supabase: it has no `service_role` until one is made for the run, and it does not show how PostgREST passes an embedding to `clause_search`. The Edge Functions have not been run anywhere, because they need the hosted model, and are first exercised in phase 4.
+- Check: all of the above pass, and `python scripts/check_publishable.py --new-since origin/main` reports no new problem.
+- Done before the gate, 2026-10-13: the built script was run on the development machine in PGlite 0.3.16 (Postgres 17.5 compiled to run inside Node, with the `vector` and `pg_trgm` extensions), which writes nothing to the live project. All 32 tests passed. Each of nine deliberate faults put into the SQL, one at a time, made at least one test fail. PGlite is not Supabase: it has no `service_role` until one is made for the run, and it does not show how PostgREST passes an embedding to `clause_search`. The Edge Functions have not been run anywhere, because they need the hosted model, and are first exercised in phase 4.
+- What a scratch run in the live project would add over PGlite: Supabase's own Postgres build (17.6 against 17.5), the installed `vector` 0.8.0, the real `service_role` and `extensions` schema. What it would not add: PostgREST's handling of the arguments, which phase 3 checks on the pool itself. It is a write to the live project (a schema is created and dropped), and nothing in the pool's own schema is touched.
+- Gate question for Brahm: run the tests again in a scratch schema in the live project, or go to phase 3 on the PGlite result? "Run them" costs one paste of the built script in the SQL editor and gives the extra assurance above. "Go on" means phase 3's own before-and-after check is the first run against Supabase; because the migration is one transaction, a failure there leaves the pool unchanged.
 
-### Phase 3. Apply to the pool (gate: Brahm's go-ahead)
+### Phase 3. Apply to the pool (gate: Brahm's go-ahead to change the live project)
 
 - Before: run `resolve_principle`, `find_candidates`, `lookup_by_citation`, `treatment_chain` and `rule_periods_find` on fixed inputs and save the replies.
-- Apply the migration and the functions file.
-- Check: the same five calls return identical replies. The nine tables exist and are empty. The plugin's `browse` tool still answers.
+- Apply the migration, then the functions file, each as one paste in the SQL editor.
+- Check: the same five calls return identical replies. The nine tables exist and are empty. The plugin's `browse` tool still answers. Through PostgREST with the secret key, as the plugin and the Edge Functions will call it: a read of `clause` returns an empty list, and a call of `clause_search` with any text and a list of 384 numbers as the embedding returns a reply with an empty `nearest` list rather than an error. That last call proves, before any Edge Function exists, that PostgREST passes an embedding to the function, that the new grants are right and that PostgREST has seen the new objects. Supabase's own documentation calls a function with a `vector` argument this way, so it is expected to work, but it has not been run against this pool.
+- Undo if anything fails: `0001_down.sql`, one paste.
 
-### Phase 4. Deploy the Edge Functions (gate: Brahm's go-ahead)
+### Phase 4. Deploy the Edge Functions (gate: Brahm's choice of deployment route, and his go-ahead)
 
-- Two ways to deploy, neither installed today: the Supabase command-line tool with `supabase functions deploy --use-api`, which bundles on Supabase's servers and needs no Docker, or the dashboard's editor, which keeps no history of earlier versions. The command-line tool is preferred because the deployed code then matches the files under `cloud/legal-commons/functions/`. Which one is used is settled here.
-- Store the fingerprint.
-- Check: 20 fixed strings embedded on this machine and through the hosted function give a cosine similarity of at least 0.999 for each pair. A request to each function with no `apikey` header, or with the project's publishable key, is refused. The recall check that the schema plan placed here moves to phase 5, because the `clause` table is empty until then and a search over it can find nothing.
+- Two ways to deploy, neither installed today: the command-line tool with `supabase functions deploy --use-api`, which bundles the code on Supabase's servers and needs no Docker, or the dashboard's editor, where the code is pasted by hand and no history of earlier versions is kept. The command-line tool is preferred because the deployed code then matches the files under `cloud/legal-commons/supabase/functions/`.
+- Gate question for Brahm: command-line tool or dashboard editor? The command-line tool needs installing (one `npm` or `scoop` command), a `supabase login`, which asks for a personal access token that Brahm creates in the dashboard and pastes himself, and a `supabase link` to the project. The dashboard route needs none of that and is fine for three short files, but a later change must be pasted again by hand.
+- Before deploying by the command-line tool: `supabase/config.toml` must name the project (`project_id`), which it does not today. Open finding 2.
+- Store the fingerprint: call `commons-reembed` once while `clause` is empty. It then stores only the fingerprint row.
+- Check: 20 fixed strings embedded on this machine (the trial's local model setup) and through the hosted function give a cosine similarity of at least 0.999 for each pair. A request to each function with no `apikey` header, or with the project's publishable key, is refused with 401, and a request with the secret key in `apikey` alone is accepted. A request with the secret key in both `apikey` and `Authorization: Bearer`, the shape the plugin's client sends today, is either accepted or rejected, and the answer is written into phase 7. From the function's logs, the CPU time one `commons-search` call takes, so that the cost of one embedding is known and `commons-reembed`'s ceiling can be computed (open finding 1).
+- The recall check that the schema plan placed here moves to phase 5, because the `clause` table is empty until then and a search over it can find nothing.
+- Undo: delete the three functions in the dashboard. The fingerprint row goes with the tables if phase 3 is undone, or is left in place harmlessly if not.
 
 ### Phase 5. Load the decompositions (gate: Brahm's review of the 16 pilot results)
 
+- Gate: Brahm has reviewed the 16 pilot decompositions and approved them. The executing session asks where they are before it starts (see "Needed from outside the repository").
 - Contribute the 16 approved decompositions, each with its `conversion_record` rows, through `commons-contribute`.
 - Phase 1 found no principle beyond the 16. A principle pushed later is decomposed and contributed, in batches, by the same two-agent pipeline as the pilot. A person reviews every checker flag and one in ten of the rest.
-- Check, as queries: every principle has a test or a `conversion_record` reason for none. Every `criterion` row has a `conversion_record` row. Every test has at least one stated-in link. The `principle_authority` links of principles recorded with a reason for no test are listed for Brahm, since those authorities now reach no test and only he can say whether that is right.
-- Check, end to end: each of the 443 consequence rewordings from the trial is sent through `commons-search`, and in at least 95% of them a clause from a test stated by the rewording's own source principle is in the top 10. The source principle of each trial clause is known from the trial's files, and a pooled clause reaches its principle through `test_principle`. This is the first search over real pooled clauses, so a failure here stops phase 6.
+- Check, as queries: every principle has a test or a `conversion_record` reason for none. Every `criterion` row has a `conversion_record` row. Every test has at least one stated-in link (the write function always makes one, so this catches only a hand edit). The `principle_authority` links of principles recorded with a reason for no test are listed for Brahm, since those authorities now reach no test and only he can say whether that is right.
+- Check, end to end: each of the 443 consequence rewordings from the trial is sent through `commons-search`, and in at least 95% of them a clause from a test stated by the rewording's own source principle is in the top 10. The source principle of each trial clause is known from the trial's files, and a pooled clause reaches its principle through `test_principle`. The trial's clauses and the pilot's clauses were cut from the same 16 principles by different hands, so a miss can mean either that the search failed or that the pilot worded the point differently from the trial. This is the first search over real pooled clauses, so a result below 95% stops phase 6 until the misses have been read and sorted into those two kinds.
 
 ### Phase 6. Judge meaning (no further gate)
 
-- Candidate pairs: for each clause, its nearest 10 in the same role, and for each `variant_of` pair of principles, their consequences. Each pair goes once to the `equivalence-checker` agent, and its verdict in both directions is stored through `contribute_verdicts`.
+- Candidate pairs: for each clause, its nearest 10 in the same role (found through `commons-search`), and for each `variant_of` pair of principles, their consequences. Each pair goes once to the `equivalence-checker` agent (`source/probanda/agents/equivalence-checker.md`), and its verdict in both directions is stored through `contribute_verdicts`.
 - Check: every candidate pair has a verdict. Every pair in `conflict` is listed for Brahm, since only a person settles one.
 
 ### Phase 7. Give the plugin the search (step 8 of the schema plan, unchanged)
 
-One read tool that calls `commons-search`. No schema particulars in any skill or agent file, or under `plugins/` or `public/`. The plugin writes nothing from a reply to disk. Brahm decides here what the tool shows of a reply: a test's clauses with their types and its `equivalent` links are the structure of a rule, and whether sending them to a user's machine goes further than today's criteria do is the question the schema plan's "Not goals" left to this step.
+One read tool that calls `commons-search`, sending the secret key in the headers phase 4 found to work. No schema particulars in any skill or agent file, or under `plugins/` or `public/`. The plugin writes nothing from a reply to disk.
+
+Gate question for Brahm, the one the schema plan's "Not goals" left to this step: what may the tool show a user of a search reply? A reply holds a test's clauses with their types (element, exception, factor), its consequence's reading aids and its `equivalent` links, which together are the structure of a rule. Today's `resolve_by_id` already sends a principle's criteria with their types to a user's machine, under Exception 4. The choices are: show the whole reply, which relies on Exception 4 exactly as today's tools do; show only the clause texts and the principle ids, so the rule's structure stays in the cloud (Commandments 4 and 5 are then not in question, and the user follows a principle id to the prose as today); or something between, which Brahm names. Until he answers, no tool is built.
 
 ## Undoing it
 
-Phases 3 and 4 are undone by `0001_down.sql` and by deleting the three Edge Functions. Because nothing existing was changed, the pool is then exactly as it was, apart from the `pinpoint` field, which the down script also removes. Phases 5 and 6 only add rows to the new tables, which go with the tables.
+Phases 3 and 4 are undone by `0001_down.sql` and by deleting the three Edge Functions. Because nothing existing was changed, the pool is then exactly as it was, apart from the `pinpoint` field, which the down script also removes together with anything it held. Phases 5 and 6 only add rows to the new tables, which go with the tables. Phase 7 is undone by removing the tool and releasing the plugin again, and must be undone first, because a released tool that calls a deleted function fails for every user.
 
 ## Out of bounds
 
 As the schema plan states them: no write to the live project and no deployed function without Brahm's go-ahead at that phase, no allowlisting of `legal_commons__*`, no reading or printing of the credential, nothing under `cloud/` copied into `plugins/` or `public/`, and no statement of what the law is.
+
+## Open findings from the review of 2026-10-13
+
+Found by reading the built files against this plan and Supabase's documentation. None has been fixed in the code. The executing session acts on them, and re-runs the phase 2 tests after any change to the SQL.
+
+1. **Serious. `commons-reembed` may not fit in one Edge Function run.** `supabase/functions/commons-reembed/index.ts` lines 11 to 20 embed every clause in one call, and `consequence_functions.sql` lines 667 to 678 (`set_clause_embeddings`) refuse any call that leaves a clause out, so the work cannot be split across calls. Supabase's limits, read 2026-10-13: 2 seconds of CPU time per request, 256 MB of memory, and 150 seconds in all on the free plan. Embedding is CPU work, and nobody has measured what one embedding costs. Failure scenario: the pool holds 2,000 clauses, the model is changed, `commons-reembed` is shut down part way through, nothing is saved (which is right), and the pool cannot be re-embedded at all. The request it sends to PostgREST would also be about 8 KB per clause, some 16 MB at that size, against a request-size limit that has not been looked up. At today's scale (the 16 principles will give well under 200 clauses) it may fit; phase 4's timing says whether it does. Proposed fix if it does not: a staging table (`clause_embedding_staging`) filled in batches by a function that checks the fingerprint on each batch, and a final function that refuses unless every clause has a staged row, then swaps all of them in and updates the fingerprint in one transaction. `set_clause_embeddings` keeps its all-or-none rule at the swap.
+
+2. **Minor. `supabase/config.toml` has no `project_id`.** Supabase's configuration reference marks `project_id` as the one required top-level setting. Failure scenario: `supabase functions deploy` refuses to read the file. Fix: add `project_id = "nbzkuhgiqscjkypedqff"` at the top (the project ref already appears in `schema.sql` and in the plugin's `config.ts`, so it is not a secret). The dashboard route does not need it.
+
+3. **Minor. Some refusals come back as raw database errors, not as a question.** `consequence_functions.sql` line 245 converts `principle_id` to a uuid before the block that turns refusals into questions, and `contribute_verdicts` does the same for its ids and booleans at lines 562 to 565. A malformed id or a non-boolean value raises a Postgres error, which PostgREST returns as an HTTP 400 with the database's own message, outside the two reply shapes the file promises. `clause_search` line 51 does the same for an unknown role. Failure scenario: a caller sends `"principle_id": "abc"` and gets `invalid input syntax for type uuid` instead of a question about the item. Nothing is saved, so the data is safe; the reply shape is what breaks. Fix: move the conversions inside the block, or catch `invalid_text_representation` there and return a question.
+
+4. **Minor, for phase 7. Which headers an Edge Function call may carry.** The plugin's client (`source/probanda/commons-mcp/src/legal-commons/client.ts` lines 150 to 151) sends the secret key in both `apikey` and `Authorization: Bearer`. Supabase's migration guide says the Edge Function platform rejects a secret key in the Bearer header as an invalid JWT. Whether that applies with `verify_jwt = false` is not stated. Phase 4's check settles it; if the two-header form is rejected, the phase 7 tool sends `apikey` alone, as `_shared/pool.ts` already does for its own calls.
+
+5. **Unchecked assumption. No platform log keeps the text a search carries.** The Edge Functions log nothing themselves, but Supabase keeps request logs for Edge Functions and for the API, and this review did not establish whether either records a request body. A query text sent from a user's machine is held in memory for the call; if a platform log stored it, that would be User Data saved to Probanda's cloud (Commandment 3). What settles it: after a phase 4 test call that carries a marker string, read the project's Edge Function and API logs for that call and look for the marker.
+
+6. **Unchecked assumption. The scratch-test builder runs on the executing machine.** `tests/build_scratch_test.mjs` imports `rank.ts`, a TypeScript file, directly. That works on Node 22.18 and later (type stripping on by default) and fails on older Node with a syntax error. The development machine has 22.23.2. What settles it: `node --version` before building.
+
+7. **Unchecked assumption. The pilot decompositions exist and are approved.** This repository does not say where the 16 decompositions are or whether Brahm has reviewed them. Phase 5 cannot start without them. What settles it: Brahm names the folder, or says the pilot is still to be done, in which case the schema plan's step 3 comes before phase 5.
