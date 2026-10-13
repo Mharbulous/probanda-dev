@@ -7,8 +7,8 @@
     "name": "Mharbulous",
     "url": "https://github.com/Mharbulous"
   },
-  "homepage": "https://github.com/Mharbulous/probanda",
-  "repository": "https://github.com/Mharbulous/probanda",
+  "homepage": "https://github.com/Probanda-app/litigation",
+  "repository": "https://github.com/Probanda-app/litigation",
   "mcpServers": "./.mcp.json",
   "hooks": {
     "PreToolUse": [
