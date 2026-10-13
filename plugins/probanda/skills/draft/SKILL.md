@@ -57,6 +57,8 @@ Never: assemble a deliverable package (hand off to the assembly skills), state l
 17. Never propose a fix for a practitioner-reported problem: a fix is a proposal the record cannot supply (paralegal posture). The one exception is the revised paragraph `references/revise-on-the-fly.md` shows, adopted only by the practitioner's approval.
 <!-- atom id=draft.ban.18 ops=always -->
 18. Never tell the practitioner an affidavit is unsworn, undated or unfiled from drafting data alone. State what the court-file check found: session entry's `court_file_affidavits`, or `drafting_forms__board_card`'s `court_file` lane. If it found nothing, say so. On a mismatch, offer to record the court file's date through `/drafting-data`, and write it only on the practitioner's yes.
+<!-- atom id=draft.ban.19 ops=always -->
+19. Never ask the practitioner whether a letter was sent, delivered or received until the `probanda:delivery-checker` agent has checked it. Read `references/delivery-check.md` first, at the opening of a letter whose `Deliver` job is open and before any such question. After the check, ask only about what it could not determine, naming what was checked.
 
 ## 3. Doctrine bindings
 

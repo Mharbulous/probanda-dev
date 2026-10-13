@@ -178,6 +178,8 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 | The pre-review passes run, or a revision adds or changes an assertion after the overstatement review has run | `references/overstatement.md` |
 <!-- atom id=draft.ref.letters ops=letter -->
 | The Writing is a letter, a job calls for one, or the practitioner asks for a letter to their own client | `references/letters.md` |
+<!-- atom id=draft.ref.delivery-check ops=open,letter -->
+| A letter's `Deliver` job is open at the opening, the Sent write refuses with `sent_copy_mismatch`, or whether a letter went out or arrived is in question | `references/delivery-check.md` |
 <!-- atom id=draft.ref.reply ops=reply_route -->
 | The practitioner asks to reply to a message from the tribunal, a registry or another party's counsel, and not for a letter (section 1) | `references/reply.md` |
 <!-- atom id=draft.ref.unstructured ops=unstructured -->
