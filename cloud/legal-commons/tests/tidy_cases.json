@@ -1,0 +1,34 @@
+[
+  "",
+  ".",
+  "..",
+  "A plain clause",
+  "A clause with a period.",
+  "A clause with two periods..",
+  "A clause with a period and a space. ",
+  "A clause with a space before the period .",
+  "  leading and trailing spaces  ",
+  "runs   of    spaces",
+  "a\ttab",
+  "a\nline break",
+  "a\r\nWindows line break",
+  "a\u000bvertical tab and a\fform feed",
+  "a no-break space",
+  "  led by no-break spaces.",
+  "a line separator",
+  "a paragraph separator",
+  "a ogham space",
+  "a en quad and a hair space",
+  "a narrow no-break space",
+  "a medium mathematical space",
+  "a　ideographic space",
+  "﻿led by a byte order mark",
+  "a​zero width space is not white space",
+  "a  \t  mixed run.",
+  "Café written with a combining accent",
+  "Café written with one letter",
+  "Case Is Kept",
+  "Rule 3-8(3) of the Supreme Court Civil Rules.",
+  "an ellipsis…",
+  "ends with a period then a no-break space. "
+]

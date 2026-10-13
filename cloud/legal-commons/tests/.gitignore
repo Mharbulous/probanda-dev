@@ -1,0 +1,2 @@
+# Built by build_scratch_test.mjs from the shipped SQL files. Never the source.
+*.generated.sql

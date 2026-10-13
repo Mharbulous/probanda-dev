@@ -17,6 +17,18 @@ Apply to a fresh Supabase project in order:
 
 All three files are idempotent and safe to re-run.
 
+The consequence-first structure (`restructuring-plan.md`) is applied after them,
+and only at the plan's phase 3:
+
+4. `migrations/0001_consequence_structure.sql` — nine tables, one view, the
+   `tidy_clause_text` function and the `pinpoint` field. Applied once.
+   `migrations/0001_down.sql` undoes it and step 5.
+5. `consequence_functions.sql` — the five functions over those tables. Idempotent.
+
+`supabase/` holds the three Edge Functions that run the embedding model.
+`tests/` holds the tests of steps 4 and 5: `node tests/build_scratch_test.mjs
+<output.sql>` writes one script that runs them in a scratch schema and drops it.
+
 ## Troubleshooting store (separate project)
 
 `troubleshoot.sql` is **not** part of the pool. It creates the `troubleshoot`
