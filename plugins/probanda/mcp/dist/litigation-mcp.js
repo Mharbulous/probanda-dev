@@ -1,4 +1,4 @@
-// build-stamp: e324e3d87222
+// build-stamp: fb0a21267858
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -77446,7 +77446,7 @@ function fileToolDefinitions() {
   return [
     {
       name: "skill_source__read",
-      description: "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across its CREATE TABLE, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: the installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin_version` and `build_stamp`. A skill folder the installed plugin bundles is always served from the install; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
+      description: "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across the statement that creates it, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: an installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin` (the name of the plugin the file came from: this plugin, or one installed beside it; null for a checkout), `plugin_version` (that plugin's version; for a checkout, this plugin's) and `build_stamp`. A skill folder this plugin bundles is always served from it; a folder that a research, litigator or solicitor plugin installed beside it bundles is served from that plugin; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77463,7 +77463,7 @@ function fileToolDefinitions() {
     },
     {
       name: "skill_source__list",
-      description: "List entries in the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). An explicit `.claude/skills/...` prefix is accepted and stripped. Omit `dir` to list the tree root. Accepts the same path forms as `skill_source__read`. Use for skills that glob their own references/ or stages/ directories, and to recover from a `not_found` on a reference whose path you guessed. Each entry carries `shipped_from`; the result carries `plugin_version` and `build_stamp`, and below the tree root a top-level `shipped_from` too. The tree root lists the install's bundled folders plus a checkout's other folders when one resolves.",
+      description: "List entries in the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). An explicit `.claude/skills/...` prefix is accepted and stripped. Omit `dir` to list the tree root. Accepts the same path forms as `skill_source__read`. Use for skills that glob their own references/ or stages/ directories, and to recover from a `not_found` on a reference whose path you guessed. Each entry carries `shipped_from` and `plugin` (the name of the plugin the entry came from: this plugin, or one installed beside it; null for a checkout); the result carries `plugin_version` and `build_stamp`, and below the tree root a top-level `shipped_from` and `plugin` too. `plugin_version` is the version of the top-level `plugin`; at the tree root and for a checkout it is this plugin's. The tree root lists this plugin's bundled folders, then the other folders of each research, litigator or solicitor plugin installed beside it, plus a checkout's other folders when one resolves.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79959,7 +79959,7 @@ import { dirname as dirname4, isAbsolute as isAbsolute2, join as join9 } from "n
 
 // src/files/matter-root.ts
 import { existsSync as existsSync8, readdirSync as readdirSync4, readFileSync as readFileSync7, statSync as statSync3 } from "node:fs";
-import { basename, dirname as dirname3, isAbsolute, join as join8, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
+import { basename as basename2, dirname as dirname3, isAbsolute, join as join8, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
 
 // src/case/backend.ts
 import { existsSync as existsSync7, readFileSync as readFileSync6 } from "node:fs";
@@ -79968,7 +79968,7 @@ import { join as join7 } from "node:path";
 // src/repo-root.ts
 import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync as readdirSync2, statSync } from "node:fs";
 import { homedir as homedir2 } from "node:os";
-import { dirname as dirname2, join as join6, resolve, win32 as pathWin32 } from "node:path";
+import { basename, dirname as dirname2, join as join6, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
 var SKILLS_MARKER = join6(".claude", "skills");
 var CHECKOUT_MARKERS = [join6("source", "probanda", "mcp"), join6("plugins", "dev-tools")];
@@ -80054,24 +80054,98 @@ function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 }
 function pluginVersion(installRoot = INSTALL_ROOT) {
+  return pluginManifest(installRoot).version;
+}
+function pluginManifest(installRoot) {
   try {
     const manifest = JSON.parse(readFileSync3(join6(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
-    return typeof manifest?.version === "string" ? manifest.version : null;
+    return {
+      name: typeof manifest?.name === "string" ? manifest.name : null,
+      version: typeof manifest?.version === "string" ? manifest.version : null
+    };
   } catch {
-    return null;
+    return { name: null, version: null };
   }
+}
+var SIBLING_PLUGINS = ["research", "litigator", "solicitor"];
+function siblingInstalls(installRoot = INSTALL_ROOT) {
+  if (installSkillsRoot(installRoot) === void 0) return [];
+  const own = resolve(installRoot);
+  const parent = dirname2(own);
+  const candidates = new Set(childDirs(parent));
+  if (basename(own) === pluginManifest(own).version) {
+    for (const branch of childDirs(dirname2(parent))) {
+      for (const dir of childDirs(branch)) candidates.add(dir);
+    }
+  }
+  candidates.delete(own);
+  const winners = /* @__PURE__ */ new Map();
+  for (const dir of candidates) {
+    const manifest = pluginManifest(dir);
+    if (manifest.name === null || !SIBLING_PLUGINS.includes(manifest.name)) continue;
+    const skills = installSkillsRoot(dir);
+    if (skills === void 0) continue;
+    const rank = [
+      (manifest.version ?? "").split(".").map((part) => Number.parseInt(part, 10) || 0),
+      [Number(/~g(\d+)$/.exec(basename(dir))?.[1] ?? 0)],
+      [modifiedMs(dir)]
+    ];
+    const held = winners.get(manifest.name);
+    if (!held || compareRank(rank, held.rank) > 0) {
+      winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
+    }
+  }
+  return SIBLING_PLUGINS.flatMap((name) => {
+    const held = winners.get(name);
+    return held ? [held.sibling] : [];
+  });
+}
+function childDirs(dir) {
+  try {
+    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join6(dir, entry.name));
+  } catch {
+    return [];
+  }
+}
+function modifiedMs(dir) {
+  try {
+    return statSync(dir).mtimeMs;
+  } catch {
+    return 0;
+  }
+}
+function compareRank(a3, b3) {
+  for (let key = 0; key < a3.length; key++) {
+    for (let i3 = 0; i3 < Math.max(a3[key].length, b3[key].length); i3++) {
+      const diff = (a3[key][i3] ?? 0) - (b3[key][i3] ?? 0);
+      if (diff !== 0) return diff;
+    }
+  }
+  return 0;
+}
+function installedPluginLabel(shipped) {
+  if (shipped.plugin === null) return "this installed plugin";
+  return `the installed plugin "${shipped.plugin}"${shipped.plugin_version ? ` ${shipped.plugin_version}` : ""}`;
 }
 function resolveShippedRoot(relPath, env = process.env, request2 = {}) {
   const installRoot = request2.installRoot ?? INSTALL_ROOT;
   const bundle = installSkillsRoot(installRoot);
   const segment = relPath.split(/[\\/]/)[0];
-  if (bundle !== void 0 && segment !== "" && segment !== "." && segment !== ".." && !segment.includes(":") && isDirectory(join6(bundle, segment))) {
-    return { root: bundle, shipped_from: "install" };
+  if (bundle !== void 0 && segment !== "" && segment !== "." && segment !== ".." && !segment.includes(":")) {
+    if (isDirectory(join6(bundle, segment))) {
+      const own = pluginManifest(installRoot);
+      return { root: bundle, shipped_from: "install", plugin: own.name, plugin_version: own.version };
+    }
+    for (const sibling of siblingInstalls(installRoot)) {
+      if (isDirectory(join6(sibling.skills, segment))) {
+        return { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
+      }
+    }
   }
   const code = request2.code ?? "skills_root_missing";
   try {
     const repoRoot = resolveRepoRoot(env, { code, subject: request2.subject ?? "the skills tree" });
-    return { root: join6(repoRoot, ".claude", "skills"), shipped_from: "checkout" };
+    return { root: join6(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}
@@ -80091,7 +80165,9 @@ function rosterLine(installRoot, segment) {
   if (bundled.length === 0) {
     return `This plugin bundles no skill source (${join6(installRoot, "skills", "shared")} not found), so every skill needs a Coclerk checkout.`;
   }
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${segment ? `"${segment}"` : "This path"} is not among them, so it needs a Coclerk checkout.`;
+  const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
+  const folder = segment ? `"${segment}"` : "this path's folder";
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No research, litigator or solicitor plugin was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("case-data", env, installRoot);
@@ -80111,7 +80187,7 @@ function migrateScriptsDir(skill, env, installRoot) {
   const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
   if (!existsSync5(pathWin32.join(dir, "migrate_engine.py"))) {
     throw new DataServerError(
-      `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
   }
@@ -80971,7 +81047,7 @@ function resolveDbPath(root) {
 function caseDataRootFromCaseDataDir(dir, env) {
   const parent = dirname3(normalize(dir));
   const override = env.COCLERK_CASE_DATA_ROOT;
-  const named = basename(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override && normalize(override).toLowerCase() === parent.toLowerCase();
+  const named = basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override && normalize(override).toLowerCase() === parent.toLowerCase();
   if (!named) return null;
   let canon;
   try {
@@ -84855,7 +84931,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "e324e3d87222";
+var BUILD_STAMP = false ? null : "fb0a21267858";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84920,13 +84996,17 @@ function resolveServed(shipped, root, relative2, label, original) {
   } catch (err) {
     if (shipped.shipped_from !== "install" || !(err instanceof DataServerError) || err.code !== "not_found") throw err;
     throw new DataServerError(
-      `${label} not found: ${original} -- "${relative2.split(/[\\/]/)[0]}" is served from this installed plugin's bundled skill source (${shipped.root}), which has no such file`,
+      `${label} not found: ${original} -- "${relative2.split(/[\\/]/)[0]}" is served from ${installedPluginLabel(shipped)}'s bundled skill source (${shipped.root}), which has no such file`,
       "not_found"
     );
   }
 }
-function provenance2(installRoot) {
-  return { plugin_version: pluginVersion(installRoot), build_stamp: BUILD_STAMP };
+function provenance2(shipped, installRoot) {
+  return {
+    plugin: shipped.plugin,
+    plugin_version: shipped.shipped_from === "install" ? shipped.plugin_version : pluginVersion(installRoot),
+    build_stamp: BUILD_STAMP
+  };
 }
 var SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
 function normalizeSkillPath(relative2) {
@@ -84994,7 +85074,7 @@ function skillSourceRead(relative2, env, from, match, installRoot) {
     size: bytes.byteLength,
     sha256: createHash5("sha256").update(bytes).digest("hex"),
     shipped_from: shipped.shipped_from,
-    ...provenance2(installRoot)
+    ...provenance2(shipped, installRoot)
   };
   if (match === void 0) return { ...base, content: whole };
   const terms2 = (Array.isArray(match) ? match : [match]).filter((term) => typeof term === "string" && term !== "").map((term) => term.toLowerCase());
@@ -85027,7 +85107,7 @@ function skillSourceList(dir = "", recursive = false, env, installRoot) {
   const e3 = env || process.env;
   const normalizedDir = dir === "/" ? "" : normalizeSkillPath(dir);
   const entries = [];
-  let shippedFrom;
+  let served;
   if (normalizedDir === "" || normalizedDir === ".") {
     listTreeRoot(recursive, e3, installRoot, entries);
   } else {
@@ -85038,32 +85118,44 @@ function skillSourceList(dir = "", recursive = false, env, installRoot) {
     if (!statSync9(base).isDirectory()) {
       throw new DataServerError(`dir is a file, not a directory: ${dir}`, "not_found");
     }
-    walk(base, root, recursive, shipped.shipped_from, entries);
-    shippedFrom = shipped.shipped_from;
+    walk(base, root, recursive, shipped, entries);
+    served = shipped;
   }
   entries.sort((a3, b3) => a3.path < b3.path ? -1 : a3.path > b3.path ? 1 : 0);
-  return { entries, ...shippedFrom ? { shipped_from: shippedFrom } : {}, ...provenance2(installRoot) };
+  if (served) return { entries, shipped_from: served.shipped_from, ...provenance2(served, installRoot) };
+  return { entries, plugin_version: pluginVersion(installRoot), build_stamp: BUILD_STAMP };
 }
 function listTreeRoot(recursive, env, installRoot, out) {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length > 0) {
     const install = resolveShippedRoot(bundled[0], env, { installRoot });
     const root = servedRoot(install);
-    walk(root, root, recursive, "install", out);
+    walk(root, root, recursive, install, out);
+  }
+  const skip = new Set(bundled.map((name) => name.toLowerCase()));
+  const unserved = (entry) => !skip.has(entry.path.split("/")[0].toLowerCase());
+  for (const sibling of siblingInstalls(installRoot)) {
+    const shipped = { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
+    const root = servedRoot(shipped);
+    const fromSibling = [];
+    walk(root, root, recursive, shipped, fromSibling);
+    out.push(...fromSibling.filter(unserved));
+    for (const name of bundledSkillFolders(sibling.installRoot)) skip.add(name.toLowerCase());
   }
   let checkout;
+  let checkoutRoot;
   try {
-    checkout = servedRoot(resolveShippedRoot("", env, { installRoot }));
+    checkout = resolveShippedRoot("", env, { installRoot });
+    checkoutRoot = servedRoot(checkout);
   } catch (err) {
     if (bundled.length > 0 && err instanceof DataServerError && err.code === "skills_root_missing") return;
     throw err;
   }
-  const skip = new Set(bundled.map((name) => name.toLowerCase()));
   const fromCheckout = [];
-  walk(checkout, checkout, recursive, "checkout", fromCheckout);
-  out.push(...fromCheckout.filter((entry) => !skip.has(entry.path.split("/")[0].toLowerCase())));
+  walk(checkoutRoot, checkoutRoot, recursive, checkout, fromCheckout);
+  out.push(...fromCheckout.filter(unserved));
 }
-function walk(dirPath, root, recursive, from, out) {
+function walk(dirPath, root, recursive, shipped, out) {
   for (const entry of readdirSync7(dirPath, { withFileTypes: true })) {
     const full = pathWin329.join(dirPath, entry.name);
     const isDir2 = entry.isDirectory();
@@ -85071,9 +85163,10 @@ function walk(dirPath, root, recursive, from, out) {
       path: toPosixRelative(root, full),
       type: isDir2 ? "dir" : "file",
       size: isDir2 ? null : statSync9(full).size,
-      shipped_from: from
+      shipped_from: shipped.shipped_from,
+      plugin: shipped.plugin
     });
-    if (isDir2 && recursive) walk(full, root, recursive, from, out);
+    if (isDir2 && recursive) walk(full, root, recursive, shipped, out);
   }
 }
 
@@ -90894,7 +90987,7 @@ async function submissionDataApprovePlan(args, env = process.env) {
 // src/submission/forms.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { existsSync as existsSync27, mkdirSync as mkdirSync13, readdirSync as readdirSync15, readFileSync as readFileSync22, realpathSync as realpathSync8, renameSync as renameSync6, unlinkSync as unlinkSync6, writeFileSync as writeFileSync8 } from "node:fs";
-import { basename as basename3, dirname as dirname12, extname as extname2, isAbsolute as isAbsolute5, join as join25, resolve as resolve5 } from "node:path";
+import { basename as basename4, dirname as dirname12, extname as extname2, isAbsolute as isAbsolute5, join as join25, resolve as resolve5 } from "node:path";
 
 // src/submission/filing-order.ts
 var DAY_MS = 864e5;
@@ -98215,7 +98308,7 @@ function formCurrency(formKey, today2, seams = {}) {
 
 // src/submission/pre-filing/index.ts
 import { existsSync as existsSync25, readdirSync as readdirSync14, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
-import { basename as basename2, dirname as dirname11, isAbsolute as isAbsolute4, join as join24, resolve as resolve4 } from "node:path";
+import { basename as basename3, dirname as dirname11, isAbsolute as isAbsolute4, join as join24, resolve as resolve4 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -98495,13 +98588,13 @@ function resolvePackageDir(packageDir) {
   if (parts.some((p3) => /^(privileged|disclosed)$/i.test(p3))) throw refuse("it lies inside a privileged or disclosed tree");
   const draftIdx = parts.findIndex((p3) => /^0\. DRAFT/i.test(p3));
   if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse("it must lie beneath the matter's 0. DRAFT folder");
-  if (basename2(real).toLowerCase() !== basename2(dir).toLowerCase() || dirname11(real).toLowerCase() !== realpathSync6.native(dirname11(dir)).toLowerCase()) {
+  if (basename3(real).toLowerCase() !== basename3(dir).toLowerCase() || dirname11(real).toLowerCase() !== realpathSync6.native(dirname11(dir)).toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join24(dir, e3.name)).sort((a3, b3) => basename2(a3).localeCompare(basename2(b3)));
+  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join24(dir, e3.name)).sort((a3, b3) => basename3(a3).localeCompare(basename3(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -98646,7 +98739,7 @@ function archiveFile(filePath, formLabel, revision) {
 function archiveDroppedFiles(baseDir, previous, written) {
   if (!previous) return;
   for (const file2 of previous.files) {
-    if (written.has(file2.file_name) || basename3(file2.file_name) !== file2.file_name) continue;
+    if (written.has(file2.file_name) || basename4(file2.file_name) !== file2.file_name) continue;
     try {
       archiveFile(join25(baseDir, file2.file_name), file2.document_type, previous.stamp.revision);
     } catch (err) {
@@ -98877,10 +98970,10 @@ function resolvePresentationDir(presentationDir, filingTitle) {
   } catch {
     throw refuse("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
   }
-  if (!/^0\. DRAFT/i.test(basename3(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
+  if (!/^0\. DRAFT/i.test(basename4(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
   if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   const ending = ` ${sanitizeForPath(filingTitle)}`;
-  if (!basename3(dir).endsWith(ending)) throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  if (!basename4(dir).endsWith(ending)) throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
   if (existsSync27(dir) && dirname12(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
@@ -98896,7 +98989,7 @@ function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir
   } catch {
     throw refuse("does not exist");
   }
-  if (!/^0\. DRAFT/i.test(basename3(real))) throw refuse("must be the matter's 0. DRAFT folder");
+  if (!/^0\. DRAFT/i.test(basename4(real))) throw refuse("must be the matter's 0. DRAFT folder");
   if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   return dir;
 }
@@ -99013,7 +99106,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     return {
       document_type: "Work_board",
       ...path !== void 0 ? { path } : {},
-      file_name: path !== void 0 ? basename3(path) : "Job Board.html",
+      file_name: path !== void 0 ? basename4(path) : "Job Board.html",
       ...withSummary ? { board_summary: renderBoardSummary(section3, client, todos) } : {},
       ...written?.change ?? {},
       pages_written: written !== void 0,
@@ -99810,7 +99903,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
 
 // src/submission/open-session.ts
 import { existsSync as existsSync29, readdirSync as readdirSync16 } from "node:fs";
-import { basename as basename4, dirname as dirname13, join as join27 } from "node:path";
+import { basename as basename5, dirname as dirname13, join as join27 } from "node:path";
 
 // src/case/ingest-coverage.ts
 import { existsSync as existsSync28 } from "node:fs";
@@ -99886,7 +99979,7 @@ async function readMatterTodos(practiceDb2, matterNo) {
 // src/submission/open-session.ts
 var MATTER_TOKEN = /^\s*((?:\d+\.)?[A-Za-z]?\d+(?:[A-Za-z0-9.-]*[A-Za-z0-9])?)[.-]*\s+/;
 function matterToken(matterRoot) {
-  return MATTER_TOKEN.exec(basename4(matterRoot))?.[1] ?? null;
+  return MATTER_TOKEN.exec(basename5(matterRoot))?.[1] ?? null;
 }
 function trashReport(written) {
   return {
@@ -99972,7 +100065,7 @@ async function lookUpMatter(root, practiceDb2, client) {
   const token = matterToken(root);
   if (token === null) {
     return {
-      lookup: { matt_num: null, found: false, note: `No matter number at the start of the folder name "${basename4(root)}"; client identity not looked up.` },
+      lookup: { matt_num: null, found: false, note: `No matter number at the start of the folder name "${basename5(root)}"; client identity not looked up.` },
       client
     };
   }
@@ -100018,7 +100111,7 @@ function practiceConfigBlocking(dbPath) {
 }
 function backups(dbPath) {
   const dir = dirname13(dbPath);
-  const prefix = `${basename4(dbPath)}.bak-`;
+  const prefix = `${basename5(dbPath)}.bak-`;
   return new Set(existsSync29(dir) ? readdirSync16(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
@@ -100139,7 +100232,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
   const path = pathWin3214.join(shipped.root, ...rel);
   if (!existsSync30(path)) {
     throw new DataServerError(
-      `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
   }
@@ -100357,7 +100450,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
   const path = pathWin3215.join(shipped.root, ...rel);
   if (!existsSync31(path)) {
     throw new DataServerError(
-      `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
   }
@@ -100759,7 +100852,7 @@ function skillScript(rel, env, installRoot) {
   const path = pathWin3219.join(shipped.root, ...rel);
   if (!existsSync33(path)) {
     throw new DataServerError(
-      `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
+      `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
   }
@@ -101098,7 +101191,7 @@ function writeEmlPath(env = process.env, installRoot) {
   const path = pathWin3220.join(shipped.root, ...rel);
   if (!existsSync34(path)) {
     throw new DataServerError(
-      `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
   }
@@ -102076,7 +102169,7 @@ function readMessage(args) {
 
 // src/correspondence/reply-draft.ts
 import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync23, readFileSync as readFileSync26, realpathSync as realpathSync12, writeSync as writeSync7 } from "node:fs";
-import { basename as basename5, extname as extname4, win32 as pathWin3222 } from "node:path";
+import { basename as basename6, extname as extname4, win32 as pathWin3222 } from "node:path";
 
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
@@ -102332,7 +102425,7 @@ function exportDocx(args, root) {
     throw new PathOutOfScopeError(`path must be a .md at the top of the 0. DRAFT folder: ${given}`);
   }
   if (extname4(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
-  const stem2 = basename5(source, extname4(source));
+  const stem2 = basename6(source, extname4(source));
   const docx = markdownToDocx(readFileSync26(source, "utf-8"));
   const written = writeNextFree(dir, stem2, ".docx", docx);
   const wanted = pathWin3222.join(dir, `${stem2}.docx`);
@@ -103871,7 +103964,7 @@ function fileNamingSkillDir(env = process.env, installRoot) {
   for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
     if (!existsSync36(pathWin3225.join(dir, ...rel))) {
       throw new DataServerError(
-        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart" : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
         "repo_root_missing"
       );
     }
@@ -104249,7 +104342,7 @@ function mapFolder(root, rel) {
   let ambiguous;
   for (const segment of rel.split(/[\\/]+/)) {
     if (missing.length === 0 && isDirectory2(abs)) {
-      const found = matchName(childDirs(abs), segment);
+      const found = matchName(childDirs2(abs), segment);
       if (found.ambiguous) ambiguous ??= `${segment} matches ${found.ambiguous.join(" and ")} in ${pathWin3227.relative(root, abs) || "the matter root"}`;
       if (found.name) {
         abs = pathWin3227.join(abs, found.name);
@@ -104314,7 +104407,7 @@ var TemplateTree = class {
     return this.located;
   }
   list(dir) {
-    if (!this.listings.has(dir)) this.listings.set(dir, isDirectory2(dir) ? childDirs(dir) : null);
+    if (!this.listings.has(dir)) this.listings.set(dir, isDirectory2(dir) ? childDirs2(dir) : null);
     return this.listings.get(dir);
   }
 };
@@ -104333,7 +104426,7 @@ function matchName(candidates, wanted, stems = false) {
 function depluralize(name) {
   return name.toLowerCase().replace(/s$/, "");
 }
-function childDirs(dir) {
+function childDirs2(dir) {
   return readdirSync25(dir, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => e3.name);
 }
 function folderEntry(proposal, rel) {

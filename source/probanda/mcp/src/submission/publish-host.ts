@@ -21,7 +21,7 @@ import { resolveWithin } from "../files/scope.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs } from "../python-timeout.js";
-import { resolveShippedRoot } from "../repo-root.js";
+import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { confineWritingFolder } from "./bcsc-form-harness.js";
 import { confineCaseDataFolder, writeSubstanceFile } from "./substance-file.js";
 
@@ -134,7 +134,7 @@ export function subskillScriptPath(skill: "publish" | "assemble", subskill: stri
     throw new DataServerError(
       `${script} not found at ${path} -- ` +
         (shipped.shipped_from === "install"
-          ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart"
+          ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart`
           : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );

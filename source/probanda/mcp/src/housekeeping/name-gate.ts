@@ -12,7 +12,7 @@ import { DataServerError } from "../errors.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { READ_TIMEOUT_MS } from "../python-timeout.js";
-import { resolveShippedRoot } from "../repo-root.js";
+import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 
 const DRIVER = `import contextlib, io, json, sys
 import name_gate
@@ -59,7 +59,7 @@ export function fileNamingSkillDir(env: NodeJS.ProcessEnv = process.env, install
       throw new DataServerError(
         `${rel.join("\\")} not found under ${dir} -- ` +
           (shipped.shipped_from === "install"
-            ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart"
+            ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart`
             : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
         "repo_root_missing"
       );

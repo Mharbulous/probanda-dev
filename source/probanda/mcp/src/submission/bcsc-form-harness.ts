@@ -22,7 +22,7 @@ import { PathOutOfScopeError, assertContained, resolveWithin } from "../files/sc
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs } from "../python-timeout.js";
-import { resolveShippedRoot } from "../repo-root.js";
+import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 
 // Sets argv and runs harness.py as __main__. The harness ends by printing one JSON line and exiting,
 // but code it runs in-process also prints (fill_plain.py's "Written: <path>"), so everything printed
@@ -90,7 +90,7 @@ export function bcscFormHarnessPath(env: NodeJS.ProcessEnv = process.env, instal
     throw new DataServerError(
       `harness.py not found at ${path} -- ` +
         (shipped.shipped_from === "install"
-          ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart"
+          ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart`
           : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );

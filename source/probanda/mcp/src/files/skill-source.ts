@@ -15,8 +15,10 @@
 // `skills/shared/` (native trees, #1266; each SKILL.md carries a stamped
 // preamble after its frontmatter); repo-root.ts's resolveShippedRoot() picks the install
 // or a Coclerk checkout from the path's first segment alone, so a bundled skill
-// never needs a checkout and never silently reads one. Every result reports
-// `shipped_from`, and the running plugin's `plugin_version` and `build_stamp`.
+// never needs a checkout and never silently reads one. A plugin installed beside
+// this one (`research`, `litigator`, `solicitor`) serves the folders it holds the
+// same way. Every result reports `shipped_from`, the `plugin` the file came from
+// with that plugin's `plugin_version`, and the running bundle's `build_stamp`.
 //
 // Roots are resolved lazily, per call -- never at startup. A missing root must
 // surface as a clear `skills_root_missing` error on the call that needed it,
@@ -37,8 +39,10 @@ import {
 } from "./scope.js";
 import {
   bundledSkillFolders,
+  installedPluginLabel,
   pluginVersion,
   resolveShippedRoot,
+  siblingInstalls,
   type ShippedFrom,
   type ShippedRoot,
 } from "../repo-root.js";
@@ -71,15 +75,27 @@ function resolveServed(shipped: ShippedRoot, root: string, relative: string, lab
   } catch (err) {
     if (shipped.shipped_from !== "install" || !(err instanceof DataServerError) || err.code !== "not_found") throw err;
     throw new DataServerError(
-      `${label} not found: ${original} -- "${relative.split(/[\\/]/)[0]}" is served from this installed ` +
-        `plugin's bundled skill source (${shipped.root}), which has no such file`,
+      `${label} not found: ${original} -- "${relative.split(/[\\/]/)[0]}" is served from ` +
+        `${installedPluginLabel(shipped)}'s bundled skill source (${shipped.root}), which has no such file`,
       "not_found"
     );
   }
 }
 
-function provenance(installRoot?: string): { plugin_version: string | null; build_stamp: string | null } {
-  return { plugin_version: pluginVersion(installRoot), build_stamp: BUILD_STAMP };
+/**
+ * `plugin` and `plugin_version` name the plugin a path was served from. A
+ * checkout belongs to no plugin: `plugin` is null and `plugin_version` is the
+ * running plugin's, as it always was.
+ */
+function provenance(
+  shipped: ShippedRoot,
+  installRoot?: string
+): { plugin: string | null; plugin_version: string | null; build_stamp: string | null } {
+  return {
+    plugin: shipped.plugin,
+    plugin_version: shipped.shipped_from === "install" ? shipped.plugin_version : pluginVersion(installRoot),
+    build_stamp: BUILD_STAMP,
+  };
 }
 
 /** Everything up to and including a `.claude/skills/` (or legacy `.agents/skills/`) segment. */
@@ -165,6 +181,8 @@ export interface SkillSourceRead {
   sha256: string;
   content: string;
   shipped_from: ShippedFrom;
+  /** The plugin the file came from; null for a checkout. */
+  plugin: string | null;
   plugin_version: string | null;
   build_stamp: string | null;
   /** Present only on a `match` read, where `content` is a slice of the file. */
@@ -239,7 +257,7 @@ export function skillSourceRead(
     size: bytes.byteLength,
     sha256: createHash("sha256").update(bytes).digest("hex"),
     shipped_from: shipped.shipped_from,
-    ...provenance(installRoot),
+    ...provenance(shipped, installRoot),
   };
 
   if (match === undefined) return { ...base, content: whole };
@@ -285,12 +303,17 @@ export interface SkillSourceEntry {
   type: "file" | "dir";
   size: number | null;
   shipped_from: ShippedFrom;
+  /** The plugin the entry came from; null for a checkout. */
+  plugin: string | null;
 }
 
 export interface SkillSourceListing {
   entries: SkillSourceEntry[];
-  /** Absent only at the tree root, whose entries can come from both sources. */
+  /** Absent only at the tree root, whose entries can come from several sources. */
   shipped_from?: ShippedFrom;
+  /** Absent only at the tree root, like `shipped_from`; there each entry names its own. */
+  plugin?: string | null;
+  /** The version of `plugin`; at the tree root and for a checkout, the running plugin's. */
   plugin_version: string | null;
   build_stamp: string | null;
 }
@@ -307,7 +330,7 @@ export function skillSourceList(
   // which is the same request.
   const normalizedDir = dir === "/" ? "" : normalizeSkillPath(dir);
   const entries: SkillSourceEntry[] = [];
-  let shippedFrom: ShippedFrom | undefined;
+  let served: ShippedRoot | undefined;
   if (normalizedDir === "" || normalizedDir === ".") {
     listTreeRoot(recursive, e, installRoot, entries);
   } else {
@@ -318,18 +341,21 @@ export function skillSourceList(
     if (!statSync(base).isDirectory()) {
       throw new DataServerError(`dir is a file, not a directory: ${dir}`, "not_found");
     }
-    walk(base, root, recursive, shipped.shipped_from, entries);
-    shippedFrom = shipped.shipped_from;
+    walk(base, root, recursive, shipped, entries);
+    served = shipped;
   }
   entries.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  return { entries, ...(shippedFrom ? { shipped_from: shippedFrom } : {}), ...provenance(installRoot) };
+  if (served) return { entries, shipped_from: served.shipped_from, ...provenance(served, installRoot) };
+  return { entries, plugin_version: pluginVersion(installRoot), build_stamp: BUILD_STAMP };
 }
 
 /**
- * The tree root merges both sources: every folder the install bundles, plus
- * whatever else a checkout holds (its own copies of bundled folders are skipped,
- * since those paths are never served from it). With no checkout the install's
- * folders alone are the answer; with neither, the checkout's failure stands.
+ * The tree root merges every source, in resolveShippedRoot's order: every folder
+ * the install bundles, then each sibling install's folders, then whatever else a
+ * checkout holds. A folder an earlier source served is skipped in a later one,
+ * since those paths are never served from it (`shared/`, which every plugin
+ * ships, is this install's own). With no checkout the installs' folders alone are
+ * the answer; with neither, the checkout's failure stands.
  */
 function listTreeRoot(
   recursive: boolean,
@@ -341,24 +367,36 @@ function listTreeRoot(
   if (bundled.length > 0) {
     const install = resolveShippedRoot(bundled[0], env, { installRoot });
     const root = servedRoot(install);
-    walk(root, root, recursive, "install", out);
+    walk(root, root, recursive, install, out);
+  }
+  const skip = new Set(bundled.map((name) => name.toLowerCase()));
+  const unserved = (entry: SkillSourceEntry) => !skip.has(entry.path.split("/")[0].toLowerCase());
+
+  for (const sibling of siblingInstalls(installRoot)) {
+    const shipped: ShippedRoot = { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
+    const root = servedRoot(shipped);
+    const fromSibling: SkillSourceEntry[] = [];
+    walk(root, root, recursive, shipped, fromSibling);
+    out.push(...fromSibling.filter(unserved));
+    for (const name of bundledSkillFolders(sibling.installRoot)) skip.add(name.toLowerCase());
   }
 
-  let checkout: string;
+  let checkout: ShippedRoot;
+  let checkoutRoot: string;
   try {
     // An empty first segment is never bundled, so this is the checkout chain.
-    checkout = servedRoot(resolveShippedRoot("", env, { installRoot }));
+    checkout = resolveShippedRoot("", env, { installRoot });
+    checkoutRoot = servedRoot(checkout);
   } catch (err) {
     if (bundled.length > 0 && err instanceof DataServerError && err.code === "skills_root_missing") return;
     throw err;
   }
-  const skip = new Set(bundled.map((name) => name.toLowerCase()));
   const fromCheckout: SkillSourceEntry[] = [];
-  walk(checkout, checkout, recursive, "checkout", fromCheckout);
-  out.push(...fromCheckout.filter((entry) => !skip.has(entry.path.split("/")[0].toLowerCase())));
+  walk(checkoutRoot, checkoutRoot, recursive, checkout, fromCheckout);
+  out.push(...fromCheckout.filter(unserved));
 }
 
-function walk(dirPath: string, root: string, recursive: boolean, from: ShippedFrom, out: SkillSourceEntry[]): void {
+function walk(dirPath: string, root: string, recursive: boolean, shipped: ShippedRoot, out: SkillSourceEntry[]): void {
   for (const entry of readdirSync(dirPath, { withFileTypes: true })) {
     const full = pathWin32.join(dirPath, entry.name);
     const isDir = entry.isDirectory();
@@ -366,8 +404,9 @@ function walk(dirPath: string, root: string, recursive: boolean, from: ShippedFr
       path: toPosixRelative(root, full),
       type: isDir ? "dir" : "file",
       size: isDir ? null : statSync(full).size,
-      shipped_from: from,
+      shipped_from: shipped.shipped_from,
+      plugin: shipped.plugin,
     });
-    if (isDir && recursive) walk(full, root, recursive, from, out);
+    if (isDir && recursive) walk(full, root, recursive, shipped, out);
   }
 }

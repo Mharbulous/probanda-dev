@@ -18,7 +18,7 @@ import { validateMatterRoot } from "../files/matter-root.js";
 import { resolveWithin } from "../files/scope.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs } from "../python-timeout.js";
-import { resolveShippedRoot } from "../repo-root.js";
+import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { emailSignaturePath, readFirmProfile } from "../tools/practice/firm-profile.js";
 import { assertSegment, confineWritingFolder } from "./bcsc-form-harness.js";
 import { scrutinyReview, type ScrutinyReviewArgs } from "./scrutiny-review.js";
@@ -176,7 +176,7 @@ export function writeEmlPath(env: NodeJS.ProcessEnv = process.env, installRoot?:
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` +
         (shipped.shipped_from === "install"
-          ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart"
+          ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart`
           : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );

@@ -50,10 +50,13 @@ function errorOf(fn) {
 }
 
 /** An extracted .plugin install: manifest, the bundled skills/ trees, and a
- * file beside skills/ that no served path may reach. */
+ * file beside skills/ that no served path may reach. It sits two folders below its
+ * own temp dir, so the sibling scan (the folders beside the install and two levels
+ * up) reads this fixture alone and never the machine's whole temp dir. */
 function installFixture(t) {
-  const root = mkdtempSync(join(tmpdir(), "coclerk-install-"));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const base = mkdtempSync(join(tmpdir(), "coclerk-install-"));
+  t.after(() => rmSync(base, { recursive: true, force: true }));
+  const root = join(base, "store", "install");
   write(join(root, ".claude-plugin", "plugin.json"), JSON.stringify({ name: "litigation", version: "9.9.9" }));
   const src = join(root, "skills");
   write(join(src, "case-data", "SKILL.md"), "# case-data (install)\nsee references/notes.md\n");
@@ -124,7 +127,7 @@ test("a non-bundled folder with no checkout is skills_root_missing naming the in
   assert.match(err.message, /Tried, in order/);
   assert.match(err.message, /case-data, drafting-data, shared, timecamping-data/);
   assert.match(err.message, /"devtool"/);
-  assert.match(err.message, /needs a Coclerk checkout/);
+  assert.match(err.message, /The plugin that holds "devtool" is not installed on this PC's copy/);
 });
 
 test("a non-bundled folder is read from the checkout when one resolves", (t) => {
@@ -248,9 +251,9 @@ test("the deciding test is the first segment's folder, never the file", (t) => {
   const inst = installFixture(t);
   const co = checkoutFixture(t);
   const bundled = resolveShippedRoot("case-data/does-not-exist.md", co.env, { installRoot: inst.root });
-  assert.deepEqual(bundled, { root: join(inst.root, "skills"), shipped_from: "install" });
+  assert.deepEqual(bundled, { root: join(inst.root, "skills"), shipped_from: "install", plugin: "litigation", plugin_version: "9.9.9" });
   const other = resolveShippedRoot("devtool/SKILL.md", co.env, { installRoot: inst.root });
-  assert.deepEqual(other, { root: join(co.root, ".claude", "skills"), shipped_from: "checkout" });
+  assert.deepEqual(other, { root: join(co.root, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null });
   // `..` and `.` never count as a bundled folder, even though both name real directories.
   assert.equal(resolveShippedRoot("..\\x.md", co.env, { installRoot: inst.root }).shipped_from, "checkout");
   assert.equal(resolveShippedRoot(".", co.env, { installRoot: inst.root }).shipped_from, "checkout");

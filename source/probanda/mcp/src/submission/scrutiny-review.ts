@@ -22,7 +22,7 @@ import { PathOutOfScopeError, resolveWithin } from "../files/scope.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { READ_TIMEOUT_MS } from "../python-timeout.js";
-import { resolveShippedRoot } from "../repo-root.js";
+import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { publishDraftTarget } from "./publish-host.js";
 
 /** Each highlight or verbatim-check run. */
@@ -390,7 +390,7 @@ function skillScript(rel: string[], env: NodeJS.ProcessEnv, installRoot?: string
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` +
         (shipped.shipped_from === "install"
-          ? "this installed plugin's bundled skill source lacks it; reinstall the plugin and fully restart"
+          ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart`
           : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
     );
