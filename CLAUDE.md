@@ -37,7 +37,7 @@ Cowork runs plugins in a sandboxed Linux VM.
 - Secrets.
 - File paths from the maintainer's machines.
 
-`scripts/check_publishable.py` enforces this and also pins the permitted plugin and marketplace names. CI runs it on every push and pull request. Run it locally with `python scripts/check_publishable.py` before committing.
+`scripts/check_publishable.py` enforces this and also pins the permitted plugin and marketplace names. It runs only on demand: from the repo's Actions tab, or locally with `python scripts/check_publishable.py`. Run it before making the repo public.
 
 The repo must never be made public while this check fails on `main`.
 
