@@ -22,7 +22,7 @@
 
 3. *User Data* must only be saved to the *User's Machine*; and must NEVER be saved to *Probanda's Cloud*.
 
-4. *Trade Secrets* must only be saved to *Probanda's Cloud*; and must NEVER never be sent to the *User's Machine*.  
+4. *Trade Secrets* must only be saved to *Probanda's Cloud*; and must NEVER be sent to the *User's Machine*.  
 
 5.  Local storage does not encode the rulebook. It has no table, column or file per tag type or link role.
 
