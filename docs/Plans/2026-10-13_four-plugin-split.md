@@ -1,6 +1,6 @@
 # Plan: split `probanda` into four plugins
 
-Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: not started.
+Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: phase 0 in progress (terminal host tested 2026-10-13, desktop app and Cowork wait for Brahm). Phase 1 started in parallel, because only phase 3 depends on phase 0's answers.
 
 Words used below. A *plugin* is one installable folder: a manifest (`plugin.json`), skills, agents, hooks and servers. A *marketplace* is the list (`.claude-plugin/marketplace.json`) a user installs plugins from. A *hook* is a small script the host runs before or after an event, and its *matcher* is the pattern that says which tool names or agent names make it run. A *server* is one of the three MCP programs the plugin starts (`data`, `canlii`, `commons`), and a *tool* is one function a server offers, named `mcp__plugin_<plugin>_<server>__<tool>`. The *roster* (`source/probanda/roster.json`) is the list of skills a plugin ships. The *bundle* is a server compiled into one file under `mcp/dist/`.
 
@@ -109,6 +109,22 @@ Build a throwaway marketplace outside this repo with two plugins, `a` and `b`, w
 - what happens to an installed plugin after it is removed from the marketplace, with and without `forceRemoveDeletedPlugins`.
 
 Check: a table of the five answers per host, written into this plan under decision 1 and decision 3. This phase needs Brahm for the installs and the "Check for updates" press, because no session can trigger a sync.
+
+#### Phase 0 results
+
+The test marketplace is the private repository `Mharbulous/host-probe` (marketplace `host-probe`, plugins `probea`, `probeb`, `probec`), with a local checkout beside this repo. `probeb` depends on `probea`, and its skill `/probe-check` calls `mcp__plugin_probea_echo__where`, dispatches `probea:echo-agent` and prints a report. The `where` tool also says whether `probea`'s server can read a file inside each folder a `SessionStart` hook registered, which is the lookup decision 1 relies on. Delete the repository and uninstall the three plugins once all three hosts are recorded.
+
+| Question | Terminal, installed with `claude plugin install` (tested 2026-10-13) | Terminal, synced from claude.ai | Desktop app | Cowork |
+|---|---|---|---|---|
+| Does `dependencies` install `probea` with `probeb`? | Yes: "+ 1 dependency: probea". | waits for Brahm | waits for Brahm | waits for Brahm |
+| What happens when `probea` is removed? | The uninstall succeeds with "warning: required by probeb". `probeb` then shows "failed to load", "Dependency "probea@host-probe" is not installed", and its skill is absent from the next session. The session itself shows no warning. | waits | waits | waits |
+| Can `probeb`'s skill call `probea`'s tool and agent? | Yes, both. The tool was called under its plain name. | waits | waits | waits |
+| Does `probec` (manifest only) install? | Yes. | waits | waits | waits |
+| Did each `SessionStart` hook run, and what did `${CLAUDE_PLUGIN_ROOT}` hold? | Both ran. The variable held each plugin's own folder, both as an expanded argument and in the hook's environment. The server's environment held it too, and the server could read the marker file in both registered folders. | waits | waits | waits |
+| After `probec` is removed from the marketplace, no flag | It stays installed and shows "failed to load", "Plugin probec not found in marketplace host-probe". | waits | waits | waits |
+| The same, with `forceRemoveDeletedPlugins: true` | It is uninstalled at the next session start. | waits | waits | waits |
+
+On the terminal host with `claude plugin install`, decision 1 (registration by `SessionStart` hook) and decision 3 (`forceRemoveDeletedPlugins`) both work as the plan assumes.
 
 ### Phase 1: confirm the assignment and list every upward reference
 
