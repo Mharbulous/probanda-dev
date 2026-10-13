@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).with_name("practitioner-words-gate.py")
+PLUGIN_JSON = Path(__file__).resolve().parents[4] / "source" / "probanda" / "plugin.json"
+PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/practitioner-words-gate.py"
 STOCK_MD = Path(__file__).parents[1] / "references" / "jobs-stock.md"
 GATE_MD = Path(__file__).parents[1] / "references" / "jobs-gate.md"
 REVISION_MD = Path(__file__).parents[1] / "references" / "paragraph-revision.md"
@@ -964,6 +966,21 @@ class PractitionerWordsGateTest(unittest.TestCase):
     def test_a_move_whose_entity_id_is_not_a_literal_fails_closed(self):
         self.assertRefused(self.run_hook(self.moved(self.A_ROW.replace(" 31,", " (SELECT 31),"))),
                            "cannot read the paragraph revision", "entity_id of a fact move")
+
+
+class PluginRegistrationTests(unittest.TestCase):
+    def test_plugin_registers_the_gate_for_both_tool_name_forms(self):
+        manifest = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))
+        entries = [
+            entry for entry in manifest["hooks"]["PreToolUse"]
+            if any(PLUGIN_HOOK_ARG in h.get("args", []) for h in entry["hooks"])
+        ]
+        self.assertEqual(len(entries), 1)
+        matcher = re.compile(entries[0]["matcher"])
+        for prefix in ("mcp__plugin_probanda_data__", "mcp__remote-devices__plugin_probanda_data__"):
+            self.assertTrue(matcher.fullmatch(prefix + "drafting_data__execute"), prefix)
+        self.assertFalse(matcher.fullmatch("mcp__plugin_probanda_data__drafting_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))
 
 
 if __name__ == "__main__":
