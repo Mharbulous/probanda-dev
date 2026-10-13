@@ -12,7 +12,8 @@ Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
   - check_publishable.file_problems: schema DDL, forbidden file types, paths
     from a maintainer's machine, and the pinned names.
   - fingerprints read from the private side on every run and never stored:
-    schema identifiers taken from the private SQL and DDL, a rules-map marker,
+    schema identifiers taken from the private SQL and DDL (a DDL statement in
+    a TypeScript or Python string is read to its last line), a rules-map marker,
     a file that is a copy of a private source file, a long line repeated from
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
@@ -105,6 +106,10 @@ def fingerprints(repo):
             is_sql = rel.lower().endswith(".sql")
             if is_sql:
                 sql.append(text)
+            # Above zero inside a DDL statement that runs over several lines, as
+            # the schema in a TypeScript or Python string does. A blank line ends
+            # it, so prose with an unclosed bracket does not run on.
+            depth = 0
             for line in text.splitlines():
                 stripped = line.strip()
                 if len(stripped) >= LONG_LINE:
@@ -112,7 +117,13 @@ def fingerprints(repo):
                 created = CREATED.search(line)
                 if created:
                     tables.add(created.group(1).lower())
-                if created or (is_sql and not stripped.startswith("--")):
+                if created or not stripped:
+                    depth = 0
+                in_statement = depth > 0
+                if created or in_statement:
+                    code = line.split("--", 1)[0]
+                    depth = max(depth + code.count("(") - code.count(")"), 0)
+                if created or ((is_sql or in_statement) and not stripped.startswith("--")):
                     identifiers.update(t.lower() for t in SNAKE.findall(line))
     identifiers |= {t for t in tables if "_" in t}
     # A one-word table name is an ordinary word, so it counts only behind a

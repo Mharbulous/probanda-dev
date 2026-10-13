@@ -29,6 +29,12 @@ PRIVATE = {
     ".claude/skills/data/SKILL.md": f"# Data\n\n{LONG_PRIVATE_LINE}\n\nShort line.\n",
     ".claude/skills/data/node_modules/lib/index.js": "const a_library_line_that_is_long_enough_to_be_counted_as_a_long_line = 1;\n",
     "source/probanda/mcp/src/store.ts": f"db.exec(`{CREATE} practice_anchors (id)`);\nconst unrelated_name = 1;\n",
+    "source/probanda/mcp/src/practice/backend.ts":
+        f"const SCHEMA_SQL = `\n{CREATE} IF NOT EXISTS practice_matters (\n"
+        "  id TEXT PRIMARY KEY, regular_trust REAL CHECK (regular_trust <= 0),\n"
+        "  -- a comment naming ddl_comment_name\n  last_trust_date TEXT\n);\n`.trim();\n"
+        "const after_the_statement = 1;\n",
+    ".claude/skills/data/notes.md": f"Send the {CREATE} helper_view (section whole.\n\nThen read prose_after_blank here.\n",
     "cloud/pool/schema.sql": "create table if not exists pool.pooled_statements (\n  statement_text text\n);\n",
     "source/probanda/plugin.json": '{\n  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n',
 }
@@ -66,6 +72,15 @@ class TreeProblemsTest(unittest.TestCase):
 
     def test_table_named_in_ddl_outside_a_sql_file_is_reported(self):
         self.assert_reports({"a.md": "See practice_anchors.\n"}, "practice_anchors")
+
+    def test_column_of_a_ddl_statement_spread_over_lines_outside_sql_is_reported(self):
+        self.assert_reports({"a.md": "Read last_trust_date.\n"}, "last_trust_date")
+        self.assert_reports({"a.md": "Top up regular_trust.\n"}, "regular_trust")
+        self.assertEqual(self.messages({"a.md": "See after_the_statement and ddl_comment_name.\n"}), [])
+
+    def test_a_blank_line_ends_a_ddl_statement_left_open(self):
+        self.assert_reports({"a.md": "See helper_view.\n"}, "helper_view")
+        self.assertEqual(self.messages({"a.md": "A prose_after_blank here.\n"}), [])
 
     def test_table_and_column_under_cloud_are_reported(self):
         self.assert_reports({"a.md": "See pooled_statements.\n"}, "pooled_statements")
