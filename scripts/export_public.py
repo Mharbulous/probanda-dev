@@ -32,8 +32,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = Path(__file__).resolve().parent
 
+# The plugins of the public repository, each under public/plugins/<name>/.
+PUBLIC_PLUGINS = ("probanda",)
 # What a marketplace install needs. The export refuses without them.
-REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md", "plugins/probanda/.claude-plugin/plugin.json")
+REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md",
+                  *(f"plugins/{name}/.claude-plugin/plugin.json" for name in PUBLIC_PLUGINS))
 
 
 def load_script(name):
@@ -51,7 +54,7 @@ def tree_summary(files):
     count, size = Counter(), Counter()
     for rel, data in files.items():
         parts = rel.split("/")
-        depth = 3 if rel.startswith("plugins/probanda/") else 1
+        depth = 3 if rel.startswith(tuple(f"plugins/{name}/" for name in PUBLIC_PLUGINS)) else 1
         key = "/".join(parts[:depth]) + ("/" if len(parts) > depth else "")
         count[key] += 1
         size[key] += len(data)

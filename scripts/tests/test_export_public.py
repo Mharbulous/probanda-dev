@@ -35,7 +35,9 @@ PRIVATE = {
     "CLAUDE.md": "dev notes\n",
     "COMMANDMENTS.md": "rules\n",
     "README.md": "the private readme\n",
+    "source/assignment.json": '{"status": "planned", "plugins": {}}',
     "source/probanda/plugin.json": "{}",
+    "cloud/pool/notes.md": "the pool\n",
     "plugins/probanda/skills/secret/SKILL.md": "the development plugin\n",
     ".claude/skills/data/schema.sql": f"{DDL};\n",
 }
@@ -131,6 +133,13 @@ class ExportTest(unittest.TestCase):
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
         self.assertIn("missing: public/.claude-plugin/marketplace.json", out)
+
+    def test_every_public_plugin_needs_its_manifest_and_gets_its_own_summary_rows(self):
+        self.assertEqual(export_public.REQUIRED_FILES[2:],
+                         tuple(f"plugins/{name}/.claude-plugin/plugin.json" for name in export_public.PUBLIC_PLUGINS))
+        files = {"plugins/probanda/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
+        self.assertEqual(export_public.tree_summary(files),
+                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/probanda/skills/")])
 
     def test_plan_writes_nothing_and_reports_the_gate(self):
         self.repo_with(PUBLIC)

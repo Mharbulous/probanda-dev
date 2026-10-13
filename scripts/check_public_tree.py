@@ -17,8 +17,12 @@ Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
     a file that is a copy of a private source file, a long line repeated from
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
-Exit codes: 0 clean, 1 a problem was found or public/ is missing. Standard
-library only.
+The private side is .claude/skills/, cloud/ and the source folder of every plugin
+the repo builds (plugin_layout.py reads which from source/assignment.json). A
+private folder that is missing stops the check.
+
+Exit codes: 0 clean, 1 a problem was found, public/ is missing or a private folder
+is missing, 2 source/assignment.json is missing or unreadable. Standard library only.
 """
 import argparse
 import hashlib
@@ -36,12 +40,13 @@ PUBLIC = "public"
 # The human-approved list of public files: {path under public/: sha256}. Written
 # only by approve_public.py.
 APPROVED = "public-approved.json"
-# Where the fingerprints are read from.
-PRIVATE_ROOTS = (".claude/skills", "source/probanda", "cloud")
+# Where the fingerprints are read from, beside the source folder of every plugin the
+# repo builds (private_roots).
+PRIVATE_ROOTS = (".claude/skills", "cloud")
 # Third-party code and build output: a public bundle may rightly share their lines.
 SKIP_DIRS = ("node_modules", "__pycache__", ".pytest_cache", "build", "dist")
-# Private files whose content is not secret, so public/ may repeat it.
-SHARED_FILES = ("source/probanda/plugin.json", "source/probanda/.mcp.json")
+# Files of a plugin's source folder whose content is not secret, so public/ may repeat it.
+SHARED_FILES = ("plugin.json", ".mcp.json")
 # Text only: a binary cannot be scanned, so each new type is added on purpose.
 ALLOWED_SUFFIXES = (".md", ".json", ".py", ".js", ".txt")
 ALLOWED_NAMES = ("LICENSE",)
@@ -88,15 +93,25 @@ def text_of(data):
         return None
 
 
+def private_roots(repo):
+    """(private folders to fingerprint, private files public/ may repeat), as paths from
+    the repo root. The plugin source folders, which hold the server source, are where
+    source/assignment.json says the repo builds from."""
+    sources = [spec["source"] for spec in load_script("plugin_layout").plugins(repo).values()]
+    return (*PRIVATE_ROOTS, *sources), {f"{source}/{name}" for source in sources for name in SHARED_FILES}
+
+
 def fingerprints(repo):
     """What the private side holds that public/ may not repeat."""
     identifiers, tables, hashes, lines, sql = set(), set(), set(), set(), []
-    for top in PRIVATE_ROOTS:
+    roots, shared = private_roots(repo)
+    for top in roots:
         root = repo / top
+        # A root read as empty would pass a Trade Secret it should have caught.
         if not root.is_dir():
-            continue
+            sys.exit(f"STOP: private folder {top}/ is missing, so public/ cannot be checked against it")
         for rel, data in walk(root):
-            if f"{top}/{rel}" in SHARED_FILES:
+            if f"{top}/{rel}" in shared:
                 continue
             if data:
                 hashes.add(hashlib.sha256(data).hexdigest())

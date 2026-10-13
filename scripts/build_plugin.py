@@ -1,15 +1,29 @@
 #!/usr/bin/env python3
-"""Build plugins/probanda from the sources in this repo.
+"""Build the plugins under plugins/ from the sources in this repo.
 
 Usage:
-  python scripts/build_plugin.py              build into plugins/probanda/, replacing it wholesale
-  python scripts/build_plugin.py --check      compare a fresh build with plugins/probanda/
+  python scripts/build_plugin.py              build each plugin into plugins/<plugin>/, replacing it wholesale
+  python scripts/build_plugin.py --check      compare a fresh build with plugins/<plugin>/
   python scripts/build_plugin.py --out <dir>  build into <dir> instead (replaced wholesale)
 
-Sources: the skill trees under .claude/skills/ (every key of
-source/probanda/roster.json, plus shared/ and legal-commons/), every skill under
-public/plugins/probanda/skills/, and the plugin files under source/probanda/. The skill selection and the SKILL.md stamp are
-ported from CoClerk's plugin-packager build_plugin.py (native-tree path).
+Which plugins are built is set by "status" in source/assignment.json (see
+plugin_layout.py):
+
+  "planned"  one plugin, probanda. Sources: the skill trees under .claude/skills/
+             (every key of source/probanda/roster.json, plus shared/ and
+             legal-commons/), every skill under public/plugins/*/skills/, and the
+             plugin files under source/probanda/. --out <dir> is the plugin folder.
+  "cutover"  every plugin in the assignment file. Plugin P is built from
+             source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
+             VISION.md, agents/ and hooks/ where they exist), the skills the
+             assignment gives P, the whole shared/ tree, and the bundles of the
+             servers the assignment gives P. --out <dir> holds one folder per
+             plugin, <dir>/P/. A folder under plugins/ that no plugin builds is
+             reported stale by --check and removed by a build.
+
+A skill is found at .claude/skills/<name>/ or at public/plugins/*/skills/<name>/,
+never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
+plugin-packager build_plugin.py (native-tree path).
 
 Exit codes: 0 built or identical, 1 --check found differences, 2 a gate stopped
 the build before anything was written, or another build was running. Standard
@@ -23,24 +37,34 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_layout  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 
 # Shipped skill trees beside the roster skills. They are not stamped: shared/ is
-# not a skill, and legal-commons shipped unstamped in phase 1.
-EXTRA_TREES = ("shared", "legal-commons")
+# not a skill, and legal-commons shipped unstamped in phase 1. shared/ ships in
+# every plugin, legal-commons in the plugin the assignment gives it to.
+SHARED_TREE = "shared"
+EXTRA_TREES = (SHARED_TREE, "legal-commons")
 # Skills already free of Trade Secrets live under public/, the source of the public
-# repository. They ship as they are, unstamped and whole, so the development plugin
-# runs the published bytes. A skill lives here or under .claude/skills/, never both.
-PUBLIC_SKILLS = ("public", "plugins", "probanda", "skills")
+# repository, one skills folder per public plugin. They ship as they are, unstamped
+# and whole, so the development plugin runs the published bytes. A skill lives here
+# or under .claude/skills/, never both.
+PUBLIC_SKILLS = "public/plugins/*/skills"
 TREE_EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 # Text ships by extension; anything else ships only inside a roster-declared
 # asset dir. Office lock files (~$*) are never wanted, even there.
 TREE_TEXT_EXTS = (".md", ".py", ".sql", ".json")
 TRANSIENT_ASSET_PREFIX = "~$"
-MCP_DIST_DIRS = ("mcp", "canlii-mcp", "commons-mcp")
 # Files written with LF line endings and scanned for old plugin identifiers.
 TEXT_SUFFIXES = {".md", ".py", ".json", ".js", ".txt", ".html", ".css", ".csv", ".yaml", ".yml", ".sql"}
-OLD_IDENTIFIERS = ("plugin_litigation_", "plugin_legal-commons_")
+OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_")
+# The single plugin's own identifiers, a tool name and an agent or skill prefix.
+# They are old in any plugin with another name.
+SINGLE_PLUGIN_IDENTIFIERS = (rb"plugin_probanda_", rb"probanda:[A-Za-z]")
+# A path a hook runs from the installed plugin's folder.
+HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
 
 # Cowork silently renames an installed skill whose name has the segment "claude".
 RESERVED = re.compile(r"(?:^|[-_.])claude(?:[-_.]|$)", re.IGNORECASE)
@@ -69,9 +93,9 @@ def stop(message):
     sys.exit(2)
 
 
-def preamble_lines(version):
+def preamble_lines(plugin, version):
     return [
-        f"<!-- probanda v{version} -->",
+        f"<!-- {plugin} v{version} -->",
         "> **Installed copy.** This skill's full source tree ships beside this file, and a relative "
         "path in the text below cites that tree. Resolve one by trying, in order: the directory of "
         "the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then "
@@ -107,13 +131,13 @@ def frontmatter_end(lines):
     return next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
 
 
-def stamp_skill_md(text, version):
+def stamp_skill_md(text, plugin, version):
     """Insert the preamble after the closing frontmatter fence, behind one blank line."""
     lines = text.split("\n")
     end = frontmatter_end(lines)
     if end is None:
         raise ValueError("no frontmatter fence to stamp after")
-    return "\n".join(lines[:end + 1] + [""] + preamble_lines(version) + lines[end + 1:])
+    return "\n".join(lines[:end + 1] + [""] + preamble_lines(plugin, version) + lines[end + 1:])
 
 
 def frontmatter_field(text, key):
@@ -170,12 +194,13 @@ def scalar_value(block_lines):
     return text
 
 
-def check_skills(skills_root, names):
+def check_skills(skill_dirs):
+    """Gate the name and the description of each skill in {name: its folder}."""
     bad, problems = [], []
-    for s in names:
+    for s, folder in skill_dirs.items():
         if RESERVED.search(s):
             bad.append(f"skill '{s}'")
-        skill_md = skills_root / s / "SKILL.md"
+        skill_md = folder / "SKILL.md"
         if not skill_md.is_file():
             problems.append(f"no SKILL.md for skill '{s}' at {skill_md}")
             continue
@@ -198,7 +223,9 @@ def check_skills(skills_root, names):
         stop("\n  ".join(problems))
 
 
-def collect_tree(skills_root, top, declared_dirs, version, stamp):
+def collect_tree(skills_root, top, declared_dirs, stamp):
+    """One private skill tree. `stamp` is the (plugin name, version) its SKILL.md is
+    stamped with, or None for a tree that ships unstamped."""
     top_dir = skills_root / top
     if not top_dir.is_dir():
         stop(f"no source directory {top_dir} to ship")
@@ -217,57 +244,95 @@ def collect_tree(skills_root, top, declared_dirs, version, stamp):
         data = path.read_bytes()
         if stamp and arc == f"{top}/SKILL.md":
             try:
-                data = stamp_skill_md(data.decode("utf-8"), version).encode("utf-8")
+                data = stamp_skill_md(data.decode("utf-8"), *stamp).encode("utf-8")
             except ValueError:
                 stop(f"{path}: no frontmatter fence to stamp after")
         files[f"skills/{arc}"] = data
     return files
 
 
-def collect_public_skills(repo, private_tops):
-    root = repo.joinpath(*PUBLIC_SKILLS)
-    tops = sorted(p.name for p in root.iterdir() if p.is_dir()) if root.is_dir() else []
-    both = [t for t in tops if t in private_tops or (repo / ".claude" / "skills" / t).exists()]
-    if both:
-        stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
-    check_skills(root, tops)
-    return {f"skills/{path.relative_to(root).as_posix()}": path.read_bytes()
-            for top in tops for path in sorted((root / top).rglob("*")) if path.is_file()}
+def public_skill_dirs(repo):
+    """{skill name: its folder} for every skill under a public plugin."""
+    found = {}
+    for path in sorted(repo.glob(PUBLIC_SKILLS + "/*")):
+        if path.is_dir():
+            if path.name in found:
+                stop(f"skill '{path.name}' is under two public plugins: {found[path.name]} and {path}")
+            found[path.name] = path
+    return found
 
 
-def collect(repo):
-    """Every output file as {relative path: bytes}. Stops on a gate failure."""
-    src = repo / "source" / "probanda"
+def collect(repo, spec):
+    """Every output file of one plugin as {relative path: bytes}. Stops on a gate failure."""
+    name = spec["name"]
+    src = repo / spec["source"]
     skills_root = repo / ".claude" / "skills"
+    for required in ("plugin.json", "roster.json"):
+        if not (src / required).is_file():
+            stop(f"no {src / required}")
     manifest = json.loads((src / "plugin.json").read_text(encoding="utf-8"))
     roster = json.loads((src / "roster.json").read_text(encoding="utf-8"))
     version = manifest["version"]
-    if RESERVED.search(manifest["name"]):
-        stop(f"reserved word 'claude' in plugin name '{manifest['name']}'")
-    check_skills(skills_root, sorted(roster) + ["legal-commons"])
+    if manifest["name"] != name:
+        stop(f"{src / 'plugin.json'} names the plugin '{manifest['name']}', expected '{name}'")
+    if RESERVED.search(name):
+        stop(f"reserved word 'claude' in plugin name '{name}'")
+
+    public = public_skill_dirs(repo)
+    both = [t for t in public if t in roster or t in EXTRA_TREES or (skills_root / t).exists()]
+    if both:
+        stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
+    if spec["skills"] is None:
+        extra = list(EXTRA_TREES)
+    else:
+        # The assignment says which skills and agents the plugin ships, and the
+        # plugin's source says which folders of a private skill are assets and
+        # holds the agent files, so the two must agree.
+        public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
+        extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
+        private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
+        if private != set(roster):
+            stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
+                 + ", ".join(sorted(private ^ set(roster))))
+        agents = {p.stem for p in (src / "agents").glob("*.md")}
+        if agents != set(spec["agents"]):
+            stop(f"{src / 'agents'} and source/assignment.json disagree on the agents of '{name}': "
+                 + ", ".join(sorted(agents ^ set(spec["agents"]))))
+    declared = sorted(json.loads((src / ".mcp.json").read_text(encoding="utf-8"))) \
+        if (src / ".mcp.json").is_file() else []
+    if declared != sorted(spec["servers"]):
+        stop(f"{src / '.mcp.json'} declares the servers {declared}, but '{name}' ships {sorted(spec['servers'])}")
+    check_skills({t: skills_root / t for t in sorted(roster) + [t for t in extra if t != SHARED_TREE]})
+    check_skills(public)
 
     files = {".claude-plugin/plugin.json": (json.dumps(manifest, indent=2) + "\n").encode("utf-8")}
-    for name in (".mcp.json", "README.md", "VISION.md"):
-        files[name] = (src / name).read_bytes()
+    for fname in (".mcp.json", "README.md", "VISION.md"):
+        if (src / fname).is_file():
+            files[fname] = (src / fname).read_bytes()
     for sub in ("agents", "hooks"):
-        for path in sorted((src / sub).iterdir()):
-            if path.is_file() and path.suffix != ".pyc":
-                files[f"{sub}/{path.name}"] = path.read_bytes()
+        if (src / sub).is_dir():
+            for path in sorted((src / sub).iterdir()):
+                if path.is_file() and path.suffix != ".pyc":
+                    files[f"{sub}/{path.name}"] = path.read_bytes()
     for top in sorted(roster):
-        files.update(collect_tree(skills_root, top, roster[top], version, stamp=True))
-    for top in EXTRA_TREES:
-        files.update(collect_tree(skills_root, top, (), version, stamp=False))
-    files.update(collect_public_skills(repo, set(roster) | set(EXTRA_TREES)))
+        files.update(collect_tree(skills_root, top, roster[top], stamp=(name, version)))
+    for top in extra:
+        files.update(collect_tree(skills_root, top, (), stamp=None))
+    for top, folder in public.items():
+        for path in sorted(folder.rglob("*")):
+            if path.is_file():
+                files[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path.read_bytes()
     for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.
-    for name in MCP_DIST_DIRS:
-        dist = src / name / "dist"
+    for server in spec["servers"]:
+        folder = plugin_layout.SERVER_DIRS[server]
+        dist = src / folder / "dist"
         if not dist.is_dir():
             stop(f"no MCP bundle folder {dist}")
         for path in sorted(dist.rglob("*")):
             if path.is_file():
-                files[f"{name}/dist/{path.relative_to(dist).as_posix()}"] = path.read_bytes()
+                files[f"{folder}/dist/{path.relative_to(dist).as_posix()}"] = path.read_bytes()
 
     private = [p for p in files if PRIVATE_TEMPLATE_ASSET.match(p) and not PUBLIC_TEMPLATE_ASSET.match(p)]
     if private:
@@ -275,10 +340,17 @@ def collect(repo):
     bad_paths = [p for p in files if not ARCHIVE_PATH.match(p)]
     if bad_paths:
         stop("path with a character the Cowork upload validator rejects: " + ", ".join(bad_paths))
-    leftovers = [f"{p}: {needle}" for p, data in files.items() if Path(p).suffix.lower() in TEXT_SUFFIXES
-                 for needle in OLD_IDENTIFIERS if needle.encode() in data]
+    # A hook whose script is not in the plugin fails at run time, on every call it guards.
+    for word in [w for groups in manifest.get("hooks", {}).values() for group in groups
+                 for hook in group.get("hooks", []) for w in [hook.get("command", ""), *hook.get("args", [])]]:
+        for rel in HOOK_PATH.findall(word):
+            if rel not in files:
+                stop(f"hook path ${{CLAUDE_PLUGIN_ROOT}}/{rel} names no file in the built plugin '{name}'")
+    old = OLD_IDENTIFIERS + (() if name == plugin_layout.SINGLE_PLUGIN else SINGLE_PLUGIN_IDENTIFIERS)
+    leftovers = [f"{p}: {needle.decode()}" for p, data in files.items() if Path(p).suffix.lower() in TEXT_SUFFIXES
+                 for needle in old if re.search(needle, data)]
     if leftovers:
-        stop("old plugin identifiers in the output:\n  " + "\n  ".join(leftovers))
+        stop(f"old plugin identifiers in the output of '{name}':\n  " + "\n  ".join(leftovers))
     return files
 
 
@@ -350,18 +422,33 @@ def check(files, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true", help="compare a fresh build with plugins/probanda/")
-    parser.add_argument("--out", type=Path, help="build into this folder instead of plugins/probanda/")
+    parser.add_argument("--check", action="store_true", help="compare a fresh build with plugins/<plugin>/")
+    parser.add_argument("--out", type=Path, help="build into this folder instead of plugins/")
     parser.add_argument("--repo", type=Path, default=REPO, help="repo to read sources from (for tests)")
     args = parser.parse_args()
     repo = args.repo.resolve()
-    files = collect(repo)
-    target = repo / "plugins" / "probanda"
+    cutover = plugin_layout.is_cutover(repo)
+    # Every gate of every plugin runs before anything is written.
+    built = {name: collect(repo, spec) for name, spec in plugin_layout.plugins(repo).items()}
+    plugins_dir = repo / "plugins"
+    stale = sorted(p for p in plugins_dir.iterdir() if p.is_dir() and p.name not in built
+                   and not p.name.startswith(".")) if cutover and plugins_dir.is_dir() else []
     if args.check:
-        return check(files, target)
-    out = args.out.resolve() if args.out else target
-    write(files, out)
-    print(f"{out}: {len(files)} files")
+        code = max([check(files, plugins_dir / name) for name, files in built.items()], default=0)
+        for folder in stale:
+            print(f"{folder} is stale: no plugin in source/assignment.json builds it")
+        return 1 if stale else code
+    for name, files in built.items():
+        if args.out:
+            out = args.out.resolve() / name if cutover else args.out.resolve()
+        else:
+            out = plugins_dir / name
+        write(files, out)
+        print(f"{out}: {len(files)} files")
+    if not args.out:
+        for folder in stale:
+            shutil.rmtree(folder)
+            print(f"{folder}: removed, no plugin in source/assignment.json builds it")
     return 0
 
 

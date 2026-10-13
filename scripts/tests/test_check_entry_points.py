@@ -22,7 +22,8 @@ _spec.loader.exec_module(check_plugin)
 
 MIGRATE_ENGINE_REAL = os.path.join(
     check_plugin.REPO, ".claude", "skills", "drafting-data", "references", "scripts", "migrate_engine.py")
-MIGRATE_TS_REAL = check_plugin.source_path(check_plugin.REPO, "mcp", "src", "submission", "migrate.ts")
+MIGRATE_TS_REAL = check_plugin.server_path(
+    check_plugin.REPO, check_plugin.server_owner(check_plugin.REPO, "data"), "data", "src", "submission", "migrate.ts")
 
 FIXTURE_MODULE = '''\
 class MigrateError(RuntimeError):

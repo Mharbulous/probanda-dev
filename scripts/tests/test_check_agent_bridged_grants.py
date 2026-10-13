@@ -71,8 +71,11 @@ class AgentBridgedGrantViolationsTest(unittest.TestCase):
 
 class RealAgentsTest(unittest.TestCase):
     def test_every_plugin_mcp_grant_has_its_bridged_twin_and_nothing_more(self):
-        agents_dir = check_plugin.source_path(check_plugin.REPO, "agents")
-        self.assertEqual(check_plugin.agent_bridged_grant_violations(agents_dir), [])
+        for plugin in check_plugin.built_plugins(check_plugin.REPO).values():
+            if check_plugin.agent_names(check_plugin.REPO, plugin):
+                with self.subTest(plugin=plugin["name"]):
+                    agents_dir = check_plugin.source_path(check_plugin.REPO, plugin, "agents")
+                    self.assertEqual(check_plugin.agent_bridged_grant_violations(agents_dir), [])
 
 
 if __name__ == "__main__":

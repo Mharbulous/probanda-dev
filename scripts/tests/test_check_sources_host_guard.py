@@ -22,7 +22,8 @@ _spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRI
 check_plugin = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(check_plugin)
 
-SERVER_JS = check_plugin.source_path(check_plugin.REPO, *check_plugin.DATA_BUNDLE)
+SERVER_JS = check_plugin.server_path(
+    check_plugin.REPO, check_plugin.server_owner(check_plugin.REPO, "data"), "data", *check_plugin.DATA_BUNDLE)
 
 
 class SourcesHostGuardTest(unittest.TestCase):
@@ -31,7 +32,7 @@ class SourcesHostGuardTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not os.path.isfile(SERVER_JS):
-            raise unittest.SkipTest("source/probanda/mcp/dist/litigation-mcp.js not built")
+            raise unittest.SkipTest(f"{SERVER_JS} not built")
         with open(SERVER_JS, encoding="utf-8") as f:
             cls.clean = f.read()
 

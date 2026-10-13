@@ -74,6 +74,22 @@ class ScanTest(unittest.TestCase):
             [("source/probanda/agents/docket-clerk.md", "case_data__*"),
              ("source/probanda/agents/docket-clerk.md", "commons server")])
 
+    def test_at_cutover_agents_are_read_from_each_plugin_folder_and_skills_from_any_public_plugin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugins = make_repo(root, {"show-me/SKILL.md": "x\n"},
+                                agents={"docket-clerk": "- mcp__plugin_probanda_data__case_data__query\n"})
+            plugins["practice"]["skills"].append("tldr")
+            (root / "source" / "assignment.json").write_text(
+                json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
+            for rel, text in (("source/practice/agents/docket-clerk.md", "- mcp__plugin_practice_data__rules__at\n"),
+                              ("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/case-data`.\n")):
+                (root / rel).parent.mkdir(parents=True)
+                (root / rel).write_text(text, encoding="utf-8")
+            self.assertEqual(sorted({(f["file"], f["target"]) for f in check_layering.scan(root, plugins)}),
+                             [("public/plugins/practice/skills/tldr/SKILL.md", "case-data"),
+                              ("source/practice/agents/docket-clerk.md", "rules__*")])
+
     def test_tests_folder_is_not_scanned(self):
         self.assertEqual(self.pairs({"show-me/tests/test_x.py": "# /case-data\n"}), [])
 

@@ -1,6 +1,6 @@
 # Plan: split `probanda` into four plugins
 
-Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: phase 0 in progress (terminal host tested 2026-10-13, desktop app and Cowork wait for Brahm). Phase 1 done 2026-10-13. Phase 2 is next. Phases 1 and 2 ran ahead of phase 0's remaining hosts because only phase 3 depends on phase 0's answers.
+Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: phase 0 in progress (terminal host tested 2026-10-13, desktop app and Cowork wait for Brahm). Phases 1 and 2 done 2026-10-13. Phase 3 waits for phase 0's desktop and Cowork answers, so phase 4 is next. Phases 1 and 2 ran ahead of phase 0's remaining hosts because only phase 3 depends on phase 0's answers.
 
 Words used below. A *plugin* is one installable folder: a manifest (`plugin.json`), skills, agents, hooks and servers. A *marketplace* is the list (`.claude-plugin/marketplace.json`) a user installs plugins from. A *hook* is a small script the host runs before or after an event, and its *matcher* is the pattern that says which tool names or agent names make it run. A *server* is one of the three MCP programs the plugin starts (`data`, `canlii`, `commons`), and a *tool* is one function a server offers, named `mcp__plugin_<plugin>_<server>__<tool>`. The *roster* (`source/probanda/roster.json`) is the list of skills a plugin ships. The *bundle* is a server compiled into one file under `mcp/dist/`.
 
@@ -143,6 +143,7 @@ Committed: `source/assignment.json` (the plugin of every skill, agent, hook scri
 - Modes that work with `research` alone. `verify-law`: only `sweep-draft`. Mode A, Mode B and `verify-authorities` all resolve the source document through `/case-data`, so each stops at that step without `litigator`. `legal-memo-extractor`: the extraction runs. It already skips the on-file cross-check when there is no case database, and it stops, naming `/case-data` initialize, when the matter has no case-data folder.
 - `equivalence-checker` has no caller: its own file is the only one in source that names it. It stays unplaced, to be removed at cutover unless Brahm says otherwise.
 - Default taken, open to Brahm: files under `shared/` are not checked. They ship in every plugin and are read only when a skill points at them, so a shared file has no plugin of its own. `python scripts/check_layering.py --shared` lists the 133 pairs they name.
+- Found after the first write-up: the research agents reach the case database through four files under `shared/`, which the check does not read. `legal-audit-protocol.md`, `legal-audit-scoped.md`, `research-priority.md` and `legal-research.md` tell them to load the `case-data` skill and call `case_data__query` as the first authority layer. Phase 4 words that layer as present only when `litigator` is installed, the way those files already report the commons pool as "not installed". Recommended to Brahm, not done: give each shared file a home plugin in the assignment file, so the check reads it at that plugin's layer.
 - Limits of the scan. It matches names, not meaning: a bare verb ("ingest what it cites") or a description ("the matter's case database") is not found. A one-word skill name (`draft`, `publish`) counts only as a slash command, in backticks, behind a plugin prefix or as a folder in a path.
 
 ### Phase 2: teach the build and the checks about several plugins
@@ -153,7 +154,26 @@ Until cutover the assignment file lists one plugin, `probanda`, holding everythi
 
 Check: `python scripts/build_plugin.py --check` reports `plugins/probanda` current with no byte changed, `python scripts/check_plugin.py` passes, and `python -m pytest scripts/tests` passes, including a new test that builds a two-plugin fixture and asserts that `shared/` lands in both, that each SKILL.md carries its own plugin's stamp, and that a hook whose script path does not exist in its plugin fails the build.
 
+#### Phase 2 outcome (done 2026-10-13)
+
+The scripts now build and check one plugin or several, switched by `"status"` in `source/assignment.json`: `planned` builds the single plugin `probanda` as before (`plugins/probanda/` did not change by a byte), `cutover` builds every plugin the file lists. `scripts/plugin_layout.py` is the one place that reads the status and maps a server key to its folder (`data` to `mcp`, `canlii` to `canlii-mcp`, `commons` to `commons-mcp`). `check_plugin.py` gained `hook-matchers`, `unique-names` and `layering`, and prints `[N/A]` with a reason for an invariant that does not apply to a plugin. `check_public_tree.py` now stops when a private folder it fingerprints is missing. `check_publishable.py` allows the four names.
+
+What phase 5 must do because of how phase 2 was built:
+
+- Every `source/<plugin>/` needs `plugin.json`, `roster.json` (`{}` for `solicitor`) and `VISION.md`. `plugin.json`'s name must equal the folder's plugin, `.mcp.json`'s keys must equal the plugin's servers, and the roster keys and agent files must equal the assignment's lists. `litigator` and `solicitor` ship no `.mcp.json`, so their `plugin.json` drops `"mcpServers"`.
+- `equivalence-checker` stops the cutover build until it is deleted or placed.
+- Rebuild the bundles before the cutover build: the old-identifier scan reads `.js`, and the data bundle holds `probanda:case-data`.
+- `reference-resolution` runs per plugin, so a skill that cites a file in another plugin's skill folder fails. That is a real break at install time. `legal-research` citing `draft/references/authorities.md` is one, already on phase 4's list.
+- Rulings in `source/layering.json` keyed by `source/probanda/agents/<name>.md` go stale when the agents move, and `export_public.py`'s `PUBLIC_PLUGINS` is a phase 7 edit.
+- Literal `probanda` left on purpose: `plugin_layout.py` (`SINGLE_PLUGIN`), `build_plugin.py` (`SINGLE_PLUGIN_IDENTIFIERS`), `check_layering.py` (the planned-mode agents folder), `check_publishable.py` (the pinned name), the header comment of each CI workflow, and `plugin_probanda_` fixtures in several tests.
+
 ### Phase 3: make the data server find skill folders across plugins
+
+Found while preparing this phase (2026-10-13):
+
+- The bundle is built on this machine: in `source/probanda/mcp/`, `npm run build` (tsc) then `npm run bundle` (esbuild, `scripts/bundle.mjs`), and `npm test` runs both and then the suite. Not yet confirmed: that a rebuild of unchanged source reproduces the committed `dist/litigation-mcp.js` byte for byte.
+- Change to decision 1, open to Brahm: each plugin's `SessionStart` hook writes its own small file, `%APPDATA%\Coclerk\plugins\<plugin>.json`, instead of a `plugins` key inside `coclerk.json`. Four hooks can run at the same moment, and a read-then-rewrite of the one file that also holds `case_data_root` could lose an entry or corrupt it. The server reads the folder the same way.
+- Cowork is the open risk. The tool list of a Cowork session shows the data server's tools under a bridged name (`mcp__remote-devices__plugin_probanda_data__...`), which suggests the server runs on the PC while hooks run in Cowork's Linux machine. If so, a hook there registers a path the server cannot read. The phase 0 report shows this directly: it prints the platform the hook ran on, the platform the server ran on, and whether the server could read each registered folder.
 
 Carry out decision 1 as settled by phase 0. With one plugin installed the new lookup finds only its own install, so this ships before cutover.
 

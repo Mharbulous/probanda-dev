@@ -6,6 +6,7 @@ Run: python -m pytest -q scripts/tests/test_check_public_tree.py
 """
 
 import importlib.util
+import json
 import os
 import tempfile
 import unittest
@@ -21,7 +22,10 @@ CREATE = "CREATE" + " TABLE"
 MATTER_CODE = "L" + "8443"
 LONG_PRIVATE_LINE = "The clerk counts back from the anchor and lands on the next open registry day."
 
+PLANNED = '{"status": "planned", "plugins": {}}'
+
 PRIVATE = {
+    "source/assignment.json": PLANNED,
     ".claude/skills/data/references/schema.sql":
         f"{CREATE} evidence_links (\n  evidence_link_id INTEGER,\n  source_locator TEXT,\n  file_path TEXT\n);\n"
         f"-- a comment naming comment_only_name\n{CREATE} IF NOT EXISTS facts (description TEXT);\n",
@@ -131,6 +135,34 @@ class TreeProblemsTest(unittest.TestCase):
     def test_publish_scan_problems_are_reported(self):
         self.assert_reports({"a.md": f"{CREATE} t (id)\n"}, "schema DDL")
         self.assert_reports({"plugins/probanda/.claude-plugin/plugin.json": '{"name": "other"}'}, "pinned list")
+
+    def test_missing_private_folder_stops_the_check(self):
+        (self.repo / "cloud" / "pool" / "schema.sql").unlink()
+        (self.repo / "cloud" / "pool").rmdir()
+        (self.repo / "cloud").rmdir()
+        with self.assertRaises(SystemExit) as stopped:
+            self.messages({"a.md": "x\n"})
+        self.assertIn("cloud/ is missing", str(stopped.exception.code))
+
+    def test_missing_assignment_file_stops_the_check(self):
+        (self.repo / "source" / "assignment.json").unlink()
+        with self.assertRaises(SystemExit):
+            self.messages({"a.md": "x\n"})
+
+    def test_at_cutover_the_server_source_is_read_from_each_plugin_folder(self):
+        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
+        (self.repo / "source" / "assignment.json").write_text(
+            json.dumps({"status": "cutover", "plugins": {"practice": {**spec, "servers": ["data"]}, "research": spec}}),
+            encoding="utf-8")
+        (self.repo / "source" / "probanda").rename(self.repo / "source" / "practice")
+        with self.assertRaises(SystemExit) as stopped:
+            self.messages({"a.md": "x\n"})
+        self.assertIn("source/research/ is missing", str(stopped.exception.code))
+        (self.repo / "source" / "research").mkdir()
+        self.assert_reports({"a.md": "See practice_anchors.\n"}, "practice_anchors")
+        self.assertEqual(self.messages({"plugins/practice/.claude-plugin/plugin.json":
+                                        '{\n  "name": "practice",\n'
+                                        '  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n'}), [])
 
     def test_public_files_reads_only_public(self):
         (self.repo / "public" / "sub").mkdir(parents=True)

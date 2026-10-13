@@ -35,15 +35,24 @@ def agent(tools):
 
 
 class FetchGrantAllowlistTest(unittest.TestCase):
-    def violations(self, agents):
+    def violations(self, agents, **kwargs):
         with tempfile.TemporaryDirectory() as tmp:
             for name, tools in agents.items():
                 with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="\n") as f:
                     f.write(agent(tools))
-            return check_plugin.fetch_grant_allowlist_violations(tmp)
+            return check_plugin.fetch_grant_allowlist_violations(tmp, (PLAIN, BRIDGED), **kwargs)
 
-    def test_the_grants_are_the_probanda_names(self):
-        self.assertEqual(check_plugin.FETCH_GRANTS, (PLAIN, BRIDGED))
+    def test_the_grants_carry_the_name_of_the_plugin_that_ships_the_data_server(self):
+        self.assertEqual(check_plugin.fetch_grants("probanda"), (PLAIN, BRIDGED))
+        self.assertEqual(check_plugin.fetch_grants("practice"),
+                         ("mcp__plugin_practice_data__sources__fetch",
+                          "mcp__remote-devices__plugin_practice_data__sources__fetch"))
+
+    def test_a_plugin_with_no_listed_agent_needs_no_grant_but_may_not_add_one(self):
+        self.assertEqual(self.violations({"other.md": [OTHER, OTHER_BRIDGED]}, expect_grant=False), [])
+        hits = self.violations({"third.md": [PLAIN, BRIDGED]}, expect_grant=False)
+        self.assertEqual(len(hits), 1)
+        self.assertIn("third.md grants sources__fetch but is not in FETCH_GRANT_AGENTS", hits[0])
 
     def test_the_allowlist_names_the_two_agents(self):
         self.assertEqual(check_plugin.FETCH_GRANT_AGENTS, (LOCALIZE, FETCHER))

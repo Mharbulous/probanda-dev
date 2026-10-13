@@ -7,10 +7,16 @@ Usage:
 
 Ported from CoClerk's plugin-packager `direct_mode.py check litigation`, with
 every path and identifier moved to this repo: skill sources under
-.claude/skills/ (the keys of source/probanda/roster.json, plus shared/ and
-legal-commons/), plugin sources under source/probanda/, and the built plugin
-under plugins/probanda/. Each check prints one `[PASS]` or `[FAIL]` line; there
-are no silent skips. The baselines live in check_plugin_baselines/ beside this file.
+.claude/skills/ (the keys of a plugin's roster.json, plus shared/ and
+legal-commons/), plugin sources under source/<plugin>/, and the built plugin
+under plugins/<plugin>/.
+
+The checks run once for each plugin the repo builds (plugin_layout.py: the one
+plugin probanda while source/assignment.json is "planned", every plugin in it at
+"cutover"), then the checks across plugins run once. Each check prints one
+`[PASS]` or `[FAIL]` line, or an `[N/A]` line saying why it does not apply to a
+plugin that does not ship the skill, agent or server it guards; there are no
+silent skips. The baselines live in check_plugin_baselines/ beside this file.
 """
 import ast
 import glob
@@ -20,18 +26,24 @@ import os
 import posixpath
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_layering  # noqa: E402
+import plugin_layout  # noqa: E402
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 BASELINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check_plugin_baselines")
 
-SOURCE_DIR = ("source", "probanda")      # plugin sources: roster, manifest, agents, MCP runtimes
-SHIPPED_DIR = ("plugins", "probanda")    # the built plugin
 COMMONS_SKILL = "legal-commons"
-# Skill trees that ship beside the roster skills, unstamped.
-EXTRA_TREES = ("shared", COMMONS_SKILL)
+# Skill trees that ship beside the roster skills, unstamped: shared/ in every
+# plugin, legal-commons in the plugin the assignment gives it to.
+SHARED_TREE = "shared"
+EXTRA_TREES = (SHARED_TREE, COMMONS_SKILL)
 # Skills already free of Trade Secrets live here, the source of the public repository,
-# and ship whole and unstamped. A skill lives here or under .claude/skills/, never both.
-PUBLIC_SKILLS_DIR = ("public", "plugins", "probanda", "skills")
+# one skills folder per public plugin, and ship whole and unstamped. A skill lives
+# here or under .claude/skills/, never both.
+PUBLIC_SKILLS = ("public", "plugins", "*", "skills")
 # The agents merged in from legal-commons' read side.
 COMMONS_AGENTS = ("law-librarian", "troubleshooter")
 
@@ -42,12 +54,15 @@ COMMONS_FORBIDDEN = ["sqlite3", "law.sqlite", "main.sqlite", "privileged.sqlite"
 # Python entry points the data runtime imports live from the skills tree. A rename
 # in the file breaks the installed plugin with no failing test, so each entry pins
 # the symbols, and `consumers` the runtime files whose `from <module> import ...`
-# must stay a subset of them. A symbol may be dotted one level ("Cls.meth").
+# must stay a subset of them, as paths inside the source folder of `server`. An
+# entry is checked in the plugin that ships that server. A symbol may be dotted
+# one level ("Cls.meth").
 ENTRY_POINT_REGISTRY = (
     {
         "path": ".claude/skills/drafting-data/references/scripts/migrate_engine.py",
         "symbols": ("run", "MigrateError", "MigrateError.as_dict", "TARGET_SCHEMA_VERSION"),
-        "consumers": ("source/probanda/mcp/src/submission/migrate.ts",),
+        "server": "data",
+        "consumers": ("src/submission/migrate.ts",),
     },
 )
 
@@ -95,7 +110,7 @@ WORKTREE_PATH = re.compile(r"\.claude[\\/]+worktrees[\\/]+")
 # copies of the exclusions and the text-extension allowlist -- so a selection bug on
 # either side reads as a disagreement. Change both copies together.
 SHIPPED_PREFIX = "skills/"
-VISION_FILE = "VISION.md"   # ships at the plugin root from source/probanda/
+VISION_FILE = "VISION.md"   # ships at the plugin root from source/<plugin>/
 TREE_EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 TREE_TEXT_EXTS = (".md", ".py", ".sql", ".json")
 TRANSIENT_ASSET_PREFIX = "~$"
@@ -132,15 +147,14 @@ _BUNDLE_MODULE = re.compile(
 _SOURCES_NETWORK_CALL = re.compile(r"\b(?:https?\d*|transport)\.(?:request|get)\(|\bfetch\(")
 _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re.M)
 
-DATA_BUNDLE = ("mcp", "dist", "litigation-mcp.js")
-# Bundles that must carry no Supabase or commons tool namespace. commons-mcp is
-# exempt: it is the plugin's one Supabase surface.
-PURITY_DISTS = ("mcp", "canlii-mcp")
-HOST_PATH_DISTS = ("mcp", "canlii-mcp", "commons-mcp")
+# The data server's bundle, inside that server's folder.
+DATA_BUNDLE = ("dist", "litigation-mcp.js")
+# Servers whose bundles must carry no Supabase or commons tool namespace. commons
+# is exempt: it is the plugins' one Supabase surface.
+PURITY_SERVERS = ("data", "canlii")
+HOST_PATH_SERVERS = ("data", "canlii", "commons")
 
 FETCH_TOOL = "sources__fetch"
-FETCH_GRANTS = ("mcp__plugin_probanda_data__" + FETCH_TOOL,
-                "mcp__remote-devices__plugin_probanda_data__" + FETCH_TOOL)
 # The only agent files that may grant sources__fetch.
 FETCH_GRANT_AGENTS = ("localize-helper.md", "legislation-fetcher.md")
 
@@ -151,58 +165,122 @@ PLAIN_PREFIX = "mcp__plugin_"
 BRIDGE_PREFIX = "mcp__remote-devices__"
 
 RECITAL_RULE_SOURCE = ".claude/skills/shared/authority-claim-verification.md"
-RECITAL_RULE_MIRRORS = (
-    ".claude/skills/shared/legal-audit-protocol.md",
-    ".claude/skills/case-brief/agents/brief.md",
-    ".claude/skills/verify-law/agents/verify-claim.md",
-    ".claude/skills/case-data/agents/verify-edges.md",
-    ".claude/skills/case-data/agents/extract-caselaw.md",
-    ".claude/skills/case-data/agents/verify-caselaw.md",
-    "source/probanda/agents/verify-claim.md",
-    "source/probanda/agents/verify-edges.md",
-    "source/probanda/agents/extract-caselaw.md",
-    "source/probanda/agents/verify-caselaw.md",
+# The copies of the recital rule: files under .claude/skills/, each checked in the
+# plugin that ships its skill (shared/ ships in every plugin), and agent files,
+# each checked in the plugin that ships the agent.
+RECITAL_RULE_SKILL_MIRRORS = (
+    "shared/legal-audit-protocol.md",
+    "case-brief/agents/brief.md",
+    "verify-law/agents/verify-claim.md",
+    "case-data/agents/verify-edges.md",
+    "case-data/agents/extract-caselaw.md",
+    "case-data/agents/verify-caselaw.md",
 )
+RECITAL_RULE_AGENT_MIRRORS = ("verify-claim", "verify-edges", "extract-caselaw", "verify-caselaw")
 RECITAL_RULE_BLOCK = re.compile(r"<!-- recital-rule: begin.*?<!-- recital-rule: end -->", re.S)
+
+# Hook events whose matcher is a pattern over tool names, and over agent names.
+TOOL_EVENTS = ("PreToolUse", "PostToolUse")
+AGENT_EVENTS = ("SubagentStart", "SubagentStop")
+# A plugin tool (`plugin_<plugin>_<server>__`) and a plugin agent (`<plugin>:<agent>`)
+# named in a matcher.
+MATCHER_TOOL = re.compile(r"plugin_([A-Za-z0-9-]+)_([A-Za-z0-9-]+)__")
+MATCHER_AGENT = re.compile(r"([A-Za-z0-9-]+):([A-Za-z0-9-]+)")
+
+
+class NotApplicable(Exception):
+    """Raised by a check that guards something the plugin does not ship. The message
+    says what, and the check prints as N/A."""
 
 
 # --- repo layout -------------------------------------------------------------------
+# A `plugin` argument is one spec of built_plugins(): its name, source folder, the
+# plugins it requires, its servers, and the skills and agents the assignment gives it
+# (None while the one plugin ships everything).
+
+def built_plugins(repo):
+    """{name: spec} for every plugin the repo builds (plugin_layout.plugins)."""
+    return plugin_layout.plugins(repo)
+
 
 def skills_root(repo):
     return os.path.join(repo, ".claude", "skills")
 
 
-def source_path(repo, *parts):
-    return os.path.join(repo, *SOURCE_DIR, *parts)
+def source_path(repo, plugin, *parts):
+    return os.path.join(repo, *plugin["source"].split("/"), *parts)
 
 
-def roster(repo):
-    """Skill -> declared asset dirs, read from source/probanda/roster.json."""
-    with open(source_path(repo, "roster.json"), encoding="utf-8") as f:
+def server_path(repo, plugin, server, *parts):
+    """A path inside the source folder of a server the plugin ships."""
+    if server not in plugin["servers"]:
+        raise NotApplicable(f"{plugin['name']} does not ship the {server} server")
+    return source_path(repo, plugin, plugin_layout.SERVER_DIRS[server], *parts)
+
+
+def server_owner(repo, server):
+    """The one built plugin that ships a server."""
+    owners = [p for p in built_plugins(repo).values() if server in p["servers"]]
+    if len(owners) != 1:
+        raise ValueError(f"{len(owners)} built plugins ship the {server} server, expected 1")
+    return owners[0]
+
+
+def ships_skill(plugin, skill):
+    return plugin["skills"] is None or skill in plugin["skills"]
+
+
+def ships_agent(plugin, agent):
+    return plugin["agents"] is None or agent in plugin["agents"]
+
+
+def agents_dir(repo, plugin):
+    if plugin["agents"] == []:
+        raise NotApplicable(f"{plugin['name']} ships no agent")
+    return source_path(repo, plugin, "agents")
+
+
+def agent_names(repo, plugin):
+    """The agents the plugin ships: the assignment's list, or every agent file in its
+    source while the one plugin ships everything."""
+    if plugin["agents"] is not None:
+        return sorted(plugin["agents"])
+    return sorted(os.path.basename(p)[:-len(".md")] for p in glob.glob(source_path(repo, plugin, "agents", "*.md")))
+
+
+def roster(repo, plugin):
+    """Skill -> declared asset dirs, read from the plugin's roster.json."""
+    with open(source_path(repo, plugin, "roster.json"), encoding="utf-8") as f:
         return json.load(f)
 
 
-def packaged_assets(repo):
-    return {s: tuple(d) for s, d in roster(repo).items() if d}
+def packaged_assets(repo, plugin):
+    return {s: tuple(d) for s, d in roster(repo, plugin).items() if d}
 
 
-def public_skills_root(repo):
-    return os.path.join(repo, *PUBLIC_SKILLS_DIR)
+def extra_trees(plugin):
+    return tuple(t for t in EXTRA_TREES if t == SHARED_TREE or ships_skill(plugin, t))
 
 
-def public_skills(repo):
-    root = public_skills_root(repo)
-    return sorted(d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))) if os.path.isdir(root) else []
+def public_skill_dirs(repo):
+    """{skill name: its folder} for every skill under a public plugin."""
+    return {os.path.basename(d): d for d in sorted(glob.glob(os.path.join(repo, *PUBLIC_SKILLS, "*")))
+            if os.path.isdir(d)}
 
 
-def skill_names(repo):
+def public_skills(repo, plugin):
+    """The public skills the plugin ships."""
+    return sorted(s for s in public_skill_dirs(repo) if ships_skill(plugin, s))
+
+
+def skill_names(repo, plugin):
     """Every skill whose SKILL.md ships: the roster keys, legal-commons and the public skills."""
-    return sorted(roster(repo)) + [COMMONS_SKILL] + public_skills(repo)
+    return (sorted(roster(repo, plugin)) + [s for s in (COMMONS_SKILL,) if ships_skill(plugin, s)]
+            + public_skills(repo, plugin))
 
 
 def skill_md(repo, skill):
-    root = public_skills_root(repo) if skill in public_skills(repo) else skills_root(repo)
-    return os.path.join(root, skill, "SKILL.md")
+    return os.path.join(public_skill_dirs(repo).get(skill) or os.path.join(skills_root(repo), skill), "SKILL.md")
 
 
 # --- frontmatter ---------------------------------------------------------------------
@@ -284,11 +362,11 @@ def description_length(skill_md_path):
     return len(scalar_value(block)) if block else None
 
 
-def preamble_lines(version):
+def preamble_lines(plugin_name, version):
     """The lines stamp_skill_md() inserts after a shipped roster SKILL.md's frontmatter.
     The build carries its own copy; shipped-tree-purity is what catches a disagreement."""
     return [
-        f"<!-- probanda v{version} -->",
+        f"<!-- {plugin_name} v{version} -->",
         "> **Installed copy.** This skill's full source tree ships beside this file, and a relative "
         "path in the text below cites that tree. Resolve one by trying, in order: the directory of "
         "the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then "
@@ -318,10 +396,10 @@ def preamble_lines(version):
     ]
 
 
-def stamp_skill_md(text, version):
-    """Return a SKILL.md's text with preamble_lines(version) inserted after its closing
-    frontmatter fence, behind one blank line. Inserted lines take the fence line's
-    ending. Raises ValueError when the text has no frontmatter to stamp after."""
+def stamp_skill_md(text, plugin_name, version):
+    """Return a SKILL.md's text with preamble_lines(plugin_name, version) inserted after
+    its closing frontmatter fence, behind one blank line. Inserted lines take the fence
+    line's ending. Raises ValueError when the text has no frontmatter to stamp after."""
     lines = text.split("\n")
     if not lines or lines[0].strip() != "---":
         raise ValueError("no frontmatter fence to stamp after")
@@ -329,7 +407,7 @@ def stamp_skill_md(text, version):
     if end is None:
         raise ValueError("no frontmatter fence to stamp after")
     cr = "\r" if lines[0].endswith("\r") else ""
-    inserted = [line + cr for line in [""] + preamble_lines(version)]
+    inserted = [line + cr for line in [""] + preamble_lines(plugin_name, version)]
     return "\n".join(lines[:end + 1] + inserted + lines[end + 1:])
 
 
@@ -648,10 +726,18 @@ def agent_tools(agent_md_path):
     return tools
 
 
-def fetch_grant_allowlist_violations(agents_dir):
+def fetch_grants(plugin_name):
+    """The plain and the bridged name of sources__fetch, for the plugin that ships the
+    data server."""
+    return (f"mcp__plugin_{plugin_name}_data__{FETCH_TOOL}",
+            f"mcp__remote-devices__plugin_{plugin_name}_data__{FETCH_TOOL}")
+
+
+def fetch_grant_allowlist_violations(agents_dir, grants, expect_grant=True):
     """`sources__fetch` is granted only by the agent files in FETCH_GRANT_AGENTS, by at
-    least one agent, and by each listed agent that is present under both its plain and
-    its bridged name. A listed agent that is absent passes."""
+    least one agent, and by each listed agent that is present under both names in
+    `grants`. A listed agent that is absent passes. `expect_grant` is False for a
+    plugin that ships none of the listed agents, where no grant at all is right."""
     present = sorted(os.listdir(agents_dir)) if os.path.isdir(agents_dir) else []
     granting = {}
     for fn in present:
@@ -660,12 +746,12 @@ def fetch_grant_allowlist_violations(agents_dir):
             if tools:
                 granting[fn] = tools
     if not granting:
-        return [f"no agent grants {FETCH_TOOL}"]
+        return [f"no agent grants {FETCH_TOOL}"] if expect_grant else []
     hits = [f"{fn} grants {FETCH_TOOL} but is not in FETCH_GRANT_AGENTS ({', '.join(FETCH_GRANT_AGENTS)})"
             for fn in granting if fn not in FETCH_GRANT_AGENTS]
     for fn in FETCH_GRANT_AGENTS:
         if fn in present:
-            hits += [f"{fn} does not grant {name}" for name in FETCH_GRANTS if name not in granting.get(fn, [])]
+            hits += [f"{fn} does not grant {name}" for name in grants if name not in granting.get(fn, [])]
     return hits
 
 
@@ -703,7 +789,15 @@ def recital_rule_blocks(path):
         return RECITAL_RULE_BLOCK.findall(f.read().replace("\r\n", "\n"))
 
 
-def recital_rule_mirror_violations(repo, source=RECITAL_RULE_SOURCE, mirrors=RECITAL_RULE_MIRRORS):
+def recital_rule_mirrors(plugin):
+    """The copies of the recital rule the plugin ships, as repo-relative paths."""
+    skills = [f".claude/skills/{rel}" for rel in RECITAL_RULE_SKILL_MIRRORS
+              if rel.split("/")[0] == SHARED_TREE or ships_skill(plugin, rel.split("/")[0])]
+    agents = [f"{plugin['source']}/agents/{a}.md" for a in RECITAL_RULE_AGENT_MIRRORS if ships_agent(plugin, a)]
+    return tuple(skills + agents)
+
+
+def recital_rule_mirror_violations(repo, source, mirrors):
     """Every copy of the recital rule (authority-claim-verification.md §3) that is
     missing, duplicated, or not identical to the source's block. Subagents read no
     repo files, so each prompt carries the rule inline."""
@@ -724,11 +818,45 @@ def recital_rule_mirror_violations(repo, source=RECITAL_RULE_SOURCE, mirrors=REC
     return hits
 
 
+# --- hook-matchers --------------------------------------------------------------------------------
+
+def hook_matcher_violations(manifest, plugin, servers, agents, strict):
+    """(hits, matchers read) for the hook matchers of one plugin.json. A matcher that
+    names a plugin tool must name a server that plugin ships, and one that names a
+    plugin agent must name an agent that plugin ships: a matcher that names anything
+    else matches nothing, so its hook never runs. `servers` and `agents` are {plugin
+    name: what it ships} for every built plugin. With `strict`, the named plugin must
+    also be this one or one it requires. A matcher that names a host tool, or a
+    pattern tied to no plugin, passes."""
+    reachable = {plugin["name"], *plugin["requires"]} if strict else set(servers)
+    hits, count = [], 0
+    for event in TOOL_EVENTS + AGENT_EVENTS:
+        pattern, ships, kind = (MATCHER_TOOL, servers, "server") if event in TOOL_EVENTS \
+            else (MATCHER_AGENT, agents, "agent")
+        for group in manifest.get("hooks", {}).get(event, []):
+            matcher = group.get("matcher")
+            if not matcher:
+                continue
+            count += 1
+            named = pattern.findall(matcher)
+            if kind == "server" and "plugin_" in matcher and not named:
+                hits.append(f"{event} matcher {matcher!r} names a plugin tool this check cannot read")
+            for owner, unit in named:
+                if owner not in ships:
+                    hits.append(f"{event} matcher names {kind} '{unit}' of '{owner}', which is not a built plugin")
+                elif unit not in ships[owner]:
+                    hits.append(f"{event} matcher names {kind} '{unit}', which '{owner}' does not ship")
+                elif owner not in reachable:
+                    hits.append(f"{event} matcher names {kind} '{unit}' of '{owner}', which "
+                                f"'{plugin['name']}' does not require")
+    return hits, count
+
+
 # --- shipped-tree-purity --------------------------------------------------------------------------
 
-def shipped_manifest(repo):
+def shipped_manifest(repo, plugin):
     """(sha256, relpath) for every file in the built plugin, paths relative to it."""
-    root = os.path.join(repo, *SHIPPED_DIR)
+    root = os.path.join(repo, "plugins", plugin["name"])
     manifest = []
     for dirpath, dirs, files in os.walk(root):
         dirs.sort()
@@ -738,12 +866,12 @@ def shipped_manifest(repo):
     return manifest
 
 
-def skill_source_expected(root, roster_names, assets):
+def skill_source_expected(root, roster_names, assets, extra=EXTRA_TREES):
     """The `.claude/skills/`-relative paths the plugin should ship under `skills/`:
     every allowlisted text file under each roster skill and each extra tree, plus every
     file in one of that skill's declared asset dirs (an Office lock file excepted)."""
     expected = set()
-    for top in list(roster_names) + list(EXTRA_TREES):
+    for top in list(roster_names) + list(extra):
         declared = tuple(f"{top}/{d}/" for d in assets.get(top, ()))
         for dirpath, dirs, files in os.walk(os.path.join(root, top)):
             dirs[:] = [d for d in dirs if d not in TREE_EXCLUDE_DIRS]
@@ -779,10 +907,11 @@ def _text_of(path):
         return None
 
 
-def skill_source_hit_counts(repo, shipped_rels):
+def skill_source_hit_counts(repo, plugin, shipped_rels):
     """Per-file hit counts, keyed by repo-relative path: HOST_PATH over every shipped
-    text file, matter_codes over those plus the plugin agents and the firm rule
-    overlay's test fixtures. Counts only -- the matched text never leaves here."""
+    text file, matter_codes over those plus the plugin's agents and, where it ships the
+    data server, the firm rule overlay's test fixtures. Counts only -- the matched text
+    never leaves here."""
     counts = {"host_path": {}, "matter_code": {}}
     for rel in shipped_rels:
         text = _text_of(os.path.join(skills_root(repo), *rel.split("/")))
@@ -793,8 +922,9 @@ def skill_source_hit_counts(repo, shipped_rels):
             n = len(find(text))
             if n:
                 counts[scan][key] = n
-    overlay_fixtures = source_path(repo, "mcp", "test", "fixtures", "rule-overlay", "*.json")
-    for path in sorted(glob.glob(source_path(repo, "agents", "*.md")) + glob.glob(overlay_fixtures)):
+    overlay_fixtures = glob.glob(server_path(repo, plugin, "data", "test", "fixtures", "rule-overlay", "*.json")) \
+        if "data" in plugin["servers"] else []
+    for path in sorted(glob.glob(source_path(repo, plugin, "agents", "*.md")) + overlay_fixtures):
         with open(path, encoding="utf-8", errors="replace") as f:
             n = len(matter_codes(f.read()))
         if n:
@@ -802,16 +932,18 @@ def skill_source_hit_counts(repo, shipped_rels):
     return counts
 
 
-def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version):
-    """Return (hits, summary) for the `skills/` entries of a manifest ((sha256, relpath)
-    pairs). Every entry must be its source file byte for byte, except a roster SKILL.md,
-    which must be its source plus the preamble stamp_skill_md(text, version) inserts."""
+def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, version):
+    """Return (hits, summary) for the `skills/` entries of one built plugin's manifest
+    ((sha256, relpath) pairs). Every entry must be its source file byte for byte, except
+    a roster SKILL.md, which must be its source plus the preamble
+    stamp_skill_md(text, plugin name, version) inserts."""
     root = skills_root(repo)
-    tops = set(roster_names) | set(EXTRA_TREES)
+    extra = extra_trees(plugin)
+    tops = set(roster_names) | set(extra)
     hits = []
     shipped = set()
-    public_root, public = public_skills_root(repo), set(public_skills(repo))
-    for top in sorted(public & (tops | set(os.listdir(root) if os.path.isdir(root) else ()))):
+    public_dirs, public = public_skill_dirs(repo), set(public_skills(repo, plugin))
+    for top in sorted(set(public_dirs) & (tops | set(os.listdir(root) if os.path.isdir(root) else ()))):
         hits.append(f"skill in both public/ and .claude/skills/: {top}")
     public_shipped = set()
     for sha, arcname in manifest:
@@ -822,7 +954,7 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
         if parts[0] in public:
             # A public skill ships whole and byte for byte, with no preamble.
             public_shipped.add(rel)
-            source = os.path.join(public_root, *parts)
+            source = os.path.join(public_dirs[parts[0]], *parts[1:])
             if not os.path.isfile(source):
                 hits.append(f"no public source file: {arcname}")
             elif sha256_file(source) != sha:
@@ -839,7 +971,7 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
                 and not (declared and rel.startswith(declared))):
             hits.append(f"neither allowlisted text nor a declared asset: {arcname}")
         if parts[0] not in tops:
-            hits.append(f"not a roster skill or an extra tree ({', '.join(EXTRA_TREES)}): {arcname}")
+            hits.append(f"not a roster skill or an extra tree ({', '.join(extra)}): {arcname}")
         source = os.path.join(root, *parts)
         if not os.path.isfile(source):
             hits.append(f"no source file: {arcname}")
@@ -847,32 +979,32 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
             with open(source, encoding="utf-8", newline="") as f:
                 text = f.read()
             try:
-                want = hashlib.sha256(stamp_skill_md(text, version).encode("utf-8")).hexdigest()
+                want = hashlib.sha256(stamp_skill_md(text, plugin["name"], version).encode("utf-8")).hexdigest()
             except ValueError:
                 want = None
             if want != sha:
                 hits.append(f"SKILL.md not source + preamble: {arcname}")
         elif sha256_file(source) != sha:
             hits.append(f"differs from source: {arcname}")
-    for rel in sorted(skill_source_expected(root, roster_names, assets) - shipped):
+    for rel in sorted(skill_source_expected(root, roster_names, assets, extra) - shipped):
         hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
     for top in sorted(public):
-        for dirpath, _dirs, files in os.walk(os.path.join(public_root, top)):
+        for dirpath, _dirs, files in os.walk(public_dirs[top]):
             for fn in files:
-                rel = os.path.relpath(os.path.join(dirpath, fn), public_root).replace(os.sep, "/")
+                rel = top + "/" + os.path.relpath(os.path.join(dirpath, fn), public_dirs[top]).replace(os.sep, "/")
                 if rel not in public_shipped:
                     hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
 
     # VISION.md ships at the plugin root, byte for byte.
     vision_shas = [sha for sha, arcname in manifest if arcname == VISION_FILE]
-    vision_src = source_path(repo, VISION_FILE)
+    vision_src = source_path(repo, plugin, VISION_FILE)
     if not vision_shas:
         hits.append(f"missing from payload: {VISION_FILE}")
     elif not os.path.isfile(vision_src) or sha256_file(vision_src) != vision_shas[0]:
         hits.append(f"differs from source: {VISION_FILE}")
 
     present = sorted(rel for rel in shipped if os.path.isfile(os.path.join(root, *rel.split("/"))))
-    counts = skill_source_hit_counts(repo, present)
+    counts = skill_source_hit_counts(repo, plugin, present)
     for scan in ("host_path", "matter_code"):
         allowed = baseline.get(scan, {})
         for path, n in sorted(counts[scan].items()):
@@ -887,9 +1019,14 @@ def shipped_tree_purity(repo, manifest, roster_names, assets, baseline, version)
 
 
 def write_skill_source_baseline(repo, path=SKILL_SOURCE_BASELINE):
-    """Rewrite the ratchet baseline from what the sources say should ship."""
-    rels = sorted(skill_source_expected(skills_root(repo), sorted(roster(repo)), packaged_assets(repo)))
-    counts = skill_source_hit_counts(repo, rels)
+    """Rewrite the ratchet baseline from what the sources say should ship, in every
+    built plugin."""
+    counts = {"host_path": {}, "matter_code": {}}
+    for plugin in built_plugins(repo).values():
+        rels = sorted(skill_source_expected(skills_root(repo), sorted(roster(repo, plugin)),
+                                            packaged_assets(repo, plugin), extra_trees(plugin)))
+        for scan, found in skill_source_hit_counts(repo, plugin, rels).items():
+            counts[scan].update(found)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(counts, f, indent=2, sort_keys=True)
         f.write("\n")
@@ -897,21 +1034,28 @@ def write_skill_source_baseline(repo, path=SKILL_SOURCE_BASELINE):
 
 
 # --- the checks ----------------------------------------------------------------------------------
-# Each returns (ok, detail).
+# Each returns (ok, detail). A check of one plugin takes (repo, plugin) and raises
+# NotApplicable when the plugin does not ship what it guards.
 
-def check_roster_sanity(repo):
-    missing = [s for s in skill_names(repo) if not os.path.isfile(skill_md(repo, s))]
-    return not missing, ("missing source for: " + ", ".join(missing)) if missing else ""
+def check_roster_sanity(repo, plugin):
+    names = skill_names(repo, plugin)
+    missing = [s for s in names if not os.path.isfile(skill_md(repo, s))]
+    if missing:
+        return False, "missing source for: " + ", ".join(missing)
+    if plugin["skills"] is not None and set(plugin["skills"]) != set(names):
+        return False, ("roster.json and source/assignment.json disagree on: "
+                       + ", ".join(sorted(set(plugin["skills"]) ^ set(names))))
+    return True, ""
 
 
-def check_reserved_name(repo):
-    reserved = [s for s in skill_names(repo) if RESERVED_NAME.search(s)]
+def check_reserved_name(repo, plugin):
+    reserved = [s for s in skill_names(repo, plugin) if RESERVED_NAME.search(s)]
     return not reserved, ("rename: " + ", ".join(reserved)) if reserved else ""
 
 
-def check_description_no_xml_tags(repo):
+def check_description_no_xml_tags(repo, plugin):
     xml_hits = []
-    for s in skill_names(repo):
+    for s in skill_names(repo, plugin):
         if not os.path.isfile(skill_md(repo, s)):
             continue
         desc = extract_field(read_frontmatter_lines(skill_md(repo, s)), "description") or []
@@ -921,9 +1065,9 @@ def check_description_no_xml_tags(repo):
     return not xml_hits, "; ".join(xml_hits)
 
 
-def check_description_length(repo):
+def check_description_length(repo, plugin):
     long_hits, near_hits = [], []
-    for s in skill_names(repo):
+    for s in skill_names(repo, plugin):
         if not os.path.isfile(skill_md(repo, s)):
             continue
         n = description_length(skill_md(repo, s))
@@ -940,10 +1084,10 @@ def check_description_length(repo):
     return True, ""
 
 
-def check_no_absolute_repo_paths(repo):
+def check_no_absolute_repo_paths(repo, plugin):
     needle = os.path.join(repo, ".claude")
     abs_hits = []
-    for s in skill_names(repo):
+    for s in skill_names(repo, plugin):
         if not os.path.isfile(skill_md(repo, s)):
             continue
         abs_hits.extend(rel for _n, rel in grep_tree(repo, s, needles_cs=(needle,))
@@ -951,37 +1095,49 @@ def check_no_absolute_repo_paths(repo):
     return not abs_hits, ("absolute repo path in: " + ", ".join(sorted(set(abs_hits)))) if abs_hits else ""
 
 
-def check_reference_resolution(repo):
-    assets = packaged_assets(repo)
-    shipped = skill_source_expected(skills_root(repo), sorted(roster(repo)), assets)
+def check_reference_resolution(repo, plugin):
+    assets = packaged_assets(repo, plugin)
+    shipped = skill_source_expected(skills_root(repo), sorted(roster(repo, plugin)), assets, extra_trees(plugin))
     ref_hits = []
-    for s in skill_names(repo):
+    for s in skill_names(repo, plugin):
         if os.path.isdir(os.path.join(skills_root(repo), s)):
             ref_hits.extend(broken_references(repo, s, assets, shipped))
     with open(REFERENCE_UNSHIPPED_BASELINE, encoding="utf-8") as f:
         known = set(json.load(f)["known_unshipped"])
+    # The list is one for the repo. An entry of a skill another plugin ships is that
+    # plugin's to hit, so it is not stale here.
+    elsewhere = {s for other in built_plugins(repo).values() if other["name"] != plugin["name"]
+                 for s in skill_names(repo, other)}
+    known = {entry for entry in known if entry.split("/", 1)[0] not in elsewhere}
     ref_fail, n_known = reference_hit_verdict([f"{rel} -> {ref}" for rel, ref in ref_hits], known)
     if ref_fail:
         return False, "; ".join(ref_fail)
     return True, f"{n_known} known unshipped" if n_known else ""
 
 
-def check_entry_point_registry(repo):
+def check_entry_point_registry(repo, plugin):
+    entries = [e for e in ENTRY_POINT_REGISTRY if e["server"] in plugin["servers"]]
+    if not entries:
+        raise NotApplicable(f"{plugin['name']} ships no server that imports a pinned entry point")
     ep_hits = []
-    for entry in ENTRY_POINT_REGISTRY:
+    for entry in entries:
         ep_hits.extend(entry_point_violations(os.path.join(repo, *entry["path"].split("/")), entry["symbols"]))
         module_name = os.path.splitext(os.path.basename(entry["path"]))[0]
         for consumer in entry["consumers"]:
             ep_hits.extend(consumer_import_violations(
-                os.path.join(repo, *consumer.split("/")), module_name, entry["symbols"]))
+                server_path(repo, plugin, entry["server"], *consumer.split("/")), module_name, entry["symbols"]))
     return not ep_hits, "; ".join(ep_hits)
 
 
-def check_bundle_purity(repo):
+def check_bundle_purity(repo, plugin):
+    servers = [s for s in PURITY_SERVERS if s in plugin["servers"]]
+    if not servers:
+        raise NotApplicable(f"{plugin['name']} ships neither the data nor the canlii server")
     purity_hits = []
     found_any_bundle = False
-    for dist_rel in PURITY_DISTS:
-        dist = source_path(repo, dist_rel, "dist")
+    for server in servers:
+        dist_rel = plugin_layout.SERVER_DIRS[server]
+        dist = server_path(repo, plugin, server, "dist")
         if not os.path.isdir(dist):
             continue
         blob = ""
@@ -1001,29 +1157,35 @@ def check_bundle_purity(repo):
     return not purity_hits, ("found: " + ", ".join(purity_hits)) if purity_hits else ""
 
 
-def check_sources_host_guard(repo):
-    data_js = source_path(repo, *DATA_BUNDLE)
+def check_sources_host_guard(repo, plugin):
+    data_js = server_path(repo, plugin, "data", *DATA_BUNDLE)
     if not os.path.isfile(data_js):
-        return False, "/".join(DATA_BUNDLE) + " not found"
+        return False, "/".join((plugin_layout.SERVER_DIRS["data"],) + DATA_BUNDLE) + " not found"
     with open(data_js, encoding="utf-8") as f:
         guard_hits = sources_host_guard_violations(f.read())
     return not guard_hits, "; ".join(guard_hits)
 
 
-def check_fetch_grant_allowlist(repo):
-    fetch_hits = fetch_grant_allowlist_violations(source_path(repo, "agents"))
+def check_fetch_grant_allowlist(repo, plugin):
+    listed_here = any(ships_agent(plugin, fn[:-len(".md")]) for fn in FETCH_GRANT_AGENTS)
+    fetch_hits = fetch_grant_allowlist_violations(
+        agents_dir(repo, plugin), fetch_grants(server_owner(repo, "data")["name"]), expect_grant=listed_here)
     return not fetch_hits, "; ".join(fetch_hits)
 
 
-def check_recital_rule_mirror(repo):
-    recital_hits = recital_rule_mirror_violations(repo)
+def check_recital_rule_mirror(repo, plugin):
+    recital_hits = recital_rule_mirror_violations(repo, RECITAL_RULE_SOURCE, recital_rule_mirrors(plugin))
     return not recital_hits, "; ".join(recital_hits)
 
 
-def check_bundle_no_host_path(repo):
+def check_bundle_no_host_path(repo, plugin):
+    servers = [s for s in HOST_PATH_SERVERS if s in plugin["servers"]]
+    if not servers:
+        raise NotApplicable(f"{plugin['name']} ships no server")
     host_hits = []
-    for dist_rel in HOST_PATH_DISTS:
-        dist = source_path(repo, dist_rel, "dist")
+    for server in servers:
+        dist_rel = plugin_layout.SERVER_DIRS[server]
+        dist = server_path(repo, plugin, server, "dist")
         if not os.path.isdir(dist):
             continue
         for fn in sorted(os.listdir(dist)):
@@ -1039,36 +1201,79 @@ def check_bundle_no_host_path(repo):
     return not host_hits, "; ".join(host_hits)
 
 
-def check_inverse_reference(repo):
+def check_inverse_reference(repo, plugin):
     needles = COMMONS_AGENTS
     inv_hits = []
-    for s in sorted(roster(repo)):
+    for s in sorted(roster(repo, plugin)):
         inv_hits.extend(grep_tree(repo, s, needles_ci=needles))
-    inv_hits.extend(grep_dir(repo, source_path(repo, "agents"), needles,
+    inv_hits.extend(grep_dir(repo, source_path(repo, plugin, "agents"), needles,
                              skip={f"{a}.md" for a in COMMONS_AGENTS}))
     if inv_hits:
         return False, "; ".join(f"'{n}' in {rel}" for n, rel in sorted(set(inv_hits)))
     return True, "commons agents checked: " + ", ".join(COMMONS_AGENTS)
 
 
-def check_shipped_tree_purity(repo):
+def check_shipped_tree_purity(repo, plugin):
     with open(SKILL_SOURCE_BASELINE, encoding="utf-8") as f:
         baseline = json.load(f)
-    with open(source_path(repo, "plugin.json"), encoding="utf-8") as f:
+    with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
         version = json.load(f)["version"]
     hits, summary = shipped_tree_purity(
-        repo, shipped_manifest(repo), sorted(roster(repo)), packaged_assets(repo), baseline, version)
+        repo, plugin, shipped_manifest(repo, plugin), sorted(roster(repo, plugin)), packaged_assets(repo, plugin),
+        baseline, version)
     return not hits, "; ".join(hits) if hits else summary
 
 
-def check_agent_bridged_grants(repo):
-    bridge_hits = agent_bridged_grant_violations(source_path(repo, "agents"))
+def check_agent_bridged_grants(repo, plugin):
+    bridge_hits = agent_bridged_grant_violations(agents_dir(repo, plugin))
     return not bridge_hits, "; ".join(bridge_hits)
 
 
-def check_commons_encapsulation(repo):
+def check_commons_encapsulation(repo, plugin):
+    if not ships_skill(plugin, COMMONS_SKILL):
+        raise NotApplicable(f"{plugin['name']} does not ship the {COMMONS_SKILL} skill")
     enc_hits = grep_tree(repo, COMMONS_SKILL, needles_ci=COMMONS_FORBIDDEN)
     return not enc_hits, "; ".join(f"{rel} has '{n}'" for n, rel in enc_hits)
+
+
+def check_hook_matchers(repo, plugin):
+    with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
+        manifest = json.load(f)
+    plugins = built_plugins(repo)
+    hits, count = hook_matcher_violations(
+        manifest, plugin, {name: p["servers"] for name, p in plugins.items()},
+        {name: agent_names(repo, p) for name, p in plugins.items()}, strict=plugin_layout.is_cutover(repo))
+    if not count:
+        raise NotApplicable(f"{plugin['name']} declares no hook matcher")
+    return not hits, "; ".join(hits) if hits else f"{count} matchers read"
+
+
+def check_unique_names(repo):
+    hits = []
+    for kind, names_of in (("skill", skill_names), ("agent", agent_names)):
+        owners = {}
+        for plugin in built_plugins(repo).values():
+            for name in names_of(repo, plugin):
+                owners.setdefault(name, []).append(plugin["name"])
+        hits += [f"{kind} '{name}' ships in {' and '.join(found)}"
+                 for name, found in sorted(owners.items()) if len(found) > 1]
+    return not hits, "; ".join(hits)
+
+
+def check_layering_rule(repo):
+    """check_layering.py's verdict: its --report run until cutover, its strict run from then."""
+    try:
+        _shared, _upward, _ruling, found, unruled, stale, todo = check_layering.judge(Path(repo))
+    except SystemExit as exc:
+        return False, str(exc)
+    strict = plugin_layout.is_cutover(repo)
+    hits = [f"no ruling: {f} names {t}" for f, t in unruled]
+    hits += [f"stale ruling (nothing matches it): {f} names {t}" for f, t in stale]
+    if strict:
+        hits += [f"still to fix: {f} names {t}" for f, t in todo]
+    if hits:
+        return False, "; ".join(hits)
+    return True, f"{len(found)} upward pairs" + (f", {len(todo)} still to fix before cutover" if todo else "")
 
 
 CHECKS = (
@@ -1092,25 +1297,40 @@ CHECKS = (
      "authority-claim-verification.md §3", check_recital_rule_mirror),
     ("bundle-no-host-path: no dist bundle contains an absolute host path", check_bundle_no_host_path),
     ("inverse-reference: no roster skill or non-commons agent names a commons agent", check_inverse_reference),
-    ("shipped-tree-purity: plugins/probanda/skills is exactly the roster + extra-tree source "
+    ("shipped-tree-purity: the built plugin's skills folder is exactly the roster + extra-tree source "
      "(roster SKILL.md + preamble), VISION.md ships from source, with no host path or matter code "
      "over baseline", check_shipped_tree_purity),
     ("agent-bridged-grants: every plugin MCP grant in an agent has its bridged twin and nothing more",
      check_agent_bridged_grants),
     ("commons-encapsulation: the legal-commons gatekeeper skill names no local DB file",
      check_commons_encapsulation),
+    ("hook-matchers: every hook matcher that names a plugin tool or a plugin agent names one that "
+     "plugin ships", check_hook_matchers),
+)
+# Checks across the plugins built. Each takes (repo).
+REPO_CHECKS = (
+    ("unique-names: no skill name and no agent name ships in two plugins", check_unique_names),
+    ("layering: every upward reference between the plugins of source/assignment.json has a ruling "
+     "(scripts/check_layering.py)", check_layering_rule),
 )
 
 
 def run_checks(repo):
-    """[(label, ok, detail)] for every check. A check that raises is a FAIL."""
+    """[(plugin name, label, ok, detail)] for every check of every built plugin, then
+    the checks across plugins, under the plugin name None. `ok` is None for a check
+    that does not apply to the plugin. A check that raises is a FAIL."""
+    runs = [(plugin["name"], label, fn, (repo, plugin))
+            for plugin in built_plugins(repo).values() for label, fn in CHECKS]
+    runs += [(None, label, fn, (repo,)) for label, fn in REPO_CHECKS]
     results = []
-    for label, fn in CHECKS:
+    for name, label, fn, args in runs:
         try:
-            ok, detail = fn(repo)
+            ok, detail = fn(*args)
+        except NotApplicable as exc:
+            ok, detail = None, f"does not apply: {exc}"
         except Exception as exc:  # reported as a FAIL, never skipped
             ok, detail = False, f"could not run: {type(exc).__name__}: {exc}"
-        results.append((label, ok, detail))
+        results.append((name, label, ok, detail))
     return results
 
 
@@ -1126,11 +1346,18 @@ def main(argv):
     if argv[1:]:
         print(__doc__)
         return 2
+    plugins = built_plugins(REPO)
     results = run_checks(REPO)
-    print(f"Invariant checks for 'probanda' ({len(skill_names(REPO))} skills):")
-    for label, ok, detail in results:
-        print(f"  [{'PASS' if ok else 'FAIL'}] {label}" + (f" — {detail}" if detail else ""))
-    failures = [label for label, ok, _ in results if not ok]
+    marks = {True: "PASS", False: "FAIL", None: "N/A"}
+    for name in [*plugins, None]:
+        if name is None:
+            print("Checks across the plugins built:")
+        else:
+            print(f"Invariant checks for '{name}' ({len(skill_names(REPO, plugins[name]))} skills):")
+        for owner, label, ok, detail in results:
+            if owner == name:
+                print(f"  [{marks[ok]}] {label}" + (f" — {detail}" if detail else ""))
+    failures = [label for _owner, label, ok, _ in results if ok is False]
     if failures:
         print(f"\nCHECK FAILED — {len(failures)} invariant(s) violated.")
         return 1

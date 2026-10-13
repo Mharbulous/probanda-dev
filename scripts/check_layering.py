@@ -21,6 +21,11 @@ Rulings live in source/layering.json:
 shared/ ships in every plugin and is read only when a skill points at it, so its
 files are listed by --shared and never fail the check.
 
+Skills are read from .claude/skills/ and from every public/plugins/*/skills/.
+Agents are read from source/probanda/agents/ until the assignment's status is
+"cutover", then from each plugin's source/<plugin>/agents/. check_plugin.py runs
+this check too, through judge(): as --report until cutover, strict from then.
+
 Exit codes: 0 clean, 1 a reference with no ruling (in strict mode, also any
 "todo"), or a stale ruling. Standard library only.
 """
@@ -34,8 +39,8 @@ REPO = Path(__file__).resolve().parent.parent
 
 SCAN_EXTS = (".md", ".py", ".json", ".sql")
 EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
-SKILL_ROOTS = ((".claude", "skills"), ("public", "plugins", "probanda", "skills"))
-AGENTS_DIR = ("source", "probanda", "agents")
+# Private skills, and one skills folder per public plugin.
+SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
 # The data server ships in practice, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("case_data__", "drafting_data__", "drafting_forms__", "rules__")
@@ -46,6 +51,14 @@ SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__")}
 FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"
 
 
+def agent_files(repo):
+    """Every agent file: under source/probanda/agents/ until the assignment's status
+    is "cutover", then under each plugin's source/<plugin>/agents/."""
+    assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
+    owners = assignment["plugins"] if assignment.get("status") == "cutover" else ("probanda",)
+    return sorted(path for owner in owners for path in (repo / "source" / owner / "agents").glob("*.md"))
+
+
 def load(repo):
     assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
     rulings_path = repo / "source" / "layering.json"
@@ -53,7 +66,7 @@ def load(repo):
         else {"allowed": [], "todo": []}
     placed = {a for spec in assignment["plugins"].values() for a in spec["agents"]}
     placed |= set(assignment.get("unplaced", {}).get("agents", []))
-    missing = sorted(p.stem for p in repo.joinpath(*AGENTS_DIR).glob("*.md") if p.stem not in placed)
+    missing = sorted(p.stem for p in agent_files(repo) if p.stem not in placed)
     if missing:
         raise SystemExit("STOP: agent with no plugin in source/assignment.json: " + ", ".join(missing))
     return assignment["plugins"], rulings
@@ -105,8 +118,7 @@ def unit_files(repo, plugins):
     """[(plugin, unit label, path)] for every shipped text file of every unit."""
     owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
     files = []
-    for root_parts in SKILL_ROOTS:
-        root = repo.joinpath(*root_parts)
+    for root in sorted(root for pattern in SKILL_ROOTS for root in repo.glob(pattern)):
         if not root.is_dir():
             continue
         for top in sorted(p for p in root.iterdir() if p.is_dir()):
@@ -119,7 +131,7 @@ def unit_files(repo, plugins):
                         and not any(part in EXCLUDE_DIRS for part in rel.parts[:-1]):
                     files.append((plugin, f"skill {top.name}", path))
     agent_owner = {a: p for p, spec in plugins.items() for a in spec["agents"]}
-    for path in sorted(repo.joinpath(*AGENTS_DIR).glob("*.md")):
+    for path in agent_files(repo):
         if path.stem in agent_owner:
             files.append((agent_owner[path.stem], f"agent {path.stem}", path))
     return files
@@ -156,14 +168,10 @@ def scan(repo, plugins):
     return findings
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--report", action="store_true", help="list every upward reference with its ruling")
-    parser.add_argument("--shared", action="store_true", help="also list what the files under shared/ name")
-    parser.add_argument("--repo", type=Path, default=REPO, help="repo to read (for tests)")
-    args = parser.parse_args()
-    sys.stdout.reconfigure(errors="backslashreplace")
-    repo = args.repo.resolve()
+def judge(repo):
+    """Scan the repo and set each upward (file, target) pair against its ruling.
+    Returns (shared findings, upward findings, {pair: ruling label}, pairs found,
+    pairs with no ruling, rulings nothing matches, pairs still to fix)."""
     plugins, rulings = load(repo)
     findings = scan(repo, plugins)
 
@@ -177,6 +185,17 @@ def main():
     unruled = sorted(found_pairs - set(ruling))
     stale = sorted(set(ruling) - found_pairs)
     todo = sorted(pair for pair in found_pairs if ruling.get(pair) == "todo")
+    return shared, upward, ruling, found_pairs, unruled, stale, todo
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--report", action="store_true", help="list every upward reference with its ruling")
+    parser.add_argument("--shared", action="store_true", help="also list what the files under shared/ name")
+    parser.add_argument("--repo", type=Path, default=REPO, help="repo to read (for tests)")
+    args = parser.parse_args()
+    sys.stdout.reconfigure(errors="backslashreplace")
+    shared, upward, ruling, found_pairs, unruled, stale, todo = judge(args.repo.resolve())
 
     if args.report:
         for f in sorted(upward, key=lambda f: (f["plugin"], f["file"], f["target"], f["line"])):

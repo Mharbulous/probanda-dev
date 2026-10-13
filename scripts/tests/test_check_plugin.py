@@ -96,7 +96,14 @@ CHECK_NAMES = [
     "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "bundle-purity",
     "sources-host-guard", "fetch-grant-allowlist", "recital-rule-mirror", "bundle-no-host-path",
     "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
+    "hook-matchers", "unique-names", "layering",
 ]
+# One matcher of each kind the hook-matchers check reads, and two it lets through.
+HOOKS = {
+    "PreToolUse": [{"matcher": "Bash|mcp__(.+__)?plugin_probanda_data__sources__fetch", "hooks": []},
+                   {"matcher": "mcp__.+mail_(send_email|forward_email)", "hooks": []}],
+    "SubagentStart": [{"matcher": "probanda:localize-helper", "hooks": []}],
+}
 
 
 def write(root, rel, data):
@@ -129,7 +136,7 @@ class Fixture:
         self.root = os.path.realpath(tempfile.mkdtemp(prefix="check-plugin-"))
         src = "source/probanda/"
         self.roster = {"alpha": ["templates"]}
-        self.write(src + "plugin.json", json.dumps({"name": "probanda", "version": VERSION}) + "\n")
+        self.write(src + "plugin.json", json.dumps({"name": "probanda", "version": VERSION, "hooks": HOOKS}) + "\n")
         self.write(src + "VISION.md", "# vision\n")
         for name in ("localize-helper", "legislation-fetcher"):
             self.write(f"{src}agents/{name}.md", agent([PLAIN + "sources__fetch", BRIDGED + "sources__fetch"]))
@@ -162,14 +169,27 @@ class Fixture:
         self.write(s + "legal-commons/SKILL.md", COMMONS_SKILL_MD)
         self.write(s + "not-in-roster/SKILL.md", skill_md("not-in-roster", "Not shipped."))
         self.write(check_plugin.RECITAL_RULE_SOURCE, f"# Source\n\n{RECITAL_BLOCK}\n")
-        for mirror in check_plugin.RECITAL_RULE_MIRRORS:
-            if mirror.startswith(s):
-                self.write(mirror, f"# Mirror\n\n{RECITAL_BLOCK}\n")
+        for mirror in check_plugin.RECITAL_RULE_SKILL_MIRRORS:
+            self.write(s + mirror, f"# Mirror\n\n{RECITAL_BLOCK}\n")
         self.write(s + "drafting-data/references/scripts/migrate_engine.py", ENGINE)
         self.build()
 
     def write(self, rel, data):
         write(self.root, rel, data)
+
+    def assign(self):
+        """Write source/assignment.json: still "planned", so the one plugin probanda is
+        built, with every skill folder and agent file placed in one target plugin."""
+        skills = set(os.listdir(check_plugin.skills_root(self.root))) - {"shared"}
+        skills |= set(check_plugin.public_skill_dirs(self.root))
+        agents = [fn[:-3] for fn in os.listdir(os.path.join(self.root, "source", "probanda", "agents"))]
+        self.write("source/assignment.json", json.dumps({"status": "planned", "plugins": {"litigator": {
+            "requires": [], "skills": sorted(skills), "agents": sorted(agents), "hooks": {},
+            "servers": ["data", "canlii", "commons"]}}}) + "\n")
+
+    @property
+    def plugin(self):
+        return check_plugin.built_plugins(self.root)["probanda"]
 
     def set_roster(self, roster):
         self.roster = roster
@@ -178,29 +198,31 @@ class Fixture:
     def build(self):
         """Write roster.json and plugins/probanda/ as a correct build of the sources would."""
         self.set_roster(self.roster)
+        self.assign()
         shutil.rmtree(os.path.join(self.root, "plugins", "probanda"), ignore_errors=True)
         skills = check_plugin.skills_root(self.root)
         assets = {s: tuple(d) for s, d in self.roster.items() if d}
         for rel in check_plugin.skill_source_expected(skills, sorted(self.roster), assets):
             data = read(skills, rel)
             if rel.split("/")[0] in self.roster and rel.endswith("/SKILL.md") and rel.count("/") == 1:
-                data = check_plugin.stamp_skill_md(data.decode("utf-8"), VERSION).encode("utf-8")
+                data = check_plugin.stamp_skill_md(data.decode("utf-8"), "probanda", VERSION).encode("utf-8")
             self.write("plugins/probanda/skills/" + rel, data)
         self.write("plugins/probanda/VISION.md", read(self.root, "source/probanda/VISION.md"))
 
     def results(self):
+        self.assign()
         return {label.split(":", 1)[0]: (ok, detail)
-                for label, ok, detail in check_plugin.run_checks(self.root)}
+                for _plugin, label, ok, detail in check_plugin.run_checks(self.root)}
 
     def manifest(self):
-        return check_plugin.shipped_manifest(self.root)
+        return check_plugin.shipped_manifest(self.root, self.plugin)
 
     def source_sha(self, rel):
         return hashlib.sha256(read(check_plugin.skills_root(self.root), rel)).hexdigest()
 
     def purity(self, manifest=None, baseline=None):
         return check_plugin.shipped_tree_purity(
-            self.root, self.manifest() if manifest is None else manifest, ["alpha"], ASSETS,
+            self.root, self.plugin, self.manifest() if manifest is None else manifest, ["alpha"], ASSETS,
             baseline or {"host_path": {}, "matter_code": {}}, version=VERSION)
 
     def cleanup(self):
@@ -224,7 +246,7 @@ class FixtureTest(unittest.TestCase):
         ok, detail = results[name]
         self.assertFalse(ok, f"{name} passed a planted violation")
         self.assertIn(fragment, detail)
-        others = {n: d for n, (o, d) in results.items() if not o and n != name}
+        others = {n: d for n, (o, d) in results.items() if o is not True and n != name}
         self.assertEqual(others, {}, "other checks failed too")
 
 
@@ -233,7 +255,7 @@ class TestCleanFixture(FixtureTest):
     def test_every_check_runs_and_passes(self):
         results = self.fixture.results()
         self.assertEqual(list(results), CHECK_NAMES)
-        self.assertEqual({n: d for n, (ok, d) in results.items() if not ok}, {})
+        self.assertEqual({n: d for n, (ok, d) in results.items() if ok is not True}, {})
 
     def test_commons_bundle_is_exempt_from_purity(self):
         self.assertIn(b"supabase", read(self.fixture.root, "source/probanda/commons-mcp/dist/legal-commons-mcp.js"))
@@ -376,7 +398,9 @@ class TestSelection(FixtureTest):
         })
 
     def test_skill_md_is_source_plus_preamble(self):
-        stamped = check_plugin.stamp_skill_md(SOURCE_SKILL_MD, VERSION)
+        self.assertIn(f"\n<!-- practice v{VERSION} -->\n",
+                      check_plugin.stamp_skill_md(SOURCE_SKILL_MD, "practice", VERSION))
+        stamped = check_plugin.stamp_skill_md(SOURCE_SKILL_MD, "probanda", VERSION)
         frontmatter, body = SOURCE_SKILL_MD.split("---\n\n", 1)
         self.assertTrue(stamped.startswith(frontmatter + "---\n"))
         first_body_line = stamped[len(frontmatter + "---\n"):].split("\n")[1]
@@ -416,7 +440,7 @@ class TestShippedTreePurity(FixtureTest):
 
     def test_stamp_for_a_different_version_fails(self):
         hits, _ = check_plugin.shipped_tree_purity(
-            self.fixture.root, self.fixture.manifest(), ["alpha"], ASSETS,
+            self.fixture.root, self.fixture.plugin, self.fixture.manifest(), ["alpha"], ASSETS,
             {"host_path": {}, "matter_code": {}}, version="9.9.9")
         self.assertEqual(hits, ["SKILL.md not source + preamble: skills/alpha/SKILL.md"])
 
@@ -509,7 +533,7 @@ class TestPublicSkill(FixtureTest):
 
     def test_public_skill_shipped_as_it_is_passes_every_check(self):
         self.assertEqual({n: d for n, (ok, d) in self.fixture.results().items() if not ok}, {})
-        self.assertIn("beta", check_plugin.skill_names(self.fixture.root))
+        self.assertIn("beta", check_plugin.skill_names(self.fixture.root, self.fixture.plugin))
 
     def test_stamped_or_edited_copy_fails(self):
         self.fixture.write("plugins/probanda/skills/beta/SKILL.md", skill_md("beta", "Edited."))
@@ -563,6 +587,192 @@ class TestReferenceToUnshippedFile(FixtureTest):
         self.assertEqual(check_plugin.reference_hit_verdict([listed, unlisted], {listed}), ([unlisted], 1))
         self.assertEqual(check_plugin.reference_hit_verdict([], {listed}),
                          ([f"stale known-unshipped entry: {listed}"], 0))
+
+
+class TestHookMatchers(FixtureTest):
+    """hook-matchers: a matcher that names a plugin tool or agent names one that plugin ships."""
+
+    def plant(self, event, matcher):
+        hooks = {**HOOKS, event: HOOKS.get(event, []) + [{"matcher": matcher, "hooks": []}]}
+        self.fixture.write("source/probanda/plugin.json",
+                           json.dumps({"name": "probanda", "version": VERSION, "hooks": hooks}) + "\n")
+
+    def test_server_the_plugin_does_not_ship_fails(self):
+        self.plant("PreToolUse", "mcp__(.+__)?plugin_probanda_westlaw__search")
+        self.assertOnlyFails("hook-matchers", "PreToolUse matcher names server 'westlaw', which 'probanda' does not ship")
+
+    def test_tool_of_a_plugin_that_is_not_built_fails(self):
+        self.plant("PostToolUse", "Bash|mcp__plugin_practice_data__rules__audit")
+        self.assertOnlyFails("hook-matchers", "names server 'data' of 'practice', which is not a built plugin")
+
+    def test_plugin_tool_the_check_cannot_read_fails(self):
+        self.plant("PreToolUse", "mcp__plugin_.+__rules__audit")
+        self.assertOnlyFails("hook-matchers", "names a plugin tool this check cannot read")
+
+    def test_agent_the_plugin_does_not_ship_fails(self):
+        self.plant("SubagentStop", "probanda:ghost")
+        self.assertOnlyFails("hook-matchers", "SubagentStop matcher names agent 'ghost', which 'probanda' does not ship")
+
+    def test_host_tools_and_host_agents_pass(self):
+        hooks = {"PreToolUse": [{"matcher": "Read|Write|SendUserFile|mcp__(.+__)?device_.*", "hooks": []},
+                                {"matcher": "mcp__.+mail_(send_email|forward_email)", "hooks": []}],
+                 "SubagentStart": [{"matcher": "Explore", "hooks": []}],
+                 "SessionStart": [{"hooks": []}]}
+        self.fixture.write("source/probanda/plugin.json",
+                           json.dumps({"name": "probanda", "version": VERSION, "hooks": hooks}) + "\n")
+        self.assertEqual(self.fixture.results()["hook-matchers"], (True, "3 matchers read"))
+
+    def test_plugin_with_no_matcher_is_not_applicable(self):
+        self.fixture.write("source/probanda/plugin.json", json.dumps({"name": "probanda", "version": VERSION}) + "\n")
+        ok, detail = self.fixture.results()["hook-matchers"]
+        self.assertIsNone(ok)
+        self.assertEqual(detail, "does not apply: probanda declares no hook matcher")
+
+    def violations(self, hooks, strict):
+        litigator = {"name": "litigator", "requires": ["practice"]}
+        servers = {"practice": ["data"], "research": ["canlii"], "litigator": []}
+        agents = {"practice": ["docket-clerk"], "research": ["verify-claim"], "litigator": ["marshal-facts"]}
+        return check_plugin.hook_matcher_violations({"hooks": hooks}, litigator, servers, agents, strict)[0]
+
+    def test_at_cutover_a_matcher_names_only_its_own_plugin_or_one_it_requires(self):
+        hooks = {"PreToolUse": [{"matcher": "mcp__(.+__)?plugin_practice_data__x|mcp__plugin_research_canlii__y"}],
+                 "SubagentStart": [{"matcher": "practice:docket-clerk|litigator:marshal-facts|research:verify-claim"}]}
+        self.assertEqual(self.violations(hooks, strict=True), [
+            "PreToolUse matcher names server 'canlii' of 'research', which 'litigator' does not require",
+            "SubagentStart matcher names agent 'verify-claim' of 'research', which 'litigator' does not require"])
+        self.assertEqual(self.violations(hooks, strict=False), [])
+
+    def test_a_server_named_under_the_wrong_plugin_fails(self):
+        hooks = {"PreToolUse": [{"matcher": "mcp__plugin_practice_canlii__y"}]}
+        self.assertEqual(self.violations(hooks, strict=True),
+                         ["PreToolUse matcher names server 'canlii', which 'practice' does not ship"])
+
+
+SPEC = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
+
+
+class TestAcrossPlugins(unittest.TestCase):
+    """unique-names and layering, on a small repo with two plugins in its assignment."""
+
+    def setUp(self):
+        self.root = os.path.realpath(tempfile.mkdtemp(prefix="check-plugin-"))
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def assign(self, status, practice, litigator):
+        write(self.root, "source/assignment.json", json.dumps({"status": status, "plugins": {
+            "practice": {**SPEC, **practice}, "litigator": {**SPEC, "requires": ["practice"], **litigator}}}))
+        for name, given in (("practice", practice), ("litigator", litigator)):
+            write(self.root, f"source/{name}/roster.json", json.dumps({s: [] for s in given.get("skills", [])}))
+
+    def test_unique_names_passes_when_no_name_ships_twice(self):
+        self.assign("cutover", {"skills": ["show-me"], "agents": ["clerk"]}, {"skills": ["draft"], "agents": ["marshal"]})
+        self.assertEqual(check_plugin.check_unique_names(self.root), (True, ""))
+
+    def test_skill_or_agent_in_two_plugins_fails(self):
+        self.assign("cutover", {"skills": ["show-me", "draft"], "agents": ["clerk"]},
+                    {"skills": ["draft"], "agents": ["clerk", "marshal"]})
+        self.assertEqual(check_plugin.check_unique_names(self.root),
+                         (False, "skill 'draft' ships in practice and litigator; agent 'clerk' ships in practice and litigator"))
+
+    def layering(self, status, rulings):
+        self.assign(status, {"skills": ["show-me"]}, {"skills": ["case-data"]})
+        write(self.root, ".claude/skills/show-me/SKILL.md", "Ask `/case-data` first.\n")
+        write(self.root, ".claude/skills/case-data/SKILL.md", "Present it with /show-me.\n")
+        write(self.root, "source/layering.json", json.dumps(rulings))
+        return check_plugin.check_layering_rule(self.root)
+
+    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "case-data"}
+
+    def test_upward_reference_with_no_ruling_fails_before_and_at_cutover(self):
+        for status in ("planned", "cutover"):
+            with self.subTest(status=status):
+                self.assertEqual(self.layering(status, {"allowed": [], "todo": []}),
+                                 (False, "no ruling: .claude/skills/show-me/SKILL.md names case-data"))
+
+    def test_reference_still_to_fix_passes_until_cutover_and_fails_at_it(self):
+        rulings = {"allowed": [], "todo": [self.PAIR]}
+        self.assertEqual(self.layering("planned", rulings), (True, "1 upward pairs, 1 still to fix before cutover"))
+        self.assertEqual(self.layering("cutover", rulings),
+                         (False, "still to fix: .claude/skills/show-me/SKILL.md names case-data"))
+
+    def test_allowed_reference_passes_at_cutover_and_a_stale_ruling_fails(self):
+        self.assertEqual(self.layering("cutover", {"allowed": [self.PAIR], "todo": []}), (True, "1 upward pairs"))
+        stale = {"file": ".claude/skills/show-me/SKILL.md", "target": "draft"}
+        ok, detail = self.layering("planned", {"allowed": [self.PAIR, stale], "todo": []})
+        self.assertFalse(ok)
+        self.assertIn("stale ruling (nothing matches it): .claude/skills/show-me/SKILL.md names draft", detail)
+
+    def test_skill_folder_with_no_plugin_fails_instead_of_ending_the_run(self):
+        write(self.root, ".claude/skills/orphan/SKILL.md", "x\n")
+        ok, detail = self.layering("planned", {"allowed": [self.PAIR], "todo": []})
+        self.assertFalse(ok)
+        self.assertIn("has no plugin in source/assignment.json", detail)
+
+
+class TestSecondPlugin(FixtureTest):
+    """A plugin that ships no server, agent or skill of its own: each check that guards
+    one says it does not apply, and the rest run against that plugin's own folders."""
+
+    NOT_APPLICABLE = {
+        "entry-point-registry": "solicitor ships no server that imports a pinned entry point",
+        "bundle-purity": "solicitor ships neither the data nor the canlii server",
+        "sources-host-guard": "solicitor does not ship the data server",
+        "fetch-grant-allowlist": "solicitor ships no agent",
+        "bundle-no-host-path": "solicitor ships no server",
+        "agent-bridged-grants": "solicitor ships no agent",
+        "commons-encapsulation": "solicitor does not ship the legal-commons skill",
+        "hook-matchers": "solicitor declares no hook matcher",
+    }
+
+    def setUp(self):
+        super().setUp()
+        self.fixture.write("source/solicitor/plugin.json", json.dumps({"name": "solicitor", "version": "0.2.0"}) + "\n")
+        self.fixture.write("source/solicitor/roster.json", "{}\n")
+        self.fixture.write("source/solicitor/VISION.md", "# solicitor\n")
+        self.fixture.write("plugins/solicitor/VISION.md", "# solicitor\n")
+        skills = check_plugin.skills_root(self.fixture.root)
+        for rel in check_plugin.skill_source_expected(skills, [], {}, ("shared",)):
+            self.fixture.write("plugins/solicitor/skills/" + rel, read(skills, rel))
+        solicitor = {"name": "solicitor", "source": "source/solicitor", "requires": ["probanda"],
+                     "servers": [], "skills": [], "agents": []}
+        patcher = mock.patch.object(check_plugin, "built_plugins",
+                                    return_value={"probanda": self.fixture.plugin, "solicitor": solicitor})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def results(self, plugin):
+        return {label.split(":", 1)[0]: (ok, detail)
+                for owner, label, ok, detail in check_plugin.run_checks(self.fixture.root) if owner == plugin}
+
+    def test_each_plugin_is_checked_and_what_it_does_not_ship_is_not_applicable(self):
+        self.assertEqual({n: d for n, (ok, d) in self.results("probanda").items() if ok is not True}, {})
+        solicitor = self.results("solicitor")
+        self.assertEqual(list(solicitor), CHECK_NAMES[:-2])
+        self.assertEqual({n: d for n, (ok, d) in solicitor.items() if ok is None},
+                         {n: f"does not apply: {why}" for n, why in self.NOT_APPLICABLE.items()})
+        self.assertEqual({n: d for n, (ok, d) in solicitor.items() if ok is False}, {})
+        self.assertEqual({n: ok for n, (ok, _) in self.results(None).items()}, {"unique-names": True, "layering": True})
+
+    def test_a_plugin_is_checked_against_its_own_built_folder_and_stamp(self):
+        self.fixture.write("plugins/solicitor/skills/shared/legal-audit-protocol.md", "edited in the build\n")
+        ok, detail = self.results("solicitor")["shipped-tree-purity"]
+        self.assertFalse(ok)
+        self.assertEqual(detail, "differs from source: skills/shared/legal-audit-protocol.md")
+        self.assertTrue(self.results("probanda")["shipped-tree-purity"][0])
+
+    def test_main_prints_a_section_for_each_plugin_and_one_across_them(self):
+        out = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")   # main() reconfigures stdout
+        with mock.patch.object(check_plugin, "REPO", self.fixture.root), contextlib.redirect_stdout(out):
+            code = check_plugin.main(["check_plugin.py"])
+        out.flush()
+        text = out.buffer.getvalue().decode("utf-8")
+        self.assertEqual(code, 0, text)
+        self.assertIn("Invariant checks for 'probanda' (2 skills):", text)
+        self.assertIn("Invariant checks for 'solicitor' (0 skills):", text)
+        self.assertIn("Checks across the plugins built:", text)
+        self.assertIn("  [N/A] sources-host-guard: ", text)
+        self.assertIn(" — does not apply: solicitor does not ship the data server", text)
+        self.assertEqual(text.count("  [N/A] "), len(self.NOT_APPLICABLE))
 
 
 class TestMatterCodePattern(unittest.TestCase):
