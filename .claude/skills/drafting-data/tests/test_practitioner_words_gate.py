@@ -255,9 +255,18 @@ OLD = "The invoice was delivered on April 2nd 2025."
 REVISED = "The invoice was delivered on 2 April 2025."
 ALTERNATIVE = "The invoice was delivered to the defendant on 2 April 2025."
 ASK = f"Change fact 3 to: {REVISED}"
-LABELS = ("Keep the current wording", "Your proposed revision", "The model's alternative revision", "Something else")
-SELECTOR = ("**The current wording**\n\n```\n" + OLD + "\n```\n\n**Your proposed revision**\n\n```\n" + REVISED
-            + "\n```\n\n**The model's alternative revision**\n\n```\n" + ALTERNATIVE + "\n```\n\nPick one of the four.")
+
+
+def shown(text):
+    """The session's reply showing one revised paragraph, whole, in its only fenced code block."""
+    return f"The revised paragraph:\n\n```\n{text}\n```\n\nApprove it?"
+
+
+def execute_lines(sql):
+    """An earlier drafting_data__execute call and its result."""
+    use, res = tool_lines("mcp__plugin_probanda_data__drafting_data__execute", {"ok": True})
+    use["message"]["content"][0]["input"] = {"sql_script": sql}
+    return [use, res]
 
 
 def revision(new, choice, origin, select=False, update_text=None):
@@ -619,7 +628,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
                     "UPDATE ticket_steps SET text = upper(text) WHERE ticket_id = 2 AND ordinal = 1;",
                     "UPDATE ticket_steps SET (text, done_at) = ('x', NULL) WHERE ticket_id = 2 AND ordinal = 1;"):
             with self.subTest(sql=sql):
-                self.assertRefused(self.run_hook(sql), "cannot read the ticket fields")
+                self.assertRefused(self.run_hook(sql), "cannot read the practitioner's wording")
 
     def write_earlier(self, *lines, name="earlier.jsonl"):
         path = Path(self.tmp.name) / name
@@ -802,7 +811,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
     def test_a_replaced_step_that_is_not_one_literal_fails_closed(self):
         for value in ("text || 'x'", "'Audit' || ' the exhibit list'"):
             with self.subTest(value=value):
-                self.assertRefused(self.run_hook(replace_steps(value)), "cannot read the ticket fields")
+                self.assertRefused(self.run_hook(replace_steps(value)), "cannot read the practitioner's wording")
 
     def test_a_stock_step_put_back_passes_and_is_the_text_jobs_stock_md_gives(self):
         text = STOCK_MD.read_text(encoding="utf-8")
@@ -857,47 +866,60 @@ class PractitionerWordsGateTest(unittest.TestCase):
         self.assertRefused(self.run_hook(replace_steps(sql_text(STORED))), "field: ticket_steps.text")
 
     # An on-the-fly paragraph revision (paragraph-revision.md, draft/references/revise-on-the-fly.md).
-    def selected(self, last_turn):
-        """The ask, the reply showing the three texts and the selector, then the practitioner's answer."""
-        self.write_transcript(turn_line(ASK), reply_line(SELECTOR), widget_line(*LABELS), turn_line(last_turn))
+    def approved(self, text, last_turn="Yes", *after):
+        """The ask, the reply showing one revised paragraph, then the practitioner's answer."""
+        self.write_transcript(turn_line(ASK), reply_line(shown(text)), turn_line(last_turn), *after)
 
     def test_a_revision_in_the_practitioners_typed_words_passes(self):
-        self.write_transcript(turn_line(ASK))
-        self.assertEqual(self.run_hook(revision(REVISED, "proposed", "practitioner")).returncode, 0)
-        self.write_transcript(turn_line(ASK), reply_line(SELECTOR), turn_line("Something else: The invoice arrived on 2 April 2025."))
-        self.assertEqual(self.run_hook(revision("The invoice arrived on 2 April 2025.", "other", "practitioner")).returncode, 0)
-
-    def test_a_widget_pick_of_the_proposed_text_passes_on_the_earlier_typed_turn(self):
-        self.write_transcript(turn_line(ASK), reply_line(SELECTOR), widget_line(REVISED, ALTERNATIVE), turn_line(REVISED))
+        self.approved(REVISED)
         self.assertEqual(self.run_hook(revision(REVISED, "proposed", "practitioner")).returncode, 0)
 
-    def test_the_alternative_picked_in_the_widget_passes(self):
-        self.selected("The model's alternative revision")
+    def test_the_models_paragraph_shown_and_approved_passes(self):
+        self.approved(ALTERNATIVE)
         self.assertEqual(self.run_hook(revision(ALTERNATIVE, "alternative", "model")).returncode, 0)
 
-    def test_the_alternative_named_in_a_chat_reply_passes(self):
-        self.write_transcript(turn_line(ASK), reply_line(SELECTOR), turn_line("Go with the alternative."))
+    def test_a_paragraph_shown_in_a_sent_message_passes(self):
+        sent = {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "id": "m1", "name": "SendUserMessage", "input": {"message": shown(ALTERNATIVE)}}]}}
+        self.write_transcript(turn_line(ASK), sent, turn_line("Yes"))
         self.assertEqual(self.run_hook(revision(ALTERNATIVE, "alternative", "model")).returncode, 0)
 
-    def test_the_alternative_from_an_older_reply_is_refused(self):
-        self.write_transcript(turn_line(ASK), reply_line(SELECTOR), turn_line("Let me think about it."),
-                              reply_line("Take your time."), turn_line("The alternative, please."))
+    def test_a_paragraph_from_an_older_reply_is_refused(self):
+        self.write_transcript(turn_line(ASK), reply_line(shown(ALTERNATIVE)), turn_line("Let me think about it."),
+                              reply_line("Take your time."), turn_line("Yes"))
         self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", "no fenced code block")
+                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 0")
 
-    def test_the_alternative_is_refused_when_the_last_turn_does_not_name_it(self):
-        self.selected("Your proposed revision")
+    def test_a_second_paragraph_in_the_reply_is_refused(self):
+        self.write_transcript(turn_line(ASK), reply_line(shown(REVISED) + "\n\n```\n" + ALTERNATIVE + "\n```"),
+                              turn_line("Yes"))
         self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", "does not name the alternative")
+                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 2")
+
+    def test_a_shown_paragraph_is_refused_when_the_last_turn_is_not_a_bare_yes(self):
+        for last_turn in ("Yes, but say April 2nd.", "Go with the alternative."):
+            with self.subTest(last_turn=last_turn):
+                self.approved(ALTERNATIVE, last_turn)
+                self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
+                                   "field: paragraph_revisions.new_text", "not a bare yes", f"last turn: {last_turn}")
 
     def test_a_fabricated_revision_is_refused(self):
-        self.selected("The model's alternative revision")
         fabricated = "The invoice was never delivered."
-        for choice, origin, fragment in (("alternative", "model", "no fenced code block"),
-                                         ("other", "practitioner", "not an unbroken run")):
-            with self.subTest(origin=origin):
-                self.assertRefused(self.run_hook(revision(fabricated, choice, origin)),
-                                   "field: paragraph_revisions.new_text", f"wrote: {fabricated}", fragment)
+        self.approved(REVISED)
+        self.assertRefused(self.run_hook(revision(fabricated, "alternative", "model")),
+                           "field: paragraph_revisions.new_text", f"wrote: {fabricated}",
+                           "not, character for character", f"shown: {REVISED}")
+        self.approved(fabricated)
+        self.assertRefused(self.run_hook(revision(fabricated, "proposed", "practitioner")),
+                           "field: paragraph_revisions.new_text", f"wrote: {fabricated}", "not an unbroken run")
+
+    def test_one_approval_admits_one_revision(self):
+        self.approved(REVISED)
+        both = revision(REVISED, "proposed", "practitioner") + "\n" + revision(ALTERNATIVE, "alternative", "model")
+        self.assertRefused(self.run_hook(both), "writes 2 paragraph revisions", f"wrote: {ALTERNATIVE}")
+        self.approved(REVISED, "Yes", *execute_lines(revision(REVISED, "proposed", "practitioner")))
+        self.assertRefused(self.run_hook(revision(REVISED, "proposed", "practitioner")),
+                           "already written, or attempted", "field: paragraph_revisions.new_text")
 
     def test_a_revision_whose_update_writes_other_text_is_refused(self):
         self.write_transcript(turn_line(ASK))
@@ -913,9 +935,9 @@ class PractitionerWordsGateTest(unittest.TestCase):
                            "field: paragraph_revisions.new_text", "differs from old_text")
 
     def test_an_insert_select_revision_passes(self):
-        self.write_transcript(turn_line(ASK))
+        self.approved(REVISED)
         self.assertEqual(self.run_hook(revision(REVISED, "proposed", "practitioner", select=True)).returncode, 0)
-        self.selected("The model's alternative revision")
+        self.approved(ALTERNATIVE)
         self.assertEqual(self.run_hook(revision(ALTERNATIVE, "alternative", "model", select=True)).returncode, 0)
 
     def test_a_revision_it_cannot_read_fails_closed(self):
