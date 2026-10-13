@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # public/ is the source of the public repository: it must be clean on every commit.
+      - run: python3 scripts/check_public_tree.py
       - if: github.event_name == 'workflow_dispatch'
         run: python3 scripts/check_publishable.py
       # The checkout is shallow, so the commit to compare against is fetched on its own.

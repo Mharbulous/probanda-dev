@@ -1,0 +1,12 @@
+{
+  "name": "probanda",
+  "displayName": "Probanda",
+  "version": "0.0.1",
+  "description": "A litigation practice plugin for British Columbia lawyers.",
+  "author": {
+    "name": "Probanda",
+    "url": "https://github.com/Probanda-app"
+  },
+  "homepage": "https://github.com/Probanda-app/litigation",
+  "repository": "https://github.com/Probanda-app/litigation"
+}

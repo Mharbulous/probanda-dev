@@ -1,0 +1,51 @@
+name: publish-public
+
+# Publishes public/ to the public repository, Probanda-app/litigation. Started by hand only,
+# from the Actions tab, by a person: publication is immediate and cannot be reliably undone.
+# export_public.py refuses unless every file under public/ is free of Trade Secrets and User
+# Data and matches public-approved.json, the list a person approved with approve_public.py.
+#
+# Needs the repository secret PUBLIC_REPO_DEPLOY_KEY: the private half of a deploy key that
+# has write access to Probanda-app/litigation and to nothing else.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: publish-public
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check that public/ is clean and approved
+        run: python3 scripts/export_public.py --plan
+      - name: Clone the public repository
+        env:
+          DEPLOY_KEY: ${{ secrets.PUBLIC_REPO_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/public_repo
+          chmod 600 ~/.ssh/public_repo
+          # GitHub's published host key, pinned so the push cannot go to another host.
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
+          git clone -c core.sshCommand="ssh -i $HOME/.ssh/public_repo -o IdentitiesOnly=yes" \
+            git@github.com:Probanda-app/litigation.git "$RUNNER_TEMP/litigation"
+          git -C "$RUNNER_TEMP/litigation" checkout -B main
+      - name: Export public/
+        run: python3 scripts/export_public.py "$RUNNER_TEMP/litigation"
+      - name: Commit and push
+        run: |
+          TARGET="$RUNNER_TEMP/litigation"
+          git -C "$TARGET" add -A
+          if git -C "$TARGET" diff --cached --quiet; then
+            echo "Nothing to publish: the public repository already matches public/."
+            exit 0
+          fi
+          git -C "$TARGET" -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Publish from the Probanda development repository"
+          git -C "$TARGET" push origin main

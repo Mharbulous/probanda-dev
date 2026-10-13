@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Export the publishable subset of this repo into a directory, for the public repo.
+"""Export public/ into a directory, for the public repo.
 
 Usage:
   python scripts/export_public.py <target>   check, then write the export into <target>
   python scripts/export_public.py --plan     check and report what would be exported; write nothing
 
 The export is one-way: this repo is developed in, and the public repo is only
-ever written by this script. What ships is the explicit allowlist below and
-nothing else. Before anything is written, every file to ship is read through
-check_publishable.file_problems (the same rules the publish-readiness check
-applies), and the built plugin is compared with a fresh build of its sources.
-Any problem stops the export with nothing written.
+ever written from here. What ships is public/, file for file, and nothing
+else in this repo. Before anything is written:
+
+  - every file passes check_public_tree (no Trade Secret, no User Data), and
+  - every file matches public-approved.json, the list a person approved with
+    approve_public.py. A file that is new, changed or removed since stops it.
+
+Any failure stops the export with nothing written.
 
 <target> must be empty or absent, or an existing git checkout, in which case
 everything in it except `.git` is replaced. It may not be inside this repo, and
@@ -24,21 +27,13 @@ import importlib.util
 import shutil
 import sys
 from collections import Counter
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = Path(__file__).resolve().parent
 
-# The allowlist, as repo-relative POSIX paths. A tree ships every file under it.
-# Nothing outside these entries ships, whatever else the repo holds.
-REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md")
-OPTIONAL_FILES = ("LICENSE",)
-TREES = ("plugins/probanda",)
-# Never shipped from inside a tree.
-SKIP_DIRS = ("__pycache__",)
-SKIP_SUFFIXES = (".pyc",)
-
-BUILT_PREFIX = "plugins/probanda/"
+# What a marketplace install needs. The export refuses without them.
+REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md", "plugins/probanda/.claude-plugin/plugin.json")
 
 
 def load_script(name):
@@ -48,42 +43,7 @@ def load_script(name):
     return module
 
 
-def collect(repo):
-    """({repo-relative path: bytes} for every file the allowlist selects, [missing required paths])."""
-    files, missing = {}, []
-    for rel in REQUIRED_FILES + OPTIONAL_FILES:
-        path = repo / rel
-        if path.is_file():
-            files[rel] = path.read_bytes()
-        elif rel in REQUIRED_FILES:
-            missing.append(rel)
-    for tree in TREES:
-        root = repo / tree
-        if not root.is_dir():
-            missing.append(tree + "/")
-            continue
-        for path in sorted(root.rglob("*")):
-            parts = path.relative_to(root).parts
-            if not path.is_file() or any(p in SKIP_DIRS for p in parts[:-1]) or path.suffix in SKIP_SUFFIXES:
-                continue
-            files[path.relative_to(repo).as_posix()] = path.read_bytes()
-    return files, missing
-
-
-def publishable_problems(files, file_problems):
-    """[(path, line, message)] for every file, by check_publishable's own rules."""
-    found = []
-    for rel, data in files.items():
-        found += [(str(p), n, msg) for p, n, msg, _ in file_problems(PurePosixPath(rel), data)]
-    return found
-
-
-def stale_paths(files, built):
-    """Plugin files that differ from `built`, a fresh build as {path inside the plugin: bytes}."""
-    shipped = {rel[len(BUILT_PREFIX):]: data for rel, data in files.items() if rel.startswith(BUILT_PREFIX)}
-    return ([f"added: {p}" for p in sorted(set(built) - set(shipped))]
-            + [f"removed: {p}" for p in sorted(set(shipped) - set(built))]
-            + [f"changed: {p}" for p in sorted(p for p in set(built) & set(shipped) if built[p] != shipped[p])])
+public_tree = load_script("check_public_tree")
 
 
 def tree_summary(files):
@@ -91,7 +51,7 @@ def tree_summary(files):
     count, size = Counter(), Counter()
     for rel, data in files.items():
         parts = rel.split("/")
-        depth = 3 if rel.startswith(BUILT_PREFIX) else 1
+        depth = 3 if rel.startswith("plugins/probanda/") else 1
         key = "/".join(parts[:depth]) + ("/" if len(parts) > depth else "")
         count[key] += 1
         size[key] += len(data)
@@ -126,38 +86,27 @@ def write(files, target):
         path.write_bytes(data)
 
 
-def export(repo, target, plan, built=None, file_problems=None):
-    """Run every check, then write unless `plan`. `built` is a callable returning a
-    fresh build of the plugin as {path inside the plugin: bytes}. Returns the exit code."""
-    if file_problems is None:
-        file_problems = load_script("check_publishable").file_problems
+def export(repo, target, plan):
+    """Run every check, then write unless `plan`. Returns the exit code."""
     if target is not None:
         error = check_target(repo, target)
         if error:
             print(f"STOP: {error}", file=sys.stderr)
             return 2
-    files, missing = collect(repo)
+    files = public_tree.public_files(repo)
     print(f"{len(files)} files, {sum(len(d) for d in files.values()):,} bytes would be exported:")
     for n, size, path in tree_summary(files):
         print(f"  {n:5d} files {size:12,d} bytes  {path}")
 
-    refused = []
-    refused += [f"missing: {p}" for p in missing]
-    problems = publishable_problems(files, file_problems)
-    kinds = Counter(msg for _, _, msg in problems)
-    for kind, n in sorted(kinds.items()):
-        refused.append(f"{n} x {kind}")
-    if built is not None and not missing:
-        refused += [f"plugin is stale against its sources, {line}" for line in stale_paths(files, built())]
+    refused = [f"missing: {public_tree.PUBLIC}/{p}" for p in REQUIRED_FILES if p not in files]
+    problems = public_tree.problems_in(repo, files)
+    refused += [f"{public_tree.PUBLIC}/{rel}:{lineno}: {message}" for rel, lineno, message in problems]
+    refused += [f"not approved, {line}" for line in
+                public_tree.approval_diff(public_tree.digests(files), public_tree.load_approved(repo))]
     if refused:
         print("\nREFUSED, nothing written:")
         for line in refused:
             print(f"  {line}")
-        if problems:
-            per_file = Counter(path for path, _, _ in problems)
-            print(f"\n{len(problems)} problem(s) in {len(per_file)} exported files:")
-            for path, n in per_file.most_common():
-                print(f"  {n:5d}  {path}")
         return 1
     if plan:
         print("\nPLAN OK: every check passed. Nothing written.")
@@ -176,9 +125,7 @@ def main():
     args = parser.parse_args()
     if (args.target is None) == (not args.plan):
         parser.error("give a target directory, or --plan, not both and not neither")
-    repo = args.repo.resolve()
-    build_plugin = load_script("build_plugin")
-    return export(repo, args.target, args.plan, built=lambda: build_plugin.collect(repo))
+    return export(args.repo.resolve(), args.target, args.plan)
 
 
 if __name__ == "__main__":
