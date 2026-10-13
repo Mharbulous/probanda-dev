@@ -1089,6 +1089,16 @@ class PractitionerWordsGateTest(unittest.TestCase):
                 self.assertRefused(self.run_hook(sql), "marker_suppressions.note is not an unbroken run",
                                    "field: marker_suppressions.note", f"wrote: {PROPOSAL}")
 
+    def test_a_fixed_job_text_is_not_a_suppression_note(self):
+        self.suppressing()
+        self.assertEqual(self.run_hook(update(GATE_TITLE, intent=GATE_INTENT)).returncode, 0)
+        for sql in (suppress(sql_text("File and serve")), suppress(sql_text(GATE_TITLE), values=True),
+                    resuppress(f"note = {sql_text(STOCK_STEPS[0])}")):
+            with self.subTest(sql=sql):
+                self.assertRefused(self.run_hook(sql), "marker_suppressions.note is not an unbroken run",
+                                   "field: marker_suppressions.note")
+        self.assertRefused(self.run_hook(suppress(sql_text("File and serve")), transcript=""), "no transcript_path")
+
     def test_a_bare_yes_does_not_adopt_a_proposed_suppression_note(self):
         self.suppressing(reply_line(f"I can record the suppression with this note.\n\n{COMPOSED_NOTE}\n\nRecord it?"),
                          turn_line("Yes"))

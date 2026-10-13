@@ -98,6 +98,7 @@ persisted to a file. A ticket_steps.text is also exempt when it equals, characte
 character, a Proposal item such a result printed: the item on a detail line under Proposed
 or Shelved, a string on a job's `keys:` line, or a board_data proposal's item (a
 grouped intake job's steps, jobs-create.md §3e). An item never passes as a title or intent.
+No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
 The gate cannot see which job holds a key, so this trusts the record as the title exemption
 does: printed by a drafting_forms__* result in this session.
 
@@ -851,8 +852,10 @@ def main():
     if move_refusals:
         return refuse("\n".join(move_refusals + [MOVE_CLOSING]))
     try:
+        # Fixed text is a job's: it never passes as counsel's suppression note.
         written = [(f, v, flagged) for f, v, flagged in ticket_writes(script)
-                   if v not in FIXED_TEXT and not (f == "title" and v.startswith(REVIEW_TITLE_PREFIXES))]
+                   if f == NOTE_FIELD
+                   or (v not in FIXED_TEXT and not (f == "title" and v.startswith(REVIEW_TITLE_PREFIXES)))]
     except Unreadable as exc:
         return refuse(f"cannot read the practitioner's wording this script writes: {exc}. Write "
                       "tickets.title, tickets.intent, ticket_steps.text and marker_suppressions.note as plain "
