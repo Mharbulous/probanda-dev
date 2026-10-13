@@ -1,0 +1,144 @@
+{
+  "status": "planned",
+  "note": "The plugin each unit ships in after the four-plugin split (docs/Plans/2026-10-13_four-plugin-split.md). Until cutover the build still ships everything as the one plugin probanda. A skill is named by its folder under .claude/skills/ or public/plugins/probanda/skills/, an agent by its file under source/probanda/agents/, a hook by its script's path from the repo root.",
+  "plugins": {
+    "practice": {
+      "requires": [],
+      "skills": [
+        "TLDR",
+        "ar-follow-up",
+        "bill-client",
+        "build-timeline",
+        "dyu",
+        "executive-assistant",
+        "file-naming",
+        "file-review-prep",
+        "file-sorting",
+        "find-document",
+        "invoice-reviewing",
+        "invoice-tracking",
+        "localize",
+        "matter-status-tracking",
+        "plugin-fix",
+        "practice-data",
+        "proof-read",
+        "reflect",
+        "retainer-tracking",
+        "route-accounting",
+        "rule-update",
+        "safe-file-deletion",
+        "show-me",
+        "task-prioritization",
+        "time-entry-drafting",
+        "time-pipeline-data",
+        "time-sorting",
+        "timecamping",
+        "timecamping-data",
+        "wip-tracker"
+      ],
+      "agents": [
+        "docket-clerk",
+        "housekeeping-namer",
+        "housekeeping-reviewer",
+        "localize-helper"
+      ],
+      "hooks": {
+        "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
+        "mail-send-gate": ".claude/skills/draft/hooks/mail-send-gate.py",
+        "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
+        "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
+        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
+        "trailing-dyu": "public/plugins/probanda/skills/dyu/hooks/trailing-dyu.py"
+      },
+      "servers": [
+        "data"
+      ]
+    },
+    "research": {
+      "requires": [
+        "practice"
+      ],
+      "skills": [
+        "case-brief",
+        "legal-citation",
+        "legal-commons",
+        "legal-memo-extractor",
+        "legal-research",
+        "review-proposition",
+        "verify-law"
+      ],
+      "agents": [
+        "law-librarian",
+        "legislation-fetcher",
+        "research-agent",
+        "research-paralegal",
+        "troubleshooter",
+        "verify-claim"
+      ],
+      "hooks": {
+        "block-main-session-canlii": ".claude/skills/legal-research/hooks/block-main-session-canlii.py",
+        "block-subagent-legal-research": ".claude/skills/legal-research/hooks/block-subagent-legal-research.py",
+        "commons-read-only": "source/probanda/hooks/commons-read-only.py"
+      },
+      "servers": [
+        "canlii",
+        "commons"
+      ]
+    },
+    "litigator": {
+      "requires": [
+        "practice",
+        "research"
+      ],
+      "skills": [
+        "apply-to-facts",
+        "assemble",
+        "calculate",
+        "case-data",
+        "draft",
+        "drafting-data",
+        "housekeeping",
+        "ingest",
+        "litigation-fact-extractor",
+        "polish-substance",
+        "prepare",
+        "publish",
+        "rule-migrate"
+      ],
+      "agents": [
+        "delivery-checker",
+        "extract-affidavit",
+        "extract-caselaw",
+        "extract-facts",
+        "extract-provision",
+        "extract-sought-orders",
+        "marshal-facts",
+        "migration-runner",
+        "rules-improviser",
+        "rules-reorienter",
+        "verify-caselaw",
+        "verify-edges",
+        "verify-source"
+      ],
+      "hooks": {
+        "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",
+        "practitioner-words-gate": ".claude/skills/drafting-data/hooks/practitioner-words-gate.py"
+      },
+      "servers": []
+    },
+    "solicitor": {
+      "requires": [
+        "practice"
+      ],
+      "skills": [],
+      "agents": [],
+      "hooks": {},
+      "servers": []
+    }
+  },
+  "unplaced": {
+    "agents": [
+      "equivalence-checker"
+    ]
+  }
+}
