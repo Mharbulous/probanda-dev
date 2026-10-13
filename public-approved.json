@@ -1,7 +1,7 @@
 {
   ".claude-plugin/marketplace.json": "d5e3a8e6a545b7b6570f56a048aa7c42c8cf66b26eec428c13a600eb18975df1",
-  "README.md": "77ce85f625a32f3cae8913f5636331905a46cdc91b59f741149de5acda0388e6",
-  "plugins/probanda/.claude-plugin/plugin.json": "60f75af95be67ce0e07c2d56ec141b4c63f39ecb18a3e269091132430aeba8a7",
+  "README.md": "e15485567c307b3db4beed1942a420588054cff5cc9a03beb81d15353fbf102e",
+  "plugins/probanda/.claude-plugin/plugin.json": "5ec948b4583a7e8e94591dc69c4ec8fdf63f44e7624f93bbf8d22499ea41a320",
   "plugins/probanda/skills/TLDR/SKILL.md": "d8d5585b33bd1faa0d0d0d9ec0114b9b0de914587e49ab8a3195869722c57440",
   "plugins/probanda/skills/dyu/SKILL.md": "d7ffb8926dbdfe037696a369c7a923a3bc4ff3c4f3def04f824ea8aac191d122",
   "plugins/probanda/skills/dyu/hooks/trailing-dyu.py": "9fa782b27da609be9805a189879b3d3f8efe3276f2d41e95545f68fd48265af5",
