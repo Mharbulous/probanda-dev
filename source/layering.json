@@ -1,13 +1,6 @@
 {
   "note": "Rulings for scripts/check_layering.py. One ruling covers every line of a file that names the target. Reasons used in 'allowed': invitation = a real call into research, which Brahm allowed on 2026-10-13 because it invites the user to install research; signpost = tells the user or the caller that something is another skill's job, and calls nothing; conditional = a step that runs only when the higher plugin is installed, or only on work one of its skills created, and that says what happens without it; caller = describes a higher skill that calls this one; mention = a comparison, an example or a description.",
   "allowed": [
-    {"file": ".claude/skills/bill-client/SKILL.md", "target": "housekeeping", "why": "signpost", "note": "Asks the practitioner to run /housekeeping on one folder."},
-    {"file": ".claude/skills/file-naming/SKILL.md", "target": "housekeeping", "why": "caller"},
-    {"file": ".claude/skills/file-naming/references/conformance-check.md", "target": "housekeeping", "why": "caller"},
-    {"file": ".claude/skills/file-naming/references/general-conventions.md", "target": "housekeeping", "why": "caller"},
-    {"file": ".claude/skills/file-sorting/SKILL.md", "target": "housekeeping", "why": "caller"},
-    {"file": ".claude/skills/file-sorting/profiles/accounting/profile.md", "target": "housekeeping", "why": "caller"},
-    {"file": ".claude/skills/file-sorting/profiles/litigation-matter/profile.md", "target": "housekeeping", "why": "caller"},
     {"file": ".claude/skills/localize/SKILL.md", "target": "assemble", "why": "caller", "note": "Names the skills whose knowledge trees it writes."},
     {"file": ".claude/skills/localize/SKILL.md", "target": "draft", "why": "caller"},
     {"file": ".claude/skills/localize/SKILL.md", "target": "publish", "why": "caller"},
@@ -19,7 +12,6 @@
     {"file": ".claude/skills/reflect/SKILL.md", "target": "draft", "why": "mention", "note": "An example of a file a finding implicates."},
     {"file": ".claude/skills/reflect/SKILL.md", "target": "legal-research", "why": "mention", "note": "A maintainer comment."},
     {"file": ".claude/skills/reflect/SKILL.md", "target": "research-agent", "why": "mention", "note": "Reads that agent's returns in a transcript, when there are any."},
-    {"file": ".claude/skills/route-accounting/SKILL.md", "target": "housekeeping", "why": "signpost"},
     {"file": ".claude/skills/rule-update/SKILL.md", "target": "assemble", "why": "mention", "note": "Refuses to run in a session that ran a drafting skill."},
     {"file": ".claude/skills/rule-update/SKILL.md", "target": "draft", "why": "mention"},
     {"file": ".claude/skills/rule-update/SKILL.md", "target": "polish-substance", "why": "mention"},
@@ -35,11 +27,9 @@
     {"file": "source/probanda/agents/docket-clerk.md", "target": "apply-to-facts", "why": "signpost", "note": "Names where the legal question goes. The clerk returns it as an open item."},
     {"file": "source/probanda/agents/docket-clerk.md", "target": "drafting-data", "why": "signpost", "note": "Tells the caller where a filing's id comes from."},
     {"file": "source/probanda/agents/docket-clerk.md", "target": "legal-research", "why": "signpost"},
-    {"file": "source/probanda/agents/housekeeping-namer.md", "target": "housekeeping", "why": "caller"},
     {"file": "source/probanda/agents/localize-helper.md", "target": "draft", "why": "caller"},
     {"file": "source/probanda/agents/localize-helper.md", "target": "publish", "why": "caller"},
     {"file": "source/probanda/agents/localize-helper.md", "target": "legislation-fetcher", "why": "mention", "note": "Says which tools the two agents share."},
-    {"file": ".claude/skills/legal-memo-extractor/SKILL.md", "target": "housekeeping", "why": "signpost"},
     {"file": ".claude/skills/legal-research/SKILL.md", "target": "apply-to-facts", "why": "signpost"},
     {"file": ".claude/skills/review-proposition/SKILL.md", "target": "draft", "why": "conditional", "note": "Only for a scrutiny review job, which /draft creates."},
     {"file": ".claude/skills/review-proposition/SKILL.md", "target": "drafting_forms__*", "why": "conditional", "note": "The same step."},
@@ -53,9 +43,7 @@
     {"file": ".claude/skills/legal-research/SKILL.md", "target": "draft", "why": "caller", "note": "Says who composes the provenance line of a stored statement."},
     {"file": ".claude/skills/case-data/SKILL.md", "target": "legal-research", "why": "signpost", "note": "The description says what the law is belongs to legal-research."},
     {"file": ".claude/skills/case-data/operations/amend-law.md", "target": "commons server", "why": "mention", "note": "States that the operation never calls a commons tool."},
-    {"file": ".claude/skills/case-data/operations/housekeeping-log.md", "target": "housekeeping", "why": "caller"},
     {"file": ".claude/skills/case-data/operations/ingest-extract.md", "target": "draft", "why": "mention", "note": "The execution status `draft`, and one note that /draft reads the served document itself."},
-    {"file": ".claude/skills/case-data/operations/ingest-extract.md", "target": "housekeeping", "why": "caller"},
     {"file": ".claude/skills/case-data/operations/ingest-extract.md", "target": "verify-law", "why": "mention", "note": "Names case-data's own verify-law operation (operations/verify-law.md), not the research skill."},
     {"file": ".claude/skills/case-data/operations/ingest-submission-law.md", "target": "verify-law", "why": "mention", "note": "Names case-data's own verify-law operation (operations/verify-law.md), not the research skill."},
     {"file": ".claude/skills/case-data/operations/ingest-verify.md", "target": "verify-law", "why": "mention", "note": "Names case-data's own verify-law operation (operations/verify-law.md), not the research skill."},
@@ -75,7 +63,6 @@
     {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "drafting-data", "why": "mention", "note": "A record of past design decisions."},
     {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "drafting_data__*", "why": "mention", "note": "A record of past design decisions."},
     {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "drafting_forms__*", "why": "mention", "note": "A record of past design decisions."},
-    {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "housekeeping", "why": "mention", "note": "A record of past design decisions."},
     {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "research-agent", "why": "mention", "note": "A record of past design decisions."},
     {"file": ".claude/skills/case-data/references/design-decisions.md", "target": "verify-law", "why": "mention", "note": "A record of past design decisions."},
     {"file": ".claude/skills/case-data/references/queries.sql", "target": "legal-commons", "why": "mention", "note": "A code comment."},
@@ -88,7 +75,9 @@
     {"file": ".claude/skills/ingest/SKILL.md", "target": "legal-research", "why": "caller"},
     {"file": ".claude/skills/ingest/SKILL.md", "target": "litigation-fact-extractor", "why": "signpost"},
     {"file": "source/probanda/agents/delivery-checker.md", "target": "draft", "why": "caller", "note": "Dispatched by /draft, and `draft` is also a field of its input."},
-    {"file": "source/probanda/agents/verify-edges.md", "target": "verify-law", "why": "mention", "note": "Names case-data's own verify-law operation (operations/verify-law.md), not the research skill."}
+    {"file": "source/probanda/agents/verify-edges.md", "target": "verify-law", "why": "mention", "note": "Names case-data's own verify-law operation (operations/verify-law.md), not the research skill."},
+    {"file": ".claude/skills/housekeeping/SKILL.md", "target": "draft", "why": "mention", "note": "`draft` here is a row outcome (move to 0. DRAFT), not the skill."},
+    {"file": ".claude/skills/housekeeping/SKILL.md", "target": "drafting-data", "why": "conditional", "note": "Re-points /drafting-data's stored paths after a move. Without litigator there is no submission database, and the step is skipped."}
   ],
   "todo": []
 }
