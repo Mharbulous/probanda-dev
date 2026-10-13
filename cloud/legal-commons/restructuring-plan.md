@@ -247,8 +247,9 @@ Counts: 16 `principle`, 35 `criterion`, 3 `authority`, 14 `principle_authority`,
 ### Phase 3. Apply to the pool (gate: Brahm's go-ahead to change the live project)
 
 - Before: run `resolve_principle`, `find_candidates`, `lookup_by_citation`, `treatment_chain` and `rule_periods_find` on fixed inputs and save the replies.
-- Apply the migration, then the functions file, each as one paste in the SQL editor.
-- Check: the same five calls return identical replies. The ten tables exist and are empty. The plugin's `browse` tool still answers. Through PostgREST with the secret key, as the plugin and the Edge Functions will call it: a read of `clause` returns an empty list, and a call of `clause_search` with any text and a list of 384 numbers as the embedding returns a reply with an empty `nearest` list rather than an error. That last call proves, before any Edge Function exists, that PostgREST passes an embedding to the function, that the new grants are right and that PostgREST has seen the new objects. Supabase's own documentation calls a function with a `vector` argument this way, so it is expected to work, but it has not been run against this pool.
+- Before, added after a review on 2026-10-13: one query in the SQL editor confirms that `postgres` owns every table of the schema (adding the `pinpoint` field needs ownership) and that neither the `anon` nor the `authenticated` role may use the schema (nothing in either file sets that, and the new tables rely on it).
+- Apply the migration, then the functions file, each as one paste in the SQL editor. If a paste stops with an error, run `rollback;` alone before trying again, because the editor's connection may be left inside the failed transaction.
+- Check: the same five calls return identical replies. The ten tables exist and are empty. The seven functions exist, and the `anon` role can run none of them and read none of the ten tables. The plugin's `browse` tool still answers. Through PostgREST with the secret key, as the plugin and the Edge Functions will call it: a read of `clause` returns an empty list, and a call of `clause_search` with any text and a list of 384 numbers as the embedding returns a reply with an empty `nearest` list rather than an error. That last call proves, before any Edge Function exists, that PostgREST passes an embedding to the function, that the new grants are right and that PostgREST has seen the new objects. Supabase's own documentation calls a function with a `vector` argument this way, so it is expected to work, but it has not been run against this pool.
 - Undo if anything fails: `0001_down.sql`, one paste.
 
 ### Phase 4. Deploy the Edge Functions (gate: Brahm's choice of deployment route, and his go-ahead)
@@ -305,3 +306,13 @@ Found by reading the built files against this plan and Supabase's documentation.
 6. **Settled. The scratch-test builder runs on the executing machine.** `node --version` on the development machine gives 22.23.2, above the 22.18 the builder needs, and the builder ran.
 
 7. **Settled as to where, open as to which. The pilot decompositions.** They exist, as five decomposer runs and three checker runs in the maintainer's working folder. Which run Brahm approves is the phase 5 gate.
+
+## Findings from the review before phase 3, 2026-10-13
+
+A second model read the three SQL files and the plugin's client code before the pool was changed, and advised going ahead. Its procedural points are in phase 3 above. None of the following stops phase 3. Each is settled before the phase named.
+
+8. **Open, before phase 5. A very long clause gets a database error, not a question.** `clause.text_key` is unique through an index, and Postgres refuses an index entry longer than about 2,700 bytes with an error that is not of class 22, so `contribute_decomposition` would pass it on raw. The pilot's clauses are short. Before phase 5 the longest pilot clause is measured, and the function is given a length check if any comes near.
+9. **Open, before phase 5. Reading aids are written once per consequence clause.** `contribute_decomposition` adds `clause_part` rows only when the consequence has none, so contributing a corrected decomposition with the same consequence wording does not correct its actor, discretion or polarity. Phase 5 loads each principle once, so this bears only on a later correction.
+10. **Noted. A reused clause keeps its stored embedding.** The embedding sent for a clause that is already pooled is discarded. That is right while one model is in use, which the fingerprint enforces.
+11. **Noted, for phase 7. `clause_search` takes an embedding of any length.** One of the wrong length gets the database's own error. `commons-search` is the only caller and makes the embedding itself.
+12. **Noted. Three existing tools' replies gain a field.** `amend_authority_edge`, `link_authority` and `unlink_authority` return the whole `principle_authority` row, which now includes `pinpoint`, empty. Nothing reads the shape of those replies.
