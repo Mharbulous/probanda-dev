@@ -1,9 +1,8 @@
 """Regression lock for the persist rule's coverage and filename (#1440).
 
-The gate can dispatch a superseding audit agent in place of research-agent. Its
-return must be persisted under the same file stem, or the tier-3 prior-lead rule and
-the locate-authority filter, which match the filename, miss it. No litigation file
-may name the commons agent, so the rule names no agent in the filename.
+The audit agent's return must be persisted under the file stem, or the tier-3
+prior-lead rule and the locate-authority filter, which match the filename, miss it.
+The rule names no agent in the filename.
 """
 import unittest
 from pathlib import Path

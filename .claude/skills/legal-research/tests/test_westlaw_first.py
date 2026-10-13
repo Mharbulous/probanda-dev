@@ -5,9 +5,6 @@ whose API returns no decision text, and closed its gate with Westlaw never run.
 Each test here pins one piece of the fix in
 `docs/design/2026-09-24 research-lawyer Westlaw-first fix plan.md` (§4, §5.1, §8),
 so an edit that undoes it fails the build.
-
-Litigation-side only. The commons audit agent's twin checks live in the commons
-plugin's own tests, because no litigation file may name a commons agent.
 """
 import json
 import re

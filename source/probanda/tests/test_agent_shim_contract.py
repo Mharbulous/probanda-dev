@@ -1,12 +1,8 @@
-"""Pins law-librarian (legal-commons) and research-agent (litigation) as twin shims.
+"""Pins research-agent's tool grant, lane and description.
 
-Both agents are thin bootstrap shims over `shared/legal-audit-protocol.md` (decision
-2026-07-20, reaffirmed 2026-08-12 -- see
-`planning/1. Design/2026-08-12_audit-agents-and-commons-holdings-check-design.md`).
-This is the commons-side test reading a litigation-side file: the sanctioned
-dependency direction (legal-commons -> litigation), never the reverse.
+research-agent is a thin bootstrap shim over `shared/legal-audit-protocol.md`.
 
-Stdlib-only line parsing -- both agent files use block-list YAML frontmatter, no
+Stdlib-only line parsing -- the agent file uses block-list YAML frontmatter, no
 external YAML package, per repo rule.
 """
 
@@ -16,7 +12,6 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-LAW_LIBRARIAN_PATH = REPO_ROOT / "source" / "probanda" / "agents" / "law-librarian.md"
 RESEARCH_LAWYER_PATH = REPO_ROOT / "source" / "probanda" / "agents" / "research-agent.md"
 
 WRITE_TOOL_PATTERN = re.compile(
@@ -42,11 +37,9 @@ BRIDGE_PREFIX = "mcp__remote-devices__"
 def _bridged(tool):
     return BRIDGE_PREFIX + tool[len("mcp__") :]
 
-# Sentences the two `description:` fields must keep verbatim even though the fields
-# differ overall (law-librarian's description also covers pool routing/consolidation).
-# Unlike the body and tool grant, nothing else pins these -- an edit to one file's
-# wording here previously could drift silently. See law-librarian-decision memory.
-SHARED_DESCRIPTION_CLAUSES = [
+# Sentences the `description:` field must keep verbatim: skills route to the agent by
+# them, and nothing else pins them.
+DESCRIPTION_CLAUSES = [
     "Notes up every authority relied on, compares each authority's facts to the "
     "situation asked about, and gates disclosure behind a confidence summary.",
     "Every statement of law carries a pinpoint citation; anything uncited is offered "
@@ -111,75 +104,32 @@ def _parse_description(frontmatter_lines):
     return " ".join(collected)
 
 
-def _normalize_body(body_lines, heading):
-    """Drop the leading blank lines and normalize the `# <heading>` line."""
-    normalized = []
-    seen_heading = False
-    for line in body_lines:
-        if not seen_heading and line.strip() == f"# {heading}":
-            normalized.append("# AGENT")
-            seen_heading = True
-            continue
-        normalized.append(line)
-    if not seen_heading:
-        raise AssertionError(f"no `# {heading}` heading found in body")
-    return normalized
-
-
 class AgentShimContractTests(unittest.TestCase):
     def setUp(self):
-        self.law_librarian_frontmatter, self.law_librarian_body = _split_frontmatter(
-            LAW_LIBRARIAN_PATH
-        )
-        self.research_lawyer_frontmatter, self.research_lawyer_body = _split_frontmatter(
-            RESEARCH_LAWYER_PATH
-        )
+        self.frontmatter, self.body = _split_frontmatter(RESEARCH_LAWYER_PATH)
+        self.tools = _parse_tools(self.frontmatter)
 
-    def test_bodies_are_identical_after_normalizing_the_heading(self):
-        law_librarian_normalized = _normalize_body(self.law_librarian_body, "law-librarian")
-        research_lawyer_normalized = _normalize_body(
-            self.research_lawyer_body, "research-agent"
-        )
-        self.assertEqual(law_librarian_normalized, research_lawyer_normalized)
-
-    def test_law_librarian_grant_is_research_lawyer_plus_the_five_pool_tools_under_both_names(self):
-        law_librarian_tools = _parse_tools(self.law_librarian_frontmatter)
-        research_lawyer_tools = _parse_tools(self.research_lawyer_frontmatter)
-
-        self.assertTrue(research_lawyer_tools, "research-agent tools: block parsed empty")
-        self.assertTrue(law_librarian_tools, "law-librarian tools: block parsed empty")
-
-        extra = law_librarian_tools - research_lawyer_tools
-        missing = research_lawyer_tools - law_librarian_tools
-
-        self.assertEqual(missing, set(), "law-librarian is missing a research-agent tool")
-        self.assertEqual(extra, POOL_READ_TOOLS | {_bridged(tool) for tool in POOL_READ_TOOLS})
+    def test_grant_holds_the_five_pool_read_tools_under_both_names(self):
+        self.assertTrue(self.tools, "research-agent tools: block parsed empty")
+        commons = {tool for tool in self.tools if "_commons__" in tool}
+        self.assertEqual(commons, POOL_READ_TOOLS | {_bridged(tool) for tool in POOL_READ_TOOLS})
 
     def test_every_mcp_grant_is_declared_under_its_bridged_name_too(self):
-        for path, frontmatter in (
-            (LAW_LIBRARIAN_PATH, self.law_librarian_frontmatter),
-            (RESEARCH_LAWYER_PATH, self.research_lawyer_frontmatter),
-        ):
-            tools = _parse_tools(frontmatter)
-            plain = {tool for tool in tools if tool.startswith("mcp__plugin_")}
-            bridged = {tool for tool in tools if tool.startswith(BRIDGE_PREFIX)}
-            self.assertTrue(plain, f"{path} grants no plugin MCP tool")
-            self.assertEqual(
-                bridged,
-                {_bridged(tool) for tool in plain},
-                f"{path} bridged grant does not mirror its plain MCP grant",
-            )
+        plain = {tool for tool in self.tools if tool.startswith("mcp__plugin_")}
+        bridged = {tool for tool in self.tools if tool.startswith(BRIDGE_PREFIX)}
+        self.assertTrue(plain, "research-agent grants no plugin MCP tool")
+        self.assertEqual(
+            bridged,
+            {_bridged(tool) for tool in plain},
+            "research-agent bridged grant does not mirror its plain MCP grant",
+        )
 
-    def test_no_commons_write_tool_in_either_grant(self):
-        for path, frontmatter in (
-            (LAW_LIBRARIAN_PATH, self.law_librarian_frontmatter),
-            (RESEARCH_LAWYER_PATH, self.research_lawyer_frontmatter),
-        ):
-            for tool in _parse_tools(frontmatter):
-                self.assertIsNone(
-                    WRITE_TOOL_PATTERN.search(tool),
-                    f"{path} grants a commons write tool: {tool}",
-                )
+    def test_no_commons_write_tool_in_the_grant(self):
+        for tool in self.tools:
+            self.assertIsNone(
+                WRITE_TOOL_PATTERN.search(tool),
+                f"research-agent grants a commons write tool: {tool}",
+            )
 
     def test_write_tool_pattern_matches_every_commons_write_tool(self):
         # The pattern is the only thing standing between a new pool write tool and
@@ -206,40 +156,20 @@ class AgentShimContractTests(unittest.TestCase):
                 WRITE_TOOL_PATTERN.search(tool), f"{tool} is a read tool, not a write tool"
             )
 
-    def test_both_bodies_declare_the_law_audit_lane(self):
-        for path, body in (
-            (LAW_LIBRARIAN_PATH, self.law_librarian_body),
-            (RESEARCH_LAWYER_PATH, self.research_lawyer_body),
-        ):
-            self.assertTrue(
-                any(line.strip().startswith("**Lane:** law-audit") for line in body),
-                f"{path} body does not declare **Lane:** law-audit",
-            )
+    def test_body_declares_the_law_audit_lane(self):
+        self.assertTrue(
+            any(line.strip().startswith("**Lane:** law-audit") for line in self.body),
+            "research-agent body does not declare **Lane:** law-audit",
+        )
 
-    def test_descriptions_share_the_common_clauses(self):
-        # Case-insensitive: each description leads into these clauses from different
-        # prior sentences, so one may capitalize the clause's first word as a new
-        # sentence while the other continues it lowercase mid-sentence. That's a
-        # sentence-boundary artifact, not the wording drift this test guards against.
-        law_librarian_description = _parse_description(self.law_librarian_frontmatter).casefold()
-        research_lawyer_description = _parse_description(
-            self.research_lawyer_frontmatter
-        ).casefold()
-
-        self.assertTrue(law_librarian_description, "law-librarian description parsed empty")
-        self.assertTrue(research_lawyer_description, "research-agent description parsed empty")
-
-        for clause in SHARED_DESCRIPTION_CLAUSES:
-            folded_clause = clause.casefold()
+    def test_description_keeps_its_clauses(self):
+        description = _parse_description(self.frontmatter).casefold()
+        self.assertTrue(description, "research-agent description parsed empty")
+        for clause in DESCRIPTION_CLAUSES:
             self.assertIn(
-                folded_clause,
-                law_librarian_description,
-                f"law-librarian description is missing shared clause: {clause!r}",
-            )
-            self.assertIn(
-                folded_clause,
-                research_lawyer_description,
-                f"research-agent description is missing shared clause: {clause!r}",
+                clause.casefold(),
+                description,
+                f"research-agent description is missing clause: {clause!r}",
             )
 
 

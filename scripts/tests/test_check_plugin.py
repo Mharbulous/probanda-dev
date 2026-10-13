@@ -358,12 +358,12 @@ class TestPlantedViolations(FixtureTest):
         self.assertOnlyFails("bundle-no-host-path", "mcp/dist/litigation-mcp.js: '/home/someone/'")
 
     def test_inverse_reference(self):
-        self.fixture.write(".claude/skills/alpha/references/rules.md", "Prefer the law-librarian agent.\n")
+        self.fixture.write(".claude/skills/alpha/references/rules.md", "Ask the troubleshooter agent.\n")
         self.fixture.build()
-        self.assertOnlyFails("inverse-reference", "'law-librarian' in alpha/references/rules.md")
+        self.assertOnlyFails("inverse-reference", "'troubleshooter' in alpha/references/rules.md")
 
     def test_inverse_reference_ignores_the_commons_agents_own_files(self):
-        self.assertIn(b"law-librarian", read(self.fixture.root, "source/probanda/agents/law-librarian.md"))
+        self.assertIn(b"troubleshooter", read(self.fixture.root, "source/probanda/agents/troubleshooter.md"))
         self.assertTrue(self.fixture.results()["inverse-reference"][0])
 
     def test_shipped_tree_purity(self):

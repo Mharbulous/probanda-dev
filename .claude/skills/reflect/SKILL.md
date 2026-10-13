@@ -388,7 +388,7 @@ row, cite the prior report or memory in the **Verified:** line, and raise the im
 level (Low→Medium, Medium→High) — a recurrence means the prior fix did not hold.
 
 **CanLII-first canary (regression lock).** Check every law-audit agent return in the
-transcript (`research-agent`, or an audit agent that supersedes it). If it or its tool
+transcript (`research-agent`). If it or its tool
 calls show CanLII used beyond note-up, or `Westlaw: not run` with no reason or one
 neither its spawn prompt nor its protocol gives, record a finding titled
 **CanLII-first research recurred**, marked **Recurring**, impact High. That is the

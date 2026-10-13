@@ -41,7 +41,7 @@ CURRENCY_TOOL = "legislation_currency"
 CITATOR_TOOLS = {"get_case_citator", "get_case_citator_tease"}
 RESEARCH_AGENT_PREFIXES = ("probanda:",)
 
-BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside the research agents (research-agent or a superseding audit agent, citator only), never in the main session.
+BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside research-agent (citator only), never in the main session.
 A statute-currency check is the canlii legislation_currency tool, which runs here.
 A question about what the law is goes through /legal-research. If its agent's gate closed, relay the agent's confidence summary and research offers verbatim and stop. A closed gate is never a licence to research or answer the question yourself.
 If the research agent is unavailable, report that the Probanda plugin needs a re-import and full app restart, and stop."""

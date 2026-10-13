@@ -97,7 +97,6 @@ class AuditContractTests(unittest.TestCase):
         self.assertEqual(OFFER_TAG.findall(NOTES_WITH_ORIGIN), ["yes", "no", "no"])
 
     def test_shim_carries_no_contract(self):
-        # The twin shim's body is pinned to this one by the other plugin's own shim-contract test.
         root = Path(__file__).resolve().parents[4]
         text = (root / "source/probanda/agents/research-agent.md").read_text(encoding="utf-8")
         self.assertIn("shared/legal-audit-protocol.md", text)

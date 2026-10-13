@@ -17,7 +17,7 @@ A push to `main` is the release. claude.ai installs Probanda from this repositor
 
 ## The move from CoClerk
 
-The source moved here from CoClerk and is no longer edited there. The plugin carries legal-commons' read side only: its gatekeeper skill, the `law-librarian` and `troubleshooter` agents, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
+The source moved here from CoClerk and is no longer edited there. The plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
 
 ## Permanent names
 

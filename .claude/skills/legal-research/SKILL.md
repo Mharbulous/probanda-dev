@@ -73,9 +73,7 @@ permitted to make statements of law.
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders.
-4. Spawn `research-agent`, or a superseding audit agent whose description
-   declares it preferred when installed — routing is by description, never by
-   naming one here. Fill the doctrine's spawn-prompt template: the question, the
+4. Spawn `research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the matter root, who asked, today's date, the file stem, any memo
    template the practitioner named, any pooled-layer results your own pre-spawn
    lookup returned, the Westlaw memo and decision files retrieved, and any
