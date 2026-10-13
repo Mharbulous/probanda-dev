@@ -4,6 +4,10 @@ Obey @COMMANDMENTS.md
 
 The plugin is developed here. Its source is the skill trees under `.claude/skills/` and the plugin files under `source/probanda/` (`plugin.json`, `roster.json`, agents, hooks and the MCP servers). `plugins/probanda/` is built from them by `scripts/build_plugin.py`, which replaces it wholesale, and is never edited by hand. To change the plugin, change the source, run `python scripts/build_plugin.py` and commit the result. `python scripts/build_plugin.py --check` reports whether `plugins/probanda/` matches its source, and `python scripts/check_plugin.py` checks the built plugin.
 
+## Releasing
+
+A push to `main` is the release. claude.ai installs Probanda from this repository as the marketplace `probanda` and picks up new commits itself, and each machine then syncs from claude.ai. To release, bump `version` in `source/probanda/plugin.json`, run `python scripts/build_plugin.py`, commit and push. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+
 ## The move from CoClerk
 
 The source moved here from CoClerk and is no longer edited there. The plugin carries legal-commons' read side only: its gatekeeper skill, the `law-librarian` and `troubleshooter` agents, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
