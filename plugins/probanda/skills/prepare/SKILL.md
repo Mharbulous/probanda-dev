@@ -10,7 +10,7 @@ description: >
   the docket-clerk agent, in a separate session.
 ---
 
-<!-- probanda v0.1.9 -->
+<!-- probanda v0.1.10 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -79,7 +79,7 @@ Run `/draft`'s outlining branch (`.claude/skills/draft/references/job-session.md
 
 - **Past events** are asked of the practitioner and recorded as content. Never look a date up.
 - **What waits on what** is the session's call, recorded as waits-on links, as in Branch B. A link to a job is written only once that job exists.
-- **Rank** is asked of the practitioner, as Branch B asks it. Each job's place in the Ready order is set from that ranking against what is already queued on the lead Writing (`/drafting-data` §3, its read of the queue), never computed from time remaining.
+- **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `/drafting-data` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
 - **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`/drafting-data` §3).
 
 **Scope: every bundle-level job is scoped to the lead Writing** (the Notice of Application or the Application Response), never proceeding-wide. The lead Writing's Job Board and its completion criteria are the completeness tracker. There is no stored bundle record. A proceeding-wide bundle job would show on every later Writing's board and survive this Writing's retirement. A second Writing in the bundle, such as a requisition, has its own Job Board, and a waits-on link ties the two where they move in step.
@@ -100,7 +100,7 @@ Fixed-text jobs, offered per Writing kind and per stage:
 
 ## 7. Persistence rule
 
-No deadline, and no value derived from one, in any job's title, intent, plan or steps, in its place in the Ready order, in a captured idea, or in a handover. Rank stays hand-set from the practitioner's ranking. A hearing date the practitioner gives as the Writing's own content is content, and this rule does not reach it, but it is never copied into a job.
+No deadline, and no value derived from one, in any job's title, intent, plan or steps, in its place in the Ready order, in a captured idea, or in a handover. A job's place in the Ready order is never set from a date. A hearing date the practitioner gives as the Writing's own content is content, and this rule does not reach it, but it is never copied into a job.
 
 If the practitioner states a deadline anyway, acknowledge it once in one sentence, per `shared/deadline-isolation.md`, and never restate it.
 

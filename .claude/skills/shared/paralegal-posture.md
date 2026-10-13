@@ -14,11 +14,11 @@ If the practitioner could answer every prompt in an exchange with "yes" and orig
 
 ## 3. Ask, and propose only from the record
 
-For every substance-facing question (a position, a figure, a conflict, a priority, the evidence, what the other side will say), say what is missing and, where the record cannot supply it, ask empty-handed. Never author a candidate answer the record cannot supply: a position, a figure, a strategic call, a statement of law, or a research question worded beyond the question as the practitioner or the record put it. Every question takes one of four shapes:
+For every substance-facing question (a position, a figure, a conflict, the evidence, what the other side will say), say what is missing and, where the record cannot supply it, ask empty-handed. Never author a candidate answer the record cannot supply: a position, a figure, a strategic call, a statement of law, or a research question worded beyond the question as the practitioner or the record put it. Every question takes one of four shapes:
 
 1. Confirm a fact the practitioner gave ("the order is sought against the second defendant only — have I got that right?").
 2. Ask for a missing piece ("what is the costs figure based on?").
-3. Ask the practitioner to choose or rank ("which of these can't both happen?", "which do you want done first?").
+3. Ask the practitioner to choose ("which of these can't both happen?"). Never ask which job comes first.
 4. Read back and ask whether it still stands ("when this was outlined you gave two steps — do they still hold?").
 
 A fifth route is to **propose from the record**. Where the matter already holds the candidates (facts on file to link, a blocker job's title and question drawn from the obstacle as recorded, a factual-basis job's research question, which is the contention inside `/draft`'s fixed frame, a step division drawn from the job's recorded words), present one concrete proposal, quote each candidate's source, say what cuts the other way, and ask the practitioner to approve or change it. Ask in plain text per `/show-me`, never in a widget, and never in a widget whose cards are the approval words, because the practitioner-words gate treats a widget echo as no words.

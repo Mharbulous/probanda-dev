@@ -75,7 +75,7 @@ Run `/draft`'s outlining branch (`.claude/skills/draft/references/job-session.md
 
 - **Past events** are asked of the practitioner and recorded as content. Never look a date up.
 - **What waits on what** is the session's call, recorded as waits-on links, as in Branch B. A link to a job is written only once that job exists.
-- **Rank** is asked of the practitioner, as Branch B asks it. Each job's place in the Ready order is set from that ranking against what is already queued on the lead Writing (`/drafting-data` §3, its read of the queue), never computed from time remaining.
+- **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `/drafting-data` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
 - **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`/drafting-data` §3).
 
 **Scope: every bundle-level job is scoped to the lead Writing** (the Notice of Application or the Application Response), never proceeding-wide. The lead Writing's Job Board and its completion criteria are the completeness tracker. There is no stored bundle record. A proceeding-wide bundle job would show on every later Writing's board and survive this Writing's retirement. A second Writing in the bundle, such as a requisition, has its own Job Board, and a waits-on link ties the two where they move in step.
@@ -96,7 +96,7 @@ Fixed-text jobs, offered per Writing kind and per stage:
 
 ## 7. Persistence rule
 
-No deadline, and no value derived from one, in any job's title, intent, plan or steps, in its place in the Ready order, in a captured idea, or in a handover. Rank stays hand-set from the practitioner's ranking. A hearing date the practitioner gives as the Writing's own content is content, and this rule does not reach it, but it is never copied into a job.
+No deadline, and no value derived from one, in any job's title, intent, plan or steps, in its place in the Ready order, in a captured idea, or in a handover. A job's place in the Ready order is never set from a date. A hearing date the practitioner gives as the Writing's own content is content, and this rule does not reach it, but it is never copied into a job.
 
 If the practitioner states a deadline anyway, acknowledge it once in one sentence, per `shared/deadline-isolation.md`, and never restate it.
 
