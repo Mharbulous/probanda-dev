@@ -220,6 +220,8 @@ Verified later the same day by the session that took the work over. The subagent
 
 Seen from a desktop app session on 2026-10-13, with `probea` still at 0.0.1 in the store (so no `siblings` section): both `SessionStart` hooks ran, with `${CLAUDE_PLUGIN_ROOT}` set to each plugin's own `rpm\plugin_<id>\` folder. The tool `mcp__plugin_probea_echo__where` was callable under its plain name. `probea`'s server could read the marker file inside `probeb`'s folder. The store's `probanda` folder holds `.claude-plugin\plugin.json` and `skills\shared\`. This is not yet the `/probe-check` report that phase 0 asks for.
 
+Seen again from a second desktop app session late on 2026-10-13: the store still held `probea` 0.0.1, so `where` again returned no `siblings` section, and Brahm was asked again to press "Check for updates" on `host-probe` and paste the two reports. Read from disk by that session, not listed by the server: the store holds eight `rpm\plugin_<id>\` folders, each with a readable manifest (`probea`, `probeb` and `probec` at 0.0.1, `probanda` at 0.1.6, `cowork-plugin-management`, `dev-tools`, `skill-tooling`), and `probea`, `probeb` and `probanda` hold `skills\shared\`. The same session re-ran phase 3's cheap checks on the uncommitted tree and all passed with the numbers above (unit tier 775 passed, exit 1 on six file-time budgets only). Phase 3 is still uncommitted.
+
 Design choices given to the subagent, beyond decision 1:
 
 - The sibling scan runs only when the server's own install root is a packaged install (`skills/shared/` exists). Otherwise, after cutover, a dev run from `source/practice/` would pick up the repo's built `plugins/research/` two levels up.
