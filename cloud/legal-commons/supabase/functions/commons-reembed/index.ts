@@ -14,12 +14,29 @@
 //   staged embedding in at once with the new fingerprint, or refuses. While the
 //   pool has no clause this stores the first fingerprint.
 //   Reply: set_clause_embeddings's reply, unchanged.
+//
+// A check:   { "embed": [1 to 100 texts] }
+//   embeds the texts and returns the embeddings. Reads and writes nothing. It is
+//   how the hosted model is compared with a local one, and how many embeddings
+//   fit in one request is measured.
+//   Reply: { "embeddings": [[384 numbers], ...] }
 
 import { callPool, clausesAfter, embed, FINGERPRINT_SENTENCE, MODEL, reply, serve } from "../_shared/pool.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 serve(async (key, body) => {
+  if (body.embed !== undefined) {
+    const texts = body.embed;
+    if (!(Array.isArray(texts) && texts.length >= 1 && texts.length <= 100 &&
+          texts.every((text) => typeof text === "string" && text.trim() !== ""))) {
+      return reply(400, { error: "embed must be a list of 1 to 100 texts" });
+    }
+    const embeddings = [];
+    for (const text of texts) embeddings.push(await embed(text));
+    return reply(200, { embeddings });
+  }
+
   const fingerprint = await embed(FINGERPRINT_SENTENCE);
 
   if (body.finish === true) {
