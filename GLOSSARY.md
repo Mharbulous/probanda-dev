@@ -84,6 +84,7 @@ terms:
   - Provenance
   - Qualified admission
   - Ratio decidendi
+  - Rationale
   - Recommendation
   - Record
   - Recovery
@@ -178,7 +179,7 @@ _Avoid_: compound document; container (engineer-facing); book (the court's word 
 The general body of law describing a cause of action (a kind of Legal Concept), independent of any matter.
 
 **Clause**:
-One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are three clause types, **Element**, **Exception** and **Factor**, and a clause takes its type from the test that uses it. The clause a test entails is that test's **Consequence**. One clause may be an element of one test and the consequence of another.
+One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are four clause types. **Element**, **Exception** and **Factor** are a test's conditions, and a **Rationale** explains a test. A clause takes its type from the test that uses it. The clause a test entails is that test's **Consequence**. One clause may be an element of one test and the consequence of another.
 _Avoid_: clause for a numbered provision of a contract or statute (say provision, or contract clause); statement (taken by **Statement of fact** and **Statement of law**). The drafting database's `clauses` table is a frozen code name for a clause of a Writing, not this sense.
 
 **Close as superseded**:
@@ -456,6 +457,10 @@ A single **admit** position where the limiting language is recorded verbatim (ne
 A proposition necessary to the decision; the part of a decision capable of binding. Whether it binds a given forum is a separate question of law.
 _Avoid_: ratio for "the court's own words" (obiter is also the court's own words), or for a text-similarity score.
 
+**Rationale**:
+A clause that states why a test exists: its purpose, basis or justification. It helps a decision maker understand the test, and decide when and how to exercise a discretion the test grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two tests are compared. It attaches to a test, with the principle that states it, and one rationale may be shared by several tests. It is kept, never discarded.
+_Avoid_: rationale for a condition (an **Element**, **Exception** or **Factor**); a rationale attached to a single condition or to a consequence (it attaches to a test, and its own words name what it explains); **Ratio decidendi**.
+
 **Recommendation**:
 An answer formed from information already within reach — the repository, the matter's files, tool results, the conversation — without sending a separate agent off to research the point.
 _Avoid_: hunch (understates it); advice (overstates it — no independent research yet).
@@ -544,7 +549,7 @@ To **adduce** is to put evidence into the trial record at trial. Two forms: **el
 _Avoid_: enter (say tender); file, serve (different acts); adduce for a document alone (the genus — say tender).
 
 **Test**:
-One route to a consequence: a set of clauses, each an element, an exception or a factor, that entails exactly one consequence when met. It records the principle that states it. A test may have no clauses (a definition, or a bare norm).
+One route to a consequence: a set of clauses, each an element, an exception or a factor, that entails exactly one consequence when met. It records the principle that states it. A test may have no clauses (a definition, or a bare norm). A test may also carry a **Rationale**, which explains it and is not one of its conditions.
 _Avoid_: limb (an alternative limb is a test of its own; a cumulative limb is an element); test for a whole rule.
 
 **Theorized Fact**:
