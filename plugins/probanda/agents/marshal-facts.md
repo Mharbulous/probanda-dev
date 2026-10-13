@@ -1,7 +1,7 @@
 ---
 name: marshal-facts
 description: >
-  Given a verified legal test, doctrine or principle as a list of criteria with citations,
+  Given the verified criteria of a legal test, cause of action or defence, each with a citation,
   finds this matter's facts in case data and applies each criterion to them: the facts
   bearing on it, whether they satisfy, leave unsupported or contradict it, their
   verification and posture, and the gaps. Read-only. States no law of its own and reaches
