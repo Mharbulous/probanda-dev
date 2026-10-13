@@ -14,11 +14,38 @@ POSITION_BASES = {
     "other",
 }
 RELIEF_VALUES = {"seek", "consent", "oppose", "no_position"}
-FORBIDDEN_FACT = re.compile(
-    r"\b(admits?|denies?|does not admit|not admit|no knowledge|outside "
-    r"(?:its|their|his|her) knowledge|strict proof|takes? no position|"
-    r"consents?|opposes?|incorporates?|adopts?|paragraphs?\s+\d+)\b",
+# A stance on a pleading is recognised by its shape, not by a word. "consent"
+# counts only as the verb "consent(s) to", so "Consent Order" and "the consent
+# of" never match.
+_PARAGRAPH = r"\b(?:sub)?para(?:graph)?s?\.?\s*\d+"
+_STANCE_VERB = (
+    r"\b(?:admits?|den(?:y|ies)|takes? no position|consents?\s+to|opposes?|"
+    r"incorporates?|adopts?)\b"
+)
+_SAME_SENTENCE = r"[^.;]{0,60}?"
+# Unmistakable: a stance verb whose object is a numbered pleading paragraph,
+# active ("admits paragraph 4") or passive ("paragraph 4 is denied").
+PLAIN_STANCE = re.compile(
+    _STANCE_VERB + _SAME_SENTENCE + _PARAGRAPH
+    + r"|" + _PARAGRAPH + r"[^.;]{0,40}?\b(?:is|are)\s+(?:not\s+)?"
+    r"(?:admitted|denied|opposed|adopted|incorporated)\b",
     re.IGNORECASE,
+)
+# Possibly a stance: a bare paragraph reference, non-admission wording, or a
+# stance verb whose object is a pleading or an allegation.
+RESIDUAL_STANCE = re.compile(
+    _PARAGRAPH
+    + r"|\b(?:not admit|no knowledge|outside (?:its|their|his|her) knowledge|"
+    r"strict proof|takes? no position)\b"
+    r"|" + _STANCE_VERB + _SAME_SENTENCE
+    + r"\b(?:allegations?|pleadings?|notice of civil claim|response to civil "
+    r"claim|counterclaim|third party notice|petition|notice of application|"
+    r"application response)\b",
+    re.IGNORECASE,
+)
+RESIDUAL_NOTE = (
+    "UNCONFIRMED: possible pleading stance or paragraph reference; "
+    "confirm this is a fact"
 )
 LOCATOR = re.compile(
     r"^(?:paras?\.?\s*)?(\d+)(?:\(([a-z0-9]+)\))?"
@@ -135,10 +162,15 @@ def validate_extraction(payload, answered_fact_keys=(), answered_relief_keys=())
     relief_targets = set(answered_relief_keys) | new_relief_keys
 
     for fact in payload["facts"]:
-        if FORBIDDEN_FACT.search(fact["description"]):
+        if PLAIN_STANCE.search(fact["description"]):
             raise ExtractionError(
                 f"non-factual position stored as fact at {fact['source_locator']}"
             )
+        if RESIDUAL_STANCE.search(fact["description"]):
+            # Not plainly a stance: keep the fact and send it to the human
+            # queue (conventions §5) rather than dropping it or aborting.
+            fact["notes"] = RESIDUAL_NOTE
+            fact["verified"] = 2
     seen = set()
     for position in payload["fact_positions"]:
         if position["value"] not in FACT_VALUES:

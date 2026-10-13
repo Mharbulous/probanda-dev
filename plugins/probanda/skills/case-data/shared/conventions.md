@@ -1,6 +1,6 @@
 # Shared conventions — single source of truth
 
-This file is the **single source of truth** for the cross-cutting semantics every operation depends on: the pointer-resolution preamble, the environment contract, the database connection pattern, the `verified` enum, notes prefixes, citation format, the bitemporal update convention, dump discipline, schema phases, the clock source for dates, the pointer JSON forms, the stored path form, and the pending markers. Operations reference this file rather than restating any of it. When two documents would say the same thing, this one is authoritative.
+This file is the **single source of truth** for the cross-cutting semantics every operation depends on: the pointer-resolution preamble, the environment contract, the database connection pattern, the `verified` enum, notes prefixes, citation format, the bitemporal update convention, dump discipline, schema phases, the clock source for dates, the pointer JSON forms, the stored path form, the pending markers, and the wording rules. Operations reference this file rather than restating any of it. When two documents would say the same thing, this one is authoritative.
 
 **Read this file as the first step of every operation.**
 
@@ -241,3 +241,11 @@ SET notes = NULLIF(REPLACE(REPLACE(REPLACE(notes, char(10) || :marker, ''),
 WHERE source_id = :source_id
   AND instr(notes, :marker) > 0;
 ```
+
+---
+
+## 12. Wording rules
+
+- Never write "status" for where a fact stands between the parties. Write "posture". "Status" is for the lifecycle of a proceeding or of a source's ingestion.
+- Never write "claim" as shorthand for a cause of action. Write "cause of action" or "asserted cause of action".
+- Never split a qualified admission into an admit row and a deny row. Record one `admit` position with the limiting words verbatim in `qualification`, never paraphrased.

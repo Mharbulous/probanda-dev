@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 73
+-- Current version: db_meta.schema_version = 74
 
 
 CREATE TABLE db_meta (
@@ -1039,7 +1039,7 @@ CREATE TABLE "tickets" (
     rejected_at               TEXT,
     superseded_marker_gone_at TEXT,
     session_proposed          INTEGER NOT NULL DEFAULT 0 CHECK (session_proposed IN (0, 1)),
-    deleted_at                TEXT, created_by TEXT,
+    deleted_at                TEXT, created_by TEXT, bf_on TEXT CHECK (bf_on IS NULL OR bf_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
     CHECK ((status = 'wip') = (locked_by IS NOT NULL)),
     CHECK ((locked_by IS NULL) = (locked_at IS NULL)),
     CHECK (superseded_by IS NULL OR status = 'superseded'),

@@ -50,7 +50,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-TARGET_SCHEMA_VERSION = 73
+TARGET_SCHEMA_VERSION = 74
 
 _MARKER_RE = re.compile(r'^-- MIGRATE\s+(\d+)\s*->\s*(\d+)\s*$', re.MULTILINE)
 

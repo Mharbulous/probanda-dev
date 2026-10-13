@@ -1,6 +1,6 @@
 # Terminology Crosswalk
 
-> This file is updated whenever schema anchors change. It maps each glossary term in `../GLOSSARY.md` to its exact table/column/view/CHECK-value anchor in the v7.0 schema (`schema.sql`, `queries.sql`). `GLOSSARY.md` points here rather than embedding table names in glossary prose — if a table or column is renamed, update this file only.
+> This file is updated whenever schema anchors change. It maps each case-data term in the root `GLOSSARY.md` ("Case data") to its exact table/column/view/CHECK-value anchor in the v7.0 schema (`schema.sql`, `queries.sql`). The root `GLOSSARY.md` points here rather than embedding table names in glossary prose — if a table or column is renamed, update this file only.
 
 | Term | Schema anchor | Notes |
 |---|---|---|

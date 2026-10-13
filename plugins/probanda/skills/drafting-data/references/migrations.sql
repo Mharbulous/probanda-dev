@@ -4895,3 +4895,21 @@ CREATE TABLE rule_served (
 CREATE INDEX idx_rule_served_rule ON rule_served(rule_id);
 
 UPDATE db_meta SET value = '73' WHERE key = 'schema_version';
+
+-- MIGRATE 73 -> 74
+-- A job can be held until a bring-forward (BF) date (Brahm, 2026-10-12). Until that date the job
+-- shows in the Job Board's Bring Forward lane and is not assigned.
+--
+-- 1. tickets gains bf_on, nullable: the first day the job may be worked, a YYYY-MM-DD by a CHECK of
+--    its own, like filings.pure_law_on. It is a start date, never a deadline. Written only on the
+--    practitioner's word (jobs-closeout.md §10b), never proposed or inferred by a session, and the
+--    one job value typed as given and not computed in SQL. The lane is derived at render: a queued,
+--    unshelved job whose bf_on is later than the local date is in Bring Forward, and from that date
+--    on it reads as Blocked or Ready with no write. drafting_data__assign_job reads it: a job is
+--    not assigned before its bf_on (jobs-run.md §4). ADD COLUMN, no rebuild: every existing row
+--    reads NULL.
+-- Job process state, so no revision triggers. Additive: no row changes and no revision moves.
+
+ALTER TABLE tickets ADD COLUMN bf_on TEXT CHECK (bf_on IS NULL OR bf_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]');
+
+UPDATE db_meta SET value = '74' WHERE key = 'schema_version';

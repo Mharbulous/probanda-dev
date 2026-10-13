@@ -211,6 +211,12 @@ class FixtureTest(unittest.TestCase):
     def setUp(self):
         self.fixture = Fixture()
         self.addCleanup(self.fixture.cleanup)
+        # The committed list names the real repo's skills, so every entry is stale against the fixture.
+        self.fixture.write("reference_unshipped_baseline.json", json.dumps({"known_unshipped": []}) + "\n")
+        patcher = mock.patch.object(check_plugin, "REFERENCE_UNSHIPPED_BASELINE",
+                                    os.path.join(self.fixture.root, "reference_unshipped_baseline.json"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def assertOnlyFails(self, name, fragment):
         """`name` fails with a detail mentioning `fragment`; every other check passes."""
