@@ -20,6 +20,7 @@ import json
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -290,7 +291,16 @@ def write(files, out):
         if out.exists():
             out.rename(replaced)
         try:
-            building.rename(out)
+            # A file watcher or virus scanner can hold the freshly written folder
+            # open for a moment, and Windows refuses to rename it until it lets go.
+            for attempt in range(20):
+                try:
+                    building.rename(out)
+                    break
+                except PermissionError:
+                    if attempt == 19:
+                        raise
+                    time.sleep(0.5)
         except BaseException:
             if replaced.exists():
                 replaced.rename(out)
