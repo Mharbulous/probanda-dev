@@ -8,7 +8,7 @@ import time
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).with_name("practitioner-words-gate.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "practitioner-words-gate.py"
 PLUGIN_JSON = Path(__file__).resolve().parents[4] / "source" / "probanda" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/practitioner-words-gate.py"
 STOCK_MD = Path(__file__).parents[1] / "references" / "jobs-stock.md"

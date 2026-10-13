@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).with_name("html-pages-gate.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "html-pages-gate.py"
 DRAFT = r"<matter>\0. DRAFT"
 
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.

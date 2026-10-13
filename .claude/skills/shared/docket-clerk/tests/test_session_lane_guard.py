@@ -8,7 +8,7 @@ import unittest
 import uuid
 from pathlib import Path
 
-SCRIPT = Path(__file__).with_name("session-lane-guard.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "session-lane-guard.py"
 AGENT = "probanda:docket-clerk"
 PLUGIN_JSON = Path(__file__).resolve().parents[5] / "source" / "probanda" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
