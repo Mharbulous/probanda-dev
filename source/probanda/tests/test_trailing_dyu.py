@@ -10,6 +10,7 @@ SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "probanda" / "skills" / "dyu"
 HOOK = SKILL_ROOT / "hooks" / "trailing-dyu.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
 PLUGIN_JSON = REPO_ROOT / "source" / "probanda" / "plugin.json"
+PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "probanda" / ".claude-plugin" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
 
 
@@ -62,6 +63,11 @@ class TrailingDyuTests(unittest.TestCase):
         groups = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]["UserPromptSubmit"]
         args = [arg for group in groups for hook in group["hooks"] for arg in hook["args"]]
         self.assertIn(PLUGIN_HOOK_ARG, args)
+
+    def test_the_public_plugin_registers_the_hook(self):
+        groups = json.loads(PUBLIC_PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]["UserPromptSubmit"]
+        args = [arg for group in groups for hook in group["hooks"] for arg in hook["args"]]
+        self.assertEqual(args, [PLUGIN_HOOK_ARG])
 
 
 if __name__ == "__main__":
