@@ -29,6 +29,7 @@ PRIVATE = {
     ".claude/skills/data/SKILL.md": f"# Data\n\n{LONG_PRIVATE_LINE}\n\nShort line.\n",
     ".claude/skills/data/node_modules/lib/index.js": "const a_library_line_that_is_long_enough_to_be_counted_as_a_long_line = 1;\n",
     "source/probanda/mcp/src/store.ts": f"db.exec(`{CREATE} practice_anchors (id)`);\nconst unrelated_name = 1;\n",
+    "cloud/pool/schema.sql": "create table if not exists pool.pooled_statements (\n  statement_text text\n);\n",
     "source/probanda/plugin.json": '{\n  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n',
 }
 
@@ -65,6 +66,10 @@ class TreeProblemsTest(unittest.TestCase):
 
     def test_table_named_in_ddl_outside_a_sql_file_is_reported(self):
         self.assert_reports({"a.md": "See practice_anchors.\n"}, "practice_anchors")
+
+    def test_table_and_column_under_cloud_are_reported(self):
+        self.assert_reports({"a.md": "See pooled_statements.\n"}, "pooled_statements")
+        self.assert_reports({"a.md": "Read statement_text.\n"}, "statement_text")
 
     def test_identifier_on_a_non_ddl_line_outside_sql_is_not_a_fingerprint(self):
         self.assertEqual(self.messages({"a.md": "An unrelated_name here.\n"}), [])

@@ -36,7 +36,7 @@ PUBLIC = "public"
 # only by approve_public.py, run by a person.
 APPROVED = "public-approved.json"
 # Where the fingerprints are read from.
-PRIVATE_ROOTS = (".claude/skills", "source/probanda")
+PRIVATE_ROOTS = (".claude/skills", "source/probanda", "cloud")
 # Third-party code and build output: a public bundle may rightly share their lines.
 SKIP_DIRS = ("node_modules", "__pycache__", ".pytest_cache", "build", "dist")
 # Private files whose content is not secret, so public/ may repeat it.

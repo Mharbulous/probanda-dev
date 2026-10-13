@@ -112,6 +112,22 @@ def file_problems(path, data):
     return problems
 
 
+# The pool's cloud side. Its schema files are kept in this private repo by design
+# and are never published, so a scan of the repo does not report them. file_problems
+# makes no such exception: the public tree and the export are scanned in full.
+CLOUD_ROOT = "cloud"
+
+
+def repo_file_problems(path, data):
+    """file_problems for a repo-relative path, less the schema files under cloud/."""
+    found = file_problems(path, data)
+    if path.parts[:1] != (CLOUD_ROOT,):
+        return found
+    is_sql = path.name.lower().endswith(".sql")
+    return [p for p in found
+            if p[2] != "contains schema DDL" and not (is_sql and p[2] == "forbidden file type")]
+
+
 def worktree_problems(root):
     files = tracked_files(root)
     problems = []
@@ -123,7 +139,7 @@ def worktree_problems(root):
                 problems.append((path, 1, "forbidden file type", ""))
             problems.append((path, 1, f"cannot read tracked file: {e.strerror}", ""))
             continue
-        problems += file_problems(path, data)
+        problems += repo_file_problems(path, data)
     return files, problems
 
 
@@ -142,7 +158,7 @@ def commit_problems(root, commit):
     for _, path in blobs:
         end = out.index(b"\n", pos)
         size = int(out[pos:end].split()[2])
-        problems += file_problems(path, out[end + 1:end + 1 + size])
+        problems += repo_file_problems(path, out[end + 1:end + 1 + size])
         pos = end + 1 + size + 1
     return problems
 

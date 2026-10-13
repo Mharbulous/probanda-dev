@@ -67,5 +67,28 @@ class NewProblemsTest(unittest.TestCase):
         self.assertEqual(check_publishable.new_problems(check_publishable.commit_problems(root, "HEAD"), worktree), [])
 
 
+class CloudFolderTest(unittest.TestCase):
+    def messages(self, name, text, scan):
+        return [p[2] for p in scan(PurePosixPath(name), text.encode("utf-8"))]
+
+    def test_schema_file_under_cloud_is_not_reported_by_the_repo_scan(self):
+        self.assertEqual(self.messages("cloud/pool/schema.sql", f"{DDL_A}\n", check_publishable.repo_file_problems), [])
+
+    def test_schema_file_elsewhere_is_still_reported_by_the_repo_scan(self):
+        self.assertEqual(self.messages("docs/schema.sql", f"{DDL_A}\n", check_publishable.repo_file_problems),
+                         ["forbidden file type", "contains schema DDL"])
+
+    def test_other_problems_under_cloud_are_still_reported(self):
+        machine_path = "C:" + "\\Users\\someone\\pool"
+        self.assertEqual(self.messages("cloud/pool/notes.md", f"{machine_path}\n", check_publishable.repo_file_problems),
+                         ["contains a path from a maintainer's machine"])
+        self.assertEqual(self.messages("cloud/pool/secret.env", "x\n", check_publishable.repo_file_problems),
+                         ["forbidden file type"])
+
+    def test_published_files_get_no_cloud_exception(self):
+        self.assertEqual(self.messages("cloud/pool/schema.sql", f"{DDL_A}\n", check_publishable.file_problems),
+                         ["forbidden file type", "contains schema DDL"])
+
+
 if __name__ == "__main__":
     unittest.main()
