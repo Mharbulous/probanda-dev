@@ -2,7 +2,7 @@
 
 Written 2026-10-13 and revised the same day, several times, after reading the build scripts, the checks, the hook scripts, the server code and the skills.
 
-**Status (2026-10-13).** Phases 1, 2 and 4 are done, and `main` ships `probanda` 0.1.9 with the assignment below. Phase 0 is partly done: the terminal host, claude.ai, the synced terminal and Cowork are recorded, the desktop app is not. Phase 0 showed that decision 1 as first written (each plugin's hook registers its folder) fails in Cowork, so decision 1 now reads: the data server looks at the plugin folders beside its own. Brahm was told this would be built unless he objected, and he did not object. What remains, in order: the rest of phase 0, phase 3, phase 5, phase 6, phase 7. Phases 1, 2 and 4 ran ahead of phase 0 because only phase 3 depended on its answers. The open decisions for Brahm are listed in one place near the end.
+**Status (2026-10-13).** Phases 1, 2 and 4 are done, and `main` ships `probanda` 0.1.9 with the assignment below. Phase 0 is partly done: the terminal host, claude.ai, the synced terminal and Cowork are recorded, the desktop app is not. Phase 0 showed that decision 1 as first written (each plugin's hook registers its folder) fails in Cowork, so decision 1 now reads: the data server looks at the plugin folders beside its own. Brahm was told this would be built unless he objected, and he did not object. Later the same day: phase 0's step 1 is done (`probea` 0.0.2), the desktop store holds the three probes, and Brahm has been asked for the two `/probe-check` reports. Phase 3 is being built in the working tree, uncommitted, and is not released until those reports are recorded (see "Phase 3 build state"). What remains, in order: the rest of phase 0, phase 3, phase 5, phase 6, phase 7. Phases 1, 2 and 4 ran ahead of phase 0 because only phase 3 depended on its answers. The open decisions for Brahm are listed in one place near the end.
 
 Words used below. A *plugin* is one installable folder: a manifest (`plugin.json`), skills, agents, hooks and servers. A *marketplace* is the list (`.claude-plugin/marketplace.json`) a user installs plugins from. A *host* is the program that runs a plugin: the terminal (Claude Code), the desktop app, or Cowork. A *hook* is a small script the host runs before or after an event, and its *matcher* is the pattern that says which tool names or agent names make it run. A *server* is one of the three MCP programs the plugin starts (`data`, `canlii`, `commons`), and a *tool* is one function a server offers, named `mcp__plugin_<plugin>_<server>__<tool>`. The *roster* (`source/probanda/roster.json`) is the list of skills a plugin ships. The *bundle* is a server compiled into one file under `mcp/dist/`. The *install root* of a plugin is the folder the host unpacked it into. A *sibling* is another plugin's install root beside it.
 
@@ -146,7 +146,7 @@ What this meant for decision 1. In Cowork the hook and the server are on differe
 
 #### Phase 0, what remains
 
-1. Change `probea`'s `where` tool so it also reports what the new decision 1 would see: the folders beside its own install root and two levels up, and for each one the `name` and `version` in its `.claude-plugin/plugin.json`, or that it has none. This needs no hook.
+1. Done 2026-10-13 (`host-probe` commit `2628840`, `probea` 0.0.2): `where` now returns a `siblings` section with `install_root`, `beside` and `two_levels_up`, and for each folder its manifest `name` and `version` (or `manifest_error`) and `has_skills_shared`. Run from the checkout it listed `probea`, `probeb` and `probec` correctly. The same afternoon the desktop store (`e6299e19-...\f2086fa7-...\rpm\`) held all three probes as `plugin_<id>\` folders, each with a readable `.claude-plugin\plugin.json`, with `probea` still at 0.0.1. A report whose tool result has no `siblings` section came from the 0.0.1 copy: press "Check for updates" on `host-probe` in claude.ai and wait for the store.
 2. When the desktop store has received the three probe plugins (its `rpm/manifest.json` lists them), run `/probe-check` in the desktop app and in Cowork and record: whether `probeb`'s skill reaches `probea`'s tool, and what the `where` tool lists. The expected answer, from this PC's disk, is that the server sees `rpm/plugin_<id>/` folders beside it, each with a readable manifest.
 3. Record the desktop app's answers to the five questions in the table.
 4. Then delete the `host-probe` repository and uninstall the three plugins.
@@ -203,6 +203,18 @@ Steps:
 3. Write the missing-folder error as decision 1 describes it.
 
 Check: `npm test` in the server folder passes, plus new unit tests with on-disk fixtures for each layout: a sibling by name, a `<plugin>~g3` folder beside its older copy with the newer one winning, an id-named sibling (`plugin_<id>/`) with the name read from its manifest, the two-levels-up version layout, a `.staging/` folder and a `probanda` folder both ignored, a sibling with no `skills/shared/` ignored, a sibling that holds the segment winning over a checkout that also holds it, and the error, when no root holds the segment, listing the siblings found. Then `python scripts/build_plugin.py` with the rebuilt bundle, `build_plugin.py --check`, `check_plugin.py` (including `bundle-no-host-path`) and `python scripts/check_publishable.py --new-since origin/main` pass. Release as `probanda` 0.1.10 or the next number. The phase is not complete until phase 0's desktop and Cowork `where` listings are recorded.
+
+#### Phase 3 build state (2026-10-13, not yet verified or released)
+
+A subagent built phase 3 in the working tree and left it uncommitted: `repo-root.ts`, `files/skill-source.ts`, `schema-gen.ts`, four files under `submission/`, `housekeeping/name-gate.ts`, the rebuilt `dist/litigation-mcp.js`, `test/skill-source-install.unit.test.mjs` and the new `test/sibling-install.unit.test.mjs`. It was also to bump `source/probanda/plugin.json` to 0.1.10 and rebuild `plugins/probanda/`. The orchestrating session had not yet read its report or run the checks when this was written. A session that finds these changes still uncommitted reads the diff against the design below, runs phase 3's check itself, and commits only after phase 0's two reports are recorded.
+
+Design choices given to the subagent, beyond decision 1:
+
+- The sibling scan runs only when the server's own install root is a packaged install (`skills/shared/` exists). Otherwise, after cutover, a dev run from `source/practice/` would pick up the repo's built `plugins/research/` two levels up.
+- A folder whose name starts with `.` is skipped at either level. The install root itself is skipped. An unreadable manifest means "not a sibling".
+- No cache: the store changes when the host syncs.
+- A result gains a `plugin` field, and `plugin_version` becomes that plugin's version. For `shipped_from: checkout`, `plugin` is null and `plugin_version` stays the running plugin's version. `shipped_from` is `install` for a sibling.
+- The tree-root listing merges the own install, then the siblings, then the checkout.
 
 ### Phase 4: rewrite the references
 
