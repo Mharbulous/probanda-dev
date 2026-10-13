@@ -8,6 +8,12 @@ import { callPool, embed, reply, serve } from "../_shared/pool.ts";
 
 serve(async (key, body) => {
   if (typeof body.text !== "string" || body.text.trim() === "") return reply(400, { error: "text is required" });
+  // Checked here because PostgREST converts these two before clause_search runs,
+  // and would answer a malformed one with the database's own error.
+  if (body.role !== undefined && typeof body.role !== "string") return reply(400, { error: "role must be text" });
+  if (body.limit !== undefined && !Number.isInteger(body.limit)) {
+    return reply(400, { error: "limit must be a whole number" });
+  }
   return await callPool(key, "clause_search", {
     p_text: body.text,
     p_embedding: JSON.stringify(await embed(body.text)),

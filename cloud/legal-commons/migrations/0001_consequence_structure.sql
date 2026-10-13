@@ -5,7 +5,7 @@
 -- and rule_periods.sql, in one paste in the SQL editor. Then apply
 -- ../consequence_functions.sql. Undo with 0001_down.sql.
 --
--- Additive: nine tables, one view, one function the `clause` table depends on,
+-- Additive: ten tables, one view, one function the `clause` table depends on,
 -- and one field on `principle_authority`. No existing column, row or function
 -- changes.
 --
@@ -230,6 +230,20 @@ create table legal_commons.embedding_fingerprint (
 );
 
 -- -----------------------------------------------------------------------------
+-- clause_embedding_staging: new embeddings waiting for a change of model. They
+-- arrive a batch at a time (stage_clause_embeddings), because one Edge Function
+-- request cannot embed a whole pool, and each row keeps the fingerprint its
+-- batch came with. set_clause_embeddings moves all of them into `clause` at
+-- once and empties this table. Nothing reads a staged embedding before then.
+-- -----------------------------------------------------------------------------
+create table legal_commons.clause_embedding_staging (
+  clause_id    uuid primary key references legal_commons.clause(clause_id),
+  embedding    extensions.vector(384) not null,
+  fingerprint  extensions.vector(384) not null,
+  created_at   timestamptz not null default now()
+);
+
+-- -----------------------------------------------------------------------------
 -- conversion_record: what became of each old row. Either a target or a reason
 -- is filled. criterion_id is empty for a record about the principle as a whole.
 -- Written by contribute_decomposition in the same transaction as the tests.
@@ -268,6 +282,7 @@ grant all on legal_commons.test_principle to service_role;
 grant all on legal_commons.test_rationale to service_role;
 grant all on legal_commons.meaning_verdict to service_role;
 grant all on legal_commons.embedding_fingerprint to service_role;
+grant all on legal_commons.clause_embedding_staging to service_role;
 grant all on legal_commons.conversion_record to service_role;
 grant select on legal_commons.clause_pair_state to service_role;
 

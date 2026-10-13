@@ -7,7 +7,7 @@
 -- and none cascades, so a dependency this file does not know about stops the
 -- script instead of being dropped with it.
 --
--- The rows of the nine tables go with the tables. No existing table loses a
+-- The rows of the ten tables go with the tables. No existing table loses a
 -- row; `principle_authority` loses the `pinpoint` field and what it held.
 -- =============================================================================
 
@@ -17,12 +17,14 @@ drop function if exists legal_commons.clause_search(text, extensions.vector, tex
 drop function if exists legal_commons.contribute_decomposition(jsonb, text);
 drop function if exists legal_commons.contribute_verdicts(jsonb, text);
 drop function if exists legal_commons.retire(text, uuid, text, text);
-drop function if exists legal_commons.set_clause_embeddings(jsonb, jsonb);
+drop function if exists legal_commons.stage_clause_embeddings(jsonb, jsonb);
+drop function if exists legal_commons.set_clause_embeddings(jsonb);
 
 alter table legal_commons.principle_authority drop column pinpoint;
 
 drop view legal_commons.clause_pair_state;
 drop table legal_commons.conversion_record;
+drop table legal_commons.clause_embedding_staging;
 drop table legal_commons.embedding_fingerprint;
 drop table legal_commons.meaning_verdict;
 drop table legal_commons.test_rationale;

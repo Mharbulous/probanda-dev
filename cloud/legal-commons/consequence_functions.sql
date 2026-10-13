@@ -5,17 +5,22 @@
 -- in one paste in the SQL editor. Idempotent: safe to re-run.
 -- Undone by migrations/0001_down.sql.
 --
--- Five functions here; the sixth, tidy_clause_text, is in the migration because
+-- Six functions here; the seventh, tidy_clause_text, is in the migration because
 -- the `clause` table is built on it.
 --
--- Replies. clause_search is the one reader. Each of the four writers replies in
+-- Replies. clause_search is the one reader. Each of the five writers replies in
 -- one of two shapes and no other:
 --   {"saved": true, ...}                    the write was saved
 --   {"saved": false, "question": "..."}     nothing was saved; a question about
 --                                           the item that was sent
 -- A refused write leaves no row behind: the writers that do more than one write
 -- run them inside a block that is rolled back whole when a question is raised
--- (SQLSTATE LC001, used for nothing else).
+-- (SQLSTATE LC001, used for nothing else). A value inside the JSON that is not
+-- in its proper form (an id that is not a uuid, a number that is not a number)
+-- raises a Postgres error of class 22 (`data_exception`), and the same block
+-- turns that into a question too. An argument that is itself typed (retire's
+-- id, clause_search's embedding) is converted by PostgREST before the function
+-- starts, so a malformed one gets PostgREST's own error and never reaches here.
 --
 -- Embeddings arrive as JSON arrays of 384 numbers, made by the Edge Functions.
 -- No function here runs a model.
@@ -48,7 +53,8 @@ declare
   v_role text := coalesce(p_role, 'any');
 begin
   if v_role not in ('any', 'consequence', 'element', 'exception', 'factor', 'rationale') then
-    raise exception 'clause_search: unknown role %', v_role;
+    return jsonb_build_object('exact', null, 'nearest', '[]'::jsonb, 'question',
+      'Which kind of statement is being looked for: a consequence, an element, an exception, a factor, a rationale, or any?');
   end if;
 
   return (
@@ -242,7 +248,7 @@ language plpgsql
 set search_path = legal_commons, extensions
 as $$
 declare
-  v_principle_id uuid := (p_payload->>'principle_id')::uuid;
+  v_principle_id uuid;
   v_principle_text text;
   v_md5 text;
   v_stored extensions.vector;
@@ -265,6 +271,7 @@ declare
 begin
   begin
     -- The principle.
+    v_principle_id := (p_payload->>'principle_id')::uuid;
     if v_principle_id is null then
       raise sqlstate 'LC001' using message = 'Which principle is this a decomposition of?';
     end if;
@@ -520,8 +527,12 @@ begin
           and r.clause_id is not distinct from v_conv_clause
           and r.reason is not distinct from v_reason);
     end loop;
-  exception when sqlstate 'LC001' then
-    return jsonb_build_object('saved', false, 'question', sqlerrm);
+  exception
+    when sqlstate 'LC001' then
+      return jsonb_build_object('saved', false, 'question', sqlerrm);
+    when data_exception then
+      return jsonb_build_object('saved', false, 'question',
+        'Is every id, number and yes-or-no value in this decomposition written in its proper form?');
   end;
 
   return jsonb_build_object(
@@ -591,8 +602,12 @@ begin
       );
       v_count := v_count + 1;
     end loop;
-  exception when sqlstate 'LC001' then
-    return jsonb_build_object('saved', false, 'question', sqlerrm);
+  exception
+    when sqlstate 'LC001' then
+      return jsonb_build_object('saved', false, 'question', sqlerrm);
+    when data_exception then
+      return jsonb_build_object('saved', false, 'question',
+        'Is every id and every yes-or-no value in these verdicts written in its proper form?');
   end;
 
   return jsonb_build_object('saved', true, 'verdicts', v_count);
@@ -628,21 +643,85 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- set_clause_embeddings: replaces every clause's embedding and the fingerprint
--- together, for a change of model, and stores the first fingerprint while the
--- pool has no clause. It takes all rows in one call and refuses a call that
--- leaves any clause out: embeddings from two models under one fingerprint would
--- return wrong neighbours without saying so.
+-- stage_clause_embeddings: holds one batch of new embeddings for a change of
+-- model, without touching the embeddings the search reads. A change of model
+-- arrives in batches because one Edge Function request cannot embed a whole
+-- pool. Each staged row keeps the fingerprint its batch came with. Staging a
+-- clause again replaces what was staged for it.
 --   p_rows:        [ { "clause_id", "embedding": [384 numbers] } ]
---   p_fingerprint: { "model", "sentence", "embedding": [384 numbers] }
+--   p_fingerprint: [384 numbers]      -- fresh embedding of the fixed sentence
 -- -----------------------------------------------------------------------------
-create or replace function legal_commons.set_clause_embeddings(p_rows jsonb, p_fingerprint jsonb)
+create or replace function legal_commons.stage_clause_embeddings(p_rows jsonb, p_fingerprint jsonb)
 returns jsonb
 language plpgsql
 set search_path = legal_commons, extensions
 as $$
 declare
-  v_rows jsonb := coalesce(p_rows, '[]'::jsonb);
+  v_count integer;
+begin
+  if (case when jsonb_typeof(p_fingerprint) = 'array' then jsonb_array_length(p_fingerprint) else 0 end) <> 384 then
+    return jsonb_build_object('saved', false, 'question',
+      'Did this batch come with the embedding model''s fresh embedding of the fixed sentence?');
+  end if;
+  if (case when jsonb_typeof(p_rows) = 'array' then jsonb_array_length(p_rows) else 0 end) = 0 then
+    return jsonb_build_object('saved', false, 'question', 'Which statements does this batch carry new embeddings for?');
+  end if;
+  if exists (
+    select 1 from jsonb_array_elements(p_rows) r
+    where r.value->>'clause_id' is null
+       or (case when jsonb_typeof(r.value->'embedding') = 'array'
+                then jsonb_array_length(r.value->'embedding') else 0 end) <> 384
+  ) then
+    return jsonb_build_object('saved', false, 'question',
+      'Does every row name a statement and carry its embedding?');
+  end if;
+
+  begin
+    if exists (
+      select 1 from jsonb_array_elements(p_rows) r
+      where not exists (
+        select 1 from legal_commons.clause c where c.clause_id = (r.value->>'clause_id')::uuid)
+    ) then
+      return jsonb_build_object('saved', false, 'question', 'Is every statement named in this batch in the pool?');
+    end if;
+
+    insert into legal_commons.clause_embedding_staging (clause_id, embedding, fingerprint)
+    select distinct on ((r.value->>'clause_id')::uuid)
+           (r.value->>'clause_id')::uuid,
+           (r.value->'embedding')::text::extensions.vector,
+           p_fingerprint::text::extensions.vector
+    from jsonb_array_elements(p_rows) r
+    order by (r.value->>'clause_id')::uuid
+    on conflict (clause_id) do update set
+      embedding = excluded.embedding,
+      fingerprint = excluded.fingerprint,
+      created_at = now();
+    get diagnostics v_count = row_count;
+  exception when data_exception then
+    return jsonb_build_object('saved', false, 'question',
+      'Is every id and every number in this batch written in its proper form?');
+  end;
+
+  return jsonb_build_object('saved', true, 'staged', v_count);
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- set_clause_embeddings: replaces every clause's embedding and the fingerprint
+-- together, from the staged rows, for a change of model. It also stores the
+-- first fingerprint while the pool has no clause. All or none: it refuses while
+-- any clause has no staged embedding, or while any staged embedding came with a
+-- fingerprint other than the one given, because embeddings from two models
+-- under one fingerprint would return wrong neighbours without saying so.
+--   p_fingerprint: { "model", "sentence", "embedding": [384 numbers] }
+-- -----------------------------------------------------------------------------
+create or replace function legal_commons.set_clause_embeddings(p_fingerprint jsonb)
+returns jsonb
+language plpgsql
+set search_path = legal_commons, extensions
+as $$
+declare
+  v_new extensions.vector;
   v_count integer;
 begin
   -- No clause may arrive between the completeness check and the update.
@@ -655,37 +734,40 @@ begin
     return jsonb_build_object('saved', false, 'question',
       'Does the fingerprint name the model, the fixed sentence and that sentence''s embedding?');
   end if;
-  if jsonb_typeof(v_rows) <> 'array' or exists (
-    select 1 from jsonb_array_elements(v_rows) r
-    where r.value->>'clause_id' is null
-       or (case when jsonb_typeof(r.value->'embedding') = 'array'
-                then jsonb_array_length(r.value->'embedding') else 0 end) <> 384
-  ) then
+  begin
+    v_new := (p_fingerprint->'embedding')::text::extensions.vector;
+  exception when data_exception then
     return jsonb_build_object('saved', false, 'question',
-      'Does every row name a statement and carry its embedding?');
-  end if;
+      'Is every number in the fingerprint written in its proper form?');
+  end;
+
   if exists (
     select 1 from legal_commons.clause c
     where not exists (
-      select 1 from jsonb_array_elements(v_rows) r where (r.value->>'clause_id')::uuid = c.clause_id)
+      select 1 from legal_commons.clause_embedding_staging s where s.clause_id = c.clause_id)
   ) then
     return jsonb_build_object('saved', false, 'question',
-      'Does this call carry a new embedding for every statement in the pool?');
+      'Has a new embedding been staged for every statement in the pool?');
   end if;
-  if (select count(*) from legal_commons.clause) <> jsonb_array_length(v_rows) then
+  if exists (
+    select 1 from legal_commons.clause_embedding_staging s
+    where 1 - (s.fingerprint <=> v_new) < 0.999
+  ) then
     return jsonb_build_object('saved', false, 'question',
-      'Does every embedding in this call belong to one statement in the pool, once?');
+      'Were all the staged embeddings made by the model this fingerprint names?');
   end if;
 
   update legal_commons.clause c
-  set embedding = (r.value->'embedding')::text::extensions.vector
-  from jsonb_array_elements(v_rows) r
-  where c.clause_id = (r.value->>'clause_id')::uuid;
+  set embedding = s.embedding
+  from legal_commons.clause_embedding_staging s
+  where c.clause_id = s.clause_id;
   get diagnostics v_count = row_count;
 
+  -- `where true`: Supabase refuses a delete with no condition from an API role.
+  delete from legal_commons.clause_embedding_staging where true;
+
   insert into legal_commons.embedding_fingerprint (only_row, model, sentence, embedding)
-  values (true, p_fingerprint->>'model', p_fingerprint->>'sentence',
-          (p_fingerprint->'embedding')::text::extensions.vector)
+  values (true, p_fingerprint->>'model', p_fingerprint->>'sentence', v_new)
   on conflict (only_row) do update set
     model = excluded.model,
     sentence = excluded.sentence,
@@ -704,10 +786,12 @@ revoke execute on function legal_commons.clause_search(text, extensions.vector, 
 revoke execute on function legal_commons.contribute_decomposition(jsonb, text) from public;
 revoke execute on function legal_commons.contribute_verdicts(jsonb, text) from public;
 revoke execute on function legal_commons.retire(text, uuid, text, text) from public;
-revoke execute on function legal_commons.set_clause_embeddings(jsonb, jsonb) from public;
+revoke execute on function legal_commons.stage_clause_embeddings(jsonb, jsonb) from public;
+revoke execute on function legal_commons.set_clause_embeddings(jsonb) from public;
 grant execute on function legal_commons.clause_search(text, extensions.vector, text, integer) to service_role;
 grant execute on function legal_commons.contribute_decomposition(jsonb, text) to service_role;
 grant execute on function legal_commons.contribute_verdicts(jsonb, text) to service_role;
 grant execute on function legal_commons.retire(text, uuid, text, text) to service_role;
-grant execute on function legal_commons.set_clause_embeddings(jsonb, jsonb) to service_role;
+grant execute on function legal_commons.stage_clause_embeddings(jsonb, jsonb) to service_role;
+grant execute on function legal_commons.set_clause_embeddings(jsonb) to service_role;
 notify pgrst, 'reload schema';

@@ -123,7 +123,7 @@ begin
   perform pg_temp.lc_check('a write is refused while no fingerprint is stored',
     r->>'saved' = 'false' and r ? 'question' and pg_temp.lc_counts()->>'clause' = '0', r::text);
 
-  r := legal_commons.set_clause_embeddings('[]'::jsonb,
+  r := legal_commons.set_clause_embeddings(
     jsonb_build_object('model', 'scratch-model', 'sentence', 'Scratch sentence', 'embedding', pg_temp.lc_vec(1)));
   perform pg_temp.lc_check('the first fingerprint is stored while the pool has no clause',
     r->>'saved' = 'true' and pg_temp.lc_counts()->>'embedding_fingerprint' = '1', r::text);
@@ -174,6 +174,16 @@ begin
     pg_temp.lc_payload_one() || '{"principle_id":"00000000-0000-0000-0000-0000000000a9"}'::jsonb, 'scratch');
   perform pg_temp.lc_check('a principle id that was merged away is refused',
     r->>'saved' = 'false' and r ? 'question' and pg_temp.lc_counts() = v_before, r::text);
+
+  r := legal_commons.contribute_decomposition(
+    pg_temp.lc_payload_one() || '{"principle_id":"abc"}'::jsonb, 'scratch');
+  perform pg_temp.lc_check('a principle id that is not an id gets a question, not a database error',
+    r->>'saved' = 'false' and r ? 'question' and pg_temp.lc_counts() = v_before, r::text);
+
+  r := legal_commons.contribute_decomposition(
+    pg_temp.lc_payload_one() || '{"conversion":[{"criterion_id":"abc","reason":"Scratch"}]}'::jsonb, 'scratch');
+  perform pg_temp.lc_check('a malformed id deep in a decomposition gets a question, and nothing is saved',
+    r->>'saved' = 'false' and r ? 'question' and pg_temp.lc_counts() = v_before, r::text);
 end $t$;
 
 -- 4. A good decomposition, and the same one again.
@@ -221,6 +231,8 @@ do $t$
 declare
   r jsonb;
   v_all jsonb;
+  v_first jsonb;
+  v_new jsonb := jsonb_build_object('model', 'scratch-model-2', 'sentence', 'Scratch sentence', 'embedding', pg_temp.lc_vec(1));
   v_sum_before text;
   v_sum_after text;
 begin
@@ -228,20 +240,42 @@ begin
          md5(string_agg(c.embedding::text, '|' order by c.clause_id))
   into v_all, v_sum_before
   from legal_commons.clause c;
+  v_first := jsonb_build_array(v_all->0);
 
-  r := legal_commons.set_clause_embeddings(v_all - 0,
-    jsonb_build_object('model', 'scratch-model-2', 'sentence', 'Scratch sentence', 'embedding', pg_temp.lc_vec(1)));
+  r := legal_commons.stage_clause_embeddings(
+    jsonb_build_array(v_all->0 || '{"clause_id":"abc"}'::jsonb), pg_temp.lc_vec(1));
+  perform pg_temp.lc_check('a staged batch with a malformed id gets a question, not a database error',
+    r->>'saved' = 'false' and r ? 'question'
+      and (select count(*) from legal_commons.clause_embedding_staging) = 0, r::text);
+
+  -- The first batch: every clause but one.
+  r := legal_commons.stage_clause_embeddings(v_all - 0, pg_temp.lc_vec(1));
+  select md5(string_agg(c.embedding::text, '|' order by c.clause_id)) into v_sum_after from legal_commons.clause c;
+  perform pg_temp.lc_check('staging a batch is saved and changes no embedding the search reads',
+    r->>'saved' = 'true' and r->>'staged' = '4' and v_sum_after = v_sum_before, r::text);
+
+  r := legal_commons.set_clause_embeddings(v_new);
   select md5(string_agg(c.embedding::text, '|' order by c.clause_id)) into v_sum_after from legal_commons.clause c;
   perform pg_temp.lc_check('replacing embeddings with one clause left out is refused, and nothing changes',
     r->>'saved' = 'false' and r ? 'question' and v_sum_after = v_sum_before
       and (select f.model from legal_commons.embedding_fingerprint f) = 'scratch-model', r::text);
 
-  r := legal_commons.set_clause_embeddings(v_all,
-    jsonb_build_object('model', 'scratch-model-2', 'sentence', 'Scratch sentence', 'embedding', pg_temp.lc_vec(1)));
+  -- The second batch, as if made by another model.
+  r := legal_commons.stage_clause_embeddings(v_first, pg_temp.lc_vec(2));
+  r := legal_commons.set_clause_embeddings(v_new);
   select md5(string_agg(c.embedding::text, '|' order by c.clause_id)) into v_sum_after from legal_commons.clause c;
-  perform pg_temp.lc_check('replacing every embedding at once is saved, with the fingerprint',
+  perform pg_temp.lc_check('replacing embeddings staged under two fingerprints is refused, and nothing changes',
+    r->>'saved' = 'false' and r ? 'question' and v_sum_after = v_sum_before
+      and (select f.model from legal_commons.embedding_fingerprint f) = 'scratch-model', r::text);
+
+  -- The second batch again, by the right model: it replaces what was staged.
+  r := legal_commons.stage_clause_embeddings(v_first, pg_temp.lc_vec(1));
+  r := legal_commons.set_clause_embeddings(v_new);
+  select md5(string_agg(c.embedding::text, '|' order by c.clause_id)) into v_sum_after from legal_commons.clause c;
+  perform pg_temp.lc_check('replacing every embedding from two staged batches is saved, with the fingerprint',
     r->>'saved' = 'true' and r->>'clauses' = '5' and v_sum_after <> v_sum_before
-      and (select f.model from legal_commons.embedding_fingerprint f) = 'scratch-model-2', r::text);
+      and (select f.model from legal_commons.embedding_fingerprint f) = 'scratch-model-2'
+      and (select count(*) from legal_commons.clause_embedding_staging) = 0, r::text);
 end $t$;
 
 -- 7. The search and meaning verdicts. xi = ypsilon = zeta by two model verdicts
@@ -283,6 +317,10 @@ begin
   r := legal_commons.clause_search('Scratch reason', v_q, 'rationale', 10);
   perform pg_temp.lc_check('a role limits the nearest clauses to that role',
     r->'exact'->>'text' = 'Scratch reason' and jsonb_array_length(r->'nearest') = 0, r::text);
+
+  r := legal_commons.clause_search('Scratch reason', v_q, 'scratch-role', 10);
+  perform pg_temp.lc_check('a search for an unknown role gets a question, not a database error',
+    r ? 'question' and jsonb_array_length(r->'nearest') = 0, r::text);
 end $t$;
 
 -- 8. A person's verdict overrides two model verdicts, and a pair has one form.
@@ -323,6 +361,12 @@ begin
     jsonb_build_object('clause_a', v_small, 'clause_b', v_large, 'a_implies_b', true, 'b_implies_a', true,
       'judge_kind', 'model')), 'scratch');
   perform pg_temp.lc_check('a model verdict that names no model is refused',
+    r->>'saved' = 'false' and r ? 'question', r::text);
+
+  r := legal_commons.contribute_verdicts(jsonb_build_array(
+    jsonb_build_object('clause_a', 'abc', 'clause_b', v_large, 'a_implies_b', 'perhaps', 'b_implies_a', true,
+      'judge_kind', 'person')), 'scratch');
+  perform pg_temp.lc_check('a verdict with a malformed id gets a question, not a database error',
     r->>'saved' = 'false' and r ? 'question', r::text);
 end $t$;
 

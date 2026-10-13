@@ -61,20 +61,19 @@ export async function callPool(key: string, fn: string, args: Record<string, unk
   return new Response(await res.text(), { status: res.status, headers: { "Content-Type": "application/json" } });
 }
 
-/** Every clause's id and text, read a page at a time. */
-export async function allClauses(key: string): Promise<{ clause_id: string; text: string }[]> {
-  const page = 500;
-  const out: { clause_id: string; text: string }[] = [];
-  for (let offset = 0; ; offset += page) {
-    const res = await fetch(
-      `${Deno.env.get("SUPABASE_URL")}/rest/v1/clause?select=clause_id,text&order=clause_id&limit=${page}&offset=${offset}`,
-      { headers: headers(key, "Accept-Profile") },
-    );
-    if (!res.ok) throw new Error(`reading clauses failed (${res.status})`);
-    const rows = await res.json();
-    out.push(...rows);
-    if (rows.length < page) return out;
-  }
+/** The next `limit` clauses in id order, after the id given or from the start. */
+export async function clausesAfter(
+  key: string,
+  after: string | null,
+  limit: number,
+): Promise<{ clause_id: string; text: string }[]> {
+  const from = after ? `&clause_id=gt.${after}` : "";
+  const res = await fetch(
+    `${Deno.env.get("SUPABASE_URL")}/rest/v1/clause?select=clause_id,text&order=clause_id&limit=${limit}${from}`,
+    { headers: headers(key, "Accept-Profile") },
+  );
+  if (!res.ok) throw new Error(`reading clauses failed (${res.status})`);
+  return await res.json();
 }
 
 /**

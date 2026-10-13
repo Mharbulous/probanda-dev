@@ -2,6 +2,8 @@
 # pool's secret keys are not JWTs: each function checks the caller's `apikey`
 # header itself (functions/_shared/pool.ts) before it reads the request body.
 
+project_id = "nbzkuhgiqscjkypedqff"
+
 [functions.commons-search]
 verify_jwt = false
 
