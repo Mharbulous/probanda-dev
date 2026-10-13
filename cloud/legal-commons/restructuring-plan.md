@@ -175,16 +175,33 @@ How a caller is admitted, from Supabase's documentation read 2026-10-13. By defa
 
 ## Phases, in order, each with its check
 
-### Phase 1. Learn the live pool's state (gate: Brahm runs the dump)
+### Phase 1. Learn the live pool's state (done 2026-10-13)
 
 This is step 4 of the schema plan, unchanged, with three additions to what the dump must show: the distinct values of `criterion.requirement_type`, a row count for every table, and whether any function or policy deletes a `principle` row.
 
 - Check: a written list of every difference from `schema.sql`, `functions.sql` and `rule_periods.sql`. Each difference is then applied to this plan and to the mapping before phase 2 starts.
-- The count of principles settles how much there is to decompose. The pool held 16 on 2026-10-12 and July's records describe about 148. The migration does not depend on the answer. Phase 5 does.
+
+Result, from two read-only queries Brahm ran in the SQL editor on 2026-10-13 (Postgres 17.6, encoding UTF8).
+
+What matches:
+
+- The eight tables, every column with its type, default and nullability, every index and every constraint match `schema.sql` and `rule_periods.sql`. There is no view, trigger, policy or row-level security in `legal_commons`.
+- The ten functions match `functions.sql` and `rule_periods.sql`. The md5 of each live body equals the md5 of the body in the file, and the signatures, defaults and languages agree. None runs with its owner's rights.
+- The `public` schema holds no table and no view, so no matter data is left in the project.
+- No function in any schema deletes or truncates `principle`, and no foreign key cascades. Default 5 stands.
+
+Differences:
+
+1. The `vector` extension is already installed, version 0.8.0, in the `extensions` schema. The migration's `create extension if not exists` is therefore a no-op on the pool, and the down script leaves the extension in place. Phase 2 below is corrected.
+2. Every existing function can be run by `PUBLIC` (every role), which is Postgres's default, while `functions.sql` describes the pool as granted to `service_role` only. The tables are granted to `postgres` and `service_role` only and no function runs with its owner's rights, so another role is refused at the first table a function touches. The existing functions are left as they are. Each new function withdraws the `PUBLIC` right. Phase 2 below is corrected.
+
+Counts: 16 `principle`, 35 `criterion`, 3 `authority`, 14 `principle_authority`, 2 `rule_period`, 1 `rule_period_verification`, 0 `principle_redirects`, 0 `treatment`. The pool holds the 16 pilot principles and no others, so phase 5 has nothing beyond them to decompose. With 14 links for 16 principles, at least two principles have no authority, and their tests will reach none.
+
+`criterion.requirement_type` holds `element` on 29 rows and `factor` on 6. No row holds `exception` and no row holds a value outside the three clause types, so the conversion needs no extra rule.
 
 ### Phase 2. Write and test the migration (gate: Brahm's go-ahead for the scratch schema)
 
-- Files under `cloud/legal-commons/`: `migrations/0001_consequence_structure.sql` (the `vector` extension, the nine tables, the view, the `pinpoint` field, indexes on every foreign key, grants to `service_role`, and `notify pgrst, 'reload schema'`, which tells PostgREST to notice the new objects), `migrations/0001_down.sql` (removes exactly what the first adds), `consequence_functions.sql`, and `functions/` for the three Edge Functions with their `config.toml` entries setting `verify_jwt = false`.
+- Files under `cloud/legal-commons/`: `migrations/0001_consequence_structure.sql` (`create extension if not exists` for `vector`, which does nothing on the pool because phase 1 found it installed, the nine tables, the view, the `pinpoint` field, indexes on every foreign key, grants to `service_role`, and `notify pgrst, 'reload schema'`, which tells PostgREST to notice the new objects), `migrations/0001_down.sql` (removes exactly what the first adds, and so leaves the `vector` extension, which was there before), `consequence_functions.sql` (each function granted to `service_role`, with the default right of every role to run it withdrawn), and `functions/` for the three Edge Functions with their `config.toml` entries setting `verify_jwt = false`.
 - Tests, each of which can fail: the tidying rule gives the same result in SQL and in `rank.ts` for every string in the shared list. A decomposition with an exception chain that loops is refused. A test whose condition is its own consequence is refused. Contributing the same decomposition twice leaves the row counts unchanged. A rationale for a test its principle does not state is refused. A write with a wrong fingerprint, or with none stored, is refused. A `set_clause_embeddings` call that leaves one clause out is refused. A search reaches a test through two `equivalent` pairs in a row, and does not follow a pair in `conflict`. A person's verdict overrides two model verdicts. Amending a principle's text marks its tests stale. Running the down script leaves the schema as it was before, shown by comparing a dump of the scratch schema taken before the migration with one taken after the down script.
 - Check: all of the above pass in the scratch schema, and `python scripts/check_publishable.py --new-since origin/main` reports no new problem.
 
@@ -203,7 +220,7 @@ This is step 4 of the schema plan, unchanged, with three additions to what the d
 ### Phase 5. Load the decompositions (gate: Brahm's review of the 16 pilot results)
 
 - Contribute the 16 approved decompositions, each with its `conversion_record` rows, through `commons-contribute`.
-- Decompose and contribute any further principles phase 1 found, in batches, by the same two-agent pipeline as the pilot. A person reviews every checker flag and one in ten of the rest.
+- Phase 1 found no principle beyond the 16. A principle pushed later is decomposed and contributed, in batches, by the same two-agent pipeline as the pilot. A person reviews every checker flag and one in ten of the rest.
 - Check, as queries: every principle has a test or a `conversion_record` reason for none. Every `criterion` row has a `conversion_record` row. Every test has at least one stated-in link. The `principle_authority` links of principles recorded with a reason for no test are listed for Brahm, since those authorities now reach no test and only he can say whether that is right.
 - Check, end to end: each of the 443 consequence rewordings from the trial is sent through `commons-search`, and in at least 95% of them a clause from a test stated by the rewording's own source principle is in the top 10. The source principle of each trial clause is known from the trial's files, and a pooled clause reaches its principle through `test_principle`. This is the first search over real pooled clauses, so a failure here stops phase 6.
 
