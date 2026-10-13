@@ -52,7 +52,6 @@
   "polish-substance": [],
   "practice-data": [],
   "prepare": [],
-  "proof-read": [],
   "publish": [
     "scripts",
     "templates",
@@ -89,7 +88,6 @@
   "timecamping-data": [
     "scripts"
   ],
-  "TLDR": [],
   "verify-law": [
     "scripts"
   ],
