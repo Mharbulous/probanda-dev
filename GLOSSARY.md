@@ -194,7 +194,7 @@ A part of a Mockup — caption (style of proceeding), orders, paragraphs, excerp
 _Avoid_: section (a schema term); part (Form 32's own word).
 
 **Consequence**:
-The clause a test entails: the legal outcome. The hub of a **Rule**, and the entry a search looks for. It records its actor and its discretion (may, must, is) as fields, because similarity search blurs them. Tests point at it. It points at nothing. Two consequences judged to mean the same are both kept and linked, never merged.
+The clause a test entails: the legal outcome. The hub of a **Rule**, and the entry a search looks for. It records its actor and its discretion (true when the outcome is discretionary, as with "may"; false otherwise) as fields, because similarity search blurs them. Tests point at it. It points at nothing. Two consequences judged to mean the same are both kept and linked, never merged.
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
