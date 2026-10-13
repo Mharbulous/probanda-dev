@@ -8,6 +8,13 @@ The plugin is developed here. Its source is the skill trees under `.claude/skill
 
 A push to `main` is the release. claude.ai installs Probanda from this repository as the marketplace `probanda` and picks up new commits itself, and each machine then syncs from claude.ai. To release, bump `version` in `source/probanda/plugin.json`, run `python scripts/build_plugin.py`, commit and push. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
 
+## Two repositories
+
+- `Mharbulous/probanda-plugins` is this repository. It is private, and all development happens here. It stays private: its history holds schema files.
+- `Probanda-app/litigation` is the public repository that users install from.
+
+`public/` is the Public Folder: the only source of the public repository, so it never holds a Trade Secret or User Data. A skill lives under `public/plugins/probanda/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. A person approves its files with `python scripts/approve_public.py` and publishes by starting the `publish-public` workflow from the Actions tab. No LLM approves or publishes, and nobody edits the public repository by hand.
+
 ## The move from CoClerk
 
 The source moved here from CoClerk and is no longer edited there. The plugin carries legal-commons' read side only: its gatekeeper skill, the `law-librarian` and `troubleshooter` agents, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
