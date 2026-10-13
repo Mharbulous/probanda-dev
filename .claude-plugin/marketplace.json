@@ -2,8 +2,8 @@
   "name": "probanda",
   "description": "Probanda, a Claude Cowork plugin for litigation practice in British Columbia",
   "owner": {
-    "name": "Mharbulous",
-    "url": "https://github.com/Mharbulous"
+    "name": "Probanda",
+    "url": "https://github.com/Probanda-app"
   },
   "plugins": [
     {
