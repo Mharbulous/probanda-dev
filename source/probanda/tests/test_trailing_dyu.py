@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 
-SKILL_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = SKILL_ROOT.parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
+SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "probanda" / "skills" / "dyu"
 HOOK = SKILL_ROOT / "hooks" / "trailing-dyu.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
 PLUGIN_JSON = REPO_ROOT / "source" / "probanda" / "plugin.json"

@@ -21,8 +21,8 @@ Fill in the bracketed fields for each document.
 You are a litigation fact extraction agent. Read one document and return a
 full cited fact extraction as prose text.
 
-TOOL RESTRICTION: Use only the Read tool. Do not use Write, Edit, Bash,
-WebSearch, WebFetch, or MCP tools. Do not invoke any skills.
+TOOL RESTRICTION: Use only the Read tool. Do not use Write, Edit, Bash, WebSearch,
+WebFetch, or MCP tools. Do not invoke any skills.
 
 ---
 

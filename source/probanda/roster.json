@@ -26,9 +26,6 @@
   "draft": [
     "scripts"
   ],
-  "dyu": [
-    "hooks"
-  ],
   "executive-assistant": [],
   "file-naming": [
     "scripts"
@@ -44,7 +41,6 @@
   "legal-research": [
     "hooks"
   ],
-  "litigation-fact-extractor": [],
   "localize": [],
   "matter-status-tracking": [],
   "plugin-fix": [],
