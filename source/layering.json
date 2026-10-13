@@ -1,5 +1,5 @@
 {
-  "note": "Rulings for scripts/check_layering.py. One ruling covers every line of a file that names the target. Reasons used in 'allowed': exception = decided by Brahm on 2026-10-13 (verify-law and legal-memo-extractor call /case-data); signpost = tells the user or the caller that something is another skill's job, and calls nothing; conditional = a step that runs only on work a skill of the higher plugin created; caller = describes a higher skill that calls this one; mention = a comparison, an example or a description.",
+  "note": "Rulings for scripts/check_layering.py. One ruling covers every line of a file that names the target. Reasons used in 'allowed': exception = decided by Brahm on 2026-10-13 (verify-law and legal-memo-extractor call /case-data); signpost = tells the user or the caller that something is another skill's job, and calls nothing; conditional = a step that runs only when the higher plugin is installed, or only on work one of its skills created, and that says what happens without it; caller = describes a higher skill that calls this one; mention = a comparison, an example or a description.",
   "allowed": [
     {"file": ".claude/skills/bill-client/SKILL.md", "target": "housekeeping", "why": "signpost", "note": "Asks the practitioner to run /housekeeping on one folder."},
     {"file": ".claude/skills/file-naming/SKILL.md", "target": "housekeeping", "why": "caller"},
@@ -68,20 +68,19 @@
     {"file": ".claude/skills/verify-law/scripts/diff_excerpt.py", "target": "case-data", "why": "exception"},
     {"file": ".claude/skills/verify-law/subskills/sweep-draft/SUBSKILL.md", "target": "draft", "why": "signpost", "note": "A Writing in /draft is not swept here."},
     {"file": ".claude/skills/verify-law/subskills/verify-authorities/SUBSKILL.md", "target": "case-data", "why": "exception"},
-    {"file": ".claude/skills/verify-law/subskills/verify-authorities/SUBSKILL.md", "target": "draft", "why": "conditional", "note": "Only when the document is a mockup that /draft rendered."}
+    {"file": ".claude/skills/verify-law/subskills/verify-authorities/SUBSKILL.md", "target": "draft", "why": "conditional", "note": "Only when the document is a mockup that /draft rendered."},
+    {"file": ".claude/skills/bill-client/SKILL.md", "target": "case-data", "why": "conditional", "note": "Without litigator: client number from practice-data matter-lookup, and the housekeeping check is skipped with a notice."},
+    {"file": ".claude/skills/file-sorting/profiles/litigation-matter/profile.md", "target": "case-data", "why": "conditional", "note": "The profile stops and says it needs litigator."},
+    {"file": ".claude/skills/find-document/SKILL.md", "target": "case-data", "why": "conditional", "note": "Without litigator: searches the name as given and says so."},
+    {"file": ".claude/skills/show-me/SKILL.md", "target": "verify-law", "why": "conditional", "note": "Without research: says the verbatim check was not run, and a proposed excerpt stays unproposed."},
+    {"file": ".claude/skills/task-prioritization/SKILL.md", "target": "drafting-data", "why": "conditional", "note": "Without litigator: the filing-pointer workflow says so and stops."},
+    {"file": ".claude/skills/case-brief/SKILL.md", "target": "case-data", "why": "conditional", "note": "Without litigator: skips tier 1 and makes no offer to persist."},
+    {"file": ".claude/skills/legal-research/SKILL.md", "target": "case-data", "why": "conditional", "note": "Without litigator: no held copy is asked for and nothing is ingested, and the relay says so."},
+    {"file": ".claude/skills/legal-research/SKILL.md", "target": "ingest", "why": "conditional", "note": "The same step: ingests only when the ingest skill is available."},
+    {"file": ".claude/skills/legal-research/SKILL.md", "target": "draft", "why": "caller", "note": "Says who composes the provenance line of a stored statement."},
+    {"file": ".claude/skills/legal-research/subskills/westlaw-query-optimizer/SUBSKILL.md", "target": "case-data", "why": "conditional", "note": "Without litigator: client number from practice-data matter-lookup."},
+    {"file": "source/probanda/agents/law-librarian.md", "target": "case_data__*", "why": "conditional", "note": "The grant is used as the shared audit protocol directs, which reports the tier NOT AUDITED when litigator is not installed."},
+    {"file": "source/probanda/agents/research-agent.md", "target": "case_data__*", "why": "conditional", "note": "The same as law-librarian."}
   ],
-  "todo": [
-    {"file": ".claude/skills/bill-client/SKILL.md", "target": "case-data", "fix": "Steps 1 and 2 call /case-data's profile, initialize and housekeeping-log operations. Word them as running only when litigator is installed, with practice-data matter-lookup as the route without it."},
-    {"file": ".claude/skills/draft/hooks/mail-send-gate.py", "target": "folder draft", "fix": "A practice hook whose script sits in a litigator skill folder. Move the script to source/probanda/hooks/ and change its path in plugin.json in the same commit."},
-    {"file": ".claude/skills/file-sorting/profiles/litigation-matter/profile.md", "target": "case-data", "fix": "The litigation-matter profile invokes /case-data for the review record and for initialization. Only /housekeeping (litigator) uses this profile. Say the profile needs litigator, or move it beside /housekeeping."},
-    {"file": ".claude/skills/find-document/SKILL.md", "target": "case-data", "fix": "Step 1 asks /case-data to resolve a name. It already says what to do when /case-data cannot answer. Add: when litigator is not installed, search the name as given."},
-    {"file": ".claude/skills/show-me/SKILL.md", "target": "verify-law", "fix": "Rule 9 runs /verify-law Mode A step 2 (the verbatim check) on every excerpt. show-me is in practice and verify-law in research. Either the check's script moves where practice ships it, or rule 9 is worded as needing research."},
-    {"file": ".claude/skills/task-prioritization/SKILL.md", "target": "drafting-data", "fix": "The filing-pointer workflow asks /drafting-data for a matter's filings. Word the workflow as available only when litigator is installed."},
-    {"file": ".claude/skills/case-brief/SKILL.md", "target": "case-data", "fix": "Looks for a held copy through case-data and offers to persist through it. Word both as available only when litigator is installed."},
-    {"file": ".claude/skills/legal-research/SKILL.md", "target": "case-data", "fix": "Step 3 asks /case-data for a held copy, and step 5 says to ingest what the answer cites (the bare word, which the scan does not match). Word both as running only when litigator is installed."},
-    {"file": ".claude/skills/legal-research/SKILL.md", "target": "draft", "fix": "Step 4 cites draft/references/authorities.md for the provenance line of a stored statement. That file is in litigator. State the rule where research ships it, or word the step as applying only to a statement /draft handed in."},
-    {"file": ".claude/skills/legal-research/subskills/westlaw-query-optimizer/SUBSKILL.md", "target": "case-data", "fix": "Takes the client number from /case-data when the folder name lacks it. Name practice-data's matter-lookup as the route without litigator."},
-    {"file": "source/probanda/agents/law-librarian.md", "target": "case_data__*", "fix": "Holds a case_data__query grant and reads the matter's case database as one authority layer. The instructions are in shared/legal-audit-protocol.md, legal-audit-scoped.md, research-priority.md and legal-research.md, which tell it to load the case-data skill. Word that layer there as present only when litigator is installed."},
-    {"file": "source/probanda/agents/research-agent.md", "target": "case_data__*", "fix": "The same as law-librarian."}
-  ]
+  "todo": []
 }

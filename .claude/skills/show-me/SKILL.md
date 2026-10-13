@@ -111,7 +111,7 @@ The current text and the proposed text are always shown in full in code blocks: 
 
 An excerpt is by definition a word-for-word copy of the source. Comparing it to the source is a script's job. Never paste a stored or proposed excerpt into chat, in a code block, in a diff, or in a quotation.
 
-Before the decision turn, run the verbatim check (`/verify-law` Mode A, step 2) on every excerpt the decision touches, changed or not. Report one line: `verbatim, pages X-Y`, or one line per opcode of the form `differs: "<ours>" in our excerpt, "<source>" in the source`.
+Before the decision turn, run the verbatim check (`/verify-law` Mode A, step 2) on every excerpt the decision touches, changed or not. Report one line: `verbatim, pages X-Y`, or one line per opcode of the form `differs: "<ours>" in our excerpt, "<source>" in the source`. The check ships in the `research` plugin. If the `verify-law` skill is not available in this session, the check cannot run: say in one line that the verbatim check needs the `research` plugin and was not run, and treat every excerpt as unchecked. A proposed excerpt then stays unproposed.
 
 A proposed excerpt is cut from the source with `highlight_pages.py --excerpt-out` (Mechanics step 2), never typed. Run the verbatim check on the file. Exit 0 is required before the excerpt is proposed. If the check fails, change the span's start or end words and rerun. Never edit the file by hand. If it still fails, report the differing words and stop. The proposed excerpt then stays unproposed and the practitioner decides.
 

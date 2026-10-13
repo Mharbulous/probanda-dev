@@ -1,6 +1,6 @@
 # Plan: split `probanda` into four plugins
 
-Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: phase 0 in progress (terminal host tested 2026-10-13, desktop app and Cowork wait for Brahm). Phases 1 and 2 done 2026-10-13. Phase 3 waits for phase 0's desktop and Cowork answers, so phase 4 is next. Phases 1 and 2 ran ahead of phase 0's remaining hosts because only phase 3 depends on phase 0's answers.
+Written 2026-10-13, revised the same day after a read of the build scripts, the checks, the hook scripts, the server code and the skills the first draft had only scanned. Status: phase 0 in progress (terminal host tested 2026-10-13, desktop app and Cowork wait for Brahm). Phases 1, 2 and 4 done 2026-10-13. Phase 3 waits for phase 0's desktop and Cowork answers, and phase 5 waits for phase 3. Phases 1 and 2 ran ahead of phase 0's remaining hosts because only phase 3 depends on phase 0's answers.
 
 Words used below. A *plugin* is one installable folder: a manifest (`plugin.json`), skills, agents, hooks and servers. A *marketplace* is the list (`.claude-plugin/marketplace.json`) a user installs plugins from. A *hook* is a small script the host runs before or after an event, and its *matcher* is the pattern that says which tool names or agent names make it run. A *server* is one of the three MCP programs the plugin starts (`data`, `canlii`, `commons`), and a *tool* is one function a server offers, named `mcp__plugin_<plugin>_<server>__<tool>`. The *roster* (`source/probanda/roster.json`) is the list of skills a plugin ships. The *bundle* is a server compiled into one file under `mcp/dist/`.
 
@@ -184,6 +184,19 @@ Check: `npm test` in the server folder passes, plus new tests that serve a skill
 In source, with the single plugin still shipping: remove or reword every real upward reference from phase 1, and move `mail-send-gate.py` to `source/probanda/hooks/` with its `plugin.json` path. This phase changes prose and one file location. Names that depend on the plugin name are not touched yet.
 
 Check: `python scripts/check_layering.py` passes strict. `build_plugin.py --check`, `check_plugin.py` and the Python tests pass.
+
+#### Phase 4 outcome (done 2026-10-13, ahead of phase 3)
+
+`python scripts/check_layering.py` passes strict: 80 upward pairs, all allowed, none left to fix. Shipped as `probanda` 0.1.7.
+
+- Each real upward call now says what happens when the higher plugin is absent, tested by whether its skill is available in the session ("If the `case-data` skill is not available in this session, the `litigator` plugin is not installed: ..."). With every plugin installed nothing behaves differently. `source/layering.json` gives the outcome per file under the reason `conditional`.
+- `verify-law` follows Brahm's rule: its front door says Mode A, Mode B and document mode stop at the `/case-data` step and tell the practitioner the step needs `litigator`, and `verify-authorities` step 3 repeats it.
+- `show-me` rule 9 fails closed without `research`: it says the verbatim check was not run, and a proposed excerpt stays unproposed.
+- The four shared research files (`legal-audit-protocol.md`, `legal-audit-scoped.md`, `research-priority.md`, `legal-research.md`) report tier 1 as `case data: NOT AUDITED: litigator plugin not installed`, the form the coverage line already allows for a tier that could not be examined, so the line's shape did not change.
+- `legal-research` step 4 no longer cites `draft/references/authorities.md`. It says the caller supplies the provenance line.
+- `mail-send-gate.py` moved to `source/probanda/hooks/`, with its path in `plugin.json` in the same commit. Run from the built plugin, it still refuses a send and still lets the morning briefing through.
+- Not done, waiting for Brahm: `legal-memo-extractor`'s on-file cross-check. Its text today says to skip the cross-check when case-data is not available, leaving every authority an `Unverified lead`. Brahm's rule for the two excepted skills says to stop at the step. The two disagree, so the text is unchanged until he chooses.
+- Confirmed: rebuilding the data bundle from unchanged source (`node source/probanda/mcp/scripts/bundle.mjs`) reproduces the committed file byte for byte.
 
 ### Phase 5: cutover, in one commit
 

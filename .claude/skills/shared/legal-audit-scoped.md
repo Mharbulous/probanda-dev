@@ -168,7 +168,9 @@ retrieval are never run from a scoped dispatch, so both always read
 `not run: scoped dispatch` here. A note-up dispatch
 visits no `6. LAW` folder and asks no holdings question, so it reports
 `case data: not examined | 6. LAW: not examined` — never `audited`, and never
-omitted.
+omitted. The case database ships in the `litigator` plugin: when the `case-data`
+skill is not available in this session, skip the tier-1 query and report
+`case data: NOT AUDITED: litigator plugin not installed`.
 
 ## `report: brief` — a hard output budget
 

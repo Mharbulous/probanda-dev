@@ -150,7 +150,9 @@ its own Job Board.
 1. Identify the to-do. It must belong to a matter: an admin or professional to-do with no matter
    points nowhere.
 2. Ask `/drafting-data` for the matter's filings and pre-filing proceedings, each with its id,
-   and confirm with the practitioner which one is meant.
+   and confirm with the practitioner which one is meant. If the `drafting-data` skill is not
+   available in this session, the `litigator` plugin is not installed and there is no filing to
+   point to: say so and stop.
 3. **Set:** invoke ``practice-data`` `upsert-task` keyed by the to-do's `id`, with `filing_ref`
    `filing:<id>` for a filing or `proceeding:<id>` for a pre-filing proceeding. Pointing it
    elsewhere is the same call with the new value. A filing has at most one open to-do in its matter

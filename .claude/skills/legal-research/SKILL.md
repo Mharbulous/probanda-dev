@@ -69,7 +69,9 @@ permitted to make statements of law.
    the same run. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
-   files nothing for, ask `/case-data` for a held copy before marking it unread. A
+   files nothing for, ask `/case-data` for a held copy before marking it unread (when the
+   `case-data` skill is not available in this session, the `litigator` plugin is not
+   installed and there is no held copy: mark it unread). A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders.
@@ -81,7 +83,7 @@ permitted to make statements of law.
    lookup returned, the Westlaw memo and decision files retrieved, and any
    `6. LAW\` listing and text you extracted for it, and `Re-invocation: no`. Never name CanLII as a place
    to read or check decisions: it serves no decision text. A stored statement of law handed in goes with
-   its provenance line (`draft/references/authorities.md`, Reusing a stored statement). The line says where
+   its provenance line, as the caller supplied it (`/draft` composes it). The line says where
    the statement came from, not what the law is (`shared/legal-research.md`).
 5. A return carrying `needs_download` or a hand-off packet on an issue of the question,
    whatever its other gaps, is a pipeline step, not a closed gate: download or run it (unless declined) through
@@ -89,7 +91,7 @@ permitted to make statements of law.
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then relay the agent's answer (its finding verbatim or as its file card, never in your own words), save it to the matter's `6. LAW\<issue>\` folder
    (`6. LAW\` itself when the question spans issues), and ingest what it cites. The doctrine's "After the answer" rule carries the
-   mechanics. If its disclosure gate is closed after any loop — it declines, reports
+   mechanics. Ingesting needs the `litigator` plugin: when the `ingest` skill is not available in this session, save the answer, ingest nothing, and say so in the relay. If its disclosure gate is closed after any loop — it declines, reports
    layers unavailable, or offers only a preliminary impression — relay its
    confidence summary and research offers verbatim and stop. Nothing is saved
    until the practitioner chooses. A closed gate is
