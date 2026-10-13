@@ -38,7 +38,6 @@
 | Issue.status (lifecycle) | `main.issues.status` CHECK(`open`\|`resolved`\|`abandoned`) | Lifecycle status of the issue itself — distinct from Fact Posture. |
 | Legal Concept | `law.legal_concepts` | `concept_id`, `name`, `concept_type`, `jurisdiction`, `in_force_date`, `repeal_date`. UNIQUE(name, jurisdiction). |
 | Legal Concept type (5 kinds in one table) | `law.legal_concepts.concept_type` CHECK(`cause_of_action`\|`doctrine`\|`test`\|`defence`\|`remedy`) | Discriminator — never split into separate tables. |
-| Legal Criteria | `law.legal_criteria` | `criterion_id`, `concept_id`, `requirement_type`, `criterion_order`, `criterion_description`, `burden_of_proof`, `determined_by_concept_id`. |
 | Element | `law.legal_criteria.requirement_type = 'element'` | Mandatory — a gap here is FATAL in gap analysis (`@query_03_coa_gap_analysis`). |
 | Factor | `law.legal_criteria.requirement_type = 'factor'` | Weighed — a gap here is WEAK ("WEAK (factor gap)" in `@query_03_coa_gap_analysis`). |
 | Cause of Action Concept | `law.legal_concepts` where `concept_type = 'cause_of_action'` | General law, no client data. |
