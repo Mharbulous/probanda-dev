@@ -65,7 +65,7 @@ REFERENCE_RULES = (
     "a quoted statute, rule or regulation",
     # source discipline
     "A summary, a note or an earlier draft is not a source.",
-    "checked against that filing's own source",
+    "checked against that Writing's own source",
     # a mailbox-only email is cited resolvably, not read as a source (#1298)
     "not located until ingested: cite sender, date and Message-ID",
     # provision wording only; legal effect goes to the gate

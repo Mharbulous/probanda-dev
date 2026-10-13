@@ -34,7 +34,8 @@ class LooseThreadTriageTest(unittest.TestCase):
         choose = paragraph(self.text, "1. **Choose.**")
         self.assertIn(
             "When the `live` lane's `## Loose Threads (n)` count is 20 or more, "
-            "add one line offering to triage them (`references/loose-thread-triage.md`); "
+            "add one line offering to rank them on the Loose Threads page "
+            "(`references/loose-thread-triage.md`); "
             "otherwise wait with no prompt.",
             choose,
         )
@@ -47,7 +48,7 @@ class LooseThreadTriageTest(unittest.TestCase):
         table = self.procedure[self.procedure.index("## 15. References"):]
         self.assertIn(
             "| Dispatch found no job and the Loose Threads count is 20 or more, "
-            "or the practitioner asks to triage the loose threads (section 14, Dispatch) "
+            "or the practitioner asks to rank or triage the loose threads (section 14, Dispatch) "
             "| `references/loose-thread-triage.md` |",
             table,
         )
@@ -56,7 +57,7 @@ class LooseThreadTriageTest(unittest.TestCase):
         captured = paragraph(JOB_SESSION.read_text(encoding="utf-8"), "- Captured ideas:")
         self.assertIn(
             "offer a three-way choice, outline it now, leave it, or drop it, "
-            "with no recommendation and no ranking",
+            "with no recommendation among the three.",
             captured,
         )
 
@@ -65,10 +66,15 @@ class LooseThreadTriageTest(unittest.TestCase):
             self.assertIn(f"**Step {n}.", self.triage)
 
     def test_reference_carries_the_rules(self):
-        self.assertIn("sorts by what each thread says, not by merit", self.triage)
+        self.assertIn(
+            "Ranking orders, it never removes: however weak a thread, "
+            "the session never drops it on its own judgment.",
+            self.triage,
+        )
+        self.assertIn("Never infer a discard from a low rank.", self.triage)
         self.assertIn("only on their yes", self.triage)
         self.assertIn(
-            "A queued job counts as open work against the filing's `gate` criterion "
+            "A queued job counts as open work against the Writing's `gate` criterion "
             "until it is completed or shelved.",
             self.triage,
         )

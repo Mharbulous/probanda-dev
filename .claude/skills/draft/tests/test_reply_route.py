@@ -50,11 +50,15 @@ class ReplyRouteTest(unittest.TestCase):
     def test_letters_points_at_it(self):
         self.assertIn("`references/reply.md`", (REFERENCES / "letters.md").read_text(encoding="utf-8"))
 
-    def test_the_route_uses_its_two_tools_and_no_session_entry(self):
+    def test_the_route_uses_its_two_tools_and_opens_the_database_only_to_attach(self):
         self.assertIn("`drafting_forms__read_message`", self.route)
         self.assertIn("`drafting_forms__reply_draft`", self.route)
-        self.assertIn("takes no session entry", self.route)
-        self.assertNotIn("open_session", self.route)
+        self.assertIn("takes no intake and no session entry's opening", self.route)
+        self.assertIn("It opens the drafting database only to attach the file to one Job Board", self.route)
+        attach = next(line for line in self.route.splitlines()
+                      if line.startswith("5. **Attach it to a Job Board at its first save**"))
+        before = self.route[:self.route.index(attach)]
+        self.assertNotIn("Call `drafting_forms__open_session`", before)
 
     def test_the_final_pass_checks_quotes_by_script(self):
         final = section(self.route, "## 5. The final pass, on request")

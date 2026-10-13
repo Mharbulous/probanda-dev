@@ -13,7 +13,7 @@ def paragraph(text, opening):
 
 
 class VacuousStepReadBackTest(unittest.TestCase):
-    """A step that only restates the job's title is named as naming no work, never offered for approval."""
+    """A step that only restates the job's title is named as naming no work, never announced as a step to run."""
 
     @classmethod
     def setUpClass(cls):
@@ -31,26 +31,29 @@ class VacuousStepReadBackTest(unittest.TestCase):
         self.assertIn("only restates the job's title and so names no work, then ask how it should read", self.rule)
         self.assertIn("Propose no wording.", self.rule)
 
-    def test_no_approval_offer(self):
-        self.assertIn("Never read it back as a step to approve, and never ask whether it is still right.", self.rule)
-        self.assertIn("approval as stated is not offered", self.rule)
+    def test_never_announced_and_the_job_does_not_proceed(self):
+        self.assertIn("Never announce it as a step to run, and never ask whether it is still right.", self.rule)
+        self.assertIn("While any such step stands, the job does not proceed", self.rule)
 
     def test_taken_over_read_back_defers_to_the_rule(self):
         taken_over = paragraph(TAKE_OVER.read_text(encoding="utf-8"), "**A taken-over job:**")
         self.assertIn(
             "Where an unfinished step only restates the title (`references/job-session.md`, "
             '"A step that only restates the title"), name it as naming no work '
-            "and ask how it should read instead, never whether it is still right.",
+            "and ask how it should read, and the job does not proceed until it is answered.",
             taken_over,
         )
+        self.assertIn("Never ask whether the next unfinished step is still right.", taken_over)
 
-    def test_multi_step_read_back_withholds_approval(self):
-        multi = paragraph(self.text, "**A newly assigned job of two or more steps:**")
-        self.assertIn("A step that only restates the title (above) gets no approve offer.", multi)
+    def test_announce_and_proceed_stops_for_it(self):
+        announce = paragraph(self.text, "**Announce and proceed.**")
+        self.assertIn("Once the premise check and the title-restating check above have passed", announce)
+        stops = paragraph(self.text, "The only stops before the first step are")
+        self.assertIn("and a step that only restates the title (above).", stops)
 
     def test_one_step_dispatch_is_unchanged(self):
         self.assertIn(
-            "A newly assigned one-step job has no read-back and is dispatched on its recorded intent as below, unchanged.",
+            "A newly assigned one-step job is dispatched on its recorded intent as below, unchanged.",
             self.rule,
         )
         one_step = paragraph(self.text, "**A newly assigned one-step job**")

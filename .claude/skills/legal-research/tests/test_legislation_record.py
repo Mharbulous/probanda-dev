@@ -67,7 +67,7 @@ class DraftTests(unittest.TestCase):
     def test_intake_note_up_quotes_from_the_record_path(self):
         text = flat(read(DRAFT_REFS / "job-session.md"))
         rule = text[text.index("**An intake note-up job on a statute, regulation or rule**"):]
-        rule = rule[:rule.index("**A newly assigned job of two or more steps:**")]
+        rule = rule[:rule.index("**Announce and proceed.**")]
         self.assertIn(SOURCE, rule)
         self.assertIn("from the file at the record's `path`", rule)
         self.assertIn("its `currency_marker` as that provision's \"current to\" date", rule)
@@ -110,7 +110,7 @@ class OneCheckPerActTests(unittest.TestCase):
     def test_note_up_job_checks_once_at_its_first_step(self):
         text = flat(read(DRAFT_REFS / "job-session.md"))
         rule = text[text.index("**An intake note-up job on a statute, regulation or rule**"):]
-        rule = rule[:rule.index("**A newly assigned job of two or more steps:**")]
+        rule = rule[:rule.index("**Announce and proceed.**")]
         self.assertIn("once, at its first step, naming every step's provision", rule)
         self.assertIn("Every later step reuses that record and checks nothing again", rule)
 
