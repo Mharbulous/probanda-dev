@@ -19,4 +19,4 @@ On Claude Code 2.1.275 or later this works in one step:
 
 ## Status
 
-This is an early release. It installs the plugin itself, with no skills yet. Skills are added here as each one is published.
+This is an early release. It holds a first few skills, and more are added here as each one is published.
