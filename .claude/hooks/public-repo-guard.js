@@ -6,7 +6,9 @@
 //   - starting the publish-public workflow;
 //   - a write to public-approved.json, or running approve_public.py. A shell command that
 //     names either passes without asking only if it reads it or runs a single plain git add,
-//     commit, push, pull, fetch, status, diff, log or show.
+//     commit, push, pull, fetch, status, diff, log or show. Two more single commands pass:
+//     scripts/approve_public.py with no arguments, which shows the changes and writes
+//     nothing without a terminal, and a pytest run of its test file.
 // Reading the public repository (gh repo view, git ls-remote, git clone) passes without asking.
 const fs = require("fs");
 const { spawnSync } = require("child_process");
@@ -24,7 +26,10 @@ function ask(reason) {
 const PUBLIC_REPO = /probanda-app[\\/]litigation/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
 const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show)|cat|head|tail|wc|grep)(?: |$)/;
-const CHAINING = /[;&|<>`\n\r]|\$\(|\$\{/;
+const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;
+const SHOW_ONLY = new RegExp(`^python3? ${quoted("scripts[\\\\/]approve_public\\.py")}$`);
+const TEST_RUN = new RegExp(`^python3? -m pytest (?:-q )?${quoted("scripts[\\\\/]tests[\\\\/]test_approve_public\\.py")}(?: -q)?$`);
+const CHAINING =/[;&|<>`\n\r]|\$\(|\$\{/;
 const REPO_WRITE = /\bpush\b|\bremote\s+(?:add|set-url)\b|\bgh\s+(?:repo\s+(?:edit|delete|rename|archive|create|sync)|release|workflow|secret|variable)\b|\bgh\s+api\b.*(?:\s-X|--method|\s-f|\s-F|--field|--input)\b/i;
 
 if (typeof input.command === "string") {
@@ -43,7 +48,8 @@ if (typeof input.command === "string") {
       ask("This checkout's remote is Probanda-app/litigation, so this push publishes to the public repository.");
     }
   }
-  if (APPROVAL.test(command) && !(ALLOWED.test(command) && !CHAINING.test(command) && !/--output/.test(command))) {
+  const harmless = (ALLOWED.test(command) && !/--output/.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
+  if (APPROVAL.test(command) && !(harmless && !CHAINING.test(command))) {
     ask("This command names public-approved.json or approve_public.py and may approve files for publication.");
   }
 } else {
