@@ -37,7 +37,9 @@ Cowork runs plugins in a sandboxed Linux VM.
 - Secrets.
 - File paths from the maintainer's machines.
 
-`scripts/check_publishable.py` enforces this and also pins the permitted plugin and marketplace names. It runs only on demand: from the repo's Actions tab, or locally with `python scripts/check_publishable.py`. Run it before making the repo public.
+`scripts/check_publishable.py` enforces this and also pins the permitted plugin and marketplace names. The full scan runs on demand: from the repo's Actions tab, or locally with `python scripts/check_publishable.py`. Run it before making the repo public. On 2026-10-12 it reported 3,091 problems: 2,964 lines of schema DDL and 21 forbidden files, which the exception above covers, and 106 lines holding a path from a maintainer's machine, which no exception covers. About half of all the problems are in the source (`.claude/skills/` and `source/probanda/`) and half in the copy built from it in `plugins/probanda/`.
+
+No change may add a problem of any kind. On every pull request and every push to `main`, CI runs `python scripts/check_publishable.py --new-since <base>`, which fails only when the change holds a problem its base does not. A problem line that moved, or a file that was renamed, adds nothing. Run it locally as `python scripts/check_publishable.py --new-since origin/main`.
 
 The repo must never be made public while this check fails on `main`.
 
