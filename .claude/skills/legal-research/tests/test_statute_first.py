@@ -18,8 +18,6 @@ SKILL = SKILL_ROOT / "SKILL.md"
 PROTOCOL = SKILLS_ROOT / "shared" / "legal-audit-protocol.md"
 CASE_DATA = SKILLS_ROOT / "case-data" / "SKILL.md"
 SCHEMA_GEN = REPO_ROOT / "source" / "probanda" / "mcp" / "src" / "schema-gen.ts"
-# The commons twin's grant is held equal to this one by legal-commons' shim contract test;
-# naming it here would break the one-way dependency (packager check inverse-reference).
 AUDIT_AGENT = REPO_ROOT / "source" / "probanda" / "agents" / "research-agent.md"
 TOOL = "research_filing__legislation_search"
 ORDER_RULE = "**A statutory-text question runs duty 4 before duty 3.**"

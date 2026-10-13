@@ -72,9 +72,9 @@ How tier 2 is audited depends on what the running component holds:
 - **A session whose own tool list carries them** (a project with the pooled-layer
   expansion installed) runs the same reads itself and passes the results into any
   agent it spawns.
-- **A component holding neither** does not fake the tier. It either spawns a
-  law-audit agent whose description declares it preferred when installed — that
-  agent audits tier 2 directly — or records tier 2 as **NOT AUDITED** and says so.
+- **A component holding neither** does not fake the tier. It either spawns
+  `research-agent`, which audits tier 2 directly, or records tier 2 as
+  **NOT AUDITED** and says so.
 
 Where the expansion is not installed at all, tier 2 does not exist for that
 session: record it as **not installed**, skip to tier 3, and never treat its

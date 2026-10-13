@@ -44,8 +44,8 @@ EXTRA_TREES = (SHARED_TREE, COMMONS_SKILL)
 # one skills folder per public plugin, and ship whole and unstamped. A skill lives
 # here or under .claude/skills/, never both.
 PUBLIC_SKILLS = ("public", "plugins", "*", "skills")
-# The agents merged in from legal-commons' read side.
-COMMONS_AGENTS = ("law-librarian", "troubleshooter")
+# The agent merged in from legal-commons' read side.
+COMMONS_AGENTS = ("troubleshooter",)
 
 # Forbidden database-particular tokens in the legal-commons gatekeeper skill:
 # matter data is reached only through /case-data, never by naming a local DB file.

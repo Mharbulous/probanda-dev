@@ -81,7 +81,6 @@
         "verify-law"
       ],
       "agents": [
-        "law-librarian",
         "legislation-fetcher",
         "research-agent",
         "research-paralegal",
