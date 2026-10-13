@@ -22,6 +22,10 @@ __pycache__/
 # Built plugin archives
 *.plugin
 
+# Folders build_plugin.py holds only while a build runs
+plugins/.probanda.building/
+plugins/.probanda.replaced/
+
 # Session worktrees
 .claude/worktrees/
 

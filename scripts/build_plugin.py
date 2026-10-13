@@ -12,7 +12,8 @@ files under source/probanda/. The skill selection and the SKILL.md stamp are
 ported from CoClerk's plugin-packager build_plugin.py (native-tree path).
 
 Exit codes: 0 built or identical, 1 --check found differences, 2 a gate stopped
-the build before anything was written. Standard library only.
+the build before anything was written, or another build was running. Standard
+library only.
 """
 import argparse
 import json
@@ -265,22 +266,52 @@ def collect(repo):
 
 
 def write(files, out):
-    if out.exists():
-        shutil.rmtree(out)
-    for rel, data in files.items():
-        path = out / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(data)
-        if path.suffix == ".py":
-            path.chmod(0o755)
+    """Build beside `out`, then swap the finished folder into place, so a reader
+    never sees a half-written `out`. Windows cannot rename a folder over an
+    existing one, so the swap is two renames and `out` is absent between them.
+    The building folder doubles as the lock against a second build."""
+    building = out.with_name(f".{out.name}.building")
+    replaced = out.with_name(f".{out.name}.replaced")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        building.mkdir()
+    except FileExistsError:
+        stop(f"{building} exists: another build is running, or one was killed. "
+             "If no build is running, delete that folder and build again.")
+    try:
+        for rel, data in files.items():
+            path = building / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            if path.suffix == ".py":
+                path.chmod(0o755)
+        if replaced.exists():
+            shutil.rmtree(replaced)
+        if out.exists():
+            out.rename(replaced)
+        try:
+            building.rename(out)
+        except BaseException:
+            if replaced.exists():
+                replaced.rename(out)
+            raise
+    finally:
+        if building.exists():
+            shutil.rmtree(building)
+    if replaced.exists():
+        shutil.rmtree(replaced)
 
 
 def check(files, target):
-    on_disk = {p.relative_to(target).as_posix(): p for p in target.rglob("*") if p.is_file()} \
-        if target.is_dir() else {}
+    try:
+        on_disk = {p.relative_to(target).as_posix(): p for p in target.rglob("*") if p.is_file()} \
+            if target.is_dir() else {}
+        changed = sorted(p for p in set(files) & set(on_disk) if on_disk[p].read_bytes() != files[p])
+    except FileNotFoundError as e:
+        stop(f"{e.filename} disappeared while {target} was being read: a build appears to be "
+             "running. Run --check again once it has finished.")
     added = sorted(set(files) - set(on_disk))
     removed = sorted(set(on_disk) - set(files))
-    changed = sorted(p for p in set(files) & set(on_disk) if on_disk[p].read_bytes() != files[p])
     for label, paths in (("added", added), ("removed", removed), ("changed", changed)):
         for p in paths:
             print(f"{label}: {p}")

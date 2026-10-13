@@ -44,6 +44,30 @@ class BuildPluginTest(unittest.TestCase):
                     "commons-mcp/dist/legal-commons-mcp.js", ".claude-plugin/plugin.json"):
             self.assertTrue((self.out / rel).is_file(), rel)
 
+    def test_rebuild_swaps_the_folder_and_leaves_no_temp_folder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "probanda"
+            (out / "skills").mkdir(parents=True)
+            (out / "skills" / "stale.md").write_text("stale", encoding="utf-8")
+            result = build("--out", str(out))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse((out / "skills" / "stale.md").exists())
+            self.assertTrue((out / ".claude-plugin" / "plugin.json").is_file())
+            self.assertEqual([p.name for p in Path(tmp).iterdir()], ["probanda"])
+
+    def test_a_build_in_progress_stops_a_second_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "probanda"
+            out.mkdir()
+            (out / "kept.md").write_text("kept", encoding="utf-8")
+            building = Path(tmp) / ".probanda.building"
+            building.mkdir()
+            result = build("--out", str(out))
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("another build is running", result.stderr)
+            self.assertTrue((out / "kept.md").is_file())
+            self.assertTrue(building.is_dir())
+
     def test_overlong_description_stops_the_build(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
