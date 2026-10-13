@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,8 @@ from pathlib import Path
 
 SCRIPT = Path(__file__).with_name("session-lane-guard.py")
 AGENT = "probanda:docket-clerk"
+PLUGIN_JSON = Path(__file__).resolve().parents[5] / "source" / "probanda" / "plugin.json"
+PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
 
 
 class SessionLaneGuardTest(unittest.TestCase):
@@ -217,6 +220,40 @@ class SessionLaneGuardTest(unittest.TestCase):
                                 capture_output=True, text=True, env=self.env)
         self.assertEqual(result.returncode, 0)
         self.assertIn("hook error", result.stderr)
+
+
+class PluginRegistrationTests(unittest.TestCase):
+    # The script reads tool names without the plugin prefix, so the manifest
+    # matchers are the only place a wrong plugin name stops the guard running.
+    def setUp(self):
+        self.hooks = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]
+
+    def entries(self, event):
+        return [entry for entry in self.hooks[event]
+                if any(PLUGIN_HOOK_ARG in h.get("args", []) for h in entry["hooks"])]
+
+    def test_plugin_registers_the_guard_for_both_tool_name_forms(self):
+        entries = self.entries("PreToolUse")
+        self.assertEqual(len(entries), 1)
+        matcher = re.compile(entries[0]["matcher"])
+        tools = [f"practice_data__{name}" for name in (
+            "active_deadlines", "open_tasks", "upsert_deadline", "upsert_anchor",
+            "delete_anchor", "rule_overlay", "upsert_rule_overlay")] + ["rules__audit"]
+        for prefix in ("mcp__plugin_probanda_data__", "mcp__remote-devices__plugin_probanda_data__"):
+            for tool in tools:
+                self.assertTrue(matcher.fullmatch(prefix + tool), prefix + tool)
+        self.assertTrue(matcher.fullmatch("Skill"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_probanda_data__rules__at"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__rules__audit"))
+
+    def test_plugin_registers_the_guard_for_the_docket_clerk_agent(self):
+        for event in ("SubagentStart", "SubagentStop"):
+            entries = self.entries(event)
+            self.assertEqual(len(entries), 1, event)
+            self.assertEqual(entries[0]["matcher"], AGENT, event)
+
+    def test_test_agent_name_is_the_scripts(self):
+        self.assertIn(f'AGENT = "{AGENT}"', SCRIPT.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
