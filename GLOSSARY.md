@@ -194,7 +194,7 @@ A part of a Mockup — caption (style of proceeding), orders, paragraphs, excerp
 _Avoid_: section (a schema term); part (Form 32's own word).
 
 **Consequence**:
-The clause a test entails: the legal outcome. The hub of a **Rule**, and the entry a search looks for. It records its actor and its force (may, must, is) as fields, because similarity search blurs them. Tests point at it. It points at nothing.
+The clause a test entails: the legal outcome. The hub of a **Rule**, and the entry a search looks for. It records its actor and its force (may, must, is) as fields, because similarity search blurs them. Tests point at it. It points at nothing. Two consequences judged to mean the same are both kept and linked, never merged.
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
@@ -205,7 +205,7 @@ A later segment of a bundle whose text matches an earlier segment: the scanned p
 _Avoid_: duplicate (reserved for the cross-file hash match at the ingest gate).
 
 **Court Rule**:
-A provision of the procedural rules of a court or tribunal. Rules of court are delegated legislation; an arbitral institution's rules bind by the parties' agreement. The term marks source, not character or size: a Court Rule's content can be a rule, a factor test or a principle in rule form (e.g. the object of the BC Supreme Court Civil Rules, Rule 1-3). The enacted or adopted text governs.
+A provision of the procedural rules of a court or tribunal. Rules of court are delegated legislation; an arbitral institution's rules bind by the parties' agreement. The term marks source, not content: one Court Rule may state one rule, several rules, or a test made only of factors. The enacted or adopted text governs.
 
 **Criterion**:
 One fixed condition on a Writing's completion-criteria card, read as met, unmet or pending at render time from the render's marker inventory or from job rows. Stock per Writing kind, never authored per Writing and never stored. A met criterion can flip back. Pending never counts as met.
@@ -226,7 +226,7 @@ A matter raised by the responding party that defeats liability or relief, often 
 The **terminal** disposition on a theorized fact's provenance: our own investigation concluded the fact is **likely untrue**. Recorded on the provenance row, never by deletion — the record of what was considered and rejected is the point. An argument may not rest on a dismissed fact. "Dismissed" is a fact-investigation disposition, **not** a party position and **not** a posture, and it is knowable only for **our own** side — there is no way to know what an opposing party has privately dismissed. (Distinct from a *proceeding* status or an *issue* status — see **Fact Posture**.)
 
 **Doctrine**:
-A named body of law organizing rules, tests and exceptions under one or more principles (e.g. promissory estoppel). Used without an article ("legal doctrine"), it means the body of law generally.
+A named body of law that groups related rules (e.g. promissory estoppel). Used without an article ("legal doctrine"), it means the body of law generally.
 _Avoid_: doctrine for scholarly writing about the law (the civilian sense) — write "secondary authority". The drafting database's authority kind `doctrine` and the pool's `doctrine_tag` are frozen code names, not this sense.
 
 **Document**:
@@ -326,7 +326,7 @@ _Avoid_: body (the affidavit-only word; keep it for affidavit prose); parent (a 
 A reported case or statute citation (e.g. a neutral citation or statute chapter reference), used to identify an authority. Legal citations are not computed — they are recorded as reported.
 
 **Legal Concept**:
-A named body of law: a cause of action, doctrine, test, defence, or remedy. Legal concepts are reusable law, not tied to any matter.
+A named body of law as case data stores it: a cause of action, doctrine, test, defence or remedy. Legal concepts are reusable law, not tied to any matter. The kind `test` is a frozen code value for a body of law known by a test's name, not a **Test**.
 _Avoid_: Legal Theory (avoid the term entirely; use "Legal Concept" for general law or "Asserted Cause of Action" for the case-specific instance — "Legal Theory" conflates the two and adds no precision).
 
 **Legal research and writing**:
