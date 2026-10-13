@@ -1,5 +1,5 @@
 """The fact-swap script of references/paragraph-revision.md §6, run on the real engine against a
-fresh v59 database the way drafting_data__execute runs it: one executescript wrapped in BEGIN and
+fresh database at the current schema the way drafting_data__execute runs it: one executescript wrapped in BEGIN and
 COMMIT. Proves the cross-guarded UPDATEs land together or not at all, and that each audit INSERT,
 guarded on changes() = 1, lands only when the statement before it changed one row (trigger writes
 excluded)."""
@@ -51,7 +51,7 @@ class TestFactReorderScript(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.db_path = Path(self._tmp.name) / "submission.sqlite"
-        self.assertEqual(engine.run({"db_path": str(self.db_path)})["schema_version"], 61)
+        self.assertEqual(engine.run({"db_path": str(self.db_path)})["schema_version"], engine.TARGET_SCHEMA_VERSION)
         self.con = sqlite3.connect(str(self.db_path))
         self.addCleanup(self.con.close)
         self.con.execute("PRAGMA foreign_keys = ON")

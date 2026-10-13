@@ -410,11 +410,14 @@ class TestV21RevisionTriggers(unittest.TestCase):
     # changes no substance. v52 adds ticket_answers, eleven: saving an answer
     # for a job changes no substance either. v57 adds paragraph_revisions,
     # twelve: the audit row is append-only, and the substance UPDATE written
-    # beside it moves the revision through its own table's triggers. v73 adds
-    # the rules-position tables, sixteen: where a session stands on its rules
-    # map, and which rules it was served, change no substance.
+    # beside it moves the revision through its own table's triggers. v67 adds
+    # board_attachments, thirteen: attaching a draft to a board changes no
+    # mockup, only the Job Board pages (ADR 0042, migrations.sql 66 -> 67).
+    # v73 adds the rules-position tables, seventeen: where a session stands on
+    # its rules map, and which rules it was served, change no substance.
     EXEMPT = frozenset(
         {
+            "board_attachments",
             "session_position",
             "job_position",
             "rule_served",
