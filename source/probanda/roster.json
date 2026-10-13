@@ -40,7 +40,6 @@
   "ingest": [],
   "invoice-reviewing": [],
   "invoice-tracking": [],
-  "legal-citation": [],
   "legal-memo-extractor": [],
   "legal-research": [
     "hooks"
@@ -79,7 +78,6 @@
     "hooks",
     "scripts"
   ],
-  "step-widget": [],
   "task-prioritization": [],
   "time-entry-drafting": [],
   "time-pipeline-data": [],
