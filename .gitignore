@@ -22,6 +22,9 @@ __pycache__/
 # Built plugin archives
 *.plugin
 
+# Session worktrees
+.claude/worktrees/
+
 # Editors
 .vscode/
 .idea/
