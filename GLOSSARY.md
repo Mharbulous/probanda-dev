@@ -458,7 +458,7 @@ A proposition necessary to the decision; the part of a decision capable of bindi
 _Avoid_: ratio for "the court's own words" (obiter is also the court's own words), or for a text-similarity score.
 
 **Rationale**:
-A clause that states why a test exists: its purpose, basis or justification. It helps a decision maker understand the test, and decide when and how to exercise a discretion the test grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two tests are compared. It attaches to a test, with the principle that states it, and one rationale may be shared by several tests. It is kept, never discarded.
+A clause that states why a test exists: its purpose, basis or justification. The test for one: it is the "because" that justifies the proposition, and it is not a statement of the rule. It helps a decision maker understand the test, and decide when and how to exercise a discretion the test grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two tests are compared. It attaches to a test, with the principle that states it, and one rationale may be shared by several tests. It is kept, never discarded.
 _Avoid_: rationale for a condition (an **Element**, **Exception** or **Factor**); a rationale attached to a single condition or to a consequence (it attaches to a test, and its own words name what it explains); **Ratio decidendi**.
 
 **Recommendation**:
