@@ -1,0 +1,9 @@
+{
+  ".claude-plugin/marketplace.json": "d5e3a8e6a545b7b6570f56a048aa7c42c8cf66b26eec428c13a600eb18975df1",
+  "README.md": "77ce85f625a32f3cae8913f5636331905a46cdc91b59f741149de5acda0388e6",
+  "plugins/probanda/.claude-plugin/plugin.json": "60f75af95be67ce0e07c2d56ec141b4c63f39ecb18a3e269091132430aeba8a7",
+  "plugins/probanda/skills/TLDR/SKILL.md": "d8d5585b33bd1faa0d0d0d9ec0114b9b0de914587e49ab8a3195869722c57440",
+  "plugins/probanda/skills/legal-citation/SKILL.md": "67ffd228803d8fc2de83e56f8f6108614c67f27f106f059d8a202597cb9d5a9d",
+  "plugins/probanda/skills/proof-read/SKILL.md": "d2b9dc1126ade47c8fc32d901d3dce4be9674036becc0ad3470a22c4025cfa3f",
+  "plugins/probanda/skills/proof-read/references/trial-lawyer-style.md": "85f723ee650f3d1d5a09885d92461a007e8d6fdee8c23845dbcab6121b0b77bc"
+}
