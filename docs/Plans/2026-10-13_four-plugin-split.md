@@ -196,6 +196,7 @@ Check: `python scripts/check_layering.py` passes strict. `build_plugin.py --chec
 - `legal-research` step 4 no longer cites `draft/references/authorities.md`. It says the caller supplies the provenance line.
 - `mail-send-gate.py` moved to `source/probanda/hooks/`, with its path in `plugin.json` in the same commit. Run from the built plugin, it still refuses a send and still lets the morning briefing through.
 - Not done, waiting for Brahm: `legal-memo-extractor`'s on-file cross-check. Its text today says to skip the cross-check when case-data is not available, leaving every authority an `Unverified lead`. Brahm's rule for the two excepted skills says to stop at the step. The two disagree, so the text is unchanged until he chooses.
+- For phase 5: a file added to git on Windows is stored non-executable, and `git commit -- <path>` re-reads the file and drops a staged mode change. The built `mail-send-gate.py` needed `git update-index --chmod=+x` and a commit with no pathspec. At cutover every `.py` under the four new `plugins/<name>/` folders is a new file, so check `git ls-files -s plugins/` for `100644` scripts before pushing.
 - Confirmed: rebuilding the data bundle from unchanged source (`node source/probanda/mcp/scripts/bundle.mjs`) reproduces the committed file byte for byte.
 
 ### Phase 5: cutover, in one commit
