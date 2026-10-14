@@ -1,4 +1,4 @@
-# The pool's three Edge Functions. JWT verification is off for each because the
+# The pool's four Edge Functions. JWT verification is off for each because the
 # pool's secret keys are not JWTs: each function checks the caller's `apikey`
 # header itself (functions/_shared/pool.ts) before it reads the request body.
 
@@ -11,4 +11,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.commons-reembed]
+verify_jwt = false
+
+[functions.commons-find]
 verify_jwt = false
