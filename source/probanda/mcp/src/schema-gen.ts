@@ -560,6 +560,22 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     {
+      name: caseDataPrefixed("ingest_authority"),
+      description:
+        "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). " +
+        "Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. " +
+        "A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. " +
+        "Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: probanda:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "result_path", type: "str" },
+        { name: "file_path", type: "str" },
+        { name: "file_hash", type: "str" },
+        { name: "bundled_pages", type: "str" },
+      ], ["matter_root", "result_path", "file_path", "file_hash"]),
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: caseDataPrefixed("migrate"),
       description:
         "Upgrade a matter's case databases to the current schema. Two-phase and gated: " +

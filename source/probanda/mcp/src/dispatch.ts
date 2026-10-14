@@ -8,6 +8,7 @@ import { callPracticeTool } from "./tools/practice/index.js";
 import { caseDataQuery, caseDataExecute } from "./case/backend.js";
 import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
+import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
 import {
   timePipelineGet,
   timePipelineSet,
@@ -161,6 +162,10 @@ export async function callTool(
 
   if (name === "case_data__resolve_participant") {
     return resolveParticipant(args.matter_root as string, args.name as string);
+  }
+
+  if (name === "case_data__ingest_authority") {
+    return ingestAuthority(args as unknown as AuthorityIngestRequest);
   }
 
   if (name === "case_data__migrate") {
