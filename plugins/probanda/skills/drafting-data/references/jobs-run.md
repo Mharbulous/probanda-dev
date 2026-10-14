@@ -81,6 +81,28 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
 
 Each replaced step's text is a run of one practitioner turn: their own words, or the block they pasted back by the adoption ceremony (`shared/paralegal-posture.md` section 3). The practitioner-words gate refuses any other.
 
+**The pickup rewrite.** `/draft`'s pickup review (`draft/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
+
+```sql
+DELETE FROM ticket_steps WHERE ticket_id = 2
+  AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND status = 'queued' AND locked_by IS NULL
+              AND rejected_at IS NULL AND plan_approved_at IS NULL
+              AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL));
+INSERT INTO ticket_steps (ticket_id, ordinal, text)
+  SELECT 2, 1, 'Draft the reply to the letter of 3 May' FROM tickets WHERE id = 2 AND status = 'queued'
+    AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
+INSERT INTO ticket_steps (ticket_id, ordinal, text)
+  SELECT 2, 2, 'check the costs figure against the invoice' FROM tickets WHERE id = 2 AND status = 'queued'
+    AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
+UPDATE tickets SET title = 'Reply to the letter of 3 May'
+  WHERE id = 2 AND status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
+```
+
+Every statement carries the same guard, so either all of them write or none does. Each title and step is an unbroken run of the job card's own words as a `drafting_forms__*` result printed them this session, which the practitioner-words gate passes; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced. Confirm-read the title and the steps in order: anything but the written text assigns nothing and re-renders.
+
 If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above.
 
 **The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
