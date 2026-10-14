@@ -427,10 +427,10 @@ const TAIL = String.raw`</script>
     // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
     var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
 
-    // The card header's work name: the title without its trailing ": " + item. Derived rather than
+    // The card header's work name: the title without its trailing ": " + label. Derived rather than
     // listed, because one work name carries a colon of its own.
     function workName(p) {
-      var tail = ": " + p.item;
+      var tail = ": " + p.label;
       return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
     }
     // A witnesses-keyed count is displayed beside the item, never inside it (design §8).

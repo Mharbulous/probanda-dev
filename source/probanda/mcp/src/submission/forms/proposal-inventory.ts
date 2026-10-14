@@ -372,6 +372,8 @@ export interface Proposal {
   id: number;
   qualifier?: string;
   item: string;
+  /** The item's short name in the title (itemLabel); a note-up's is its item whole. */
+  label: string;
   title: string;
   lane: "proposed" | "held" | "rejected";
   holder: ProposalHolder | null;
@@ -384,6 +386,29 @@ export interface Proposal {
 const SLUG_ORDER = Object.fromEntries(
   (Object.keys(WORK_NAMES) as ProposalSlug[]).map((slug, i) => [slug, i])
 ) as Record<ProposalSlug, number>;
+
+/** The singular noun a long item's record is named by. Written once more, as a table, in
+ * `/drafting-data`'s filing-checklists.md §6a, which a session reads to build the same label. */
+const RECORD_NOUNS: Readonly<Record<string, string>> = {
+  submissions: "submission",
+  facts: "fact",
+  statements_of_fact: "statement of fact",
+  statements_of_law: "statement of law",
+  law_assertions: "law assertion",
+  order_sought: "order",
+  admissions: "admission",
+  clauses: "clause",
+};
+
+/** An item's short name for a title: the item itself when it is 80 characters or fewer on one
+ * line, else its record's noun and id (and qualifier), then its first eight words. The rule is
+ * stated for sessions in filing-checklists.md §6a; change both together. */
+export function itemLabel(table: string, id: number, qualifier: string | undefined, item: string): string {
+  if (item.length <= 80 && !/[\r\n]/.test(item)) return item;
+  const noun = Object.hasOwn(RECORD_NOUNS, table) ? RECORD_NOUNS[table] : table.replaceAll("_", " ");
+  const words = item.trim().split(/\s+/).slice(0, 8).join(" ");
+  return `${noun} ${id}${qualifier === undefined ? "" : `, ${qualifier}`}, "${words}…"`;
+}
 
 /** Design §5's ladders, read off the key set alone (decision c): a rung generates work only while
  * no later rung of its own ladder also printed. 📇 is the one positive condition -- an authority
@@ -475,6 +500,9 @@ export function deriveProposals(
         lane = "rejected";
       }
     }
+    // A note-up keeps its item whole: the authority's name is what one job per Act groups on, and
+    // withNoteUpSteps builds each step from the title.
+    const label = first.slug === "note-up" ? first.item : itemLabel(first.table, first.id, first.qualifier, first.item);
     proposals.push({
       key,
       slug: first.slug,
@@ -483,7 +511,8 @@ export function deriveProposals(
       id: first.id,
       ...(first.qualifier === undefined ? {} : { qualifier: first.qualifier }),
       item: first.item,
-      title: `${WORK_NAMES[first.slug]}: ${first.item}`,
+      label,
+      title: `${WORK_NAMES[first.slug]}: ${label}`,
       lane,
       holder,
       ...(first.table === "witnesses" ? { count: new Set(entries.map((e) => e.statement_id)).size } : {}),

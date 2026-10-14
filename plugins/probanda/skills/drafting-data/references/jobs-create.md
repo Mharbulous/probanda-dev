@@ -26,7 +26,7 @@ INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, bi
 
 `created_by` is this session's own `session_token` (§1; `'sess-a1'` stands in for it), written by this section's two creates, the plain one above and the guarded one below, and by no other create. It is what lets this session later be assigned one of the jobs it created, and only those (§4).
 
-Outside six fixed-text exceptions — §14's gate job, the fast-path job, §3b's stock bundle jobs, §3c's counsel's review jobs, §3d's scrutiny review jobs and §3i's research offer jobs — `title`, `intent` and every `ticket_steps.text` written here are the practitioner's own words as selected at the closing read-back, or a proposal the session showed in its visible reply that they approved word for word with a bare yes, written with `session_proposed = 1`, and never the session's words unapproved — `intent` one sentence of theirs or of the approved proposal, verbatim (for a one-step job it is its only step, quoted at dispatch, so nothing the session composed may stand in it unapproved), `title` an unbroken run of their own words from one answer (the text typed after a slash command is one) or of the approved proposal, no word swapped or moved; the `title` literal is the selected card's value. How the work divides into jobs and steps is the session's call; the words in them are the practitioner's or a proposal they approved word for word. A fast-path job's title and intent are the Proposal's title, `<work name>: <item>`, and its single step is its key type's step frame (`filing-checklists.md` §6a) on the Proposal's item, so that the step names the work rather than restating the title. All three are fixed text from the record and not the session's words, written with no closing read-back because the pick is the practitioner's: a Proposal picked and left unedited is its approval. A stock bundle job's strings are §3b's, a counsel's review job's are §3c's, a scrutiny review job's are §3d's, and a research offer job's are §3i's, on the same terms.
+Outside six fixed-text exceptions — §14's gate job, the fast-path job, §3b's stock bundle jobs, §3c's counsel's review jobs, §3d's scrutiny review jobs and §3i's research offer jobs — `title`, `intent` and every `ticket_steps.text` written here are the practitioner's own words as selected at the closing read-back, or a proposal the session showed in its visible reply that they approved word for word with a bare yes, written with `session_proposed = 1`, and never the session's words unapproved — `intent` one sentence of theirs or of the approved proposal, verbatim (for a one-step job it is its only step, quoted at dispatch, so nothing the session composed may stand in it unapproved), `title` an unbroken run of their own words from one answer (the text typed after a slash command is one) or of the approved proposal, no word swapped or moved; the `title` literal is the selected card's value. How the work divides into jobs and steps is the session's call; the words in them are the practitioner's or a proposal they approved word for word. A fast-path job's title and intent are the Proposal's title as the card printed it, `<work name>: <item label>`, and its steps are §6a's step derivation (`filing-checklists.md`) on the Proposal's item, so that each step names the work rather than restating the title. All of them are fixed text from the record and not the session's words, written with no closing read-back because the pick is the practitioner's: a Proposal picked and left unedited is its approval. A stock bundle job's strings are §3b's, a counsel's review job's are §3c's, a scrutiny review job's are §3d's, and a research offer job's are §3i's, on the same terms.
 
 **A job outlined from Proposals takes the guarded create instead of the plain `INSERT` above** — the fast-path job always, and a hand-worded job outlined from Proposals too. The job row survives only when no `queued` or `wip` job with `rejected_at IS NULL` already holds any of its keys. Call 1 is the plain `INSERT ... VALUES`, followed in the same script by a `DELETE` of that row whenever a live job holds any of its keys, every key named in the `IN` list:
 
@@ -49,7 +49,7 @@ Keep the `INSERT` then `DELETE` shape: `last_insert_rowid()` is safe here only b
 SELECT id FROM tickets WHERE proceeding_id = 1 AND title = 'reply to their attornment argument' ORDER BY id DESC LIMIT 1;
 ```
 
-After a guarded create the recovery takes a different shape, because a fast-path title recurs: an older job on the same key, now completed, carries the same `<work name>: <item>` title, and the plain shape above would return it when the guard wrote nothing. The just-created job is the one queued job with that title that holds no `ticket_proposals` rows yet, since those rows are written after this call and an older job on the same key keeps its rows. No `LIMIT`, so that a second match shows and stops the session:
+After a guarded create the recovery takes a different shape, because a fast-path title recurs: an older job on the same key, now completed, carries the same `<work name>: <item label>` title, and the plain shape above would return it when the guard wrote nothing. The just-created job is the one queued job with that title that holds no `ticket_proposals` rows yet, since those rows are written after this call and an older job on the same key keeps its rows. No `LIMIT`, so that a second match shows and stops the session:
 
 ```sql
 SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Note up: Smith v. Jones, 2023 BCCA 182' AND status = 'queued' AND deleted_at IS NULL
@@ -245,7 +245,7 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 1, 'Note up: Supr
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 2, 'Note up: Supreme Court Civil Rules, B.C. Reg. 168/2009, Rule 14-1(12)');
 ```
 
-A card printing `  steps: none` (the Writing cites no provision) gets no step row, the one exception to §3's "always at least one", so that no step restates the title. Every other Proposal not in a group (below) gets one row, ordinal 1, text its key type's step frame (`filing-checklists.md` §6a) with `<item>` replaced by its detail line's `item:` character for character, never its title: a step equal to the title fails `/draft`'s pre-claim check, so the job could never be assigned.
+A card printing `  steps: none` (the Writing cites no provision) gets no step row, the one exception to §3's "always at least one", so that no step restates the title. Every other Proposal not in a group (below) gets its steps by §6a's step derivation (`filing-checklists.md`) on its detail line's `item:`: one row, ordinal 1, or one row per numbered or lettered part the item itself has, ordinal 1, 2, 3…, each its key type's step frame followed by the item's own words character for character. Never its title: a step equal to the title fails `/draft`'s pre-claim check, so the job could never be assigned.
 
 ```sql
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 1, 'Find and record the pinpoint in the document: M. Reyes: Overtime for the final week was recorded in the Site Diary.');
@@ -272,7 +272,7 @@ A line keyed on a row this read does not return stays in Proposed, however near 
 **One title, one job.** Lines in one batch that print the same title, other than lines already in a group (below), are written as one job: its title and intent are that title, and it holds every one of their keys, with a `ticket_proposals` row each. Their keys are written in one Call 1 `IN` list, as a group's are, and its scope rows are each key's rows, each written once. Its steps:
 
 - **A note-up of a statute, regulation or rule:** every member's `step <n>:` lines, members in printed order and each member's lines in its own order, each distinct text written once, numbered 1, 2, 3…; no step row when every member prints `steps: none`. So the note-ups of one Act, however many `authorities` rows name it, are one job titled `Note up: <Act>`, with one step per provision, which runs on one currency check (`/draft`'s job-session).
-- **Any other line:** one step, the shared item's step frame.
+- **Any other line:** its steps by §6a's step derivation on the shared item.
 
 So no two jobs one intake writes share a title, and Call 2 never mistakes a sibling for a race.
 
@@ -303,7 +303,7 @@ SELECT DISTINCT p.proposal_key FROM ticket_proposals p JOIN tickets t ON t.id = 
 
 Drop every key it returns from the batch. It is Call 1's guard, read ahead. A key a completed job once held still prints in Proposed, and one such key in a group would otherwise make the guard drop the whole group at every intake. "Take the next" runs this read before it chooses, so that it chooses a line that will be written.
 
-**Grouping.** The keys left of one type in the table, on its tables, form one job when they number 2 or more. The job is written at its first member's place in the Proposed lane's printed order. A lone key of that type is written as above, as its own job titled with its Proposal's title (`Locate the exhibit pinpoint: <item>`), with one step.
+**Grouping.** The keys left of one type in the table, on its tables, form one job when they number 2 or more. The job is written at its first member's place in the Proposed lane's printed order. A lone key of that type is written as above, as its own job titled with its Proposal's title (`Locate the exhibit pinpoint: <item label>`), with its steps by §6a's step derivation.
 
 **Call 1, group**, is Call 1 above with the table's text as title and intent and every member key in the `IN` list:
 
@@ -342,7 +342,7 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (2, 'statements_o
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (2, 'statements_of_fact', 8);
 ```
 
-After the batch the session re-renders. The practitioner-words gate reads no `INSERT INTO tickets` and no step written without a delete, so nothing intake writes reaches it. A job of its own, or of one title, takes the Proposal's fixed text as title and intent, and its step is §6a's fixed frame on the card's item, or the card's own `step <n>:` text. A group job's title and intent are the table's fixed text and its steps are items from the record. A later rewrite of a group job's steps passes the gate when each step is an item a `drafting_forms__*` result printed in that session.
+After the batch the session re-renders. The practitioner-words gate reads no `INSERT INTO tickets` and no step written without a delete, so nothing intake writes reaches it. A job of its own, or of one title, takes the Proposal's fixed text as title and intent, and its steps are §6a's step derivation on the card's item, or the card's own `step <n>:` text. A group job's title and intent are the table's fixed text and its steps are items from the record. A later rewrite of a group job's steps passes the gate when each step is an item a `drafting_forms__*` result printed in that session.
 
 ## 3f. Spin off blockers (the holding session)
 
@@ -374,7 +374,7 @@ SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'does attornment de
 
 No row: the lock was lost before this blocker was written. Stop, run §2's confirm-read after a release on job 42 so the readings below have a row to read, name any blocker already written, and report. One row: the new job. More than one: stop and ask.
 
-**Call 3, the children**, on the recovered literal id (here `51`), unguarded on purpose: this job is the session's own creation and must not be left without a step. One `ticket_steps` row, ordinal 1, its text the intent verbatim. The scope rows are the held job's own, copied, since the blocker's work serves the held job's step:
+**Call 3, the children**, on the recovered literal id (here `51`), unguarded on purpose: this job is the session's own creation and must not be left without a step. One `ticket_steps` row, ordinal 1, its text the intent verbatim. A research blocker (`/draft`'s `job-session.md`, Movers) is the one exception: its step is `What must be shown to establish this contention? <contention>`, the frame followed by the contention, the item on the held job's `keys:` line, character for character, because its title and intent name the contention only by its item label. The scope rows are the held job's own, copied, since the blocker's work serves the held job's step:
 
 ```sql
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (51, 1, 'Does attornment defeat the stay?');
