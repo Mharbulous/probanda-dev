@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "probanda" / "skills" / "dyu"
+SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "practice" / "skills" / "dyu"
 HOOK = SKILL_ROOT / "hooks" / "trailing-dyu.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
 PLUGIN_JSON = REPO_ROOT / "source" / "practice" / "plugin.json"
-PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "probanda" / ".claude-plugin" / "plugin.json"
+PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "practice" / ".claude-plugin" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
 
 

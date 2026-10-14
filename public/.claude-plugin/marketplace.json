@@ -1,15 +1,31 @@
 {
   "name": "probanda",
-  "description": "Probanda, a Claude Cowork plugin for litigation practice in British Columbia",
+  "description": "Probanda, Claude Cowork plugins for legal practice in British Columbia",
   "owner": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"
   },
+  "forceRemoveDeletedPlugins": true,
   "plugins": [
     {
-      "name": "probanda",
-      "source": "./plugins/probanda",
-      "description": "A litigation practice plugin for British Columbia lawyers"
+      "name": "practice",
+      "source": "./plugins/practice",
+      "description": "The base plugin. Requires nothing. Install it first: every other Probanda plugin requires it."
+    },
+    {
+      "name": "research",
+      "source": "./plugins/research",
+      "description": "What the law is: legal citation. Requires practice. Install practice first, then research."
+    },
+    {
+      "name": "litigator",
+      "source": "./plugins/litigator",
+      "description": "Court work on a matter. Requires practice and research. Install practice, then research, then litigator."
+    },
+    {
+      "name": "solicitor",
+      "source": "./plugins/solicitor",
+      "description": "Reserved for solicitor's work. Ships no skills yet. Requires practice. Install practice first."
     }
   ]
 }

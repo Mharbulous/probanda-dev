@@ -58,7 +58,7 @@
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
         "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
-        "trailing-dyu": "public/plugins/probanda/skills/dyu/hooks/trailing-dyu.py"
+        "trailing-dyu": "public/plugins/practice/skills/dyu/hooks/trailing-dyu.py"
       },
       "servers": [
         "data"

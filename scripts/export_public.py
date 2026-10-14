@@ -33,7 +33,7 @@ REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = Path(__file__).resolve().parent
 
 # The plugins of the public repository, each under public/plugins/<name>/.
-PUBLIC_PLUGINS = ("probanda",)
+PUBLIC_PLUGINS = ("practice", "research", "litigator", "solicitor")
 # What a marketplace install needs. The export refuses without them.
 REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md",
                   *(f"plugins/{name}/.claude-plugin/plugin.json" for name in PUBLIC_PLUGINS))

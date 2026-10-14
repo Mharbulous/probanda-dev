@@ -23,7 +23,7 @@ _spec.loader.exec_module(approve_public)
 
 PUBLIC = {
     "README.md": "# Probanda\n\nAn early release.\n",
-    "plugins/probanda/skills/x/SKILL.md": "A skill.\n",
+    "plugins/practice/skills/x/SKILL.md": "A skill.\n",
 }
 
 
@@ -77,9 +77,9 @@ class ApproveTest(unittest.TestCase):
         self.assertNotIn("a first few skills", out)
 
     def test_an_added_file_is_shown_in_full(self):
-        self.put("public/plugins/probanda/skills/y/SKILL.md", "Another skill.\nSecond line.\n")
+        self.put("public/plugins/practice/skills/y/SKILL.md", "Another skill.\nSecond line.\n")
         _, out = self.run_approve(False)
-        self.assertIn("added: plugins/probanda/skills/y/SKILL.md", out)
+        self.assertIn("added: plugins/practice/skills/y/SKILL.md", out)
         self.assertIn("+Another skill.", out)
         self.assertIn("+Second line.", out)
 

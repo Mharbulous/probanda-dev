@@ -522,7 +522,7 @@ class TestShippedTreePurity(FixtureTest):
 class TestPublicSkill(FixtureTest):
     """A skill under public/ ships whole and unstamped, and lives in one place only."""
 
-    PUBLIC = "public/plugins/probanda/skills/"
+    PUBLIC = "public/plugins/practice/skills/"
 
     def setUp(self):
         super().setUp()

@@ -23,12 +23,14 @@ _spec.loader.exec_module(export_public)
 # Built from parts so this file holds no line the publish scan itself reports.
 DDL = "CREATE" + " TABLE a (id)"
 
-MARKETPLACE = json.dumps({"name": "probanda", "plugins": [{"name": "probanda", "source": "./plugins/probanda"}]})
+MARKETPLACE = json.dumps({"name": "probanda", "plugins": [
+    {"name": name, "source": f"./plugins/{name}"} for name in export_public.PUBLIC_PLUGINS]})
 PUBLIC = {
     ".claude-plugin/marketplace.json": MARKETPLACE,
     "README.md": "# Probanda\n",
-    "plugins/probanda/.claude-plugin/plugin.json": json.dumps({"name": "probanda", "version": "1"}),
-    "plugins/probanda/skills/x/SKILL.md": "A skill.\n",
+    **{f"plugins/{name}/.claude-plugin/plugin.json": json.dumps({"name": name, "version": "1"})
+       for name in export_public.PUBLIC_PLUGINS},
+    "plugins/practice/skills/x/SKILL.md": "A skill.\n",
 }
 # In the repo, outside public/: never exported.
 PRIVATE = {
@@ -100,20 +102,20 @@ class ExportTest(unittest.TestCase):
 
     def test_file_added_after_approval_refuses(self):
         self.repo_with(PUBLIC)
-        self.put("public/plugins/probanda/skills/y/SKILL.md", "Another skill.\n")
+        self.put("public/plugins/practice/skills/y/SKILL.md", "Another skill.\n")
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
-        self.assertIn("not approved, added: plugins/probanda/skills/y/SKILL.md", out)
+        self.assertIn("not approved, added: plugins/practice/skills/y/SKILL.md", out)
 
     def test_file_removed_after_approval_refuses(self):
         self.repo_with(PUBLIC)
-        (self.repo / "public/plugins/probanda/skills/x/SKILL.md").unlink()
+        (self.repo / "public/plugins/practice/skills/x/SKILL.md").unlink()
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
-        self.assertIn("not approved, removed: plugins/probanda/skills/x/SKILL.md", out)
+        self.assertIn("not approved, removed: plugins/practice/skills/x/SKILL.md", out)
 
     def test_approved_trade_secret_still_refuses(self):
-        public = {**PUBLIC, "plugins/probanda/skills/x/ref.md": f"{DDL}\n"}
+        public = {**PUBLIC, "plugins/practice/skills/x/ref.md": f"{DDL}\n"}
         self.repo_with(public)
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
@@ -137,9 +139,9 @@ class ExportTest(unittest.TestCase):
     def test_every_public_plugin_needs_its_manifest_and_gets_its_own_summary_rows(self):
         self.assertEqual(export_public.REQUIRED_FILES[2:],
                          tuple(f"plugins/{name}/.claude-plugin/plugin.json" for name in export_public.PUBLIC_PLUGINS))
-        files = {"plugins/probanda/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
+        files = {"plugins/practice/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
         self.assertEqual(export_public.tree_summary(files),
-                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/probanda/skills/")])
+                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/practice/skills/")])
 
     def test_plan_writes_nothing_and_reports_the_gate(self):
         self.repo_with(PUBLIC)

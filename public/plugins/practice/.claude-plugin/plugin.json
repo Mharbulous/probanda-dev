@@ -1,8 +1,8 @@
 {
-  "name": "probanda",
-  "displayName": "Probanda",
+  "name": "practice",
+  "displayName": "Probanda Practice",
   "version": "0.0.1",
-  "description": "A litigation practice plugin for British Columbia lawyers.",
+  "description": "The base Probanda plugin for British Columbia lawyers. Requires nothing. Install it first: every other Probanda plugin requires it.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"

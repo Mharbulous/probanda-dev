@@ -1,21 +1,29 @@
 # Probanda
 
-Probanda is a Claude Cowork plugin for litigation practice in British Columbia.
+Probanda is a set of Claude Cowork plugins for legal practice in British Columbia.
 
 ## Install
 
-In Claude, add this repository as a plugin marketplace, then install the plugin from it:
+In Claude, add this repository as a plugin marketplace, then install the plugins from it in this order. `practice` comes first because every other plugin requires it, and `research` comes before `litigator`, which requires both:
 
 ```
 /plugin marketplace add Probanda-app/plugins
-/plugin install probanda@probanda
+/plugin install practice@probanda
+/plugin install research@probanda
+/plugin install litigator@probanda
+/plugin install solicitor@probanda
 ```
 
-On Claude Code 2.1.275 or later this works in one step:
+On Claude Code 2.1.275 or later each install works in one step:
 
 ```
-/plugin install probanda --marketplace Probanda-app/plugins
+/plugin install practice --marketplace Probanda-app/plugins
+/plugin install research --marketplace Probanda-app/plugins
+/plugin install litigator --marketplace Probanda-app/plugins
+/plugin install solicitor --marketplace Probanda-app/plugins
 ```
+
+`solicitor` ships no skills yet.
 
 ## Status
 
