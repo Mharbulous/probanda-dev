@@ -11,17 +11,19 @@
 // verbatim, then the reason, the loose thread's id, who surfaced it and where it came from, as the
 // lane's line does. An unranked card, and one ranked before v70, shows the idea verbatim instead,
 // ending in its tags (a "?" while unranked). The controls are folder tabs, an
-// All groups switch with a chip per group over the ranked, and, on each card not yet deferred, a
-// Defer button (schema v68). Ranking never drops a loose thread, so the page lists every open one; a
-// deferred one shows collapsed to its first line and faded.
+// All groups switch with a chip per group over the ranked, and, on each card, a status button
+// reading Ranked, Unranked or Deferred that defers the thread or brings it back (schema v68).
+// Ranking never drops a loose thread, so the page lists every open one. A deferred one shows only
+// under the Deferred tab (and All), never under Ranked or Unranked.
 //
-// A fourth tab, Resolved, lists the threads that are not open (fetchResolvedSeeds), newest first, one
+// A fifth tab, Resolved, lists the threads that are not open (fetchResolvedSeeds), newest first, one
 // line each saying how it left the board and when: discarded (schema v75), a red struck line with a
 // Restore link that copies an instruction and writes nothing; suggested to Probanda (v75); or outlined
-// into a job that is not deleted, named by number and title and dated by the job's creation. The All
-// tab shows them only while its "Show/Hide Resolved Threads" checkbox is on, and it starts off.
+// into a job that is not deleted, named by number and title and dated by the job's creation. Each line
+// ends in an inert Resolved label. The All tab shows them only while its "Show/Hide Resolved Threads"
+// checkbox is on, and it starts off.
 //
-// The Defer button writes through the data server's localhost listener (../../page-api/server.ts):
+// The status button writes through the data server's localhost listener (../../page-api/server.ts):
 // the page posts the db_path, proceeding and token embedded here, and the listener writes only
 // with a token a render made. The page checks the listener on load and disables the buttons, with
 // one line saying why, when it does not answer.
@@ -68,7 +70,7 @@ export interface LooseIdea {
 /** A resolved loose thread, as the page's Resolved section draws it. */
 export type ResolvedIdea = ResolvedSeed;
 
-/** What the page's Defer button posts to the listener: its port, and the body it sends. */
+/** What the page's status button posts to the listener: its port, and the body it sends. */
 export interface LooseIdeasApi {
   port: number;
   db_path: string;
@@ -113,13 +115,16 @@ export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: Node
   return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
 }
 
-/** The header's counts: every open loose thread, the ranked and the unranked, then the resolved. */
+/** The header's counts: every open loose thread, the ranked, the unranked and the deferred (which
+ * add up to it), then the resolved. A deferred thread counts as Deferred only. */
 function looseIdeasMeta(data: LooseIdeasData): [string, string][] {
-  const ranked = data.ideas.filter((i) => i.rank !== null).length;
+  const deferred = data.ideas.filter((i) => i.deferred_at !== null).length;
+  const ranked = data.ideas.filter((i) => i.deferred_at === null && i.rank !== null).length;
   return [
     ["Threads", String(data.ideas.length)],
     ["Ranked", String(ranked)],
-    ["Unranked", String(data.ideas.length - ranked)],
+    ["Unranked", String(data.ideas.length - ranked - deferred)],
+    ["Deferred", String(deferred)],
     ["Resolved", String(data.resolved.length)],
   ];
 }
@@ -141,12 +146,10 @@ article.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-r
 .idea>.body{display:flex;flex-direction:column;gap:4px}
 .idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}
 .idea>.body>p.thought{white-space:pre-wrap}
-.idea>button.defer{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
-.idea>button.defer:disabled{cursor:default;opacity:.5}
+.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
+.idea>button.status:disabled{cursor:default;opacity:.5}
 .idea>.error{margin:0;font-size:12.5px;color:#b3261e}
-article.idea.deferred{opacity:.55}
-.idea.deferred>.text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:0;cursor:default}
-.idea.deferred>:not(.text){display:none}
+.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}
 .api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
 .switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}
 .switch .label{color:#b9c9c0;transition:color .18s}
@@ -169,14 +172,15 @@ article.idea.deferred{opacity:.55}
 @media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}
 `;
 
-// Draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unranked, Resolved) over one
-// panel holding three sections, ranked, unranked, then resolved. Several cards may be open; each section's first open
-// card starts open. The Ranked heading carries the All groups switch: on, every group shows; off,
-// a chip per group shows that group when pressed, every chip pressed at first and the selection kept
+// Draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unranked, Deferred, Resolved)
+// over one panel holding four sections, ranked, unranked, deferred, then resolved; a deferred thread
+// sits under Deferred only. Several cards may be open; each section's first card starts open. The
+// Ranked heading carries the All groups switch: on, every group shows; off, a chip per group shows that group when pressed, every chip pressed at first and the selection kept
 // across toggles. Turning it off breaks the chips out of a cluster behind the switch; turning it on
-// plays the same motion in reverse, then hides them. Each card not yet deferred carries a Defer
-// button, enabled once the listener answers /health within 2 s; a click posts the page's api block
-// and, on 200, collapses and fades the card in place. A failure shows on the card.
+// plays the same motion in reverse, then hides them. Each card carries a status button reading
+// Ranked, Unranked or Deferred, enabled once the listener answers /health within 2 s; a click posts
+// the page's api block to /defer, or to /undefer on a deferred card, and, on 200, moves the card to
+// its new section and relabels it. The header's counts keep the render's. A failure shows on the card.
 // The Resolved section holds one line per resolved thread, saying how it left the board and when, a
 // discarded one struck with a Restore link that copies "restore loose thread #N". It shows under its
 // own tab, and under All only while the "Show/Hide Resolved Threads" checkbox is on. The checkbox
@@ -194,7 +198,7 @@ const PAGE_SCRIPT = String.raw`(function () {
   var base = "http://127.0.0.1:" + api.port;
   var header = document.querySelector("header");
   var board = document.querySelector(".board");
-  var deferButtons = [];
+  var statusButtons = [];
   var colour = {};
   data.groups.forEach(function (g) { colour[g.key] = g.colour; });
 
@@ -214,55 +218,65 @@ const PAGE_SCRIPT = String.raw`(function () {
     line.textContent = message;
   }
 
-  function defer(c, button) {
+  // The section an open loose thread belongs under: deferred, else ranked or unranked.
+  function home(c) { return c.deferred ? "deferred" : c.idea.rank === null ? "unranked" : "ranked"; }
+  function label(c) {
+    c.button.textContent = c.deferred ? "Deferred" : c.idea.rank === null ? "Unranked" : "Ranked";
+    c.button.title = c.deferred ? "Click to bring back" : "Click to defer";
+  }
+
+  function toggleDeferral(c) {
+    var button = c.button;
+    var failed = c.deferred ? "Not brought back: " : "Not deferred: ";
     button.disabled = true;
-    fetch(base + "/seeds/" + c.idea.id + "/defer", {
+    fetch(base + "/seeds/" + c.idea.id + (c.deferred ? "/undefer" : "/defer"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token })
     }).then(function (res) {
       return res.json().then(function (body) { return { ok: res.ok, body: body }; }, function () { return { ok: false, body: { error: "The listener answered " + res.status + "." } }; });
     }).then(function (reply) {
+      button.disabled = false;
       if (reply.ok) {
-        c.node.classList.add("deferred");
-        c.node.removeChild(button);
-        c.set(false);
-        c.inert = true;
-        c.text.tabIndex = -1;
+        var from = sections[home(c)];
+        from.cards.splice(from.cards.indexOf(c), 1);
+        c.deferred = !c.deferred;
+        var to = sections[home(c)];
+        to.cards.push(c);
+        to.stack.appendChild(c.node);
+        label(c);
+        apply();
         return;
       }
-      button.disabled = false;
-      showError(c.node, "Not deferred: " + (reply.body.error || reply.body.outcome || "the listener refused it") + ".");
+      showError(c.node, failed + (reply.body.error || reply.body.outcome || "the listener refused it") + ".");
     }, function () {
       button.disabled = false;
-      showError(c.node, "Not deferred: the listener did not answer. Buttons need the Claude desktop app running.");
+      showError(c.node, failed + "the listener did not answer. Buttons need the Claude desktop app running.");
     });
   }
 
   // A card: its job description, or the idea when it has none, which toggles it and ends in its
   // tags, then its body, which opens with the idea when the job description stood in for it.
   function ideaCard(i) {
-    var node = el("article", i.deferred_at ? "idea deferred" : "idea");
+    var node = el("article", "idea");
     var text = el("p", "text");
     var body = el("div", "body");
-    var c = { node: node, idea: i, text: text, inert: !!i.deferred_at, open: false };
+    var button = el("button", "status");
+    var c = { node: node, idea: i, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
     c.set = function (on) {
       c.open = on;
       node.setAttribute("data-open", String(on));
       text.setAttribute("aria-expanded", String(on));
       body.hidden = !on;
     };
-    if (!c.inert) {
-      var button = el("button", "defer", "Defer");
-      button.type = "button";
-      button.title = "Defer indefinitely";
-      button.disabled = true;
-      button.addEventListener("click", function () { defer(c, button); });
-      node.appendChild(button);
-      deferButtons.push(button);
-    }
+    button.type = "button";
+    button.disabled = true;
+    label(c);
+    button.addEventListener("click", function () { toggleDeferral(c); });
+    node.appendChild(button);
+    statusButtons.push(button);
     text.setAttribute("role", "button");
-    text.tabIndex = c.inert ? -1 : 0;
+    text.tabIndex = 0;
     text.appendChild(document.createTextNode(i.job || i.idea));
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
@@ -280,9 +294,9 @@ const PAGE_SCRIPT = String.raw`(function () {
     if (i.reason) body.appendChild(el("p", "why", i.reason));
     body.appendChild(el("p", "where", "Loose thread " + i.id + " · " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
     node.appendChild(body);
-    text.addEventListener("click", function () { if (!c.inert) c.set(!c.open); });
+    text.addEventListener("click", function () { c.set(!c.open); });
     text.addEventListener("keydown", function (e) {
-      if (c.inert || (e.key !== "Enter" && e.key !== " ")) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
       e.preventDefault();
       c.set(!c.open);
     });
@@ -343,7 +357,14 @@ const PAGE_SCRIPT = String.raw`(function () {
     folder.appendChild(sec);
     var first = cards.filter(function (c) { return !c.inert; })[0];
     if (first) first.set(true);
-    sections[name] = { node: sec, h2: h2, cards: cards };
+    sections[name] = { node: sec, h2: h2, stack: stack, cards: cards };
+  }
+
+  // A resolved line, ending in its inert status label.
+  function resolvedCard(d) {
+    var r = resolvedLine(d);
+    r.node.appendChild(el("span", "status", "Resolved"));
+    return r;
   }
 
   var allGroups = true;
@@ -371,10 +392,12 @@ const PAGE_SCRIPT = String.raw`(function () {
   var noGroups = el("p", "empty", "No groups selected. Choose a group above, or turn on All groups.");
   noGroups.hidden = true;
 
-  var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
+  var open = data.ideas.filter(function (i) { return !i.deferred_at; });
+  var rankedCards = open.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
-  section("resolved", "Resolved", [], data.resolved.map(resolvedLine));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], open.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("deferred", "Deferred", [], data.ideas.filter(function (i) { return !!i.deferred_at; }).map(ideaCard));
+  section("resolved", "Resolved", [], data.resolved.map(resolvedCard));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
@@ -441,7 +464,7 @@ const PAGE_SCRIPT = String.raw`(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]];
+  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -457,7 +480,9 @@ const PAGE_SCRIPT = String.raw`(function () {
 
   var current = "all";
   function apply() {
-    rankedCards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
+    // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
+    sections.deferred.cards.forEach(function (c) { c.node.hidden = false; });
+    sections.ranked.cards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
     var any = false;
     Object.keys(sections).forEach(function (name) {
@@ -492,7 +517,7 @@ const PAGE_SCRIPT = String.raw`(function () {
   });
   apply();
 
-  if (deferButtons.length > 0) {
+  if (statusButtons.length > 0) {
     var abort = new AbortController();
     var timer = setTimeout(function () { abort.abort(); }, 2000);
     fetch(base + "/health", { signal: abort.signal }).then(function (res) {
@@ -500,7 +525,7 @@ const PAGE_SCRIPT = String.raw`(function () {
     }).then(function (body) {
       clearTimeout(timer);
       if (!body || body.ok !== true) throw new Error("no listener");
-      deferButtons.forEach(function (b) { b.disabled = false; });
+      statusButtons.forEach(function (b) { b.disabled = false; });
     }).catch(function () {
       clearTimeout(timer);
       header.appendChild(el("p", "api-off", "Buttons need the Claude desktop app running."));
