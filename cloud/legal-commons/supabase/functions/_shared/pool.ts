@@ -1,14 +1,12 @@
-// Shared by the three pool functions: who may call, the embedding model, and
-// the one way they reach the database.
-//
-// Each function is deployed with JWT verification off (config.toml), because the
-// pool's secret keys are not JWTs. So each function checks the caller itself,
-// before it reads the request body: the `apikey` header must hold one of the
-// project's secret keys. Supabase gives the function those keys in
-// SUPABASE_SECRET_KEYS, a JSON dictionary of name to key. A publishable key is
-// not in it and is refused like any other value.
+// Shared by the pool functions: the embedding model and the one way they reach
+// the database. Who may call, and the frame each function runs in, are in
+// caller.ts and re-exported here.
 //
 // Nothing here logs. No function logs a text it receives.
+
+import { callerSecretKey, reply, serve } from "./caller.ts";
+
+export { callerSecretKey, reply, serve };
 
 export const MODEL = "gte-small";
 
@@ -24,27 +22,6 @@ const session = new (globalThis as any).Supabase.ai.Session(MODEL);
 /** The embedding of one text: 384 numbers, mean-pooled and normalized. */
 export async function embed(text: string): Promise<number[]> {
   return (await session.run(text, { mean_pool: true, normalize: true })) as number[];
-}
-
-function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
-  // Compares every byte whatever the result, so the time taken says nothing about where two keys differ.
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < a.length; i++) diff |= a[i] ^ (b[i % (b.length || 1)] ?? 0);
-  return diff === 0;
-}
-
-/** The project's secret key the caller sent, or null when the caller sent none of them. */
-export function callerSecretKey(req: Request): string | null {
-  const sent = req.headers.get("apikey");
-  if (!sent) return null;
-  const keys = Object.values(JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")) as string[];
-  const encoder = new TextEncoder();
-  const sentBytes = encoder.encode(sent);
-  return keys.find((key) => sameBytes(encoder.encode(key), sentBytes)) ?? null;
-}
-
-export function reply(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
 function headers(key: string, profile: "Accept-Profile" | "Content-Profile"): Record<string, string> {
@@ -74,23 +51,4 @@ export async function clausesAfter(
   );
   if (!res.ok) throw new Error(`reading clauses failed (${res.status})`);
   return await res.json();
-}
-
-/**
- * The frame every function shares: POST only, the caller checked before the body
- * is read, then the function's own work.
- */
-export function serve(work: (key: string, body: Record<string, unknown>) => Promise<Response>): void {
-  Deno.serve(async (req) => {
-    if (req.method !== "POST") return reply(405, { error: "POST only" });
-    const key = callerSecretKey(req);
-    if (!key) return reply(401, { error: "not authorized" });
-    let body: Record<string, unknown>;
-    try {
-      body = await req.json();
-    } catch {
-      return reply(400, { error: "the request body is not JSON" });
-    }
-    return await work(key, body);
-  });
 }
