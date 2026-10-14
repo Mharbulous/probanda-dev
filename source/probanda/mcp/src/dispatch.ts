@@ -26,6 +26,7 @@ import { submissionDataCreateJobBoard, type CreateJobBoardArgs } from "./submiss
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
+import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
 import { submissionDataRecordSent, type RecordSentArgs } from "./submission/forms/sent-write.js";
@@ -254,6 +255,10 @@ export async function callTool(
 
   if (name === "drafting_data__approve_plan") {
     return submissionDataApprovePlan(args as unknown as ApprovePlanArgs);
+  }
+
+  if (name === "drafting_data__track_source") {
+    return submissionDataTrackSource(args as unknown as TrackSourceArgs);
   }
 
   if (name === "drafting_data__release_job") {

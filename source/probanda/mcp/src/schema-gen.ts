@@ -1526,6 +1526,60 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("track_source"),
+      description:
+        "Record the sources to get on the job (a tickets row) this session holds, and close them, in one call. A source " +
+        "to get is a decision, an enactment or a file the job's work has named and is about to retrieve or read; it is the " +
+        "job's own record beside its steps and never a step. add takes {kind, label} items, kind one of decision, " +
+        "legislation, file, label one line of at most 200 characters: a citation, an instrument's title and citation, or a " +
+        "file name, with no statement of law, no deadline and no date other than the one inside a citation. Adding an item " +
+        "already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, " +
+        "reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only " +
+        "a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. " +
+        "session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints " +
+        "none. The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another " +
+        "session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was " +
+        "written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: " +
+        "invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's " +
+        "database needs the v76 migration, and carry on with the work). Returns ticket_id, outcome, sources (every source " +
+        "on the job, open and closed), open, unknown (close items naming no source on the job), locked_by, status, " +
+        "rejected_at and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+          add: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { kind: { type: "string", enum: ["decision", "legislation", "file"] }, label: { type: "string" } },
+              required: ["kind", "label"],
+              additionalProperties: false,
+            },
+          },
+          close: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                kind: { type: "string", enum: ["decision", "legislation", "file"] },
+                label: { type: "string" },
+                outcome: { type: "string", enum: ["got", "not_retrieved"] },
+                reason: { type: "string" },
+              },
+              required: ["kind", "label", "outcome"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description:
         "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. " +
