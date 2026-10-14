@@ -57,7 +57,9 @@ not a stylistic preference.
    tried is not a report — the practitioner cannot check it. Then **offer** retrieval via the
    `research-paralegal` agent. Retrieval runs only on the practitioner's confirmation — one rule
    for CanLII and Westlaw alike — and never while another `research-paralegal` instance is in
-   flight (it is the singleton owner of the shared Chrome session and Downloads folder). If
+   flight (it is the singleton owner of the shared Chrome session and Downloads folder). A caller
+   holding a job on the Job Board records the citation on the job before that dispatch and closes it once
+   it has landed (`/drafting-data`'s `jobs-common.md` §2, "Sources to get"). If
    case-data's operation does not fit this citation, name the mismatch and ask. No other method.
 
    **Secondhand reproduction.** If the caller names another judgment on file that quotes the

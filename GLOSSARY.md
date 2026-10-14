@@ -521,6 +521,10 @@ Case-specific recorded material belonging to a matter: a document, but also a re
 **Source Citation**:
 A computed reference of the form `<file_path>#<locator>`, used to pinpoint where in a source a fact or position comes from (e.g. a paragraph, a page/line range in a transcript). A page-less source (a Word document, an email) is located by an ordinal body paragraph or its header block, so that an independent reader re-deriving the same text reaches the same place.
 
+**Source to get**:
+A court decision, an enactment or a file that a job's work has named and is about to retrieve or read, recorded on the job before the work that gets it. It is open until it is closed as got or as not retrieved. It is the job's own record beside its **Steps** and never one of them: the steps are the practitioner's plan, and a source to get is found by the work. Its label is a citation, an instrument or a file name, never what an authority holds. Not a **Source**: that is the matter's own evidentiary record. Internal name: the `ticket_sources` table.
+_Avoid_: discovered item; sub-step; download (it also covers legislation and files to read); source (alone).
+
 **Stage**:
 One of the outlining sessions in which `/prepare` is re-run: opening the bundle, after the gate job completes, and after responses arrive.
 _Avoid_: phase; step (a job's unit).
