@@ -318,7 +318,7 @@ _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfin
 
 **Job Board**:
 The per-Writing page (`Job Board <id>.html` at the top of the draft folder) rendering this Writing's **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceeding's loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Job Board of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Job Board** is a Job Board with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Job Board pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
-_Avoid_: Work Board; document (a Mockup, not a Writing member).
+_Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
 
 **Leading document**:
 The document a bundle exists to deliver: the affidavit body, the cover letter, the Land Title form. The first non-apparatus segment in the file. A bundle may have none (a Book of Authorities, a Record: nothing but apparatus in front of the attachments).
@@ -592,6 +592,10 @@ A principle recorded, under the pool's earlier design, as another judge's wordin
 **Verified**:
 Describes whether the *extraction or classification* of a row has been quality-checked — nothing more. It does NOT mean the underlying fact is true, proven, admitted, or accepted by a court. A fact can be fully verified (the extraction accurately reflects what the source document says) while still being hotly disputed on the merits.
 _Avoid_: verified as a synonym for "proven" or "true" anywhere in prose.
+
+**Work Board**:
+The practice-wide page (`Work Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board`, in the deadline lane (`shared/html-pages.md`, The Work Board). Its internal name is `practice_board`.
+_Avoid_: Job Board (one Writing's page); `Work_board` (the Job Board's internal document type); Litigation Strategy (one matter's page).
 
 **Work marker**:
 One emoji from a closed set, printed on a Mockup where a predicate over the database is true (an open jurisdictional-basis slot, an excerpt with no pinpoint, a fact with no witness…), each naming the work that finishes it. The compressed to-do list of a Writing. Deferred work counts (a reserved row awaits its deployment decision); only ⬜ means nothing started; an emoji that names no work is not a marker. Three types: **work** (we act), **event** (they or the world acted — reports that outcome and renders as prefix of the work it routed; several events may route the same work), **hold** (our posture — renders only in Held in reserve). Rules, tables and mis-readings: `.claude/skills/drafting-data/references/work-markers.md` (SSOT).

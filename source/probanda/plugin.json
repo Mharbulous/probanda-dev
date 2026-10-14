@@ -55,7 +55,7 @@
         ]
       },
       {
-        "matcher": "Skill|mcp__(.+__)?plugin_probanda_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay)|mcp__(.+__)?plugin_probanda_data__rules__audit",
+        "matcher": "Skill|mcp__(.+__)?plugin_probanda_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay|render_practice_board)|mcp__(.+__)?plugin_probanda_data__rules__audit",
         "hooks": [
           {
             "type": "command",

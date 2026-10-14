@@ -161,6 +161,11 @@ export function practiceToolDefinitions(): ToolDefinition[] {
       ]),
     },
     {
+      name: practicePrefixed("render_practice_board"),
+      description: "Write the Work Board, the practice-wide page of open work, to Work Board.html beside practice.db, and return work_board_path with the count in each panel (overdue, due_today, coming_up, other), the flagged and conflicted counts, excluded_test_matters and read_failures. It never returns a date. The page covers every matter, billable: false included; a matter whose status is exactly 'test' is left out. Its panels are Overdue, Due today, Coming up (the next 14 days) and Other open work, built from the all-matters active_deadlines and open_tasks sweeps by stored date only: a deadline by deadline_date, an event by anchor_date, a to-do by its deadline_date (its BF date is a plain label), an undated to-do in Other open work. A provisional alternative, a review-flagged deadline and a conflicted event draw flagged, never as a plain due date. The page is a human interface: present work_board_path as a file card and relay the counts; never read, grep or parse the page (shared/html-pages.md). Deadline lane: never called from a drafting session.",
+      inputSchema: objectSchema([]),
+    },
+    {
       name: practicePrefixed("ar_data"),
       description: "Non-closed, billable matters with trust status, WIP hours, and pending payment-in-flight state for AR reporting. Non-billable matters (billable: false) are excluded, and the WIP hours count only entries flagged billable: true. WIP hours start at each matter's own billing cutoff, derived from its invoices exactly as wip_hours derives it (date_to + 1 day when set, else issue_date), and each row reports it as cutoff_date/cutoff_source; a matter with no invoices sums all its billable entries with cutoff_date and cutoff_source null.",
       inputSchema: objectSchema([]),

@@ -27,7 +27,7 @@ LANES = {
 }
 SLASH_RE = re.compile(r"^\s*/([\w.:-]+)")
 DEADLINE_TOOL_RE = re.compile(
-    r"(?:^|__)(practice_data__(?:active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay))$")
+    r"(?:^|__)(practice_data__(?:active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay|render_practice_board))$")
 AUDIT_TOOL_RE = re.compile(r"(?:^|__)rules__audit$")
 AGENT = "probanda:docket-clerk"
 MONTH = r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"

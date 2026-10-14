@@ -21,7 +21,8 @@ So this gate refuses:
   page (best effort: a page reached through a variable or a wildcard passes);
 - every other device_* tool with any string input naming a page, except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
-  `To Do List.html`), `Job Board <id>.html`,
+  `To Do List.html`), `Work Board.html` (the practice-wide page beside
+  practice.db), `Job Board <id>.html`,
   `Job Board - proceeding <id>.html` or a listed view page's
   `<page name> - Job Board <id>.html`, case aside, or the same pages under their
   names before 2026-10-09 (`Job Board - filing <id>.html`,
@@ -69,9 +70,10 @@ SHELL_TOOL = re.compile(r"Bash|PowerShell|mcp__(.+__)?device_bash|mcp__(.+__)?wo
 DEVICE_TOOL = re.compile(r"mcp__(.+__)?device_.*")
 STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
+# practice-wide Work Board beside practice.db, the
 # id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>") and the
 # listed view pages.
-STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|" + VIEW)
+STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|" + VIEW)
 
 
 def basename(path):
