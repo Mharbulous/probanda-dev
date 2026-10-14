@@ -348,6 +348,19 @@ This step never derives a deadline, never states time remaining, and never calls
 
 ---
 
+## Another copy of a registered source (after completion)
+
+[`ingest.md`](ingest.md) Step 4 sends a file with no hash match through [`supersede-draft.md`](supersede-draft.md) §1 before it reaches this operation, so a pair §1 found is already settled. This step covers the pair §1 did not find: at any point in this run, the session concludes that the document is another copy of registered source N, with a different hash. The conclusion can come from the extractor's hand-back, from a query made for another step, or from anything else the session read. `../shared/extraction-protocol.md`, "Another copy with a different hash", sets the scope and the rule. The step applies to the top-level `main.sources` row of Paths A, C and E when its `category` is `court`: an affidavit's body row, a book's own row.
+
+1. **Finish the document's own transactions first**, exactly as its path says. The conclusion never skips an exhibit, a segment or a pass, and never leaves the row `partial`.
+2. **Run `supersede-draft.md`** with `mode` `attended` and `pair` the new row's `source_id` and N. Run it after the date-setting check, or as soon as the conclusion is reached when that is later. `pair` skips its §1. It compares the two files page by page (§2), asks its one question (§5), and writes nothing before the practitioner's answer.
+3. **By its outcome.** `superseded` or `not_version`: nothing more is written here. A row that ends superseded takes no delivery check and no name check, because its file has moved to `0. DRAFT*\Superseded\`. `declined`: append `SUPERSEDE-PENDING: possible other version of source #<N>.` to the new row with conventions §11's append statement, in its own `case_data__execute` call, and say so in the report. The gate offers the pair again from the marker.
+4. **Write no note for the conclusion.** The marker, or the decided pair, is the record. A note written anyway follows the wording the protocol fixes: `DISCREPANCY: possible duplicate of source #<N>.`, with the row at `verified = 2`.
+
+An unattended ingest runs step 1 and writes the marker in place of steps 2 and 3 ([`ingest-unattended.md`](ingest-unattended.md), Substitution 1j).
+
+---
+
 ## Outgoing correspondence: delivery check (after completion)
 
 After the date-setting check, test whether the just-registered top-level `main.sources` row is a letter the firm sent: its `category` is `correspondence`, and the document's own face shows the firm as its author (its letterhead or signature block, never the folder or the filename) writing to someone outside the firm. An email, a letter received, a privileged source and a file under the solicitor-client folder rule never match.

@@ -23,6 +23,15 @@ No hash match at all → treat as new and extract.
 
 **Exception: a copy of an email attachment.** When the only match is an email attachment's child row (no `file_path`) and that row was read through (`complete`), the file is already held: extract nothing, and report the attachment and its email. An attachment row not read through is no match, and the file is extracted as new (design-decisions #54).
 
+## Another copy with a different hash
+
+The hash lookup finds a file's own bytes only. An unsigned draft, a signed copy and the filed copy of one court document have three hashes, so `operations/supersede-draft.md` pairs such copies by name and page count before extraction. That pass can miss a pair. Any ingest, extraction or verification step can still conclude later that a court document is another copy of registered source N. The main agent reaches that conclusion, never a subagent, because no subagent sees another registered source.
+
+- **Scope.** Both are top-level court sources. Source N is not superseded, and neither source already names the other with a `[SUPERSEDED-BY:#`, `[NOT-VERSION-OF:#` or `SUPERSEDE-PENDING:` marker.
+- **The conclusion decides nothing.** It is never a reason to skip part of the read, to leave the source `partial`, or to fold or merge anything. The new copy is registered and read through like any other document. Which copy is kept is decided only in `operations/supersede-draft.md`.
+- **Never free text alone.** The conclusion is either settled at once or recorded as the pending marker `SUPERSEDE-PENDING: possible other version of source #<N>.` ([`conventions.md`](conventions.md) §11) on the new copy's source. Attended: once the new copy has its source, hand the two sources to `operations/supersede-draft.md` as its `pair`, which writes nothing before the practitioner's answer. When the practitioner gives no answer, write the marker. Unattended: write the marker.
+- **A note is optional and never stands in for the marker.** The marker is the record, and it holds only the source id, never document text. Where a note is also written, it is a sentence of its own reading exactly `DISCREPANCY: possible duplicate of source #<N>.`, with anything else in a separate sentence. No other wording is used ("suspected duplicate", "appears to be a copy"), because `operations/supersede-draft.md` removes only that sentence when the pair is decided. The note is a prefixed note, so its source goes to `verified = 2` in the same write (`conventions.md` §5). The marker never changes `verified`.
+
 ## Register with an honest status, then flip
 
 Register the source with an **honest, non-complete status before writing any child entities** (facts, factual positions, relief items/positions, source references, evidence links, provenance). Flip the status to `complete` only when the source has actually been registered and read through — even if that read recorded gaps (skipped exhibits, unreadable pages). Reserve `failed` for the case where ingestion could not begin at all.

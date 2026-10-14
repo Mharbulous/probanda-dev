@@ -94,6 +94,8 @@ Decide the destination from the probe result. Route to exactly one operation and
 
 The gate itself still writes nothing: `supersede-draft.md` writes only after the practitioner's answer.
 
+`supersede-draft.md` §1 pairs copies by name and page count, so it can find no candidate for a file that is in fact another copy of a registered court source. The file then goes to `ingest-extract.md` and is registered and read through as a new document. When the session concludes later, during or after that read, that the file is another copy of registered source N, the conclusion is never left in a note: `ingest-extract.md`'s "Another copy of a registered source" step hands the two sources to `supersede-draft.md` as its `pair`, and writes the `SUPERSEDE-PENDING:` marker when the practitioner gives no answer.
+
 This matches the duplicate-routing contract in `../shared/extraction-protocol.md`, including its email-attachment exception; the table above applies it across the main and privileged source stores.
 
 When the presented file is a legal authority (case law / statute / regulation / treatise), the extractor path performs its own hash check against `law.authorities`; the gate still routes it to `ingest-extract.md`, which owns that branch.

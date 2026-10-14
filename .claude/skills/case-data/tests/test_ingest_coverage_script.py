@@ -86,8 +86,12 @@ class IngestCoverageScriptTests(unittest.TestCase):
         self.assertEqual(out["status"], "ok")
         self.assertEqual(out["to_ingest"], [r"7. DISCOVERY\list of documents.pdf"])
         self.assertEqual(out["missing"], ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*"])
+        self.assertEqual(out["records"], [
+            {"path": r"7. DISCOVERY\list of documents.pdf", "verdict": "none",
+             "source_id": None, "possible_version_of": None}])
         self.assertEqual(
-            set(out), {"status", "to_ingest", "damaged", "unreadable", "missing", "newest_correspondence"})
+            set(out),
+            {"status", "to_ingest", "records", "damaged", "unreadable", "missing", "newest_correspondence"})
 
     def test_a_court_file_folder_with_a_file_number_is_walked(self):
         self.build()
