@@ -13,51 +13,53 @@ def paragraph(text, opening):
 
 
 class VacuousStepReadBackTest(unittest.TestCase):
-    """A step that only restates the job's title is named as naming no work, never announced as a step to run."""
+    """A step that only restates the job's request is named as naming no work, never announced or dispatched."""
 
     @classmethod
     def setUpClass(cls):
         cls.text = JOB_SESSION.read_text(encoding="utf-8")
-        cls.rule = paragraph(cls.text, "**A step that only restates the title.**")
+        cls.rule = paragraph(cls.text, "**A step that only restates the request.**")
 
-    def test_step_is_compared_with_the_title_after_normalising(self):
+    def test_rule_is_served_before_the_assigning_write(self):
+        self.assertIn("<!-- atom id=draft.steps.restated ops=dispatch,pre_claim,plan_readback,take_over -->", self.text)
+        self.assertIn("Before the assigning write of every ready job, one-step or many-step", self.rule)
+
+    def test_step_is_compared_with_title_and_intent_after_normalising(self):
         self.assertIn(
-            "compare each step not yet done with the job's title, ignoring case, "
-            "surrounding and repeated whitespace, and trailing punctuation",
+            "compare each step not yet done with the job's title and with its intent, ignoring case, "
+            "surrounding and repeated whitespace, trailing punctuation",
             self.rule,
         )
+        self.assertIn("A step that equals or contains the title or the intent names no work", self.rule)
 
-    def test_read_back_names_it_and_asks_how_it_should_read(self):
-        self.assertIn("only restates the job's title and so names no work, then ask how it should read", self.rule)
-        self.assertIn("Propose no wording.", self.rule)
+    def test_read_back_names_it_and_proposes_by_adoption(self):
+        self.assertIn("only restates the request and so names no work", self.rule)
+        self.assertIn("by the adoption ceremony (`shared/paralegal-posture.md` section 3)", self.rule)
+        self.assertIn("Assign nothing and write nothing.", self.rule)
 
     def test_never_announced_and_the_job_does_not_proceed(self):
-        self.assertIn("Never announce it as a step to run, and never ask whether it is still right.", self.rule)
-        self.assertIn("While any such step stands, the job does not proceed", self.rule)
+        self.assertIn("never dispatch on it, and never ask whether it is still right.", self.rule)
+        self.assertIn("While any such step stands, the job is neither assigned nor proceeds", self.rule)
 
     def test_taken_over_read_back_defers_to_the_rule(self):
         taken_over = paragraph(TAKE_OVER.read_text(encoding="utf-8"), "**A taken-over job:**")
         self.assertIn(
-            "Where an unfinished step only restates the title (`references/job-session.md`, "
-            '"A step that only restates the title"), name it as naming no work '
-            "and ask how it should read, and the job does not proceed until it is answered.",
+            "Where an unfinished step only restates the request (`references/job-session.md`, "
+            '"A step that only restates the request"), name it as naming no work',
             taken_over,
         )
         self.assertIn("Never ask whether the next unfinished step is still right.", taken_over)
 
     def test_announce_and_proceed_stops_for_it(self):
         announce = paragraph(self.text, "**Announce and proceed.**")
-        self.assertIn("Once the premise check and the title-restating check above have passed", announce)
+        self.assertIn("Once the premise check and the restating check above have passed", announce)
         stops = paragraph(self.text, "The only stops before the first step are")
-        self.assertIn("and a step that only restates the title (above).", stops)
+        self.assertIn("and a step that only restates the request (above).", stops)
 
-    def test_one_step_dispatch_is_unchanged(self):
-        self.assertIn(
-            "A newly assigned one-step job is dispatched on its recorded intent as below, unchanged.",
-            self.rule,
-        )
+    def test_one_step_job_is_not_exempt(self):
+        self.assertNotIn("dispatched on its recorded intent as below, unchanged", self.text)
         one_step = paragraph(self.text, "**A newly assigned one-step job**")
-        self.assertIn("runs on its creation approval. No pause", one_step)
+        self.assertIn("runs on its creation approval once its step names work. No pause", one_step)
 
 
 if __name__ == "__main__":
