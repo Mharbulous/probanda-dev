@@ -57,7 +57,10 @@ ORDER BY source_id;
 Read each PDF's page count with `references/scripts/extract_outline.py <path>` (its output carries `pages`), for every newcomer and every registered row under `scan_folder`. A script error leaves that file's count unknown. Then run `candidates`. Two files are a pair when all of these hold:
 
 - **Same proceeding.** Two registered rows: equal, non-null `proceeding_id`. A newcomer and a registered row, or two newcomers: the same `5. COURT…` folder (first path segment).
-- **Same title stem**: the file name, lower-cased, with dates and the whole words DRAFT, SIGNED, UNSIGNED, EXECUTED, FILED, AFFIRMED and UNFILED stripped, and every run of other characters collapsed to one space. A word is stripped only whole, so `unsigned` never leaves `un`.
+- **Similar title**, compared on each file's title stem: the file name, lower-cased, with dates and the whole words DRAFT, SIGNED, UNSIGNED, EXECUTED, FILED, AFFIRMED and UNFILED stripped, and every run of other characters collapsed to one space. A word is stripped only whole, so `unsigned` never leaves `un`. The two stems need not be equal, because two copies of one document are often named by hand, with a filler word, an abbreviation or a typo in one of them. `same_title` compares them in three steps:
+  - Each stem is split into words. A document code in the list below is replaced by its meaning, and the filler words `of`, `re`, `the`, `and`, `to` and `for` are dropped. The list is a short copy of the court document codes in `file-naming/references/code-registry.md`, which stays their source; it sits here because `candidates` runs from this fenced code alone.
+  - The numbers in the two names must be the same. `AFF#1` and `AFF#2` are never a pair, and neither are a numbered name and one with no number.
+  - The remaining words are compared as two sets. Two words match when they are equal, or when both have 6 or more letters and differ by at most 2 single-letter edits (a typo). The titles are similar when the matched words are at least 0.6 of all the distinct words in the two names.
 - **Page counts within 2**, when both files are PDFs with a known count.
 - **No marker**: neither registered row carries `[SUPERSEDED-BY:#` or `[NOT-VERSION-OF:#` naming the other. The markers are the cache: a decided pair is never assessed again.
 
@@ -74,6 +77,61 @@ def title_stem(path):
     name = os.path.splitext(path.replace('/', '\\').split('\\')[-1])[0].lower()
     name = re.sub(r'[^0-9a-z]+', ' ', _STEM_DATE.sub(' ', name))
     return ' '.join(_STEM_TOKEN.sub(' ', name).split())
+
+
+_FILLER = frozenset(('of', 're', 'the', 'and', 'to', 'for'))
+_CODES = {
+    'aff': 'affidavit',
+    'ar': 'application response',
+    'dj': 'default judgment',
+    'noa': 'notice of application',
+    'nocc': 'notice of civil claim',
+    'noh': 'notice of hearing',
+    'ordr': 'order',
+    'pet': 'petition',
+    'req': 'requisition',
+    'rnocc': 'response to civil claim',
+    'rtp': 'response to petition',
+}
+
+
+def _edits(a, b):
+    """The number of single-letter insertions, deletions and substitutions between two words."""
+    row = list(range(len(b) + 1))
+    for i, x in enumerate(a, 1):
+        diagonal, row[0] = row[0], i
+        for j, y in enumerate(b, 1):
+            diagonal, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, diagonal + (x != y))
+    return row[-1]
+
+
+def title_words(path):
+    """The numbers and the other words of a title stem, codes expanded and filler words dropped."""
+    numbers, words = set(), set()
+    for token in title_stem(path).split():
+        for word in _CODES.get(token, token).split():
+            if word.isdigit():
+                numbers.add(int(word))
+            elif word not in _FILLER:
+                words.add(word)
+    return numbers, words
+
+
+def same_title(a, b):
+    """Whether two file names are similar enough to be two copies of one document."""
+    (numbers_a, words_a), (numbers_b, words_b) = title_words(a), title_words(b)
+    if numbers_a != numbers_b:
+        return False
+    matched = len(words_a & words_b)
+    unmatched = sorted(words_b - words_a)
+    for word in sorted(words_a - words_b):
+        near = next((other for other in unmatched
+                     if len(word) >= 6 and len(other) >= 6 and _edits(word, other) <= 2), None)
+        if near is not None:
+            unmatched.remove(near)
+            matched += 1
+    distinct = len(words_a) + len(words_b) - matched
+    return distinct == 0 or matched / distinct >= 0.6
 
 
 def candidates(newcomers, registered, pages, scan_folder, matter_root):
@@ -108,18 +166,18 @@ def candidates(newcomers, registered, pages, scan_folder, matter_root):
     for path in court:
         for r in rows:
             if (segment(r['path']) == segment(path)
-                    and title_stem(r['path']) == title_stem(path)
+                    and same_title(r['path'], path)
                     and pages_fit(path, r['path'])):
                 pairs.append({'newcomer': path, 'source_id': r['source_id']})
     for i, a in enumerate(court):
         for b in court[i + 1:]:
-            if (segment(a) == segment(b) and title_stem(a) == title_stem(b)
+            if (segment(a) == segment(b) and same_title(a, b)
                     and pages_fit(a, b)):
                 pairs.append({'newcomers': [a, b]})
     for i, a in enumerate(rows):
         for b in rows[i + 1:]:
             if (a['proceeding_id'] is not None and a['proceeding_id'] == b['proceeding_id']
-                    and title_stem(a['path']) == title_stem(b['path'])
+                    and same_title(a['path'], b['path'])
                     and pages_fit(a['path'], b['path'])
                     and not names(a, b['source_id']) and not names(b, a['source_id'])):
                 pairs.append({'source_ids': [a['source_id'], b['source_id']]})
