@@ -59,6 +59,8 @@ details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)
    and on its criterion row. The margin under the header is this page's own: workboard-assets.ts is
    shared with the other pages. */
 header{margin-bottom:16px}
+/* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
+header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
 header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
@@ -146,12 +148,17 @@ const TAIL = String.raw`</script>
     return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
   }
 
-  // The page's one section names the page: "Job Board <id>: <Writing>", the id the file name's.
+  // The page's one section names the page: "Job Board <id>", the id the file name's, then the
+  // heading's gold rule, then the Writing's title on its own line.
   var first = data.sections[0];
   if (first) {
-    header.querySelector("h1").textContent = first.meta.filing_id === null
-      ? "Job Board: Proceeding " + first.meta.proceeding_id
-      : "Job Board " + first.meta.filing_id + ": " + first.meta.filing;
+    var h1 = header.querySelector("h1");
+    if (first.meta.filing_id === null) {
+      h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
+    } else {
+      h1.textContent = "Job Board " + first.meta.filing_id;
+      if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
+    }
   }
 
   // The section's proceeding: its venue (the forum's last segment), registry, court file number and
