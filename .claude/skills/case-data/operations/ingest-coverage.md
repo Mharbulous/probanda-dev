@@ -24,6 +24,7 @@ Read-only. For a set of matter folders named by glob, report which of their file
 | `records` | one `{path, verdict, source_id, possible_version_of}` for each `to_ingest` path, in the same order, saying why the file is not held. `verdict` is the file's [`ingest-status.md`](ingest-status.md) verdict: `none` (no usable record), `partial` or `failed`. `source_id` is the `main.sources` row behind that verdict, null when there is none. `possible_version_of` is ingest-status's field of that name: the id of the source a `SUPERSEDE-PENDING:` marker on that row names, null when there is none. A path named by a copy, whose twin lies outside the folders checked, carries the copy's own verdict, `none`, with the twin's `source_id` and `possible_version_of` |
 | `damaged` | stored-form paths whose verdict carries an `anomaly`: no ingest takes them until the record is repaired |
 | `unreadable` | `{path, error}` for each file whose bytes could not be read: neither ingested nor a gap, because its state is unknown |
+| `folders` | every pattern in `folder_globs`, in the order given: the folders this check covered. A caller names the folders checked from here |
 | `missing` | the patterns in `folder_globs` that matched no folder |
 | `newest_correspondence` | `{date, path}`: the latest `metadata.date` among files under the `correspondence_globs` folders that are held, by their own verdict (`ingested` or `ingested_by_reference`) or as a copy of an ingested twin, in the main or privileged store. Null when none carries a date |
 
@@ -112,7 +113,7 @@ def coverage(scope, entries, correspondence_globs):
                             'source_id': own['source_ids'][0] if own['source_ids'] else None,
                             'possible_version_of': own['possible_version_of']})
     return {'to_ingest': to_ingest, 'records': records, 'damaged': damaged,
-            'unreadable': scope['unreadable'],
+            'unreadable': scope['unreadable'], 'folders': list(scope['folders']),
             'missing': scope['missing'], 'newest_correspondence': newest}
 ```
 

@@ -62,11 +62,16 @@ export type IngestCoverage =
       damaged: string[];
       /** Files whose bytes could not be read, so their state is unknown. */
       unreadable: { path: string; error: string }[];
+      /** Every folder pattern this check covered, in the order given. A session names the folders
+       * checked from here, never from the caller's list alone. */
+      folders: string[];
       /** The checked folder patterns that matched no folder. */
       missing: string[];
       /** The newest dated correspondence the case database holds, or null when none carries a date
        * or no correspondence folder was checked. */
       newest_correspondence: { date: string; path: string } | null;
+      /** When this check ran: an ISO 8601 UTC timestamp. */
+      checked_at: string;
     }
   /** No case-data database in the folder: there is nothing to check against. */
   | { status: "not_applicable"; reason: string }

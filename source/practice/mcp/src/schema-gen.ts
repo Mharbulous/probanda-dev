@@ -2034,7 +2034,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: " +
         "verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; " +
         "source_id is the case-data source behind the verdict, and possible_version_of the source that file may " +
-        "be another version of; each is null when there is none. " +
+        "be another version of; each is null when there is none. With status ok it also returns folders, every " +
+        "folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from " +
+        "folders, never from opened.ingest_inputs alone. " +
         "When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, " +
         "matched by number and deponent code against the file names in the matter's COURT FILE folder, with its " +
         "court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, " +

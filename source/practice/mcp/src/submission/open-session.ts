@@ -107,8 +107,9 @@ export interface OpenSessionResult extends BootstrapResult {
    * (`opened.ingest_inputs.folders`) the case database does not yet hold, and, when a correspondence
    * folder is among them, the newest dated correspondence it does (/case-data design-decisions #60).
    * `to_ingest` names those files and `records` says, one entry per `to_ingest` path, why each is not
-   * held: its verdict, its source, and the source it may be another version of.
-   * Checked only when that filing has a Ready job. `not_applicable` and `unavailable` mean the check
+   * held: its verdict, its source, and the source it may be another version of. `folders` names the
+   * folder patterns it covered and `checked_at` when it ran, so the input check can stand on it
+   * (/draft job-session.md). Checked only when that filing has a Ready job. `not_applicable` and `unavailable` mean the check
    * did not run, never that the folders are ingested. The session reports it in the fast open's
    * closing line (/draft). */
   ingest_coverage: IngestCoverage;
