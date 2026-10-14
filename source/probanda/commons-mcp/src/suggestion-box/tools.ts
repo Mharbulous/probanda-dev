@@ -16,6 +16,9 @@ const NOT_CONFIGURED_HINT =
 const GITHUB_API = "https://api.github.com";
 const REPO_FORM = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const TOKEN_FORM = /^[\x21-\x7E]+$/;
+// GitHub's token-type prefixes. The hint shows one of these and the last four
+// characters, so it never shows any of the secret part beyond those four.
+const TOKEN_PREFIX = /^(?:github_pat_|gh[pousr]_)/;
 
 export function isSuggestionBoxToolName(name: string): boolean {
   return name.startsWith("suggestion_box__");
@@ -146,6 +149,6 @@ async function configureStatus(state: SuggestionBoxState): Promise<unknown> {
   return {
     configured: state.credential !== null,
     repo: state.credential?.repo ?? null,
-    token_hint: token.length < 20 ? null : `${token.slice(0, 10)}…${token.slice(-4)}`,
+    token_hint: token.length < 20 ? null : `${token.match(TOKEN_PREFIX)?.[0] ?? ""}…${token.slice(-4)}`,
   };
 }

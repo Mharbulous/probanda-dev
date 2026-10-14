@@ -248,12 +248,19 @@ test("configure_credential sets a working pair live and saves it under the state
 test("configure_status never returns the token", async (t) => {
   const calls = fakeFetch(t, github());
   const result = await index.callTool(context(), "suggestion_box__configure_status", {});
-  assert.deepEqual(result, { configured: true, repo: REPO, token_hint: "fake-token…tial" });
+  assert.deepEqual(result, { configured: true, repo: REPO, token_hint: "…tial" });
   assert.ok(!JSON.stringify(result).includes(TOKEN), "the full token is not in the result");
   assert.ok(!JSON.stringify(result).includes("0000000000"), "the token body is not in the result");
 
   const short = await index.callTool(context({ repo: REPO, token: "fake-short-token" }), "suggestion_box__configure_status", {});
   assert.equal(short.token_hint, null, "a short token gets no hint at all");
+
+  // A GitHub token shows its type prefix and its last four characters only.
+  for (const prefix of ["github_pat_", "ghp_"]) {
+    const token = `${prefix}${"0".repeat(30)}wxyz`;
+    const typed = await index.callTool(context({ repo: REPO, token }), "suggestion_box__configure_status", {});
+    assert.equal(typed.token_hint, `${prefix}…wxyz`);
+  }
 
   assert.deepEqual(await index.callTool(context(null), "suggestion_box__configure_status", {}), {
     configured: false,
