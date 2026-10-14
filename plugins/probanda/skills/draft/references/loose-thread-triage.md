@@ -29,7 +29,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 **Working the threads without a pick.** This route runs when the practitioner says to work on the loose threads, and in a session whose held job's recorded intent is to work them, where a bare "continue" is enough. It is not the triage offer and not an outlining session, so Steps 4 and 5 do not run: the held job is the record of the effort. Ask no question about which thread to take. What the practitioner says about how to proceed is applied to the job's work and is never captured as a loose thread (SKILL.md section 3, Captured ideas). One thread per instruction.
 
-- **No job held.** Write the loose-threads job by `/drafting-data`'s fixed-text create ("The loose-threads job"), its title and intent the practitioner's instruction word for word, assign it with `drafting_data__assign_job`, and carry on in the same turn. The instruction names the job it creates, so Dispatch's rule for a session that created a job is met (`references/dispatch.md` section 14). A session the assign call refuses says so in one line and stops.
+- **No job held.** Write the loose-threads job by `/drafting-data`'s fixed-text create ("The loose-threads job"), its intent the practitioner's instruction word for word and its title that instruction cleaned by §3's rule, assign it with `drafting_data__assign_job`, and carry on in the same turn. The instruction names the job it creates, so Dispatch's rule for a session that created a job is met (`references/dispatch.md` section 14). A session the assign call refuses says so in one line and stops.
 - **Another job held.** The route does not run, because a session is assigned one job. Say in one line that a new `/draft` session takes the instruction.
 - **Scope.** The loose-threads job covers the whole board: one scope row for every substance table. Where the held loose-threads job has narrower scope, the instruction is the scope expansion: write the missing rows by `/drafting-data`'s scope expansion, say so in one line, and ask nothing.
 - **Re-rank first.** Read the lane by Step 1. When any open thread that is not deferred is unranked, run Step 2 in full, one script with its confirm-read, by `/drafting-data`'s ranking write, then Step 3 without its wait. Ranking writes no job.
@@ -41,7 +41,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 **Step 4. Outline or discard only on the practitioner's word.** They say which threads to outline as jobs of their own and which to discard, by rank or by idea. Never infer a discard from a low rank. Which thread the working route above takes is the session's choice, never asked here.
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
-- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation.
+- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation. A new job's title is their words cleaned by `/drafting-data` §3's rule, and its intent stays verbatim.
 - **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count) and re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
@@ -54,6 +54,6 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 **Tooling threads go to the Suggestion Box.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. An evaluator weighs each against doing nothing, and no thread is discarded or sent without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
-**Step 5. Record the effort as a Ready job**, outlined in the practitioner's own words: the practitioner-words gate on title, intent and steps applies. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
+**Step 5. Record the effort as a Ready job**, outlined in the practitioner's own words: the practitioner-words gate on title, intent and steps applies, and the title is cleaned by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
 
 Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through `board_card` only, and nothing about time remaining enters a rank, its reason or its job description.

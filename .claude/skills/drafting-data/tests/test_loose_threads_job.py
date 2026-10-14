@@ -168,7 +168,7 @@ class LooseThreadsJobTests(unittest.TestCase):
 class SectionTextTests(unittest.TestCase):
     def test_section_3j_rules(self):
         text = flat(section_3j())
-        self.assertIn("- Title and intent: the practitioner's instruction, character for character.", text)
+        self.assertIn("- Title: the practitioner's instruction, cleaned by §3's rule. Intent: the instruction, character for character.", text)
         self.assertIn("so `session_proposed` is `0`", text)
         self.assertIn(f"Step 1, fixed text that lives here and nowhere else, and that a session never rewords: `{STEP}`",
                       text)
