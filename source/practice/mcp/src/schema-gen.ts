@@ -749,8 +749,9 @@ export function timecampingToolDefinitions(): ToolDefinition[] {
 // skill without a repo folder grant), a write-only surface
 // confined to the repo's git-versioned docs/ tree (how dev-tool skills deliver
 // reports without a folder grant), and a move-only soft delete into a matter's
-// TRASH folder (ADR 0014), the confined move /housekeeping files approved rows
-// with (file_ops__move), and the research_filing__* set that moves completed
+// TRASH folder and the confined move /housekeeping files approved rows with
+// (fileOpsToolDefinitions, served by the file-admin plugin's `files` server
+// only), and the research_filing__* set that moves completed
 // downloads from the OS Downloads folder into an existing `6. LAW` subfolder,
 // saves research answers there at the next free vN, and files a page
 // sources__fetch already fetched there, read from the fetch memo, and reads (never
@@ -763,7 +764,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "skill_source__read",
       description:
-        "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across the statement that creates it, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: an installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin` (the name of the plugin the file came from: this plugin, or one installed beside it; null for a checkout), `plugin_version` (that plugin's version; for a checkout, this plugin's) and `build_stamp`. A skill folder this plugin bundles is always served from it; a folder that a research, litigator or solicitor plugin installed beside it bundles is served from that plugin; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
+        "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across the statement that creates it, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: an installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin` (the name of the plugin the file came from: this plugin, or one installed beside it; null for a checkout), `plugin_version` (that plugin's version; for a checkout, this plugin's) and `build_stamp`. A skill folder this plugin bundles is always served from it; a folder that another Probanda plugin installed beside it (research, litigator, solicitor or file-admin) bundles is served from that plugin; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
       inputSchema: {
         type: "object",
         properties: {
@@ -781,7 +782,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "skill_source__list",
       description:
-        "List entries in the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). An explicit `.claude/skills/...` prefix is accepted and stripped. Omit `dir` to list the tree root. Accepts the same path forms as `skill_source__read`. Use for skills that glob their own references/ or stages/ directories, and to recover from a `not_found` on a reference whose path you guessed. Each entry carries `shipped_from` and `plugin` (the name of the plugin the entry came from: this plugin, or one installed beside it; null for a checkout); the result carries `plugin_version` and `build_stamp`, and below the tree root a top-level `shipped_from` and `plugin` too. `plugin_version` is the version of the top-level `plugin`; at the tree root and for a checkout it is this plugin's. The tree root lists this plugin's bundled folders, then the other folders of each research, litigator or solicitor plugin installed beside it, plus a checkout's other folders when one resolves.",
+        "List entries in the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). An explicit `.claude/skills/...` prefix is accepted and stripped. Omit `dir` to list the tree root. Accepts the same path forms as `skill_source__read`. Use for skills that glob their own references/ or stages/ directories, and to recover from a `not_found` on a reference whose path you guessed. Each entry carries `shipped_from` and `plugin` (the name of the plugin the entry came from: this plugin, or one installed beside it; null for a checkout); the result carries `plugin_version` and `build_stamp`, and below the tree root a top-level `shipped_from` and `plugin` too. `plugin_version` is the version of the top-level `plugin`; at the tree root and for a checkout it is this plugin's. The tree root lists this plugin's bundled folders, then the other folders of each Probanda plugin installed beside it, plus a checkout's other folders when one resolves.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1087,40 +1088,6 @@ export function fileToolDefinitions(): ToolDefinition[] {
         additionalProperties: false,
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
-    },
-    {
-      name: "file_ops__trash",
-      description:
-        "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no coclerk.json at or above the path); `protected` (the workspace root, coclerk.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          path: { type: "string" },
-          dry_run: { type: "boolean" },
-        },
-        required: ["path"],
-        additionalProperties: false,
-      },
-      annotations: { destructiveHint: false, openWorldHint: false },
-    },
-    {
-      name: "file_ops__move",
-      description:
-        "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not coclerk.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          matter_root: { type: "string" },
-          source: { type: "string" },
-          destination: { type: "string" },
-          create_folders: { type: "array", items: { type: "string" } },
-          draft_unchanged: { type: "boolean" },
-          superseded: { type: "boolean" },
-        },
-        required: ["matter_root", "source", "destination"],
-        additionalProperties: false,
-      },
-      annotations: { destructiveHint: false, openWorldHint: false },
     },
     {
       name: "research_filing__list_downloads",
@@ -2580,6 +2547,49 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+// The file-admin plugin's tools: the soft delete into a matter's TRASH folder
+// (ADR 0014) and the confined move /housekeeping files approved rows with.
+// Served only by the `files` server (src/file-admin-index.ts), never by the
+// practice plugin's `data` server, so disabling file-admin removes them.
+export function fileOpsToolDefinitions(): ToolDefinition[] {
+  return [
+    {
+      name: "file_ops__trash",
+      description:
+        "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no coclerk.json at or above the path); `protected` (the workspace root, coclerk.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          dry_run: { type: "boolean" },
+        },
+        required: ["path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "file_ops__move",
+      description:
+        "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not coclerk.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          source: { type: "string" },
+          destination: { type: "string" },
+          create_folders: { type: "array", items: { type: "string" } },
+          draft_unchanged: { type: "boolean" },
+          superseded: { type: "boolean" },
+        },
+        required: ["matter_root", "source", "destination"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+  ];
+}
+
 // /housekeeping's preflight, run files, approval page, approval wait, resolve, recovery and journal
 // (planning/1. Design/2026-09-23_housekeeping-redesign-spec.md §B8-§B10). Every write lands in
 // the matter's `<case-data folder>\housekeeping\<run-id>\` directory and nowhere else.
@@ -2731,6 +2741,14 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
+  ];
+}
+
+// The file-admin plugin's `files` server: every tool that renames, moves or
+// deletes a user's file (docs/Plans/2026-10-14_file-admin-plugin.md).
+export function buildFileAdminToolDefinitions(): ToolDefinition[] {
+  return [
+    ...fileOpsToolDefinitions(),
     ...housekeepingToolDefinitions(),
   ];
 }

@@ -4,4 +4,4 @@
 
 It requires `practice` and `research`. It keeps no data store of its own: its skills use the `data` server that `practice` ships.
 
-The vision, the design principles and the anti-patterns that govern all four Probanda plugins are in the `VISION.md` of the `practice` plugin. They apply here unchanged.
+The vision, the design principles and the anti-patterns that govern all five Probanda plugins are in the `VISION.md` of the `practice` plugin. They apply here unchanged.

@@ -1,6 +1,6 @@
 # practice
 
-The base Probanda plugin: firm records, time, billing, filing, case data, deadlines, and every part the other Probanda plugins share. It ships the `data` server.
+The base Probanda plugin: firm records, time, billing, case data, deadlines, and every part the other Probanda plugins share. It ships the `data` server.
 
 ## What to install, and in what order
 
@@ -9,6 +9,8 @@ The base Probanda plugin: firm records, time, billing, filing, case data, deadli
 3. `litigator`, for court work on a matter. It requires `practice` and `research`.
 
 `solicitor` is reserved and ships no skills yet. It requires `practice`.
+
+`file-admin` is optional. It holds every Probanda tool that renames, moves or deletes your own files (matter housekeeping, routing accounting files, applying approved renames), and it requires `practice`. Install it after `practice` if you want those tools. Without it, a step that would move or trash a file stops and says so. The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-admin removes Probanda's file tools, not the host's.
 
 Install them in that order. Not every host installs a required plugin for you, and a plugin whose required plugin is missing loads with tools and agents absent.
 

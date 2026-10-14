@@ -3,7 +3,7 @@
 The orchestrator (SKILL.md, Step 3d) fills the `<<…>>` placeholders
 and passes the result as the prompt for **one** spawned subagent, one per
 batch of up to 15 files. Each subagent runs in parallel with the others,
-dispatched with `subagent_type: "practice:housekeeping-reviewer"` and
+dispatched with `subagent_type: "file-admin:housekeeping-reviewer"` and
 **pinned to `model: "sonnet"`**. That agent type's toolset
 (`Read`, `Glob`, `Grep`, read-only `Bash`, the SwitchYard plugin's
 `environment-gauge` skill) has no `Edit`/`Write`/rename/move capability,

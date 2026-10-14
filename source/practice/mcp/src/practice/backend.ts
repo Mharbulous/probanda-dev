@@ -14,16 +14,18 @@
 // SharePoint-synced `0. CASE DATA` tree. spawnSync serializes DB access within
 // this process.
 
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { configPath } from "../config-path.js";
+import { resolveCaseDataRoot } from "./case-data-root.js";
 import { UnscopedAdmin, type SelectOptions } from "../db/scope.js";
 import { ValidationError } from "../errors.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import type { EntityDefinition } from "../registry.js";
+
+// Moved to ./case-data-root.ts; re-exported for the modules that import it from here.
+export { resolveCaseDataRoot };
 
 // The local practice schema. This runtime is the practice-data backend, so it
 // owns the DDL (the /practice-data skill holds no schema by the encapsulation
@@ -822,47 +824,6 @@ export function practiceTimeoutMs(op: SqliteOp, env: NodeJS.ProcessEnv = process
 const KILLED_WRITE_ADVICE =
   "The write may already have committed: verify it by reading it back before retrying (/practice-data Conventions).";
 
-// Appended to the path-resolution errors below (spec 2026-10-06_practice-db-config-repair).
-const CONFIG_STATUS_HINT =
-  "Call practice_data__config_status to see what is missing and the candidate root.";
-
-// Resolves the practitioner's "0. CASE DATA" folder from the Roaming
-// coclerk.json `case_data_root` key. Shared by every local database that
-// lives under it (practice.db here, time_pipeline.db in ../time-pipeline/backend.ts)
-// so the config-reading and error-reporting logic has exactly one copy.
-// `fallback` is consulted only when that file is absent: a string is the root, null leaves the
-// missing-file error standing. A present file always wins and the fallback is never called.
-export function resolveCaseDataRoot(env: NodeJS.ProcessEnv = process.env, fallback?: () => string | null): string {
-  const configFile = configPath(env);
-  if (!existsSync(configFile)) {
-    const derived = fallback?.() ?? null;
-    if (derived !== null) return derived;
-    throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Set "case_data_root" ` +
-      `in coclerk.json (the path to your "0. CASE DATA" folder) or the COCLERK_DB_PATH env override. ` +
-      CONFIG_STATUS_HINT
-    );
-  }
-  let root: unknown;
-  try {
-    root = (JSON.parse(readFileSync(configFile, "utf-8")) as Record<string, unknown>).case_data_root;
-  } catch (err) {
-    throw new ValidationError(`coclerk.json is not valid JSON: ${(err as Error).message}`);
-  }
-  if (typeof root !== "string" || root === "") {
-    throw new ValidationError(
-      `coclerk.json is missing "case_data_root" (the path to your "0. CASE DATA" folder). ` +
-      `Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
-    );
-  }
-  if (!existsSync(root)) {
-    throw new ValidationError(
-      `Configured case_data_root does not exist: ${root}. Update ${configFile} after moving ` +
-      `the Litigation Documents library, or restore that root. No _practice directory was created.`
-    );
-  }
-  return root;
-}
 
 // Resolves the practice.db path (spec §5): COCLERK_DB_PATH wins (test override);
 // otherwise the Roaming coclerk.json `case_data_root` + `_practice\<name>`.

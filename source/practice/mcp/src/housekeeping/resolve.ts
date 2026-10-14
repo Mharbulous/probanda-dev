@@ -10,7 +10,7 @@ import { readdirSync, realpathSync, statSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
-import { resolveCaseDataRoot } from "../practice/backend.js";
+import { resolveCaseDataRoot } from "../practice/case-data-root.js";
 import { type GateGroup, type GateResult, runNameGate } from "./name-gate.js";
 import { type Approval, INFORMATION_ONLY, type Proposal, type Row } from "./proposal.js";
 import {

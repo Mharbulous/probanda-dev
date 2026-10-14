@@ -6,6 +6,10 @@ import { build } from "esbuild";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outfile = resolve(root, "dist", "litigation-mcp.js");
+// The file-admin plugin's `files` server: a second entry point built from this
+// same source, serving only the file_ops__* and housekeeping__* tools
+// (src/file-admin-index.ts, docs/Plans/2026-10-14_file-admin-plugin.md).
+const fileAdminOutfile = resolve(root, "..", "..", "file-admin", "files-mcp", "dist", "file-admin-mcp.js");
 
 // The repo root is resolved at RUNTIME now (src/repo-root.ts), not baked in
 // here at build time. A baked root is a per-build-machine literal in a
@@ -38,23 +42,28 @@ if (!schemaMatch) {
 }
 const submissionSchemaVersion = Number(schemaMatch[1]);
 
-await mkdir(dirname(outfile), { recursive: true });
-const result = await build({
-  entryPoints: [resolve(root, "src", "index.ts")],
-  bundle: true,
-  platform: "node",
-  target: "node20",
-  format: "esm",
-  absWorkingDir: root,
-  tsconfig: resolve(root, "tsconfig.json"),
-  banner: { js: `// build-stamp: ${STAMP_PLACEHOLDER}` },
-  define: {
-    __LITIGATION_BUILD_STAMP__: JSON.stringify(STAMP_PLACEHOLDER),
-    __LITIGATION_SUBMISSION_SCHEMA_VERSION__: JSON.stringify(submissionSchemaVersion),
-  },
-  outfile,
-  write: false,
-});
-const text = result.outputFiles[0].text;
-const stamp = createHash("sha256").update(text).digest("hex").slice(0, 12);
-await writeFile(outfile, text.replaceAll(STAMP_PLACEHOLDER, stamp));
+async function bundle(entry, out) {
+  await mkdir(dirname(out), { recursive: true });
+  const result = await build({
+    entryPoints: [resolve(root, "src", entry)],
+    bundle: true,
+    platform: "node",
+    target: "node20",
+    format: "esm",
+    absWorkingDir: root,
+    tsconfig: resolve(root, "tsconfig.json"),
+    banner: { js: `// build-stamp: ${STAMP_PLACEHOLDER}` },
+    define: {
+      __LITIGATION_BUILD_STAMP__: JSON.stringify(STAMP_PLACEHOLDER),
+      __LITIGATION_SUBMISSION_SCHEMA_VERSION__: JSON.stringify(submissionSchemaVersion),
+    },
+    outfile: out,
+    write: false,
+  });
+  const text = result.outputFiles[0].text;
+  const stamp = createHash("sha256").update(text).digest("hex").slice(0, 12);
+  await writeFile(out, text.replaceAll(STAMP_PLACEHOLDER, stamp));
+}
+
+await bundle("index.ts", outfile);
+await bundle("file-admin-index.ts", fileAdminOutfile);

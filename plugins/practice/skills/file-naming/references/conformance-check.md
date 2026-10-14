@@ -7,7 +7,7 @@ data files — `code-registry.md` (the code single source of truth) and
 them by bare filename.
 
 **Callers:**
-- **Housekeeping** (`housekeeping/SKILL.md`, via `/file-naming`) runs **test mode**
+- **Housekeeping** (`/housekeeping`, in the `file-admin` plugin, via `/file-naming`) runs **test mode**
   (the name gate) over the current names of the files it reviews, then its
   `housekeeping-namer` agent, or the session itself for a privileged-store file,
   runs **proposal mode** from each file's naming evidence.

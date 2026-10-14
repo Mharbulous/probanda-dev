@@ -10,9 +10,7 @@
     "scripts"
   ],
   "file-review-prep": [],
-  "file-sorting": [],
   "find-document": [],
-  "housekeeping": [],
   "ingest": [],
   "invoice-reviewing": [],
   "invoice-tracking": [],
@@ -22,7 +20,6 @@
   "practice-data": [],
   "reflect": [],
   "retainer-tracking": [],
-  "route-accounting": [],
   "rule-update": [],
   "safe-file-deletion": [
     "hooks"

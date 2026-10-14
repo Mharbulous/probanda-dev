@@ -12,7 +12,7 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-RESEARCH_LAWYER_PATH = REPO_ROOT / "source" / "probanda" / "agents" / "research-agent.md"
+RESEARCH_LAWYER_PATH = REPO_ROOT / "source" / "research" / "agents" / "research-agent.md"
 
 WRITE_TOOL_PATTERN = re.compile(
     r"legal_commons__(push|merge_authority|amend_|link_|unlink_|configure_"

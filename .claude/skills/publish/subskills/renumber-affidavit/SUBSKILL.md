@@ -15,7 +15,7 @@ each Word draft beside the old one and keeps tracked changes and comments. On
 the practitioner's yes it renames the affidavit's folder. It never edits, overwrites,
 renames or deletes a Word draft, and it never hand-edits Word XML or renames with
 the shell. Every edit goes through `renumber_affidavit.py`, and every
-rename goes through `/file-naming`'s apply.
+rename goes through `/file-apply`'s apply, in the `file-admin` plugin.
 
 **In Cowork, stop here.** In Cowork (this host grants the data tools as
 `mcp__remote-devices__plugin_practice_data__<name>`), stop before any tool
@@ -84,14 +84,21 @@ Run the scripts from the repo root. The draft folder is the matter's one
      practitioner changes that copy's number in Word.
 
 5. **Rename the folders** only on the practitioner's yes, after every copy is
-   written. Build one `/file-naming` apply manifest holding every folder pair
+   written. Build one `/file-apply` apply manifest holding every folder pair
    (a swap runs all-or-nothing with no temporary name left behind), with
    `expected_total` set to the count shown. Report `/file-naming`'s gate
-   verdict on each new folder name.
+   verdict on each new folder name. If `/file-apply` is not available in this
+   session, the `file-admin` plugin is not enabled: rename nothing, tell the
+   practitioner that this step renames a folder and needs `file-admin`, and go
+   on to step 6 with the folders unrenamed. Never fall back to a shell `mv` or
+   `rm` or the Write tool.
 
 6. **Close.** Name each new copy as current, at its path after any folder rename,
    and list each original as superseded. Ask which to send to TRASH
-   (`file_ops__trash`), and act only on the answer. Then list every reference left
+   (`file_ops__trash`), and act only on the answer. If `file_ops__trash` is not
+   available in this session, the `file-admin` plugin is not enabled: trash
+   nothing, and tell the practitioner that sending a copy to TRASH needs
+   `file-admin`. Never fall back to a shell `mv` or `rm` or the Write tool. Then list every reference left
    at the old number, each with the place where it is changed:
    - review PDFs: rebind the renumbered `.docx` with `/assemble`
      `assemble-affidavit`, and offer the old PDFs to TRASH on the same answer;

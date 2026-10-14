@@ -1,6 +1,6 @@
 ---
 name: file-naming
-description: Check a filename against the firm's file naming convention (date + code + author/recipient + re/encl/srv + subject + amount), propose a conforming name from a document's content, or apply an approved rename or routing manifest. Domain-agnostic — knows the grammar and code registry, not any folder layout. Use for "check this file name", "what should I call this file", or when another skill (housekeeping, ingest) needs the grammar/gate/apply engine. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
+description: Check a filename against the firm's file naming convention (date + code + author/recipient + re/encl/srv + subject + amount), or propose a conforming name from a document's content. Domain-agnostic — knows the grammar and code registry, not any folder layout. Use for "check this file name", "what should I call this file", or when another skill (housekeeping, ingest) needs the grammar or the gate. Applying a rename -> /file-apply. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
 ---
 
 ## Contents
@@ -10,22 +10,21 @@ description: Check a filename against the firm's file naming convention (date + 
 | References | To find the code registry, format grammar or conformance contract |
 | Intent: gate — test a filename, no file opened | Checking whether a filename conforms, without opening the file |
 | Intent: propose — derive a conforming name | A name failed the gate, or the user asks what to call a file |
-| Intent: apply — execute an approved rename manifest | An approved rename manifest is ready to run |
-| Intent: apply-route — execute an approved routing manifest | An approved routing manifest is ready to move files across folders |
 | For callers building their own review pipeline (e.g. housekeeping) | A caller dispatches its own reviewers or runs its own approval loop |
 
 This skill deliberately carries no `disable-model-invocation` line: `/housekeeping` opens it
 through the Skill tool, which refuses a skill carrying that line. It is a stated
 exception, listed in `docs/agents/context-optimization.md`. Do not add the line back.
 
-# File naming (grammar authority + rename engine)
+# File naming (grammar authority)
 
 Owns the firm's file naming grammar, the code registry, and the mechanics of
-checking and applying names. Knows nothing about which folders exist or what
-belongs in them — that is `/file-sorting`'s job (folder profiles) or a
-caller's own logic. This skill answers exactly three questions: **does this
-name conform?**, **what should this file be named?**, and **apply this
-approved rename manifest.**
+checking names. Knows nothing about which folders exist or what belongs in
+them — that is the folder profiles of the `file-admin` plugin, or a caller's
+own logic. This skill answers exactly two questions: **does this name
+conform?** and **what should this file be named?** It renames nothing:
+applying an approved rename or routing manifest is `/file-apply`, in the
+`file-admin` plugin.
 
 **A file renamed *incorrectly* is worse than one left alone** — a wrong name
 can hide a triggered deadline or break a keyword search. Every intent below
@@ -81,71 +80,17 @@ return the leave-alone signal; never guess a component to complete a name.
 For a **standalone "check this file name" / "what should I call this"**
 request: run **gate** on the current name first. If it conforms, say so — no
 further work. If it fails, read the file yourself, derive a proposed name
-under **propose**, and present it to the user for confirmation before
-renaming — this skill does not rename without approval, same as every other
-caller.
-
-## Intent: apply — execute an approved rename manifest
-
-Wraps `scripts/apply_renames.py`, all-or-nothing:
-
-```
-python scripts/apply_renames.py <manifest.json>
-```
-
-Manifest shape: `{"expected_total": N, "renames": [{"src": "<abs path>", "dst": "<abs path>"}, ...]}`.
-Preflight rejects the whole manifest (renames nothing) on a count mismatch,
-a missing source, a colliding destination (unless another pair's source: a
-swap, run two-pass with rollback), or any pair whose folder differs
-between `src` and `dst` — a move is a separate action from a rename, and this
-script never performs one. The caller is responsible for building the
-manifest from its own approved plan and setting `expected_total` to the count
-it presented to the user; this skill does not track approval state itself.
-
-## Intent: apply-route — execute an approved routing manifest
-
-The move counterpart to **apply** above — for `/route-accounting`, whose
-approved plan moves loose files at the accounting root to a different folder
-rather than renaming them in place. **apply** continues
-to reject any cross-folder pair; this is the intent for when that's exactly
-what's wanted.
-
-Wraps `scripts/apply_routes.py`:
-
-```
-python scripts/apply_routes.py <manifest.json>
-```
-
-Manifest shape:
-```json
-{
-  "expected_total": N,
-  "src_root": "<abs path all sources must sit directly in>",
-  "allowed_dst_roots": ["<abs path>", "..."],
-  "routes": [{"src": "<abs path>", "dst_dir": "<abs leaf destination dir>"}, ...]
-}
-```
-`dst_dir` is the fully-resolved leaf destination folder, not a filename —
-the destination filename is only decided at apply time, in case of a
-collision (see below).
-
-Preflight rejects the whole manifest (moves nothing) on a count mismatch, a
-missing source, a source not directly inside `src_root`, a `dst_dir` outside
-every `allowed_dst_root`, or a `dst_dir` equal to the source's own folder.
-Unlike **apply**, a destination-filename **collision does not fail the
-batch** — the script appends a numbered suffix (`name (2).ext`,
-`name (3).ext`, ...) rather than overwriting, and moves the rest of the
-batch regardless. It also creates any missing leaf destination folder
-(`makedirs`, not the full category template — just the specific folder the
-manifest names). The caller builds the manifest from its own approved plan,
-the same way it builds an **apply** manifest.
+under **propose**, and present it to the user for confirmation. Once they approve, the
+rename is `/file-apply`'s **apply** intent. If `/file-apply` is not available in
+this session, the `file-admin` plugin is not enabled: stop, tell the
+practitioner that this step renames a file and needs `file-admin`, and do
+nothing else. Never fall back to a shell `mv` or `rm` or the Write tool.
 
 ## For callers building their own review pipeline (e.g. housekeeping)
 
-This skill is the mechanical layer only. A caller that dispatches its own
+This skill is the grammar layer only. A caller that dispatches its own
 reviewers, batches many files, or manages an approval/record-keeping loop
-(`/housekeeping`, `/route-accounting`) owns that orchestration itself and uses this
-skill's **gate**/**apply-route** for the mechanical steps and this skill's
+owns that orchestration itself and uses this skill's **gate** and this skill's
 reference files (`code-registry.md`, `general-conventions.md`) as the
 material it hands its own subagents. Nothing here dispatches a subagent or
 asks the user anything on a caller's behalf, except in the standalone-request

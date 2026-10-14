@@ -75,15 +75,6 @@ import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
-import { fileOpsTrash } from "./file_ops/trash.js";
-import { fileOpsMove } from "./file_ops/move.js";
-import { orderCandidates } from "./housekeeping/order.js";
-import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js";
-import { preflight } from "./housekeeping/preflight.js";
-import { reconcile } from "./housekeeping/reconcile.js";
-import { resolveRun } from "./housekeeping/resolve.js";
-import { servePage } from "./housekeeping/server.js";
-import { waitApproval } from "./housekeeping/wait.js";
 import {
   appendManifest,
   fileDownload,
@@ -540,67 +531,6 @@ export async function callTool(
 
   if (name === "repo_docs__read") {
     return repoDocsRead(args.path as string);
-  }
-
-  if (name === "file_ops__trash") {
-    return fileOpsTrash(args.path as string, (args.dry_run as boolean | undefined) ?? false);
-  }
-
-  if (name === "file_ops__move") {
-    const createFolders = args.create_folders ?? [];
-    if (!Array.isArray(createFolders) || createFolders.some((f) => typeof f !== "string")) {
-      throw new ValidationError("file_ops__move.create_folders must be an array of strings");
-    }
-    return fileOpsMove(
-      args.matter_root as string,
-      args.source as string,
-      args.destination as string,
-      createFolders as string[],
-      (args.draft_unchanged as boolean | undefined) ?? false,
-      (args.superseded as boolean | undefined) ?? false
-    );
-  }
-
-  if (name === "housekeeping__preflight") {
-    return preflight(args.matter_root as string, (args.include_template as boolean | undefined) ?? false);
-  }
-
-  if (name === "housekeeping__new_run") {
-    return newRun(args.matter_root as string);
-  }
-
-  if (name === "housekeeping__order_candidates") {
-    return orderCandidates(args.matter_root as string, args.run_id as string, args.candidates);
-  }
-
-  if (name === "housekeeping__write_run_file") {
-    return writeRunFile(args.matter_root as string, args.run_id as string, args.file_name as string, args.content as string);
-  }
-
-  if (name === "housekeeping__serve_page") {
-    return servePage(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__wait_approval") {
-    return waitApproval(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__resolve") {
-    return resolveRun(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__reconcile") {
-    return reconcile(args.matter_root as string, args.run_id as string | undefined);
-  }
-
-  if (name === "housekeeping__journal_append") {
-    return journalAppend(
-      args.matter_root as string,
-      args.run_id as string,
-      args.row_id as string,
-      args.outcome as string,
-      args.reason as string | undefined
-    );
   }
 
   if (name === "research_filing__list_downloads") {

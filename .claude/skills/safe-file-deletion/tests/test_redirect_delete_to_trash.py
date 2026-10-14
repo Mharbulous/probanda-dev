@@ -76,7 +76,7 @@ class HookTestCase(unittest.TestCase):
         self.assertEqual(out["permissionDecision"], "deny")
         self.assertNotIn("updatedInput", out)
         self.assertTrue(out["permissionDecisionReason"].startswith(
-            "Do not delete this directly - call the litigation tool file_ops__trash with this path;"
+            "Do not delete this directly - call the file-admin tool file_ops__trash with this path;"
         ))
 
     def assertRewritten(self, result, expected_command, original_input):

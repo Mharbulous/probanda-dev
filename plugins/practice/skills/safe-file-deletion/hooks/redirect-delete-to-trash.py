@@ -798,32 +798,17 @@ def device_rm_rewrite(command):
 
 def block_message(label, offending):
     lines = [
-        "Do not delete this directly - call the litigation tool file_ops__trash with this"
+        "Do not delete this directly - call the file-admin tool file_ops__trash with this"
         " path; it moves the item to <root>/" + TRASH_DIRNAME + "/<same relative path>.",
         "Blocked pattern: " + label,
     ]
-    target = Path(os.path.abspath(offending)) if offending is not None else None
-    root = workspace_root(target) if target is not None else None
-    if target is not None:
-        lines.append("Location outside any Git worktree: " + str(target))
-    lines.append("If the tool is unavailable:")
-    if root is not None and target != root:
-        dest = root / TRASH_DIRNAME / target.relative_to(root)
-        lines += [
-            "  1. This workspace's root (has " + MARKER + "): " + str(root),
-            "  2. Create the TRASH path if it doesn't already exist:",
-            '     mkdir -p "' + dest.parent.as_posix() + '"',
-            "  3. Move the file or folder there instead of deleting it:",
-            '     mv --backup=numbered "' + target.as_posix() + '" "' + dest.as_posix() + '"',
-        ]
-    else:
-        lines += [
-            "  1. Find this workspace's root (the top-level project/matter folder).",
-            "  2. Create `<root>/" + TRASH_DIRNAME + "/<same-relative-path>` if it doesn't"
-            " already exist (`mkdir -p`).",
-            "  3. Move the file or folder there with `mv --backup=numbered`, preserving its"
-            " relative path, rather than deleting it.",
-        ]
+    if offending is not None:
+        lines.append("Location outside any Git worktree: " + str(Path(os.path.abspath(offending))))
+    lines.append(
+        "If file_ops__trash is not available in this session, the file-admin plugin is not"
+        " enabled and this deletion is refused: tell the practitioner that it needs file-admin."
+        " Never fall back to a shell move or delete, or the Write tool."
+    )
     lines.append(
         "Then retry your original task using the moved file's new location if needed."
     )

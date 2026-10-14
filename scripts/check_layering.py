@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List every upward reference between the four plugins of source/assignment.json.
+"""List every upward reference between the plugins of source/assignment.json.
 
 Usage:
   python scripts/check_layering.py            strict: fail on any upward reference not allowed
@@ -44,8 +44,11 @@ SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
 # The data server ships in practice, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
-# Tool families of the research servers, for a name written without its plugin prefix.
-SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__", "suggestion_box__")}
+# Tool families of a server, for a name written without its plugin prefix: the
+# research plugin's commons server, and the file-admin plugin's files server, whose
+# tools rename, move or delete a user's file.
+SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__", "suggestion_box__"),
+                        "files": ("file_ops__", "housekeeping__")}
 # A family name starts a tool name or follows the server key (data__rules__at), so
 # rules__ is not found inside skill_rules__.
 FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"
@@ -107,7 +110,7 @@ def targets(plugins):
                 out.append((kind[:-1], name, plugin, name_pattern(name)))
         for server in spec["servers"]:
             families = "|".join(re.escape(f) for f in SERVER_TOOL_FAMILIES.get(server, ()))
-            pattern = rf"plugin_\w+?_{re.escape(server)}__" + (rf"|{FAMILY_START}(?:{families})" if families else "")
+            pattern = rf"plugin_[\w-]+?_{re.escape(server)}__" + (rf"|{FAMILY_START}(?:{families})" if families else "")
             out.append(("tool", f"{server} server", plugin, re.compile(pattern)))
     for family in LITIGATOR_TOOL_FAMILIES:
         out.append(("tool", f"{family}*", "litigator", re.compile(FAMILY_START + re.escape(family))))

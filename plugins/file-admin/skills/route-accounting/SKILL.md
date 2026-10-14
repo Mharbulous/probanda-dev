@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: In the firm's accounting root, review loose bookkeeping files and route each one to its destination folder, after the user approves a routing plan. Use for 'route-accounting', or to sort/file loose accounting documents. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
 ---
 
-<!-- practice v0.2.0 -->
+<!-- file-admin v0.2.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -186,7 +186,7 @@ There is no folder-type table for this Kind — the capped work list (3a +
 3c) is one flat list of loose root files. **Split it into batches of up to
 15 files** (so a full 50-file cap dispatches at most 4 subagents) and
 dispatch one subagent per batch using the **Agent tool**, dispatched with
-`subagent_type: "practice:housekeeping-reviewer"` and **pinned to
+`subagent_type: "file-admin:housekeeping-reviewer"` and **pinned to
 `model: "sonnet"`**. Issue all the dispatches **in a single turn** so they
 run concurrently — one batch's review never blocks another's. If that agent
 type is absent from this session's roster, dispatch the generic agent
@@ -206,7 +206,7 @@ Build each subagent's prompt from
 - the **structured return contract** (reproduced in the routing template) it
   must hand back.
 
-**Restricted toolset.** The `practice:housekeeping-reviewer` agent
+**Restricted toolset.** The `file-admin:housekeeping-reviewer` agent
 definition enforces this structurally — its toolset has no `Edit`, `Write`,
 or any rename/move capability, so a subagent dispatched under that type
 cannot mutate the filesystem regardless of what its prompt says. `Read` is
@@ -330,8 +330,8 @@ file stays as-is.
 **You** (the orchestrator) perform the moves — the subagents never had write
 access. Route **only** the files the user approved.
 
-**Always apply routes through `../file-naming/scripts/apply_routes.py`**
-(reached via `/file-naming`'s **apply-route** intent) — never by hand, one
+**Always apply routes through `../file-apply/scripts/apply_routes.py`**
+(reached via `/file-apply`'s **apply-route** intent) — never by hand, one
 move at a time. Build its JSON manifest from `route-plan.json`, restricted to
 the entries the user approved: `src_root` is the accounting root,
 `allowed_dst_roots` is the four destination roots recorded in `route-plan.json`,

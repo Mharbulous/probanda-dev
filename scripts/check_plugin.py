@@ -151,8 +151,8 @@ _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re
 DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # Servers whose bundles must carry no Supabase or commons tool namespace. commons
 # is exempt: it is the plugins' one Supabase surface.
-PURITY_SERVERS = ("data", "canlii")
-HOST_PATH_SERVERS = ("data", "canlii", "commons")
+PURITY_SERVERS = ("data", "canlii", "files")
+HOST_PATH_SERVERS = ("data", "canlii", "commons", "files")
 
 FETCH_TOOL = "sources__fetch"
 # The only agent files that may grant sources__fetch.

@@ -377,6 +377,28 @@ Checks, all run in the worktree on 2026-10-13:
 | A search for `plugin_probanda_` and `probanda:` followed by a letter | None in the four built folders, `.claude/skills/`, `source/` or `.github/`. 24 lines under `scripts/`: the scan's own two patterns in `build_plugin.py`, and planned-mode fixtures in five test files |
 | `python scripts/check_public_tree.py` | Passed: 11 files |
 
+#### Phase 5 rebuilt as five plugins (2026-10-14, on `cutover`, not merged, not pushed)
+
+`main` was merged into `cutover` twice (at `eab5e21`, then `48570b3`), each merge applying the rename to what `main` had added, and a third commit built `file-admin` from `docs/Plans/2026-10-14_file-admin-plugin.md`. `main` may have moved again since: the session that merges `cutover` repeats the same work for whatever is new.
+
+- **Merged from `main` and renamed.** The `suggestion` skill ships in `research`, as `main`'s assignment says, and `/probanda:suggestion` became `/research:suggestion`, including in the commons server's tool description. `main`'s hooks `plugin-cache-guard` and `hidden-skills-note` ship in `practice`, with their scripts in `source/practice/hooks/`. `suggestion-evaluator` ships in `litigator`, and `equivalence-checker` is back in `research` (decision 3, B). The source `main` added under `source/probanda/` was placed in the cutover folders.
+- **Bundles.** The commons bundle was rebuilt too, because its source now names `/research:suggestion`. `main`'s committed data and commons bundles were older than their source (no `render_practice_board`, no suggestion `source` label), so the rebuilt ones carry those changes as well. Each bundle was built through a `node_modules` junction with `preserveSymlinks` set by a temporary edit, and a second build reproduced every bundle byte for byte.
+- **`file-admin`.** Built as its plan's "Design" says, with these choices: the `files` server has its own dispatcher (`file-admin-dispatch.ts`) rather than an allowed set inside `dispatch.ts`, because importing `dispatch.ts` would bundle every backend and its schema lines. `resolveCaseDataRoot` moved to `practice/case-data-root.ts` (re-exported from `practice/backend.ts`) for the same reason. The `files` bundle holds no line `check_publishable.py` counts. `ListTools` on the data bundle lists 107 tools and no `file_ops__*` or `housekeeping__*`, and refuses `file_ops__trash` as unknown. The `files` bundle lists exactly those 11.
+- **Behaviour changed on purpose.** `safe-file-deletion` lost its shell fallback, and outside a matter it now asks the practitioner to delete the file instead of moving it to a `TRASH` folder by shell. The delete hook's deny message no longer gives shell steps. One line of `housekeeping/SKILL.md` lost the word that `check_publishable.py` reads as a maintainer path, because rewording it would otherwise have counted as a new problem.
+
+Checks on the third commit:
+
+| Check | Result |
+|---|---|
+| `build_plugin.py --check` | All five folders current |
+| `check_plugin.py` | Passed for all five; layering 100 upward pairs, all ruled |
+| `check_layering.py` (strict) | 100 pairs, all allowed |
+| `check_publishable.py --new-since origin/main` | No new problem, 3,096 in all |
+| `python -m pytest scripts/tests` | 30 failed, 186 passed. The same 30 fail on `main`: `check_plugin.py`'s `bundle-schema-ceiling` check was added without its test fixture |
+| Server suite (`node scripts/test.mjs`) | 1,876 passed, 16 failed. Unit tier 782 passed. The db failures in `loose-thread-discard` and `matter-pages` and the 10 browser failures in `workboard-file-url` fail on `main` too. `assemble-general-host` failed once under load and passes alone |
+| Search of the five built folders for `plugin_probanda_` and `probanda:` followed by a letter | None |
+| `git ls-files -s plugins/` | Every `.py` and `.sh` is `100755` |
+
 ### Phase 6: move each machine over
 
 Brahm, on each machine: press "Check for updates" on the marketplace, confirm `probanda` is gone (uninstall it by hand if it is still listed), install `practice`, `research` and `litigator`, in that order, then `file-admin` unless that machine's practitioner wants Probanda kept away from their files. A machine that syncs before `probanda` is uninstalled keeps running the old plugin's skills until the host removes it or Brahm does. The new `practice` server ignores the old folder (decision 1), so the two cannot mix files.
