@@ -297,16 +297,11 @@ const TAIL = String.raw`</script>
       return card;
     }
 
-    // A deleted job (schema v54): one struck line in Completed, never a card. Its Restore link only
-    // copies the instruction for the practitioner to paste into a session. It writes to no database,
-    // file or server (ADR 0015, 2026-10-05 amendment). Two spaces follow the colon; the stylesheet keeps them.
-    function deletedLine(d) {
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
-      line.appendChild(document.createTextNode(" *DELETED* "));
+    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
+    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
+    function restoreLink(instruction) {
       var restore = el("a", "", "Restore");
       restore.href = "#";
-      var instruction = "restore job #" + d.id;
       // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
       function showInstruction() { restore.textContent = instruction; }
       restore.addEventListener("click", function (event) {
@@ -317,7 +312,27 @@ const TAIL = String.raw`</script>
           setTimeout(function () { restore.textContent = "Restore"; }, 1500);
         }, showInstruction);
       });
-      line.appendChild(restore);
+      return restore;
+    }
+
+    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
+    // colon; the stylesheet keeps them.
+    function deletedLine(d) {
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
+      line.appendChild(document.createTextNode(" *DELETED* "));
+      line.appendChild(restoreLink("restore job #" + d.id));
+      return line;
+    }
+
+    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
+    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
+    function discardedSeedLine(s) {
+      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
+      line.appendChild(document.createTextNode(" *DISCARDED* "));
+      line.appendChild(restoreLink("restore loose thread #" + s.id));
       return line;
     }
 
@@ -634,13 +649,14 @@ const TAIL = String.raw`</script>
     jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
     // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them.
+    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
+    // Either way the count is the open threads'.
     var threadsPage = views.filter(function (v) { return v.name === ${JSON.stringify(LOOSE_THREADS_PAGE_NAME)}; })[0];
-    if (threadsPage && data.seeds.length > 0) {
+    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
     } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard));
+      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
     }
     section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);

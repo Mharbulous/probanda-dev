@@ -15,6 +15,10 @@
 // Defer button (schema v68). Ranking never drops a loose thread, so the page lists every open one; a
 // deferred one shows collapsed to its first line and faded.
 //
+// Under the All tab two more sections follow (schema v75): Discarded, each thread the practitioner
+// dropped as a red struck line with a Restore link that copies an instruction and writes nothing, and
+// Suggested, each thread sent to Probanda as a plain line. Neither is in the header's counts.
+//
 // The Defer button writes through the data server's localhost listener (../../page-api/server.ts):
 // the page posts the db_path, proceeding and token embedded here, and the listener writes only
 // with a token a render made. The page checks the listener on load and disables the buttons, with
@@ -27,7 +31,7 @@
 import { pageApiPort, pageApiToken } from "../../page-api/token.js";
 import type { ViewPage } from "../view-pages.js";
 import type { FilingRow } from "./query.js";
-import { fetchOpenSeeds, inRankOrder, seedOrigin, withFromFiling, type RankGroup } from "./render-work-board.js";
+import { fetchDiscardedSeeds, fetchOpenSeeds, inRankOrder, seedOrigin, withFromFiling, type RankGroup } from "./render-work-board.js";
 import { VIEW_FOLDER_CSS } from "./view-folder-css.js";
 
 /** Each group's short name and colour on this page, in triage's group order. */
@@ -73,6 +77,9 @@ export interface LooseIdeasData {
   groups: { key: RankGroup; label: string; colour: string; count: number }[];
   /** Every open loose thread in the shared order: the ranked first, then the unranked. */
   ideas: LooseIdea[];
+  /** The proceeding's discarded and suggested loose threads (schema v75), in id order: one with
+   * `discarded_at` set is drawn struck under Discarded, any other under Suggested. */
+  discarded: { id: number; idea: string; discarded_at: string | null; suggested_at: string | null }[];
   api: LooseIdeasApi;
 }
 
@@ -98,7 +105,8 @@ export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: Node
     .map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i) => i.group === key).length }))
     .filter((g) => g.count > 0);
   const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  return { groups, ideas, api };
+  const discarded = fetchDiscardedSeeds(dbPath, filing.proceeding_id).map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
+  return { groups, ideas, discarded, api };
 }
 
 /** The header's counts: every open loose thread, the ranked and the unranked. */
@@ -161,6 +169,8 @@ article.idea.deferred{opacity:.55}
 // plays the same motion in reverse, then hides them. Each card not yet deferred carries a Defer
 // button, enabled once the listener answers /health within 2 s; a click posts the page's api block
 // and, on 200, collapses and fades the card in place. A failure shows on the card.
+// Two more sections, Discarded and Suggested, show under All only, having no tab of their own: one
+// line per thread, a discarded one struck with a Restore link that copies "restore loose thread #N".
 // Everything drawn at load uses only element creation, attributes, classList.add and plain
 // properties; measuring and animating happen on a click.
 const PAGE_SCRIPT = String.raw`(function () {
@@ -268,6 +278,30 @@ const PAGE_SCRIPT = String.raw`(function () {
     return c;
   }
 
+  // A thread that left the board, as a section's inert card: a discarded one struck, with a Restore
+  // link that only copies the instruction to paste into a session, and a suggested one plain.
+  function discardedSeedLine(d) {
+    if (!d.discarded_at) return { node: el("p", "suggested", "Loose thread " + d.id + ":  " + d.idea + " *SUGGESTED*"), inert: true };
+    var line = el("p", "deleted");
+    line.appendChild(el("s", "", "Loose thread " + d.id + ":  " + d.idea));
+    line.appendChild(document.createTextNode(" *DISCARDED* "));
+    var restore = el("a", "", "Restore");
+    restore.href = "#";
+    var instruction = "restore loose thread #" + d.id;
+    // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
+    function showInstruction() { restore.textContent = instruction; }
+    restore.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { showInstruction(); return; }
+      navigator.clipboard.writeText(instruction).then(function () {
+        restore.textContent = "Copied";
+        setTimeout(function () { restore.textContent = "Restore"; }, 1500);
+      }, showInstruction);
+    });
+    line.appendChild(restore);
+    return { node: line, inert: true };
+  }
+
   var tablist = el("div", "tabs");
   tablist.setAttribute("role", "tablist");
   tablist.setAttribute("aria-label", "Show");
@@ -321,6 +355,8 @@ const PAGE_SCRIPT = String.raw`(function () {
   var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
   section("unsorted", "Unsorted", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("discarded", "Discarded", [], data.discarded.filter(function (d) { return d.discarded_at; }).map(discardedSeedLine));
+  section("suggested", "Suggested", [], data.discarded.filter(function (d) { return !d.discarded_at; }).map(discardedSeedLine));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 

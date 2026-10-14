@@ -99,6 +99,9 @@ ol.steps li.next::before{border-color:var(--ink)}
 p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
 p.deleted s{white-space:pre-wrap}
 p.deleted a{color:inherit}
+/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
+   line in ordinary ink, unstruck. */
+p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
 
 /* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
    line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the

@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 14: Loose-thread triage
 
-**What it is.** An outlining session, under Branch B's rules (`references/job-session.md`): a thread outlined here is a job this session created, under Dispatch's rule for such a session (`references/dispatch.md` section 14), outlining a loose thread consumes it, leaving it touches nothing, and dropping it removes it on the practitioner's word only. A loose thread cannot be shelved or superseded. The session ranks every open thread best to worst for follow-up and shows the order on the Loose Threads page. Ranking orders, it never removes: however weak a thread, the session never drops it on its own judgment. A thread captured after the ranking shows as unranked until the next ranking.
+**What it is.** An outlining session, under Branch B's rules (`references/job-session.md`): a thread outlined here is a job this session created, under Dispatch's rule for such a session (`references/dispatch.md` section 14), outlining a loose thread consumes it, leaving it touches nothing, and dropping it discards it on the practitioner's word only. A loose thread cannot be shelved or superseded. The session ranks every open thread best to worst for follow-up and shows the order on the Loose Threads page. Ranking orders, it never removes: however weak a thread, the session never drops it on its own judgment. A thread captured after the ranking shows as unranked until the next ranking.
 
 **Deferred threads.** A thread whose line in the `loose_threads` lane ends ` · deferred` was set aside by the practitioner, usually with the Defer button on the Loose Threads page. Leave it as it is: do not rank it, propose it, or offer to discard it again, unless the practitioner asks about it or asks for the deferred threads. Read the state from `board_card` only. To defer a thread or bring one back on the practitioner's word, use `/drafting-data`'s deferral write ("Deferring a loose thread").
 
@@ -16,7 +16,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 **2b. Rank the threads as jobs.** Give each a group, a rank and a reason, judged on its job description. The group is what the thread says, exactly one of seven:
 
 1. **`decision`: practitioner remarks and decisions already made.** The practitioner's own instruction or decision.
-2. **`tooling`: plugin and tooling feedback.** A tool failure, a missing feature, a skill or page defect.
+2. **`tooling`: plugin and tooling feedback.** A tool failure, a missing feature, a skill or page defect. A thread about the plugin, its tools, skills or pages is `tooling` even when the practitioner said it: `decision` is for decisions about the matter.
 3. **`housekeeping`: case-data and law-folder housekeeping.** Ingesting a document, adding or correcting an authority row, filing a text.
 4. **`research`: research offers and research questions.** An offered research run or an open question about the law.
 5. **`authority`: Writing doesn't match an authority as cited.** A proposition, pinpoint, excerpt or rule wording that departs from the authority.
@@ -31,7 +31,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
 - **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation.
-- **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids gone, the count) and re-render.
+- **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count) and re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
 **Checking plugin threads against the installed plugin.** Only when the practitioner asks for it. Tested only on the `tooling` group, so written for it.
@@ -39,8 +39,9 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 - **4a. Check each thread against the installed plugin.** Read-only helpers, each taking three or four threads grouped by area, each returning only `DONE | PARTLY | NOT DONE`, one to three `file:line` evidence lines, and what is missing. How the threads divide among helpers is a mechanical choice stated in one line, as Branch A's fan-out is.
 - **4b. Spot-check every evidence line that drives a decision** before reporting it.
 - **4c. Report one table:** built (with where), partly built (with what is missing), not built.
-- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids gone, the count), re-render, and present the Job Board page again.
-- **4e. The remaining plugin ideas.** List the group's remaining plugin ideas, plus any plugin-related thread seen in another group and any gap this session found. Where they go is the practitioner's instruction. They stay loose threads.
+- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count), re-render, and present the Job Board page again.
+
+**Tooling threads go to the Suggestion Box.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. An evaluator weighs each against doing nothing, and no thread is discarded or sent without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
 **Step 5. Record the effort as a Ready job**, outlined in the practitioner's own words: the practitioner-words gate on title, intent and steps applies. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
 

@@ -89,7 +89,7 @@ INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 2);
 UPDATE seeds SET charted_into = 2 WHERE id = 1;
 ```
 
-Run this once the job it became now exists (its recovered literal id — call 2 above); it removes the loose thread from the Job Board's "Loose Threads" section (the query there filters `charted_into IS NULL`). §3i's add path runs this same write outside an outlining session, on a thread its sort captured.
+Run this once the job it became now exists (its recovered literal id — call 2 above); it removes the loose thread from the Job Board's "Loose Threads" section (the query there filters on the board's open-thread condition: not outlined, not discarded, not suggested). §3i's add path runs this same write outside an outlining session, on a thread its sort captured.
 
 **Recording the Proposals a job was outlined from** — the same shape as the loose-thread consumption above: its own statement, after call 2, on the recovered literal id, never `last_insert_rowid()`. One row per key the job was outlined from; one job may hold several keys, and a merged job does:
 

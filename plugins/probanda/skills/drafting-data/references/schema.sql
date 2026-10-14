@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 74
+-- Current version: db_meta.schema_version = 75
 
 
 CREATE TABLE db_meta (
@@ -340,7 +340,7 @@ CREATE TABLE seeds (
     surfaced_by      TEXT NOT NULL,
     idea             TEXT NOT NULL,
     charted_into     INTEGER REFERENCES tickets(id)
-, rank INTEGER CHECK (rank IS NULL OR rank >= 1), rank_group TEXT CHECK (rank_group IS NULL OR rank_group IN ('decision','tooling','housekeeping','research','authority','evidence','other')), rank_reason TEXT CHECK ((rank IS NULL) = (rank_group IS NULL) AND (rank IS NULL) = (rank_reason IS NULL)), deferred_at TEXT, rank_job TEXT CHECK (rank_job IS NULL OR rank IS NOT NULL));
+, rank INTEGER CHECK (rank IS NULL OR rank >= 1), rank_group TEXT CHECK (rank_group IS NULL OR rank_group IN ('decision','tooling','housekeeping','research','authority','evidence','other')), rank_reason TEXT CHECK ((rank IS NULL) = (rank_group IS NULL) AND (rank IS NULL) = (rank_reason IS NULL)), deferred_at TEXT, rank_job TEXT CHECK (rank_job IS NULL OR rank IS NOT NULL), discarded_at TEXT, suggested_at TEXT);
 
 CREATE INDEX idx_seeds_proceeding ON seeds(proceeding_id);
 

@@ -4913,3 +4913,23 @@ UPDATE db_meta SET value = '73' WHERE key = 'schema_version';
 ALTER TABLE tickets ADD COLUMN bf_on TEXT CHECK (bf_on IS NULL OR bf_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]');
 
 UPDATE db_meta SET value = '74' WHERE key = 'schema_version';
+
+-- MIGRATE 74 -> 75
+-- A loose thread can leave the board without being deleted (Brahm, 2026-10-13). seeds gains two
+-- nullable minutes, YYYY-MM-DDTHH:MM local time, as deferred_at is:
+--
+-- 1. discarded_at: the minute the practitioner dropped the thread. NULL is not discarded. A discarded
+--    thread is kept, is no longer open, and shows as a struck line that can be restored by clearing
+--    the minute. It replaces the row delete: every drop of a loose thread writes it.
+-- 2. suggested_at: the minute the thread was sent to Probanda as a suggestion about the plugin. NULL
+--    is not suggested. A suggested thread is kept and is no longer open.
+--
+-- Both are written by the raw idioms in references/jobs-run.md section 8, only on the practitioner's
+-- word. seeds is job process state (ADR 0009), so the columns carry no revision trigger.
+--
+-- Additive: two ADD COLUMNs, no rebuild; every existing row reads NULL in both. The hop moves no
+-- revision: it writes no row.
+ALTER TABLE seeds ADD COLUMN discarded_at TEXT;
+ALTER TABLE seeds ADD COLUMN suggested_at TEXT;
+
+UPDATE db_meta SET value = '75' WHERE key = 'schema_version';

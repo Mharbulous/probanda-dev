@@ -174,26 +174,39 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
 
 Never create a proceeding here, never create a job other than §3i's research offer job, and never assign anything: a loose thread is consumed only by a later outlining session (§3) or by §3i's add path.
 
-**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. Or, in any session, a thread the research-offer sort (`shared/legal-research.md`, "After the answer") captured in that session, when the practitioner names that offer to drop. No table references a loose thread, so the delete stands alone:
+**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. Or, in any session, a thread the research-offer sort (`shared/legal-research.md`, "After the answer") captured in that session, when the practitioner names that offer to drop. Dropping discards the thread (v75): it stamps `discarded_at`, the minute dropped, `YYYY-MM-DDTHH:MM` in local time, and deletes no row. A discarded thread is kept, is no longer open, and shows on the Loose Threads page as a red struck line with a Restore link. One thread or a group, the write is the same stamp, naming every id positively, never `NOT IN`. Then the confirm-read, expected `0`:
 
 ```sql
-DELETE FROM seeds WHERE id = 1;
+UPDATE seeds SET discarded_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id IN (3, 7, 12) AND discarded_at IS NULL;
+SELECT COUNT(*) FROM seeds WHERE id IN (3, 7, 12) AND discarded_at IS NULL;
 ```
 
-**Dropping a group of loose threads** (`/draft`'s loose-thread triage): on the practitioner's yes to dropping the threads a reported group holds, one delete naming every id positively, never `NOT IN`. Same rule: only in an outlining session, and only on the practitioner's word for those threads. Then the confirm-read, expected `0`:
+On a database held below v75 the write fails with `no such column`. Say that the matter's database needs the v75 migration, and stop: never delete the row instead.
+
+**Dropping a group of loose threads** (`/draft`'s loose-thread triage): on the practitioner's yes to dropping the threads a reported group holds, the stamp above. Same rule: only in an outlining session, and only on the practitioner's word for those threads.
+
+**Restoring a discarded thread** (v75): only on the practitioner's word, usually pasted from the page's Restore link ("restore loose thread #7"), which copies the instruction and writes nothing. The thread is open again, with the rank it had. Then the confirm-read, expected the one row with `discarded_at` NULL:
 
 ```sql
-DELETE FROM seeds WHERE id IN (3, 7, 12);
-SELECT COUNT(*) FROM seeds WHERE id IN (3, 7, 12);
+UPDATE seeds SET discarded_at = NULL WHERE id = 7 AND discarded_at IS NOT NULL;
+SELECT id, discarded_at FROM seeds WHERE id = 7;
 ```
 
-**Ranking the loose threads** (`/draft`'s loose-thread triage, v66): only in an outlining session. Every open thread of the proceeding is ranked, meaning the set the board's loose_threads lane shows, `charted_into IS NULL` or outlined into a deleted job (`charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)`), which shows again. Each gets a job description, a group and a reason, one `UPDATE` per thread, all in one script. `rank_job` (v70) is the job description: the work the thread asks for, stated in actionable form, written before the threads are ranked so that the ranking orders jobs. It restates only what the thread says, with no position, figure, statement of law, recommendation, or research question worded beyond the thread's own words, and never names time remaining or a deadline. `idea` is never overwritten. `rank` is 1 for the best to follow up, then 2, 3 and on. `rank_group` is one of seven slugs, mirroring the triage groups: `decision` (the practitioner's own remark or decision already made), `tooling` (a tool failure, missing feature, skill or page defect), `housekeeping` (case-data or law-folder housekeeping: ingesting a document, an authority row, filing a text), `research` (a research offer or an open question about the law), `authority` (the Writing departs from an authority as cited), `evidence` (the Writing departs from the evidence or pleadings), `other` (fits none of these). `rank_reason` is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Ranking orders, it never removes: it deletes no row and never sets `charted_into`, and a weak thread leaves only by the drop write above, on the practitioner's word. A thread captured after the ranking stays unranked (all four NULL) until the next ranking. The four are set together or all left NULL. A CHECK ties `rank`, `rank_group` and `rank_reason`, and another refuses `rank_job` without a rank, but a thread ranked before v70 may still lack `rank_job`, so the confirm-read counts that gap too. A deferred thread (below) is left as it is, unless the practitioner asks for it to be ranked. Then the confirm-read, expected `0`:
+**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. Written only after the Suggestion Box's post has returned an issue number (`draft/references/suggestion-box.md`), never before and never without one. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
+
+```sql
+UPDATE seeds SET suggested_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = 7 AND suggested_at IS NULL AND discarded_at IS NULL;
+SELECT id, suggested_at FROM seeds WHERE id = 7;
+```
+
+**Ranking the loose threads** (`/draft`'s loose-thread triage, v66): only in an outlining session. Every open thread of the proceeding is ranked, meaning the set the board's loose_threads lane shows, `charted_into IS NULL` or outlined into a deleted job (`charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)`), which shows again, and in either case neither discarded nor suggested (`discarded_at IS NULL AND suggested_at IS NULL`, v75). A database held below v75 has neither column and a statement naming one fails there with `no such column`: on such a database, leave those two clauses out of the reads and guards below. Each gets a job description, a group and a reason, one `UPDATE` per thread, all in one script. `rank_job` (v70) is the job description: the work the thread asks for, stated in actionable form, written before the threads are ranked so that the ranking orders jobs. It restates only what the thread says, with no position, figure, statement of law, recommendation, or research question worded beyond the thread's own words, and never names time remaining or a deadline. `idea` is never overwritten. `rank` is 1 for the best to follow up, then 2, 3 and on. `rank_group` is one of seven slugs, mirroring the triage groups: `decision` (the practitioner's own remark or decision already made), `tooling` (a tool failure, missing feature, skill or page defect), `housekeeping` (case-data or law-folder housekeeping: ingesting a document, an authority row, filing a text), `research` (a research offer or an open question about the law), `authority` (the Writing departs from an authority as cited), `evidence` (the Writing departs from the evidence or pleadings), `other` (fits none of these). `rank_reason` is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Ranking orders, it never removes: it deletes no row and never sets `charted_into`, and a weak thread leaves only by the drop write above, on the practitioner's word. A thread captured after the ranking stays unranked (all four NULL) until the next ranking. The four are set together or all left NULL. A CHECK ties `rank`, `rank_group` and `rank_reason`, and another refuses `rank_job` without a rank, but a thread ranked before v70 may still lack `rank_job`, so the confirm-read counts that gap too. A deferred thread (below) is left as it is, unless the practitioner asks for it to be ranked. Then the confirm-read, expected `0`:
 
 ```sql
 UPDATE seeds SET rank = 1, rank_group = 'tooling', rank_job = 'Fix the exhibit download that fails on the second exhibit.', rank_reason = 'Blocks the exhibit download the evidence threads need.' WHERE id = 7;
 UPDATE seeds SET rank = 2, rank_group = 'evidence', rank_job = 'Correct the exhibit letter in paragraph 12 to match the affidavit.', rank_reason = 'One exhibit letter to correct, checked against the record already on file.' WHERE id = 3;
 SELECT COUNT(*) FROM seeds WHERE proceeding_id = 1 AND (rank IS NULL OR rank_job IS NULL) AND deferred_at IS NULL
-  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL));
+  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL))
+  AND discarded_at IS NULL AND suggested_at IS NULL;
 ```
 
 **Correcting a job description** (v70): only when the practitioner names a ranked thread and gives the description it should carry. The session writes their words, changing nothing else on the row. The column does not record who wrote a description: it is the practitioner's wording, for the practitioner-words gate when the thread is outlined, only where they wrote or adopted it in the conversation. Then the confirm-read, expected the one row with the new text:
@@ -208,11 +221,12 @@ SELECT id, rank_job FROM seeds WHERE id = 7;
 ```sql
 UPDATE seeds SET deferred_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
   WHERE id = 7 AND proceeding_id = 1 AND deferred_at IS NULL
-  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL));
+  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL))
+  AND discarded_at IS NULL AND suggested_at IS NULL;
 SELECT id, deferred_at FROM seeds WHERE id = 7;
 ```
 
-To bring it back, the mirror write: `UPDATE seeds SET deferred_at = NULL WHERE id = 7 AND proceeding_id = 1 AND deferred_at IS NOT NULL AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL));`, then the same confirm-read.
+To bring it back, the mirror write: `UPDATE seeds SET deferred_at = NULL WHERE id = 7 AND proceeding_id = 1 AND deferred_at IS NOT NULL AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) AND discarded_at IS NULL AND suggested_at IS NULL;`, then the same confirm-read.
 
 ## 9. Complete
 

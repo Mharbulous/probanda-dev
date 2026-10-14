@@ -35,7 +35,7 @@ import {
   type ProposalSlug,
   withNoteUpSteps,
 } from "./proposal-inventory.js";
-import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveTicketClause, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
+import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveSeedClause, liveTicketClause, seedClosedColumns, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WritingLabel } from "./writing-label.js";
 
@@ -73,6 +73,17 @@ interface DeletedTicket {
   id: number;
   title: string;
   filing_id: number | null;
+}
+
+/** A loose thread that left the board without being outlined (schema v75): discarded, or else suggested. */
+export interface DiscardedSeed {
+  id: number;
+  idea: string;
+  filing_id: number | null;
+  /** The minute the practitioner dropped it; null on a suggested thread. */
+  discarded_at: string | null;
+  /** The minute it was sent to Probanda as a suggestion; null when it was not. */
+  suggested_at: string | null;
 }
 
 interface StepRow {
@@ -367,6 +378,10 @@ export interface WorkBoardData {
   /** The deleted jobs this section's page draws as struck lines in Completed (schema v54), in id
    * order. Nothing else reads them: the summary and board_card name no deleted job. */
   deleted: { id: number; title: string }[];
+  /** The discarded and suggested loose threads this section's pages draw as lines (schema v75), in id
+   * order: a discarded one struck, a suggested one plain. Nothing else reads them: the summary and
+   * board_card name none. Empty on a database held below v75. */
+  discardedSeeds: Omit<DiscardedSeed, "filing_id">[];
   /** The drafts attached to this board (schema v67, ADR 0042), in id order (fetchAttachments): on a
    * filing's board its own rows, plus, on the proceeding's lowest-id live Writing only, the
    * proceeding's rows with no Writing; on a pre-filing board every row of the proceeding. Empty on a
@@ -543,6 +558,8 @@ export interface ProceedingBoard {
   holders: Map<string, { ticket_id: number; filing_id: number | null }>;
   /** The proceeding's deleted jobs, in id order. They are on no card, in no count and in no summary. */
   deleted: DeletedTicket[];
+  /** The proceeding's discarded and suggested loose threads, in id order. They are in no count and in no summary. */
+  discardedSeeds: DiscardedSeed[];
 }
 
 /** Today's local date, `YYYY-MM-DD`, which a bring-forward date reads against as a string. */
@@ -673,7 +690,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
     }
   }
 
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
 }
 
 function columnHeld(dbPath: string, table: string, column: string): boolean {
@@ -681,12 +698,27 @@ function columnHeld(dbPath: string, table: string, column: string): boolean {
 }
 
 /** What makes a loose thread open, given its proceeding's deleted job ids: never outlined, or outlined
- * into a deleted job. fetchOpenSeeds reads with it and the Loose Threads page's Defer write guards with it. */
-export function openSeedCondition(deletedIds: ReadonlySet<number>): { sql: string; params: number[] } {
+ * into a deleted job, and neither discarded nor suggested (schema v75; a database below it holds none
+ * of either). fetchOpenSeeds reads with it and the Loose Threads page's Defer write guards with it. */
+export function openSeedCondition(dbPath: string, deletedIds: ReadonlySet<number>): { sql: string; params: number[] } {
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})`, params: deletedList };
+  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
 }
+
+/** The proceeding's discarded and suggested loose threads, in id order; none on a database held below v75. */
+export function fetchDiscardedSeeds(dbPath: string, proceedingId: number): DiscardedSeed[] {
+  if (seedClosedColumns(dbPath).length < 2) return [];
+  return rows<DiscardedSeed>(
+    dbPath,
+    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
+    [proceedingId]
+  );
+}
+
+/** A section's discarded and suggested loose threads, as its page draws them. */
+const discardedSeedLines = (seeds: readonly DiscardedSeed[]): WorkBoardData["discardedSeeds"] =>
+  seeds.map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
 
 /** Every open loose thread in one proceeding, in id order: the board's and the Loose Threads page's one
  * set. A loose thread outlined into a deleted job shows again, and one captured from a deleted job names no origin job. */
@@ -695,7 +727,7 @@ export function fetchOpenSeeds(
   proceedingId: number,
   deletedIds: ReadonlySet<number> = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d) => d.id))
 ): Omit<WorkBoardSeed, "from_filing">[] {
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(dbPath, deletedIds);
   // The ranking (schema v66); a database below it holds every loose thread unranked.
   const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
   // The job description (schema v70); a database below it holds none.
@@ -1474,6 +1506,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     tickets: gated,
     seeds,
     deleted: board.deleted.filter((d) => onFilingBoard(d.filing_id, ctx.filing.id)).map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
@@ -1519,6 +1552,7 @@ function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
     tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered, idleHours)),
     seeds: board.seeds.filter((s) => s.filing_id === own).map((s) => ({ ...s, from_filing: null })),
     deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s) => s.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: [],
@@ -1552,6 +1586,7 @@ export function buildPreFilingBoardData(
     tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered, idleHours)),
     seeds: board.seeds.map((s) => ({ ...s, from_filing: null })),
     deleted: board.deleted.map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: [],

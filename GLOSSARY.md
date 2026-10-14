@@ -353,7 +353,7 @@ _Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; J
 
 **Loose thread**:
 Two senses, told apart by where each appears:
-- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). It never counts toward a completion criterion.
+- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. It never counts toward a completion criterion.
 - on a mockup, the 🧵 work marker, defined in `.claude/skills/drafting-data/references/work-markers.md`, which counts toward the open-items criterion.
 The Job Board's own "Ideas for later" section already renders the first sense in the lawyer-facing word — the deferred vocabulary pass (design doc §11) covers only widget labels and prompts elsewhere, not the board's own headings, which were lawyer-facing from the start (that is the point of a rendered surface). Internal names are unchanged: the `seeds` table, `review_points.seed_id`, `seeds.charted_into`, the `seed` CSS class, element ids and data key.
 _Avoid_: note (a different, unstored concept this schema deliberately excludes); seed.
@@ -513,7 +513,7 @@ The push-time act of stripping everything matter-identifying from a principle be
 
 **Shelve**:
 The practitioner's instruction, given in a session, that moves a Proposal, or a queued or in-progress job, to the Job Board's Shelved angles list until the practitioner restores it ("shelved by you"). A shelved Proposal comes back to Proposed if its marker or its item changes from what it read when shelved. A shelved job keeps its place in the work history and is never assigned. Internal names are unchanged: `tickets.rejected_at`, the `proposal_rejections` table, the `rejected` category and lane values, and the `rejected-angles` section id.
-_Avoid_: reject, rejection; dismissal; drop (a loose thread's removal, or `dropped_on` on substance); supersession.
+_Avoid_: reject, rejection; dismissal; drop (a loose thread's discard, or `dropped_on` on substance); supersession.
 
 **Source**:
 Case-specific recorded material belonging to a matter: a document, but also a recording, photograph, or transcript — anything that captures information in a fixed, referenceable form. Sources are the case-specific evidentiary record. A key boundary: **unrecorded anticipated testimony is NOT a source** until it is captured in some record (an affidavit, a transcript, a will-say statement). Until captured, it cannot be cited or linked as evidence — it is merely anticipated.
