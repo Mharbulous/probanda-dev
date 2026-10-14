@@ -348,6 +348,12 @@ This step never derives a deadline, never states time remaining, and never calls
 
 ---
 
+## Procedural history entry (after completion)
+
+After the date-setting check, when the just-registered top-level `main.sources` row has `category` `court` or `correspondence`, add one entry for it to the matter's `ProceduralHistory.md`, as `../../shared/procedural-history.md` says: under the date the document itself states, what the document is in one line, and its path relative to the matter folder. Path B (privileged), a file under the solicitor-client folder rule and Path D never get an entry here. A document that sets a date is entered without the date it sets. This step asks nothing, derives no deadline, and runs the same way in an unattended ingest. An affidavit or a book gets one entry, for its top-level row.
+
+---
+
 ## Another copy of a registered source (after completion)
 
 [`ingest.md`](ingest.md) Step 4 sends a file with no hash match through [`supersede-draft.md`](supersede-draft.md) §1 before it reaches this operation, so a pair §1 found is already settled. This step covers the pair §1 did not find: at any point in this run, the session concludes that the document is another copy of registered source N, with a different hash. The conclusion can come from the extractor's hand-back, from a query made for another step, or from anything else the session read. `../shared/extraction-protocol.md`, "Another copy with a different hash", sets the scope and the rule. The step applies to the top-level `main.sources` row of Paths A, C and E when its `category` is `court`: an affidavit's body row, a book's own row.
