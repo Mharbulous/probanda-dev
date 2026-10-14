@@ -40,7 +40,7 @@ Cowork runs plugins in a sandboxed Linux VM.
 
 ## Never commit
 
-- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in `plugins/probanda/`, so the publish-readiness check fails by design until the schema-split rebuild removes them. Until that rebuild, a schema hop may add lines to those legacy schemas when Brahm allows that hop in conversation, and the `--new-since` check below then reports those lines, and each schema file the hop edits as a forbidden file, and nothing else. Nothing else may add any.
+- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in `plugins/probanda/`, so the publish-readiness check fails by design until each legacy store is converted and leaves the list in Exception 4 of COMMANDMENTS.md. No change may add any.
 - Databases.
 - Built `.plugin` archives.
 - Handovers or E2E reports.
