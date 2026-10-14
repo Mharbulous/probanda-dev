@@ -13,8 +13,6 @@ import { buildToolDefinitions } from "./schema-gen.js";
 
 export { buildToolDefinitions } from "./schema-gen.js";
 export { callTool, dispatchTool } from "./dispatch.js";
-// Exported so the bundle carries it before step 5 of the practice-db conversion calls it.
-export { loadCloudKey } from "./cloud-key.js";
 
 // Every namespace this runtime serves is local-backed: SQLite through the host
 // Python `sqlite3` module, or the host file system. The full tool list is
