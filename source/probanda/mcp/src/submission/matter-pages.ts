@@ -57,6 +57,7 @@ import {
   fetchPreFilingProceedings,
   fetchProceeding,
   fetchRevision,
+  isJobOnlyBoard,
   type FilingRow,
   type ProceedingRow,
 } from "./forms/query.js";
@@ -137,7 +138,7 @@ export function filingBoardData(
   now: string,
   revision: number,
   dates: MatterDates = DATES_NOT_READ,
-  manifest: RenderManifest | null = readManifest(mockupDir(dbPath, filing.id))
+  manifest: RenderManifest | null = isJobOnlyBoard(filing) ? null : readManifest(mockupDir(dbPath, filing.id))
 ): WorkBoardData {
   const ctx = buildContext(dbPath, proceeding, filing, [], revision, client, undefined, now);
   return buildWorkBoardData({ ...ctx, inventory: manifest?.inventory ?? null }, deadlineCriteria(dates, filing.id));
@@ -171,9 +172,12 @@ interface ViewTarget {
   file: string;
 }
 
-/** Every registered view page for each live filing, in the order given (ADR 0033, 2026-10-07 amendment). */
+/** Every registered view page for each live filing, in the order given (ADR 0033, 2026-10-07 amendment).
+ * A Job Board with no Writing has none. */
 function viewTargets(live: { proceeding: ProceedingRow; filing: FilingRow }[]): ViewTarget[] {
-  return live.flatMap(({ proceeding, filing }) => VIEW_PAGES.map((page) => ({ page, filing, proceeding, file: viewPageFile(page, filing.id) })));
+  return live
+    .filter(({ filing }) => !isJobOnlyBoard(filing))
+    .flatMap(({ proceeding, filing }) => VIEW_PAGES.map((page) => ({ page, filing, proceeding, file: viewPageFile(page, filing.id) })));
 }
 
 /** Refuses a page target that exists without its page's marker, every page's name read from the
@@ -299,7 +303,8 @@ export function writeMatterPages(
     const own = reuse.section;
     const pages = [
       ...live.map((r) => {
-        const manifest = readManifest(mockupDir(dbPath, r.filing.id));
+        // A Job Board with no Writing has no mockup folder, so none is looked up for it.
+        const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
         return {
           proceeding: r.proceeding,
           section: own?.meta.filing_id === r.filing.id ? own : filingBoardData(dbPath, r.filing, r.proceeding, client, now, revision, dates, manifest),
@@ -535,11 +540,11 @@ function edgeText(edges: WorkBoardEdge[]): string {
 
 type BoardProposal = WorkBoardData["proposals"][number];
 
-/** What derives now for each key: the Proposals by key, or null on a pre-filing section or a
- * retired filing, which derive none. */
+/** What derives now for each key: the Proposals by key, or null on a pre-filing section, a
+ * retired filing or a Job Board with no Writing, which derive none. */
 function derivedOf(section: WorkBoardData): Map<string, BoardProposal> | null {
   const m = section.meta;
-  return m.filing_id === null || m.state_label === "Retired" ? null : new Map(section.proposals.map((p) => [p.key, p]));
+  return m.filing_id === null || m.state_label === "Retired" || m.job_only ? null : new Map(section.proposals.map((p) => [p.key, p]));
 }
 
 /** A held key with its stored item and, when `derived` is given, what derives for it now: the
@@ -766,7 +771,7 @@ export function renderLiveLanes(section: WorkBoardData): string[] {
     }
   }
   lines.push(`## Loose Threads (${section.seeds.length})`);
-  if (m.filing_id !== null) lines.push(proposedHeading(section));
+  if (m.filing_id !== null && !m.job_only) lines.push(proposedHeading(section));
   if (section.lapsed_keys.length > 0) lines.push(`🧹 lapsed keys: ${section.lapsed_keys.join(", ")}`);
   return lines;
 }
@@ -846,6 +851,8 @@ function renderBoardCard(
   for (const t of section.tickets) if (jobs.includes(t.id)) lines.push(...jobCardLines(t, derived, section.seeds));
   for (const lane of CARD_LANES) {
     if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== undefined)) continue;
+    // A Job Board with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
+    if (section.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
     if (lane === "criteria") lines.push(...goalLines(section));
     if (lane === "live") lines.push(...renderLiveLanes(section));
     if (lane === "proposed") lines.push(proposedHeading(section), ...proposedOf(section).flatMap(proposalLines));

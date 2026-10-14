@@ -27,7 +27,7 @@ import { parseKnowledgePath, type KnowledgeSeams } from "../../knowledge/tree.js
 import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-profile.js";
 import { submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { composeLayoutSnapshot } from "../writing-snapshot.js";
-import { boardAttachmentsHeld, fetchParties, fetchProceeding, type FilingRow, type ProceedingRow } from "./query.js";
+import { boardAttachmentsHeld, fetchParties, fetchProceeding, JOB_BOARD_KIND, type FilingRow, type ProceedingRow } from "./query.js";
 
 type Json = Record<string, unknown>;
 
@@ -270,6 +270,9 @@ export interface CreateWritingResult {
  */
 export async function submissionDataCreateWriting(args: CreateWritingArgs, seams: KnowledgeSeams = {}): Promise<CreateWritingResult> {
   const env = seams.env ?? process.env;
+  if (args.kind === JOB_BOARD_KIND) {
+    throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Job Board with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
+  }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
   const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding }, seams);
   const signer = chooseSigner(built.stored.layout, args, proceeding, env, seams.caseDataRoot);

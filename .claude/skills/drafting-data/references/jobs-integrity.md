@@ -12,6 +12,7 @@ Not enforceable by a table constraint — hold these by discipline when composin
 - A loose thread is never a blocker — `ticket_blocks` only ever references `tickets.id` on both sides; a loose thread has no scope, no plan, nothing to block on.
 - A `ticket_blocks` edge that points outside the job's own proceeding renders as an unresolved blocker (ADR 0018): the renderer only loads this proceeding's jobs, so it cannot see the other job's status, and the blocked job stays under "Blocked" and is never offered as ready. A `superseded_by` pointer outside the proceeding renders the pointer with no status. Either is a composition mistake to correct, never a way to share work across proceedings: no job moves between proceedings or belongs to two.
 - A job or loose thread of a proceeding with no Writing (ADR 0018) has `filing_id` NULL. It renders on that proceeding's own Job Board (`drafting_forms__render` with `proceeding_id`) until the proceeding has a Writing, then on every Writing's board like any proceeding-scoped row.
+- A Job Board with no Writing (`drafting_data__create_job_board`) shows only the jobs and loose threads whose `filing_id` is its id. A proceeding-scoped row (`filing_id` NULL) never shows on it, and its own jobs show on no Writing's board. Its open loose threads, like every open loose thread in the proceeding, also show on each Writing's board, so none strands when it closes.
 
 ## 12. What the schema already refuses, loudly
 

@@ -85,6 +85,7 @@ import {
   fetchSentParties,
   fetchProceeding,
   fetchRevision,
+  isJobOnlyBoard,
   requireForum,
   type FilingRow,
   type PartyRow,
@@ -648,6 +649,11 @@ export interface RenderResult {
    * cleared) before it renders again -- rendering one would archive the mockups of a filing
    * whose work is over. */
   filing_retired?: boolean;
+  /** True only on a Job Board with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
+   * board and nothing else, so no mockup, manifest, Counsel Brief or presentation copy is written.
+   * `documents` carries the Job Board alone, with its board_summary. A closed one also carries
+   * filing_retired and a note. */
+  job_board_only?: true;
   /** Present only when this render wrote the matter's pages: every view page written (ADR 0033,
    * 2026-10-07 amendment), [{name, filing_id, path}]. */
   view_page_paths?: PagesWritten["view_page_paths"];
@@ -1014,8 +1020,20 @@ export function submissionFormsRender(
   const loadStart = performance.now();
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const requestedDir = draftDir === undefined ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
+  // A Job Board with no Writing has no document, so no filed face and no presentation folder: only
+  // its board renders, and under draft_dir the matter's pages go into that folder itself.
+  const jobOnly = isJobOnlyBoard(filing);
+  if (jobOnly && (renderMode !== "mockup" || presentationDir !== undefined)) {
+    throw new ValidationError(
+      `drafting_forms__render: filing ${filingId} is a Job Board with no Writing, so it has no ${renderMode !== "mockup" ? "filed face" : "presentation folder"}; ` +
+        "render it in mockup mode, with draft_dir to rewrite the matter's pages",
+      "job_board_only"
+    );
+  }
+  const requestedDir = draftDir === undefined || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
   const projectionDir = requestedDir === undefined ? undefined : resolvePresentationDir(requestedDir, filing.title);
+  const pagesDir =
+    jobOnly && draftDir !== undefined ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === undefined ? undefined : dirname(projectionDir);
   const revision = fetchRevision(dbPath);
   // Read before buildContext reads the review state, so an approval landing between the two
   // makes the next render miss rather than hit a manifest stamped with the newer mark.
@@ -1024,8 +1042,9 @@ export function submissionFormsRender(
   // Party/counsel SSOT: a drafting Writing's counsel and address for service are read live from
   // case data, through /case-data's own script, so the filed-face refusal below rests on no caller input.
   // A retired filing's mockup render, below, prints only the board, which reads no party: it reads none.
+  // Nor does a Job Board with no Writing.
   const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);
-  const { parties, drift }: DraftingParties = retiredMockup
+  const { parties, drift }: DraftingParties = retiredMockup || jobOnly
     ? { parties: [], drift: { rows: [] } }
     : timed(timings, "parties_drift", () => partiesFor(dbPath, proceeding, filing));
   const contextStart = performance.now();
@@ -1036,8 +1055,8 @@ export function submissionFormsRender(
   // the section this render built for its filing, and that section is recorded so board_changed
   // compares against what this filing last reported, never against a page.
   const writePages = (section: WorkBoardData) => {
-    if (!projectionDir) return undefined;
-    const pages = writeMatterPages(dbPath, dirname(projectionDir), client, now, revision, todos, dates, timings, { section });
+    if (!pagesDir) return undefined;
+    const pages = writeMatterPages(dbPath, pagesDir, client, now, revision, todos, dates, timings, { section });
     onPages?.(pages);
     return { pages, change: recordPagesState(dbPath, todos, section, sessionToken) };
   };
@@ -1062,6 +1081,35 @@ export function submissionFormsRender(
   });
   // The filing's linked deadlines, its section's last Goal criteria: dateless, so board_summary can carry them.
   const deadlines = deadlineCriteria(dates, filingId);
+
+  // A Job Board with no Writing, open or closed: the board alone. documentsForFiling, the manifest
+  // and finishMockup are never reached, so nothing is written beside the database or in a
+  // presentation folder for it. Under draft_dir the matter's pages are rewritten, a closed board with
+  // no page, as a retired filing has none.
+  if (jobOnly) {
+    const section = timed(timings, "board_section", () => buildWorkBoardData(ctx));
+    selectDocuments([{ document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
+    const written = writePages(section);
+    return {
+      filing_id: filingId,
+      revision,
+      job_board_only: true,
+      documents: [boardDocument(section, written, true)],
+      ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
+      ...trashReport(written),
+      ...(filing.retired_on
+        ? {
+            filing_retired: true,
+            note:
+              `Job Board ${filingId} was closed on ${filing.retired_on}, so it has no page. ` +
+              "Recover it (clear filings.retired_on and retirement_reason) before working it again.",
+          }
+        : {}),
+      ...(sessionToken ? { session_token: sessionToken } : {}),
+      rendered_at: ctx.rendered,
+      timings: withTotal(timings, started),
+    };
+  }
 
   // Retired filing (schema v17): mockup mode renders no mockup and writes nothing beside the
   // database. Re-rendering a retired filing's other mockups would archive the copies of work that
@@ -1540,6 +1588,7 @@ export function submissionFormsEmitForm32(
   }
 
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__emit_form32");
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1625,6 +1674,7 @@ export function submissionFormsEmitForm33(
   }
 
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__emit_form33");
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1688,6 +1738,7 @@ export function submissionFormsEmitAffidavit(dbPath: string, filingId: number, d
   }
 
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__emit_affidavit");
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1757,6 +1808,7 @@ export function submissionFormsEmitBccaBook(dbPath: string, filingId: number): E
   }
 
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__emit_bcca_book");
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1795,6 +1847,7 @@ export function submissionFormsEmitBccaFactum(dbPath: string, filingId: number, 
   }
 
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__emit_bcca_factum");
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1847,6 +1900,7 @@ export function submissionFormsPreFilingCheck(dbPath: string, filingId: number, 
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing, "drafting_forms__pre_filing_check");
   if (filing.retired_on) throw new ValidationError(`Filing ${filingId} is retired (${filing.retired_on}); nothing to gate`);
   const revision = fetchRevision(dbPath);
   return { filing_id: filingId, revision, ...runPreFilingChecks(dbPath, filingId, packageDir) };
@@ -1856,6 +1910,14 @@ export function fetchFilingById(dbPath: string, filingId: number): FilingRow {
   const found = submissionDataQuery(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]).rows as unknown as FilingRow[];
   if (found.length === 0) throw new ValidationError(`No filing found with id ${filingId}`);
   return found[0];
+}
+
+/** A Job Board with no Writing has no document to emit or gate: the filed-face emitters and the
+ * pre-filing check refuse it by name, before anything is read for it. */
+function refuseJobOnlyBoard(filing: FilingRow, tool: string): void {
+  if (isJobOnlyBoard(filing)) {
+    throw new ValidationError(`${tool}: filing ${filing.id} is a Job Board with no Writing, so it has no document`, "job_board_only");
+  }
 }
 
 /** Carries the build-stamp fields (issue #452) on every response, refusals included -- a server
@@ -1891,6 +1953,9 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     render_state?: RenderState;
     retired_on?: string;
     retirement_reason?: string;
+    /** True only on a Job Board with no Writing (forms/query.ts JOB_BOARD_KIND): listed so a session
+     * can find it, never a Writing, with no paths and no render_state, since it has no mockup. */
+    job_board_only?: true;
   }[];
   /** Present only on success (ADR 0018): every proceeding with no filing, in id order, with its forum
    * (null while not yet chosen). Each is a section of the Job Board, rendered from proceeding_id. */
@@ -1997,7 +2062,7 @@ export function rankFilings(
     const drafting = new Map<number, string>();
     return new Map(
       listed
-        .filter(({ filing }) => !filing.retired_on)
+        .filter(({ filing }) => !filing.retired_on && !isJobOnlyBoard(filing))
         .map(({ proceeding, filing }): [number, string] => {
           if (filing.filed_on) return [filing.id, partiesDigest(partiesFor(dbPath, proceeding, filing))];
           let digest = drafting.get(proceeding.id);
@@ -2014,6 +2079,30 @@ export function rankFilings(
   const legacyOnce = () => (legacy ??= legacyMockupDirs(dbPath));
   const ranked: Ranked[] = timed(timings, "filing_entries", () =>
     listed.map(({ proceeding, filing }) => {
+      // A Job Board with no Writing has no mockup, so no folder is looked up and it answers no
+      // render question. A closed one is listed as a retired filing is.
+      if (isJobOnlyBoard(filing)) {
+        const lifecycle = deriveLifecycle(filing, null, now.slice(0, 10));
+        return {
+          filing_id: filing.id,
+          hearing_date: null,
+          latest_activity: filing.retired_on ? null : activityFor(filing.proceeding_id, filing.id),
+          retired: Boolean(filing.retired_on),
+          proceeding,
+          filing,
+          lifecycle,
+          render_state: null,
+          entry: {
+            filing_id: filing.id,
+            title: filing.title,
+            paths: [],
+            lifecycle: lifecycle.state,
+            ...(filing.retired_on ? { retired_on: filing.retired_on } : {}),
+            ...(filing.retired_on && filing.retirement_reason ? { retirement_reason: filing.retirement_reason } : {}),
+            job_board_only: true as const,
+          },
+        };
+      }
       const baseDir = mockupDir(dbPath, filing.id, legacyOnce);
       const hearingDate = fetchHearingDate(dbPath, filing.id);
       // No appeal deadline on this path (#583 §3), so the lifecycle never reaches appeal_expired.
@@ -2274,7 +2363,8 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
   const dbPath = result.db_path;
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== undefined && client.clientNo !== undefined && client.matterNo !== undefined;
-  const queue = complete ? result.filings.filter((f) => !f.retired_on && f.render_state !== "fresh").map((f) => f.filing_id) : [];
+  // A Job Board with no Writing has no mockup to render.
+  const queue = complete ? result.filings.filter((f) => !f.retired_on && !f.job_board_only && f.render_state !== "fresh").map((f) => f.filing_id) : [];
   return startRenderJob({
     dbPath,
     ...(result.matter_board_path ? { draftDir: dirname(result.matter_board_path) } : {}),

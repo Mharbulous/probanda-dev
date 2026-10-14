@@ -16,8 +16,8 @@
 
 import type { MatterTodos } from "../matter-todos.js";
 import { LIFECYCLE_LABELS, type Lifecycle, type LifecycleState } from "./lifecycle.js";
-import type { FilingRow, ProceedingRow } from "./query.js";
-import { buildProceedingBoard, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
+import { isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./query.js";
+import { buildProceedingBoard, jobBoardLabel, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
 import type { RenderState } from "../render-manifest.js";
 
 /** One filing as the caller has already ranked it. */
@@ -53,6 +53,9 @@ export interface MatterBoardFiling {
   in_progress?: number;
   retired_on?: string;
   retirement_reason?: string;
+  /** True only on a Job Board with no Writing: drawn under Job Boards, never under Writings, its
+   * state_label Open or Closed and its in_progress counting only its own jobs. */
+  job_only?: true;
 }
 
 /** A proceeding with no filing (ADR 0018): a line of its own. */
@@ -84,27 +87,33 @@ export interface MatterBoardData {
 const inProgress = (tickets: WorkBoardTicket[]) => tickets.filter((t) => t.category === "wip").length;
 
 function liveLine(entry: RankedFiling, board: ProceedingBoard): MatterBoardFiling {
+  // A Job Board with no Writing holds only its own jobs: a proceeding-wide job is on the Writings' boards.
+  const jobOnly = isJobOnlyBoard(entry.filing);
+  const onBoard = (filingId: number | null) => (jobOnly ? filingId === entry.filing.id : onFilingBoard(filingId, entry.filing.id));
   return {
     filing_id: entry.filing.id,
     title: entry.filing.title,
     state: entry.lifecycle.state,
-    state_label: LIFECYCLE_LABELS[entry.lifecycle.state],
+    state_label: jobOnly ? jobBoardLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
     state_since: entry.lifecycle.since,
     render_state: entry.render_state,
-    in_progress: inProgress(board.tickets.filter((t) => onFilingBoard(t.filing_id, entry.filing.id)).map((t) => t.ticket)),
+    in_progress: inProgress(board.tickets.filter((t) => onBoard(t.filing_id)).map((t) => t.ticket)),
+    ...(jobOnly ? { job_only: true as const } : {}),
   };
 }
 
 function retiredLine(entry: RankedFiling): MatterBoardFiling {
+  const jobOnly = isJobOnlyBoard(entry.filing);
   return {
     filing_id: entry.filing.id,
     title: entry.filing.title,
     state: entry.lifecycle.state,
-    state_label: LIFECYCLE_LABELS[entry.lifecycle.state],
+    state_label: jobOnly ? jobBoardLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
     state_since: entry.lifecycle.since,
     render_state: null,
     retired_on: entry.filing.retired_on as string,
     ...(entry.filing.retirement_reason ? { retirement_reason: entry.filing.retirement_reason } : {}),
+    ...(jobOnly ? { job_only: true as const } : {}),
   };
 }
 

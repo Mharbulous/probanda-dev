@@ -93,12 +93,12 @@ On a remote-device-only host the card is a copy frozen at staging, so restaging 
 <!-- atom id=draft.open.then-opening ops=open -->
 Then the Opening (section 14). An empty board with no job of any status and no captured ideas goes straight to the outlining branch of that reference.
 <!-- atom id=draft.job-only ops=route_reply,new_work -->
-Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off run only inside an assigned job's approved plan; section 8 also runs when the practitioner asks to start a proceeding or Writing; retirement and recovery follow `references/retire-filing.md`. An on-the-fly revision or reorder is not job-only (`references/revise-on-the-fly.md`), and neither is the practitioner's override (section 13, `references/assemble-then-gate.md`).
+Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off run only inside an assigned job's approved plan; section 8 also runs when the practitioner asks to start a proceeding or Writing, or asks for a new Job Board for work that is not a Writing (a Job Board with no Writing); retirement and recovery follow `references/retire-filing.md`. An on-the-fly revision or reorder is not job-only (`references/revise-on-the-fly.md`), and neither is the practitioner's override (section 13, `references/assemble-then-gate.md`).
 
 <!-- atom id=draft.s8.setup ops=setup -->
 ## 8. New matter setup
 
-The proceeding, the forum, the document type, the venue and kind lookup, the recovery check and the response seam (items 1 and 2, which "Save first" below refers to) and the exit are in `references/new-matter-setup.md`. Read it when no proceeding exists or the practitioner starts a proceeding or Writing.
+The proceeding, the forum, the document type, the venue and kind lookup, the recovery check and the response seam (items 1 and 2, which "Save first" below refers to) and the exit are in `references/new-matter-setup.md`. Read it when no proceeding exists or the practitioner starts a proceeding or Writing, or asks for a new Job Board for work that is not a Writing (a Job Board with no Writing).
 
 <!-- atom id=draft.s8.counsel ops=counsel_of_record,setup -->
 When session entry returns `parties_drift` rows, `counsel_offers` or `migration_refused`, or setup is about to ask for a party's counsel or address for service, read `references/counsel-of-record.md`, which holds why counsel of record and addresses for service are read live from case data and never elicited, how each drift row is confirmed, and the three answers to a counsel offer (apply, discard, hold). Present the rows after the fast open and before the Opening.
@@ -126,6 +126,7 @@ This section's rules are in `references/substance-and-revise.md`. Read it when a
 - To read work markers, name exactly one document in the call's document list. That one alone returns its text; all copies still refresh. Names: each `document_type` a render with no list returns. Never send a bad name to list them. The mockup's closing Legend explains each symbol on it, and the response's `symbol_notes` carries the notes written for the model.
 - If the returned length exceeds roughly fifty thousand characters, read that document's presentation copy in pages, but only after confirming its revision line equals the revision the response reported. On mismatch, apply the sandbox mount-staleness workaround (`/environment-gauge`, a rename round trip) and read again.
 - Name the Job Board by its document type, `Work_board` (its page is the Writing's `Job Board <id>.html`, but the tool refuses that name). Naming it returns `board_summary`, never the page (`shared/html-pages.md`); a render that does not name it returns no summary. The opening reads the board from session entry's `opened`. A render names `Work_board` only to open a different Writing; a re-check of the board is `board_card(lanes: ["live"])`, never a render. A board-only render with no presentation folder writes no copies and returns `pages_written: false`: it does not rewrite the Job Board, so it never licenses presenting or staging that page.
+- A Job Board with no Writing renders by its own id in the Writing's place, with `draft_dir` only: the result's document list holds the `Work_board` entry alone, with `job_board_only: true`, so there is no mockup to read or present, and the tool refuses a filed render or `presentation_dir` for it.
 - **No appeal deadline.** Never pass `appeal_deadline`. A drafting session never looks up a date, so the board never claims an appeal period expired.
 - **Refusals:** retired Writing (board only, offer recovery, never retry); empty document list (installed bundle behind the database, surface and stop); refused presentation folder for a reason other than its name (say why and stop); a page path held by a file the server did not write (`shared/html-pages.md`); filed-face citation gate failure; `prose_format_gate_failed`, a general Writing's prose line flagged `🧩 <!-- format: ... -->` that is not printed wording (rewrite it, a blank as `________`); a refusal the kind's type file names. Each is surfaced and stopped on, never retried to force a result. Naming a document the Writing does not have fails loudly, read the failure, do not guess another name.
 
@@ -197,7 +198,7 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.nightly-launch ops=nightly -->
 | The `draft-nightly` scheduled task fires | `references/nightly-launch.md` |
 <!-- atom id=draft.ref.retire-filing ops=retire -->
-| Retirement chosen, the Writing is said to be finished, or a retired Writing is offered for recovery | `references/retire-filing.md` |
+| Retirement chosen, the Writing is said to be finished, or a retired Writing is offered for recovery, or the practitioner asks to close or reopen a Job Board with no Writing | `references/retire-filing.md` |
 <!-- atom id=draft.ref.legacy ops=legacy -->
 | Session entry reported a hosted board or a plugin-predates condition (it opened a board but `opened` has no `board_summary`, or it returns no `job_board_paths` field at all), or a re-entered Writing shows loose-thread markers (the 🧵 marker on the mockup, not the Job Board's Loose Threads list) | `references/legacy.md` |
 <!-- atom id=draft.ref.venue-and-kind-lookup ops=venue_lookup -->
@@ -205,7 +206,7 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.unattended-run ops=unattended_run -->
 | An unattended run starts: `/draft unattended <Writing title>` or the nightly launch (section 14) | `references/unattended-run.md` |
 <!-- atom id=draft.ref.new-matter-setup ops=setup -->
-| Session entry reports no proceeding, or the practitioner asks to start a proceeding or Writing, or names a document type or an incoming document to answer (section 8) | `references/new-matter-setup.md` |
+| Session entry reports no proceeding, or the practitioner asks to start a proceeding or Writing, or names a document type or an incoming document to answer, or asks for a new Job Board for work that is not a Writing (section 8) | `references/new-matter-setup.md` |
 <!-- atom id=draft.ref.substance-and-revise ops=substance -->
 | An assigned job writes substance or sends a research question (section 9), an item is elicited on a kind whose type file has a Deployment section (section 10), or the practitioner asks for a change (section 12) | `references/substance-and-revise.md` |
 <!-- atom id=draft.ref.assemble-then-gate ops=assemble -->

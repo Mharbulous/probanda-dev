@@ -15,6 +15,8 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 
 Each is written through §3's two-call idiom as `kind = 'work'`, with `billing_anchor` by §3's rule and `priority` from §3's priority read. **`filing_id` is always the lead Writing's id** — the Notice of Application, the Application Response, or the letter — and never NULL: a proceeding-scoped stock job would show on every later Writing's board and survive this Writing's retirement.
 
+Opening a Job Board with no Writing (`drafting_data__create_job_board`) writes no stock job.
+
 **`Availability letter`.** A `/draft` session dispatches it and drafts the letter. The letter is BCSC's `letter` kind, saved as a Writing on the proceeding of the job's own Writing when the job is dispatched, with its recipients defaulting to the whole service list by `filing-checklists.md` §13's forum idiom. The job stands in for `Draft the letter` under its own title, so that save writes no `Draft the letter` row and writes `Deliver` blocked by this job. No date appears in the job, nor any value derived from one.
 
 - Intent: `Obtain the court's availability for the hearing of this application by letter.`

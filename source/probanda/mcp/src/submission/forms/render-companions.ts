@@ -53,7 +53,7 @@ import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from ".
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchFilingRhetoricPlacements, fetchProceedingRhetoric, fetchRhetoric, interleave, renderRhetoricLine, rhetoricPrintable } from "./render-rhetoric.js";
 import { deriveLifecycle, LIFECYCLE_LABELS } from "./lifecycle.js";
-import { captionHeadingFor, fetchHearingDate, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, rhetoricHeld, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
+import { captionHeadingFor, fetchHearingDate, JOB_BOARD_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, rhetoricHeld, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -342,8 +342,9 @@ function fetchOtherFilingDeployments(
 ): { orders: Map<number, string[]>; submissions: Map<number, string[]>; rhetoric: Map<number, string[]> } {
   const filings = rows<{ id: number; kind: string; title: string; filed_on: string | null; decided_on: string | null; entered_on: string | null; retired_on: string | null; needs_forum_parts: 0 | 1 }>(
     dbPath,
-    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? ORDER BY id`,
-    [proceedingId, filingId]
+    // A Job Board with no Writing deploys nothing and is no filing to name here.
+    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
+    [proceedingId, filingId, JOB_BOARD_KIND]
   );
   const orders = new Map<number, string[]>();
   const submissions = new Map<number, string[]>();

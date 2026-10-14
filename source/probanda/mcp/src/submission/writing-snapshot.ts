@@ -20,6 +20,7 @@ import type { KnowledgeSeams } from "../knowledge/tree.js";
 import { submissionDataExecute, submissionDataQuery } from "./backend.js";
 import type { StoredLayout } from "./forms/layout-snapshot.js";
 import { UNBUILT_PROJECTIONS, type LayoutPart } from "./forms/projections.js";
+import { isJobOnlyBoard } from "./forms/query.js";
 
 type Json = Record<string, unknown>;
 
@@ -140,6 +141,7 @@ export async function resnapshotWriting(
     [filingId]
   ).rows[0] as unknown as (FilingDates & { kind: string; forum: string | null }) | undefined;
   if (!filing) throw new NotFoundError(`no filing ${filingId} in ${dbPath}`, "not_found");
+  if (isJobOnlyBoard(filing)) throw new ValidationError(`filing ${filingId} is a Job Board with no Writing, so it has no stored layout to re-snapshot`, "job_board_only");
   const refused = notDrafting(filingId, filing);
   if (refused) throw refused;
 

@@ -160,7 +160,8 @@ const TAIL = String.raw`</script>
     var card = el("details", "retired");
     card.setAttribute("data-filing-id", String(f.filing_id));
     card.appendChild(el("summary", "", f.title));
-    card.appendChild(el("p", "", "Retired " + f.retired_on + (f.retirement_reason ? " — " + f.retirement_reason.replace(/_/g, " ") : "")));
+    // A Job Board with no Writing is closed, never retired, and prints no reason.
+    card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " — " + f.retirement_reason.replace(/_/g, " ") : "")));
     return card;
   }
 
@@ -184,9 +185,13 @@ const TAIL = String.raw`</script>
   data.todos.forEach(function (t) { todos.appendChild(todoItem(t)); });
   section("todos", "To-dos", data.todos.length, data.todos.length > 0 ? todos : el("p", "empty", data.todos_note || "No open to-dos for this matter."));
 
-  var live = data.filings.filter(function (f) { return !f.retired_on; });
+  // A Job Board with no Writing is no Writing: it is counted and drawn in a section of its own.
+  var writings = data.filings.filter(function (f) { return !f.job_only; });
+  var live = writings.filter(function (f) { return !f.retired_on; });
+  var jobBoards = data.filings.filter(function (f) { return f.job_only && !f.retired_on; });
   var retired = data.filings.filter(function (f) { return f.retired_on; });
-  section("filings", "Writings", live.length, stack(live.map(filingLine), data.filings.length === 0 ? "No Writings in this matter." : "No live Writings."));
+  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : "No live Writings."));
+  if (jobBoards.length > 0) section("job-boards", "Job Boards", jobBoards.length, stack(jobBoards.map(filingLine), ""));
   if (data.pre_filing.length > 0) section("pre-filing", "Before filing", data.pre_filing.length, stack(data.pre_filing.map(preFilingLine), ""));
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
 

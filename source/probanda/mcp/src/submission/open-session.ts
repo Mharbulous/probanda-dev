@@ -168,7 +168,8 @@ function openBoard(
   filingId: number | undefined,
   timings: PhaseTimings
 ): Opening {
-  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined)?.filing_id;
+  // A Job Board with no Writing is never the default: it opens only when filing_id names it.
+  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.job_board_only)?.filing_id;
   const proceedingId = target === undefined ? listed.pre_filing_proceedings?.[0]?.proceeding_id : undefined;
   const phases = (rendered: PhaseTimings) => {
     for (const t of rendered) timings.push({ phase: `open: ${t.phase}`, ms: t.ms });

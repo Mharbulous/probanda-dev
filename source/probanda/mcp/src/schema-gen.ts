@@ -1294,7 +1294,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       name: submissionDataPrefixed("execute"),
       description:
         "Run a write SQL script against one matter's submission database in a single transaction, with no " +
-        "compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a general " +
+        "compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, " +
+        "a Job Board with no Writing is created through drafting_data__create_job_board, never here, a general " +
         "Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through " +
         "drafting_data__record_filed, a drafting Writing's stored layout is " +
         "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
@@ -1333,7 +1334,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "proceeding's own Job Board (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that " +
         "board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue " +
         "blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a " +
-        "database below schema v67).",
+        "database below schema v67). A Job Board with no Writing is never created here: its kind is refused with " +
+        "reserved_kind, and drafting_data__create_job_board creates it.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1358,6 +1360,32 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           signer_party_id: { type: "number" },
         },
         required: ["db_path", "proceeding_id", "tree", "kind", "title"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("create_job_board"),
+      description:
+        "Create one Job Board with no Writing on a proceeding: the one door for a board that holds work no Writing " +
+        "carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. " +
+        "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one " +
+        "with none keeps its own Job Board, which already holds jobs with no Writing, and the call is refused with " +
+        "no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, a Counsel " +
+        "Brief, a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
+        "job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no " +
+        "filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write " +
+        "nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so " +
+        "each Writing's mockups read stale once. Returns filing_id, the id drafting_forms__render, " +
+        "drafting_forms__board_card and each job's filing_id take for this board, proceeding_id and title.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          proceeding_id: { type: "number" },
+          title: { type: "string" },
+        },
+        required: ["db_path", "proceeding_id", "title"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },
@@ -1728,6 +1756,11 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "(every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. " +
         "It takes only client fields, " +
         "session_token and draft_dir, and refuses a proceeding that has a filing. " +
+        "A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: " +
+        "job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with " +
+        "no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own " +
+        "`Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
+        "refused with job_board_only. " +
         "Every response also carries timings: per-phase durations in ms, for profiling only.",
       inputSchema: {
         type: "object",
@@ -1803,7 +1836,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "` · court file: none found[ (<note>)]`, then ` · mismatch: court file shows <status> <date>; drafting data shows " +
         "<unsworn|made <date>>` when they disagree; only file names are read. Then key: the live " +
         "job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else " +
-        "`(no job or Proposal carries <key>)`. Writes nothing, moves no revision and writes no page.",
+        "`(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the " +
+        "criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. " +
+        "Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1833,7 +1868,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "its content and write its mockups. filings comes back in the order to present them in; present that order " +
         "as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they " +
         "are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with " +
-        "no paths. Every response reports both schema_version and current_schema_version; if the database is behind " +
+        "no paths. A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with " +
+        "job_board_only true, no paths and no render_state: it is not a Writing, has a Job Board page and no view " +
+        "page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind " +
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
         "filings at all (issue 351) -- call " +
         "drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the " +
@@ -1920,7 +1957,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, " +
         "and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is " +
         "drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
-        "it opens filing_id, or the first live filing, or the first pre-filing proceeding, as drafting_forms__render " +
+        "it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when " +
+        "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
         "with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened " +
         "(board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, " +
         "filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board " +

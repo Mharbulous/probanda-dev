@@ -21,6 +21,7 @@ import { timecampingDataMigrate } from "./timecamping/migrate.js";
 import { submissionDataQuery, submissionDataExecute } from "./submission/backend.js";
 import { submissionDataMigrate } from "./submission/migrate.js";
 import { submissionDataCreateWriting, type CreateWritingArgs } from "./submission/forms/layout-snapshot.js";
+import { submissionDataCreateJobBoard, type CreateJobBoardArgs } from "./submission/forms/create-job-board.js";
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
@@ -228,6 +229,10 @@ export async function callTool(
     return submissionDataCreateWriting(args as unknown as CreateWritingArgs, {
       caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path as string, process.env)),
     });
+  }
+
+  if (name === "drafting_data__create_job_board") {
+    return submissionDataCreateJobBoard(args as unknown as CreateJobBoardArgs);
   }
 
   if (name === "drafting_data__record_sent") {

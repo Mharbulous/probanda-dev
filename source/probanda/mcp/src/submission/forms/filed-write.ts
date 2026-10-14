@@ -10,7 +10,7 @@ import { DataServerError, NotFoundError, ValidationError } from "../../errors.js
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { storedLayout } from "./layout-snapshot.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
-import { fetchRevision, type FilingRow } from "./query.js";
+import { fetchRevision, isJobOnlyBoard, type FilingRow } from "./query.js";
 import { isCalendarDate } from "./sent-write.js";
 
 const TOOL = "drafting_data__record_filed";
@@ -41,6 +41,7 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
   if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows as unknown as FilingRow[];
   if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
   if (filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general") {

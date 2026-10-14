@@ -35,7 +35,7 @@ import {
   type ProposalSlug,
   withNoteUpSteps,
 } from "./proposal-inventory.js";
-import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, liveTicketClause, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
+import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveTicketClause, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WritingLabel } from "./writing-label.js";
 
@@ -358,6 +358,9 @@ export interface WorkBoardData {
     /** Present only when the filing's stored layout declares `ingest_inputs`: those folders, and the
      * ids of this filing's own Ready jobs (never a proceeding-wide job's). Absent on a pre-filing board. */
     ingest_inputs?: { folders: string[]; ready_jobs: number[] };
+    /** True only on a Job Board with no Writing (JOB_BOARD_KIND): `state` is null, `state_label` reads
+     * Open or Closed, and the section has no Goal card, criteria or Proposals. */
+    job_only?: true;
   };
   tickets: WorkBoardTicket[];
   seeds: WorkBoardSeed[];
@@ -722,14 +725,14 @@ export function fetchOpenSeeds(
  * board (`filingId` null) holds every row of its proceeding. A Writing's board holds its own rows and,
  * only when it is the proceeding's lowest-id live Writing, the proceeding's rows with no Writing (rows
  * written by hand after the proceeding's first Writing, which create_writing does not re-point), so no
- * draft is ever on two boards. */
+ * draft is ever on two boards. A Job Board with no Writing holds its own rows only and is never that Writing. */
 export function fetchAttachments(dbPath: string, proceedingId: number, filingId: number | null): WorkBoardAttachment[] {
   if (!boardAttachmentsHeld(dbPath)) return [];
   return rows<WorkBoardAttachment>(
     dbPath,
     "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? " +
-      "OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL))) ORDER BY id",
-    [proceedingId, filingId, filingId, filingId, proceedingId]
+      "OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
+    [proceedingId, filingId, filingId, filingId, proceedingId, JOB_BOARD_KIND]
   );
 }
 
@@ -1422,6 +1425,7 @@ function withIdleFlag(t: WorkBoardTicket, rendered: string, hours: number | null
 /** `deadlines` are the dateless Goal criteria of the anchors linked to this filing in practice data
  * (matter-dates.ts deadlineCriteria); they print after `gate` and `hearing-date`. */
 export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly GoalCriterion[] = []): WorkBoardData {
+  if (isJobOnlyBoard(ctx.filing)) return buildJobOnlyBoardData(ctx);
   const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
   const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e) => (e.generating ? [proposalKey(e)] : [])));
@@ -1481,6 +1485,44 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
 /** The State row of a proceeding with no filing (ADR 0018), shared with its Matter Board card. */
 export function preFilingLabel(proceeding: ProceedingRow): string {
   return proceeding.forum === null ? "Forum not yet chosen" : "No filing yet";
+}
+
+/** The State row of a Job Board with no Writing, shared with its Litigation Strategy line. */
+export function jobBoardLabel(filing: Pick<FilingRow, "retired_on">): string {
+  return filing.retired_on ? "Closed" : "Open";
+}
+
+/** A Job Board with no Writing (JOB_BOARD_KIND): only the jobs, deleted jobs, open loose threads and
+ * attachments whose filing_id is its own, so a proceeding-wide row (filing_id NULL) stays on the
+ * Writings' boards. No stored layout is read: it has no lifecycle, Goal card, criteria, Proposals or
+ * ingest inputs. */
+function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
+  const idleHours = idleFlagHours(process.env);
+  const own = ctx.filing.id;
+  return {
+    meta: {
+      revision: ctx.revision,
+      matter: ctx.matterNo,
+      client: ctx.clientName,
+      file: ctx.proceeding.file_number ?? "",
+      filing: ctx.filing.title,
+      filing_id: own,
+      proceeding_id: ctx.proceeding.id,
+      rendered: ctx.rendered,
+      state: null,
+      state_label: jobBoardLabel(ctx.filing),
+      state_since: ctx.filing.retired_on,
+      ready_to_retire: false,
+      job_only: true,
+    },
+    tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered, idleHours)),
+    seeds: board.seeds.filter((s) => s.filing_id === own).map((s) => ({ ...s, from_filing: null })),
+    deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
+    attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
+    proposals: [],
+    lapsed_keys: [],
+  };
 }
 
 /** A proceeding with no filing (ADR 0018): every ticket and open loose thread in it. No filing, so no

@@ -38,6 +38,8 @@ NULL means the guard matched nothing — a `wip` job appeared between the read-f
 
 `completed`, already-`superseded` and deleted (§10a) jobs are left as they are. Recovery (clearing `filings.retired_on`) does **not** un-supersede them: the work they described belonged to the Writing as it stood, and a recovered Writing is outlined afresh. This write rides in the same `execute` script as the `filings` UPDATE, which is a substance write — so that script moves the revision through §8's triggers, the job tables' revision-bump exemption notwithstanding.
 
+**Closing a Job Board with no Writing** is this same script, with the board's id as the `filings` id and `retirement_reason = 'other'`: a job in progress on it refuses the close, and its queued jobs are superseded. Reopening it clears the two columns and un-supersedes nothing (`filing-checklists.md` §11).
+
 ## 9b. Close as superseded (bookkeeping)
 
 A job outlined from Proposals whose marker no longer shows is closed on the practitioner's instruction, never on a session's own initiative and never by the render (the 2026-09-21 design §4.7). It is the practitioner-visible act for that case: not a shelving, which reads as an angle they chose not to pursue, and not a completion, which would stamp work that was never done.

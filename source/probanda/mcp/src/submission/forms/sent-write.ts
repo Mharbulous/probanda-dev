@@ -31,7 +31,7 @@ import { storedLayout, type StoredLayout } from "./layout-snapshot.js";
 import type { LayoutPart } from "./projections.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import type { MarkerInventory } from "./proposal-inventory.js";
-import { fetchProse, fetchRevision, liveTicketClause, type FilingRow } from "./query.js";
+import { fetchProse, fetchRevision, isJobOnlyBoard, liveTicketClause, type FilingRow } from "./query.js";
 import { PRE_SEND_TITLE, unmetAuthorityConfirmedCriterion, unmetCurrencyCriterion, unmetHeldCriteria, unmetPositionConflictCriterion, type GoalCriterion } from "./render-work-board.js";
 
 const TOOL = "drafting_data__record_sent";
@@ -281,6 +281,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   checkArgs(args);
   const [filing] = rows<FilingRow>(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
   if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
   const stored = filing.layout_snapshot === null ? null : storedLayout(filing);

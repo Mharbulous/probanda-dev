@@ -46,6 +46,7 @@ Enter exactly as `/draft` enters (`.claude/skills/draft/SKILL.md` §6): the same
 - **No proceeding exists, or a proceeding has no Writing:** start the proceeding or Writing as `/draft` §7 allows ("section 8 also runs when the practitioner asks to start a proceeding or Writing") and run `/draft` §8's proceeding-identification step as written (ADR 0018). Nothing is restated here.
 - **The lead Writing already exists:** open it by name, as `/draft` §7 does, and render its Job Board (`/draft` §11). Where the Writing session entry opens first is not the lead Writing, use the named-Writing path or the Writing picker of `/draft` §7 to reach it.
 - **No Notice of Application or Application Response is in view, and the practitioner is not starting one:** stop, as the introduction says.
+- **The practitioner asks for a Job Board with no Writing** (work that is not a document, on a proceeding that has a Writing): `/prepare` opens none. Say in one line that `/draft` opens it (`/draft` §8), and stop.
 
 ## 3. What it writes, in this order
 
