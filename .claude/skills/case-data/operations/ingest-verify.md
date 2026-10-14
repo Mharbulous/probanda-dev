@@ -232,6 +232,12 @@ If the re-presented source meets `order-effects.md` Step 1 detection, hand off t
 
 ---
 
+## Step 6 — Another copy of a registered source
+
+When this pass leads the session to conclude that the hash-matched source is another copy of registered source N, with a different hash (`../shared/extraction-protocol.md`, "Another copy with a different hash"), run `ingest-extract.md`'s "Another copy of a registered source" step after Step 5, with the hash-matched row in place of its new row.
+
+---
+
 ## Path D — Case-law authority verification
 
 Use this path for an already-ingested `case_law` authority whose hash duplicate
