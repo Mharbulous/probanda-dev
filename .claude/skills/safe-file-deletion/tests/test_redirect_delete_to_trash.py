@@ -16,7 +16,7 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_ROOT.parents[2]
 HOOK = SKILL_ROOT / "hooks" / "redirect-delete-to-trash.py"
-PLUGIN_JSON = REPO_ROOT / "source" / "probanda" / "plugin.json"
+PLUGIN_JSON = REPO_ROOT / "source" / "practice" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py"
 
 DEVICE = "mcp__remote-devices__device_bash"
@@ -683,7 +683,7 @@ class PluginRegistrationTests(unittest.TestCase):
         matcher = re.compile(entries[0]["matcher"])
         for name in ("Bash", "PowerShell", DEVICE, "mcp__foo__device_bash"):
             self.assertTrue(matcher.fullmatch(name), name)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_probanda_data__case_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_practice_data__case_data__query"))
 
 
 if __name__ == "__main__":

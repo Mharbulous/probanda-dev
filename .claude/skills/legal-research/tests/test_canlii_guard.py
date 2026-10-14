@@ -9,11 +9,11 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_ROOT.parents[2]
 HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
-PLUGIN_JSON = REPO_ROOT / "source" / "probanda" / "plugin.json"
+PLUGIN_JSON = REPO_ROOT / "source" / "research" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/legal-research/hooks/block-main-session-canlii.py"
 
-LOCAL = "mcp__plugin_probanda_canlii__"
-BRIDGED = "mcp__remote-devices__plugin_probanda_canlii__"
+LOCAL = "mcp__plugin_research_canlii__"
+BRIDGED = "mcp__remote-devices__plugin_research_canlii__"
 
 
 def run_hook(stdin_text):
@@ -44,8 +44,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_plugin_agent_citator_call_is_allowed(self):
         # Inside an agent CanLII is note-up only (test_westlaw_first.py pins the
         # in-agent block).
-        for agent_type in ("probanda:research-agent", "probanda:research-paralegal",
-                           "probanda:audit-agent"):
+        for agent_type in ("research:research-agent", "research:research-paralegal"):
             with self.subTest(agent_type=agent_type):
                 result = call(LOCAL + "get_case_citator", agent_id="a1b2", agent_type=agent_type)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -53,7 +52,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_raw_legislation_tools_are_blocked_in_every_agent(self):
         # The paralegal's legislation-currency mode retired into legislation_currency
         # (2026-10-06), so no agent keeps the raw legislation tools.
-        for agent_type in ("probanda:research-paralegal", "probanda:research-agent"):
+        for agent_type in ("research:research-paralegal", "research:research-agent"):
             for tool in ("get_legislation_databases", "browse_legislation",
                          "get_legislation_regulation_metadata"):
                 with self.subTest(agent_type=agent_type, tool=tool):
@@ -64,7 +63,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
         # Leg 1 of shared/statute-currency.md as one call: metadata, no statement of law.
         for prefix in (LOCAL, BRIDGED):
             for extra in ({}, {"agent_id": "a1b2", "agent_type": "general-purpose"},
-                          {"agent_id": "a1b2", "agent_type": "probanda:research-agent"}):
+                          {"agent_id": "a1b2", "agent_type": "research:research-agent"}):
                 with self.subTest(prefix=prefix, extra=extra):
                     self.assertEqual(call(prefix + "legislation_currency", **extra).returncode, 0)
 
@@ -73,7 +72,9 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
         self.assertIn("legislation_currency", result.stderr)
 
     def test_non_plugin_subagent_research_call_is_blocked(self):
-        for agent_type in ("general-purpose", "Explore", "research-paralegal", None):
+        # An agent of another plugin, or of the retired single plugin, is not a research agent.
+        for agent_type in ("general-purpose", "Explore", "research-paralegal", None,
+                           "practice:docket-clerk", "probanda" + ":research-agent"):
             with self.subTest(agent_type=agent_type):
                 self.assertBlocked(call(LOCAL + "search", agent_id="a1b2", agent_type=agent_type))
 
@@ -84,7 +85,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
                     self.assertEqual(call(prefix + tool).returncode, 0)
 
     def test_other_tools_are_allowed(self):
-        for tool in ("mcp__plugin_probanda_data__case_data__query", "Read", "WebSearch"):
+        for tool in ("mcp__plugin_practice_data__case_data__query", "Read", "WebSearch"):
             with self.subTest(tool=tool):
                 self.assertEqual(call(tool).returncode, 0)
 
@@ -105,7 +106,7 @@ class PluginRegistrationTests(unittest.TestCase):
         matcher = re.compile(entries[0]["matcher"])
         for name in (LOCAL + "search", BRIDGED + "search"):
             self.assertTrue(matcher.fullmatch(name), name)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_probanda_data__case_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_practice_data__case_data__query"))
 
 
 if __name__ == "__main__":

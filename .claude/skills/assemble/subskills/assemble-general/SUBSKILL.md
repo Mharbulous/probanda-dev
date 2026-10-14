@@ -16,7 +16,7 @@ Depends on `assemble/subskills/assemble-bcca-book/scripts/paginate_book.py` for 
 
 ## In Cowork
 
-In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_probanda_data__<name>`), the sandbox has neither PyMuPDF nor Word, sees neither the matter folder nor the case-data folder, and its Write tool writes into the sandbox, not the host (ADR 0027). Never run the binder in the sandbox shell, and never write `enclosures.json` with the Write tool. Run steps 1 and 2 for their checks and the practitioner's answers, but save nothing. In place of writing `enclosures.json` and of step 3, call `drafting_forms__assemble_general` with:
+In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_practice_data__<name>`), the sandbox has neither PyMuPDF nor Word, sees neither the matter folder nor the case-data folder, and its Write tool writes into the sandbox, not the host (ADR 0027). Never run the binder in the sandbox shell, and never write `enclosures.json` with the Write tool. Run steps 1 and 2 for their checks and the practitioner's answers, but save nothing. In place of writing `enclosures.json` and of step 3, call `drafting_forms__assemble_general` with:
 
 - `matter_root`: the matter folder's absolute host path. The server finds the case-data folder from the matter's `coclerk.json` itself and never opens the drafting database, so do not call `drafting_forms__open_session` for a bind: it can migrate the database and raise counsel refusals that have nothing to do with the bind (#1427)
 - `docx_name`: the bare file name of the deliverable `publish-general` reported, at the top of the draft folder

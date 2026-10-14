@@ -21,7 +21,7 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SKILLS = REPO_ROOT / ".claude" / "skills"
-PLUGIN_AGENTS = REPO_ROOT / "source" / "probanda" / "agents"
+SOURCE = REPO_ROOT / "source"
 
 # agent name -> (skill that owns the template, pinned model or None for "inherit")
 AGENTS = {
@@ -39,6 +39,12 @@ AGENTS = {
 
 def _template(name):
     return SKILLS / AGENTS[name][0] / "agents" / (name + ".md")
+
+
+def _agent(name):
+    """The agent's file, in whichever plugin ships it (source/<plugin>/agents/)."""
+    (path,) = SOURCE.glob("*/agents/%s.md" % name)
+    return path
 
 
 def _read(path):
@@ -68,7 +74,7 @@ class PluginAgentParityTests(unittest.TestCase):
     def test_grant_is_read_only(self):
         for name in sorted(AGENTS):
             with self.subTest(agent=name):
-                frontmatter, _ = _split(_read(PLUGIN_AGENTS / (name + ".md")), name)
+                frontmatter, _ = _split(_read(_agent(name)), name)
                 self.assertRegex(frontmatter, r"(?m)^name: %s$" % re.escape(name))
                 self.assertEqual(
                     ["Read"],
@@ -82,7 +88,7 @@ class PluginAgentParityTests(unittest.TestCase):
     def test_model_pin_matches_the_558_split(self):
         for name, (_, model) in sorted(AGENTS.items()):
             with self.subTest(agent=name):
-                frontmatter, _ = _split(_read(PLUGIN_AGENTS / (name + ".md")), name)
+                frontmatter, _ = _split(_read(_agent(name)), name)
                 found = re.findall(r"(?m)^model: (.*)$", frontmatter)
                 if model is None:
                     self.assertEqual(
@@ -96,7 +102,7 @@ class PluginAgentParityTests(unittest.TestCase):
     def test_body_is_template_plus_lane_line(self):
         for name in sorted(AGENTS):
             with self.subTest(agent=name):
-                _, body = _split(_read(PLUGIN_AGENTS / (name + ".md")), name)
+                _, body = _split(_read(_agent(name)), name)
                 h1, lane, rest = body.split("\n\n", 2)
                 self.assertTrue(
                     lane.startswith("**Lane:** "), "lane line must follow the H1"

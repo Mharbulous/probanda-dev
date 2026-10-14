@@ -26,7 +26,7 @@ The tool responses the fill reads are saved as JSON files in the working folder 
 
 ## In Cowork
 
-In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_probanda_data__<name>`), the sandbox sees neither the matter folder nor the case-data folder, and the Write tool writes into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox shell, and never use the Write tool for a working file. Run steps 1 to 4 for their checks, refusals and payloads, but save nothing: compose `letter.json`'s and `tokens.json`'s content as JSON objects instead of writing them. In place of step 5, call `drafting_forms__publish_general` with:
+In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_practice_data__<name>`), the sandbox sees neither the matter folder nor the case-data folder, and the Write tool writes into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox shell, and never use the Write tool for a working file. Run steps 1 to 4 for their checks, refusals and payloads, but save nothing: compose `letter.json`'s and `tokens.json`'s content as JSON objects instead of writing them. In place of step 5, call `drafting_forms__publish_general` with:
 
 - `matter_root`: the matter folder's host path, as `drafting_forms__open_session` takes it
 - `db_path`: step 1's database path
@@ -39,7 +39,7 @@ The server renders the filed face, reads the format file and, for a letterhead W
 
 ## Steps
 
-Tools are named without their prefix. Call each under whichever of `mcp__plugin_probanda_data__<name>` and `mcp__remote-devices__plugin_probanda_data__<name>` this host grants.
+Tools are named without their prefix. Call each under whichever of `mcp__plugin_practice_data__<name>` and `mcp__remote-devices__plugin_practice_data__<name>` this host grants.
 
 1. **Resolve the database.** Invoke `/drafting-data` to resolve `db_path` for the current matter, following its own Configuration section. Never re-derive its path-resolution rules independently.
 

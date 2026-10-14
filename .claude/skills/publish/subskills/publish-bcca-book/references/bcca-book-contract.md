@@ -273,7 +273,7 @@ rejection. Codes (extend this table, never redefine one already listed):
 
 `fill_book.py --validate <path>` mirrors `harness.py validate32`'s role:
 no session, no output file, exit 0 on pass. It is the acceptance oracle
-for the emitter's own test suite (`source/probanda/mcp/test/`) —
+for the emitter's own test suite (`source/practice/mcp/test/`) —
 proving the TypeScript emitter's output against this Python validator
 without coupling the two pipelines at runtime, the same decoupling
 `assembly-input-contract.md`'s `validate32`/`validate33` already

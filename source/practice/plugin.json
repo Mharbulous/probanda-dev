@@ -1,0 +1,139 @@
+{
+  "name": "practice",
+  "displayName": "Probanda Practice",
+  "version": "0.2.0",
+  "description": "The base Probanda plugin for British Columbia lawyers: firm records, time, billing, filing, case data and deadlines. Install it first. The research, litigator and solicitor plugins all require it.",
+  "author": {
+    "name": "Probanda",
+    "url": "https://github.com/Probanda-app"
+  },
+  "homepage": "https://github.com/Probanda-app/litigation",
+  "repository": "https://github.com/Probanda-app/litigation",
+  "mcpServers": "./.mcp.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|mcp__(.+__)?device_bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Soft-delete guard"
+          }
+        ]
+      },
+      {
+        "matcher": "Skill|mcp__(.+__)?plugin_practice_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay)|mcp__(.+__)?plugin_practice_data__rules__audit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Drafting/deadline session guard"
+          }
+        ]
+      },
+      {
+        "matcher": "SendUserFile",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/show-me/hooks/staged-file-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Staged-file gate"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.+mail_(send_email|forward_email|reply_to_email)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/mail-send-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Mail-send gate"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/practice-data/hooks/inject-practice-quirks.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
+            ],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "practice:docket-clerk",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "practice:docket-clerk",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

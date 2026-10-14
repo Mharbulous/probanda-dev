@@ -1,0 +1,39 @@
+{
+  "apply-to-facts": [],
+  "assemble": [
+    "subskills/assemble-affidavit/scripts",
+    "subskills/assemble-affidavit/assets",
+    "subskills/assemble-bcca-book/scripts",
+    "subskills/assemble-vaniac-package/scripts",
+    "subskills/assemble-boc/scripts",
+    "subskills/assemble-general/scripts"
+  ],
+  "calculate": [
+    "subskills/court-interest-calculator/scripts",
+    "subskills/contract-interest-rates/scripts",
+    "subskills/calculate-boc/scripts"
+  ],
+  "drafting-data": [
+    "hooks"
+  ],
+  "draft": [
+    "scripts"
+  ],
+  "polish-substance": [],
+  "prepare": [],
+  "publish": [
+    "scripts",
+    "templates",
+    "subskills/publish-bcsc-form/scripts",
+    "subskills/publish-bcsc-form/templates",
+    "subskills/publish-bcca-factum/scripts",
+    "subskills/publish-bcca-factum/templates",
+    "subskills/publish-vaniac-package/scripts",
+    "subskills/publish-vaniac-package/templates",
+    "subskills/publish-small-claims-form/assets",
+    "subskills/publish-boc/scripts",
+    "subskills/publish-boc/templates",
+    "subskills/publish-general/scripts"
+  ],
+  "rule-migrate": []
+}

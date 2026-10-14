@@ -1,4 +1,4 @@
-# Runs every Python test in this repo (.claude/skills/**, source/probanda/tests, scripts/tests) on a
+# Runs every Python test in this repo (.claude/skills/**, source/*/tests, scripts/tests) on a
 # clean Windows checkout. Ported from CoClerk's skills-python-tests.yml (shape settled there on #1038).
 # Windows only, like data-mcp-tests.yml: the skills resolve Windows paths.
 #
@@ -89,7 +89,6 @@ jobs:
         run: |
           log="$RUNNER_TEMP/test.log"
           status=0 count=0
-          # The source/probanda/tests path in the find below changes at the cutover of the four-plugin split (docs/Plans/2026-10-13_four-plugin-split.md, phase 5).
           while IFS= read -r dir; do
             count=$((count + 1))
             echo "--- $dir ---" | tee -a "$log"
@@ -99,7 +98,7 @@ jobs:
               echo "--- $dir failed (exit $code) ---" | tee -a "$log"
               status=1
             fi
-          done < <(find .claude/skills source/probanda/tests scripts/tests -name 'test_*.py' | sed 's#/[^/]*$##' | sort -u)
+          done < <(find .claude/skills source/*/tests scripts/tests -name 'test_*.py' | sed 's#/[^/]*$##' | sort -u)
           [ "$count" -gt 0 ] || { echo "no test folders found"; exit 1; }
           exit $status
 

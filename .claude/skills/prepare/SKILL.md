@@ -34,7 +34,7 @@ Built for the BCSC **Notice of Application** and **Application Response** only. 
 
 - Never drafts any document, never writes substance, and never invokes `/draft` per document. Each surrounding piece is a job, or a Writing of its own, that a later session works.
 - Is never assigned a job. An outlining session never assigns itself one.
-- Never calls a deadline tool, for any purpose, including recording a past event. A hook on the drafting lane refuses it, but the hook fails open and is only the backstop. This rule is the rule. To record a date the practitioner gives, spawn `probanda:docket-clerk` once and relay its reply verbatim; it returns only a count (`shared/deadline-isolation.md`, "Calling docket-clerk").
+- Never calls a deadline tool, for any purpose, including recording a past event. A hook on the drafting lane refuses it, but the hook fails open and is only the backstop. This rule is the rule. To record a date the practitioner gives, spawn `practice:docket-clerk` once and relay its reply verbatim; it returns only a count (`shared/deadline-isolation.md`, "Calling docket-clerk").
 - Spawns no sessions and no chips, and hands nothing off inside the session.
 - Is not the triage seat. Whether and when to start or file stays with `task-prioritization`, `/executive-assistant` and the practitioner, before the session opens.
 - Never touches the database except through `/drafting-data`. This skill names no table, column or query. Every write follows `.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations", cited by section below, and the gatekeeper's own references for the forum and the Writing.

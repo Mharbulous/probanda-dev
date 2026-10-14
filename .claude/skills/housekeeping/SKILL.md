@@ -42,8 +42,8 @@ This skill is the only front door, for litigation matters only, and holds **no d
 - `/case-data`: `pointer-health`, `ingest-status`, `ingest-unattended`, `relocate-source`, and `housekeeping-log` (modes `lookup`, `record`, `retry`). A matter's parties, court file numbers, client name and recorded filing lawyer and firm come from its ordinary read operations.
 - `/drafting-data`: re-pointing its stored document paths after a move ("Re-point after a move").
 - `/file-sorting`: `detect-profile`, `scope`, `record-backend`, and the litigation-matter profile's folder notes. `/file-naming`: the **gate** intent (`../file-naming/scripts/name_gate.py`), `../file-naming/scripts/hash_files.py`, and its references.
-- The litigation data server's tools (prefix `mcp__plugin_probanda_data__`, or its Cowork-bridged name): `housekeeping__preflight`, `housekeeping__new_run`, `housekeeping__order_candidates`, `housekeeping__write_run_file`, `housekeeping__serve_page`, `housekeeping__wait_approval`, `housekeeping__resolve`, `housekeeping__reconcile`, `housekeeping__journal_append`, `file_ops__move`, `file_ops__trash`, `research_filing__append_manifest`.
-- The `housekeeping-namer` agent (`probanda:housekeeping-namer`).
+- The litigation data server's tools (prefix `mcp__plugin_practice_data__`, or its Cowork-bridged name): `housekeeping__preflight`, `housekeeping__new_run`, `housekeeping__order_candidates`, `housekeeping__write_run_file`, `housekeeping__serve_page`, `housekeeping__wait_approval`, `housekeeping__resolve`, `housekeeping__reconcile`, `housekeeping__journal_append`, `file_ops__move`, `file_ops__trash`, `research_filing__append_manifest`.
+- The `housekeeping-namer` agent (`practice:housekeeping-namer`).
 
 ## Terms
 
@@ -166,7 +166,7 @@ Each facet of a naming-evidence block carries a verbatim quote and a pinpoint, o
 
 **What is composed.** Every admitted row with a block, except privileged-store rows, which this session composes itself (below). A subfolder row admitted only by the ingest arm, whose name conforms, still goes to the namer, so its folder's misfile test runs (a misfiled file is caught even when its name is fine); its proposal stays its current name unless the namer raises `misfiled`. A duplicate is composed from its twin's stored record (the `metadata` `ingest-status` returned with it); with none, its proposal is the twin's own name and folder.
 
-**The namer.** The matter's party names and court file numbers are the ones fetched at the start of Step 8. Split the namer's rows into batches of about 15 and dispatch every batch **in one turn**, in parallel: Agent tool, `subagent_type: "probanda:housekeeping-namer"`, `model: "sonnet"`. If that agent type is not in this session's roster, stop and say so; no other agent composes names. Each dispatch carries one JSON object:
+**The namer.** The matter's party names and court file numbers are the ones fetched at the start of Step 8. Split the namer's rows into batches of about 15 and dispatch every batch **in one turn**, in parallel: Agent tool, `subagent_type: "practice:housekeeping-namer"`, `model: "sonnet"`. If that agent type is not in this session's roster, stop and say so; no other agent composes names. Each dispatch carries one JSON object:
 
 - `run_date`; `matter`: `root_name`, `parties`, `action_numbers`;
 - `folders`: each on-disk filing folder (never 0 or 1, never `TRASH`), `{name, folder_type, subfolders}` with `folder_type` the keyword table's number and `subfolders` the relative paths of the folders inside it;

@@ -17,8 +17,8 @@ GATE = SKILLS_ROOT / "shared" / "legal-research.md"
 SKILL = SKILL_ROOT / "SKILL.md"
 PROTOCOL = SKILLS_ROOT / "shared" / "legal-audit-protocol.md"
 CASE_DATA = SKILLS_ROOT / "case-data" / "SKILL.md"
-SCHEMA_GEN = REPO_ROOT / "source" / "probanda" / "mcp" / "src" / "schema-gen.ts"
-AUDIT_AGENT = REPO_ROOT / "source" / "probanda" / "agents" / "research-agent.md"
+SCHEMA_GEN = REPO_ROOT / "source" / "practice" / "mcp" / "src" / "schema-gen.ts"
+AUDIT_AGENT = REPO_ROOT / "source" / "research" / "agents" / "research-agent.md"
 TOOL = "research_filing__legislation_search"
 ORDER_RULE = "**A statutory-text question runs duty 4 before duty 3.**"
 
@@ -97,8 +97,8 @@ class AuditTests(unittest.TestCase):
 
     def test_the_audit_agent_holds_the_tool_under_both_names(self):
         text = AUDIT_AGENT.read_text(encoding="utf-8")
-        self.assertIn(f"  - mcp__plugin_probanda_data__{TOOL}\n", text)
-        self.assertIn(f"  - mcp__remote-devices__plugin_probanda_data__{TOOL}\n", text)
+        self.assertIn(f"  - mcp__plugin_practice_data__{TOOL}\n", text)
+        self.assertIn(f"  - mcp__remote-devices__plugin_practice_data__{TOOL}\n", text)
 
     def test_runtime_defines_the_tool(self):
         self.assertRegex(SCHEMA_GEN.read_text(encoding="utf-8"), re.escape(f'name: "{TOOL}"'))

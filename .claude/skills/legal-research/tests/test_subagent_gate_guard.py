@@ -9,7 +9,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_ROOT.parents[2]
 HOOK = SKILL_ROOT / "hooks" / "block-subagent-legal-research.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
-PLUGIN_JSON = REPO_ROOT / "source" / "probanda" / "plugin.json"
+PLUGIN_JSON = REPO_ROOT / "source" / "research" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/legal-research/hooks/block-subagent-legal-research.py"
 
 
@@ -34,13 +34,13 @@ class SubagentGateGuardTests(unittest.TestCase):
         self.assertIn("Nothing was dispatched", result.stderr)
 
     def test_main_session_gate_is_allowed(self):
-        for skill in ("legal-research", "probanda:legal-research", "/legal-research"):
+        for skill in ("legal-research", "research:legal-research", "/legal-research"):
             with self.subTest(skill=skill):
                 self.assertEqual(skill_call(skill, "Is the claim out of time?").returncode, 0)
 
     def test_subagent_gate_is_blocked(self):
-        for skill in ("legal-research", "probanda:legal-research"):
-            for agent_type in ("general-purpose", "probanda:research-agent", None):
+        for skill in ("legal-research", "research:legal-research"):
+            for agent_type in ("general-purpose", "research:research-agent", None):
                 with self.subTest(skill=skill, agent_type=agent_type):
                     self.assertBlocked(skill_call(
                         skill, "note up the Act", agent_id="a1b2", agent_type=agent_type))

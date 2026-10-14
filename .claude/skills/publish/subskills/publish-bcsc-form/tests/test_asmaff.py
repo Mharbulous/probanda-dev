@@ -39,7 +39,7 @@ exhibits: [{"letter":"A","label":"Invoice 1001","file_path":null},{"letter":"B",
 1. I am the bookkeeper of the plaintiff.
 2. Attached hereto and marked as **Exhibit "A"** is a true copy of Invoice 1001, issued under the agreement attached as **Exhibit "B"**.
 """
-GOLDEN = SKILL_ROOT.parents[4] / "source" / "probanda" / "mcp" / "test" / "fixtures" / "affidavit-emitted.md"
+GOLDEN = SKILL_ROOT.parents[4] / "source" / "practice" / "mcp" / "test" / "fixtures" / "affidavit-emitted.md"
 
 CONTEXT = {
     "court_file_number": "S-123456",

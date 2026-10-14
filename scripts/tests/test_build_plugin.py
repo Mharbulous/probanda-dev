@@ -1,5 +1,6 @@
 """Tests for scripts/build_plugin.py. Every build goes to a temp folder."""
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -9,76 +10,96 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
-SOURCE = REPO / "source" / "probanda"
+SOURCE = REPO / "source"
+PLUGINS = ("practice", "research", "litigator", "solicitor")
+BUNDLES = {"practice": ("mcp/dist/litigation-mcp.js",),
+           "research": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js")}
 
 
 def build(*args):
     return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True)
 
 
+def copy_repo(repo):
+    """Copy what a build reads into `repo`: the skills, the plugin sources and the public skills."""
+    skip = shutil.ignore_patterns("tests", "test", "src", "build", "__pycache__", "node_modules")
+    shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
+    shutil.copytree(SOURCE, repo / "source", ignore=skip)
+    # A hook of the practice plugin runs a script in a public skill.
+    shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)
+
+
 class BuildPluginTest(unittest.TestCase):
+    """The real repo, built at "cutover": one folder per plugin under --out."""
+
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
-        cls.out = Path(cls.tmp.name) / "probanda"
+        cls.out = Path(cls.tmp.name) / "out"
         result = build("--out", str(cls.out))
         if result.returncode != 0:
             raise AssertionError(result.stderr)
-        cls.version = json.loads((SOURCE / "plugin.json").read_text(encoding="utf-8"))["version"]
+        cls.versions = {name: json.loads((SOURCE / name / "plugin.json").read_text(encoding="utf-8"))["version"]
+                        for name in PLUGINS}
 
     @classmethod
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    def test_roster_skill_is_stamped(self):
-        text = (self.out / "skills" / "draft" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn(f"\n<!-- probanda v{self.version} -->\n> **Installed copy.**", text)
+    def test_every_plugin_is_built_and_nothing_else(self):
+        self.assertEqual(sorted(p.name for p in self.out.iterdir()), sorted(PLUGINS))
+
+    def test_roster_skill_is_stamped_with_its_own_plugin(self):
+        for plugin, skill in (("practice", "case-data"), ("research", "legal-research"), ("litigator", "draft")):
+            with self.subTest(plugin=plugin):
+                text = (self.out / plugin / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn(f"\n<!-- {plugin} v{self.versions[plugin]} -->\n> **Installed copy.**", text)
 
     def test_no_tests_or_bytecode_ship(self):
         shipped = [p.relative_to(self.out).parts for p in self.out.rglob("*")]
         self.assertFalse([p for p in shipped if "tests" in p[:-1] or "__pycache__" in p])
 
-    def test_bundles_and_manifest_exist(self):
-        for rel in ("mcp/dist/litigation-mcp.js", "canlii-mcp/dist/canlii-mcp.js",
-                    "commons-mcp/dist/legal-commons-mcp.js", ".claude-plugin/plugin.json"):
-            self.assertTrue((self.out / rel).is_file(), rel)
+    def test_each_bundle_ships_in_one_plugin_and_every_plugin_has_a_manifest(self):
+        for plugin in PLUGINS:
+            self.assertTrue((self.out / plugin / ".claude-plugin" / "plugin.json").is_file(), plugin)
+            self.assertTrue((self.out / plugin / "skills" / "shared").is_dir(), plugin)
+            bundles = sorted(p.relative_to(self.out / plugin).as_posix() for p in (self.out / plugin).glob("*/dist/*.js"))
+            self.assertEqual(bundles, sorted(BUNDLES.get(plugin, ())), plugin)
+
+    def test_no_old_plugin_identifier_ships(self):
+        old = re.compile(rb"plugin_" + rb"probanda_|" + rb"probanda" + rb":[A-Za-z]")
+        hits = [p.relative_to(self.out).as_posix() for p in self.out.rglob("*")
+                if p.is_file() and old.search(p.read_bytes())]
+        self.assertEqual(hits, [])
 
     def test_rebuild_swaps_the_folder_and_leaves_no_temp_folder(self):
         with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / "probanda"
-            (out / "skills").mkdir(parents=True)
-            (out / "skills" / "stale.md").write_text("stale", encoding="utf-8")
+            out = Path(tmp) / "out"
+            (out / "practice" / "skills").mkdir(parents=True)
+            (out / "practice" / "skills" / "stale.md").write_text("stale", encoding="utf-8")
             result = build("--out", str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertFalse((out / "skills" / "stale.md").exists())
-            self.assertTrue((out / ".claude-plugin" / "plugin.json").is_file())
-            self.assertEqual([p.name for p in Path(tmp).iterdir()], ["probanda"])
+            self.assertFalse((out / "practice" / "skills" / "stale.md").exists())
+            self.assertTrue((out / "practice" / ".claude-plugin" / "plugin.json").is_file())
+            self.assertEqual(sorted(p.name for p in out.iterdir()), sorted(PLUGINS))
 
     def test_a_build_in_progress_stops_a_second_build(self):
         with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / "probanda"
-            out.mkdir()
-            (out / "kept.md").write_text("kept", encoding="utf-8")
-            building = Path(tmp) / ".probanda.building"
+            out = Path(tmp) / "out"
+            (out / "practice").mkdir(parents=True)
+            (out / "practice" / "kept.md").write_text("kept", encoding="utf-8")
+            building = out / ".practice.building"
             building.mkdir()
             result = build("--out", str(out))
             self.assertEqual(result.returncode, 2)
             self.assertIn("another build is running", result.stderr)
-            self.assertTrue((out / "kept.md").is_file())
+            self.assertTrue((out / "practice" / "kept.md").is_file())
             self.assertTrue(building.is_dir())
 
     def test_overlong_description_stops_the_build(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
-            skip = shutil.ignore_patterns("tests", "__pycache__", "node_modules")
-            shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
-            src = repo / "source" / "probanda"
-            src.mkdir(parents=True)
-            shutil.copy2(REPO / "source" / "assignment.json", repo / "source" / "assignment.json")
-            for name in ("plugin.json", "roster.json", ".mcp.json", "README.md", "VISION.md"):
-                shutil.copy2(SOURCE / name, src / name)
-            for sub in ("agents", "hooks", "mcp/dist", "canlii-mcp/dist", "commons-mcp/dist"):
-                shutil.copytree(SOURCE / sub, src / sub, ignore=skip)
+            copy_repo(repo)
             skill_md = repo / ".claude" / "skills" / "draft" / "SKILL.md"
             skill_md.write_text("---\nname: draft\ndescription: " + "x" * 1100 + "\n---\n\nBody.\n",
                                 encoding="utf-8")
@@ -91,23 +112,23 @@ class BuildPluginTest(unittest.TestCase):
     def test_public_skill_ships_unstamped_and_may_not_also_be_private(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
-            skip = shutil.ignore_patterns("tests", "__pycache__", "node_modules")
-            shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
-            shutil.copytree(SOURCE, repo / "source" / "probanda", ignore=skip)
-            shutil.copy2(REPO / "source" / "assignment.json", repo / "source" / "assignment.json")
-            # The real public skills come too: a hook of the plugin runs a script in one of them.
-            shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)
+            copy_repo(repo)
             text = "---\nname: zz-public\ndescription: A public skill.\n---\n\nBody.\n"
             # Any public plugin's skills folder is searched, whatever the plugin is called.
             public = repo / "public" / "plugins" / "another" / "skills" / "zz-public"
             (public / "references").mkdir(parents=True)
             (public / "SKILL.md").write_bytes(text.encode("utf-8"))
             (public / "references" / "notes.txt").write_bytes(b"shipped whole\n")
+            assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
+            assignment["plugins"]["practice"]["skills"].append("zz-public")
+            (repo / "source" / "assignment.json").write_text(json.dumps(assignment), encoding="utf-8")
             out = repo / "out"
             result = build("--repo", str(repo), "--out", str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual((out / "skills" / "zz-public" / "SKILL.md").read_bytes(), text.encode("utf-8"))
-            self.assertTrue((out / "skills" / "zz-public" / "references" / "notes.txt").is_file())
+            shipped = out / "practice" / "skills" / "zz-public"
+            self.assertEqual((shipped / "SKILL.md").read_bytes(), text.encode("utf-8"))
+            self.assertTrue((shipped / "references" / "notes.txt").is_file())
+            self.assertFalse((out / "research" / "skills" / "zz-public").exists())
 
             (repo / ".claude" / "skills" / "zz-public").mkdir()
             result = build("--repo", str(repo), "--out", str(repo / "out2"))

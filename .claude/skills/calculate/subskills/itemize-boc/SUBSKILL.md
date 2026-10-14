@@ -14,7 +14,7 @@ Second member of the bill-of-costs chain. It fills `tariffScale`, `unitValue` an
 `tariffItems[]` in the shared state file and nothing else.
 
 **In Cowork, stop here.** In Cowork (this host grants the data tools as
-`mcp__remote-devices__plugin_probanda_data__<name>`), stop before any tool
+`mcp__remote-devices__plugin_practice_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the case-data folder this chain works in

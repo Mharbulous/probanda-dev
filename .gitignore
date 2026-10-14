@@ -8,7 +8,7 @@ Desktop.ini
 node_modules/
 
 # TypeScript output of the MCP runtimes (the bundles in dist/ are tracked)
-source/probanda/*/build/
+source/*/*/build/
 
 # Python caches
 __pycache__/
@@ -26,8 +26,8 @@ __pycache__/
 TRASH/
 
 # Folders build_plugin.py holds only while a build runs
-plugins/.probanda.building/
-plugins/.probanda.replaced/
+plugins/.*.building/
+plugins/.*.replaced/
 
 # Session worktrees
 .claude/worktrees/

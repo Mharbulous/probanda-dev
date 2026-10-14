@@ -5,7 +5,7 @@
 The unified download-and-file machinery for court decisions by citation,
 Westlaw-first or CanLII-only. `research-paralegal` fetches this file at
 citation mode entry, and the deep-research playbook fetches it too (Stages 7
-and 9), via `mcp__plugin_probanda_data__skill_source__read`, path
+and 9), via `mcp__plugin_practice_data__skill_source__read`, path
 `shared/research-paralegal/citation-download.md` — follow it exactly, never
 proceeding from a remembered procedure. The filing tools, collision handling,
 and the unified manifest live in the core agent; this file carries the
@@ -165,7 +165,7 @@ CanLII's download mechanics — deep-URL construction, the PDF-link trap, the
 `download`-attribute anchor, citation-as-written naming, no-snapshot-diff
 identification, and the 403 record-and-move-on rule — live in one canonical
 file, `shared/canlii-download-mechanics.md`. **Before the first CanLII
-download**, fetch it via `mcp__plugin_probanda_data__skill_source__read`
+download**, fetch it via `mcp__plugin_practice_data__skill_source__read`
 (path `shared/canlii-download-mechanics.md`) and follow it exactly. Never
 proceed from remembered CanLII mechanics. CanLII serves **PDF only**; there is
 no format choice on this path.

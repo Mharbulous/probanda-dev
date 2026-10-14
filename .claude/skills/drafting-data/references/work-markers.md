@@ -1,6 +1,6 @@
 # Work markers
 
-This document is the SSOT for the rules governing the work-marker emojis that I want mockup projection engine to generate; each emoji's own row (its meaning, its predicate and its history) lives in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, the single source for the rows. Every marker whose predicate holds renders immediately after its component. While this is the canonical document and most definitive record of my intentions for the /draft skill, it is also a work in progress and remains open for discussion with me when problems are found, or when new features/functionality are being added.  No changes to this document may be made without discussion with and express approval from both me and a Fable agent.
+This document is the SSOT for the rules governing the work-marker emojis that I want mockup projection engine to generate; each emoji's own row (its meaning, its predicate and its history) lives in `source/practice/mcp/src/submission/forms/symbol-table.ts`, the single source for the rows. Every marker whose predicate holds renders immediately after its component. While this is the canonical document and most definitive record of my intentions for the /draft skill, it is also a work in progress and remains open for discussion with me when problems are found, or when new features/functionality are being added.  No changes to this document may be made without discussion with and express approval from both me and a Fable agent.
 
 ## Reading rules
 
@@ -28,15 +28,15 @@ A marker is a **to-do on that line**, never a status label. (1) Each **work** ma
 
 ### 1a. Work emojis — 31
 
-The 31 work rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
+The 31 work rows live in `source/practice/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
 
 ### 1b. Event emojis — 14
 
-The 14 event rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work the event routes and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
+The 14 event rows live in `source/practice/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work the event routes and who does it, `condition` (the predicate) and `history` (the schema record). That file is the single source.
 
 ### 1c. Hold emojis — 3
 
-The 3 hold rows live in `source/probanda/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, and `condition` (the predicate; a hold has no `history`). That file is the single source.
+The 3 hold rows live in `source/practice/mcp/src/submission/forms/symbol-table.ts`, one row per symbol: name, meaning, the work and who does it, and `condition` (the predicate; a hold has no `history`). That file is the single source.
 
 Crossed out is **not** a hold emoji — strikethrough styling is its rendering (terms-and-symbols → Deployment).
 

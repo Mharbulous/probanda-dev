@@ -3,7 +3,7 @@
 The orchestrator (SKILL.md, Step 3d) fills the `<<…>>` placeholders
 and passes the result as the prompt for **one** spawned subagent, one per
 batch of up to 15 files. Each subagent runs in parallel with the others,
-dispatched with `subagent_type: "probanda:housekeeping-reviewer"` and
+dispatched with `subagent_type: "practice:housekeeping-reviewer"` and
 **pinned to `model: "sonnet"`**. That agent type's toolset
 (`Read`, `Glob`, `Grep`, read-only `Bash`, the SwitchYard plugin's
 `environment-gauge` skill) has no `Edit`/`Write`/rename/move capability,
@@ -51,7 +51,7 @@ from context.
   Routing rules: <<ABSOLUTE PATH, or skill_source__read PATH, TO file-sorting/profiles/accounting/notes/routing-rules.md>>
 If this is an absolute path, Read it directly. If instead it's a
 skill_source__read path (this prose isn't mounted on disk in this session),
-fetch it with the mcp__plugin_probanda_data__skill_source__read tool
+fetch it with the mcp__plugin_practice_data__skill_source__read tool
 before using it. This file has the full 7 routing rules, worked examples,
 and the vendor list for rule 4. Do not consult any other reference file.
 

@@ -1,6 +1,6 @@
 {
-  "status": "planned",
-  "note": "The plugin each unit ships in after the four-plugin split (docs/Plans/2026-10-13_four-plugin-split.md). Until cutover the build still ships everything as the one plugin probanda. A skill is named by its folder under .claude/skills/ or public/plugins/probanda/skills/, an agent by its file under source/probanda/agents/, a hook by its script's path from the repo root.",
+  "status": "cutover",
+  "note": "The plugin each unit ships in since the four-plugin split (docs/Plans/2026-10-13_four-plugin-split.md). A skill is named by its folder under .claude/skills/ or public/plugins/*/skills/, an agent by its file under source/<plugin>/agents/, a hook by its script's path from the repo root.",
   "plugins": {
     "practice": {
       "requires": [],
@@ -57,7 +57,7 @@
       ],
       "hooks": {
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
-        "mail-send-gate": "source/probanda/hooks/mail-send-gate.py",
+        "mail-send-gate": "source/practice/hooks/mail-send-gate.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
         "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
@@ -90,7 +90,7 @@
       "hooks": {
         "block-main-session-canlii": ".claude/skills/legal-research/hooks/block-main-session-canlii.py",
         "block-subagent-legal-research": ".claude/skills/legal-research/hooks/block-subagent-legal-research.py",
-        "commons-read-only": "source/probanda/hooks/commons-read-only.py"
+        "commons-read-only": "source/research/hooks/commons-read-only.py"
       },
       "servers": [
         "canlii",
@@ -134,10 +134,5 @@
       "hooks": {},
       "servers": []
     }
-  },
-  "unplaced": {
-    "agents": [
-      "equivalence-checker"
-    ]
   }
 }

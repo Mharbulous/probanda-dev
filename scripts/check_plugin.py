@@ -1248,6 +1248,17 @@ def check_hook_matchers(repo, plugin):
     return not hits, "; ".join(hits) if hits else f"{count} matchers read"
 
 
+def check_dependencies(repo, plugin):
+    """The host installs and enforces what plugin.json declares, and the build, the
+    hook-matchers check and the layering check trust what the assignment says."""
+    with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
+        declared = json.load(f).get("dependencies", [])
+    if sorted(declared) != sorted(plugin["requires"]):
+        return False, (f"plugin.json declares {sorted(declared)}, but source/assignment.json "
+                       f"requires {sorted(plugin['requires'])}")
+    return True, ""
+
+
 def check_unique_names(repo):
     hits = []
     for kind, names_of in (("skill", skill_names), ("agent", agent_names)):
@@ -1306,6 +1317,8 @@ CHECKS = (
      check_commons_encapsulation),
     ("hook-matchers: every hook matcher that names a plugin tool or a plugin agent names one that "
      "plugin ships", check_hook_matchers),
+    ("dependencies: plugin.json's dependencies are the plugins source/assignment.json says it requires",
+     check_dependencies),
 )
 # Checks across the plugins built. Each takes (repo).
 REPO_CHECKS = (

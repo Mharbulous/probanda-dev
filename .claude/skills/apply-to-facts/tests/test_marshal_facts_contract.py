@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
-AGENT = REPO / "source" / "probanda" / "agents" / "marshal-facts.md"
+AGENT = REPO / "source" / "litigator" / "agents" / "marshal-facts.md"
 SKILL = REPO / ".claude" / "skills" / "apply-to-facts" / "SKILL.md"
 SCHEMA = REPO / ".claude" / "skills" / "case-data" / "references" / "schema.sql"
 
@@ -21,10 +21,10 @@ EXPECTED_TOOLS = [
     "Glob",
     "Grep",
     "Skill",
-    "mcp__plugin_probanda_data__skill_source__read",
-    "mcp__plugin_probanda_data__case_data__query",
-    "mcp__remote-devices__plugin_probanda_data__skill_source__read",
-    "mcp__remote-devices__plugin_probanda_data__case_data__query",
+    "mcp__plugin_practice_data__skill_source__read",
+    "mcp__plugin_practice_data__case_data__query",
+    "mcp__remote-devices__plugin_practice_data__skill_source__read",
+    "mcp__remote-devices__plugin_practice_data__case_data__query",
 ]
 
 SQL_KEYWORDS = re.compile(r"\b(SELECT|FROM|JOIN|WHERE|INSERT|UPDATE|DELETE)\b")

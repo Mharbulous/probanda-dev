@@ -198,7 +198,7 @@ After a restore that landed, re-render.
 
 A job the practitioner wants held until a set day carries that day in `tickets.bf_on` (schema v74), a `YYYY-MM-DD` by CHECK. Until then the job shows in the Job Board's Bring Forward lane, tagged `BF <date>` on `board_card`'s `live` lane, and `drafting_data__assign_job` refuses it with `before_bf` (`jobs-run.md` §4). From that day on it reads as Blocked or Ready with no write: the lane is derived at each render from the local date, and nothing is stored but the date. Bring Forward waits on a date, Blocked waits on another job, and a job held by both shows in Bring Forward first.
 
-**A BF date is a start date, never a deadline** (`shared/deadline-isolation.md`). It is printed as a plain date, with no day count, no overdue marking and no "due". Never label, compute or reason about it as a deadline or a limitation date, and never send it to `probanda:docket-clerk`.
+**A BF date is a start date, never a deadline** (`shared/deadline-isolation.md`). It is printed as a plain date, with no day count, no overdue marking and no "due". Never label, compute or reason about it as a deadline or a limitation date, and never send it to `practice:docket-clerk`.
 
 **Only on the practitioner's word.** A session sets, changes or clears a BF date only when the practitioner says so and names the date. It is never proposed, offered, inferred from a document or computed from another date. The date is the one job value typed as the practitioner gave it and not computed in SQL (`jobs-common.md` §0). Like a shelving, the write is bookkeeping: permitted in every session, and never a licence to edit the job's title, intent or steps.
 

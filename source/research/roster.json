@@ -1,0 +1,11 @@
+{
+  "case-brief": [],
+  "legal-memo-extractor": [],
+  "legal-research": [
+    "hooks"
+  ],
+  "review-proposition": [],
+  "verify-law": [
+    "scripts"
+  ]
+}

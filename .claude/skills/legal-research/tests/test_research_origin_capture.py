@@ -98,7 +98,7 @@ class AuditContractTests(unittest.TestCase):
 
     def test_shim_carries_no_contract(self):
         root = Path(__file__).resolve().parents[4]
-        text = (root / "source/probanda/agents/research-agent.md").read_text(encoding="utf-8")
+        text = (root / "source/research/agents/research-agent.md").read_text(encoding="utf-8")
         self.assertIn("shared/legal-audit-protocol.md", text)
         self.assertNotIn("live_issue", text)
 

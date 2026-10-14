@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "practitioner-words-gate.py"
-PLUGIN_JSON = Path(__file__).resolve().parents[4] / "source" / "probanda" / "plugin.json"
+PLUGIN_JSON = Path(__file__).resolve().parents[4] / "source" / "litigator" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/practitioner-words-gate.py"
 STOCK_MD = Path(__file__).parents[1] / "references" / "jobs-stock.md"
 GATE_MD = Path(__file__).parents[1] / "references" / "jobs-gate.md"
@@ -265,7 +265,7 @@ def shown(text):
 
 def execute_lines(sql):
     """An earlier drafting_data__execute call and its result."""
-    use, res = tool_lines("mcp__plugin_probanda_data__drafting_data__execute", {"ok": True})
+    use, res = tool_lines("mcp__plugin_practice_data__drafting_data__execute", {"ok": True})
     use["message"]["content"][0]["input"] = {"sql_script": sql}
     return [use, res]
 
@@ -353,7 +353,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def run_hook(self, sql, transcript=None):
         payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
-                   "tool_name": "mcp__plugin_probanda_data__drafting_data__execute",
+                   "tool_name": "mcp__plugin_practice_data__drafting_data__execute",
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "sql_script": sql},
                    "transcript_path": str(self.transcript) if transcript is None else transcript}
         return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"),
@@ -561,12 +561,12 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def test_a_fast_path_job_takes_a_printed_proposal_title(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__render", RENDER))
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__render", RENDER))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
 
     def test_a_fast_path_job_takes_a_printed_proposal_title_from_the_summary(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__render", SUMMARY_RENDER))
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__render", SUMMARY_RENDER))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         self.assertEqual(self.run_hook(update(SHELVED, intent=SHELVED)).returncode, 0)
         self.assertRefused(self.run_hook(update("Chase the guarantor")), "field: title")
@@ -574,7 +574,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def test_a_fast_path_job_takes_a_printed_proposal_title_from_a_board_card(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__board_card", CARD))
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__board_card", CARD))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         self.assertEqual(self.run_hook(update(SHELVED, intent=SHELVED)).returncode, 0)
         self.assertRefused(self.run_hook(update("Serve the August notice to admit")), "field: title")
@@ -582,7 +582,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def test_a_fast_path_job_takes_a_proposal_title_from_a_persisted_result(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *persisted_lines("mcp__plugin_probanda_data__drafting_forms__render", RENDER))
+                              *persisted_lines("mcp__plugin_practice_data__drafting_forms__render", RENDER))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         self.assertRefused(self.run_hook(update(PROPOSAL.lower(), intent=PROPOSAL)), "field: title")
 
@@ -590,14 +590,14 @@ class PractitionerWordsGateTest(unittest.TestCase):
         # #1358's E2E: the render was saved to a file, and the approval was sent while the session worked.
         approval = f"Yes, take {ITEM}."
         self.write_transcript(turn_line("Draft the opening submissions."),
-                              *persisted_lines("mcp__plugin_probanda_data__drafting_forms__render", SUMMARY_RENDER),
+                              *persisted_lines("mcp__plugin_practice_data__drafting_forms__render", SUMMARY_RENDER),
                               queued_line(approval))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         self.assertEqual(self.run_hook(update(ITEM, intent=approval)).returncode, 0)
 
     def test_the_proposal_exemption_is_exact_and_needs_a_forms_result(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__render", RENDER))
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__render", RENDER))
         self.assertRefused(self.run_hook(update(PROPOSAL.lower(), intent=PROPOSAL)), "field: title")
         self.write_transcript(turn_line("Take the note-up."), *tool_lines("Bash", RENDER))
         self.assertRefused(self.run_hook(update(PROPOSAL, intent=PROPOSAL)), "field: title", "field: intent")
@@ -861,7 +861,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
                 self.assertEqual(self.run_hook(replace_steps(sql_text(step))).returncode, 0)
 
     # A grouped intake job's steps are Proposal items (jobs-create.md §3e).
-    def board_card_opening(self, card=GROUP_CARD, tool="mcp__plugin_probanda_data__drafting_forms__board_card"):
+    def board_card_opening(self, card=GROUP_CARD, tool="mcp__plugin_practice_data__drafting_forms__board_card"):
         self.write_transcript(turn_line("Open the opening submissions."), *tool_lines(tool, card))
 
     def test_a_group_intake_create_passes_with_no_turn_beyond_the_opening(self):
@@ -1081,7 +1081,7 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def test_a_printed_proposal_title_is_not_a_suppression_note(self):
         self.write_transcript(turn_line("Take the note-up."),
-                              *tool_lines("mcp__plugin_probanda_data__drafting_forms__render", RENDER))
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__render", RENDER))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         for sql in (suppress(sql_text(PROPOSAL)), suppress(sql_text(PROPOSAL), values=True),
                     resuppress(f"note = {sql_text(PROPOSAL)}")):
@@ -1132,9 +1132,9 @@ class PluginRegistrationTests(unittest.TestCase):
         ]
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
-        for prefix in ("mcp__plugin_probanda_data__", "mcp__remote-devices__plugin_probanda_data__"):
+        for prefix in ("mcp__plugin_practice_data__", "mcp__remote-devices__plugin_practice_data__"):
             self.assertTrue(matcher.fullmatch(prefix + "drafting_data__execute"), prefix)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_probanda_data__drafting_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_practice_data__drafting_data__query"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))
 
 

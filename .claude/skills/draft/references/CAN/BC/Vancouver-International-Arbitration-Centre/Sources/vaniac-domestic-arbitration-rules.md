@@ -102,4 +102,4 @@ items:
 
 Verbatim excerpts of the rules this venue's files cite, keyed by `rule_ref` in the front matter, each without its paragraph label. A lead-in keyed at the paragraph (such as `R. 25(b)`) is the text its sub-paragraphs complete.
 
-R. 25(c) is held for quotation only. Its period's value and computation belong to `probanda:docket-clerk`, never to a drafting session.
+R. 25(c) is held for quotation only. Its period's value and computation belong to `practice:docket-clerk`, never to a drafting session.

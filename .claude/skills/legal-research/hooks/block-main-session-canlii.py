@@ -21,25 +21,25 @@ Policy (closed-gate rule, Westlaw-first gate): .claude/skills/shared/legal-resea
 Decision rule
   1. Not a CanLII server tool, a credential setup tool, or
      legislation_currency                                        -> allow.
-  2. The call comes from a plugin-shipped agent (hook input has
-     agent_id, and agent_type carries a litigation: or
-     legal-commons: prefix):
+  2. The call comes from an agent the research plugin ships (hook
+     input has agent_id, and agent_type carries the research:
+     prefix):
      a. citator tool                                             -> allow.
      b. any other CanLII tool                                    -> block (exit 2).
-  3. Otherwise (main session, or a non-plugin subagent)          -> block (exit 2).
+  3. Otherwise (main session, or any other subagent)             -> block (exit 2).
 
-Registered in plugins/litigation/.claude-plugin/plugin.json. Fails OPEN on any
+Registered in source/research/plugin.json. Fails OPEN on any
 unexpected error, loudly.
 """
 import json
 import re
 import sys
 
-CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_probanda_canlii__(.+)$")
+CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_research_canlii__(.+)$")
 SETUP_TOOLS = {"configure_status", "configure_credential"}
 CURRENCY_TOOL = "legislation_currency"
 CITATOR_TOOLS = {"get_case_citator", "get_case_citator_tease"}
-RESEARCH_AGENT_PREFIXES = ("probanda:",)
+RESEARCH_AGENT_PREFIXES = ("research:",)
 
 BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside research-agent (citator only), never in the main session.
 A statute-currency check is the canlii legislation_currency tool, which runs here.

@@ -96,7 +96,7 @@ CHECK_NAMES = [
     "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "bundle-purity",
     "sources-host-guard", "fetch-grant-allowlist", "recital-rule-mirror", "bundle-no-host-path",
     "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
-    "hook-matchers", "unique-names", "layering",
+    "hook-matchers", "dependencies", "unique-names", "layering",
 ]
 # One matcher of each kind the hook-matchers check reads, and two it lets through.
 HOOKS = {
@@ -726,7 +726,8 @@ class TestSecondPlugin(FixtureTest):
 
     def setUp(self):
         super().setUp()
-        self.fixture.write("source/solicitor/plugin.json", json.dumps({"name": "solicitor", "version": "0.2.0"}) + "\n")
+        self.fixture.write("source/solicitor/plugin.json", json.dumps(
+            {"name": "solicitor", "version": "0.2.0", "dependencies": ["probanda"]}) + "\n")
         self.fixture.write("source/solicitor/roster.json", "{}\n")
         self.fixture.write("source/solicitor/VISION.md", "# solicitor\n")
         self.fixture.write("plugins/solicitor/VISION.md", "# solicitor\n")
@@ -759,6 +760,17 @@ class TestSecondPlugin(FixtureTest):
         self.assertFalse(ok)
         self.assertEqual(detail, "differs from source: skills/shared/legal-audit-protocol.md")
         self.assertTrue(self.results("probanda")["shipped-tree-purity"][0])
+
+    def test_dependencies_that_differ_from_the_assignment_fail(self):
+        for declared in ({}, {"dependencies": []}, {"dependencies": ["probanda", "research"]}):
+            with self.subTest(declared=declared):
+                self.fixture.write("source/solicitor/plugin.json", json.dumps(
+                    {"name": "solicitor", "version": "0.2.0", **declared}) + "\n")
+                ok, detail = self.results("solicitor")["dependencies"]
+                self.assertFalse(ok)
+                self.assertEqual(detail, f"plugin.json declares {sorted(declared.get('dependencies', []))}, "
+                                         "but source/assignment.json requires ['probanda']")
+        self.assertEqual(self.results("probanda")["dependencies"], (True, ""))
 
     def test_main_prints_a_section_for_each_plugin_and_one_across_them(self):
         out = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")   # main() reconfigures stdout

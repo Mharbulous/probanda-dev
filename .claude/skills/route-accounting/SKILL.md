@@ -182,7 +182,7 @@ There is no folder-type table for this Kind — the capped work list (3a +
 3c) is one flat list of loose root files. **Split it into batches of up to
 15 files** (so a full 50-file cap dispatches at most 4 subagents) and
 dispatch one subagent per batch using the **Agent tool**, dispatched with
-`subagent_type: "probanda:housekeeping-reviewer"` and **pinned to
+`subagent_type: "practice:housekeeping-reviewer"` and **pinned to
 `model: "sonnet"`**. Issue all the dispatches **in a single turn** so they
 run concurrently — one batch's review never blocks another's. If that agent
 type is absent from this session's roster, dispatch the generic agent
@@ -202,7 +202,7 @@ Build each subagent's prompt from
 - the **structured return contract** (reproduced in the routing template) it
   must hand back.
 
-**Restricted toolset.** The `probanda:housekeeping-reviewer` agent
+**Restricted toolset.** The `practice:housekeeping-reviewer` agent
 definition enforces this structurally — its toolset has no `Edit`, `Write`,
 or any rename/move capability, so a subagent dispatched under that type
 cannot mutate the filesystem regardless of what its prompt says. `Read` is

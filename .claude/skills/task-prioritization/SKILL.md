@@ -65,7 +65,7 @@ When the user asks "what should I work on?", "what's next?", or wants the ranked
 A to-do is one outcome the practitioner would cross off, such as "Re-file default judgment
 application". Work toward it (research, checks, attaching evidence) is jobs on the Job Board of the
 filing it points to, never another to-do. Research that serves a filing is always a job on that
-filing. Apart from the follow-up and rule-change diary to-dos `probanda:docket-clerk` writes, this
+filing. Apart from the follow-up and rule-change diary to-dos `practice:docket-clerk` writes, this
 skill is the only one that creates a to-do, and a drafting session hands its to-do requests here
 (ADR 0023 D1, D2).
 
@@ -246,5 +246,5 @@ Rules:
 - **Creating a `scheduled-tasks` entry for a per-item reminder** — cadence lives on the to-do's row as `next_nudge_date` + `nudge_interval_days` (see ``practice-data``'s Consumer Contract); the scheduler is a clock tick, not a record of what is due
 - **Advancing `next_nudge_date` outside briefing mode, or from the stale stored date instead of from today**
 - **Feeding nudge-due items into the ranking model** — they are a separate surfaced list, not a tier input or tie-breaker
-- **Calculating or storing deadlines** — read `deadline_date` from `tasks` (manual entry) or from `probanda:docket-clerk`; never recalculate
+- **Calculating or storing deadlines** — read `deadline_date` from `tasks` (manual entry) or from `practice:docket-clerk`; never recalculate
 - **Parsing the accounting CSV directly** — trust data enters only through `retainer-tracking`'s import workflow

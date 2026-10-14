@@ -90,7 +90,7 @@ def name_pattern(name):
     n = re.escape(name)
     marked = (rf"(?<![\w./-])/{n}(?![\w-])"          # /draft
               rf"|`/?{n}(?![\w:-])"                   # `draft` or `draft op`, not the key `draft:...`
-              rf"|\w+:{n}(?![\w-])"                   # probanda:draft
+              rf"|\w+:{n}(?![\w-])"                   # litigator:draft
               rf"|(?:skills|\.\.)/{n}/")              # skills/draft/ or ../draft/
     if "-" not in name:
         return re.compile(marked)

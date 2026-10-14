@@ -2,7 +2,7 @@
 
 Read by the `legislation-fetcher` agent over `skill_source__read`, path `legal-research/references/legislation-fetcher-playbook.md`. The knowledge-tree grammar, the overlay and `_hosts.json` are `shared/knowledge-tree.md`. This file is the tool sequence for one instrument and how to handle each result.
 
-Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_probanda_data__<name>` and `mcp__remote-devices__plugin_probanda_data__<name>` this host grants.
+Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_practice_data__<name>` and `mcp__remote-devices__plugin_practice_data__<name>` this host grants.
 
 ## 1. Rules for every run
 

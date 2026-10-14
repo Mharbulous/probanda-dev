@@ -1,0 +1,48 @@
+{
+  "name": "litigator",
+  "displayName": "Probanda Litigator",
+  "version": "0.2.0",
+  "description": "Court work on a matter, for British Columbia lawyers: applying the law to the facts, drafting, court forms, filing packages and calculations. Requires the practice and research plugins: install practice, then research, then litigator.",
+  "author": {
+    "name": "Probanda",
+    "url": "https://github.com/Probanda-app"
+  },
+  "homepage": "https://github.com/Probanda-app/litigation",
+  "repository": "https://github.com/Probanda-app/litigation",
+  "dependencies": [
+    "practice",
+    "research"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__(.+__)?plugin_practice_data__drafting_data__execute",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/practitioner-words-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Practitioner-words gate"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Write|Edit|MultiEdit|NotebookRead|NotebookEdit|Grep|Bash|PowerShell|mcp__(.+__)?device_.*|mcp__(.+__)?workspace__bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/html-pages-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "HTML pages gate"
+          }
+        ]
+      }
+    ]
+  }
+}

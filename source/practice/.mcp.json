@@ -1,0 +1,8 @@
+{
+  "data": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/mcp/dist/litigation-mcp.js"
+    ]
+  }
+}

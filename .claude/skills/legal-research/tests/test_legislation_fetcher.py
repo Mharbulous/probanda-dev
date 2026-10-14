@@ -14,12 +14,13 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
-AGENTS = REPO_ROOT / "source" / "probanda" / "agents"
+AGENTS = REPO_ROOT / "source" / "research" / "agents"
+PRACTICE_AGENTS = REPO_ROOT / "source" / "practice" / "agents"
 FETCHER = AGENTS / "legislation-fetcher.md"
 PLAYBOOK = SKILL_ROOT / "references" / "legislation-fetcher-playbook.md"
 
-LOCAL = "mcp__plugin_probanda_data__"
-BRIDGED = "mcp__remote-devices__plugin_probanda_data__"
+LOCAL = "mcp__plugin_practice_data__"
+BRIDGED = "mcp__remote-devices__plugin_practice_data__"
 GRANTED = (
     "skill_source__read",
     "sources__fetch",
@@ -47,7 +48,7 @@ TOUCHED = (
     SHARED / "statute-currency.md",
     SHARED / "knowledge-tree.md",
     AGENTS / "research-paralegal.md",
-    AGENTS / "localize-helper.md",
+    PRACTICE_AGENTS / "localize-helper.md",
 )
 
 
@@ -103,8 +104,8 @@ class AgentTests(unittest.TestCase):
         self.assertIn("legal-research/references/legislation-fetcher-playbook.md", read(FETCHER))
 
     def test_both_allowlisted_agents_grant_sources_fetch_under_both_names(self):
-        for name in ("localize-helper.md", "legislation-fetcher.md"):
-            tools = granted_tools(AGENTS / name)
+        for folder, name in ((PRACTICE_AGENTS, "localize-helper.md"), (AGENTS, "legislation-fetcher.md")):
+            tools = granted_tools(folder / name)
             for prefix in (LOCAL, BRIDGED):
                 with self.subTest(agent=name, prefix=prefix):
                     self.assertIn(prefix + "sources__fetch", tools)

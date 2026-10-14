@@ -1,0 +1,14 @@
+{
+  "canlii": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/canlii-mcp/dist/canlii-mcp.js"
+    ]
+  },
+  "commons": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/commons-mcp/dist/legal-commons-mcp.js"
+    ]
+  }
+}

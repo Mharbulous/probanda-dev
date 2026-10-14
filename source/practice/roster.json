@@ -1,0 +1,43 @@
+{
+  "ar-follow-up": [],
+  "bill-client": [],
+  "build-timeline": [
+    "scripts"
+  ],
+  "case-data": [],
+  "executive-assistant": [],
+  "file-naming": [
+    "scripts"
+  ],
+  "file-review-prep": [],
+  "file-sorting": [],
+  "find-document": [],
+  "housekeeping": [],
+  "ingest": [],
+  "invoice-reviewing": [],
+  "invoice-tracking": [],
+  "localize": [],
+  "matter-status-tracking": [],
+  "plugin-fix": [],
+  "practice-data": [],
+  "reflect": [],
+  "retainer-tracking": [],
+  "route-accounting": [],
+  "rule-update": [],
+  "safe-file-deletion": [
+    "hooks"
+  ],
+  "show-me": [
+    "hooks",
+    "scripts"
+  ],
+  "task-prioritization": [],
+  "time-entry-drafting": [],
+  "time-pipeline-data": [],
+  "time-sorting": [],
+  "timecamping": [],
+  "timecamping-data": [
+    "scripts"
+  ],
+  "wip-tracker": []
+}

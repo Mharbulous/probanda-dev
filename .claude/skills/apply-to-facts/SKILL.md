@@ -146,7 +146,7 @@ wrong skill and the work belongs to its owner:
 |---|---|
 | Interest owed under a judgment or statute | ``/calculate`` with ``court-interest-calculator`` |
 | Interest owed under a contract's own term | ``/calculate`` with ``contract-interest-rates`` |
-| A date, a deadline, or the deadline register | the ``probanda:docket-clerk`` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
+| A date, a deadline, or the deadline register | the ``practice:docket-clerk`` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
 | The application itself, or a response to one | ``draft`` |
 
 These run in both directions. A conclusion this skill reaches often needs one of them to turn

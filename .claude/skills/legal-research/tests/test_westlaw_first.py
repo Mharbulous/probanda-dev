@@ -18,7 +18,10 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
-LITIGATION = REPO_ROOT / "source" / "probanda"
+SOURCE = REPO_ROOT / "source"
+# Every plugin's source folder. The research plugin ships these agents and the CanLII server.
+PLUGIN_SOURCES = sorted(p.parent for p in SOURCE.glob("*/roster.json"))
+LITIGATION = SOURCE / "research"
 RESEARCH_LAWYER = LITIGATION / "agents" / "research-agent.md"
 PARALEGAL_COPIES = (
     LITIGATION / "agents" / "research-paralegal.md",
@@ -27,9 +30,9 @@ HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
 CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "index.ts"
 CANLII_DIST = LITIGATION / "canlii-mcp" / "dist" / "canlii-mcp.js"
 
-CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_probanda_canlii__(.+)$")
-LOCAL = "mcp__plugin_probanda_canlii__"
-BRIDGED = "mcp__remote-devices__plugin_probanda_canlii__"
+CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_research_canlii__(.+)$")
+LOCAL = "mcp__plugin_research_canlii__"
+BRIDGED = "mcp__remote-devices__plugin_research_canlii__"
 LEGISLATION_TOOLS = ("get_legislation_databases", "browse_legislation",
                      "get_legislation_regulation_metadata")
 CITATOR_ALLOW_LIST = {"get_case_citator", "get_case_citator_tease", "configure_status"}
@@ -108,11 +111,12 @@ def run_hook(tool_name, **extra):
 
 
 def plugin_files():
-    """Every file the Probanda plugin ships or serves: the plugin tree, and the
+    """Every file the Probanda plugins ship or serve: each plugin's tree, and the
     skill source its skill_source mirror carries (its roster plus shared/)."""
-    roots = [LITIGATION, SHARED]
-    roster = json.loads((LITIGATION / "roster.json").read_text(encoding="utf-8"))
-    roots += [SKILLS_ROOT / name for name in roster]
+    roots = [*PLUGIN_SOURCES, SHARED]
+    for source in PLUGIN_SOURCES:
+        roster = json.loads((source / "roster.json").read_text(encoding="utf-8"))
+        roots += [SKILLS_ROOT / name for name in roster]
     for root in roots:
         for path in root.rglob("*"):
             if path.is_file() and not SKIPPED_DIRS.intersection(path.relative_to(root).parts):
@@ -303,7 +307,7 @@ class CanliiServerTests(unittest.TestCase):
 
 
 class InAgentHookTests(unittest.TestCase):
-    AUDIT_AGENTS = ("probanda:research-agent", "probanda:audit-agent")
+    AUDIT_AGENTS = ("research:research-agent",)
 
     def test_audit_agents_are_blocked_from_every_non_citator_canlii_tool(self):
         for agent_type in self.AUDIT_AGENTS:
@@ -327,11 +331,11 @@ class InAgentHookTests(unittest.TestCase):
         for tool in LEGISLATION_TOOLS:
             with self.subTest(tool=tool):
                 result = run_hook(LOCAL + tool, agent_id="a1",
-                                  agent_type="probanda:research-paralegal")
+                                  agent_type="research:research-paralegal")
                 self.assertEqual(result.returncode, 2, result.stderr)
 
     def test_every_agent_may_run_legislation_currency(self):
-        for agent_type in self.AUDIT_AGENTS + ("probanda:research-paralegal",):
+        for agent_type in self.AUDIT_AGENTS + ("research:research-paralegal",):
             with self.subTest(agent_type=agent_type):
                 result = run_hook(LOCAL + "legislation_currency", agent_id="a1", agent_type=agent_type)
                 self.assertEqual(result.returncode, 0, result.stderr)
