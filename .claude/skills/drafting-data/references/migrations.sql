@@ -4933,3 +4933,39 @@ ALTER TABLE seeds ADD COLUMN discarded_at TEXT;
 ALTER TABLE seeds ADD COLUMN suggested_at TEXT;
 
 UPDATE db_meta SET value = '75' WHERE key = 'schema_version';
+
+-- MIGRATE 75 -> 76
+-- A job records the sources its work goes on to get (Brahm, 2026-10-13). A research job is created
+-- with one step, and the decisions, enactments and files the research then names were recorded
+-- nowhere on it, so an interrupted job held no record of what was about to be retrieved.
+--
+-- 1. ticket_sources: one row per source to get on a job. kind is what is retrieved, never a legal
+--    category. label is a citation, an instrument's title and citation, or a file name: no statement
+--    of law, no deadline, and no date other than the one inside a citation. A row is open until
+--    closed_at is set with its outcome; reason is a short mechanical status, on either outcome.
+--    Written only by drafting_data__track_source, under the job's lock.
+--
+-- Why a table of its own and not ticket_steps rows: the steps are the approved plan, in the
+-- practitioner's words. A Change deletes and recreates them (jobs-run.md section 5), which would
+-- drop these rows, and the practitioner-words gate does not read a step appended without a delete,
+-- so a session's item would stand as the practitioner's. The rows key to the job, not to a step,
+-- because a step's ordinal names different work after a Change (section 6).
+--
+-- Job process state (ADR 0009), like ticket_answers, so no revision triggers: adding or closing a
+-- source never archives a mockup. Additive: one CREATE TABLE, whose UNIQUE serves the read by job;
+-- no row changes and no revision moves.
+CREATE TABLE ticket_sources (
+    id        INTEGER PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    kind      TEXT NOT NULL CHECK (kind IN ('decision', 'legislation', 'file')),
+    label     TEXT NOT NULL,
+    added_at  TEXT NOT NULL,
+    closed_at TEXT,
+    outcome   TEXT CHECK (outcome IN ('got', 'not_retrieved')),
+    reason    TEXT,
+    CHECK ((closed_at IS NULL) = (outcome IS NULL)),
+    CHECK (reason IS NULL OR outcome IS NOT NULL),
+    UNIQUE (ticket_id, kind, label)
+);
+
+UPDATE db_meta SET value = '76' WHERE key = 'schema_version';

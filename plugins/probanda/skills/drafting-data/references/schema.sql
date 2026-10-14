@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 75
+-- Current version: db_meta.schema_version = 76
 
 
 CREATE TABLE db_meta (
@@ -1434,3 +1434,17 @@ CREATE TABLE rule_served (
 );
 
 CREATE INDEX idx_rule_served_rule ON rule_served(rule_id);
+
+CREATE TABLE ticket_sources (
+    id        INTEGER PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    kind      TEXT NOT NULL CHECK (kind IN ('decision', 'legislation', 'file')),
+    label     TEXT NOT NULL,
+    added_at  TEXT NOT NULL,
+    closed_at TEXT,
+    outcome   TEXT CHECK (outcome IN ('got', 'not_retrieved')),
+    reason    TEXT,
+    CHECK ((closed_at IS NULL) = (outcome IS NULL)),
+    CHECK (reason IS NULL OR outcome IS NOT NULL),
+    UNIQUE (ticket_id, kind, label)
+);
