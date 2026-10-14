@@ -1201,6 +1201,35 @@ def check_bundle_no_host_path(repo, plugin):
     return not host_hits, "; ".join(host_hits)
 
 
+BAKED_SCHEMA = re.compile(r"BAKED_SCHEMA_VERSION = (?:false|true|[^?\n]+)\s*\?\s*null\s*:\s*(\d+)")
+ENGINE_TARGET = re.compile(r"^TARGET_SCHEMA_VERSION\s*=\s*(\d+)\s*$", re.M)
+
+
+def check_bundle_schema_ceiling(repo, plugin):
+    """The data bundle's baked drafting-data schema version equals the migration source's target.
+
+    scripts/bundle.mjs bakes TARGET_SCHEMA_VERSION into the bundle at build time
+    (src/submission/schema-ceiling.ts). A migrate_engine.py hop committed without a
+    rebuilt bundle ships an install whose migration source is ahead of its renderers:
+    open_session then withholds every migration and renders nothing. 3935943 (74 over
+    a 73 bundle), 78ffce8 (75 over 74) and 7d09fd6 (76 over 74) each reached main so."""
+    data_js = server_path(repo, plugin, "data", *DATA_BUNDLE)
+    engine = os.path.join(skills_root(repo), "drafting-data", "references", "scripts", "migrate_engine.py")
+    if not os.path.isfile(data_js):
+        return False, "/".join((plugin_layout.SERVER_DIRS["data"],) + DATA_BUNDLE) + " not found"
+    with open(data_js, encoding="utf-8") as f:
+        baked = BAKED_SCHEMA.search(f.read())
+    with open(engine, encoding="utf-8") as f:
+        target = ENGINE_TARGET.search(f.read())
+    if not baked or not target:
+        return False, ("no baked schema version in the data bundle" if not baked
+                       else "no TARGET_SCHEMA_VERSION in drafting-data's migrate_engine.py")
+    if baked.group(1) != target.group(1):
+        return False, (f"the migration source targets schema {target.group(1)} but the data bundle was built "
+                       f"against {baked.group(1)}: rebuild the bundle (/repackage) before this ships")
+    return True, f"both at schema {target.group(1)}"
+
+
 def check_inverse_reference(repo, plugin):
     needles = COMMONS_AGENTS
     inv_hits = []
@@ -1296,6 +1325,8 @@ CHECKS = (
     ("recital-rule-mirror: every inline copy of the recital rule matches "
      "authority-claim-verification.md §3", check_recital_rule_mirror),
     ("bundle-no-host-path: no dist bundle contains an absolute host path", check_bundle_no_host_path),
+    ("bundle-schema-ceiling: the data bundle is built against the drafting-data migration source's "
+     "target schema version", check_bundle_schema_ceiling),
     ("inverse-reference: no roster skill or non-commons agent names a commons agent", check_inverse_reference),
     ("shipped-tree-purity: the built plugin's skills folder is exactly the roster + extra-tree source "
      "(roster SKILL.md + preamble), VISION.md ships from source, with no host path or matter code "

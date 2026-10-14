@@ -1946,8 +1946,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
         "filings at all (issue 351) -- call " +
         "drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the " +
-        "installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- rebuild/reinstall " +
-        "the plugin, not drafting_data__migrate. Every response also reports build_stamp and current_build_stamp; " +
+        "installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- never " +
+        "drafting_data__migrate; the note names the next step for its case: fully restart the app when the plugin " +
+        "installed on disk is a newer build than the one running, otherwise run /repackage, reinstall the plugin and " +
+        "fully restart the app. Every response also reports build_stamp and current_build_stamp; " +
         "server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also " +
         "carries schema_target_version (what the migration source would apply), bundle_schema_version (what this " +
         "bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge " +

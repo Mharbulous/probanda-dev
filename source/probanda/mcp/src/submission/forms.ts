@@ -58,7 +58,7 @@ import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path
 import { buildStampStatus, type BuildStampStatus } from "../build-stamp.js";
 import { submissionDataQuery } from "./backend.js";
 import { currentSchemaVersion } from "./migrate.js";
-import { renderableSchemaVersion, type SchemaSourceStatus, schemaSourceStatus } from "./schema-ceiling.js";
+import { bundleNextStep, renderableSchemaVersion, type SchemaSourceStatus, schemaSourceStatus } from "./schema-ceiling.js";
 import {
   freshManifest,
   legacyMockupDirs,
@@ -2263,8 +2263,7 @@ export function submissionFormsBootstrap(
       note:
         `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. ` +
         "No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can " +
-        "crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than " +
-        "this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__bootstrap again.",
+        "crash inside a renderer or produce wrong output. " + bundleNextStep("database"),
       timings: withTotal(timings, started),
     };
   }
@@ -2285,8 +2284,7 @@ export function submissionFormsBootstrap(
           `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it ` +
           `to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. ` +
           "The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and " +
-          "nothing was copied aside. No filing was listed and nothing was rendered. Rebuild and reinstall the Probanda " +
-          "plugin so its bundle matches the migration source, then start a new session.",
+          "nothing was copied aside. No filing was listed and nothing was rendered. " + bundleNextStep("source"),
         timings: withTotal(timings, started),
       };
     }
