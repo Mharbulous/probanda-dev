@@ -272,6 +272,10 @@ function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "m
  * `draftDir` is already confined (resolveDraftDir, or the parent of a confined presentation folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
+ * `reuse.only` names the one filing whose Job Board page and view pages are built and written, with
+ * the Litigation Strategy: the background render job passes the filing it just rendered, and writes
+ * every page once after its last, because building them all after every filing costs the square of
+ * the filing count.
  */
 export function writeMatterPages(
   dbPath: string,
@@ -284,7 +288,7 @@ export function writeMatterPages(
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
   timings: PhaseTimings,
-  reuse: { ranked?: Ranked[]; section?: WorkBoardData } = {}
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
 ): PagesWritten {
   return timed(timings, "matter_pages", () => {
     const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
@@ -301,8 +305,14 @@ export function writeMatterPages(
       rendered: now,
     };
     const own = reuse.section;
+    // What this call builds and writes: every page, or one filing's.
+    const { only } = reuse;
+    const liveWritten = only === undefined ? live : live.filter((r) => r.filing.id === only);
+    const preFilingWritten = only === undefined ? preFiling : [];
+    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+    const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
     const pages = [
-      ...live.map((r) => {
+      ...liveWritten.map((r) => {
         // A Job Board with no Writing has no mockup folder, so none is looked up for it.
         const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
         return {
@@ -312,7 +322,7 @@ export function writeMatterPages(
           views: views.filter((v) => v.filing.id === r.filing.id).map((v) => ({ name: v.page.name, file: v.file })),
         };
       }),
-      ...preFiling.map((p) => ({
+      ...preFilingWritten.map((p) => ({
         proceeding: p,
         section:
           own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
@@ -335,7 +345,7 @@ export function writeMatterPages(
           section.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null),
       })
     );
-    const viewPages = views.map((v) =>
+    const viewPages = viewsWritten.map((v) =>
       renderViewPageHtml(
         v.page,
         { filing: v.filing.title, matter: meta.matter, client: meta.client, revision, rendered: now },
@@ -345,8 +355,8 @@ export function writeMatterPages(
     const swept = sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]);
     const matterBoardPath = join(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targets.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));
-    views.forEach((v, i) => writePage(join(draftDir, v.file), viewPages[i]));
+    targetsWritten.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));
+    viewsWritten.forEach((v, i) => writePage(join(draftDir, v.file), viewPages[i]));
     return {
       job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: matterBoardPath,

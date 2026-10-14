@@ -71,6 +71,8 @@ export interface RenderJobOptions {
   render: (filingId: number) => void;
   /** True when the filing's mockups already match what `render` would produce now. */
   isFresh: (filingId: number) => boolean;
+  /** Runs once after the last filing, when this job rendered any, before it reports done. Throws on failure. */
+  settle?: () => void;
   env?: NodeJS.ProcessEnv;
 }
 
@@ -92,6 +94,7 @@ interface Job {
   skip: Set<number>;
   render: (filingId: number) => void;
   isFresh: (filingId: number) => boolean;
+  settle?: () => void;
   promise: Promise<JobSummary>;
   resolve: (summary: JobSummary) => void;
 }
@@ -272,7 +275,16 @@ function step(job: Job): void {
     }
 
     job.status.current = job.status.queued.shift() ?? null;
-    if (job.status.current === null) job.status.state = "done";
+    if (job.status.current === null) {
+      job.status.state = "done";
+      if (job.settle && job.rendered.length > 0) {
+        try {
+          job.settle();
+        } catch (err) {
+          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso() };
+        }
+      }
+    }
     try {
       utimesSync(job.lockFile, new Date(), new Date());
     } catch {
@@ -373,6 +385,7 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
     skip: new Set(),
     render: options.render,
     isFresh: options.isFresh,
+    ...(options.settle ? { settle: options.settle } : {}),
     promise,
     resolve,
   };

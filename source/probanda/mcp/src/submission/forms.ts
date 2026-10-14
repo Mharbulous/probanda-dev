@@ -2369,7 +2369,8 @@ function renderStateOf(dbPath: string, filingId: number, client: ClientContext):
  * only when all three client fields were supplied (#588 §6): a stamp built from the fallbacks would
  * miss at step 6 anyway. An empty queue still starts a job, which writes `done` at once and so
  * replaces a status file a killed job left behind. After each filing it renders, the job rewrites
- * the matter's pages bootstrap wrote (#1365), with the to-dos the last registry read recorded
+ * that filing's pages and the Litigation Strategy, and after the last every page bootstrap wrote
+ * (#1365), so the work per filing does not grow with the matter's size, with the to-dos the last registry read recorded
  * and the hearing dates its caller read, held in this closure and never persisted (ADR 0013,
  * 2026-10-04 amendment); a page write that fails is recorded on failed[] like a render that fails.
  */
@@ -2379,6 +2380,8 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
   const complete = client.clientName !== undefined && client.clientNo !== undefined && client.matterNo !== undefined;
   // A Job Board with no Writing has no mockup to render.
   const queue = complete ? result.filings.filter((f) => !f.retired_on && !f.job_board_only && f.render_state !== "fresh").map((f) => f.filing_id) : [];
+  const pages = (only?: number) =>
+    writeMatterPages(dbPath, dirname(result.matter_board_path as string), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === undefined ? {} : { only });
   return startRenderJob({
     dbPath,
     ...(result.matter_board_path ? { draftDir: dirname(result.matter_board_path) } : {}),
@@ -2386,10 +2389,9 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
       if (rendered.note) throw new Error(rendered.note);
-      if (result.matter_board_path) {
-        writeMatterPages(dbPath, dirname(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, []);
-      }
+      if (result.matter_board_path) pages(filingId);
     },
     isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh",
+    ...(result.matter_board_path ? { settle: () => pages() } : {}),
   });
 }

@@ -1,4 +1,4 @@
-// build-stamp: 207f88e5a425
+// build-stamp: 0f7128a67937
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6260,7 +6260,7 @@ var require_discriminator = __commonJS({
       error: error2,
       code(cxt) {
         const { gen, data, schema, parentSchema, it: it3 } = cxt;
-        const { oneOf: oneOf2 } = parentSchema;
+        const { oneOf: oneOf3 } = parentSchema;
         if (!it3.opts.discriminator) {
           throw new Error("discriminator: requires discriminator option");
         }
@@ -6269,7 +6269,7 @@ var require_discriminator = __commonJS({
           throw new Error("discriminator: requires propertyName");
         if (schema.mapping)
           throw new Error("discriminator: mapping is not supported");
-        if (!oneOf2)
+        if (!oneOf3)
           throw new Error("discriminator: requires oneOf keyword");
         const valid = gen.let("valid", false);
         const tag = gen.const("tag", (0, codegen_1._)`${data}${(0, codegen_1.getProperty)(tagName)}`);
@@ -6297,8 +6297,8 @@ var require_discriminator = __commonJS({
           const oneOfMapping = {};
           const topRequired = hasRequired(parentSchema);
           let tagRequired = true;
-          for (let i3 = 0; i3 < oneOf2.length; i3++) {
-            let sch = oneOf2[i3];
+          for (let i3 = 0; i3 < oneOf3.length; i3++) {
+            let sch = oneOf3[i3];
             if ((sch === null || sch === void 0 ? void 0 : sch.$ref) && !(0, util_1.schemaHasRulesButRef)(sch, it3.self.RULES)) {
               const ref = sch.$ref;
               sch = compile_1.resolveRef.call(it3.self, it3.schemaEnv.root, it3.baseId, ref);
@@ -78089,6 +78089,44 @@ function submissionDataToolDefinitions() {
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
+      name: submissionDataPrefixed("track_source"),
+      description: "Record the sources to get on the job (a tickets row) this session holds, and close them, in one call. A source to get is a decision, an enactment or a file the job's work has named and is about to retrieve or read; it is the job's own record beside its steps and never a step. add takes {kind, label} items, kind one of decision, legislation, file, label one line of at most 200 characters: a citation, an instrument's title and citation, or a file name, with no statement of law, no deadline and no date other than the one inside a citation. Adding an item already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's database needs the v76 migration, and carry on with the work). Returns ticket_id, outcome, sources (every source on the job, open and closed), open, unknown (close items naming no source on the job), locked_by, status, rejected_at and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+          add: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { kind: { type: "string", enum: ["decision", "legislation", "file"] }, label: { type: "string" } },
+              required: ["kind", "label"],
+              additionalProperties: false
+            }
+          },
+          close: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                kind: { type: "string", enum: ["decision", "legislation", "file"] },
+                label: { type: "string" },
+                outcome: { type: "string", enum: ["got", "not_retrieved"] },
+                reason: { type: "string" }
+              },
+              required: ["kind", "label", "outcome"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description: "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. Only the status (back to queued) and the lock change; the plan, its approval, the steps and their stamps, scope and proposals stay. By default the write matches only a wip job holding this session's token. expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with jobs), releases another session's job instead, and the write lands only while that holder is still on the row and the job is not shelved; pass it only after the practitioner chose Return it to Ready on /draft's take-over form. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: released (changes 1), taken_over (another holder is on the row, or with expected_holder the holder changed since the card was read: nothing was written; re-render), shelved (no lock, rejected_at set), completed, no_match (the guards matched nothing, and the returned status shows why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at and a note.",
       inputSchema: {
@@ -78202,7 +78240,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -84644,6 +84682,12 @@ function courtRecordDocumentColumns(dbPath, alias) {
 function liveTicketClause(dbPath, alias) {
   return deletedAtHeld(dbPath) ? ` AND ${alias === void 0 ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
+function seedClosedColumns(dbPath) {
+  return rows(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at') ORDER BY name").map((c3) => c3.name);
+}
+function liveSeedClause(dbPath) {
+  return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
+}
 function fetchFilingLaw(dbPath, filingId) {
   return rows(
     dbPath,
@@ -84682,7 +84726,7 @@ function fetchLatestActivity(dbPath, proceedingId) {
        UNION ALL SELECT filing_id, plan_approved_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT filing_id, completed_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT t.filing_id, s.done_at FROM ticket_steps s JOIN tickets t ON t.id = s.ticket_id WHERE t.proceeding_id = ?${liveTicketClause(dbPath, "t")}
-       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL
+       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL${liveSeedClause(dbPath)}
      ) WHERE ts IS NOT NULL GROUP BY filing_id`,
     [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
   );
@@ -84858,7 +84902,7 @@ function withPartiesDriftLines(markdown, rows21) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 74;
+var BAKED_SCHEMA_VERSION = false ? null : 76;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -85055,7 +85099,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "207f88e5a425";
+var BUILD_STAMP = false ? null : "0f7128a67937";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85452,7 +85496,16 @@ function step(job) {
       job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
     }
     job.status.current = job.status.queued.shift() ?? null;
-    if (job.status.current === null) job.status.state = "done";
+    if (job.status.current === null) {
+      job.status.state = "done";
+      if (job.settle && job.rendered.length > 0) {
+        try {
+          job.settle();
+        } catch (err) {
+          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+        }
+      }
+    }
     try {
       utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
     } catch {
@@ -85537,6 +85590,7 @@ function startRenderJob(options) {
     skip: /* @__PURE__ */ new Set(),
     render: options.render,
     isFresh: options.isFresh,
+    ...options.settle ? { settle: options.settle } : {},
     promise,
     resolve: resolve7
   };
@@ -89635,6 +89689,14 @@ async function submissionDataCreateWriting(args, seams = {}) {
     throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Job Board with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
   }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
+  const styleSuffix = proceeding.style_of_cause ? ` - ${proceeding.style_of_cause}` : null;
+  const title = args.title.trim();
+  if (styleSuffix !== null && title.endsWith(styleSuffix)) {
+    throw new ValidationError(
+      `${TOOL}.title "${title}" ends with the proceeding's style of proceeding; a title names the Writing only. Nothing was written. Pass "${title.slice(0, -styleSuffix.length).trim()}" instead.`,
+      "title_holds_style"
+    );
+  }
   const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding }, seams);
   const signer = chooseSigner(built.stored.layout, args, proceeding, env, seams.caseDataRoot);
   const statements = [
@@ -90043,6 +90105,112 @@ function renderGeneral(ctx, stored, cited2) {
   return { markdown: [header, ...lines2].join("\n").trimEnd() + "\n", unwritten: [...new Set(state.unwritten)], currency_withheld: state.currency_withheld, prose_format: state.prose_format };
 }
 
+// src/submission/forms/track-source.ts
+var TOOL3 = "drafting_data__track_source";
+var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var KINDS = ["decision", "legislation", "file"];
+var OUTCOMES = ["got", "not_retrieved"];
+var LABEL_MAX = 200;
+var REASON_MAX = 60;
+var ticketSourcesHeldDbs = /* @__PURE__ */ new Set();
+function ticketSourcesHeld(dbPath) {
+  if (ticketSourcesHeldDbs.has(dbPath)) return true;
+  const [{ n: n3 }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows;
+  if (n3 > 0) ticketSourcesHeldDbs.add(dbPath);
+  return n3 > 0;
+}
+function oneLine(value, field, max) {
+  if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
+    throw new ValidationError(`${TOOL3}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
+  }
+  return value.trim();
+}
+function oneOf2(value, field, allowed) {
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new ValidationError(`${TOOL3}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
+  }
+  return value;
+}
+async function submissionDataTrackSource(args, env = process.env) {
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL3}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const id = args.ticket_id;
+  const token = args.session_token;
+  const add = (args.add ?? []).map((a3) => ({ kind: oneOf2(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
+  const close = (args.close ?? []).map((c3) => ({
+    kind: oneOf2(c3.kind, "close.kind", KINDS),
+    label: oneLine(c3.label, "close.label", LABEL_MAX),
+    outcome: oneOf2(c3.outcome, "close.outcome", OUTCOMES),
+    reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
+  }));
+  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
+    throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+  }
+  if (!ticketSourcesHeld(args.db_path)) {
+    throw new ValidationError(
+      `${TOOL3}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
+      "schema_below_v76"
+    );
+  }
+  const held = "EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const statements = [
+    ...add.flatMap((a3) => [
+      {
+        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
+        params: [id, a3.kind, a3.label, id, token]
+      },
+      {
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`,
+        params: [a3.kind, a3.label, id, token]
+      }
+    ]),
+    ...close.map((c3) => ({
+      sql: `UPDATE ticket_sources SET closed_at = ${NOW}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
+      params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, token]
+    }))
+  ];
+  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, statements, env);
+  const [read2] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows;
+  if (read2 === void 0) throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+  const sources = submissionDataQuery(args.db_path, "SELECT id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id = ? ORDER BY id", [id]).rows;
+  const open = sources.filter((s3) => s3.closed_at === null).length;
+  const on2 = new Set(sources.map((s3) => `${s3.kind}: ${s3.label}`));
+  let outcome;
+  let note;
+  let unknown2 = [];
+  if (read2.locked_by === token) {
+    outcome = "recorded";
+    unknown2 = close.map((c3) => `${c3.kind}: ${c3.label}`).filter((k3) => !on2.has(k3));
+    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown2.length > 0 ? ` ${unknown2.length} close item${unknown2.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
+  } else if (read2.locked_by !== null) {
+    outcome = "not_held";
+    note = `Nothing was written: another session holds job ${id} (taken over). Dispatch nothing for this job; report it and stop.`;
+  } else if (read2.rejected_at !== null) {
+    outcome = "shelved";
+    note = `Nothing was written: job ${id} is shelved (rejected_at ${read2.rejected_at}). Dispatch nothing for this job; report it and stop.`;
+  } else if (read2.status === "completed") {
+    outcome = "completed";
+    note = `Nothing was written: job ${id} is completed. Dispatch nothing for this job; report it and stop.`;
+  } else {
+    outcome = "no_match";
+    note = `Nothing was written: job ${id} is status=${read2.status} with no holder, so the guards matched nothing. Dispatch nothing for this job; report it and stop.`;
+  }
+  return {
+    ticket_id: id,
+    outcome,
+    sources,
+    open,
+    unknown: unknown2,
+    locked_by: read2.locked_by,
+    status: read2.status,
+    rejected_at: read2.rejected_at,
+    note,
+    ...written?.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms/render-work-board.ts
 function rows4(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -90133,6 +90301,7 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const proposalRows = proceedingIds.length === 0 ? [] : rows4(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
   const captures = proceedingIds.length === 0 ? [] : rows4(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
   const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows4(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows4(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
   const blockersOf = /* @__PURE__ */ new Map();
   for (const b3 of blocks2) blockersOf.set(b3.blocked_id, [...blockersOf.get(b3.blocked_id) ?? [], b3.blocker_id]);
   const conflictsOf = /* @__PURE__ */ new Map();
@@ -90145,6 +90314,7 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const proposalsByTicket = groupBy(proposalRows, (p3) => p3.ticket_id);
   const capturesByTicket = groupBy(captures, (s3) => s3.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a3) => a3.ticket_id);
+  const sourcesByTicket = groupBy(sourceRows, (s3) => s3.ticket_id);
   const retiredOn = new Map(rows4(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
   const edge = (id) => {
     const other = ticketById.get(id);
@@ -90192,11 +90362,13 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
       dispatch_skips: [],
       lock_note: category === "wip" && t3.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t3.id) ?? []).map((a3) => ({ file_path: a3.file_path, saved_at: a3.saved_at })),
+      sources: (sourcesByTicket.get(t3.id) ?? []).map((s3) => ({ kind: s3.kind, label: s3.label, outcome: s3.outcome, reason: s3.reason })),
       last_activity_at: latestStamp([
         t3.locked_at,
         ...(stepsByTicket.get(t3.id) ?? []).map((s3) => s3.done_at),
         ...(capturesByTicket.get(t3.id) ?? []).map((s3) => s3.created),
-        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at)
+        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at),
+        ...(sourcesByTicket.get(t3.id) ?? []).flatMap((s3) => [s3.added_at, s3.closed_at])
       ])
     };
     return { filing_id: t3.filing_id, ticket };
@@ -90212,18 +90384,43 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
       if (material.length > 0) ticket.dispatch_skips.push({ reason: "shared_material", job: held.id, material });
     }
   }
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
 }
 function columnHeld(dbPath, table, column) {
   return rows4(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
 }
-function openSeedCondition(deletedIds) {
+function openSeedCondition(dbPath, deletedIds) {
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})`, params: deletedList };
+  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
+}
+function fetchDiscardedSeeds(dbPath, proceedingId) {
+  if (seedClosedColumns(dbPath).length < 2) return [];
+  return rows4(
+    dbPath,
+    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
+    [proceedingId]
+  );
+}
+var discardedSeedLines = (seeds) => seeds.map((s3) => ({ id: s3.id, idea: s3.idea, discarded_at: s3.discarded_at, suggested_at: s3.suggested_at }));
+function fetchResolvedSeeds(dbPath, proceedingId) {
+  const closed = seedClosedColumns(dbPath);
+  const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
+  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  return rows4(
+    dbPath,
+    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
+     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
+     WHERE s.proceeding_id = ? AND (${resolved})`,
+    [proceedingId]
+  ).map((r3) => {
+    if (r3.discarded_at !== null) return { id: r3.id, idea: r3.idea, how: "discarded", at: r3.discarded_at, job_id: null, job_title: null };
+    if (r3.suggested_at !== null) return { id: r3.id, idea: r3.idea, how: "suggested", at: r3.suggested_at, job_id: null, job_title: null };
+    return { id: r3.id, idea: r3.idea, how: "job", at: r3.job_created, job_id: r3.job_id, job_title: r3.job_title };
+  }).sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1);
 }
 function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(dbPath, deletedIds);
   const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
   const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
   const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
@@ -90689,6 +90886,7 @@ function buildWorkBoardData(ctx, deadlines3 = []) {
     tickets: gated,
     seeds,
     deleted: board.deleted.filter((d3) => onFilingBoard(d3.filing_id, ctx.filing.id)).map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
@@ -90725,6 +90923,7 @@ function buildJobOnlyBoardData(ctx) {
     tickets: board.tickets.filter((t3) => t3.filing_id === own).map((t3) => withIdleFlag(t3.ticket, ctx.rendered, idleHours)),
     seeds: board.seeds.filter((s3) => s3.filing_id === own).map((s3) => ({ ...s3, from_filing: null })),
     deleted: board.deleted.filter((d3) => d3.filing_id === own).map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s3) => s3.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: []
@@ -90751,6 +90950,7 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
     tickets: board.tickets.map((t3) => withIdleFlag(t3.ticket, meta2.rendered, idleHours)),
     seeds: board.seeds.map((s3) => ({ ...s3, from_filing: null })),
     deleted: board.deleted.map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: []
@@ -90758,13 +90958,13 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
 }
 
 // src/submission/forms/sent-write.ts
-var TOOL3 = "drafting_data__record_sent";
-var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL4 = "drafting_data__record_sent";
+var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 function refused(message, code) {
-  return new DataServerError(`${TOOL3}: ${message}`, code);
+  return new DataServerError(`${TOOL4}: ${message}`, code);
 }
 function rows5(dbPath, sql, params) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -90815,7 +91015,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     const job = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
     const statements2 = [
       {
-        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
+        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW2} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
         params: [filing.proceeding_id, filing.id, PRE_SEND_TITLE, PRE_SEND_INTENT, filing.id, anchor.billing_anchor, filing.id, PRE_SEND_TITLE],
         expect_changes: 1
       },
@@ -90838,7 +91038,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     if (step2.text.includes(WAIVER2) || label === void 0) continue;
     const c3 = byId.get(id);
     statements.push(
-      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
+      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW2} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
     );
   }
   let next = Math.max(0, ...steps.map((s3) => s3.ordinal));
@@ -90879,25 +91079,25 @@ function isCalendarDate(text4) {
 }
 function checkArgs(args) {
   if (!isCalendarDate(args.sent_on)) {
-    throw new ValidationError(`${TOOL3}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
+    throw new ValidationError(`${TOOL4}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
   }
   if (args.sent_copy_path === void 0 === (args.sent_copy_text === void 0)) {
-    throw new ValidationError(`${TOOL3} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
+    throw new ValidationError(`${TOOL4} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
   }
   if (args.sent_copy_path !== void 0) {
     if (![".eml", ".pdf", ".msg"].includes(extname(args.sent_copy_path).toLowerCase())) {
-      throw new ValidationError(`${TOOL3}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
+      throw new ValidationError(`${TOOL4}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync20(args.sent_copy_path)) throw new ValidationError(`${TOOL3}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync20(args.sent_copy_path)) throw new ValidationError(`${TOOL4}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
-    throw new ValidationError(`${TOOL3}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
+    throw new ValidationError(`${TOOL4}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
   }
 }
 async function submissionDataRecordSent(args, env = process.env) {
   checkArgs(args);
   const [filing] = rows5(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
-  if (filing === void 0) throw new NotFoundError(`${TOOL3}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL4}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
@@ -90916,7 +91116,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       "no_stored_text"
     );
   }
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL3, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL4, env);
   const held = unmetHeldCriteria(args.db_path, filing, latestInventory(args.db_path, filing, revision));
   const currency = unmetCurrencyCriterion(args.db_path, filing);
   if (currency !== null) held.push(currency);
@@ -90965,12 +91165,12 @@ async function submissionDataRecordSent(args, env = process.env) {
     statements.push(...gate.statements);
     if (waived.length > 0) {
       statements.push({
-        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
+        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW2} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
         params: [WAIVER2, args.send_anyway, ...job.params]
       });
     }
     statements.push({
-      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
+      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
       params: [...job.params, ...job.params],
       expect_changes: 1
     });
@@ -90979,8 +91179,8 @@ async function submissionDataRecordSent(args, env = process.env) {
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
-      { sql: `UPDATE ticket_steps SET done_at = ${NOW} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
-      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
+      { sql: `UPDATE ticket_steps SET done_at = ${NOW2} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
+      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);
@@ -91011,14 +91211,14 @@ async function submissionDataRecordSent(args, env = process.env) {
 }
 
 // src/submission/forms/filed-write.ts
-var TOOL4 = "drafting_data__record_filed";
+var TOOL5 = "drafting_data__record_filed";
 function refused2(message, code) {
-  return new DataServerError(`${TOOL4}: ${message}`, code);
+  return new DataServerError(`${TOOL5}: ${message}`, code);
 }
 async function submissionDataRecordFiled(args, env = process.env) {
-  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL4}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
+  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL5}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
-  if (filing === void 0) throw new NotFoundError(`${TOOL4}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL5}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused2(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused2(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused2(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
@@ -91026,7 +91226,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
     throw refused2(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL4, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL5, env);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -91055,19 +91255,19 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/assign-job.ts
-var TOOL5 = "drafting_data__assign_job";
-var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL6 = "drafting_data__assign_job";
+var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL5}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL6}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL5}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.takeover === true && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL5}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL6}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   if (args.takeover !== true && args.expected_holder !== void 0) {
-    throw new ValidationError(`${TOOL5}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL6}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
   const takeover = args.takeover === true;
   const live = liveTicketClause(args.db_path);
@@ -91077,11 +91277,11 @@ async function submissionDataAssignJob(args, env = process.env) {
   const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
   const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const params = [args.session_token, args.ticket_id, ...takeover ? [args.expected_holder.trim()] : [], ...creatorHeld ? [args.session_token, args.session_token] : []];
-  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW2} WHERE id = ? AND ${guard}`, params }], env);
+  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW3} WHERE id = ? AND ${guard}`, params }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
   const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read2] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL5}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL6}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
@@ -91127,25 +91327,25 @@ function createdAny(dbPath, sessionToken) {
 }
 
 // src/submission/forms/approve-plan.ts
-var TOOL6 = "drafting_data__approve_plan";
-var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL7 = "drafting_data__approve_plan";
+var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL6}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const [job] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps FROM tickets WHERE id = ?", [id]).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL6}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL6}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL7}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW3} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
+    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW4} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL6}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (changes === 1) {
@@ -94323,12 +94523,16 @@ ol.steps li.done::before{border-color:var(--done);background-color:var(--done);b
 :root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 ol.steps li.next{font-weight:500}
 ol.steps li.next::before{border-color:var(--ink)}
+p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
 
 /* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
    two spaces after the colon. */
 p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
 p.deleted s{white-space:pre-wrap}
 p.deleted a{color:inherit}
+/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
+   line in ordinary ink, unstruck. */
+p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
 
 /* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
    line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
@@ -94812,14 +95016,15 @@ function buildLooseIdeasData(dbPath, filing, env = process.env) {
   );
   const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
   const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  return { groups, ideas, api };
+  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
 }
 function looseIdeasMeta(data) {
   const ranked = data.ideas.filter((i3) => i3.rank !== null).length;
   return [
     ["Threads", String(data.ideas.length)],
     ["Ranked", String(ranked)],
-    ["Unsorted", String(data.ideas.length - ranked)]
+    ["Unranked", String(data.ideas.length - ranked)],
+    ["Resolved", String(data.resolved.length)]
   ];
 }
 var PAGE_CSS = String.raw`
@@ -94854,6 +95059,9 @@ article.idea.deferred{opacity:.55}
 .switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
 .switch[aria-checked=true] .knob{transform:translateX(13px)}
 .switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}
+.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle:not([hidden]) + .switch{margin-left:0}
 .chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}
 .chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}
@@ -94945,7 +95153,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
     var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
-    if (i.rank === null) rank.title = "Unsorted";
+    if (i.rank === null) rank.title = "Unranked";
     tags.appendChild(rank);
     if (i.rank !== null && i.group_label) {
       var group = el("span", "tag group", i.group_label);
@@ -94966,6 +95174,35 @@ var PAGE_SCRIPT = String.raw`(function () {
     });
     c.set(false);
     return c;
+  }
+
+  // A resolved thread, as its section's inert card: one line ending in how it left the board and the
+  // date. A discarded one is struck, with a Restore link that only copies the instruction to paste
+  // into a session; a suggested one and one outlined into a job are plain lines.
+  function resolvedLine(d) {
+    var date = d.at.slice(0, 10);
+    var thread = "Loose thread " + d.id + ":  " + d.idea;
+    if (d.how === "suggested") return { node: el("p", "suggested", thread + " *SUGGESTED* Suggested " + date), inert: true };
+    if (d.how === "job") return { node: el("p", "suggested", thread + " Became Job #" + d.job_id + ": " + d.job_title + " (job created " + date + ")"), inert: true };
+    var line = el("p", "deleted");
+    line.appendChild(el("s", "", thread));
+    line.appendChild(document.createTextNode(" *DISCARDED* "));
+    var restore = el("a", "", "Restore");
+    restore.href = "#";
+    var instruction = "restore loose thread #" + d.id;
+    // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
+    function showInstruction() { restore.textContent = instruction; }
+    restore.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { showInstruction(); return; }
+      navigator.clipboard.writeText(instruction).then(function () {
+        restore.textContent = "Copied";
+        setTimeout(function () { restore.textContent = "Restore"; }, 1500);
+      }, showInstruction);
+    });
+    line.appendChild(restore);
+    line.appendChild(document.createTextNode(" Discarded " + date));
+    return { node: line, inert: true };
   }
 
   var tablist = el("div", "tabs");
@@ -95020,7 +95257,8 @@ var PAGE_SCRIPT = String.raw`(function () {
 
   var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unsorted", "Unsorted", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("resolved", "Resolved", [], data.resolved.map(resolvedLine));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
@@ -95032,7 +95270,24 @@ var PAGE_SCRIPT = String.raw`(function () {
   var track = el("span", "track");
   track.appendChild(el("span", "knob"));
   toggle.appendChild(track);
-  if (rankedCards.length > 0) sections.ranked.h2.appendChild(toggle);
+  var showResolved = false;
+  var resolvedToggle = null;
+  if (data.resolved.length > 0) {
+    resolvedToggle = el("button", "resolved-toggle", "☐ Show/Hide Resolved Threads");
+    resolvedToggle.type = "button";
+    resolvedToggle.setAttribute("role", "checkbox");
+    resolvedToggle.setAttribute("aria-checked", "false");
+    resolvedToggle.addEventListener("click", function () {
+      showResolved = !showResolved;
+      resolvedToggle.textContent = showResolved ? "☑ Show/Hide Resolved Threads" : "☐ Show/Hide Resolved Threads";
+      resolvedToggle.setAttribute("aria-checked", String(showResolved));
+      apply();
+    });
+  }
+  if (rankedCards.length > 0) {
+    if (resolvedToggle) sections.ranked.h2.appendChild(resolvedToggle);
+    sections.ranked.h2.appendChild(toggle);
+  }
 
   // The break-out: every chip from a small cluster behind the switch to its place, at once, with
   // the row's height on the same timing. Reversed, the same motion gathers them back.
@@ -95070,7 +95325,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unsorted", "Unsorted"]];
+  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -95081,6 +95336,8 @@ var PAGE_SCRIPT = String.raw`(function () {
     tablist.appendChild(b);
     return b;
   });
+  // With nothing ranked the Ranked heading is hidden, so the checkbox ends the tab row.
+  if (resolvedToggle && rankedCards.length === 0) tablist.appendChild(resolvedToggle);
 
   var current = "all";
   function apply() {
@@ -95088,7 +95345,8 @@ var PAGE_SCRIPT = String.raw`(function () {
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var on = (current === "all" || current === name) && sections[name].cards.length > 0;
+      var shown = current === name || (current === "all" && (name !== "resolved" || showResolved));
+      var on = shown && sections[name].cards.length > 0;
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
@@ -95099,6 +95357,7 @@ var PAGE_SCRIPT = String.raw`(function () {
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
     empty.hidden = any;
+    if (resolvedToggle) resolvedToggle.hidden = current !== "all";
   }
   function select(b) {
     current = b.getAttribute("data-filter");
@@ -95403,6 +95662,18 @@ var TAIL2 = String.raw`</script>
         });
         body.appendChild(ol);
       }
+      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
+      // under a heading of their own and outside the step count.
+      if (t.sources.length > 0) {
+        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
+        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
+        var sources = el("ol", "steps");
+        t.sources.forEach(function (s) {
+          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
+          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
+        });
+        body.appendChild(sources);
+      }
 
       var dl = el("dl");
       if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
@@ -95425,16 +95696,11 @@ var TAIL2 = String.raw`</script>
       return card;
     }
 
-    // A deleted job (schema v54): one struck line in Completed, never a card. Its Restore link only
-    // copies the instruction for the practitioner to paste into a session. It writes to no database,
-    // file or server (ADR 0015, 2026-10-05 amendment). Two spaces follow the colon; the stylesheet keeps them.
-    function deletedLine(d) {
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
-      line.appendChild(document.createTextNode(" *DELETED* "));
+    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
+    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
+    function restoreLink(instruction) {
       var restore = el("a", "", "Restore");
       restore.href = "#";
-      var instruction = "restore job #" + d.id;
       // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
       function showInstruction() { restore.textContent = instruction; }
       restore.addEventListener("click", function (event) {
@@ -95445,7 +95711,27 @@ var TAIL2 = String.raw`</script>
           setTimeout(function () { restore.textContent = "Restore"; }, 1500);
         }, showInstruction);
       });
-      line.appendChild(restore);
+      return restore;
+    }
+
+    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
+    // colon; the stylesheet keeps them.
+    function deletedLine(d) {
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
+      line.appendChild(document.createTextNode(" *DELETED* "));
+      line.appendChild(restoreLink("restore job #" + d.id));
+      return line;
+    }
+
+    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
+    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
+    function discardedSeedLine(s) {
+      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
+      line.appendChild(document.createTextNode(" *DISCARDED* "));
+      line.appendChild(restoreLink("restore loose thread #" + s.id));
       return line;
     }
 
@@ -95762,13 +96048,14 @@ var TAIL2 = String.raw`</script>
     jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
     // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them.
+    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
+    // Either way the count is the open threads'.
     var threadsPage = views.filter(function (v) { return v.name === ${JSON.stringify(LOOSE_THREADS_PAGE_NAME)}; })[0];
-    if (threadsPage && data.seeds.length > 0) {
+    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
     } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard));
+      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
     }
     section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
@@ -96824,8 +97111,13 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       rendered: now
     };
     const own = reuse.section;
+    const { only } = reuse;
+    const liveWritten = only === void 0 ? live : live.filter((r3) => r3.filing.id === only);
+    const preFilingWritten = only === void 0 ? preFiling : [];
+    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+    const viewsWritten = only === void 0 ? views : views.filter((v3) => v3.filing.id === only);
     const pages = [
-      ...live.map((r3) => {
+      ...liveWritten.map((r3) => {
         const manifest = isJobOnlyBoard(r3.filing) ? null : readManifest(mockupDir(dbPath, r3.filing.id));
         return {
           proceeding: r3.proceeding,
@@ -96834,7 +97126,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
           views: views.filter((v3) => v3.filing.id === r3.filing.id).map((v3) => ({ name: v3.page.name, file: v3.file }))
         };
       }),
-      ...preFiling.map((p3) => ({
+      ...preFilingWritten.map((p3) => ({
         proceeding: p3,
         section: own !== void 0 && own.meta.filing_id === null && own.meta.proceeding_id === p3.id ? own : buildPreFilingBoardData(dbPath, p3, { revision, matter: meta2.matter, client: client.clientName ?? p3.matter_reference, rendered: now }),
         writings: [],
@@ -96844,7 +97136,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos));
     const jobBoards = pages.map(
       ({ proceeding, section: section2, writings, views: pageViews }) => renderWorkBoardHtml({
-        meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "" },
+        meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
         sections: [section2],
         dates: pageDates(dates, [section2]),
         writings,
@@ -96853,7 +97145,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
         court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname10(draftDir)).filter((a3) => a3.mismatch !== null)
       })
     );
-    const viewPages = views.map(
+    const viewPages = viewsWritten.map(
       (v3) => renderViewPageHtml(
         v3.page,
         { filing: v3.filing.title, matter: meta2.matter, client: meta2.client, revision, rendered: now },
@@ -96863,8 +97155,8 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const swept = sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]);
     const matterBoardPath = join23(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targets.forEach((t3, i3) => writePage(join23(draftDir, t3.file), jobBoards[i3]));
-    views.forEach((v3, i3) => writePage(join23(draftDir, v3.file), viewPages[i3]));
+    targetsWritten.forEach((t3, i3) => writePage(join23(draftDir, t3.file), jobBoards[i3]));
+    viewsWritten.forEach((v3, i3) => writePage(join23(draftDir, v3.file), viewPages[i3]));
     return {
       job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join23(draftDir, t3.file) })),
       matter_board_path: matterBoardPath,
@@ -97032,6 +97324,11 @@ function tagTail(t3, rendered) {
   const idle = idleTag(t3, rendered);
   return (idle === null ? "" : ` \xB7 ${idle}`) + (t3.idle_flag ? ` \xB7 ${t3.idle_flag}` : "");
 }
+function sourcesText(sources) {
+  const got = sources.filter((s3) => s3.outcome === "got").length;
+  const rest = sources.filter((s3) => s3.outcome !== "got").map((s3) => s3.outcome === null ? `\u2610 ${s3.kind}: ${s3.label}` : `\u2612 ${s3.kind}: ${s3.label} (not retrieved${s3.reason === null ? "" : `: ${s3.reason}`})`);
+  return [`${got} of ${sources.length} got`, ...rest].join(" \xB7 ");
+}
 function jobCardLines(t3, derived, seeds) {
   const head = collapsedText(t3);
   if (t3.category === "superseded") {
@@ -97048,6 +97345,7 @@ function jobCardLines(t3, derived, seeds) {
   const own = seeds.filter((s3) => s3.origin_ticket_id === t3.id);
   if (own.length > 0) lines2.push(`  loose threads: ${own.map((s3) => `loose thread ${s3.id}: ${JSON.stringify(s3.idea)} (${s3.created})`).join("; ")}`);
   if (t3.answers.length > 0) lines2.push(`  answers: ${t3.answers.map((a3) => `${a3.file_path} (${a3.saved_at})`).join("; ")}`);
+  if (t3.sources.length > 0) lines2.push(`  sources to get: ${sourcesText(t3.sources)}`);
   if (t3.category === "bring_forward") lines2.push(`  bring forward: ${t3.bf_on}`);
   if (t3.category === "completed") lines2.push(`  completed: ${t3.completed_at ?? "(unknown time)"}`);
   if (t3.category === "rejected") lines2.push(`  shelved: ${t3.rejected_at ?? "(unknown time)"}`);
@@ -97696,7 +97994,7 @@ function renderBccaBookFiledFace(ctx) {
 
 // src/submission/forms/emit-bcca-factum.ts
 var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
-function oneLine(text4) {
+function oneLine2(text4) {
   return text4.replace(/\s*\n\s*/g, " ").trim();
 }
 function pushExcerpt(lines2, excerpt, cite) {
@@ -97785,24 +98083,24 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referenced]);
   const body = [];
   body.push("## OPENING STATEMENT", "");
-  opening.forEach((p3) => body.push(oneLine(p3), ""));
+  opening.forEach((p3) => body.push(oneLine2(p3), ""));
   let n3 = 0;
-  const rhetoricLines = (row3) => renderRhetoricFiled({ ...row3, wording: oneLine(row3.wording) }, ++n3, "", "cite: ");
+  const rhetoricLines = (row3) => renderRhetoricFiled({ ...row3, wording: oneLine2(row3.wording) }, ++n3, "", "cite: ");
   body.push("## PART 1 - STATEMENT OF FACTS", "");
-  factsPosition.forEach((p3) => body.push(`${++n3}. ${oneLine(p3)}`));
+  factsPosition.forEach((p3) => body.push(`${++n3}. ${oneLine2(p3)}`));
   for (const entry of interleave(facts, factsRhetoric, (f3) => f3.filing_ordinal)) {
     if (entry.kind === "rhetoric") {
       body.push(...rhetoricLines(entry.row));
       continue;
     }
     const f3 = entry.item;
-    body.push(`${++n3}. ${oneLine(f3.postulate)}`);
+    body.push(`${++n3}. ${oneLine2(f3.postulate)}`);
     const cite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
     if (cite) body.push(`cite: ${cite}`);
   }
   body.push("");
   body.push("## PART 2 - ISSUES ON APPEAL", "");
-  submissions.forEach((s3) => body.push(`${++n3}. ${oneLine(s3.contention)}`));
+  submissions.forEach((s3) => body.push(`${++n3}. ${oneLine2(s3.contention)}`));
   body.push("");
   body.push("## PART 3 - ARGUMENT", "");
   const lawParas = /* @__PURE__ */ new Map();
@@ -97812,10 +98110,10 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       continue;
     }
     const s3 = entry.item;
-    body.push(`${++n3}. ${oneLine(s3.contention)}`);
+    body.push(`${++n3}. ${oneLine2(s3.contention)}`);
     for (const f3 of factsBySubmission.get(s3.id) ?? []) {
       const cite = courtRecordCitation(f3.courtRecord, f3.courtRecordPinpoint);
-      body.push(`${++n3}. ${oneLine(f3.postulate)}${cite ? ` ${cite}` : ""}`);
+      body.push(`${++n3}. ${oneLine2(f3.postulate)}${cite ? ` ${cite}` : ""}`);
       for (const st3 of f3.statements) {
         if (st3.purpose !== "impeachment") pushExcerpt(body, st3.exhibit_id !== null ? st3.exhibit_excerpt : st3.excerpt, factCite(exhibitMap, labelMap, st3));
       }
@@ -97824,19 +98122,19 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       const prior = lawParas.get(la2.lawAssertionId);
       n3 += 1;
       if (prior !== void 0) {
-        body.push(`${n3}. As set out in paragraph ${prior}, above, ${oneLine(la2.proposition)}`);
+        body.push(`${n3}. As set out in paragraph ${prior}, above, ${oneLine2(la2.proposition)}`);
         continue;
       }
       lawParas.set(la2.lawAssertionId, n3);
-      body.push(`${n3}. ${oneLine(la2.proposition)}`);
+      body.push(`${n3}. ${oneLine2(la2.proposition)}`);
       for (const st3 of printedLaw(la2)) pushExcerpt(body, st3.excerpt, lawCite(st3));
     }
   }
   body.push("");
   body.push("## PART 4 - NATURE OF ORDER SOUGHT", "");
-  for (const row3 of fetchRhetoric(ctx.dbPath, filing.id, "form", "orders")) body.push(`${++n3}. ${oneLine(row3.wording)}`);
-  body.push(`${++n3}. The ${signer.roleLabel.toLowerCase()}${signer.roleLabel.endsWith("s") ? "seek" : "seeks"} an Order:`);
-  orders.forEach((o3) => body.push(oneLine(o3.wording_override ?? o3.wording)));
+  for (const row3 of fetchRhetoric(ctx.dbPath, filing.id, "form", "orders")) body.push(`${++n3}. ${oneLine2(row3.wording)}`);
+  body.push(`${++n3}. The ${signer.roleLabel.toLowerCase()} ${signer.roleLabel.endsWith("s") ? "seek" : "seeks"} an Order:`);
+  orders.forEach((o3) => body.push(oneLine2(o3.wording_override ?? o3.wording)));
   body.push(`${++n3}. All of which is respectfully submitted.`);
   const { enactments } = factumEnactments(ctx.dbPath, lawParas);
   const bare2 = enactments.find((e3) => e3.excerpts.length === 0);
@@ -97880,7 +98178,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   put("filing_party_phrase", formatNameList(clientGroup.names));
   put("party_groups", JSON.stringify(partyGroups));
   put("contacts", JSON.stringify(contacts));
-  put("chronology", JSON.stringify(chronology.map((c3) => ({ date: c3.event_date, event: oneLine(c3.event) }))));
+  put("chronology", JSON.stringify(chronology.map((c3) => ({ date: c3.event_date, event: oneLine2(c3.event) }))));
   put("authorities", JSON.stringify(factumAuthorities(ctx.dbPath, lawParas).map(({ authority_id, ...a3 }) => a3)));
   put("enactments", JSON.stringify(enactments.map(({ authority_id, ...e3 }) => e3)));
   put("signing_place", place);
@@ -99166,7 +99464,7 @@ function selectDocuments(documents, wanted) {
   }
   return documents.filter((doc) => wanted.includes(doc.document_type));
 }
-function resolvePresentationDir(presentationDir, filingTitle) {
+function resolvePresentationDir(presentationDir, filingTitle, styleOfCause) {
   if (!isAbsolute5(presentationDir)) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
   }
@@ -99181,7 +99479,10 @@ function resolvePresentationDir(presentationDir, filingTitle) {
   if (!/^0\. DRAFT/i.test(basename4(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
   if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   const ending = ` ${sanitizeForPath(filingTitle)}`;
-  if (!basename4(dir).endsWith(ending)) throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  const oldEnding = styleOfCause ? ` ${sanitizeForPath(oldTitle(filingTitle, styleOfCause))}` : null;
+  if (!basename4(dir).endsWith(ending) && (oldEnding === null || !basename4(dir).endsWith(oldEnding))) {
+    throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  }
   if (existsSync27(dir) && dirname12(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
@@ -99201,10 +99502,13 @@ function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir
   if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   return dir;
 }
-function presentationFolder(proceeding, filing) {
+function presentationFolder(proceeding, filing, title = filing.title) {
   const stored = layoutFor(filing);
   const code = stored !== null ? stored.layout.folder_code : resolveTypeFile(requireForum(proceeding, true).forum, filing.kind).block.folder_code;
-  return `${code} ${sanitizeForPath(filing.title)}`;
+  return `${code} ${sanitizeForPath(title)}`;
+}
+function oldTitle(title, styleOfCause) {
+  return `${title} - ${styleOfCause}`;
 }
 function renameable(dir) {
   const entries = readdirSync15(dir, { withFileTypes: true });
@@ -99216,8 +99520,11 @@ function renameable(dir) {
 function presentationDirFromDraft(draftDir, proceeding, filing) {
   const draft = resolveDraftDir(draftDir, "drafting_forms__render.draft_dir");
   const undated = presentationFolder(proceeding, filing);
-  const isUndated = (name) => name.toLowerCase() === undated.toLowerCase();
+  const old = proceeding.style_of_cause ? presentationFolder(proceeding, filing, oldTitle(filing.title, proceeding.style_of_cause)) : null;
+  const isOld = (name) => old !== null && name.toLowerCase() === old.toLowerCase();
+  const isUndated = (name) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
   const matches = readdirSync15(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory() && (isUndated(e3.name) || /^\d{4}-\d{2}-\d{2} /.test(e3.name) && isUndated(e3.name.slice(11)))).map((e3) => e3.name).sort();
+  if (matches.length === 1 && isOld(matches[0])) return join25(draft, matches[0]);
   if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join25(draft, undated);
   const candidates = matches.map((name) => {
     const path = join25(draft, name);
@@ -99301,7 +99608,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     );
   }
   const requestedDir = draftDir === void 0 || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
-  const projectionDir = requestedDir === void 0 ? void 0 : resolvePresentationDir(requestedDir, filing.title);
+  const projectionDir = requestedDir === void 0 ? void 0 : resolvePresentationDir(requestedDir, filing.title, proceeding.style_of_cause);
   const pagesDir = jobOnly && draftDir !== void 0 ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === void 0 ? void 0 : dirname12(projectionDir);
   const revision = fetchRevision(dbPath);
   const approvals = fetchApprovalsMark(dbPath);
@@ -100006,6 +100313,7 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== void 0 && client.clientNo !== void 0 && client.matterNo !== void 0;
   const queue = complete ? result.filings.filter((f3) => !f3.retired_on && !f3.job_board_only && f3.render_state !== "fresh").map((f3) => f3.filing_id) : [];
+  const pages = (only) => writeMatterPages(dbPath, dirname12(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
   return startRenderJob({
     dbPath,
     ...result.matter_board_path ? { draftDir: dirname12(result.matter_board_path) } : {},
@@ -100013,17 +100321,16 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
       if (rendered.note) throw new Error(rendered.note);
-      if (result.matter_board_path) {
-        writeMatterPages(dbPath, dirname12(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, []);
-      }
+      if (result.matter_board_path) pages(filingId);
     },
-    isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh"
+    isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh",
+    ...result.matter_board_path ? { settle: () => pages() } : {}
   });
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL7 = "drafting_data__complete_job";
-var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL8 = "drafting_data__complete_job";
+var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read2, client, todos, dates) {
   try {
     let filingId = read2.filing_id;
@@ -100057,9 +100364,9 @@ function rewritePages(args, read2, client, todos, dates) {
   }
 }
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -100072,7 +100379,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
         params: [id, id, id, id, token]
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW4}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW5}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
         params: [id, token]
       }
     ],
@@ -100085,7 +100392,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read2.status === "completed" && read2.locked_by === null) {
@@ -100118,14 +100425,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL8 = "drafting_data__release_job";
+var TOOL9 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL8}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL9}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -100136,7 +100443,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read2.locked_by !== null && (holder === null ? read2.locked_by === args.session_token : read2.locked_by.endsWith(holder));
   let outcome;
@@ -103424,7 +103731,7 @@ function skillRulesCoverage(skill) {
 
 // src/files/rules-position.ts
 var POSITION_SCHEMA_VERSION = 73;
-var NOW5 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
+var NOW6 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
 var MAIN = "main";
 var DB_FACTS = ["job_held", "job_steps"];
 var SESSION_FACTS = ["unattended", "host"];
@@ -103538,7 +103845,7 @@ function serve(composed, skill, prior) {
 async function logServed(dbPath, token, path, sent, env) {
   if (sent.length === 0) return null;
   const statements = sent.map(({ rule }) => ({
-    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW5})`,
+    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW6})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
   try {
@@ -103560,9 +103867,9 @@ function block(dag, composed, served, options) {
   if (options.logError !== null) extra.push(`  <log_error message="${xmlAttr(options.logError)}"/>`);
   return renderRules(dag, { ...composed, rules: served.sent }, { attrs, left: options.left, head, extra });
 }
-var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW5}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
-var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW5}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
-var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW5}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
+var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW6}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
+var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
+var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
 async function rulesMove(args, env = process.env) {
   const tool = "rules__move";
   checkArgs2(tool, args.db_path, args.session_token);
@@ -103642,7 +103949,7 @@ async function rulesMove(args, env = process.env) {
   ];
   if (entersOutOfBounds) {
     statements.push({
-      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW5})`,
+      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW6})`,
       params: [token, (stored ?? [skill]).join(" ")]
     });
   }
@@ -103789,7 +104096,7 @@ async function rulesBranch(args, env = process.env) {
     statements = [
       { sql: "DELETE FROM session_position WHERE session_token = ? AND branch = ?", params: [token, label] },
       {
-        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW5} WHERE session_token = ? AND branch = ?`,
+        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW6} WHERE session_token = ? AND branch = ?`,
         params: [JSON.stringify(served.inForce), token, MAIN]
       }
     ];
@@ -106762,8 +107069,8 @@ function sectionBlocks(chunks) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL9 = "research_filing__save_answer";
-var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL10 = "research_filing__save_answer";
+var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
@@ -106771,20 +107078,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL9} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named < 3) throw new ValidationError(`${TOOL10} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL9}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL10}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL9}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL10}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -106793,7 +107100,7 @@ async function saveAnswerTool(args, env = process.env) {
   try {
     written = await submissionDataWrite(
       dbPath,
-      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW6} FROM tickets WHERE id = ? AND locked_by = ?`,
+      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW7} FROM tickets WHERE id = ? AND locked_by = ?`,
       [lawRelativePath(saved.path), id, token],
       env
     );
@@ -106930,6 +107237,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "drafting_data__approve_plan") {
     return submissionDataApprovePlan(args);
+  }
+  if (name === "drafting_data__track_source") {
+    return submissionDataTrackSource(args);
   }
   if (name === "drafting_data__release_job") {
     return submissionDataReleaseJob(args);
@@ -107331,16 +107641,16 @@ import { isAbsolute as isAbsolute6 } from "node:path";
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
   const deletedIds = new Set(fetchDeletedTickets(args.db_path, args.proceeding_id).map((d3) => d3.id));
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(args.db_path, deletedIds);
   const sql = args.action === "defer" ? `UPDATE seeds SET deferred_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NULL` : `UPDATE seeds SET deferred_at = NULL WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NOT NULL`;
   const written = await submissionDataWriteAll(args.db_path, [{ sql, params: [args.seed_id, args.proceeding_id, ...open.params], expect_changes: 1 }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
-  const [read2] = submissionDataQuery(args.db_path, "SELECT proceeding_id, charted_into, deferred_at FROM seeds WHERE id = ?", [args.seed_id]).rows;
+  const [read2] = submissionDataQuery(args.db_path, `SELECT proceeding_id, charted_into, deferred_at${seedClosedColumns(args.db_path).map((c3) => `, ${c3}`).join("")} FROM seeds WHERE id = ?`, [args.seed_id]).rows;
   let outcome;
   if (read2 === void 0) outcome = "not_found";
   else if (changes === 1) outcome = args.action === "defer" ? "deferred" : "undeferred";
   else if (read2.proceeding_id !== args.proceeding_id) outcome = "wrong_proceeding";
-  else if (read2.charted_into !== null && !deletedIds.has(read2.charted_into)) outcome = "not_open";
+  else if (read2.charted_into !== null && !deletedIds.has(read2.charted_into) || read2.discarded_at != null || read2.suggested_at != null) outcome = "not_open";
   else outcome = "already";
   return {
     seed_id: args.seed_id,
