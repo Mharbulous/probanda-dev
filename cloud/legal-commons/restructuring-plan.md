@@ -60,7 +60,7 @@ Two points of mechanics. Postgres fills a generated column with a user-written f
 | `discretionary` | boolean | Required |
 | `polarity` | text | `affirmative` or `negative` |
 
-The three reading aids are the ones `GLOSSARY.md` describes under Consequence. A simple consequence has one part. A compound consequence has one part for each linked outcome. A clause used only as a condition or a rationale has no parts. This departs from the schema plan's Design table, which put the three aids on the clause. See default 1.
+The three reading aids are the ones `GLOSSARY.md` describes under Consequence. A simple consequence has one part. A compound consequence has one part for each actor that has its own main verb, so two linked outcomes of one actor are one part (Brahm's decision, 2026-10-13). A clause used only as a condition or a rationale has no parts. This departs from the schema plan's Design table, which put the three aids on the clause. See default 1.
 
 ### `test`: one route to one consequence
 
