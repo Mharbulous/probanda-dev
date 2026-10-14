@@ -15876,13 +15876,10 @@ async function lookupByCitation(client, args) {
   return client.rpc("lookup_by_citation", { p_citation: String(args.citation) });
 }
 async function browse(client, args) {
-  const keyword = String(args.keyword);
-  const limit = typeof args.limit === "number" ? args.limit : 50;
-  return client.get(
-    "principle",
-    { text: `ilike.*${keyword}*`, select: "principle_id,text,jurisdiction,variant_of,doctrine_tag" },
-    { limit }
-  );
+  return client.rpc("browse_principles", {
+    p_keyword: String(args.keyword),
+    p_limit: typeof args.limit === "number" ? args.limit : 50
+  });
 }
 async function treatmentChain(client, args) {
   return client.rpc("treatment_chain", { p_authority_id: String(args.authority_id) });
@@ -16407,10 +16404,41 @@ function troubleshootToolDefinitions() {
     }
   ];
 }
+function suggestionBoxPrefixed(name) {
+  return `suggestion_box__${name}`;
+}
+function suggestionBoxToolDefinitions() {
+  return [
+    {
+      name: suggestionBoxPrefixed("submit"),
+      description: "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. title and body are the whole post: they must name no person, entity, matter, document or path. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
+      inputSchema: objectSchema([
+        { name: "title", type: "str" },
+        { name: "body", type: "str" }
+      ], ["title", "body"])
+    },
+    {
+      name: suggestionBoxPrefixed("configure_credential"),
+      description: "One-time setup: store the private GitHub repo (owner/name) that suggestions are posted to and a token limited to that repo with Issues: Read and write. The pair is checked against GitHub before it is saved and refused unless the repo is private. Persisted host-side encrypted at rest, and never logged or echoed back.",
+      inputSchema: objectSchema([
+        { name: "repo", type: "str" },
+        { name: "token", type: "str" }
+      ], ["repo", "token"]),
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: suggestionBoxPrefixed("configure_status"),
+      description: "Report whether this machine has a Suggestion Box credential, the repo it names, and a redacted hint identifying the token. Never returns the token itself.",
+      inputSchema: objectSchema([], []),
+      annotations: { readOnlyHint: true }
+    }
+  ];
+}
 function buildToolDefinitions() {
   return [
     ...legalCommonsToolDefinitions(),
-    ...troubleshootToolDefinitions()
+    ...troubleshootToolDefinitions(),
+    ...suggestionBoxToolDefinitions()
   ];
 }
 
@@ -16713,6 +16741,139 @@ async function configureStatus2(client) {
   };
 }
 
+// src/suggestion-box/config.ts
+import { join as join5 } from "node:path";
+function credentialPath3(env = process.env) {
+  return join5(defaultStateDir(env, "suggestion-box"), "credential.json.dpapi");
+}
+async function loadSuggestionBoxConfig(env = process.env) {
+  try {
+    const persisted = await readProtectedJson(credentialPath3(env), null);
+    if (persisted?.repo && persisted.token) return { credential: { repo: persisted.repo, token: persisted.token } };
+    return { credential: null };
+  } catch (error2) {
+    const detail = error2 instanceof Error ? error2.message : String(error2);
+    process.stderr.write(
+      `suggestion-box: stored credential at ${credentialPath3(env)} could not be read \u2014 ${detail}
+Starting unconfigured; call suggestion_box__configure_credential to replace it.
+`
+    );
+    return { credential: null, credentialError: detail.split("\n")[0].trim() };
+  }
+}
+async function persistSuggestionBoxCredential(credential, env = process.env) {
+  await writeProtectedJson(credentialPath3(env), credential, true);
+}
+
+// src/suggestion-box/tools.ts
+var NOT_CONFIGURED_HINT2 = "the Suggestion Box is not configured: call suggestion_box__configure_credential once with the private repo (owner/name) and a token limited to that repo with Issues: Read and write";
+var GITHUB_API = "https://api.github.com";
+var REPO_FORM = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+var TOKEN_FORM = /^[\x21-\x7E]+$/;
+var TOKEN_PREFIX = /^(?:github_pat_|gh[pousr]_)/;
+function isSuggestionBoxToolName(name) {
+  return name.startsWith("suggestion_box__");
+}
+function callSuggestionBoxTool(state, name, args) {
+  switch (name) {
+    case "suggestion_box__submit":
+      return submit(state, args);
+    case "suggestion_box__configure_credential":
+      return configureCredential3(state, args);
+    case "suggestion_box__configure_status":
+      return configureStatus3(state);
+    default:
+      throw new ValidationError(`Unknown suggestion_box tool "${name}"`);
+  }
+}
+function headers(token) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "User-Agent": "probanda-suggestion-box"
+  };
+}
+async function github(token, path, init) {
+  try {
+    return await fetch(`${GITHUB_API}${path}`, {
+      method: init.method,
+      headers: init.body === void 0 ? headers(token) : { ...headers(token), "Content-Type": "application/json" },
+      body: init.body
+    });
+  } catch (error2) {
+    throw new ValidationError(`GitHub could not be reached: ${error2 instanceof Error ? error2.message : String(error2)}`);
+  }
+}
+async function requirePrivateRepo(credential) {
+  const reply = await github(credential.token, `/repos/${credential.repo}`, { method: "GET" });
+  if (reply.status === 401) throw new ValidationError("GitHub refused the token (401)");
+  if (reply.status === 404) {
+    throw new ValidationError("GitHub found no such repo for that token (404): the name is wrong or the token has no access to it");
+  }
+  if (reply.status !== 200) throw new ValidationError(`GitHub answered ${reply.status} for the repo`);
+  const repo = await reply.json();
+  if (repo.private !== true) {
+    throw new ValidationError("that repo is not private: the Suggestion Box posts only to a private repo");
+  }
+}
+async function submit(state, args) {
+  const credential = state.credential;
+  if (!credential) {
+    throw new ValidationError(state.credentialError ? `${NOT_CONFIGURED_HINT2} (the stored credential could not be read: ${state.credentialError})` : NOT_CONFIGURED_HINT2);
+  }
+  const title = String(args.title ?? "").trim();
+  const body = String(args.body ?? "").trim();
+  if (!title) throw new ValidationError("submit requires a title");
+  if (!body) throw new ValidationError("submit requires a body");
+  const hits = findRedactionHits({ title, body });
+  if (hits.length > 0) {
+    throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
+  }
+  await requirePrivateRepo(credential);
+  const reply = await github(credential.token, `/repos/${credential.repo}/issues`, {
+    method: "POST",
+    body: JSON.stringify({ title, body, labels: ["suggestion"] })
+  });
+  if (reply.status !== 201) throw new ValidationError(`GitHub answered ${reply.status}, so the suggestion was not posted`);
+  const issue2 = await reply.json();
+  return { issue_number: issue2.number, url: issue2.html_url };
+}
+async function configureCredential3(state, args) {
+  const repo = String(args.repo || "").trim();
+  const token = String(args.token || "").trim();
+  if (!REPO_FORM.test(repo)) throw new ValidationError("configure_credential requires repo as owner/name");
+  if (!token) throw new ValidationError("configure_credential requires token");
+  if (!TOKEN_FORM.test(token)) {
+    throw new ValidationError("configure_credential requires a token of printable characters with no spaces");
+  }
+  const credential = { repo, token };
+  try {
+    await requirePrivateRepo(credential);
+  } catch (error2) {
+    throw new ValidationError(`not saved: ${error2 instanceof Error ? error2.message : String(error2)}`);
+  }
+  state.credential = credential;
+  delete state.credentialError;
+  try {
+    await persistSuggestionBoxCredential(credential);
+  } catch (error2) {
+    return {
+      configured: true,
+      persisted: false,
+      warning: `the credential works and is active for this session, but could not be saved to disk, so it must be supplied again after a restart: ${error2 instanceof Error ? error2.message : String(error2)}`
+    };
+  }
+  return { configured: true, persisted: true };
+}
+async function configureStatus3(state) {
+  const token = state.credential?.token ?? "";
+  return {
+    configured: state.credential !== null,
+    repo: state.credential?.repo ?? null,
+    token_hint: token.length < 20 ? null : `${token.match(TOKEN_PREFIX)?.[0] ?? ""}\u2026${token.slice(-4)}`
+  };
+}
+
 // src/dispatch.ts
 var definitions;
 async function dispatchTool(context, name, rawArgs) {
@@ -16733,6 +16894,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (isTroubleshootToolName(name)) {
     return callTroubleshootTool(context, name, args);
+  }
+  if (isSuggestionBoxToolName(name)) {
+    return callSuggestionBoxTool(context.suggestionBox, name, args);
   }
   throw new ValidationError(`Unknown tool "${name}"`);
 }
@@ -16876,7 +17040,7 @@ async function createDispatchContext(env = process.env) {
   const poolConfig = await loadLegalCommonsConfig(env);
   const legalCommons = new LegalCommonsClient(poolConfig);
   const troubleshoot = new LegalCommonsClient(await loadTroubleshootConfig(env, poolConfig));
-  return { legalCommons, troubleshoot };
+  return { legalCommons, troubleshoot, suggestionBox: await loadSuggestionBoxConfig(env) };
 }
 async function start() {
   const context = await createDispatchContext();
