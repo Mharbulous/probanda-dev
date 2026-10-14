@@ -572,7 +572,7 @@ test("the Job Board header omits a blank proceeding line and an empty Writing-da
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const section = {
     meta: { revision: 1, matter: "", client: "", file: "", filing: "", filing_id: null, proceeding_id: 1, rendered: "2026-10-05 09:00", state: null, state_label: "No filing yet", state_since: null, ready_to_retire: false },
-    tickets: [], seeds: [], deleted: [], proposals: [], lapsed_keys: [],
+    tickets: [], seeds: [], discardedSeeds: [], deleted: [], proposals: [], lapsed_keys: [],
   };
   const draw = (name, dates) => {
     const file = join(dir, name);
@@ -879,10 +879,10 @@ test("board_card(key) prints the live job holding the key, else the Proposal und
   }
 });
 
-// The seven lists, in order, then board_card's Proposed count: a wip job with every step stamped
+// The eight lists, in order, then board_card's Proposed count: a wip job with every step stamped
 // stays In Progress, a queued job whose blocker was superseded is Blocked, and an unheld Proposal is
 // counted on the card but never drawn on the page.
-test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Superseded, Loose Threads, then Proposed, and the page draws no Proposed section", async () => {
+test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed, Shelved, Superseded, Loose Threads, then Proposed, and the page draws no Proposed section", async () => {
   const f = seededDbFixture();
   try {
     await seededBoard(
@@ -894,7 +894,7 @@ test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Supe
 
     const lines = cardOf(f, { lanes: ["live"] }).split("\n");
     const headings = lines.filter((l) => l.startsWith("## ")).map((l) => l.replace(/ \(.*$/, ""));
-    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Loose Threads", "## Proposed"]);
+    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Bring Forward", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Loose Threads", "## Proposed"]);
     const lane = (heading) => {
       const start = lines.findIndex((l) => l.startsWith(`## ${heading} (`));
       const end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
@@ -908,7 +908,7 @@ test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Supe
     const { draft } = draftFolder(f);
     const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const sections = drawPage(board.path).main.all().filter((n) => n.tag === "section").map((n) => n.id);
-    assert.deepEqual(sections, ["ready", "in-progress", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"]);
+    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"]);
     assert.equal(readFileSync(board.path, "utf-8").includes('<section id="proposed">'), false);
   } finally {
     f.cleanup();

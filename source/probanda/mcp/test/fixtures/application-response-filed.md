@@ -40,7 +40,7 @@ The application respondent(s) take(s) no position on the granting of the orders 
 
 ## PART 5: LEGAL BASIS
 
-4. **Security for costs is unwarranted given the defendant's assets in this jurisdiction.**
+4. Security for costs is unwarranted given the defendant's assets in this jurisdiction.
 
 ## PART 6: MATERIAL TO BE RELIED ON
 

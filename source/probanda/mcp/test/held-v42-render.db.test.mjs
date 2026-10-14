@@ -131,7 +131,7 @@ test("a submission-backed Writing on a matter held at v42 renders its statement 
     assert.doesNotMatch(md, /settled by counsel/, type);
     // v48's submissions.no_facts_needed_on is absent at v42 and reads as NULL, so submission 1, which
     // rests on no fact, still raises 🧾.
-    assert.match(md, /^\S+ \*\*A deployed contention\.\*\* 🧾/m, type);
+    assert.match(md, /^\S+ A deployed contention\. 🧾/m, type);
     assert.doesNotMatch(md, /no stated fact needed/, type);
   }
   assert.equal(schemaVersion(m.dbPath), 42);

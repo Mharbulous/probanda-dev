@@ -47,7 +47,7 @@ test("an order or submission deployed only on another filing is listed, not held
       /## Submissions used on other filings\n\n- Argued on the retired filing\. — Default Judgment Requisition \(Retired\) <!-- submission_id 1 -->\n/
     );
     assert.equal(brief.split("<!-- submission_id 1 -->").length - 1, 1, "no argument body for a submission deployed elsewhere");
-    assert.match(brief, /^R1\. \*\*Drafted but deployed nowhere\.\*\*.*🂡 <!-- submission_id 2 -->$/m, "a submission deployed nowhere is still reserved");
+    assert.match(brief, /^R1\. Drafted but deployed nowhere\..*🂡 <!-- submission_id 2 -->$/m, "a submission deployed nowhere is still reserved");
 
     const keys = boardDataOf(f.dbPath, 2).proposals.map((p) => p.key);
     assert.ok(!keys.some((k) => /:order_sought:(1|2|3|5)$/.test(k)), `no Proposal for orders deployed elsewhere: ${keys.join(", ")}`);

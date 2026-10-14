@@ -346,7 +346,7 @@ test("renders BCSC Form 32 notice of application", async () => {
     assert.doesNotMatch(noticeOfApplication, /## Held in reserve/, "expected no Held-in-reserve trailing section on the Notice of Application");
 
     const part3Section = noticeOfApplication.split("## PART 3: LEGAL BASIS")[1].split("## PART 4")[0];
-    assert.match(part3Section, /^\d+\. \*\*Corbin Vasey is in default under the Rules\.\*\*/m, "expected the contention as the submission's own bold opening paragraph");
+    assert.match(part3Section, /^\d+\. Corbin Vasey is in default under the Rules\./m, "expected the contention as the submission's own opening paragraph");
     assert.doesNotMatch(part3Section, /Corbin Vasey has not filed a response to civil claim\./, "expected the rested-on postulate, already PART 2 paragraph 1, not to render again under the submission");
     assert.match(
       part3Section,
@@ -450,12 +450,12 @@ test("Notice of Application PART 3 references a linked fact already in PART 2 by
       ["submissions:2"]
     );
 
-    // The filed face strips the comment and the 🧾 against it, leaving A's bold contention alone.
+    // The filed face strips the comment and the 🧾 against it, leaving A's contention alone.
     const filed = submissionFormsRender(f.dbPath, 1, client, "filed");
     assertFiledFaceDocumentsClean(filed.documents);
     const filedNoa = filed.documents.find((d) => d.document_type === "Notice_of_application").markdown;
     assert.doesNotMatch(filedNoa, /supporting fact paragraphs|🧾|NOT PLACED/);
-    assert.match(filedNoa, /^\d+\. \*\*Submission A rests on three Part 2 facts\.\*\*$/m);
+    assert.match(filedNoa, /^\d+\. Submission A rests on three Part 2 facts\.$/m);
   } finally {
     f.cleanup();
   }
@@ -501,9 +501,9 @@ test("Notice of Application PART 3 marks a contention with no linked proposition
 
     const result = submissionFormsRender(f.dbPath, 1, client);
     const part3 = part3Of(result);
-    assert.match(lineOf(part3, 1), /^\d+\. \*\*Submission A rests on a Part 2 fact\.\*\* 📚 <!-- submission_id 1 --> <!-- supporting fact paragraphs: 1 -->$/);
-    assert.match(lineOf(part3, 2), /^\d+\. \*\*Submission B states neither fact nor law\.\*\* 📚 <!-- submission_id 2 --> 🧾<!-- supporting fact paragraphs: {2}NONE -->$/);
-    assert.match(lineOf(part3, 3), /^\d+\. \*\*Submission C needs no stated law\.\*\* \(no stated law needed, per counsel 2026-10-06\)/);
+    assert.match(lineOf(part3, 1), /^\d+\. Submission A rests on a Part 2 fact\. 📚 <!-- submission_id 1 --> <!-- supporting fact paragraphs: 1 -->$/);
+    assert.match(lineOf(part3, 2), /^\d+\. Submission B states neither fact nor law\. 📚 <!-- submission_id 2 --> 🧾<!-- supporting fact paragraphs: {2}NONE -->$/);
+    assert.match(lineOf(part3, 3), /^\d+\. Submission C needs no stated law\. \(no stated law needed, per counsel 2026-10-06\)/);
     assert.doesNotMatch(lineOf(part3, 3), /📚/);
 
     const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
@@ -513,12 +513,12 @@ test("Notice of Application PART 3 marks a contention with no linked proposition
       ["proposition:submissions:1", "proposition:submissions:2"]
     );
 
-    // The filed face strips 📚 and counsel's tag, leaving C's bold contention alone.
+    // The filed face strips 📚 and counsel's tag, leaving C's contention alone.
     const filed = submissionFormsRender(f.dbPath, 1, client, "filed");
     assertFiledFaceDocumentsClean(filed.documents);
     const filedNoa = filed.documents.find((d) => d.document_type === "Notice_of_application").markdown;
     assert.doesNotMatch(filedNoa, /📚|no stated law needed/);
-    assert.match(filedNoa, /^\d+\. \*\*Submission C needs no stated law\.\*\*$/m);
+    assert.match(filedNoa, /^\d+\. Submission C needs no stated law\.$/m);
 
     // Linking a proposition clears A's 📚.
     await submissionDataExecute(f.dbPath, "INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 90);");

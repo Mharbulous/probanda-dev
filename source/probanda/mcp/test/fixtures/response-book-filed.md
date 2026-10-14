@@ -84,7 +84,7 @@ THIS IS A RESPONSE TO the stay application of the Appellants, Tidewater Outfitte
 
 ### Part 3: Analysis
 
-4. **The appeal raises no serious question to be tried.**
+4. The appeal raises no serious question to be tried.
 
 5. The arbitration was commenced on 12 May 2026.
 

@@ -436,8 +436,8 @@ for (const [name, executable] of BROWSERS) {
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.deepEqual(
           board.sections,
-          ["ready", "in-progress", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"],
-          "the eight lists, in order"
+          ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"],
+          "the nine lists, in order"
         );
         assert.equal(board.controls, 0, "no line carries a checkbox, a red X, a Go button or any other control");
         // Goal card design §2.9: the card sits above the first lane. The fixture's card string is

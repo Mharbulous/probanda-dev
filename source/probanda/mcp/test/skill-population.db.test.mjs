@@ -287,8 +287,8 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'notice_of_application', NULL, NULL, 'Fenwick Notice of Application');
 
-      INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge)
-        VALUES (1, '2026-10-14', '10:00 am', 30, 1);
+      INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge, proposed_hearing)
+        VALUES (1, '2026-10-14', '10:00 am', 30, 1, '2026-10-14 at 10:00 am');
       -- filing_facts.section renamed to .part (#380); document='form' -- no
       -- matching document='written_argument' row is seeded (the deferred
       -- elicitation ticket's job), so 🧵 is expected on this fact/order/
@@ -318,7 +318,8 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
     // Issue #440: fact 1's court_record_pinpoint ('Part 1, Division 1') must reach the
     // rendered fact line as real citation text, not just silence the 📍 marker.
     assert.ok(noa.includes("(Part 1, Division 1)"), "fact 1's court-record pinpoint should render as a citation, not disappear once captured");
-    assert.ok(noa.includes("2026-10-14") && noa.includes("10:00 am"), "hearing_details fields should be filled, not the courthouse-address/hearing placeholder text");
+    // B.C. Reg. 105/2026's Form 32 fixes no hearing date: the notice states the applicant's proposal.
+    assert.ok(noa.includes("will be heard on 2026-10-14 at 10:00 am."), "hearing_details.proposed_hearing should be filled, not the hearing placeholder text");
     const wa = findFile(baseDir, "Written Arguments.md");
     assertRendersClean("Written Arguments companion", wa);
     assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));

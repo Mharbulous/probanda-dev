@@ -25,7 +25,7 @@ Rendered: <TIMESTAMP>
 
 *Paragraph numbers as in this filing's venue document (mockup).*
 
-1. **The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.** 🧾 <!-- submission_id 1 -->
+1. The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement. 🧾 <!-- submission_id 1 -->
 
 2. contractual interpretation principles <!-- law_assertion_id 1 -->
 
@@ -44,7 +44,7 @@ Rendered: <TIMESTAMP>
    🚨 <!-- statement_of_law_id 2 -->
 
 
-4. **No authority has yet been located for the second submission.** <!-- submission_id 2 -->
+4. No authority has yet been located for the second submission. <!-- submission_id 2 -->
 
 5. The parties entered the Asset Purchase Agreement on December 1, 2023. <!-- fact_id 1 -->
 
@@ -88,7 +88,7 @@ Rendered: <TIMESTAMP>
 
 *Numbered independently (R1, R2, …): these appear on no face of this filing, so there is no paragraph number to share.*
 
-R1. **A reserved fallback argument, held for reply.** 🧾📚 🂡 <!-- submission_id 3 -->
+R1. A reserved fallback argument, held for reply. 🧾📚 🂡 <!-- submission_id 3 -->
 
 ## Killed authorities
 
@@ -130,7 +130,7 @@ R1. **A reserved fallback argument, held for reply.** 🧾📚 🂡 <!-- submiss
 | 🚨 | negative treatment | questioned or not followed in similar cases, but still law | disclose it or replace it |
 | 🏆 | not best copy | the copy relied on is not the best copy held | mark it missing or stale (practitioner, on ingest's proposal) |
 | 🙅🏻‍♂️ | denied | refused to admit | prove it by evidence (practitioner) |
-| 🂡 | held in reserve | drafted and deliberately held: no document of the filing deploys it, and for an order or submission no document of any filing of the proceeding | decide later whether to deploy or abandon it (practitioner) |
+| 🂡 | held in reserve | drafted and deliberately held: no document of the filing deploys it, and for an order, submission or rhetorical paragraph no document of any filing of the proceeding | decide later whether to deploy or abandon it (practitioner) |
 | 🂡 | | prints in the Counsel Brief only; never delivered | |
 | 🤥 | impeachment | a statement held for impeachment | decide later whether to deploy or abandon it (practitioner) |
 | 🤥 | | prints in the Counsel Brief only; never delivered | |

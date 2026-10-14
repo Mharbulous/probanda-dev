@@ -77,7 +77,7 @@ test("a witness statement ahead of an exhibit shifts no Ex. N on the Notice of A
     // Fact 1 is Part 2 paragraph 1, so neither Notice of Application face re-prints it, or the
     // statement's citation line, under Part 3: the mockup names it by number, the filed face omits it.
     assert.match(noa, /<!-- submission_id 1 --> <!-- supporting fact paragraphs: 1 -->/, "expected the Notice of Application mockup to reference fact 1's Part 2 paragraph");
-    assert.match(filed.split("## Part 3")[0], /^> Witness Statement of A\. Renwick, para 1, Ex\. 1, p\. 1$/m, "expected the filed face's Part 2 to cite the statement under fact 1");
+    assert.match(filed.split("## Part 3")[0], /^>> Witness Statement of A\. Renwick, para 1, Ex\. 1, p\. 1$/m, "expected the filed face's Part 2 to cite the statement under fact 1");
     assert.doesNotMatch(filed.split("## Part 3")[1], /Witness Statement of A\. Renwick/, "expected the filed face to state fact 1 once, in Part 2, with no citation line under Part 3");
 
     const noaPart4 = noa.split("## PART 4: MATERIAL TO BE RELIED ON")[1];
@@ -87,8 +87,8 @@ test("a witness statement ahead of an exhibit shifts no Ex. N on the Notice of A
 
     assert.equal(
       filed.split("## Part 4")[1].trim(),
-      "- Invoice #114 (2026-03-01)\n- Pleadings filed in this proceeding\n- Such further affidavits or filed court documents as this honourable court may allow",
-      "expected the filed face's Part 4 to list the invoice, then the two standard closing lines"
+      "- Invoice #114 (March 1, 2026)\n- Pleadings filed in this proceeding",
+      "expected the filed face's Part 4 to list the invoice, its date as Form 32 prints it, then the pleadings line alone"
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

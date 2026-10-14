@@ -26,6 +26,7 @@
       "locked_at": null,
       "completed_at": "2026-09-02T09:00",
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [],
@@ -51,6 +52,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -65,6 +67,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [
         "facts",
@@ -97,6 +100,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -111,6 +115,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -136,6 +141,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -150,6 +156,7 @@
       "locked_at": "2026-09-02T10:05",
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [],
@@ -180,6 +187,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": "2026-09-02T10:12"
     },
     {
@@ -194,6 +202,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": {
         "id": 1,
         "status": "completed",
@@ -223,6 +232,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -237,6 +247,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -262,6 +273,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -276,6 +288,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [],
@@ -294,6 +307,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -308,6 +322,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [],
@@ -326,6 +341,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -340,6 +356,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -365,6 +382,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -379,6 +397,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -404,6 +423,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -418,6 +438,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -443,6 +464,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -457,6 +479,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": "2026-09-03T09:00",
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [],
@@ -481,6 +504,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     },
     {
@@ -495,6 +519,7 @@
       "locked_at": null,
       "completed_at": null,
       "rejected_at": null,
+      "bf_on": null,
       "superseded_by": null,
       "scope": [],
       "blocked_by": [
@@ -520,6 +545,7 @@
       "dispatch_skips": [],
       "lock_note": null,
       "answers": [],
+      "sources": [],
       "last_activity_at": null
     }
   ],
@@ -540,6 +566,7 @@
     }
   ],
   "deleted": [],
+  "discardedSeeds": [],
   "attachments": [],
   "proposals": [
     {

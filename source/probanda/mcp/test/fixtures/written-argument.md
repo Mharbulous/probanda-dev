@@ -28,7 +28,7 @@ Rendered: <TIMESTAMP>
 ## Submissions
 
 
-1. **The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.** 🧾 <!-- submission_id 1 -->
+1. The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement. 🧾 <!-- submission_id 1 -->
 
 2. contractual interpretation principles 🧐 <!-- law_assertion_id 1 -->
 
@@ -47,7 +47,7 @@ Rendered: <TIMESTAMP>
    🚨🧐 <!-- statement_of_law_id 2 -->
 
 
-4. **No authority has yet been located for the second submission.** 🧐 <!-- submission_id 2 -->
+4. No authority has yet been located for the second submission. 🧐 <!-- submission_id 2 -->
 
 5. The parties entered the Asset Purchase Agreement on December 1, 2023. 🧐 <!-- fact_id 1 -->
 
@@ -75,10 +75,10 @@ Rendered: <TIMESTAMP>
 
 10. a second point of law also not yet researched 📖 <!-- law_assertion_id 4 -->
 
-11. **The award sought is within the Tribunal's Rule 24(j) cap.**
+11. The award sought is within the Tribunal's Rule 24(j) cap.
    The total claimed by the Claimant, exclusive of interest and costs, is $150,000.
 
-12. **The Claimant asks the Arbitral Tribunal to award the following relief.**
+12. The Claimant asks the Arbitral Tribunal to award the following relief.
    (a) $150,000 — payment of $150,000 🏅⚠️ <!-- relief_item a -->
    (b) interest;
    (c) costs.

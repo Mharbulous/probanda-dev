@@ -56,7 +56,8 @@ const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql.repl
 const job = (dbPath, id) => query(dbPath, STATE_READ.replace(/\b42\b/g, "?"), [id])[0];
 const run = async (dbPath, sql, id) => (await submissionDataExecute(dbPath, forJob(sql, id))).changes;
 const board = (dbPath) => boardDataOf(dbPath, 1, CLIENT, NOW);
-const card = (dbPath) => submissionFormsBoardCard({ db_path: dbPath, filing_id: 1, lanes: [...CARD_LANES] }, CLIENT, NOW).card;
+// The attached and court file lanes read the matter's 0. DRAFT folder, so every lane needs draft_dir.
+const card = (dbPath, draft) => submissionFormsBoardCard({ db_path: dbPath, filing_id: 1, lanes: [...CARD_LANES], draft_dir: draft }, CLIENT, NOW).card;
 const ticketIds = (data) => data.tickets.map((t) => t.id);
 const ticketOf = (data, id) => data.tickets.find((t) => t.id === id);
 const proposalOf = (data) => data.proposals.find((p) => p.key === KEY);
@@ -105,9 +106,11 @@ async function matter(t) {
 }
 
 test("a deleted job stays in the database and is on no card, in no count and in no summary", async (t) => {
-  const { dbPath } = await matter(t);
+  const { dir, dbPath } = await matter(t);
+  const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
+  mkdirSync(draft, { recursive: true });
   const before = board(dbPath);
-  const beforeCard = card(dbPath);
+  const beforeCard = card(dbPath, draft);
   assert.equal(ticketOf(before, 3).category, "waiting", "#3 waits on #2");
   assert.deepEqual(proposalOf(before).lane, "held");
 
@@ -124,7 +127,7 @@ test("a deleted job stays in the database and is on no card, in no count and in 
   assert.deepEqual(after.seeds.map((s) => [s.id, s.origin_ticket_id]), [[1, null], [2, null]], "the captured seed names no origin job, and the outlined one shows again");
 
   const summary = renderBoardSummary(after, CLIENT, TODOS_NOT_READ);
-  const afterCard = card(dbPath);
+  const afterCard = card(dbPath, draft);
   for (const text of [summary, afterCard]) {
     assert.doesNotMatch(text, /#2\b/);
     assert.equal(text.includes(DELETED_TITLE), false);

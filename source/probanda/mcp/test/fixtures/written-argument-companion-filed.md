@@ -15,4 +15,4 @@
 
 ## Submissions
 
-1. **The Plaintiff asks the Court to award the following relief.**
+1. The Plaintiff asks the Court to award the following relief.
