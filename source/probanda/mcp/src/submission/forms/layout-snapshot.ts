@@ -274,6 +274,17 @@ export async function submissionDataCreateWriting(args: CreateWritingArgs, seams
     throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Job Board with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
   }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
+  // A title names the Writing only. The style of proceeding is the proceeding's own record, and the
+  // Job Board prints it from there, so a title that repeats it is refused before anything is written.
+  const styleSuffix = proceeding.style_of_cause ? ` - ${proceeding.style_of_cause}` : null;
+  const title = args.title.trim();
+  if (styleSuffix !== null && title.endsWith(styleSuffix)) {
+    throw new ValidationError(
+      `${TOOL}.title "${title}" ends with the proceeding's style of proceeding; a title names the Writing only. Nothing was written. ` +
+        `Pass "${title.slice(0, -styleSuffix.length).trim()}" instead.`,
+      "title_holds_style"
+    );
+  }
   const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding }, seams);
   const signer = chooseSigner(built.stored.layout, args, proceeding, env, seams.caseDataRoot);
   const statements: WriteStatement[] = [

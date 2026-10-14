@@ -417,7 +417,7 @@ export interface WorkBoardData {
 /** One Job Board page (#1365, ADR 0033's 2026-10-05 amendment): the matter's meta and one section, a
  * live filing's or a pre-filing proceeding's. `meta.revision` stays the data line's first key, so
  * readExistingRevision still reads it. The client number and the section's proceeding's forum,
- * registry and file number are "" when unknown. */
+ * registry, file number and style of proceeding are "" when unknown. */
 export interface MatterJobBoardData {
   meta: {
     revision: number;
@@ -428,6 +428,7 @@ export interface MatterJobBoardData {
     forum: string;
     registry: string;
     file_number: string;
+    style_of_cause: string;
   };
   sections: WorkBoardData[];
   /** The matter's dates (ADR 0013, 2026-10-04 amendments): drawn on the page, in no section. */

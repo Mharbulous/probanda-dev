@@ -325,7 +325,7 @@ export function writeMatterPages(
     const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
     const jobBoards = pages.map(({ proceeding, section, writings, views: pageViews }) =>
       renderWorkBoardHtml({
-        meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "" },
+        meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
         sections: [section],
         dates: pageDates(dates, [section]),
         writings,
