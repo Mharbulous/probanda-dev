@@ -64,7 +64,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Stock bundle jobs and the Letter save idiom | `/prepare` offers a Writing kind's stock jobs, or a letter or `internal-memo` is saved | `references/jobs-stock.md` §3b |
 | Counsel's review jobs | The pre-review passes leave nothing open and every completion criterion above counsel's review holds | `references/jobs-stock.md` §3c |
 | Create a pass finding job | A pre-review pass (`/draft`'s letter passes or overstatement review) leaves a finding undecided in the turn it states it | `references/jobs-stock.md` §3g |
-| Create a research offer job | A `/legal-research` return's Step 5 offer is on the board's application, or the practitioner names a relayed offer to add | `references/jobs-stock.md` §3i |
+| Create a research offer job | The practitioner names a relayed `/legal-research` Step 5 offer to add | `references/jobs-stock.md` §3i |
 | Create a scrutiny review job | A scrutiny return is recorded `'failed'` on a statement linked to a live Writing, or a failed statement is linked to one again | `references/jobs-stock.md` §3d |
 | Assign a job (`drafting_data__assign_job`; semantics §4) | The practitioner picks a Ready job, or says yes to a take-over prompt | `references/jobs-run.md` §4 |
 | Approve a plan | `/draft` stamps the plan it announced for the job this session holds, under the standing announce-and-proceed rule, or the practitioner changes it | `references/jobs-run.md` §5 |

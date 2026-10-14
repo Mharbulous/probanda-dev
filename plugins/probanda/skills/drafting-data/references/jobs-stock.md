@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or a `/legal-research` return's Step 5 offer is on the board's application or is a relayed offer the practitioner names to add (§3i).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -326,9 +326,9 @@ The job is ordinary `work`: no title exclusion leaves it out of the open jobs th
 
 ## 3i. Research offer jobs
 
-One fixed-text job per follow-up research offer that bears on the application the board is for. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
+One fixed-text job per follow-up research offer the practitioner names to add. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
 
-**Who creates it.** The session relaying the return, in the same turn, with no closing read-back and no question: once for each offer the sort in `shared/legal-research.md` ("After the answer") puts on the application, and once for an uncertain offer the practitioner then names to add. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `session_proposed`, no `ticket_proposals` row and no `ticket_blocks` edge.
+**Who creates it.** The session that relayed the return, only when the practitioner names a relayed offer to add. The sort in `shared/legal-research.md` ("After the answer") creates no job: it captures each offer as a loose thread or drops it. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `session_proposed`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
 The job's words come from the offer and from this section, never from the session.
 
@@ -367,12 +367,12 @@ No row means the guard fired: take the existing job's number from `drafting_form
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Put this question to /legal-research and save the answer under this job');
 ```
 
-**Consuming the thread on "add".** An uncertain offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:
+**Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:
 
 ```sql
 UPDATE seeds SET charted_into = 31 WHERE id = 7;
 ```
 
-This is one of two `charted_into` writes outside an outlining session, the other the loose-threads job's (`jobs-create.md` §3, "Consuming a loose thread the held job worked"). It runs in the session the sort ran in, and only on a thread that sort captured. An offer already on the application was never captured, so it has no thread to consume.
+This is one of two `charted_into` writes outside an outlining session, the other the loose-threads job's (`jobs-create.md` §3, "Consuming a loose thread the held job worked"). It runs in the session the sort ran in, and only on a thread that sort captured.
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.
