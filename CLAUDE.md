@@ -11,7 +11,7 @@ A push to `main` is the release. claude.ai installs Probanda from this repositor
 ## Two repositories
 
 - `Mharbulous/probanda-plugins` is this repository. It is private, and all development happens here. It stays private: its history holds schema files.
-- `Probanda-app/litigation` is the public repository that users install from.
+- `Probanda-app/plugins` is the public repository that users install from.
 
 `public/` is the Public Folder: the only source of the public repository, so it never holds a Trade Secret or User Data. A skill lives under `public/plugins/probanda/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
 
