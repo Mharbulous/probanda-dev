@@ -47,6 +47,17 @@ export type IngestCoverage =
       status: "ok";
       /** Matter-relative paths of the files with no ingested record. */
       to_ingest: string[];
+      /** One entry per `to_ingest` path, in the same order, saying why the file is not held:
+       * `verdict` `none` is no usable record, `partial` a partly ingested one and `failed` a failed
+       * one. `source_id` is the case-data source behind the verdict, and `possible_version_of` the
+       * source its pending supersede marker names as another version of the file; each is null when
+       * there is none. */
+      records: {
+        path: string;
+        verdict: "none" | "partial" | "failed";
+        source_id: number | null;
+        possible_version_of: number | null;
+      }[];
       /** Files whose record is damaged: no ingest takes them until it is repaired. */
       damaged: string[];
       /** Files whose bytes could not be read, so their state is unknown. */

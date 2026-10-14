@@ -37,6 +37,7 @@ A file is **ingested** when its hash matches one of:
 | `duplicate_of` | set when this file is a copy of another file (Step 2): the other copy's path, in stored form. The verdict is then `none`, and the file is never re-pointed |
 | `twin_ingested` | with `duplicate_of`: whether the other copy counts as ingested (its verdict is `ingested`, `ingested_by_reference` or `superseded`) |
 | `pending` | the pending markers on the main source (conventions §11): `order_effects`, `linkage`, `date_anchor`, `supersede`, or empty |
+| `possible_version_of` | with `supersede` in `pending`: the id of the source the `SUPERSEDE-PENDING:` marker names, which may be another version of this file. Where the row carries several such markers, the first in its notes. Null with no marker. Read from the marker only, never from a free-text note |
 | `superseded_by` | with `superseded`: the id of the source kept in its place |
 | `move_pending` | with `superseded`: true when the row's stored path lies outside `0. DRAFT*\Superseded\`, so the move [`supersede-draft.md`](supersede-draft.md) §6 makes did not happen. The attended gate and folder scan offer it again (§6c); this operation, like every unattended path, only reports it |
 | `metadata` | the stored fields a naming-evidence block is built from. Main: `title`, `description`, `category`, `date`, `execution_status`, `filed_by`, and the linked proceeding's `file_number`, `court` and `registry`. Privileged: `title`, `description`, `category`, `author`, `recipient`, `date`. Law: `title`, `citation`, `authority_type`, `jurisdiction` |
@@ -72,6 +73,9 @@ SELECT c.ord, 'main' AS store, s.source_id AS id, s.parent_source_id,
        CASE WHEN instr(coalesce(s.notes, ''), '[SUPERSEDED-BY:#') > 0
             THEN CAST(substr(s.notes, instr(s.notes, '[SUPERSEDED-BY:#') + 16) AS INTEGER)
        END AS superseded_by,
+       CASE WHEN instr(coalesce(s.notes, ''), 'SUPERSEDE-PENDING: possible other version of source #') > 0
+            THEN CAST(substr(s.notes, instr(s.notes, 'SUPERSEDE-PENDING: possible other version of source #') + 53) AS INTEGER)
+       END AS supersede_pending_of,
        json_object('title', s.title, 'description', s.description,
                    'category', s.category, 'date', s.date,
                    'execution_status', s.execution_status, 'filed_by', fp.name,
@@ -86,7 +90,7 @@ SELECT c.ord, 'privileged', p.source_id, NULL, p.file_path, NULL,
        (SELECT count(*) FROM privileged.fact_provenance WHERE source_id = p.source_id)
      + (SELECT count(*) FROM privileged.client_instructions
         WHERE source_id = p.source_id AND valid_to IS NULL),
-       0, 0, 0, 0, 0, NULL, NULL,
+       0, 0, 0, 0, 0, NULL, NULL, NULL,
        json_object('title', p.title, 'description', p.description,
                    'category', p.category, 'author', p.author,
                    'recipient', p.recipient, 'date', p.date)
@@ -98,7 +102,7 @@ SELECT c.ord, 'law', a.authority_id, NULL, a.file_path, NULL, NULL, 0, 0, 0, 0,
        CASE WHEN a.notes LIKE '[MERGED-INTO:#%'
             THEN CAST(substr(a.notes, 15, instr(substr(a.notes, 15), ' ') - 1) AS INTEGER)
        END,
-       NULL,
+       NULL, NULL,
        json_object('title', a.title, 'citation', a.citation,
                    'authority_type', a.authority_type,
                    'jurisdiction', a.jurisdiction)
@@ -150,7 +154,8 @@ def ingest_status(files, rows, matter_root, matter_folder):
                'store': None, 'source_ids': [], 'stored_path': None,
                'moved': False, 'duplicate_of': None, 'twin_ingested': None,
                'pending': [], 'metadata': None, 'merged_into': None,
-               'superseded_by': None, 'move_pending': False, 'anomaly': None}
+               'superseded_by': None, 'move_pending': False, 'anomaly': None,
+               'possible_version_of': None}
         results.append(out)
         tops = [r for r in recs if r['store'] == 'main' and r['parent_source_id'] is None]
         if len(tops) > 1:
@@ -186,6 +191,7 @@ def ingest_status(files, rows, matter_root, matter_folder):
             source_ids=[r['id'] for v, r in found if v == verdict and r['store'] == rec['store']],
             stored_path=rec['file_path'], merged_into=rec['merged_into'],
             superseded_by=rec['superseded_by'], metadata=json.loads(rec['metadata']),
+            possible_version_of=rec['supersede_pending_of'],
             pending=[name for name, key in (('order_effects', 'order_effects_pending'),
                                             ('linkage', 'linkage_pending'),
                                             ('date_anchor', 'date_anchor_pending'),

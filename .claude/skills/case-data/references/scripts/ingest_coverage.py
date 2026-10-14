@@ -9,8 +9,10 @@ this report and the per-letter check can never disagree.
 
 Three statuses:
 
-  {"status": "ok", "to_ingest", "damaged", "unreadable", "missing",
-   "newest_correspondence"}                  the operation's own output
+  {"status": "ok", "to_ingest", "records", "damaged", "unreadable", "missing",
+   "newest_correspondence"}                  the operation's own output;
+      "records" holds one {"path", "verdict", "source_id",
+      "possible_version_of"} per "to_ingest" path
   {"status": "not_applicable", "reason": ...}  no case-data database in the folder
   {"status": "unavailable", "reason": ...}     law.sqlite or privileged.sqlite
       missing, or a database behind the current schema

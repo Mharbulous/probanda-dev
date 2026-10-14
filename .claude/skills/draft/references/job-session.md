@@ -53,7 +53,12 @@ Word the two causes differently: a dead key is "the marker no longer fires on N 
 
 - Ask `/case-data` for the ingest coverage of exactly the folders in `ingest_inputs.folders`, the solicitor-client and correspondence folders among them counting as correspondence. Never read a `/case-data` file or the database for it.
 - Clean, with nothing to ingest, nothing damaged or unreadable and no folder missing: one line naming the folders checked, then go on to assign.
-- Otherwise assign nothing. Say `inputs_stale: <folder> (<N> files)` for each folder with files to ingest, name any damaged or unreadable file and any missing folder, and offer `/ingest` on every file to ingest. On a yes, run `/ingest`, check again, then assign. On a no, assign nothing and wait: the job stays in Ready. A `/case-data` error is quoted in one line and nothing is assigned: never say the folders are ingested when the check could not run.
+- Otherwise assign nothing. Say `inputs_stale: <folder> (<N> files)` for each folder with files to ingest, and name any damaged or unreadable file and any missing folder. Word each file to ingest by its entry in the coverage's `records`, and make one offer for it:
+  - `possible_version_of` holds an id N, whatever the verdict: say the file may be another version of source #N, which case data already holds, and offer `/case-data`'s `supersede-draft` on that pair. Never offer `/ingest` on it. Send both files' cards in the same turn (`/show-me`), asking `/case-data` for the other file's path. `/draft` writes no case data: the supersession is `/case-data`'s.
+  - verdict `partial` and no `possible_version_of`: say the file is partly ingested, and offer `/ingest` on it.
+  - verdict `failed` and no `possible_version_of`: say an ingest of the file failed, and offer `/ingest` on it.
+  - verdict `none` and no `possible_version_of`: the file has no record. Offer `/ingest` on it.
+- On a yes, run what was offered, check again, then assign. A file still not held after that keeps the job unassigned. On a no, assign nothing and wait: the job stays in Ready. A `/case-data` error is quoted in one line and nothing is assigned: never say the folders are ingested when the check could not run.
 - In an unattended run (`references/dispatch.md` section 14), anything but a clean result goes in the run's report and the run stops.
 
 <!-- atom id=draft.pre-claim ops=pre_claim -->

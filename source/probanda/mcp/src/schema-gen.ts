@@ -1984,7 +1984,11 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. " +
         "It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its " +
         "ingest inputs not yet in the case database, checked only when that filing has a Ready job; status " +
-        "not_applicable or unavailable means the check did not run. " +
+        "not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns " +
+        "records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: " +
+        "verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; " +
+        "source_id is the case-data source behind the verdict, and possible_version_of the source that file may " +
+        "be another version of; each is null when there is none. " +
         "When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, " +
         "matched by number and deponent code against the file names in the matter's COURT FILE folder, with its " +
         "court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, " +
