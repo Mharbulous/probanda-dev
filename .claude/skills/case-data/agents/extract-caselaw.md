@@ -248,4 +248,7 @@ absent, and its facets follow the omission rules in
   they belong on concepts extracted from decisions.
 - `criterion_order` is a 1-based integer giving the order of criteria within a
   concept.
+- `determined_by_concept_name` is the exact `name` of one of the concepts in this
+  same output, or null. A sub-test the decision relies on but does not itself
+  state becomes its own entry in `concepts` or is omitted.
 - Output the JSON object only.
