@@ -852,6 +852,17 @@ class PractitionerWordsGateTest(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertRefused(self.run_hook(replace_steps(value)), "cannot read the practitioner's wording")
 
+    def test_the_loose_threads_job_scripts_pass_as_jobs_create_md_writes_them(self):
+        # §3j: no script reads the transcript, and the title and intent are the instruction itself.
+        text = (STOCK_MD.parent / "jobs-create.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+        blocks = re.findall(r"^```sql\n(.*?)\n```$", text.split("## 3j. The loose-threads job", 1)[1], re.S | re.M)
+        self.assertEqual(len(blocks), 3, "§3j's Call 1, Call 2 and Call 3")
+        self.write_transcript(turn_line("work on loose threads"))
+        for sql in blocks:
+            for transcript in (None, ""):
+                with self.subTest(sql=sql[:40], transcript=transcript):
+                    self.assertEqual(self.run_hook(sql, transcript=transcript).returncode, 0)
+
     def test_a_stock_step_put_back_passes_and_is_the_text_jobs_stock_md_gives(self):
         text = STOCK_MD.read_text(encoding="utf-8")
         self.assertIn("Draft the chambers-availability letter", STOCK_STEPS)
