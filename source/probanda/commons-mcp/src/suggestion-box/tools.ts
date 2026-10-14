@@ -4,8 +4,8 @@ import { persistSuggestionBoxCredential, type SuggestionBoxCredential, type Sugg
 
 // Runtime logic for the Suggestion Box namespace: a suggestion about the plugin
 // that the practitioner expressly submits is posted as one GitHub issue on the
-// private repo held in stored configuration. A post carries a title and a body
-// and nothing else. The repo is checked to be private when it is configured and
+// private repo held in stored configuration. A post carries a title, a body and
+// a label naming its source (User or LLM), and nothing else. The repo is checked to be private when it is configured and
 // again before every post, so nothing here can post to a public repo.
 // Tool definitions live in schema-gen.ts.
 
@@ -19,6 +19,8 @@ const TOKEN_FORM = /^[\x21-\x7E]+$/;
 // GitHub's token-type prefixes. The hint shows one of these and the last four
 // characters, so it never shows any of the secret part beyond those four.
 const TOKEN_PREFIX = /^(?:github_pat_|gh[pousr]_)/;
+// Who the suggestion came from, as the issue label that tells the two apart.
+const SOURCE_LABELS: Record<string, string> = { user: "User", llm: "LLM" };
 
 export function isSuggestionBoxToolName(name: string): boolean {
   return name.startsWith("suggestion_box__");
@@ -90,6 +92,8 @@ async function submit(state: SuggestionBoxState, args: Record<string, unknown>):
   const body = String(args.body ?? "").trim();
   if (!title) throw new ValidationError("submit requires a title");
   if (!body) throw new ValidationError("submit requires a body");
+  const sourceLabel = SOURCE_LABELS[String(args.source ?? "")];
+  if (!sourceLabel) throw new ValidationError("submit requires source: user or llm");
   const hits = findRedactionHits({ title, body });
   if (hits.length > 0) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
@@ -98,7 +102,7 @@ async function submit(state: SuggestionBoxState, args: Record<string, unknown>):
   await requirePrivateRepo(credential);
   const reply = await github(credential.token, `/repos/${credential.repo}/issues`, {
     method: "POST",
-    body: JSON.stringify({ title, body, labels: ["suggestion"] }),
+    body: JSON.stringify({ title, body, labels: ["suggestion", sourceLabel] }),
   });
   if (reply.status !== 201) throw new ValidationError(`GitHub answered ${reply.status}, so the suggestion was not posted`);
   const issue = (await reply.json()) as { number: number; html_url: string };

@@ -137,6 +137,20 @@
             "statusMessage": "Commons read-only guard"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/plugin-cache-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Installed-plugin guard"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -147,6 +161,14 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/skills/practice-data/hooks/inject-practice-quirks.py"
+            ],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/hidden-skills-note.py"
             ],
             "timeout": 10
           }

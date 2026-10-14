@@ -446,12 +446,14 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
       description:
         "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. " +
         "title and body are the whole post: they must name no person, entity, matter, document or path. " +
+        "source is user for the practitioner's own idea (through /probanda:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box); it sets the issue label User or LLM. " +
         "Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; " +
         "the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
       inputSchema: objectSchema([
         { name: "title", type: "str" },
         { name: "body", type: "str" },
-      ], ["title", "body"]),
+        { name: "source", type: "str", enum: ["user", "llm"] },
+      ], ["title", "body", "source"]),
     },
     {
       name: suggestionBoxPrefixed("configure_credential"),
