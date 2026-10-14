@@ -415,6 +415,8 @@ class TestV21RevisionTriggers(unittest.TestCase):
     # mockup, only the Job Board pages (ADR 0042, migrations.sql 66 -> 67).
     # v73 adds the rules-position tables, seventeen: where a session stands on
     # its rules map, and which rules it was served, change no substance.
+    # v76 adds ticket_sources, eighteen: recording or closing a source a job
+    # is about to get changes no substance (migrations.sql 75 -> 76).
     EXEMPT = frozenset(
         {
             "board_attachments",
@@ -432,6 +434,7 @@ class TestV21RevisionTriggers(unittest.TestCase):
             "ticket_proposals",
             "proposal_rejections",
             "ticket_answers",
+            "ticket_sources",
             "review_approvals",
             "review_points",
             "paragraph_revisions",
