@@ -24,6 +24,7 @@ POOL_READ_TOOLS = {
     "mcp__plugin_probanda_commons__legal_commons__find_candidates",
     "mcp__plugin_probanda_commons__legal_commons__lookup_by_citation",
     "mcp__plugin_probanda_commons__legal_commons__resolve_by_id",
+    "mcp__plugin_probanda_commons__legal_commons__search",
     "mcp__plugin_probanda_commons__legal_commons__treatment_chain",
 }
 
@@ -109,7 +110,7 @@ class AgentShimContractTests(unittest.TestCase):
         self.frontmatter, self.body = _split_frontmatter(RESEARCH_LAWYER_PATH)
         self.tools = _parse_tools(self.frontmatter)
 
-    def test_grant_holds_the_five_pool_read_tools_under_both_names(self):
+    def test_grant_holds_the_six_pool_read_tools_under_both_names(self):
         self.assertTrue(self.tools, "research-agent tools: block parsed empty")
         commons = {tool for tool in self.tools if "_commons__" in tool}
         self.assertEqual(commons, POOL_READ_TOOLS | {_bridged(tool) for tool in POOL_READ_TOOLS})

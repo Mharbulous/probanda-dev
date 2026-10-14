@@ -34,6 +34,8 @@ export function callLegalCommonsTool(
       return lookupByCitation(client, args);
     case "legal_commons__browse":
       return browse(client, args);
+    case "legal_commons__search":
+      return search(client, args);
     case "legal_commons__treatment_chain":
       return treatmentChain(client, args);
     case "legal_commons__push":
@@ -171,6 +173,17 @@ async function browse(client: LegalCommonsClient, args: Record<string, unknown>)
   return client.rpc("browse_principles", {
     p_keyword: String(args.keyword),
     p_limit: typeof args.limit === "number" ? args.limit : 50,
+  });
+}
+
+// search — meaning search. The commons-find Edge Function embeds the text and
+// replies with only the matching principles' prose and their authorities'
+// citations and pinpoints, best match first: the pool's finer structure stays in
+// the cloud (Commandment 4). The text travels in the body, never the address.
+async function search(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
+  return client.callFunction("commons-find", {
+    text: String(args.text),
+    limit: typeof args.limit === "number" ? args.limit : 5,
   });
 }
 

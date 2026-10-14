@@ -74,6 +74,11 @@ export class LegalCommonsClient {
     return this.request("POST", `/rest/v1/rpc/${fn}`, body, { "Content-Profile": this.config.schema });
   }
 
+  // One of the pool's Edge Functions. The body carries the input, never the address.
+  async callFunction(name: string, body: Record<string, unknown> = {}): Promise<unknown> {
+    return this.request("POST", `/functions/v1/${name}`, body, {});
+  }
+
   // Table writes for the amend ops. Minting still goes through push_principle
   // (it needs one transaction); amends are single-statement corrections, so they
   // go straight to PostgREST — the service_role grant already covers tables.

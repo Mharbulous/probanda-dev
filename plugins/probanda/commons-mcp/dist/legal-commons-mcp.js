@@ -15791,6 +15791,8 @@ function callLegalCommonsTool(client, name, args) {
       return lookupByCitation(client, args);
     case "legal_commons__browse":
       return browse(client, args);
+    case "legal_commons__search":
+      return search(client, args);
     case "legal_commons__treatment_chain":
       return treatmentChain(client, args);
     case "legal_commons__push":
@@ -15879,6 +15881,12 @@ async function browse(client, args) {
   return client.rpc("browse_principles", {
     p_keyword: String(args.keyword),
     p_limit: typeof args.limit === "number" ? args.limit : 50
+  });
+}
+async function search(client, args) {
+  return client.callFunction("commons-find", {
+    text: String(args.text),
+    limit: typeof args.limit === "number" ? args.limit : 5
   });
 }
 async function treatmentChain(client, args) {
@@ -16125,6 +16133,14 @@ function legalCommonsToolDefinitions() {
         { name: "keyword", type: "str" },
         { name: "limit", type: "num" }
       ], ["keyword"])
+    },
+    {
+      name: legalCommonsPrefixed("search"),
+      description: "Search pooled principles by meaning, so a question worded differently from the pooled prose still finds it. Returns, best match first, each matching principle's id and prose with its authorities' citations and pinpoints. Defaults to limit 5, at most 10.",
+      inputSchema: objectSchema([
+        { name: "text", type: "str" },
+        { name: "limit", type: "num" }
+      ], ["text"])
     },
     {
       name: legalCommonsPrefixed("treatment_chain"),
@@ -16628,7 +16644,7 @@ function isTroubleshootToolName(name) {
 function callTroubleshootTool(context, name, args) {
   switch (name) {
     case "troubleshoot__search":
-      return search(context.troubleshoot, args);
+      return search2(context.troubleshoot, args);
     case "troubleshoot__record":
       return record2(context.troubleshoot, args);
     case "troubleshoot__confirm_fix":
@@ -16641,7 +16657,7 @@ function callTroubleshootTool(context, name, args) {
       throw new ValidationError(`Unknown troubleshoot tool "${name}"`);
   }
 }
-async function search(client, args) {
+async function search2(client, args) {
   const entries = await client.rpc("search_entries", {
     p_query: String(args.query),
     p_tools: Array.isArray(args.tools) ? args.tools : [],
@@ -16967,6 +16983,10 @@ var LegalCommonsClient = class {
   }
   async rpc(fn, body = {}) {
     return this.request("POST", `/rest/v1/rpc/${fn}`, body, { "Content-Profile": this.config.schema });
+  }
+  // One of the pool's Edge Functions. The body carries the input, never the address.
+  async callFunction(name, body = {}) {
+    return this.request("POST", `/functions/v1/${name}`, body, {});
   }
   // Table writes for the amend ops. Minting still goes through push_principle
   // (it needs one transaction); amends are single-statement corrections, so they

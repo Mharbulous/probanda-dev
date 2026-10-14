@@ -43,6 +43,7 @@ prompt. A WARN pause inside a push is a content confirmation, a separate thing.
 | Shortlist pooled principles for push-time dedup — the retrieval step | `legal_commons__find_candidates` |
 | Find pooled authorities by exact public citation | `legal_commons__lookup_by_citation` |
 | Keyword-browse principles by substring | `legal_commons__browse` |
+| Find pooled principles by meaning, whatever their wording; returns each one's prose with its authorities' citations and pinpoints | `legal_commons__search` |
 | Trace the authority-treats-authority chain leading to an authority | `legal_commons__treatment_chain` |
 | Publish one generalized, matter-free principle to the pool | `legal_commons__push` |
 | Correct the text of an already-pooled principle | `legal_commons__amend_principle_text` |
@@ -61,7 +62,9 @@ prompt. A WARN pause inside a push is a content confirmation, a separate thing.
 
 ## Reads
 
-The five reads are safe to call directly for lookup and dedup. `find_candidates`
+The six reads are safe to call directly for lookup and dedup. `search` answers a
+question in its own words with the principles that mean the same, best match
+first. `find_candidates`
 is the retrieval step for push-time dedup: pass a **retrieval packet** — several
 `rephrasings` of the principle (so paraphrases with different wording are still
 caught), an optional `doctrine_tag`, and the `citations` it relies on. The

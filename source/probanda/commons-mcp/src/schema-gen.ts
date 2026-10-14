@@ -89,6 +89,15 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
       ], ["keyword"]),
     },
     {
+      name: legalCommonsPrefixed("search"),
+      description:
+        "Search pooled principles by meaning, so a question worded differently from the pooled prose still finds it. Returns, best match first, each matching principle's id and prose with its authorities' citations and pinpoints. Defaults to limit 5, at most 10.",
+      inputSchema: objectSchema([
+        { name: "text", type: "str" },
+        { name: "limit", type: "num" },
+      ], ["text"]),
+    },
+    {
       name: legalCommonsPrefixed("treatment_chain"),
       description: "Return the directed authority-treats-authority chain leading to the given pooled authority.",
       inputSchema: objectSchema([{ name: "authority_id", type: "str" }], ["authority_id"]),
