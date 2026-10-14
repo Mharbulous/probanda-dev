@@ -23,7 +23,8 @@ JOBS_RUN = Path(__file__).resolve().parents[1] / "references" / "jobs-run.md"
 # The Job Board's read of a proceeding's uncharted threads (render-work-board.ts), no deletions.
 BOARD_READ = (
     "SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea FROM seeds "
-    "WHERE (charted_into IS NULL) AND proceeding_id = ? ORDER BY id"
+    "WHERE (charted_into IS NULL) AND discarded_at IS NULL AND suggested_at IS NULL "
+    "AND proceeding_id = ? ORDER BY id"
 )
 
 
