@@ -1,13 +1,13 @@
 # Plan: split out a `file-admin` plugin
 
-**Status (2026-10-14).** Approved by Brahm. Waiting: `cutover` is not merged into `main`, so step 0 stops. Nothing is built yet.
+**Status (2026-10-14).** Approved by Brahm. Later the same day Brahm made the split a five-plugin split: this plan is now carried out inside phase 5 (the cutover) of `docs/Plans/2026-10-13_four-plugin-split.md`, which is the source for sequencing. Step 0 and step 5 below apply only if it were ever run on its own. Nothing is built yet.
 
 ## Context
 
 Some practitioners want Probanda without letting it rename, move or delete their files. Today those capabilities sit in `practice` (after cutover) and on the shared `data` server, so there is no single switch. Goal: disabling the `file-admin` plugin removes every such tool, skill and agent, while `practice`, `research`, `litigator` and `solicitor` keep working.
 
 Decided by Brahm on 2026-10-14:
-- **Sequencing.** Build only after the four-plugin cutover (branch `cutover`, worktree `../probanda-cutover`, plan `docs/Plans/2026-10-13_four-plugin-split.md`) is merged into `main` and pushed. All paths below are cutover paths (`source/practice/...`). Until then this plan waits.
+- **Sequencing.** Built in the cutover commit (phase 5, step 0, of `docs/Plans/2026-10-13_four-plugin-split.md`), on the `cutover` branch in worktree `../probanda-cutover`. All paths below are cutover paths (`source/practice/...`).
 - **Scope.** Only the brief's list moves: `file_ops__*`, `housekeeping__*`, the rename and route apply scripts, `housekeeping`, `route-accounting`, `file-sorting`, and the two housekeeping agents. These stay put:
   - `research_filing__file_download` (moves a file out of Downloads)
   - render-time archiving in `submission/forms.ts:260-327`
@@ -19,7 +19,7 @@ Duplication check (2026-10-14): no plan or commit covers this. Sessions -60, -c9
 ## Deviations from the brief's scope line (approve with this plan)
 
 1. **The new server bundle is built here.** This repo has no `/repackage`. `build_plugin.py:328-335` stops when a server's `dist/` is missing, so `check_plugin.py` cannot pass without the bundle. Build it the way the four-plugin plan does: `npm run build` then `node scripts/bundle.mjs` in `source/practice/mcp/`, and commit both bundles. Run no test suite.
-2. **Versions.** `file-admin` starts at `0.2.0`. Bump `practice` and `litigator` (their built folders change), because under CLAUDE.md "Releasing" a push without a bump is never picked up.
+2. **Versions.** `file-admin` starts at `0.2.0`, as every plugin does at cutover (split plan, decision 4).
 3. **Tests are not updated** (the brief forbids it). `scripts/tests/test_build_plugin.py:14` (the `PLUGINS` tuple) will then be stale. The final report says so.
 
 ## Design
@@ -85,7 +85,6 @@ Use one wording pattern: "If `<tool>` is not available in this session, the `fil
 - `source/file-admin/README.md`: what it holds, and that it requires `practice`. Add the note: "The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-admin removes Probanda's file tools, not the host's."
 - `source/practice/README.md`: the install list adds `file-admin` as optional, with the same note.
 - `CLAUDE.md` "Permanent names": add `file-admin` and server key `files`.
-- `docs/Plans/2026-10-13_four-plugin-split.md`: one line under the status pointing to this plan.
 
 ## Steps and checks
 
