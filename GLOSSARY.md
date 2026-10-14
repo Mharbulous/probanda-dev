@@ -19,6 +19,7 @@ terms:
   - Completion criteria
   - Component
   - Consequence
+  - Consolidation part
   - Contention
   - Copy (within a bundle)
   - Court Rule
@@ -82,6 +83,7 @@ terms:
   - Proposal
   - Proposition
   - Provenance
+  - Publisher map
   - Qualified admission
   - Ratio decidendi
   - Rationale
@@ -96,6 +98,8 @@ terms:
   - Rhetorical paragraph
   - Ripe
   - Rule
+  - Rule Library
+  - Rule Set
   - Scope
   - Severance
   - Shelve
@@ -118,6 +122,7 @@ terms:
   - Unstructured Writing
   - Up-pointer
   - Variant
+  - Venue
   - Verified
   - Work marker
   - Writing
@@ -197,6 +202,10 @@ _Avoid_: section (a schema term); part (Form 32's own word).
 
 **Consequence**:
 The legal outcome a proposition produces: what may, must or does follow. In the pool it is the clause a proposition points at as its outcome. A clause is a consequence only because some proposition points at it that way, and one clause may be the consequence of several propositions. It may be compound: where the prose makes a second outcome depend on the first, both stay in one consequence. A new part begins only where the prose gives a new actor with its own main verb, so two linked outcomes of one actor are one part. Each part records three reading aids: its actor, whether it is discretionary (true where a person or a court is given a choice, as with "the court may order", and false otherwise, including a "may" that states only what is possible, as with "service may be proven") and its polarity (negative when the part says something does not happen or may not be done, otherwise affirmative). A consequence that is not compound has one part. The aids are shown beside a search result because similarity search blurs them. A consequence is the hub of a **Rule** and the entry a search looks for. Two consequences judged to mean the same are both kept and linked, never merged.
+
+**Consolidation part**:
+One of the separate pages on which an official publisher issues a single instrument, such as a **Rule Set** whose parts and appendices each have their own page. An instrument is held whole only when every part is held.
+_Avoid_: section, chapter (both name divisions within the text).
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
@@ -451,6 +460,10 @@ _Avoid_: proposition for a factual assertion (a **Postulate**); proposition to m
 **Provenance**:
 Where a fact was learned; this may be privileged (e.g. a client interview) even when the fact itself is later provable through non-privileged means. A fact can have provenance without evidence — that is a trial-prep gap (a fact you know how you learned, but cannot yet prove admissibly).
 
+**Publisher map**:
+A record of how one official publisher issues instruments: where their text is found, how each instrument's **Consolidation parts** are listed, and which signals show that the text is current. It never holds an instrument's text.
+_Avoid_: rule-set map, source list.
+
 **Qualified admission**:
 A single **admit** position where the limiting language is recorded verbatim (never split into a separate admit row and a separate deny row, and never paraphrased).
 
@@ -503,6 +516,14 @@ _Avoid_: available (generic English — "ready" here means specifically classifi
 **Rule**:
 A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Proposition** that points at any of them. A consequence with no such link is a rule on its own.
 _Avoid_: bare "rule" where the same file also means a **Court Rule** or one of the plugin's own working rules. Say which.
+
+**Rule Library**:
+The practitioner's own copy of the **Rule Sets** of the **Venues** they appear before, held on their machine, kept current against each publisher, and shared by all of the firm's matters rather than held in any one.
+_Avoid_: rules database; commons (the shared pool, which holds no Rule Set).
+
+**Rule Set**:
+One instrument of **Court Rules**, whole, as its publisher issues it: every **Consolidation part**, schedule, appendix and tariff. A Venue may work under several Rule Sets, and one Rule Set may serve several Venues.
+_Avoid_: bare "rules"; an instrument's short name (SCCR) used as a general term.
 
 **Scope**:
 The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope.
@@ -588,6 +609,10 @@ The one-way, local-only record "my local principle = cloud principle #N". The cl
 
 **Variant**:
 A principle recorded, under the pool's earlier design, as another judge's wording of a point that a different principle already makes. In the pool it is a principle whose `variant_of` field names that other principle, with a note on the difference. Existing variants are kept, and a lookup of any member returns the whole cluster. The revised structure adds none: sameness of meaning is recorded between clauses instead.
+
+**Venue**:
+A body a lawyer appears before whose procedure a **Rule Set** governs: a court, an administrative tribunal or board, or an arbitral institution. It is named by its neutral-citation code where it has one, and otherwise by its full official name.
+_Avoid_: court, tribunal (each names one kind of Venue).
 
 **Verified**:
 Describes whether the *extraction or classification* of a row has been quality-checked — nothing more. It does NOT mean the underlying fact is true, proven, admitted, or accepted by a court. A fact can be fully verified (the extraction accurately reflects what the source document says) while still being hotly disputed on the merits.
