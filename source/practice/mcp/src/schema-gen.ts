@@ -1715,7 +1715,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the " +
         "database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a " +
         "revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup " +
-        "sits outside every Cowork sandbox mount, so this is the only way to read its work markers. Each mockup " +
+        "sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir " +
+        "or presentation_dir, markdown returns only for the documents named in documents; every other document " +
+        "carries markdown_chars, its length, in its place, so to read a document's work markers name its " +
+        "document_type in documents. Each mockup " +
         "ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a " +
         "document's markdown, symbol_notes lists the notes written for the model on those symbols, one string " +
         "each, when there are any -- they are written to no file. render_mode " +
