@@ -15,6 +15,7 @@ const NOT_CONFIGURED_HINT =
 
 const GITHUB_API = "https://api.github.com";
 const REPO_FORM = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const TOKEN_FORM = /^[\x21-\x7E]+$/;
 
 export function isSuggestionBoxToolName(name: string): boolean {
   return name.startsWith("suggestion_box__");
@@ -109,6 +110,11 @@ async function configureCredential(state: SuggestionBoxState, args: Record<strin
   const token = String(args.token || "").trim();
   if (!REPO_FORM.test(repo)) throw new ValidationError("configure_credential requires repo as owner/name");
   if (!token) throw new ValidationError("configure_credential requires token");
+  // fetch refuses a header holding a control or non-ASCII character, and its
+  // message for that quotes the header, so such a token is refused here first.
+  if (!TOKEN_FORM.test(token)) {
+    throw new ValidationError("configure_credential requires a token of printable characters with no spaces");
+  }
 
   const credential = { repo, token };
   try {
