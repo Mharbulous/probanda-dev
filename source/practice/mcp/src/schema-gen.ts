@@ -604,6 +604,31 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       // coclerk.json and may move binaries out of the legacy `9. AI` folder.
       annotations: { destructiveHint: true, openWorldHint: false },
     },
+    {
+      name: caseDataPrefixed("procedural_history_append"),
+      description:
+        "The only way to write a matter's ProceduralHistory.md (shared/procedural-history.md), at the top of matter_root. " +
+        "With date (YYYY-MM-DD, the event's date) and line (what happened, one line), it adds the bullet `- <line>` under the " +
+        "`## <date>` heading, creating the file, and the heading in newest-first order, when missing; source_path (the source " +
+        "file, relative to the matter folder) appends it in backticks, or told_on (YYYY-MM-DD) appends `(the practitioner, " +
+        "<told_on>)` for an event the practitioner told the session. Refused, writing nothing: the same bullet already under " +
+        "that heading (duplicate_entry); a line holding a date later than its heading (date_after_heading) -- record the " +
+        "event without the date it sets. Optional replaces, the full text of one existing entry, removes it first: the " +
+        "correction path, used only where case data contradicts the entry. With neither date nor line it stamps the file " +
+        "alone (the currency check's 'no'). Every call rewrites last_updated from this host's own clock, local time with " +
+        "its UTC offset. Asks nothing; never announce it. Returns {ok, path, last_updated, created, added, heading_created, " +
+        "replaced}. Called by /draft and /case-data at the writes shared/procedural-history.md names, and by any session " +
+        "recording an event the practitioner told it.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "date", type: "str" },
+        { name: "line", type: "str" },
+        { name: "source_path", type: "str" },
+        { name: "told_on", type: "str" },
+        { name: "replaces", type: "str" },
+      ], ["matter_root"]),
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
   ];
 }
 

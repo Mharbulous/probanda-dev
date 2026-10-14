@@ -9,6 +9,7 @@ import { caseDataQuery, caseDataExecute } from "./case/backend.js";
 import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
+import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
 import {
   timePipelineGet,
   timePipelineSet,
@@ -158,6 +159,10 @@ export async function callTool(
 
   if (name === "case_data__ingest_authority") {
     return ingestAuthority(args as unknown as AuthorityIngestRequest);
+  }
+
+  if (name === "case_data__procedural_history_append") {
+    return proceduralHistoryAppend(args as unknown as ProceduralHistoryAppendArgs);
   }
 
   if (name === "case_data__migrate") {

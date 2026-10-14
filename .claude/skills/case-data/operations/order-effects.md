@@ -134,7 +134,7 @@ VALUES (?, 'procedural', ?,
 
 `case_data__execute` regenerates `evidence.sql` on success; there is no separate dump step.
 
-Once the changes are applied, add one entry to the matter's `ProceduralHistory.md` under today's date (`../../shared/procedural-history.md`): that case data was updated from the instrument, named by its title and its path relative to the matter folder. The entry names no trial date and no other date the instrument sets.
+Once the changes are applied, add one entry to the matter's `ProceduralHistory.md` under today's date with `case_data__procedural_history_append` (`../../shared/procedural-history.md`): that case data was updated from the instrument, named by its title and its path relative to the matter folder. The entry names no trial date and no other date the instrument sets.
 
 **Declined proposals are recorded in the run report only** — no database write, and no nagging marker. A later re-ingest re-diffs from live values and will re-propose a declined change only if the values still differ, which is correct: a practitioner may decline for timing and want it later.
 
