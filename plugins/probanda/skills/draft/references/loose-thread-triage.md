@@ -41,7 +41,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 **Step 4. Outline or discard only on the practitioner's word.** They say which threads to outline as jobs of their own and which to discard, by rank or by idea. Never infer a discard from a low rank. Which thread the working route above takes is the session's choice, never asked here.
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
-- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation. A new job's title is their words cleaned by `/drafting-data` §3's rule, and its intent stays verbatim.
+- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation. A new job's title is their words cleaned by `/drafting-data` §3's rule, and its intent and steps keep every word, given only §3's capital and full stop.
 - **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count) and re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
