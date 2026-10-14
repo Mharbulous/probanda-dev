@@ -81,6 +81,7 @@
         "verify-law"
       ],
       "agents": [
+        "equivalence-checker",
         "legislation-fetcher",
         "research-agent",
         "research-paralegal",
@@ -137,8 +138,6 @@
     }
   },
   "unplaced": {
-    "agents": [
-      "equivalence-checker"
-    ]
+    "agents": []
   }
 }
