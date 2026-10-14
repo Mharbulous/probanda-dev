@@ -1,4 +1,4 @@
-// build-stamp: d4353630e696
+// build-stamp: cbe4ef3ee3f0
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -85099,7 +85099,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "d4353630e696";
+var BUILD_STAMP = false ? null : "cbe4ef3ee3f0";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -95440,7 +95440,9 @@ ${WORKBOARD_CSS}</style>
 details.goal>summary{cursor:pointer}
 details.goal>summary::-webkit-details-marker{display:none}
 details.goal>summary:focus-visible{outline:2px solid var(--pill-bg);outline-offset:4px}
-.goal .sentence{display:block;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.goal .sentence{display:inline;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+/* The Writing's lifecycle state, a pill beside the sentence in the criterion state's own style. */
+.goal .head .lifecycle{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
 details.goal .sentence::before{content:"\25B8\00A0" / ""}
 details.goal[open] .sentence::before{content:"\25BE\00A0" / ""}
 .goal .text{display:block;margin-top:4px;font-size:13.5px}
@@ -95458,10 +95460,14 @@ details.ticket>summary .subtitle{grid-column:1/-1;font-size:12.5px;color:var(--m
 details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)}
 .body .reason{font-size:13px;color:var(--muted)}
 /* The header rows under the title, each in the meta row's own label-and-value style: the matter and
-   client; the proceeding's venue, registry and court file number, the first two unlabelled; then the
-   dates (ADR 0013, 2026-10-04 amendments), this Writing's row and the matter's row, plain text with
-   no control, each date as stored and its flag after it. A deadline a Goal card carries is drawn on
-   that card instead: in its head while unmet, and on its criterion row. */
+   client; the proceeding's venue, registry, court file number and style of proceeding, joined by
+   dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
+   Writing's row and the matter's row, plain text with no control, each date as stored and its flag
+   after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
+   and on its criterion row. The margin under the header is this page's own: workboard-assets.ts is
+   shared with the other pages. */
+header{margin-bottom:16px}
+header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
@@ -95542,12 +95548,33 @@ var TAIL2 = String.raw`</script>
   metaSpan(metaRow, "Matter", meta.matter);
   metaSpan(metaRow, "Client", meta.client ? meta.client + (meta.client_no ? " (" + meta.client_no + ")" : "") : "");
 
-  // The section's proceeding: its venue (the forum's last segment) and registry, unlabelled, then
-  // its court file number. No row when all three are blank.
+  // A section's lifecycle state, with its date when it has one.
+  function stateText(smeta) {
+    return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
+  }
+
+  // The page's one section names the page: "Job Board <id>: <Writing>", the id the file name's.
+  var first = data.sections[0];
+  if (first) {
+    header.querySelector("h1").textContent = first.meta.filing_id === null
+      ? "Job Board: Proceeding " + first.meta.proceeding_id
+      : "Job Board " + first.meta.filing_id + ": " + first.meta.filing;
+  }
+
+  // The section's proceeding: its venue (the forum's last segment), registry, court file number and
+  // style of proceeding, a dot between each two drawn, only the file number labelled. A page with no
+  // Goal card shows the section's state here, as a chip. No row when there is nothing to draw.
   var venueRow = el("div", "meta proceeding");
-  metaSpan(venueRow, "", (meta.forum || "").split("/").pop());
-  metaSpan(venueRow, "", meta.registry ? meta.registry + " Registry" : "");
-  metaSpan(venueRow, "Court File No.", meta.file_number || "");
+  function proceedingPart(label, value) {
+    if (!value) return;
+    if (venueRow.children.length > 0) venueRow.appendChild(document.createTextNode(" · "));
+    metaSpan(venueRow, label, value);
+  }
+  proceedingPart("", (meta.forum || "").split("/").pop());
+  proceedingPart("", meta.registry ? meta.registry + " Registry" : "");
+  proceedingPart("Court File No.", meta.file_number || "");
+  proceedingPart("", meta.style_of_cause || "");
+  if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
   if (venueRow.children.length > 0) header.appendChild(venueRow);
 
   // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
@@ -95571,16 +95598,10 @@ var TAIL2 = String.raw`</script>
     }
   }
 
-  // One section per live filing, then one per pre-filing proceeding, each under a heading naming it
-  // and its state, with its own Goal card and lanes drawn as a filing's board always drew them.
+  // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
+  // filing's board always drew them.
   data.sections.forEach(function (section) {
     var smeta = section.meta;
-    var head = el("h2", "section-head", smeta.filing_id === null ? "Proceeding " + smeta.proceeding_id : smeta.filing);
-    head.appendChild(document.createTextNode(" "));
-    var chip = el("span", "", smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since);
-    chip.setAttribute("data-k", "State");
-    head.appendChild(chip);
-    main.appendChild(head);
     if (smeta.ready_to_retire) {
       main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
     }
@@ -95945,6 +95966,9 @@ var TAIL2 = String.raw`</script>
       card.setAttribute("data-state", goal.state);
       var head = el(expands ? "summary" : "div", "head");
       head.appendChild(el("span", "sentence", goal.sentence));
+      // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "lifecycle", stateText(data.meta)));
       if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
       // An unmet deadline stays in the head, so it shows whether the card is open or closed.
       criteria.forEach(function (c) {
@@ -97123,7 +97147,6 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const targets = pageTargets(live, preFiling);
     const names = targets.map((t3) => t3.file);
     const views = viewTargets(live);
-    refuseForeignPages(draftDir, names, views);
     const meta2 = {
       revision,
       matter: client.matterNo ?? "",
@@ -97136,6 +97159,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const preFilingWritten = only === void 0 ? preFiling : [];
     const targetsWritten = pageTargets(liveWritten, preFilingWritten);
     const viewsWritten = only === void 0 ? views : views.filter((v3) => v3.filing.id === only);
+    refuseForeignPages(draftDir, targetsWritten.map((t3) => t3.file), viewsWritten);
     const pages = [
       ...liveWritten.map((r3) => {
         const manifest = isJobOnlyBoard(r3.filing) ? null : readManifest(mockupDir(dbPath, r3.filing.id));
@@ -97172,7 +97196,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
         v3.page.data({ dbPath, filing: v3.filing, proceeding: v3.proceeding, now, revision })
       )
     );
-    const swept = sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]);
+    const swept = only === void 0 ? sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]) : {};
     const matterBoardPath = join23(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
     targetsWritten.forEach((t3, i3) => writePage(join23(draftDir, t3.file), jobBoards[i3]));
