@@ -31,6 +31,7 @@ import { import_invoices, invoices_query } from "./invoices.js";
 import { firm_profile, upsert_firm_profile } from "./firm-profile.js";
 import { config_set_root, config_status } from "./config.js";
 import { rule_overlay, upsert_rule_overlay } from "./rule-overlay.js";
+import { render_practice_board } from "./practice-board.js";
 
 // Routes a `practice_data__*` tool to its implementation. Bootstrap-mode only;
 // runs on UnscopedAdmin with owner RLS scoping (P-D2). Args are already validated
@@ -104,6 +105,8 @@ export function callPracticeTool(
       return upsert_rule_overlay(admin, ownerId, args);
     case "practice_data__rule_overlay":
       return rule_overlay(admin, ownerId, args);
+    case "practice_data__render_practice_board":
+      return render_practice_board(admin, ownerId);
     default:
       throw new ValidationError(`Unknown practice tool "${name}"`);
   }

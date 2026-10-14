@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Tell every session that a hidden Probanda skill may be installed.
+
+Hook event: SessionStart (every source, so the note returns after a compaction).
+A user-invoked skill (disable-model-invocation: true) is left out of the
+session's skill list, so a session that checks only that list wrongly tells the
+practitioner a skill they name does not exist. Never blocks: always exits 0.
+"""
+import json
+import sys
+
+NOTE = (
+    "Some Probanda skills are user-invoked only, so they are installed but absent from "
+    "your skill list (for example /practice:plugin-fix). Never tell the practitioner that "
+    "a Probanda skill they name does not exist because it is not in your list: tell them "
+    "to type it as /<plugin>:<name>, where <plugin> is the Probanda plugin that ships it "
+    "(practice, research, litigator, solicitor or file-admin). A change the practitioner "
+    "wants to the plugin goes to /research:suggestion when the research plugin is "
+    "installed; never edit the installed plugin."
+)
+
+if __name__ == "__main__":
+    try:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": NOTE}}))
+    except Exception as err:  # never block a session start, but say so
+        print(f"hidden-skills-note: {err}", file=sys.stderr)
+    sys.exit(0)

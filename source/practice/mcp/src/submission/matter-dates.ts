@@ -94,7 +94,7 @@ export async function readMatterDates(practiceDb: UnscopedAdmin, matterNo: strin
 }
 
 /** `notice_of_application_service` -> "Notice of application service". */
-function humanise(type: string): string {
+export function humanise(type: string): string {
   const words = type.replace(/_/g, " ").trim();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }

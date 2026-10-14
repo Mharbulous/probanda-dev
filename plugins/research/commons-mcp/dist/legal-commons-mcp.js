@@ -16427,11 +16427,12 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. title and body are the whole post: they must name no person, entity, matter, document or path. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
+      description: "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /research:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box); it sets the issue label User or LLM. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
       inputSchema: objectSchema([
         { name: "title", type: "str" },
-        { name: "body", type: "str" }
-      ], ["title", "body"])
+        { name: "body", type: "str" },
+        { name: "source", type: "str", enum: ["user", "llm"] }
+      ], ["title", "body", "source"])
     },
     {
       name: suggestionBoxPrefixed("configure_credential"),
@@ -16787,6 +16788,7 @@ var GITHUB_API = "https://api.github.com";
 var REPO_FORM = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 var TOKEN_FORM = /^[\x21-\x7E]+$/;
 var TOKEN_PREFIX = /^(?:github_pat_|gh[pousr]_)/;
+var SOURCE_LABELS = { user: "User", llm: "LLM" };
 function isSuggestionBoxToolName(name) {
   return name.startsWith("suggestion_box__");
 }
@@ -16841,6 +16843,8 @@ async function submit(state, args) {
   const body = String(args.body ?? "").trim();
   if (!title) throw new ValidationError("submit requires a title");
   if (!body) throw new ValidationError("submit requires a body");
+  const sourceLabel = SOURCE_LABELS[String(args.source ?? "")];
+  if (!sourceLabel) throw new ValidationError("submit requires source: user or llm");
   const hits = findRedactionHits({ title, body });
   if (hits.length > 0) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
@@ -16848,7 +16852,7 @@ async function submit(state, args) {
   await requirePrivateRepo(credential);
   const reply = await github(credential.token, `/repos/${credential.repo}/issues`, {
     method: "POST",
-    body: JSON.stringify({ title, body, labels: ["suggestion"] })
+    body: JSON.stringify({ title, body, labels: ["suggestion", sourceLabel] })
   });
   if (reply.status !== 201) throw new ValidationError(`GitHub answered ${reply.status}, so the suggestion was not posted`);
   const issue2 = await reply.json();

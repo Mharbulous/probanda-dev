@@ -56,8 +56,10 @@
         "verify-source"
       ],
       "hooks": {
+        "hidden-skills-note": "source/practice/hooks/hidden-skills-note.py",
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
         "mail-send-gate": "source/practice/hooks/mail-send-gate.py",
+        "plugin-cache-guard": "source/practice/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
         "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
@@ -78,6 +80,7 @@
         "legal-memo-extractor",
         "legal-research",
         "review-proposition",
+        "suggestion",
         "verify-law"
       ],
       "agents": [

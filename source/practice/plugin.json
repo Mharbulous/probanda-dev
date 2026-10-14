@@ -27,7 +27,7 @@
         ]
       },
       {
-        "matcher": "Skill|mcp__(.+__)?plugin_practice_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay)|mcp__(.+__)?plugin_practice_data__rules__audit",
+        "matcher": "Skill|mcp__(.+__)?plugin_practice_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay|render_practice_board)|mcp__(.+__)?plugin_practice_data__rules__audit",
         "hooks": [
           {
             "type": "command",
@@ -67,6 +67,20 @@
             "statusMessage": "Mail-send gate"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/plugin-cache-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Installed-plugin guard"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -77,6 +91,14 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/skills/practice-data/hooks/inject-practice-quirks.py"
+            ],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/hidden-skills-note.py"
             ],
             "timeout": 10
           }
