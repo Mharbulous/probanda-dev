@@ -37,7 +37,7 @@ Read this after steps 1 to 3 of `SKILL.md` when rule 3 selects fan-out mode. The
 5. The coordination rules from e.
 6. Standing rules: no client or matter content anywhere, and other sessions are active in this checkout, so commit only your own files and never switch branch.
 7. The duplication check, its first sentences verbatim: "I don't want to duplicate work, so before you do anything, can you check whether a plan has already been created for the following proposed fixes? Also check whether any of the other sessions currently running in parallel is already working on these fixes." Then one line per spec title, then "Launch subagents only for specs that are neither planned already nor in progress elsewhere, and report the rest."
-8. The closing line, verbatim: "Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, and nothing after."
+8. The closing line, verbatim: "Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, then a short recap of what you verified, what you and the subagents assumed without verifying, and what changed. Give no recap while any spec is still unfinished: ask its open question instead."
 
 **g. Reply shape.** One line per saved spec naming the folder and file in plain words (no path with backslashes), then the block, then one line on anything left uncovered, then one sentence naming what is being resumed. Then resume.
 
@@ -63,7 +63,7 @@ Sections, in this order and numbering. Cross-reference them as §N.
 4. Design
 5. Constraints that must still hold
 6. Options considered (one marked recommended)
-7. Implementation plan. Step 1 is always "Verify against HEAD (§10) and append a verification table to this spec". The last step is always "Commit on `main` by explicit pathspec and push. Finish with one line: `Implementation of <title> complete!`, and nothing after it."
+7. Implementation plan. Step 1 is always "Verify against HEAD (§10) and append a verification table to this spec". The last step is always "Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of <title> complete!`, then what you verified and what you assumed without verifying."
 8. Implementation criteria (a numbered list, each checkable in the source by the implementing session), then this scope rule, verbatim, which overrides any standing instruction in the implementing session: "Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/repackage` does it in the cloud from origin/main: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin packager, version bumps, *-latest.plugin files, and running `/repackage`. Out of scope, because the orchestrating session runs it once after every spec lands: `build_plugin.py`. Out of scope, because valid testing happens only in Cowork after `/repackage`: writing, updating or running any test, suite, golden or E2E run in Claude Code. A type-check of edited TypeScript is allowed; it is not a test."
 9. Open questions
 10. Verify against HEAD before building
@@ -87,7 +87,7 @@ Block template:
     4. Implement the spec, within its scope rule (§8): source edits only. No bundle rebuild, no packaging, and no tests written or run here.
     5. Commit your own files on `main` by explicit pathspec (`git commit -F <msg> -- <paths>`), then `git pull --ff-only` and `git push origin main`.
     6. Do not run /repackage.
-    7. Return to the orchestrating session one line: "Implementation of <spec title> complete!", or the open question that stopped you.
+    7. Return to the orchestrating session the line "Implementation of <spec title> complete!", then what you verified and what you assumed without verifying, or else the open question that stopped you.
 
     COORDINATION
     - shared files and which spec owns which change
@@ -104,7 +104,7 @@ Block template:
     - <spec title>
     Launch subagents only for specs that are neither planned already nor in progress elsewhere, and report the rest.
 
-    Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, and nothing after.
+    Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, then a short recap of what you verified, what you and the subagents assumed without verifying, and what changed. Give no recap while any spec is still unfinished: ask its open question instead.
 
 Worked example, shape only, from the 2026-10-05 run:
 
@@ -137,4 +137,4 @@ Worked example, shape only, from the 2026-10-05 run:
     - legal-commons court rule sharing
     Launch subagents only for specs that are neither planned already nor in progress elsewhere, and report the rest.
 
-    Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, and nothing after.
+    Relay each subagent's open design questions to Brahm, never version-control questions. End with one `Implementation of <spec title> complete!` line per finished spec, then a short recap of what you verified, what you and the subagents assumed without verifying, and what changed. Give no recap while any spec is still unfinished: ask its open question instead.

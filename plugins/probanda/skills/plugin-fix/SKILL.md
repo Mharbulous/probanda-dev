@@ -56,7 +56,7 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
     - In scope: confirm each cause in the source, edit the source files the fix needs (skill text, mcp/src, docs), run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, commit the source and `plugins/probanda/` by pathspec, and push.
     - Out of scope, because /repackage does it in the cloud from origin/main: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin packager, version bumps, *-latest.plugin files, and running /repackage.
     - Out of scope, because valid testing happens only in Cowork after /repackage: writing, updating or running any test, suite, golden or E2E run here. A type-check of edited TypeScript is allowed; it is not a test.
-    - Finish with exactly one line, "Implementation of <one-line description of the fix> complete!", and nothing after it. If an open question blocked the work, ask it instead.
+    - Only when the fix is finished: write the line "Implementation of <one-line description of the fix> complete!", then a short recap of what you verified (checks run, files read in full), what you assumed without verifying, and what you changed. If an open question blocked the work, ask it instead, with no completion line and no recap.
 
     FILES EXPECTED TO EDIT (UNVERIFIED unless stated)
     - skill-source paths or tool names as this session saw them, one per line, covering every defect in this block
