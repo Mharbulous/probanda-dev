@@ -550,6 +550,88 @@ test("a refused opening of a live filing returns that filing's page", async (t) 
   assert.ok(existsSync(result.job_board_path));
 });
 
+// A Job Board with no Writing (drafting_data__create_job_board) is listed, and is never the default opening.
+async function seedJobBoard(context, m) {
+  const board = await callTool(context, "drafting_data__create_job_board", { db_path: m.dbPath, proceeding_id: 1, title: "Paper originals" });
+  // Its job is the matter's latest activity, so the board leads bootstrap's list.
+  await submissionDataExecute(
+    m.dbPath,
+    `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
+       VALUES (1, 1, ${board.filing_id}, 'Find the paper original', 'Look in the vault.', 'queued', 0, 'work', 'L9999|originals', '2099-01-01 10:00');`
+  );
+  return board.filing_id;
+}
+
+test("a Job Board with no Writing leads the list and is not opened by default", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  const draftDir = join(m.matterRoot, "0. DRAFT");
+  mkdirSync(draftDir);
+  const context = await practiceContext(t);
+  const boardId = await seedJobBoard(context, m);
+  const boardPage = join(draftDir, `Job Board ${boardId}.html`);
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.deepEqual(result.filings.map((f) => f.filing_id), [boardId, 1], "the board is first in the list");
+  assert.equal(result.filings[0].job_board_only, true);
+  assert.deepEqual(result.filings[0].paths, []);
+  assert.equal("render_state" in result.filings[0], false);
+  assert.equal(result.opened.filing_id, 1, "the first live Writing opens, not the board ahead of it");
+  assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
+  assert.deepEqual(result.job_board_paths.map((p) => p.filing_id).sort(), [1, boardId].sort(), "both pages are written");
+  assert.ok(existsSync(boardPage));
+  const job = result.background_job;
+  assert.equal([job.current, ...job.queued, ...job.done].includes(boardId), false, "the background job never queues the board");
+});
+
+test("filing_id naming a Job Board with no Writing opens its board, with no presentation folder", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  const draftDir = join(m.matterRoot, "0. DRAFT");
+  mkdirSync(draftDir);
+  const context = await practiceContext(t);
+  const boardId = await seedJobBoard(context, m);
+  const boardPage = join(draftDir, `Job Board ${boardId}.html`);
+
+  const named = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, filing_id: boardId });
+
+  assert.equal(named.open_refused, undefined);
+  assert.equal(named.opened.filing_id, boardId);
+  assert.match(named.opened.board_summary, /^State: Open$/m);
+  assert.equal(named.opened.filing_retired, undefined);
+  assert.equal(named.job_board_path.toLowerCase(), boardPage.toLowerCase());
+  assert.equal(named.ingest_coverage.status, "not_applicable");
+  assert.equal(named.form_currency, undefined);
+  const folders = () => readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  assert.deepEqual(folders(), [], "no presentation folder for the board");
+
+  // The render a session then calls for it, through the dispatch.
+  const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: boardId, draft_dir: named.draft_dir, session_token: named.session_token });
+  assert.equal(rendered.job_board_only, true);
+  assert.deepEqual(rendered.documents.map((d) => d.document_type), ["Work_board"]);
+  assert.equal(rendered.documents[0].path.toLowerCase(), boardPage.toLowerCase());
+  assert.equal(rendered.documents[0].board_changed, false);
+  assert.deepEqual(folders(), []);
+});
+
+test("a live Job Board with no Writing beside a retired Writing: nothing is opened by default", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const context = await practiceContext(t);
+  const boardId = await seedJobBoard(context, m);
+  await submissionDataExecute(m.dbPath, "UPDATE filings SET retired_on = '2026-09-30', retirement_reason = 'abandoned' WHERE id = 1;");
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.opened, undefined);
+  assert.equal(result.open_refused, undefined);
+  assert.equal(result.job_board_path, null);
+  assert.deepEqual(result.job_board_paths.map((p) => p.filing_id), [boardId], "the board's page is still written");
+  assert.ok(existsSync(result.matter_board_path));
+});
+
 test("a pre-filing proceeding alone: session entry opens its board", async (t) => {
   const m = matterFixture(t);
   await freshSubmissionDb(m.dbPath);
