@@ -1,7 +1,10 @@
-import { join } from "node:path";
+import { writeProtectedJson } from "../dpapi-store.js";
+import { credentialPath, loadCommonsKey } from "../../../../mcp-shared/commons-key.js";
 
-import { BAKED_SUPABASE_URL } from "../config.js";
-import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../dpapi-store.js";
+// The credential's path, env override and loading live in
+// source/mcp-shared/commons-key.js, so the practice data server reads the same
+// credential. This module adds the pool's schema and keeps the commons names.
+export { credentialPath };
 
 // Layer-3 legal-commons runtime config (spec §7 1a / §9). The pool is served by
 // a SINGLE STATIC Supabase credential — no per-session login, no key unlock.
@@ -41,52 +44,10 @@ interface PersistedCredential {
   staticKey: string;
 }
 
-export function credentialPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(defaultStateDir(env), "credential.json.dpapi");
-}
-
-function loadFromEnv(env: NodeJS.ProcessEnv): LegalCommonsConfig {
-  return {
-    supabaseUrl: env.SUPABASE_URL || BAKED_SUPABASE_URL,
-    // Deliberately NOT falling back to the public anon key: it has no grants on
-    // legal_commons, so a fallback would only turn "not configured" into a
-    // confusing "permission denied". Fail with a clear message instead.
-    staticKey: env.LEGAL_COMMONS_SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "",
-    schema: env.LEGAL_COMMONS_SCHEMA || "legal_commons",
-  };
-}
-
-// Async: env wins outright; only when env is blank do we pay the cost of a
-// DPAPI unprotect (a spawned powershell.exe round trip) to check the persisted
-// credential file.
-//
-// This runs during server startup, so it must not throw on a credential file
-// that exists but cannot be decrypted or parsed — DPAPI keys are tied to the
-// Windows profile, so a password reset, profile rebuild, or machine migration
-// invalidates one, and letting that propagate would crash start() before it
-// registers the very tool that lets the practitioner re-supply the key. It
-// degrades to unconfigured instead, but loudly: the reason is written to
-// stderr here and carried on every later "not configured" error. The unreadable
-// file is deliberately left in place, never deleted or overwritten.
+// Env wins outright over the persisted file; the reasoning is on
+// loadCommonsKey. Never throws on an unreadable credential file.
 export async function loadLegalCommonsConfig(env: NodeJS.ProcessEnv = process.env): Promise<LegalCommonsConfig> {
-  const config = loadFromEnv(env);
-  if (config.staticKey) return config;
-
-  try {
-    const persisted = await readProtectedJson<PersistedCredential>(credentialPath(env), null);
-    if (persisted?.staticKey) config.staticKey = persisted.staticKey;
-  } catch (error) {
-    // stderr carries the whole thing (a DPAPI failure drags a PowerShell stack
-    // trace with it, which is what you want when debugging); the tool-facing
-    // error carries only the first line, which is the actionable part.
-    const detail = error instanceof Error ? error.message : String(error);
-    config.credentialError = detail.split("\n")[0].trim();
-    process.stderr.write(
-      `legal-commons: stored credential at ${credentialPath(env)} could not be read — ` +
-      `${detail}\nStarting unconfigured; call legal_commons__configure_credential to replace it.\n`
-    );
-  }
-  return config;
+  return { ...(await loadCommonsKey(env)), schema: env.LEGAL_COMMONS_SCHEMA || "legal_commons" };
 }
 
 // Called by legal_commons__configure_credential. Persists the static key to the
