@@ -373,6 +373,6 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Put this que
 UPDATE seeds SET charted_into = 31 WHERE id = 7;
 ```
 
-This is the one `charted_into` write outside an outlining session. It runs in the session the sort ran in, and only on a thread that sort captured. An offer already on the application was never captured, so it has no thread to consume.
+This is one of two `charted_into` writes outside an outlining session, the other the loose-threads job's (`jobs-create.md` §3, "Consuming a loose thread the held job worked"). It runs in the session the sort ran in, and only on a thread that sort captured. An offer already on the application was never captured, so it has no thread to consume.
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.
