@@ -164,15 +164,14 @@ async function lookupByCitation(client: LegalCommonsClient, args: Record<string,
   return client.rpc("lookup_by_citation", { p_citation: String(args.citation) });
 }
 
-// browse — keyword browse via PostgREST ILIKE (spec §3 D7).
+// browse — keyword browse (spec §3 D7). An RPC, not a table GET: Supabase's API
+// log keeps every request's address and not its body, so the keyword must
+// travel in the body.
 async function browse(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
-  const keyword = String(args.keyword);
-  const limit = typeof args.limit === "number" ? args.limit : 50;
-  return client.get(
-    "principle",
-    { text: `ilike.*${keyword}*`, select: "principle_id,text,jurisdiction,variant_of,doctrine_tag" },
-    { limit }
-  );
+  return client.rpc("browse_principles", {
+    p_keyword: String(args.keyword),
+    p_limit: typeof args.limit === "number" ? args.limit : 50,
+  });
 }
 
 async function treatmentChain(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {

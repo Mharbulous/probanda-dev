@@ -189,12 +189,13 @@ test("find_candidates passes the retrieval packet to the union RPC (no embedding
   assert.ok(!("p_embedding" in call.body), "no embedding in the retrieval call");
 });
 
-test("browse uses a case-insensitive substring filter, not an RPC", async () => {
+// Supabase's API log keeps the address of every request and not its body, so a
+// keyword in a GET's query string would be saved on the cloud (Commandment 3).
+test("browse sends its keyword in an RPC body, never in a GET address", async () => {
   const lc = fakeLegalCommons();
   await index.callTool(context(lc), "legal_commons__browse", { keyword: "limitation" });
-  assert.equal(lc.calls.rpc.length, 0);
-  assert.equal(lc.calls.get[0].table, "principle");
-  assert.equal(lc.calls.get[0].filters.text, "ilike.*limitation*");
+  assert.equal(lc.calls.get.length, 0);
+  assert.deepEqual(lc.calls.rpc, [{ fn: "browse_principles", body: { p_keyword: "limitation", p_limit: 50 } }]);
 });
 
 test("input validation still applies to legal-commons tools", async () => {
