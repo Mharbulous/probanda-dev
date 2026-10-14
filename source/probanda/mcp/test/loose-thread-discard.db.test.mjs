@@ -93,7 +93,8 @@ function drawBoard(html) {
       return this.children.flatMap((c) => [c, ...c.all()]);
     }
     querySelector(selector) {
-      return this.all().find((n) => n.className.split(" ").includes(selector.slice(1))) ?? null;
+      const match = selector.startsWith(".") ? (n) => n.className.split(" ").includes(selector.slice(1)) : (n) => n.tag === selector;
+      return this.all().find(match) ?? null;
     }
   }
   const header = new Node("header");
