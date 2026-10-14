@@ -38,3 +38,5 @@
 
 4. However, a machine that Probanda operates for its own development and testing, including a development server, counts as part of *Probanda's Cloud* for Commandments 4 and 5 only, so the *Development Plugin* on it may hold *Trade Secrets* and its local storage may encode the rulebook. Where such a machine also holds *User Data*, it remains a *User's Machine* for Commandment 3, so that *User Data* is never copied to any other part of *Probanda's Cloud*. The *Development Plugin* is never installed on a machine that Probanda does not operate, and no repo holding it is ever made public. Each revision should move content from the *Development Plugin* into the *Published Plugin* in a form that obeys Commandments 4 and 5, and no revision may make the *Development Plugin* depend on this exception more than it already does. This exception is to be removed once the two plugins are the same.
 
+5. However, feedback about the Probanda plugin that the user expressly submits to Probanda, once stripped of anything that identifies a person, an entity or a matter, may be saved to Probanda's Cloud.
+
