@@ -92,20 +92,24 @@ Deno.serve(async (req) => {
     const inList = `in.(${chosen.join(",")})`;
     const principles = (await pool(key, `principle?select=principle_id,text&principle_id=${inList}`)) as
       { principle_id: string; text: string }[];
+    // Two plain reads, not one embedded read: principle_authority has two
+    // foreign keys to authority, so PostgREST refuses `authority(...)` as ambiguous.
     const links = (await pool(key,
-      `principle_authority?select=principle_id,pinpoint,authority(citation,title,url)&principle_id=${inList}`)) as
-      { principle_id: string; pinpoint: string | null; authority: { citation: string; title: string | null; url: string | null } }[];
+      `principle_authority?select=principle_id,authority_id,pinpoint&principle_id=${inList}`)) as
+      { principle_id: string; authority_id: string; pinpoint: string | null }[];
+    const authorityIds = [...new Set(links.map((l) => l.authority_id))];
+    const authorities = authorityIds.length === 0 ? [] : (await pool(key,
+      `authority?select=authority_id,citation,title,url&authority_id=in.(${authorityIds.join(",")})`)) as
+      { authority_id: string; citation: string; title: string | null; url: string | null }[];
 
     return reply(200, {
       results: chosen.map((id) => ({
         principle_id: id,
         text: principles.find((p) => p.principle_id === id)?.text ?? null,
-        authorities: links.filter((l) => l.principle_id === id).map((l) => ({
-          citation: l.authority.citation,
-          title: l.authority.title,
-          url: l.authority.url,
-          pinpoint: l.pinpoint,
-        })),
+        authorities: links.filter((l) => l.principle_id === id).map((l) => {
+          const a = authorities.find((x) => x.authority_id === l.authority_id);
+          return { citation: a?.citation ?? null, title: a?.title ?? null, url: a?.url ?? null, pinpoint: l.pinpoint };
+        }),
       })),
     });
   } catch {
