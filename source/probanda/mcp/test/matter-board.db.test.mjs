@@ -223,9 +223,10 @@ test("bootstrap with draft_dir writes one self-contained Litigation Strategy, ea
     for (const { filing_id, proceeding_id, path } of result.job_board_paths) {
       const board = readBoardData(path);
       const file_number = MATTER_CASE_DATA.proceedings.find((p) => p.id === proceeding_id).file_number;
+      const style_of_cause = { 1: "Larchmont v. Example", 2: "Larchmont v. Other" }[proceeding_id];
       assert.deepEqual(board.meta, {
         revision: 1, matter: "L8470", client: "Larchmont", rendered: PINNED,
-        client_no: "1", forum: "CAN/BC/BCSC", registry: "Vancouver", file_number,
+        client_no: "1", forum: "CAN/BC/BCSC", registry: "Vancouver", file_number, style_of_cause,
       });
       assert.deepEqual(board.sections.map((x) => x.meta.filing_id), [filing_id], "one section, the page's own filing's");
     }
