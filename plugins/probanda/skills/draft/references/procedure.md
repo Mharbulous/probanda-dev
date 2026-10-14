@@ -233,6 +233,8 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 | The practitioner starts a read-only turn outside scope (section 14) | `references/tangents.md` |
 <!-- atom id=draft.ref.loose-thread-triage ops=triage -->
 | Dispatch found no job and the Loose Threads count is 20 or more, or the practitioner asks to rank or triage the loose threads (section 14, Dispatch) | `references/loose-thread-triage.md` |
+<!-- atom id=draft.ref.loose-threads-work ops=route_reply,execute -->
+| The practitioner says to work on the loose threads, or the held job's intent is to work them ("Working the threads without a pick") | `references/loose-thread-triage.md` |
 <!-- atom id=draft.ref.suggestion-box ops=triage -->
 | Loose-thread triage reaches the open `tooling` threads (section 14, Dispatch) | `references/suggestion-box.md` |
 <!-- atom id=draft.ref.revise-on-the-fly ops=revise_on_the_fly -->
