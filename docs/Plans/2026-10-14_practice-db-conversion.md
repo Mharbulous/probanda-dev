@@ -225,16 +225,14 @@ Each step ends with its check passing, a commit by pathspec and a push to `main`
 
 ## Coordination with the five-plugin split
 
-`docs/Plans/2026-10-13_four-plugin-split.md` phase 5 is a single cutover commit, prepared on branch `cutover` in `../probanda-cutover`, which moves `source/probanda/mcp/` to `source/practice/mcp/`, renames `plugin_probanda_data__` to `plugin_practice_data__`, rebuilds the data bundle and adds the `file-admin` `files` bundle. It waits for Brahm's word, and its step 0 already merges whatever `main` has added since.
+The five-plugin cutover (phase 5 of `docs/Plans/2026-10-13_four-plugin-split.md`) landed on `main` at `22d9aa7` on 2026-10-14, before any step of this plan was built. The data server is now `source/practice/mcp/`, its tools are `mcp__plugin_practice_data__practice_data__*`, and `file-admin` ships the `files` bundle, built from the same source. Two lines of this plan (11 and 219) still say `source/probanda/`, because `check_publishable.py` counts any edit to a line it flags for DDL as a new problem. Read them as `source/practice/`.
 
-Recommendation: build this plan on `main` now, without waiting for the cutover.
+What still follows from the split:
 
-- Steps 1 and 2 (cloud) touch nothing the cutover moves.
-- Steps 3 to 6 change files the cutover moves or renames inside (`practice/`, `tools/practice/`, `time-pipeline/`, `schema-gen.ts`, the tests, the bundle). Git follows the moves when the cutover merges `main`. This plan adds no tool name, so the cutover's rename list does not grow.
-- Whichever lands second rebuilds the data bundle. The cutover's count of 49 problem lines in the bundle drops by the lines removed here, so the cutover session re-counts instead of using 49.
-- The `files` bundle must not pull in the cloud client: after the cutover, a search of `dist/file-admin-mcp.js` for `items-write` finds nothing. `housekeeping/resolve.ts` imports `resolveCaseDataRoot` from `practice/backend.ts`, so that function stays free of cloud imports.
-- After the cutover, `practice` needs the commons credential while only `research` ships the tool that sets it. Open decision 3 covers this.
-- Before pushing steps 5 or 8, check that no cutover merge is in progress (the split plan's status line and `git log origin/main`).
+- This plan adds no tool name and no server key.
+- The `files` bundle must not pull in the cloud client: a search of `source/file-admin/files-mcp/dist/file-admin-mcp.js` for `items-write` finds nothing. `housekeeping/resolve.ts` imports `resolveCaseDataRoot` from `practice/backend.ts`, so that function stays free of cloud imports.
+- `practice` needs the commons credential while only `research` ships the tool that sets it. Open decision 3 covers this.
+- Phases 6 and 7 of the split change no file this plan touches.
 
 ## Open decisions for Brahm
 
