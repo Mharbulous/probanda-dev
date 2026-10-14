@@ -391,8 +391,8 @@ test("the Loose Threads page draws four tabs and a Resolved section, shown under
     "Loose thread 5:  Discarded. *DISCARDED* Restore Discarded 2026-10-05",
     "Loose thread 7:  Discarded after outlining. *DISCARDED* Restore Discarded 2026-10-04",
     "Loose thread 6:  Suggested. *SUGGESTED* Suggested 2026-10-03",
-    "Loose thread 8:  Outlined into the later job. Became Job #12: Later job (job created 2026-10-03)",
-    "Loose thread 3:  Outlined into a live job. Became Job #10: Live job (job created 2026-10-01)",
+    "Loose thread 8:  Outlined into the later job. Taken up by Job #12: Later job",
+    "Loose thread 3:  Outlined into a live job. Taken up by Job #10: Live job",
   ]);
 
   // Nothing resolved: no checkbox is drawn, and the Resolved tab says it holds nothing.

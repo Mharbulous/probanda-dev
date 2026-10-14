@@ -1,4 +1,4 @@
-// build-stamp: 0f7128a67937
+// build-stamp: d4353630e696
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -32,9 +32,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/code.js
+// node_modules/ajv/dist/compile/codegen/code.js
 var require_code = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/code.js"(exports) {
+  "node_modules/ajv/dist/compile/codegen/code.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.regexpCode = exports.getEsmExportName = exports.getProperty = exports.safeStringify = exports.stringify = exports.strConcat = exports.addCodeArg = exports.str = exports._ = exports.nil = exports._Code = exports.Name = exports.IDENTIFIER = exports._CodeOrName = void 0;
@@ -186,9 +186,9 @@ var require_code = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/scope.js
+// node_modules/ajv/dist/compile/codegen/scope.js
 var require_scope = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/scope.js"(exports) {
+  "node_modules/ajv/dist/compile/codegen/scope.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ValueScope = exports.ValueScopeName = exports.Scope = exports.varKinds = exports.UsedValueState = void 0;
@@ -331,9 +331,9 @@ var require_scope = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/index.js
+// node_modules/ajv/dist/compile/codegen/index.js
 var require_codegen = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/codegen/index.js"(exports) {
+  "node_modules/ajv/dist/compile/codegen/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.or = exports.and = exports.not = exports.CodeGen = exports.operators = exports.varKinds = exports.ValueScopeName = exports.ValueScope = exports.Scope = exports.Name = exports.regexpCode = exports.stringify = exports.getProperty = exports.nil = exports.strConcat = exports.str = exports._ = void 0;
@@ -1051,9 +1051,9 @@ var require_codegen = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/util.js
+// node_modules/ajv/dist/compile/util.js
 var require_util = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/util.js"(exports) {
+  "node_modules/ajv/dist/compile/util.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.checkStrictMode = exports.getErrorPath = exports.Type = exports.useFunc = exports.setEvaluated = exports.evaluatedPropsToName = exports.mergeEvaluated = exports.eachItem = exports.unescapeJsonPointer = exports.escapeJsonPointer = exports.escapeFragment = exports.unescapeFragment = exports.schemaRefOrVal = exports.schemaHasRulesButRef = exports.schemaHasRules = exports.checkUnknownRules = exports.alwaysValidSchema = exports.toHash = void 0;
@@ -1218,9 +1218,9 @@ var require_util = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/names.js
+// node_modules/ajv/dist/compile/names.js
 var require_names = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/names.js"(exports) {
+  "node_modules/ajv/dist/compile/names.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -1257,9 +1257,9 @@ var require_names = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/errors.js
+// node_modules/ajv/dist/compile/errors.js
 var require_errors = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/errors.js"(exports) {
+  "node_modules/ajv/dist/compile/errors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.extendErrors = exports.resetErrorsCount = exports.reportExtraError = exports.reportError = exports.keyword$DataError = exports.keywordError = void 0;
@@ -1379,9 +1379,9 @@ var require_errors = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/boolSchema.js
+// node_modules/ajv/dist/compile/validate/boolSchema.js
 var require_boolSchema = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/boolSchema.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/boolSchema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.boolOrEmptySchema = exports.topBoolOrEmptySchema = void 0;
@@ -1430,9 +1430,9 @@ var require_boolSchema = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/rules.js
+// node_modules/ajv/dist/compile/rules.js
 var require_rules = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/rules.js"(exports) {
+  "node_modules/ajv/dist/compile/rules.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getRules = exports.isJSONType = void 0;
@@ -1461,9 +1461,9 @@ var require_rules = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/applicability.js
+// node_modules/ajv/dist/compile/validate/applicability.js
 var require_applicability = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/applicability.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/applicability.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.shouldUseRule = exports.shouldUseGroup = exports.schemaHasRulesForType = void 0;
@@ -1484,9 +1484,9 @@ var require_applicability = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/dataType.js
+// node_modules/ajv/dist/compile/validate/dataType.js
 var require_dataType = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/dataType.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/dataType.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.reportTypeError = exports.checkDataTypes = exports.checkDataType = exports.coerceAndCheckDataType = exports.getJSONTypes = exports.getSchemaTypes = exports.DataType = void 0;
@@ -1668,9 +1668,9 @@ var require_dataType = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/defaults.js
+// node_modules/ajv/dist/compile/validate/defaults.js
 var require_defaults = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/defaults.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/defaults.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.assignDefaults = void 0;
@@ -1705,9 +1705,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/code.js
+// node_modules/ajv/dist/vocabularies/code.js
 var require_code2 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/code.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/code.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateUnion = exports.validateArray = exports.usePattern = exports.callValidateCode = exports.schemaProperties = exports.allSchemaProperties = exports.noPropertyInData = exports.propertyInData = exports.isOwnProperty = exports.hasPropFunc = exports.reportMissingProp = exports.checkMissingProp = exports.checkReportMissingProp = void 0;
@@ -1838,9 +1838,9 @@ var require_code2 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/keyword.js
+// node_modules/ajv/dist/compile/validate/keyword.js
 var require_keyword = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/keyword.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/keyword.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateKeywordUsage = exports.validSchemaType = exports.funcKeywordCode = exports.macroKeywordCode = void 0;
@@ -1956,9 +1956,9 @@ var require_keyword = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/subschema.js
+// node_modules/ajv/dist/compile/validate/subschema.js
 var require_subschema = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/subschema.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/subschema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.extendSubschemaMode = exports.extendSubschemaData = exports.getSubschema = void 0;
@@ -2039,9 +2039,9 @@ var require_subschema = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-deep-equal/index.js
+// node_modules/fast-deep-equal/index.js
 var require_fast_deep_equal = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-deep-equal/index.js"(exports, module) {
+  "node_modules/fast-deep-equal/index.js"(exports, module) {
     "use strict";
     module.exports = function equal(a3, b3) {
       if (a3 === b3) return true;
@@ -2074,9 +2074,9 @@ var require_fast_deep_equal = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/json-schema-traverse/index.js
+// node_modules/json-schema-traverse/index.js
 var require_json_schema_traverse = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/json-schema-traverse/index.js"(exports, module) {
+  "node_modules/json-schema-traverse/index.js"(exports, module) {
     "use strict";
     var traverse = module.exports = function(schema, opts, cb) {
       if (typeof opts == "function") {
@@ -2162,9 +2162,9 @@ var require_json_schema_traverse = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/resolve.js
+// node_modules/ajv/dist/compile/resolve.js
 var require_resolve = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/resolve.js"(exports) {
+  "node_modules/ajv/dist/compile/resolve.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
@@ -2318,9 +2318,9 @@ var require_resolve = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/index.js
+// node_modules/ajv/dist/compile/validate/index.js
 var require_validate = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/validate/index.js"(exports) {
+  "node_modules/ajv/dist/compile/validate/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getData = exports.KeywordCxt = exports.validateFunctionCode = void 0;
@@ -2826,9 +2826,9 @@ var require_validate = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/validation_error.js
+// node_modules/ajv/dist/runtime/validation_error.js
 var require_validation_error = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/validation_error.js"(exports) {
+  "node_modules/ajv/dist/runtime/validation_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var ValidationError2 = class extends Error {
@@ -2842,9 +2842,9 @@ var require_validation_error = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/ref_error.js
+// node_modules/ajv/dist/compile/ref_error.js
 var require_ref_error = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/ref_error.js"(exports) {
+  "node_modules/ajv/dist/compile/ref_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var resolve_1 = require_resolve();
@@ -2859,9 +2859,9 @@ var require_ref_error = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/index.js
+// node_modules/ajv/dist/compile/index.js
 var require_compile = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/compile/index.js"(exports) {
+  "node_modules/ajv/dist/compile/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.resolveSchema = exports.getCompilingSchema = exports.resolveRef = exports.compileSchema = exports.SchemaEnv = void 0;
@@ -3083,9 +3083,9 @@ var require_compile = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/refs/data.json
+// node_modules/ajv/dist/refs/data.json
 var require_data = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/refs/data.json"(exports, module) {
+  "node_modules/ajv/dist/refs/data.json"(exports, module) {
     module.exports = {
       $id: "https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#",
       description: "Meta-schema for $data reference (JSON AnySchema extension proposal)",
@@ -3102,9 +3102,9 @@ var require_data = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/lib/utils.js
+// node_modules/fast-uri/lib/utils.js
 var require_utils = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/lib/utils.js"(exports, module) {
+  "node_modules/fast-uri/lib/utils.js"(exports, module) {
     "use strict";
     var isUUID = RegExp.prototype.test.bind(/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu);
     var isIPv4 = RegExp.prototype.test.bind(/^(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/u);
@@ -3415,9 +3415,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/lib/schemes.js
+// node_modules/fast-uri/lib/schemes.js
 var require_schemes = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/lib/schemes.js"(exports, module) {
+  "node_modules/fast-uri/lib/schemes.js"(exports, module) {
     "use strict";
     var { isUUID } = require_utils();
     var URN_REG = /([\da-z][\d\-a-z]{0,31}):((?:[\w!$'()*+,\-.:;=@]|%[\da-f]{2})+)/iu;
@@ -3625,9 +3625,9 @@ var require_schemes = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/index.js
+// node_modules/fast-uri/index.js
 var require_fast_uri = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/fast-uri/index.js"(exports, module) {
+  "node_modules/fast-uri/index.js"(exports, module) {
     "use strict";
     var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, escapePreservingEscapes, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
@@ -3911,9 +3911,9 @@ var require_fast_uri = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/uri.js
+// node_modules/ajv/dist/runtime/uri.js
 var require_uri = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/uri.js"(exports) {
+  "node_modules/ajv/dist/runtime/uri.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var uri = require_fast_uri();
@@ -3922,9 +3922,9 @@ var require_uri = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/core.js
+// node_modules/ajv/dist/core.js
 var require_core = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/core.js"(exports) {
+  "node_modules/ajv/dist/core.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = void 0;
@@ -4533,9 +4533,9 @@ var require_core = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/id.js
+// node_modules/ajv/dist/vocabularies/core/id.js
 var require_id = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/id.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/core/id.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var def = {
@@ -4548,9 +4548,9 @@ var require_id = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/ref.js
+// node_modules/ajv/dist/vocabularies/core/ref.js
 var require_ref = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/ref.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/core/ref.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.callRef = exports.getValidate = void 0;
@@ -4670,9 +4670,9 @@ var require_ref = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/index.js
+// node_modules/ajv/dist/vocabularies/core/index.js
 var require_core2 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/core/index.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/core/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var id_1 = require_id();
@@ -4691,9 +4691,9 @@ var require_core2 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitNumber.js
+// node_modules/ajv/dist/vocabularies/validation/limitNumber.js
 var require_limitNumber = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitNumber.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/limitNumber.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4723,9 +4723,9 @@ var require_limitNumber = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/multipleOf.js
+// node_modules/ajv/dist/vocabularies/validation/multipleOf.js
 var require_multipleOf = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/multipleOf.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/multipleOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4751,9 +4751,9 @@ var require_multipleOf = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/ucs2length.js
+// node_modules/ajv/dist/runtime/ucs2length.js
 var require_ucs2length = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
+  "node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function ucs2length(str) {
@@ -4777,9 +4777,9 @@ var require_ucs2length = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitLength.js
+// node_modules/ajv/dist/vocabularies/validation/limitLength.js
 var require_limitLength = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitLength.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/limitLength.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4809,9 +4809,9 @@ var require_limitLength = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/pattern.js
+// node_modules/ajv/dist/vocabularies/validation/pattern.js
 var require_pattern = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/pattern.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/pattern.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -4846,9 +4846,9 @@ var require_pattern = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitProperties.js
+// node_modules/ajv/dist/vocabularies/validation/limitProperties.js
 var require_limitProperties = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitProperties.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/limitProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4875,9 +4875,9 @@ var require_limitProperties = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/required.js
+// node_modules/ajv/dist/vocabularies/validation/required.js
 var require_required = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/required.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/required.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -4957,9 +4957,9 @@ var require_required = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitItems.js
+// node_modules/ajv/dist/vocabularies/validation/limitItems.js
 var require_limitItems = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/limitItems.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/limitItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4986,9 +4986,9 @@ var require_limitItems = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/equal.js
+// node_modules/ajv/dist/runtime/equal.js
 var require_equal = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/runtime/equal.js"(exports) {
+  "node_modules/ajv/dist/runtime/equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var equal = require_fast_deep_equal();
@@ -4997,9 +4997,9 @@ var require_equal = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
+// node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
 var require_uniqueItems = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/uniqueItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var dataType_1 = require_dataType();
@@ -5064,9 +5064,9 @@ var require_uniqueItems = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/const.js
+// node_modules/ajv/dist/vocabularies/validation/const.js
 var require_const = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/const.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/const.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5093,9 +5093,9 @@ var require_const = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/enum.js
+// node_modules/ajv/dist/vocabularies/validation/enum.js
 var require_enum = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/enum.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/enum.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5142,9 +5142,9 @@ var require_enum = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/index.js
+// node_modules/ajv/dist/vocabularies/validation/index.js
 var require_validation = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/validation/index.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/validation/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var limitNumber_1 = require_limitNumber();
@@ -5180,9 +5180,9 @@ var require_validation = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
+// node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
 var require_additionalItems = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/additionalItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateAdditionalItems = void 0;
@@ -5233,9 +5233,9 @@ var require_additionalItems = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/items.js
+// node_modules/ajv/dist/vocabularies/applicator/items.js
 var require_items = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/items.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/items.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateTuple = void 0;
@@ -5290,9 +5290,9 @@ var require_items = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
+// node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
 var require_prefixItems = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/prefixItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var items_1 = require_items();
@@ -5307,9 +5307,9 @@ var require_prefixItems = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/items2020.js
+// node_modules/ajv/dist/vocabularies/applicator/items2020.js
 var require_items2020 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/items2020.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/items2020.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5342,9 +5342,9 @@ var require_items2020 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/contains.js
+// node_modules/ajv/dist/vocabularies/applicator/contains.js
 var require_contains = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/contains.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/contains.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5436,9 +5436,9 @@ var require_contains = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/dependencies.js
+// node_modules/ajv/dist/vocabularies/applicator/dependencies.js
 var require_dependencies = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/dependencies.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/dependencies.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateSchemaDeps = exports.validatePropertyDeps = exports.error = void 0;
@@ -5530,9 +5530,9 @@ var require_dependencies = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
+// node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
 var require_propertyNames = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/propertyNames.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5573,9 +5573,9 @@ var require_propertyNames = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
+// node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
 var require_additionalProperties = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5679,9 +5679,9 @@ var require_additionalProperties = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/properties.js
+// node_modules/ajv/dist/vocabularies/applicator/properties.js
 var require_properties = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/properties.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/properties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var validate_1 = require_validate();
@@ -5737,9 +5737,9 @@ var require_properties = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
+// node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
 var require_patternProperties = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/patternProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5811,9 +5811,9 @@ var require_patternProperties = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/not.js
+// node_modules/ajv/dist/vocabularies/applicator/not.js
 var require_not = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/not.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/not.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -5842,9 +5842,9 @@ var require_not = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/anyOf.js
+// node_modules/ajv/dist/vocabularies/applicator/anyOf.js
 var require_anyOf = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/anyOf.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/anyOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5859,9 +5859,9 @@ var require_anyOf = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/oneOf.js
+// node_modules/ajv/dist/vocabularies/applicator/oneOf.js
 var require_oneOf = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/oneOf.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/oneOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5917,9 +5917,9 @@ var require_oneOf = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/allOf.js
+// node_modules/ajv/dist/vocabularies/applicator/allOf.js
 var require_allOf = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/allOf.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/allOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -5944,9 +5944,9 @@ var require_allOf = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/if.js
+// node_modules/ajv/dist/vocabularies/applicator/if.js
 var require_if = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/if.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/if.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6013,9 +6013,9 @@ var require_if = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/thenElse.js
+// node_modules/ajv/dist/vocabularies/applicator/thenElse.js
 var require_thenElse = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/thenElse.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/thenElse.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -6031,9 +6031,9 @@ var require_thenElse = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/index.js
+// node_modules/ajv/dist/vocabularies/applicator/index.js
 var require_applicator = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/applicator/index.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/applicator/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var additionalItems_1 = require_additionalItems();
@@ -6079,9 +6079,9 @@ var require_applicator = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/format/format.js
+// node_modules/ajv/dist/vocabularies/format/format.js
 var require_format = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/format/format.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/format/format.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6169,9 +6169,9 @@ var require_format = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/format/index.js
+// node_modules/ajv/dist/vocabularies/format/index.js
 var require_format2 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/format/index.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/format/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var format_1 = require_format();
@@ -6180,9 +6180,9 @@ var require_format2 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/metadata.js
+// node_modules/ajv/dist/vocabularies/metadata.js
 var require_metadata = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/metadata.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/metadata.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.contentVocabulary = exports.metadataVocabulary = void 0;
@@ -6203,9 +6203,9 @@ var require_metadata = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/draft7.js
+// node_modules/ajv/dist/vocabularies/draft7.js
 var require_draft7 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/draft7.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/draft7.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var core_1 = require_core2();
@@ -6225,9 +6225,9 @@ var require_draft7 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/discriminator/types.js
+// node_modules/ajv/dist/vocabularies/discriminator/types.js
 var require_types = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/discriminator/types.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/discriminator/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DiscrError = void 0;
@@ -6239,9 +6239,9 @@ var require_types = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/discriminator/index.js
+// node_modules/ajv/dist/vocabularies/discriminator/index.js
 var require_discriminator = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/vocabularies/discriminator/index.js"(exports) {
+  "node_modules/ajv/dist/vocabularies/discriminator/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6344,9 +6344,9 @@ var require_discriminator = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/refs/json-schema-draft-07.json
+// node_modules/ajv/dist/refs/json-schema-draft-07.json
 var require_json_schema_draft_07 = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/refs/json-schema-draft-07.json"(exports, module) {
+  "node_modules/ajv/dist/refs/json-schema-draft-07.json"(exports, module) {
     module.exports = {
       $schema: "http://json-schema.org/draft-07/schema#",
       $id: "http://json-schema.org/draft-07/schema#",
@@ -6501,9 +6501,9 @@ var require_json_schema_draft_07 = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/ajv.js
+// node_modules/ajv/dist/ajv.js
 var require_ajv = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv/dist/ajv.js"(exports, module) {
+  "node_modules/ajv/dist/ajv.js"(exports, module) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MissingRefError = exports.ValidationError = exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = exports.Ajv = void 0;
@@ -6571,9 +6571,9 @@ var require_ajv = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/formats.js
+// node_modules/ajv-formats/dist/formats.js
 var require_formats = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/formats.js"(exports) {
+  "node_modules/ajv-formats/dist/formats.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
@@ -6774,9 +6774,9 @@ var require_formats = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/limit.js
+// node_modules/ajv-formats/dist/limit.js
 var require_limit = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/limit.js"(exports) {
+  "node_modules/ajv-formats/dist/limit.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatLimitDefinition = void 0;
@@ -6846,9 +6846,9 @@ var require_limit = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/index.js
+// node_modules/ajv-formats/dist/index.js
 var require_dist = __commonJS({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/ajv-formats/dist/index.js"(exports, module) {
+  "node_modules/ajv-formats/dist/index.js"(exports, module) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var formats_1 = require_formats();
@@ -6888,7 +6888,7 @@ var require_dist = __commonJS({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs
+// node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs
 var pdf_worker_min_exports = {};
 __export(pdf_worker_min_exports, {
   WorkerMessageHandler: () => Rc
@@ -11309,7 +11309,7 @@ async function incrementalUpdate({ originalData: e3, xrefInfo: t3, changes: r3, 
 }
 var e, t, __webpack_exports__, r, a, n, i, s, o, c, l, h, u, d, f, g, p, m, b, y, w, x, S, k, C, v, O, T, D, M, R, E, N, _, L, j, U, q, X, H, W2, z, $, G, V, K, J, Y, Z, Q, ee, te, re, ae, ne, ie, se, oe, ce, le, he, ue, de, fe, ge, pe, me, be, ye, we, xe, Se, Ae, ke, Ce, ve, Fe, Ie, Oe, Te, De, Me, Be, Re, Ee, Ne, Pe, _e, Le, je, Ue, qe, Xe, He, We, ze, $e, Ge, Ve, Ke, Je, Ye, Ze, Qe, et, tt, rt, nt, it, st, ot, ct, lt, ht, ut, dt, ft, gt, pt, mt, bt, yt, wt, xt, St, At, kt, Ct, vt, Ft, It, Ot, Tt, Dt, Mt, Bt, Rt, Et, Nt, Pt, _t, Lt, jt, Ut, qt, Xt, Ht, Wt, zt, $t, Gt, Vt, Kt, Jt, Yt, Zt, Qt, er, tr, rr, ar, nr, ir, sr, or, cr, lr, hr, ur, dr, fr, gr, pr, mr, br, PasswordException, UnknownErrorException, InvalidPDFException, ResponseException, FormatError, AbortException, FeatureTest, yr, Util, wr, xr, Sr, Ar, kr, Cr, vr, Fr, Name, Cmd, Ir, Dict, Ref, RefSet, RefSetCache, BaseStream, Or, Tr, MissingDataException, ParserEOFException, XRefEntryException, XRefParseException, Dr, Mr, QCMS, Rr, Er, Nr, Pr, _r, Lr, ColorSpace, AlternateCS, PatternCS, IndexedCS, DeviceGrayCS, DeviceRgbCS, DeviceRgbaCS, DeviceCmykCS, CalGrayCS, CalRGBCS, LabCS, IccColorSpace, CmykICCBasedCS, Stream, StringStream, NullStream, ChunkedStream, ChunkedStreamManager, ImageResizer, jr, DecodeStream, StreamsSequenceStream, ColorSpaceUtils, JpegError, DNLMarkerError, EOIMarkerError, Ur, qr, Xr, Hr, Wr, zr, $r, Gr, Vr, JpegImage, JpegStream, Kr, Jr, Yr, JpxError, JpxImage, Zr, BinaryCMapStream, BinaryCMapReader, Ascii85Stream, AsciiHexStream, Qr, ea, ta, ra, aa, na, ia, CCITTFaxDecoder, CCITTFaxStream, sa, oa, ca, la, ha, FlateStream, ua, ArithmeticDecoder, Jbig2Error, ContextCache, DecodingContext, da, fa, ga, pa, ma, ba, SimpleSegmentVisitor, HuffmanLine, HuffmanTreeNode, HuffmanTable, ya, Reader, Jbig2Image, Jbig2Stream, JpxStream, LZWStream, PredictorStream, RunLengthStream, Parser, wa, Lexer, Linearization, xa, Sa, CMap, IdentityCMap, CMapFactory, Aa, ka, Ca, va, Fa, Ia, Oa, Ta, Da, Ma, Ba, Ra, Ea, Na, CFFParser, CFF, CFFHeader, CFFStrings, CFFIndex, CFFDict, Pa, CFFTopDict, _a3, CFFPrivateDict, La, CFFCharset, CFFEncoding, CFFFDSelect, CFFOffsetTracker, CFFCompiler, ja, Ua, qa, Xa, Ha, Wa, za, $a, Ga, Va, Ka, Ja, Ya, Za, Qa, en, tn, rn, an, nn, sn, ToUnicodeMap, IdentityToUnicodeMap, CFFFont, Commands, CompiledFont, TrueTypeCompiled, Type2Compiled, FontRendererFactory, on, cn, GlyfTable, Glyph, GlyphHeader, Contour, SimpleGlyph, CompositeGlyph, OpenTypeFileBuilder, ln, hn, un, dn, fn, gn, pn, mn, bn, yn, wn, Type1CharString, Type1Parser, Type1Font, xn, Sn, An, kn, fonts_Glyph, Font, ErrorFont, Cn, vn, Fn, In, On, Tn, Pattern, BaseShading, RadialAxialShading, MeshStreamReader, Dn, MeshShading, DummyShading, Mn, Bn, Rn, En, Nn, Pn, _n, Ln, jn, Un, qn, Xn, Hn, Wn, zn, $n, Gn, Vn, Kn, Jn, Yn, Zn, Qn, ei, ti, ri, ai, ni, ii, si, oi, ci, li, hi, ui, di, fi, gi, pi, mi, bi, PostScriptParser, yi, PostScriptToken, PostScriptLexer, BaseLocalCache, LocalImageCache, LocalColorSpaceCache, LocalFunctionCache, LocalGStateCache, LocalTilingPatternCache, RegionalImageCache, GlobalColorSpaceCache, GlobalImageCache, PDFFunctionFactory, PDFFunction, PostScriptStack, PostScriptEvaluator, AstNode, AstArgument, AstLiteral, AstBinaryOperation, AstMin, AstVariable, AstVariableDefinition, ExpressionBuilderVisitor, PostScriptCompiler, wi, xi, Si, Ai, ki, Ci, vi, Fi, Ii, Oi, Ti, Di, Mi, MurmurHash3_64, Bi, NullOptimizer, QueueOptimizer, OperatorList, PDFImage, Ri, Ei, Ni, Pi, TimeSlotManager, PartialEvaluator, TranslatedFont, StateManager, TextState, EvalState, EvaluatorPreprocessor, DefaultAppearanceEvaluator, AppearanceStreamEvaluator, FakeUnicodeFont, NameOrNumberTree, NameTree, NumberTree, FileSpec, _i, ji, qi, Xi, Hi, Wi, zi, XMLParserBase, SimpleDOMNode, SimpleXMLParser, MetadataParser, $i, Gi, Vi, Ki, Ji, StructTreeRoot, StructElementNode, StructElement, StructTreePage, Yi, Catalog, ObjectLoader, Zi, Qi, es, ts, rs, as, ns, is, ss, os, cs, ls, hs, us, ds, fs, gs, ps, ms, bs, ys, ws, xs, Ss, As, ks, Cs, vs, Fs, Is, Os, Ts, Ds, Ms, Bs, Rs, Es, Ns, _s, Ls, js, Us, qs, Xs, Hs, Ws, zs, $s, Gs, Vs, Ks, Js, Ys, Zs, Qs, eo, to, ro, ao, no, io, so, oo, co, lo, ho, uo, fo, go, po, mo, bo, HTMLResult, FontFinder, FontInfo, FontSelector, TextMeasure, yo, wo, xo, So, Ao, ko, Co, vo, Fo, Io, Oo, Do, Mo, Bo, Ro, Eo, No, Po, _o, Lo, jo, Uo, qo, Xo, Ho, Wo, zo, $o, XFAObject, XFAObjectArray, XFAAttribute, XmlObject, ContentObject, OptionObject, StringObject, IntegerObject, Option01, Option10, Go, Vo, Ko, Jo, Yo, Zo, AppearanceFilter, Arc, Area, Assist, Barcode, Bind, BindItems, Bookend, BooleanElement, Border, Break, BreakAfter, BreakBefore, Button, Calculate, Caption, Certificate, Certificates, CheckButton, ChoiceList, Color, Comb, Connect, ContentArea, Corner, DateElement, DateTime, DateTimeEdit, Decimal, DefaultUi, Desc, DigestMethod, DigestMethods, Draw, Edge, Encoding, Encodings, Encrypt, EncryptData, Encryption, EncryptionMethod, EncryptionMethods, Event2, ExData, ExObject, ExclGroup, Execute, Extras, Field, Fill, Filter, Float, template_Font, Format, Handler, Hyphenation, Image2, ImageEdit, Integer, Issuers, Items, Keep, KeyUsage, Line, Linear, LockDocument, Manifest, Margin, Mdp, Medium, Message, NumericEdit, Occur, Oid, Oids, Overflow, PageArea, PageSet, Para, PasswordEdit, template_Pattern, Picture, Proto, Radial, Reason, Reasons, Rectangle, RefElement, Script, SetProperty, SignData, Signature, Signing, Solid, Speak, Stipple, Subform, SubformSet, SubjectDN, SubjectDNs, Submit, Template, Text, TextEdit, Time, TimeStamp, ToolTip, Traversal, Traverse, Ui, Validate, Value, Variables, TemplateNamespace, Qo, Binder, DataHandler, ec, Acrobat, Acrobat7, ADBE_JSConsole, ADBE_JSDebugger, AddSilentPrint, AddViewerPreferences, AdjustData, AdobeExtensionLevel, Agent, AlwaysEmbed, Amd, config_Area, Attributes, AutoSave, Base, BatchOutput, BehaviorOverride, Cache, Change, Common, Compress, CompressLogicalStructure, CompressObjectStream, Compression, Config, Conformance, ContentCopy, Copies, Creator, CurrentPage, Data, Debug, DefaultTypeface, Destination, DocumentAssembly, Driver, DuplexOption, DynamicRender, Embed, config_Encrypt, config_Encryption, EncryptionLevel, Enforce, Equate, EquateRange, Exclude, ExcludeNS, FlipLabel, config_FontInfo, FormFieldFilling, GroupParent, IfEmpty, IncludeXDPContent, IncrementalLoad, IncrementalMerge, Interactive, Jog, LabelPrinter, Layout, Level, Linearized, Locale, LocaleSet, Log, MapElement, MediumInfo, config_Message, Messaging, Mode, ModifyAnnots, MsgId, NameAttr, NeverEmbed, NumberOfCopies, OpenAction, Output, OutputBin, OutputXSL, Overprint, Packets, PageOffset, PageRange, Pagination, PaginationOverride, Part, Pcl, Pdf, Pdfa, Permissions, PickTrayByPDFSize, config_Picture, PlaintextMetadata, Presence, Present, Print, PrintHighQuality, PrintScaling, PrinterName, Producer, Ps, Range2, Record, Relevant, Rename, RenderPolicy, RunScripts, config_Script, ScriptModel, Severity, SilentPrint, Staple, StartNode, StartPage, SubmitFormat, SubmitUrl, SubsetBelow, SuppressBanner, Tagged, config_Template, Threshold, To, TemplateCache, Trace, Transform, Type, Uri, config_Validate, ValidateApprovalSignatures, ValidationMessaging, Version, VersionControl, ViewerPreferences, WebClient, Whitespace, Window, Xdc, Xdp, Xsl, Zpl, ConfigNamespace, tc, ConnectionSet, EffectiveInputPolicy, EffectiveOutputPolicy, Operation, RootElement, SoapAction, SoapAddress, connection_set_Uri, WsdlAddress, WsdlConnection, XmlConnection, XsdConnection, ConnectionSetNamespace, rc, datasets_Data, Datasets, DatasetsNamespace, ac, CalendarSymbols, CurrencySymbol, CurrencySymbols, DatePattern, DatePatterns, DateTimeSymbols, Day, DayNames, Era, EraNames, locale_set_Locale, locale_set_LocaleSet, Meridiem, MeridiemNames, Month, MonthNames, NumberPattern, NumberPatterns, NumberSymbol, NumberSymbols, TimePattern, TimePatterns, TypeFace, TypeFaces, LocaleSetNamespace, nc, signature_Signature, SignatureNamespace, ic, Stylesheet, StylesheetNamespace, sc, xdp_Xdp, XdpNamespace, oc, cc, lc, hc, uc, dc, fc, gc, XhtmlObject, A, B, Body, Br, Html, I, Li, Ol, P, Span, Sub, Sup, Ul, XhtmlNamespace, pc, UnknownNamespace, Root, Empty, Builder, XFAParser, XFAFactory, AnnotationFactory, Annotation, AnnotationBorderStyle, MarkupAnnotation, WidgetAnnotation, TextWidgetAnnotation, ButtonWidgetAnnotation, ChoiceWidgetAnnotation, SignatureWidgetAnnotation, TextAnnotation, LinkAnnotation, PopupAnnotation, FreeTextAnnotation, LineAnnotation, SquareAnnotation, CircleAnnotation, PolylineAnnotation, PolygonAnnotation, CaretAnnotation, InkAnnotation, HighlightAnnotation, UnderlineAnnotation, SquigglyAnnotation, StrikeOutAnnotation, StampAnnotation, FileAttachmentAnnotation, mc, DatasetXMLParser, DatasetReader, Word64, bc, yc, DecryptStream, ARCFourCipher, NullCipher, AESBaseCipher, AES128Cipher, AES256Cipher, PDFBase, PDF17, PDF20, CipherTransform, CipherTransformFactory, XRef, wc, Page, xc, Sc, Ac, PDFDocument, BasePdfManager, LocalPdfManager, NetworkPdfManager, kc, Cc, vc, Fc, Ic, Oc, Tc, Dc, Mc, Bc, MessageHandler, PDFWorkerStream, PDFWorkerStreamReader, PDFWorkerStreamRangeReader, WorkerTask, WorkerMessageHandler, Rc;
 var init_pdf_worker_min = __esm({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs"() {
+  "node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs"() {
     "use strict";
     e = { 34: (e3, t3, r3) => {
       var a3 = r3(4901);
@@ -49754,7 +49754,7 @@ var init_pdf_worker_min = __esm({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/pdfjs-dist/legacy/build/pdf.min.mjs
+// node_modules/pdfjs-dist/legacy/build/pdf.min.mjs
 var pdf_min_exports = {};
 __export(pdf_min_exports, {
   AbortException: () => Dt2,
@@ -50510,7 +50510,7 @@ function scaleAndClamp(t3) {
 }
 var t2, e2, __webpack_exports__2, i2, s2, n2, r2, a2, o2, l2, h2, c2, d2, u2, p2, g2, f2, m2, b2, v2, w2, y2, A2, _2, x2, E2, S2, C2, T2, M2, D2, P2, k2, I2, R2, L2, O2, N2, B2, U2, H2, PasswordException2, UnknownErrorException2, InvalidPDFException2, ResponseException2, FormatError2, AbortException2, util_FeatureTest, z2, Util2, j2, G2, V2, W3, PixelsPerInch, PageViewport, RenderingCancelledException, StatTimer, PDFDateString, OutputScale, $2, EditorToolbar, HighlightToolbar, IdManager, ImageManager, CommandManager, KeyboardManager, ColorManager, AnnotationEditorUIManager, AltText, TouchManager, AnnotationEditor, FakeEditor, q2, X2, K2, MurmurHash3_642, Y2, AnnotationStorage, PrintAnnotationStorage, FontLoader, FontFaceObject, Q2, J2, Z2, tt2, et2, it2, st2, nt2, rt2, ot2, MessageHandler2, BaseCanvasFactory, DOMCanvasFactory, BaseCMapReaderFactory, DOMCMapReaderFactory, BaseFilterFactory, DOMFilterFactory, BaseStandardFontDataFactory, DOMStandardFontDataFactory, BaseWasmFactory, DOMWasmFactory, NodeFilterFactory, NodeCanvasFactory, NodeCMapReaderFactory, NodeStandardFontDataFactory, NodeWasmFactory, lt2, ht2, ct2, BaseShadingPattern, RadialAxialShadingPattern, MeshShadingPattern, DummyShadingPattern, dt2, ut2, TilingPattern, pt2, gt2, CachedCanvases, CanvasExtraState, ft2, mt2, bt2, vt2, CanvasGraphics, GlobalWorkerOptions, Metadata, wt2, OptionalContentGroup, OptionalContentConfig, PDFDataTransportStream, PDFDataTransportStreamReader, PDFDataTransportStreamRangeReader, PDFFetchStream, PDFFetchStreamReader, PDFFetchStreamRangeReader, NetworkManager, PDFNetworkStream, PDFNetworkStreamFullRequestReader, PDFNetworkStreamRangeRequestReader, yt2, PDFNodeStream, PDFNodeStreamFsFullReader, PDFNodeStreamFsRangeReader, TextLayer, XfaText, At2, isRefProxy, _t2, PDFDocumentLoadingTask, PDFDataRangeTransport, PDFDocumentProxy, PDFPageProxy, LoopbackPort, PDFWorker, WorkerTransport, xt2, PDFObjects, RenderTask, InternalRenderTask, Et2, St2, ColorConverters, BaseSVGFactory, DOMSVGFactory, XfaLayer, Ct2, Tt2, AnnotationElementFactory, AnnotationElement, LinkAnnotationElement, TextAnnotationElement, WidgetAnnotationElement, TextWidgetAnnotationElement, SignatureWidgetAnnotationElement, CheckboxWidgetAnnotationElement, RadioButtonWidgetAnnotationElement, PushButtonWidgetAnnotationElement, ChoiceWidgetAnnotationElement, PopupAnnotationElement, PopupElement, FreeTextAnnotationElement, LineAnnotationElement, SquareAnnotationElement, CircleAnnotationElement, PolylineAnnotationElement, PolygonAnnotationElement, CaretAnnotationElement, InkAnnotationElement, HighlightAnnotationElement, UnderlineAnnotationElement, SquigglyAnnotationElement, StrikeOutAnnotationElement, StampAnnotationElement, FileAttachmentAnnotationElement, AnnotationLayer, Mt2, FreeTextEditor, Outline, FreeDrawOutliner, FreeDrawOutline, HighlightOutliner, HighlightOutline, FreeHighlightOutliner, FreeHighlightOutline, ColorPicker, HighlightEditor, DrawingOptions, DrawingEditor, InkDrawOutliner, InkDrawOutline, InkDrawingOptions, InkEditor, ContourDrawOutline, SignatureExtractor, SignatureOptions, DrawnSignatureOptions, SignatureEditor, StampEditor, AnnotationEditorLayer, DrawLayer, Dt2, Pt2, kt2, It2, Rt2, Ft2, Lt2, Ot2, Nt2, Bt2, Ut2, Ht2, zt2, jt2, Gt2, Vt2, Wt2, $t2, qt2, Xt2, Kt2, Yt2, Qt2, Jt2, Zt2, te2, ee2, ie2, se2, ne2, re2, ae2, oe2, le2, he2, ce2, de2, ue2, pe2, ge2, fe2, me2, be2, ve2, we2, ye2, Ae2, _e2, xe2, Ee2;
 var init_pdf_min = __esm({
-  "../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/pdfjs-dist/legacy/build/pdf.min.mjs"() {
+  "node_modules/pdfjs-dist/legacy/build/pdf.min.mjs"() {
     "use strict";
     t2 = { 34: (t3, e3, i3) => {
       var s3 = i3(4901);
@@ -66351,7 +66351,7 @@ var init_pdf_min = __esm({
   }
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/core.js
+// node_modules/zod/v4/core/core.js
 var _a;
 // @__NO_SIDE_EFFECTS__
 function $constructor(name, initializer3, params) {
@@ -66424,7 +66424,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/util.js
+// node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -67120,7 +67120,7 @@ var Class = class {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/errors.js
+// node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -67189,7 +67189,7 @@ function formatError(error2, mapper = (issue2) => issue2.message) {
   return fieldErrors;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/parse.js
+// node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -67267,7 +67267,7 @@ var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/regexes.js
+// node_modules/zod/v4/core/regexes.js
 var cuid = /^[cC][0-9a-z]{6,}$/;
 var cuid2 = /^[0-9a-z]+$/;
 var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
@@ -67325,7 +67325,7 @@ var _null = /^null$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/checks.js
+// node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a4;
   inst._zod ?? (inst._zod = {});
@@ -67715,7 +67715,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/doc.js
+// node_modules/zod/v4/core/doc.js
 var Doc = class {
   constructor(args = []) {
     this.content = [];
@@ -67751,14 +67751,14 @@ var Doc = class {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/versions.js
+// node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 4,
   patch: 3
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/schemas.js
+// node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a4;
   inst ?? (inst = {});
@@ -69238,7 +69238,7 @@ function handleRefineResult(result, payload, input, inst) {
   }
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/locales/en.js
+// node_modules/zod/v4/locales/en.js
 var error = () => {
   const Sizable = {
     string: { unit: "characters", verb: "to have" },
@@ -69351,7 +69351,7 @@ function en_default() {
   };
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/registries.js
+// node_modules/zod/v4/core/registries.js
 var _a2;
 var $ZodRegistry = class {
   constructor() {
@@ -69399,7 +69399,7 @@ function registry() {
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/api.js
+// node_modules/zod/v4/core/api.js
 // @__NO_SIDE_EFFECTS__
 function _string(Class2, params) {
   return new Class2({
@@ -69927,7 +69927,7 @@ function _check(fn2, params) {
   return ch2;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/to-json-schema.js
+// node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -70286,7 +70286,7 @@ var createStandardJSONSchemaMethod = (schema, io2, processors = {}) => (params) 
   return finalize(ctx, schema);
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/core/json-schema-processors.js
+// node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -70619,7 +70619,7 @@ var optionalProcessor = (schema, ctx, _json, params) => {
   seen.ref = def.innerType;
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s3) {
   const schema = s3;
   return !!schema._zod;
@@ -70682,7 +70682,7 @@ function getLiteralValue(schema) {
   return void 0;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/classic/iso.js
+// node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -70723,7 +70723,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/classic/errors.js
+// node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -70762,7 +70762,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/classic/parse.js
+// node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse3 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -70776,7 +70776,7 @@ var safeDecode2 = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync2 = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync2 = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/classic/schemas.js
+// node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap();
 function _installLazyMethods(inst, group, methods) {
   const proto = Object.getPrototypeOf(inst);
@@ -71618,10 +71618,10 @@ function preprocess(fn2, schema) {
   });
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod/v4/classic/external.js
+// node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var LATEST_PROTOCOL_VERSION = "2025-11-25";
 var SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
 var RELATED_TASK_META_KEY = "io.modelcontextprotocol/related-task";
@@ -73140,15 +73140,15 @@ var UrlElicitationRequiredError = class extends McpError {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
 function isTerminal(status) {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/zod-to-json-schema/dist/esm/parsers/string.js
+// node_modules/zod-to-json-schema/dist/esm/parsers/string.js
 var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789");
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema) {
   const shape2 = getObjectShape(schema);
   const methodSchema = shape2?.method;
@@ -73169,7 +73169,7 @@ function parseWithCompat(schema, data) {
   return result.data;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
 var DEFAULT_REQUEST_TIMEOUT_MSEC = 6e4;
 var Protocol = class {
   constructor(_options) {
@@ -74123,7 +74123,7 @@ function mergeCapabilities(base, additional) {
   return result;
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
 var import_ajv = __toESM(require_ajv(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
 function createDefaultAjvInstance() {
@@ -74191,7 +74191,7 @@ var AjvJsonSchemaValidator = class {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
 var ExperimentalServerTasks = class {
   constructor(_server) {
     this._server = _server;
@@ -74404,7 +74404,7 @@ var ExperimentalServerTasks = class {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
 function assertToolsCallTaskCapability(requests, method, entityName) {
   if (!requests) {
     throw new Error(`${entityName} does not support task creation (required for ${method})`);
@@ -74439,7 +74439,7 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   }
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
 var Server = class extends Protocol {
   /**
    * Initializes this server with the given name and version information.
@@ -74819,10 +74819,10 @@ var Server = class extends Protocol {
   }
 };
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process3 from "node:process";
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
 var ReadBuffer = class {
   append(chunk) {
     this._buffer = this._buffer ? Buffer.concat([this._buffer, chunk]) : chunk;
@@ -74850,7 +74850,7 @@ function serializeMessage(message) {
   return JSON.stringify(message) + "\n";
 }
 
-// ../../../../../../../../../../../Git/probanda/source/probanda/mcp/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 var StdioServerTransport = class {
   constructor(_stdin = process3.stdin, _stdout = process3.stdout) {
     this._stdin = _stdin;
@@ -85099,7 +85099,7 @@ import { win32 as pathWin3211 } from "node:path";
 // src/build-stamp.ts
 import { readFileSync as readFileSync13 } from "node:fs";
 import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "0f7128a67937";
+var BUILD_STAMP = false ? null : "d4353630e696";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -88748,6 +88748,22 @@ function recordFactStatementGlyphs(inv, glyphs, row3, factPostulate) {
 var SLUG_ORDER = Object.fromEntries(
   Object.keys(WORK_NAMES).map((slug, i3) => [slug, i3])
 );
+var RECORD_NOUNS = {
+  submissions: "submission",
+  facts: "fact",
+  statements_of_fact: "statement of fact",
+  statements_of_law: "statement of law",
+  law_assertions: "law assertion",
+  order_sought: "order",
+  admissions: "admission",
+  clauses: "clause"
+};
+function itemLabel(table, id, qualifier, item) {
+  if (item.length <= 80 && !/[\r\n]/.test(item)) return item;
+  const noun = Object.hasOwn(RECORD_NOUNS, table) ? RECORD_NOUNS[table] : table.replaceAll("_", " ");
+  const words = item.trim().split(/\s+/).slice(0, 8).join(" ");
+  return `${noun} ${id}${qualifier === void 0 ? "" : `, ${qualifier}`}, "${words}\u2026"`;
+}
 function isCurrentRung(entries, has) {
   const first = entries[0];
   switch (first.slug) {
@@ -88798,6 +88814,7 @@ function deriveProposals(inventory, holders, rejections) {
         lane = "rejected";
       }
     }
+    const label = first.slug === "note-up" ? first.item : itemLabel(first.table, first.id, first.qualifier, first.item);
     proposals.push({
       key,
       slug: first.slug,
@@ -88806,7 +88823,8 @@ function deriveProposals(inventory, holders, rejections) {
       id: first.id,
       ...first.qualifier === void 0 ? {} : { qualifier: first.qualifier },
       item: first.item,
-      title: `${WORK_NAMES[first.slug]}: ${first.item}`,
+      label,
+      title: `${WORK_NAMES[first.slug]}: ${label}`,
       lane,
       holder,
       ...first.table === "witnesses" ? { count: new Set(entries.map((e3) => e3.statement_id)).size } : {}
@@ -95176,14 +95194,16 @@ var PAGE_SCRIPT = String.raw`(function () {
     return c;
   }
 
-  // A resolved thread, as its section's inert card: one line ending in how it left the board and the
-  // date. A discarded one is struck, with a Restore link that only copies the instruction to paste
-  // into a session; a suggested one and one outlined into a job are plain lines.
+  // A resolved thread, as its section's inert card: one line ending in how it left the board. A
+  // discarded one is struck, with a Restore link that only copies the instruction to paste into a
+  // session; a suggested one and one taken up by a job are plain lines. Discarded and suggested lines
+  // carry their date. A job's line names the job only: the thread was either outlined into it or
+  // worked inside the loose-threads job, the data does not say which, and no date records either.
   function resolvedLine(d) {
     var date = d.at.slice(0, 10);
     var thread = "Loose thread " + d.id + ":  " + d.idea;
     if (d.how === "suggested") return { node: el("p", "suggested", thread + " *SUGGESTED* Suggested " + date), inert: true };
-    if (d.how === "job") return { node: el("p", "suggested", thread + " Became Job #" + d.job_id + ": " + d.job_title + " (job created " + date + ")"), inert: true };
+    if (d.how === "job") return { node: el("p", "suggested", thread + " Taken up by Job #" + d.job_id + ": " + d.job_title), inert: true };
     var line = el("p", "deleted");
     line.appendChild(el("s", "", thread));
     line.appendChild(document.createTextNode(" *DISCARDED* "));
@@ -95814,10 +95834,10 @@ var TAIL2 = String.raw`</script>
     // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
     var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
 
-    // The card header's work name: the title without its trailing ": " + item. Derived rather than
+    // The card header's work name: the title without its trailing ": " + label. Derived rather than
     // listed, because one work name carries a colon of its own.
     function workName(p) {
-      var tail = ": " + p.item;
+      var tail = ": " + p.label;
       return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
     }
     // A witnesses-keyed count is displayed beside the item, never inside it (design §8).

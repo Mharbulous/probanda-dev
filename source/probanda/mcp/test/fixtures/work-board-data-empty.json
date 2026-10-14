@@ -26,6 +26,7 @@
       "table": "law_assertions",
       "id": 4,
       "item": "a second point of law also not yet researched",
+      "label": "a second point of law also not yet researched",
       "title": "Find doctrinal authority: a second point of law also not yet researched",
       "lane": "proposed",
       "holder": null
@@ -37,6 +38,7 @@
       "table": "law_assertions",
       "id": 2,
       "item": "second point of law",
+      "label": "second point of law",
       "title": "Find primary authority: second point of law",
       "lane": "proposed",
       "holder": null
@@ -48,6 +50,7 @@
       "table": "law_assertions",
       "id": 3,
       "item": "point of law not yet researched",
+      "label": "point of law not yet researched",
       "title": "Find primary authority: point of law not yet researched",
       "lane": "proposed",
       "holder": null
@@ -59,6 +62,7 @@
       "table": "order_sought",
       "id": 2,
       "item": "a reserved fallback order",
+      "label": "a reserved fallback order",
       "title": "Find jurisdictional basis: a reserved fallback order",
       "lane": "proposed",
       "holder": null
@@ -70,6 +74,7 @@
       "table": "order_sought",
       "id": 3,
       "item": "an order whose only basis cites a killed authority",
+      "label": "an order whose only basis cites a killed authority",
       "title": "Find jurisdictional basis: an order whose only basis cites a killed authority",
       "lane": "proposed",
       "holder": null
@@ -81,6 +86,7 @@
       "table": "statements_of_law",
       "id": 4,
       "item": "Reserved Authority v. X, 2020 BCSC 1",
+      "label": "Reserved Authority v. X, 2020 BCSC 1",
       "title": "Scrutinize: Reserved Authority v. X, 2020 BCSC 1",
       "lane": "proposed",
       "holder": null
@@ -92,6 +98,7 @@
       "table": "authorities",
       "id": 1,
       "item": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+      "label": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
       "title": "Rate the authority: Tekk Enterprises v. Acme Co., 2024 BCCA 118",
       "lane": "proposed",
       "holder": null
@@ -103,7 +110,8 @@
       "table": "admissions",
       "id": 1,
       "item": "Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
-      "title": "Quote the exhibit: Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.",
+      "label": "admission 1, \"Northridge Construction Ltd.: The Site Diary — Week…\"",
+      "title": "Quote the exhibit: admission 1, \"Northridge Construction Ltd.: The Site Diary — Week…\"",
       "lane": "proposed",
       "holder": null
     },
@@ -114,7 +122,8 @@
       "table": "admissions",
       "id": 5,
       "item": "Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
-      "title": "Locate the exhibit pinpoint: Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.",
+      "label": "admission 5, \"Northridge Construction Ltd.: The Site Diary — Week…\"",
+      "title": "Locate the exhibit pinpoint: admission 5, \"Northridge Construction Ltd.: The Site Diary — Week…\"",
       "lane": "proposed",
       "holder": null
     },
@@ -125,6 +134,7 @@
       "table": "statements_of_fact",
       "id": 7,
       "item": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+      "label": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
       "title": "Locate the exhibit pinpoint: M. Reyes: Overtime for the final week was recorded in the Site Diary.",
       "lane": "proposed",
       "holder": null
@@ -136,6 +146,7 @@
       "table": "witnesses",
       "id": 3,
       "item": "M. Reyes",
+      "label": "M. Reyes",
       "title": "Interview: M. Reyes",
       "lane": "proposed",
       "holder": null,
@@ -148,6 +159,7 @@
       "table": "documents",
       "id": 3,
       "item": "Witness Statement of A. Renwick",
+      "label": "Witness Statement of A. Renwick",
       "title": "Get it signed: Witness Statement of A. Renwick",
       "lane": "proposed",
       "holder": null
@@ -159,6 +171,7 @@
       "table": "documents",
       "id": 10,
       "item": "Notice to Admit dated 2026-08-01",
+      "label": "Notice to Admit dated 2026-08-01",
       "title": "Serve: Notice to Admit dated 2026-08-01",
       "lane": "proposed",
       "holder": null
@@ -170,6 +183,7 @@
       "table": "documents",
       "id": 9,
       "item": "Response to Notice to Admit dated 2026-06-15",
+      "label": "Response to Notice to Admit dated 2026-06-15",
       "title": "Enter the admission; pleading route: Requisition default judgment: Response to Notice to Admit dated 2026-06-15",
       "lane": "proposed",
       "holder": null
@@ -181,6 +195,7 @@
       "table": "documents",
       "id": 14,
       "item": "Notice to Admit dated 2020-01-01",
+      "label": "Notice to Admit dated 2020-01-01",
       "title": "Enter the admission; pleading route: Requisition default judgment: Notice to Admit dated 2020-01-01",
       "lane": "proposed",
       "holder": null
@@ -192,7 +207,8 @@
       "table": "submissions",
       "id": 1,
       "item": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
-      "title": "Link or draft the factual basis: The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+      "label": "submission 1, \"The Respondent owes $150,000 under the plain words…\"",
+      "title": "Link or draft the factual basis: submission 1, \"The Respondent owes $150,000 under the plain words…\"",
       "lane": "proposed",
       "holder": null
     },
@@ -203,6 +219,7 @@
       "table": "submissions",
       "id": 3,
       "item": "A reserved fallback argument, held for reply.",
+      "label": "A reserved fallback argument, held for reply.",
       "title": "Link or draft the factual basis: A reserved fallback argument, held for reply.",
       "lane": "proposed",
       "holder": null
@@ -214,6 +231,7 @@
       "table": "submissions",
       "id": 3,
       "item": "A reserved fallback argument, held for reply.",
+      "label": "A reserved fallback argument, held for reply.",
       "title": "Link or draft the proposition it requires: A reserved fallback argument, held for reply.",
       "lane": "proposed",
       "holder": null
@@ -225,6 +243,7 @@
       "table": "order_sought",
       "id": 2,
       "item": "a reserved fallback order",
+      "label": "a reserved fallback order",
       "title": "Draft a submission for the order: a reserved fallback order",
       "lane": "proposed",
       "holder": null
@@ -236,6 +255,7 @@
       "table": "order_sought",
       "id": 3,
       "item": "an order whose only basis cites a killed authority",
+      "label": "an order whose only basis cites a killed authority",
       "title": "Draft a submission for the order: an order whose only basis cites a killed authority",
       "lane": "proposed",
       "holder": null
@@ -247,6 +267,7 @@
       "table": "documents",
       "id": 2,
       "item": "Undescribed exhibit",
+      "label": "Undescribed exhibit",
       "title": "Record label, date or description: Undescribed exhibit",
       "lane": "proposed",
       "holder": null

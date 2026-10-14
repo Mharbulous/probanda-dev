@@ -297,7 +297,6 @@ export function writeMatterPages(
     const targets = pageTargets(live, preFiling);
     const names = targets.map((t) => t.file);
     const views = viewTargets(live);
-    refuseForeignPages(draftDir, names, views);
     const meta = {
       revision,
       matter: client.matterNo ?? "",
@@ -311,6 +310,7 @@ export function writeMatterPages(
     const preFilingWritten = only === undefined ? preFiling : [];
     const targetsWritten = pageTargets(liveWritten, preFilingWritten);
     const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
+    refuseForeignPages(draftDir, targetsWritten.map((t) => t.file), viewsWritten);
     const pages = [
       ...liveWritten.map((r) => {
         // A Job Board with no Writing has no mockup folder, so none is looked up for it.
@@ -352,7 +352,8 @@ export function writeMatterPages(
         v.page.data({ dbPath, filing: v.filing, proceeding: v.proceeding, now, revision })
       )
     );
-    const swept = sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]);
+    // One filing's call leaves the sweep to the job's last, full call.
+    const swept = only === undefined ? sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]) : {};
     const matterBoardPath = join(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
     targetsWritten.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));

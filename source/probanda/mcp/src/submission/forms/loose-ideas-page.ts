@@ -290,14 +290,16 @@ const PAGE_SCRIPT = String.raw`(function () {
     return c;
   }
 
-  // A resolved thread, as its section's inert card: one line ending in how it left the board and the
-  // date. A discarded one is struck, with a Restore link that only copies the instruction to paste
-  // into a session; a suggested one and one outlined into a job are plain lines.
+  // A resolved thread, as its section's inert card: one line ending in how it left the board. A
+  // discarded one is struck, with a Restore link that only copies the instruction to paste into a
+  // session; a suggested one and one taken up by a job are plain lines. Discarded and suggested lines
+  // carry their date. A job's line names the job only: the thread was either outlined into it or
+  // worked inside the loose-threads job, the data does not say which, and no date records either.
   function resolvedLine(d) {
     var date = d.at.slice(0, 10);
     var thread = "Loose thread " + d.id + ":  " + d.idea;
     if (d.how === "suggested") return { node: el("p", "suggested", thread + " *SUGGESTED* Suggested " + date), inert: true };
-    if (d.how === "job") return { node: el("p", "suggested", thread + " Became Job #" + d.job_id + ": " + d.job_title + " (job created " + date + ")"), inert: true };
+    if (d.how === "job") return { node: el("p", "suggested", thread + " Taken up by Job #" + d.job_id + ": " + d.job_title), inert: true };
     var line = el("p", "deleted");
     line.appendChild(el("s", "", thread));
     line.appendChild(document.createTextNode(" *DISCARDED* "));
