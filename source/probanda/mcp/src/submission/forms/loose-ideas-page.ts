@@ -5,7 +5,7 @@
 //   ranked   -- by rank, ties by id, each with its group and the one-line reason the ranking gave it
 //               (schema v66).
 //   unranked -- by id: the loose threads captured since the last ranking, and every one on a database
-//               held below v66. The page calls them Unsorted.
+//               held below v66. The page calls them Unranked.
 // A ranked card shows the job description the ranking restated it as (schema v70), ending in its
 // rank tag and its group's tag under the group's short name; opened, it shows the loose thought
 // verbatim, then the reason, the loose thread's id, who surfaced it and where it came from, as the
@@ -15,9 +15,11 @@
 // Defer button (schema v68). Ranking never drops a loose thread, so the page lists every open one; a
 // deferred one shows collapsed to its first line and faded.
 //
-// Under the All tab two more sections follow (schema v75): Discarded, each thread the practitioner
-// dropped as a red struck line with a Restore link that copies an instruction and writes nothing, and
-// Suggested, each thread sent to Probanda as a plain line. Neither is in the header's counts.
+// A fourth tab, Resolved, lists the threads that are not open (fetchResolvedSeeds), newest first, one
+// line each saying how it left the board and when: discarded (schema v75), a red struck line with a
+// Restore link that copies an instruction and writes nothing; suggested to Probanda (v75); or outlined
+// into a job that is not deleted, named by number and title and dated by the job's creation. The All
+// tab shows them only while its "Show/Hide Resolved Threads" checkbox is on, and it starts off.
 //
 // The Defer button writes through the data server's localhost listener (../../page-api/server.ts):
 // the page posts the db_path, proceeding and token embedded here, and the listener writes only
@@ -31,7 +33,7 @@
 import { pageApiPort, pageApiToken } from "../../page-api/token.js";
 import type { ViewPage } from "../view-pages.js";
 import type { FilingRow } from "./query.js";
-import { fetchDiscardedSeeds, fetchOpenSeeds, inRankOrder, seedOrigin, withFromFiling, type RankGroup } from "./render-work-board.js";
+import { fetchOpenSeeds, fetchResolvedSeeds, inRankOrder, seedOrigin, withFromFiling, type RankGroup, type ResolvedSeed } from "./render-work-board.js";
 import { VIEW_FOLDER_CSS } from "./view-folder-css.js";
 
 /** Each group's short name and colour on this page, in triage's group order. */
@@ -63,6 +65,9 @@ export interface LooseIdea {
   deferred_at: string | null;
 }
 
+/** A resolved loose thread, as the page's Resolved section draws it. */
+export type ResolvedIdea = ResolvedSeed;
+
 /** What the page's Defer button posts to the listener: its port, and the body it sends. */
 export interface LooseIdeasApi {
   port: number;
@@ -77,9 +82,9 @@ export interface LooseIdeasData {
   groups: { key: RankGroup; label: string; colour: string; count: number }[];
   /** Every open loose thread in the shared order: the ranked first, then the unranked. */
   ideas: LooseIdea[];
-  /** The proceeding's discarded and suggested loose threads (schema v75), in id order: one with
-   * `discarded_at` set is drawn struck under Discarded, any other under Suggested. */
-  discarded: { id: number; idea: string; discarded_at: string | null; suggested_at: string | null }[];
+  /** The proceeding's resolved loose threads, newest first: discarded, suggested, or outlined into a
+   * job that is not deleted. */
+  resolved: ResolvedIdea[];
   api: LooseIdeasApi;
 }
 
@@ -105,17 +110,17 @@ export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: Node
     .map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i) => i.group === key).length }))
     .filter((g) => g.count > 0);
   const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  const discarded = fetchDiscardedSeeds(dbPath, filing.proceeding_id).map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
-  return { groups, ideas, discarded, api };
+  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
 }
 
-/** The header's counts: every open loose thread, the ranked and the unranked. */
+/** The header's counts: every open loose thread, the ranked and the unranked, then the resolved. */
 function looseIdeasMeta(data: LooseIdeasData): [string, string][] {
   const ranked = data.ideas.filter((i) => i.rank !== null).length;
   return [
     ["Threads", String(data.ideas.length)],
     ["Ranked", String(ranked)],
-    ["Unsorted", String(data.ideas.length - ranked)],
+    ["Unranked", String(data.ideas.length - ranked)],
+    ["Resolved", String(data.resolved.length)],
   ];
 }
 
@@ -151,6 +156,9 @@ article.idea.deferred{opacity:.55}
 .switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
 .switch[aria-checked=true] .knob{transform:translateX(13px)}
 .switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}
+.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle:not([hidden]) + .switch{margin-left:0}
 .chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}
 .chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}
@@ -161,16 +169,20 @@ article.idea.deferred{opacity:.55}
 @media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}
 `;
 
-// Draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unsorted) over one panel
-// holding two sections, ranked then unranked. Several cards may be open; each section's first open
+// Draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unranked, Resolved) over one
+// panel holding three sections, ranked, unranked, then resolved. Several cards may be open; each section's first open
 // card starts open. The Ranked heading carries the All groups switch: on, every group shows; off,
 // a chip per group shows that group when pressed, every chip pressed at first and the selection kept
 // across toggles. Turning it off breaks the chips out of a cluster behind the switch; turning it on
 // plays the same motion in reverse, then hides them. Each card not yet deferred carries a Defer
 // button, enabled once the listener answers /health within 2 s; a click posts the page's api block
 // and, on 200, collapses and fades the card in place. A failure shows on the card.
-// Two more sections, Discarded and Suggested, show under All only, having no tab of their own: one
-// line per thread, a discarded one struck with a Restore link that copies "restore loose thread #N".
+// The Resolved section holds one line per resolved thread, saying how it left the board and when, a
+// discarded one struck with a Restore link that copies "restore loose thread #N". It shows under its
+// own tab, and under All only while the "Show/Hide Resolved Threads" checkbox is on. The checkbox
+// starts off ("☐", "☑" when on) and shows on the All tab alone: on the Ranked heading, left of the All
+// groups switch, or at the right of the tab row when nothing is ranked. It is not drawn when no
+// thread is resolved.
 // Everything drawn at load uses only element creation, attributes, classList.add and plain
 // properties; measuring and animating happen on a click.
 const PAGE_SCRIPT = String.raw`(function () {
@@ -255,7 +267,7 @@ const PAGE_SCRIPT = String.raw`(function () {
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
     var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
-    if (i.rank === null) rank.title = "Unsorted";
+    if (i.rank === null) rank.title = "Unranked";
     tags.appendChild(rank);
     if (i.rank !== null && i.group_label) {
       var group = el("span", "tag group", i.group_label);
@@ -278,12 +290,16 @@ const PAGE_SCRIPT = String.raw`(function () {
     return c;
   }
 
-  // A thread that left the board, as a section's inert card: a discarded one struck, with a Restore
-  // link that only copies the instruction to paste into a session, and a suggested one plain.
-  function discardedSeedLine(d) {
-    if (!d.discarded_at) return { node: el("p", "suggested", "Loose thread " + d.id + ":  " + d.idea + " *SUGGESTED*"), inert: true };
+  // A resolved thread, as its section's inert card: one line ending in how it left the board and the
+  // date. A discarded one is struck, with a Restore link that only copies the instruction to paste
+  // into a session; a suggested one and one outlined into a job are plain lines.
+  function resolvedLine(d) {
+    var date = d.at.slice(0, 10);
+    var thread = "Loose thread " + d.id + ":  " + d.idea;
+    if (d.how === "suggested") return { node: el("p", "suggested", thread + " *SUGGESTED* Suggested " + date), inert: true };
+    if (d.how === "job") return { node: el("p", "suggested", thread + " Became Job #" + d.job_id + ": " + d.job_title + " (job created " + date + ")"), inert: true };
     var line = el("p", "deleted");
-    line.appendChild(el("s", "", "Loose thread " + d.id + ":  " + d.idea));
+    line.appendChild(el("s", "", thread));
     line.appendChild(document.createTextNode(" *DISCARDED* "));
     var restore = el("a", "", "Restore");
     restore.href = "#";
@@ -299,6 +315,7 @@ const PAGE_SCRIPT = String.raw`(function () {
       }, showInstruction);
     });
     line.appendChild(restore);
+    line.appendChild(document.createTextNode(" Discarded " + date));
     return { node: line, inert: true };
   }
 
@@ -354,9 +371,8 @@ const PAGE_SCRIPT = String.raw`(function () {
 
   var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unsorted", "Unsorted", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
-  section("discarded", "Discarded", [], data.discarded.filter(function (d) { return d.discarded_at; }).map(discardedSeedLine));
-  section("suggested", "Suggested", [], data.discarded.filter(function (d) { return !d.discarded_at; }).map(discardedSeedLine));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("resolved", "Resolved", [], data.resolved.map(resolvedLine));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
@@ -368,7 +384,24 @@ const PAGE_SCRIPT = String.raw`(function () {
   var track = el("span", "track");
   track.appendChild(el("span", "knob"));
   toggle.appendChild(track);
-  if (rankedCards.length > 0) sections.ranked.h2.appendChild(toggle);
+  var showResolved = false;
+  var resolvedToggle = null;
+  if (data.resolved.length > 0) {
+    resolvedToggle = el("button", "resolved-toggle", "☐ Show/Hide Resolved Threads");
+    resolvedToggle.type = "button";
+    resolvedToggle.setAttribute("role", "checkbox");
+    resolvedToggle.setAttribute("aria-checked", "false");
+    resolvedToggle.addEventListener("click", function () {
+      showResolved = !showResolved;
+      resolvedToggle.textContent = showResolved ? "☑ Show/Hide Resolved Threads" : "☐ Show/Hide Resolved Threads";
+      resolvedToggle.setAttribute("aria-checked", String(showResolved));
+      apply();
+    });
+  }
+  if (rankedCards.length > 0) {
+    if (resolvedToggle) sections.ranked.h2.appendChild(resolvedToggle);
+    sections.ranked.h2.appendChild(toggle);
+  }
 
   // The break-out: every chip from a small cluster behind the switch to its place, at once, with
   // the row's height on the same timing. Reversed, the same motion gathers them back.
@@ -406,7 +439,7 @@ const PAGE_SCRIPT = String.raw`(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unsorted", "Unsorted"]];
+  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -417,6 +450,8 @@ const PAGE_SCRIPT = String.raw`(function () {
     tablist.appendChild(b);
     return b;
   });
+  // With nothing ranked the Ranked heading is hidden, so the checkbox ends the tab row.
+  if (resolvedToggle && rankedCards.length === 0) tablist.appendChild(resolvedToggle);
 
   var current = "all";
   function apply() {
@@ -424,7 +459,8 @@ const PAGE_SCRIPT = String.raw`(function () {
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var on = (current === "all" || current === name) && sections[name].cards.length > 0;
+      var shown = current === name || (current === "all" && (name !== "resolved" || showResolved));
+      var on = shown && sections[name].cards.length > 0;
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
@@ -435,6 +471,7 @@ const PAGE_SCRIPT = String.raw`(function () {
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
     empty.hidden = any;
+    if (resolvedToggle) resolvedToggle.hidden = current !== "all";
   }
   function select(b) {
     current = b.getAttribute("data-filter");

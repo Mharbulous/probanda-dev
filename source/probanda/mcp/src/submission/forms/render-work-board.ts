@@ -720,6 +720,41 @@ export function fetchDiscardedSeeds(dbPath: string, proceedingId: number): Disca
 const discardedSeedLines = (seeds: readonly DiscardedSeed[]): WorkBoardData["discardedSeeds"] =>
   seeds.map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
 
+/** A loose thread that is not open: discarded, else suggested, else outlined into a job that is not deleted. */
+export interface ResolvedSeed {
+  id: number;
+  idea: string;
+  how: "discarded" | "suggested" | "job";
+  /** `discarded_at`, `suggested_at`, or the job's `created`: `seeds` stores no time for the outlining,
+   * and the job is created in the script that sets `charted_into`. */
+  at: string;
+  /** The job it was outlined into, and that job's title; null unless `how` is `job`. */
+  job_id: number | null;
+  job_title: string | null;
+}
+
+/** The proceeding's resolved loose threads, newest first, ties by id: the Loose Threads page's Resolved
+ * section. A thread outlined into a deleted job is open again, so the join keeps live jobs only. A
+ * database held below v75 lists its outlined threads. */
+export function fetchResolvedSeeds(dbPath: string, proceedingId: number): ResolvedSeed[] {
+  const closed = seedClosedColumns(dbPath);
+  const column = (name: string): string => (closed.includes(name) ? `s.${name}` : `NULL AS ${name}`);
+  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  return rows<{ id: number; idea: string; discarded_at: string | null; suggested_at: string | null; job_id: number | null; job_title: string | null; job_created: string | null }>(
+    dbPath,
+    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
+     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
+     WHERE s.proceeding_id = ? AND (${resolved})`,
+    [proceedingId]
+  )
+    .map((r): ResolvedSeed => {
+      if (r.discarded_at !== null) return { id: r.id, idea: r.idea, how: "discarded", at: r.discarded_at, job_id: null, job_title: null };
+      if (r.suggested_at !== null) return { id: r.id, idea: r.idea, how: "suggested", at: r.suggested_at, job_id: null, job_title: null };
+      return { id: r.id, idea: r.idea, how: "job", at: r.job_created as string, job_id: r.job_id, job_title: r.job_title };
+    })
+    .sort((a, b) => (a.at === b.at ? a.id - b.id : a.at < b.at ? 1 : -1));
+}
+
 /** Every open loose thread in one proceeding, in id order: the board's and the Loose Threads page's one
  * set. A loose thread outlined into a deleted job shows again, and one captured from a deleted job names no origin job. */
 export function fetchOpenSeeds(
