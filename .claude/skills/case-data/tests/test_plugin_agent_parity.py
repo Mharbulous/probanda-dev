@@ -1,9 +1,11 @@
-"""Pins every read-only Probanda plugin agent to its subagent template (#549, #558).
+"""Pins every extract and verify Probanda plugin agent to its subagent template (#549, #558).
 
 Each agent body is its template verbatim plus the `**Lane:**` line plugins/CLAUDE.md
 requires after the H1. Each grant is `Read` alone — the "file-read tool only" the
 templates' binding constraints assert — so a caller dispatching one of these
-templates gets that guarantee at runtime instead of on paper.
+templates gets that guarantee at runtime instead of on paper. The one exception is
+`extract-caselaw`, which also holds `Write` for the single scratch file its caller
+names; its template limits it to that file.
 
 The model column is the #558 split: the verifiers are pinned so a weak session model
 cannot produce weak extraction *and* an equally weak check of it, while the extractors
@@ -36,6 +38,9 @@ AGENTS = {
     "extract-sought-orders": ("case-data", None),
 }
 
+# agent name -> its grant, where that is not `Read` alone
+GRANTS = {"extract-caselaw": ["Read", "Write"]}
+
 
 def _template(name):
     return SKILLS / AGENTS[name][0] / "agents" / (name + ".md")
@@ -65,13 +70,13 @@ class PluginAgentParityTests(unittest.TestCase):
             {path.stem for path in (SKILLS / "verify-law" / "agents").glob("*.md")},
         )
 
-    def test_grant_is_read_only(self):
+    def test_grant_is_read_alone_but_for_the_listed_exceptions(self):
         for name in sorted(AGENTS):
             with self.subTest(agent=name):
                 frontmatter, _ = _split(_read(PLUGIN_AGENTS / (name + ".md")), name)
                 self.assertRegex(frontmatter, r"(?m)^name: %s$" % re.escape(name))
                 self.assertEqual(
-                    ["Read"],
+                    GRANTS.get(name, ["Read"]),
                     re.findall(
                         r"^  - (.*)$",
                         frontmatter.split("tools:\n", 1)[1],
