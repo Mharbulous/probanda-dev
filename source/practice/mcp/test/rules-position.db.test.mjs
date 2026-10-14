@@ -89,8 +89,8 @@ test("a v72 database is refused naming drafting_data__migrate, and the v73 hop a
   await assert.rejects(move(dbPath, "sess-a", "rpos/session"), refused(/schema version 72.*needs version 73\. Run drafting_data__migrate on it first/, "schema_behind"));
   await assert.rejects(branch(dbPath, "sess-a", "open", "q1"), refused(/Run drafting_data__migrate/, "schema_behind"));
 
-  const result = await callTool({}, "drafting_data__migrate", { db_path: dbPath });
-  assert.deepEqual(result.applied, [{ from: 72, to: 73 }]);
+  // drafting_data__migrate runs every pending hop, so the v73 hop is applied alone to read what it adds.
+  submissionDbAt(dbPath, 73);
   const after = master();
   const key = (r) => `${r.type} ${r.name}`;
   assert.deepEqual(after.filter((r) => !before.some((b) => key(b) === key(r))).map(key).sort(), [
@@ -104,6 +104,12 @@ test("a v72 database is refused naming drafting_data__migrate, and the v73 hop a
   // Nothing else changed: every v72 entry is still there, with the same SQL.
   for (const b of before) assert.deepEqual(after.find((r) => key(r) === key(b)), b);
   assert.equal(query(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'")[0].value, "73");
+
+  // The tool the refusal names brings a v72 database to the current schema, the v73 hop first.
+  const behind = join(dir, "behind.sqlite");
+  submissionDbAt(behind, 72);
+  const result = await callTool({}, "drafting_data__migrate", { db_path: behind });
+  assert.deepEqual(result.applied[0], { from: 72, to: 73 });
 });
 
 test("the first move sends the whole path but no root rule, stores the position and logs each rule sent", async (t) => {

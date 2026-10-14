@@ -98,7 +98,7 @@ First call `housekeeping__new_run` (`matter_root`) for this run's `run_id`. The 
 
 List the root of `matter_folder`, not recursively.
 
-- **Never a candidate, never mentioned:** any file or folder whose name starts with `~` or `.`; at the root, `coclerk.json`, `CLAUDE.md`, `AGENTS.md`, CaseMap files (`.cm12`, `.cm14` and every other `.cm*` extension), `desktop.ini`, `.lnk` shortcuts, and hidden or system files; the root folders `TRASH` and `Claude outputs`.
+- **Never a candidate, never mentioned:** any file or folder whose name starts with `~` or `.`; at the root, `coclerk.json`, `CLAUDE.md`, `AGENTS.md`, `ProceduralHistory.md`, CaseMap files (`.cm12`, `.cm14` and every other `.cm*` extension), `desktop.ini`, `.lnk` shortcuts, and hidden or system files; the root folders `TRASH` and `Claude outputs`.
 - **Open in Word.** A root file is open when a sibling `~$` file has the same extension and a stem equal to the file's stem with 0, 1 or 2 leading characters removed. It is not read, rowed or counted. List its name for the header line "Open in Word, skipped this run".
 - **Root folders.** Folders numbered 0 or 1 are neither swept nor listed (they are never destinations either, except `0. DRAFT` on a `draft` row; `0. DRAFT\Superseded` is case-data's own destination for a superseded version, never housekeeping's). A folder the keyword table matches is swept. Any other root folder is never looked inside, and its name goes on the header line "Folders not looked inside".
 - **Root files:** every other root file is a candidate, whatever its extension.

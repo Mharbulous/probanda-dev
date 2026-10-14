@@ -34,6 +34,7 @@ READ = {
     "rule_period_find", "configure_credential", "configure_status",
 }
 TROUBLESHOOT = {"search", "record", "confirm_fix", "configure_credential", "configure_status"}
+SUGGESTION_BOX = {"submit", "configure_credential", "configure_status"}
 
 
 def registered_matcher():
@@ -60,6 +61,9 @@ def matcher_gaps(matcher):
         for tool in sorted(TROUBLESHOOT):
             if pattern.search(prefix + "troubleshoot__" + tool):
                 gaps.append(f"troubleshoot tool matched: {prefix}troubleshoot__{tool}")
+        for tool in sorted(SUGGESTION_BOX):
+            if pattern.search(prefix + "suggestion_box__" + tool):
+                gaps.append(f"suggestion box tool matched: {prefix}suggestion_box__{tool}")
     return gaps
 
 

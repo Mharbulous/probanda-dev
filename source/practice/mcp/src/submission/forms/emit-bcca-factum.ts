@@ -197,7 +197,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   // Before the lead-in, as the mockup prints them. Part 4 admits only numbered and plain paragraphs
   // (bcca-factum-contract.md), so a record's quote and cite lines cannot be carried here.
   for (const row of fetchRhetoric(ctx.dbPath, filing.id, "form", "orders")) body.push(`${++n}. ${oneLine(row.wording)}`);
-  body.push(`${++n}. The ${signer.roleLabel!.toLowerCase()}${signer.roleLabel!.endsWith("s") ? "seek" : "seeks"} an Order:`);
+  body.push(`${++n}. The ${signer.roleLabel!.toLowerCase()} ${signer.roleLabel!.endsWith("s") ? "seek" : "seeks"} an Order:`);
   orders.forEach((o) => body.push(oneLine(o.wording_override ?? o.wording)));
   body.push(`${++n}. All of which is respectfully submitted.`);
 

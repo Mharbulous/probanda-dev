@@ -230,7 +230,7 @@ export function pluginVersion(installRoot: string = INSTALL_ROOT): string | null
 }
 
 /** `name` and `version` from an install's `.claude-plugin/plugin.json`; each null when it cannot be read. */
-function pluginManifest(installRoot: string): { name: string | null; version: string | null } {
+export function pluginManifest(installRoot: string): { name: string | null; version: string | null } {
   try {
     const manifest = JSON.parse(readFileSync(join(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
     return {

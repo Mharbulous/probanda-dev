@@ -232,6 +232,12 @@ If the re-presented source meets `order-effects.md` Step 1 detection, hand off t
 
 ---
 
+## Step 6 — Another copy of a registered source
+
+When this pass leads the session to conclude that the hash-matched source is another copy of registered source N, with a different hash (`../shared/extraction-protocol.md`, "Another copy with a different hash"), run `ingest-extract.md`'s "Another copy of a registered source" step after Step 5, with the hash-matched row in place of its new row.
+
+---
+
 ## Path D — Case-law authority verification
 
 Use this path for an already-ingested `case_law` authority whose hash duplicate
@@ -295,8 +301,11 @@ or the style of cause.
 authority result if it is malformed, if an id does not resolve inside the D2
 payload, if a `current` value does not byte-match (JSON null matches only a stored
 SQL `NULL`), if a correction field is outside the matching `amend-law` allowlist,
-if `proposed` is null outside the nullable allowlist, if an anchor is missing, or
-if a missed-concept object fails the full extraction shape. Treatment corrections
+if `proposed` is null outside the nullable allowlist, if an anchor is missing,
+if a missed-concept object fails the full extraction shape, or if a
+`determined_by_concept_name` matches neither the `name` of a concept in the same
+output nor a stored `law.legal_concepts` row with that name in the parent
+concept's jurisdiction. Treatment corrections
 must carry both authority identities and
 `route: "practitioner_review"`. A validation failure leaves all rows, stamps, and
 the marker untouched.

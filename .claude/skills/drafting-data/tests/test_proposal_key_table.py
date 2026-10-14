@@ -1,8 +1,8 @@
 """filing-checklists.md §6a, the Proposal key-type table, and jobs-create.md §3e's submission read.
 
-§6a is the one place a job outlined from a Proposal reads its single step and its scope from, so
+§6a is the one place a job outlined from a Proposal reads its steps and its scope from, so
 it must cover every key type the renderer emits, and no step frame may restate the job's title
-(`<work name>: <item>`), which `/draft`'s pre-claim check refuses. §3e's "The submission's rows"
+(`<work name>: <item label>`), which `/draft`'s pre-claim check refuses. §3e's "The submission's rows"
 read is run against a freshly migrated synthetic database."""
 
 import re

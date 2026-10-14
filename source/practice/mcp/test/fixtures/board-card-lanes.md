@@ -19,15 +19,15 @@
   key: note-up:authorities:6 · item: Fully Captured v. Westmount, 2021 BCCA 77 · lane: proposed
 - 🏅 Rate the authority: Tekk Enterprises v. Acme Co., 2024 BCCA 118
   key: authority-rating:authorities:1 · item: Tekk Enterprises v. Acme Co., 2024 BCCA 118 · lane: proposed
-- 📑 Quote the exhibit: Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd.
+- 📑 Quote the exhibit: admission 1, "Northridge Construction Ltd.: The Site Diary — Week…"
   key: exhibit-excerpt:admissions:1 · item: Northridge Construction Ltd.: The Site Diary — Week 12 is a genuine business record of Northridge Construction Ltd. · lane: proposed
-- 💬 Quote the testimony: K. Bell: The change order for the final week was counter-signed before the work began.
+- 💬 Quote the testimony: statement of fact 8, "K. Bell: The change order for the final…"
   key: testimony-excerpt:statements_of_fact:8 · item: K. Bell: The change order for the final week was counter-signed before the work began. · lane: proposed
-- 📌 Locate the exhibit pinpoint: Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration.
+- 📌 Locate the exhibit pinpoint: admission 5, "Northridge Construction Ltd.: The Site Diary — Week…"
   key: exhibit-pinpoint:admissions:5 · item: Northridge Construction Ltd.: The Site Diary — Week 12 was retained without alteration. · lane: proposed
 - 📌 Locate the exhibit pinpoint: M. Reyes: Overtime for the final week was recorded in the Site Diary.
   key: exhibit-pinpoint:statements_of_fact:7 · item: M. Reyes: Overtime for the final week was recorded in the Site Diary. · lane: proposed
-- 🧷 Locate the testimony pinpoint: K. Bell: The change order for the final week was counter-signed before the work began.
+- 🧷 Locate the testimony pinpoint: statement of fact 8, "K. Bell: The change order for the final…"
   key: testimony-pinpoint:statements_of_fact:8 · item: K. Bell: The change order for the final week was counter-signed before the work began. · lane: proposed
 - 🗣️ Interview: M. Reyes
   key: interview:witnesses:3 · item: M. Reyes · lane: proposed

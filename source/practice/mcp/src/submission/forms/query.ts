@@ -630,6 +630,18 @@ export function liveTicketClause(dbPath: string, alias?: string): string {
   return deletedAtHeld(dbPath) ? ` AND ${alias === undefined ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
 
+/** The `seeds` columns that take a loose thread off the board (schema v75), as this database holds
+ * them: `discarded_at` and `suggested_at`, or none on a database held below v75. */
+export function seedClosedColumns(dbPath: string): string[] {
+  return rows<{ name: string }>(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at') ORDER BY name").map((c) => c.name);
+}
+
+/** ` AND discarded_at IS NULL AND suggested_at IS NULL`, so a query sees only loose threads that were
+ * neither discarded nor suggested (jobs-run.md §8); empty on a database held below v75. */
+export function liveSeedClause(dbPath: string): string {
+  return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
+}
+
 /** A Writing's prose-cited statements of law (#1214), by statement id. */
 export function fetchFilingLaw(dbPath: string, filingId: number): FilingLawRow[] {
   return rows<FilingLawRow>(
@@ -672,7 +684,7 @@ export function fetchHearingDate(dbPath: string, filingId: number): string | nul
  * The newest activity timestamp per filing in one proceeding, for the bootstrap ranking.
  *
  * Activity is any timestamp on a ticket, on one of its steps, or on a still-open loose thread
- * (`charted_into IS NULL`). A substance write carries no per-filing timestamp and is
+ * (`charted_into IS NULL`, and neither discarded nor suggested). A substance write carries no per-filing timestamp and is
  * deliberately not counted. The row whose `filing_id` is null holds the proceeding-scoped
  * activity, which counts for every filing in that proceeding; folding it in is the caller's.
  *
@@ -690,7 +702,7 @@ export function fetchLatestActivity(dbPath: string, proceedingId: number): { fil
        UNION ALL SELECT filing_id, plan_approved_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT filing_id, completed_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT t.filing_id, s.done_at FROM ticket_steps s JOIN tickets t ON t.id = s.ticket_id WHERE t.proceeding_id = ?${liveTicketClause(dbPath, "t")}
-       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL
+       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL${liveSeedClause(dbPath)}
      ) WHERE ts IS NOT NULL GROUP BY filing_id`,
     [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
   );

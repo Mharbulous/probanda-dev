@@ -174,7 +174,7 @@ test("only a roster lawyer records a Writing as sent: a staff key is refused", a
   assert.equal(filing(g, id).filed_on, null);
 });
 
-test("send anyway records the practitioner's words in each WAIVED step, stores sent_copy_id with the signer snapshot and the Sent date, moves the revision, and offers delivered", async (t) => {
+test("send anyway records the practitioner's words in each WAIVED step, stores sent_copy_id with the signer snapshot and the Sent date, and moves the revision", async (t) => {
   const { g, id } = await drafted(t);
   setInventory(g, id, [unproven, unquoted]);
   await assert.rejects(send(g, id), code("held"));
@@ -213,7 +213,7 @@ test("send anyway records the practitioner's words in each WAIVED step, stores s
   assert.ok(result.revision > revision, "the Sent write moves the revision");
   assert.equal(result.revision, g.revision());
   assert.deepEqual([result.comparison.method, result.comparison.compared, result.comparison.paragraphs], ["text", true, 2]);
-  assert.equal(result.offer_delivered, true);
+  assert.equal("offer_delivered" in result, false, "recording a Writing as sent never leads to a retirement offer (ADR 0042)");
   assert.equal(result.recorded_by, "pe");
 
   // The board reads the Writing as sent, its gate met with the waived steps.
@@ -601,11 +601,11 @@ test("an internal memo is sent like a letter: an unmet held criterion holds it, 
   assert.equal(filing(g, id).filed_on, null);
 });
 
-test("an internal memo with nothing held is recorded as sent, its lawyer signer snapshotted, and offered delivered", async (t) => {
+test("an internal memo with nothing held is recorded as sent, its lawyer signer snapshotted", async (t) => {
   const { g, id, setMemoInventory } = await draftedMemo(t);
   setMemoInventory([]);
   const result = await send(g, id);
-  assert.deepEqual([result.offer_delivered, result.pre_send_gate], [true, null]);
+  assert.equal(result.pre_send_gate, null);
   assert.equal(result.signer_snapshot.key, "pe");
   assert.equal(filing(g, id).filed_on, "2026-09-25");
 });
@@ -802,13 +802,12 @@ test("a venue's letter is held like any other: an unmet criterion refuses the Se
   assert.deepEqual([filing(g, id).filed_on, filing(g, id).sent_copy_id], [null, null]);
 });
 
-test("send anyway records a venue's letter as sent with the waiver on each open step, and it is offered delivered", async (t) => {
+test("send anyway records a venue's letter as sent with the waiver on each open step", async (t) => {
   const { g, id } = await venueLetter(t);
   setInventory(g, id, [unquoted]);
   const result = await send(g, id, { send_anyway: WORDS });
   const [job] = gateJobs(g, id);
   assert.deepEqual(result.pre_send_gate, { ticket_id: job.id, waived: ["excerpts"] });
-  assert.equal(result.offer_delivered, true);
   assert.match(stepsOf(g, job.id)[0].text, new RegExp(` — WAIVED: ${WORDS}$`));
   assert.equal(job.status, "completed");
   assert.equal(filing(g, id).filed_on, "2026-09-25");
@@ -817,7 +816,7 @@ test("send anyway records a venue's letter as sent with the waiver on each open 
 test("a venue's letter meeting every criterion is recorded as sent with no Pre-send gate job, but only after it is rendered", async (t) => {
   const { g, id } = await venueLetter(t);
   const result = await send(g, id);
-  assert.deepEqual([result.offer_delivered, result.pre_send_gate], [true, null]);
+  assert.equal(result.pre_send_gate, null);
   assert.equal(filing(g, id).filed_on, "2026-09-25");
 
   const { filing_id: unrendered } = await g.create({ proceeding_id: 2, tree: BCSC_TREE, kind: "letter", title: "Never rendered" });

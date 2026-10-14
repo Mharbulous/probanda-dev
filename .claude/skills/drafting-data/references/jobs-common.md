@@ -17,7 +17,7 @@ Every `created` / `locked_at` / `plan_approved_at` / `done_at` / `completed_at` 
 strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
 ```
 
-`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Job Board. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a `YYYY-MM-DD` the practitioner states, typed exactly as given.
+`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Job Board. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a literal `YYYY-MM-DD`, either the calendar date the practitioner states or the date a read-only query resolved from their calendar phrase and they confirmed.
 
 ## 1. Session identity (`locked_by`)
 
@@ -68,6 +68,20 @@ SELECT locked_by, status, rejected_at FROM tickets WHERE id = 42;
 ```
 
 `locked_by` equal to your own `session_token` (§1): dispatch. Anything else: dispatch nothing, stop and report, reading the cause off the row as the scope read does, and naming any answer already saved under the job. This read guards no write and changes no guard: every write still carries its own.
+
+**Sources to get** — while this session holds a job, every source its work is about to retrieve or read is recorded on the job before the work that gets it, with `drafting_data__track_source` `{db_path, ticket_id, session_token, add}`: each citation in a `research-paralegal` citation dispatch (`kind` `decision`), the instrument of each `legislation-fetcher` dispatch (`legislation`), and each file the session is about to extract or ingest (`file`). Whichever skill makes the dispatch, `/legal-research`, `/verify-law` or `/draft` itself, this is the rule. Only work about to run: never a file merely listed UNREAD, a research offer (`jobs-stock.md` §3i), a loose thread (§8) or a Westlaw deep-research run, whose record is the answer saved under the job.
+
+A source is not a step. The steps are the practitioner's approved plan and are never written for one, so the plan, its approval and its `done_at` stamps stand as they are, and a Change (§5), a release and a take-over leave the sources on the job.
+
+`label` is the citation, the instrument's title and citation, or the file's name, exactly as dispatched, on one line. It never states what an authority holds, and it carries no deadline, no time remaining and no date other than the one inside a citation.
+
+That call is also the lock read for the dispatch, so the read above is not run beside it. `outcome` `recorded`: dispatch. `not_held`, `shelved`, `completed` or `no_match`: nothing was written; dispatch nothing, stop and report as above. A refusal reading `schema_below_v76` records nothing: say once that the matter's database needs the v76 migration, run the lock read above in its place, and carry on, because the record is bookkeeping and never a reason to withhold the work.
+
+Close each source with the same tool's `close` once what landed is known, never on the dispatch's own say-so: `got` when the destination's `case-download-manifest.json` shows the decision downloaded, when the fetcher's return names the filed path, or when the extraction or ingest returned its result. An instrument served by a copy from case data closes `got` with `reason` `case-data copy`. A source a run tried and did not retrieve stays open, to be tried again or answered for at completion. Adding a source already closed reopens it, so a retry needs no other call.
+
+**A job taken over or restored with open sources** reconciles them before dispatching any: read the manifest of each destination folder and close as `got` every open source it shows landed, since the earlier session may have stopped between a download and its close. Only the sources still open are dispatched.
+
+**Before completing a job with open sources** (§9), name them in one line, "N sources not retrieved: <labels>", and complete only on the practitioner's yes. That yes closes each as `not_retrieved`, with `reason` the retrieving agent's own `status:` value where a run tried it and `not-dispatched` where none did. An unattended run reports the open sources and stops. Never close a source `not_retrieved` to clear the way for a completion nobody approved.
 
 **Confirm-read after an outline afresh** (§3a) — every statement in that script carries the same `status = 'queued' AND rejected_at IS NULL` guard, and `changes` is one total across every statement, so it cannot say which statement's guard missed, and this read stays the proof that the script landed:
 

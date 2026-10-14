@@ -415,6 +415,8 @@ class TestV21RevisionTriggers(unittest.TestCase):
     # mockup, only the Job Board pages (ADR 0042, migrations.sql 66 -> 67).
     # v73 adds the rules-position tables, seventeen: where a session stands on
     # its rules map, and which rules it was served, change no substance.
+    # v76 adds ticket_sources, eighteen: recording or closing a source a job
+    # is about to get changes no substance (migrations.sql 75 -> 76).
     EXEMPT = frozenset(
         {
             "board_attachments",
@@ -432,6 +434,7 @@ class TestV21RevisionTriggers(unittest.TestCase):
             "ticket_proposals",
             "proposal_rejections",
             "ticket_answers",
+            "ticket_sources",
             "review_approvals",
             "review_points",
             "paragraph_revisions",
@@ -4938,6 +4941,78 @@ class TestV68SeedDeferral(unittest.TestCase):
         con.execute("UPDATE seeds SET deferred_at = '2026-10-08T10:00' WHERE id = 1")
         con.commit()
         self.assertEqual(self._revision(con), self.revision, "deferring moves no revision")
+
+
+class TestV75SeedDiscardAndSuggest(unittest.TestCase):
+    """v75: a loose thread leaves the board without being deleted. seeds gains discarded_at and
+    suggested_at, NULL on every existing row; the hop adds no revision trigger and moves no revision."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea, rank, rank_group, rank_job, rank_reason, deferred_at)
+            VALUES (1, 1, '2026-10-08T09:00', 'noticed', 'An idea.', NULL, NULL, NULL, NULL, NULL),
+                   (2, 1, '2026-10-08T09:01', 'noticed', 'A ranked, deferred idea.', 1, 'tooling', 'Fix it.', 'Blocks the rest.', '2026-10-09T10:00');
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    @staticmethod
+    def _revision(con):
+        return int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=74)[-1], (73, 74))
+        con = sqlite3.connect(str(self.db_path))
+        self.assertNotIn("discarded_at", [r[1] for r in con.execute("PRAGMA table_info(seeds)")])
+        con.executescript(self.SEED)
+        con.commit()
+        self.revision = self._revision(con)
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 75})["applied"], [{"from": 74, "to": 75}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_hop_adds_two_null_columns_and_moves_no_revision(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 75)
+        self.assertEqual(self._revision(con), self.revision, "the hop moves no revision")
+        self.assertEqual([r[1] for r in con.execute("PRAGMA table_info(seeds)")][-2:], ["discarded_at", "suggested_at"])
+        self.assertEqual(
+            con.execute("SELECT id, discarded_at, suggested_at FROM seeds ORDER BY id").fetchall(),
+            [(1, None, None), (2, None, None)],
+        )
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_hop_keeps_each_thread_as_it_was(self):
+        con = self._hop()
+        self.assertEqual(
+            con.execute("SELECT id, idea, rank, rank_group, rank_job, rank_reason, deferred_at FROM seeds ORDER BY id").fetchall(),
+            [
+                (1, "An idea.", None, None, None, None, None),
+                (2, "A ranked, deferred idea.", 1, "tooling", "Fix it.", "Blocks the rest.", "2026-10-09T10:00"),
+            ],
+        )
+
+    def test_discarding_and_suggesting_move_no_revision(self):
+        con = self._hop()
+        triggers = [r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'seeds' AND name LIKE 'rev\\_%' ESCAPE '\\'")]
+        self.assertEqual(triggers, [])
+        con.execute("UPDATE seeds SET discarded_at = '2026-10-13T10:00' WHERE id = 1")
+        con.execute("UPDATE seeds SET suggested_at = '2026-10-13T10:01' WHERE id = 2")
+        con.commit()
+        self.assertEqual(self._revision(con), self.revision, "neither write moves a revision")
+
+    def test_a_fresh_database_holds_both_columns(self):
+        engine.run({"db_path": str(self.db_path)})
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        columns = [r[1] for r in con.execute("PRAGMA table_info(seeds)")]
+        self.assertIn("discarded_at", columns)
+        self.assertIn("suggested_at", columns)
 
 
 if __name__ == "__main__":

@@ -56,7 +56,7 @@ test("renders the Application Response mockup with positions grouped by Part and
     assert.match(md, /^1\. The correspondence sought was already produced on 2026-07-15\.[^\n]*<!-- fact 1 -->$/m);
     assert.match(md, /^2\. The defendant has sufficient assets within the jurisdiction\.[^\n]*<!-- fact 2 -->$/m);
     assert.match(md, /^3\. The defendant has never previously failed to satisfy a costs award\.[^\n]*<!-- fact 3 -->$/m);
-    assert.match(md, /^4\. \*\*Security for costs is unwarranted given the defendant's assets in this jurisdiction\.\*\*[^\n]* <!-- submission_id 1 --> <!-- supporting fact paragraphs: 3 -->$/m);
+    assert.match(md, /^4\. Security for costs is unwarranted given the defendant's assets in this jurisdiction\.[^\n]* <!-- submission_id 1 --> <!-- supporting fact paragraphs: 3 -->$/m);
 
     // Part 6 restarts at 1, provenance rendered.
     assert.match(md, /^1\. Affidavit of Reece Ferris \(2026-08-10\) \(served with this application response\)/m);
@@ -97,7 +97,7 @@ test("a linked fact already in Part 4 is referenced by its paragraph number, not
     assert.match(md, /^3\. The defendant has never previously failed to satisfy a costs award\.[^\n]*<!-- fact 3 -->$/m);
     assert.match(
       md,
-      /^4\. \*\*Security for costs is unwarranted given the defendant's assets in this jurisdiction\.\*\*[^\n]* <!-- submission_id 1 --> <!-- supporting fact paragraphs: 3 -->$/m
+      /^4\. Security for costs is unwarranted given the defendant's assets in this jurisdiction\.[^\n]* <!-- submission_id 1 --> <!-- supporting fact paragraphs: 3 -->$/m
     );
     assert.doesNotMatch(md, /<!-- fact_id 3 -->/, "expected fact 3 not re-printed under the submission");
   } finally {

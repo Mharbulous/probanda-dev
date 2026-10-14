@@ -32,7 +32,9 @@ ${WORKBOARD_CSS}</style>
 details.goal>summary{cursor:pointer}
 details.goal>summary::-webkit-details-marker{display:none}
 details.goal>summary:focus-visible{outline:2px solid var(--pill-bg);outline-offset:4px}
-.goal .sentence{display:block;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.goal .sentence{display:inline;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+/* The Writing's lifecycle state, a pill beside the sentence in the criterion state's own style. */
+.goal .head .lifecycle{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
 details.goal .sentence::before{content:"\25B8\00A0" / ""}
 details.goal[open] .sentence::before{content:"\25BE\00A0" / ""}
 .goal .text{display:block;margin-top:4px;font-size:13.5px}
@@ -50,10 +52,16 @@ details.ticket>summary .subtitle{grid-column:1/-1;font-size:12.5px;color:var(--m
 details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)}
 .body .reason{font-size:13px;color:var(--muted)}
 /* The header rows under the title, each in the meta row's own label-and-value style: the matter and
-   client; the proceeding's venue, registry and court file number, the first two unlabelled; then the
-   dates (ADR 0013, 2026-10-04 amendments), this Writing's row and the matter's row, plain text with
-   no control, each date as stored and its flag after it. A deadline a Goal card carries is drawn on
-   that card instead: in its head while unmet, and on its criterion row. */
+   client; the proceeding's venue, registry, court file number and style of proceeding, joined by
+   dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
+   Writing's row and the matter's row, plain text with no control, each date as stored and its flag
+   after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
+   and on its criterion row. The margin under the header is this page's own: board-template.ts
+   still has the 28px margin it copied. */
+header{margin-bottom:16px}
+/* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
+header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
+header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
@@ -135,12 +143,38 @@ const TAIL = String.raw`</script>
   metaSpan(metaRow, "Matter", meta.matter);
   metaSpan(metaRow, "Client", meta.client ? meta.client + (meta.client_no ? " (" + meta.client_no + ")" : "") : "");
 
-  // The section's proceeding: its venue (the forum's last segment) and registry, unlabelled, then
-  // its court file number. No row when all three are blank.
+  // A section's lifecycle state, with its date when it has one.
+  function stateText(smeta) {
+    return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
+  }
+
+  // The page's one section names the page: "Job Board <id>", the id the file name's, then the
+  // heading's gold rule, then the Writing's title on its own line.
+  var first = data.sections[0];
+  if (first) {
+    var h1 = header.querySelector("h1");
+    if (first.meta.filing_id === null) {
+      h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
+    } else {
+      h1.textContent = "Job Board " + first.meta.filing_id;
+      if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
+    }
+  }
+
+  // The section's proceeding: its venue (the forum's last segment), registry, court file number and
+  // style of proceeding, a dot between each two drawn, only the file number labelled. A page with no
+  // Goal card shows the section's state here, as a chip. No row when there is nothing to draw.
   var venueRow = el("div", "meta proceeding");
-  metaSpan(venueRow, "", (meta.forum || "").split("/").pop());
-  metaSpan(venueRow, "", meta.registry ? meta.registry + " Registry" : "");
-  metaSpan(venueRow, "Court File No.", meta.file_number || "");
+  function proceedingPart(label, value) {
+    if (!value) return;
+    if (venueRow.children.length > 0) venueRow.appendChild(document.createTextNode(" · "));
+    metaSpan(venueRow, label, value);
+  }
+  proceedingPart("", (meta.forum || "").split("/").pop());
+  proceedingPart("", meta.registry ? meta.registry + " Registry" : "");
+  proceedingPart("Court File No.", meta.file_number || "");
+  proceedingPart("", meta.style_of_cause || "");
+  if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
   if (venueRow.children.length > 0) header.appendChild(venueRow);
 
   // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
@@ -164,16 +198,10 @@ const TAIL = String.raw`</script>
     }
   }
 
-  // One section per live filing, then one per pre-filing proceeding, each under a heading naming it
-  // and its state, with its own Goal card and lanes drawn as a filing's board always drew them.
+  // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
+  // filing's board always drew them.
   data.sections.forEach(function (section) {
     var smeta = section.meta;
-    var head = el("h2", "section-head", smeta.filing_id === null ? "Proceeding " + smeta.proceeding_id : smeta.filing);
-    head.appendChild(document.createTextNode(" "));
-    var chip = el("span", "", smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since);
-    chip.setAttribute("data-k", "State");
-    head.appendChild(chip);
-    main.appendChild(head);
     if (smeta.ready_to_retire) {
       main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
     }
@@ -275,6 +303,18 @@ const TAIL = String.raw`</script>
         });
         body.appendChild(ol);
       }
+      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
+      // under a heading of their own and outside the step count.
+      if (t.sources.length > 0) {
+        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
+        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
+        var sources = el("ol", "steps");
+        t.sources.forEach(function (s) {
+          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
+          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
+        });
+        body.appendChild(sources);
+      }
 
       var dl = el("dl");
       if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
@@ -297,16 +337,11 @@ const TAIL = String.raw`</script>
       return card;
     }
 
-    // A deleted job (schema v54): one struck line in Completed, never a card. Its Restore link only
-    // copies the instruction for the practitioner to paste into a session. It writes to no database,
-    // file or server (ADR 0015, 2026-10-05 amendment). Two spaces follow the colon; the stylesheet keeps them.
-    function deletedLine(d) {
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
-      line.appendChild(document.createTextNode(" *DELETED* "));
+    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
+    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
+    function restoreLink(instruction) {
       var restore = el("a", "", "Restore");
       restore.href = "#";
-      var instruction = "restore job #" + d.id;
       // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
       function showInstruction() { restore.textContent = instruction; }
       restore.addEventListener("click", function (event) {
@@ -317,7 +352,27 @@ const TAIL = String.raw`</script>
           setTimeout(function () { restore.textContent = "Restore"; }, 1500);
         }, showInstruction);
       });
-      line.appendChild(restore);
+      return restore;
+    }
+
+    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
+    // colon; the stylesheet keeps them.
+    function deletedLine(d) {
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
+      line.appendChild(document.createTextNode(" *DELETED* "));
+      line.appendChild(restoreLink("restore job #" + d.id));
+      return line;
+    }
+
+    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
+    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
+    function discardedSeedLine(s) {
+      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
+      line.appendChild(document.createTextNode(" *DISCARDED* "));
+      line.appendChild(restoreLink("restore loose thread #" + s.id));
       return line;
     }
 
@@ -400,10 +455,10 @@ const TAIL = String.raw`</script>
     // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
     var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
 
-    // The card header's work name: the title without its trailing ": " + item. Derived rather than
+    // The card header's work name: the title without its trailing ": " + label. Derived rather than
     // listed, because one work name carries a colon of its own.
     function workName(p) {
-      var tail = ": " + p.item;
+      var tail = ": " + p.label;
       return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
     }
     // A witnesses-keyed count is displayed beside the item, never inside it (design §8).
@@ -511,6 +566,9 @@ const TAIL = String.raw`</script>
       card.setAttribute("data-state", goal.state);
       var head = el(expands ? "summary" : "div", "head");
       head.appendChild(el("span", "sentence", goal.sentence));
+      // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "lifecycle", stateText(data.meta)));
       if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
       // An unmet deadline stays in the head, so it shows whether the card is open or closed.
       criteria.forEach(function (c) {
@@ -634,13 +692,14 @@ const TAIL = String.raw`</script>
     jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
     // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them.
+    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
+    // Either way the count is the open threads'.
     var threadsPage = views.filter(function (v) { return v.name === ${JSON.stringify(LOOSE_THREADS_PAGE_NAME)}; })[0];
-    if (threadsPage && data.seeds.length > 0) {
+    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
     } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard));
+      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
     }
     section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);

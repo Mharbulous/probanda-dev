@@ -1198,6 +1198,26 @@ If the non-privileged store points at a Fact that is known only through privileg
 
 **What does not change.** The two-store split and its firewall (#1, #2): no cross-store foreign-key path, and no schema rule that classifies privilege. The practitioner makes every privilege call, and this decision applies the consequence of one already made. `main` keeps its 25 tables and `privileged` its 3. No schema change.
 
+## 68. `case_data__ingest_authority` writes Path D from the extractor's result file (2026-10-13)
+
+Path D described its writes in prose, so every session rebuilt the same SQL and pasted it, with the whole result, into one `case_data__execute` call per decision: 16 to 43 KB each across one batch of 21, and a count query after each because the call returns only `ok` (spec `Engineering/1. Spec/2026-10-13_authority-ingest-operation-spec.md`). `case_data__ingest_authority` takes the path of the extractor's result file and does those writes. `operations/ingest-extract.md` Path D is its only caller and its contract.
+
+**The SQL stays in this skill.** `references/scripts/ingest_authority.py` checks the result and returns fixed statements, with the checked result bound to each as one JSON parameter read through `json_each`. It opens no database. The runtime holds no table or column name (#56, #66): it passes the statements to the execute helper and reads the table names in the returned counts as data.
+
+**It is `case_data__execute`'s own write path, not a second one.** The helper in `backend.ts` accepts a list of statements in place of a script and runs them through the same lock (#28), staging, trigger layer (#12, #52), single transaction, commit to disk and dump. It imports nothing, so #27's separation holds. A statement marked `refuse` is a guard: a row it returns rolls the transaction back before any write and comes back as a reason. This is not #52's rejected batch tool: one call is one document and one transaction.
+
+**An authority is keyed on its file hash and citation together.** The same hash and citation is a re-run, and it inserts nothing. The same hash under another citation is refused for a single-authority file, because the hash tier of duplicate routing should have caught it. A bundled book's entries share the book's hash, so the caller marks an entry with `bundled_pages` and the tool allows it. A row that matches on both but is a merge tombstone (#22) is refused.
+
+**A stored concept is reused unchanged.** The tool inserts a concept only where no row holds its name and jurisdiction, matched with `IS` so that a NULL jurisdiction matches a NULL. It never rewrites a stored concept's text, which is `amend-law`'s alone (#20). Criteria of a concept are numbered on from its highest stored order, in the extractor's order, and one whose description the concept already holds is skipped.
+
+**`determined_by` follows Path D's three steps** (spec `2026-10-13_determined-by-jurisdiction-resolution-spec.md`): a concept in the same result, else a stored concept in the parent concept's jurisdiction, else a stub there, reported under `stubs`. The tool refuses only a name those steps cannot place: one that names concepts in several jurisdictions in the result, none of them the parent's.
+
+**Treatments stay with `case_data__execute`.** Matching the treated authority and choosing which of its propositions a treatment reaches are judgments (#16). The tool returns the result's `treats_prior` and the new `authority_id` for that call. A treatment is therefore a second transaction, and a failure between the two leaves a deferred treatment, a state #16 already allows.
+
+**Case law only, for now.** The provision extractor's result has the same shape with fewer keys and the tool accepts it, but that extractor writes no result file, so the statute path still writes through `case_data__execute`.
+
+No agent is granted the tool. `case_data__execute` is granted to none either, and the session that runs Path D calls both.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");
-const { deriveProposals, noteUpCleared, proposalKey, recordLawStatementGlyphs, GLYPH_SLUGS, WORK_NAMES } = await import("../build/submission/forms/proposal-inventory.js");
+const { deriveProposals, itemLabel, noteUpCleared, proposalKey, recordLawStatementGlyphs, GLYPH_SLUGS, WORK_NAMES } = await import("../build/submission/forms/proposal-inventory.js");
 
 const NO_HOLDERS = new Map();
 const NO_REJECTIONS = new Map();
@@ -53,6 +53,46 @@ test("one key yields one Proposal however many documents printed it", () => {
   assert.equal(proposals[0].marker, "📖");
   assert.equal(proposals[0].lane, "proposed");
   assert.equal(proposals[0].holder, null);
+});
+
+// filing-checklists.md §6a's label rule. LONG is 81 characters on one line, one over the limit.
+const LONG = "The Respondent owes the full purchase price under the plain words of the bargain.";
+
+test("itemLabel keeps an item of 80 characters or fewer on one line whole", () => {
+  const eighty = "x".repeat(80);
+  assert.equal(itemLabel("submissions", 1, undefined, "A short submission."), "A short submission.");
+  assert.equal(itemLabel("submissions", 1, undefined, eighty), eighty);
+});
+
+test("itemLabel names a long item by its record's noun and id, then its first eight words", () => {
+  assert.equal(LONG.length, 81);
+  assert.equal(itemLabel("submissions", 1, undefined, LONG), 'submission 1, "The Respondent owes the full purchase price under…"');
+  assert.equal(itemLabel("statements_of_fact", 8, undefined, LONG), 'statement of fact 8, "The Respondent owes the full purchase price under…"');
+});
+
+test("itemLabel names a short item holding a line break as a long one", () => {
+  assert.equal(itemLabel("facts", 2, undefined, "First line.\nSecond line."), 'fact 2, "First line. Second line.…"');
+  assert.equal(itemLabel("facts", 2, undefined, "First line.\r\nSecond line."), 'fact 2, "First line. Second line.…"');
+});
+
+test("itemLabel puts a qualifier after the id", () => {
+  assert.equal(itemLabel("clauses", 4, "para 3", LONG), 'clause 4, para 3, "The Respondent owes the full purchase price under…"');
+});
+
+test("itemLabel names an unmapped table by its name with underscores as spaces", () => {
+  assert.equal(itemLabel("exhibit_notes", 6, undefined, LONG), 'exhibit notes 6, "The Respondent owes the full purchase price under…"');
+});
+
+test("a Proposal's title is its work name and label, and a note-up keeps its long item whole", () => {
+  const long = { slug: "doctrinal-basis", marker: "📖", table: "law_assertions", id: 4, item: LONG };
+  const noteUp = { slug: "note-up", marker: "📇", table: "authorities", id: 2, item: LONG, cleared: true };
+  const { proposals } = derive([long, noteUp]);
+  const bySlug = Object.fromEntries(proposals.map((p) => [p.slug, p]));
+  assert.equal(bySlug["doctrinal-basis"].label, 'law assertion 4, "The Respondent owes the full purchase price under…"');
+  assert.equal(bySlug["doctrinal-basis"].title, `${WORK_NAMES["doctrinal-basis"]}: ${bySlug["doctrinal-basis"].label}`);
+  assert.equal(bySlug["doctrinal-basis"].item, LONG);
+  assert.equal(bySlug["note-up"].label, LONG);
+  assert.equal(bySlug["note-up"].title, `${WORK_NAMES["note-up"]}: ${LONG}`);
 });
 
 test("a witnesses-keyed Proposal counts its distinct statements and keeps the count out of the item", () => {

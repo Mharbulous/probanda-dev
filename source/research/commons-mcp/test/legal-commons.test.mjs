@@ -8,9 +8,13 @@ const schemaGen = await import("../build/schema-gen.js");
 // surface for the dispatch wiring: get + rpc. Retrieval is in-Postgres now, so
 // there is no embed() step to fake.
 function fakeLegalCommons() {
-  const calls = { get: [], rpc: [], patch: [] };
+  const calls = { get: [], rpc: [], patch: [], fn: [] };
   return {
     calls,
+    async callFunction(name, body = {}) {
+      calls.fn.push({ name, body });
+      return { results: [] };
+    },
     async get(table, filters = {}, options = {}) {
       calls.get.push({ table, filters, options });
       return [];
@@ -189,12 +193,30 @@ test("find_candidates passes the retrieval packet to the union RPC (no embedding
   assert.ok(!("p_embedding" in call.body), "no embedding in the retrieval call");
 });
 
-test("browse uses a case-insensitive substring filter, not an RPC", async () => {
+// Supabase's API log keeps the address of every request and not its body, so a
+// keyword in a GET's query string would be saved on the cloud (Commandment 3).
+test("browse sends its keyword in an RPC body, never in a GET address", async () => {
   const lc = fakeLegalCommons();
   await index.callTool(context(lc), "legal_commons__browse", { keyword: "limitation" });
-  assert.equal(lc.calls.rpc.length, 0);
-  assert.equal(lc.calls.get[0].table, "principle");
-  assert.equal(lc.calls.get[0].filters.text, "ilike.*limitation*");
+  assert.equal(lc.calls.get.length, 0);
+  assert.deepEqual(lc.calls.rpc, [{ fn: "browse_principles", body: { p_keyword: "limitation", p_limit: 50 } }]);
+});
+
+// The meaning search runs in an Edge Function, which replies with prose and
+// pinpoint citations only, so the pool's internal structure never reaches this
+// machine. Its text travels in a POST body, never in an address.
+test("search sends its text to the search function in a POST body", async () => {
+  const lc = fakeLegalCommons();
+  const result = await index.callTool(context(lc), "legal_commons__search", { text: "a lender recovers a note", limit: 3 });
+  assert.deepEqual(result, { results: [] });
+  assert.deepEqual(lc.calls.fn, [{ name: "commons-find", body: { text: "a lender recovers a note", limit: 3 } }]);
+  assert.equal(lc.calls.get.length + lc.calls.rpc.length, 0, "no direct pool read");
+});
+
+test("search defaults to five principles", async () => {
+  const lc = fakeLegalCommons();
+  await index.callTool(context(lc), "legal_commons__search", { text: "x" });
+  assert.deepEqual(lc.calls.fn[0].body, { text: "x", limit: 5 });
 });
 
 test("input validation still applies to legal-commons tools", async () => {
@@ -231,6 +253,7 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
     "legal_commons__rule_period_push",
     "legal_commons__rule_period_record_verification",
     "legal_commons__rule_period_retire",
+    "legal_commons__search",
     "legal_commons__stamp_verified",
     "legal_commons__treatment_chain",
     "legal_commons__unlink_authority",

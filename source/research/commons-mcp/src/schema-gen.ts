@@ -89,6 +89,15 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
       ], ["keyword"]),
     },
     {
+      name: legalCommonsPrefixed("search"),
+      description:
+        "Search pooled principles by meaning, so a question worded differently from the pooled prose still finds it. Returns, best match first, each matching principle's id and prose with its authorities' citations and pinpoints. Defaults to limit 5, at most 10.",
+      inputSchema: objectSchema([
+        { name: "text", type: "str" },
+        { name: "limit", type: "num" },
+      ], ["text"]),
+    },
+    {
       name: legalCommonsPrefixed("treatment_chain"),
       description: "Return the directed authority-treats-authority chain leading to the given pooled authority.",
       inputSchema: objectSchema([{ name: "authority_id", type: "str" }], ["authority_id"]),
@@ -423,12 +432,56 @@ export function troubleshootToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+function suggestionBoxPrefixed(name: string): string {
+  return `suggestion_box__${name}`;
+}
+
+// Suggestion Box namespace: a suggestion about the plugin that the practitioner
+// expressly submits, posted as a GitHub issue on a private repo held in stored
+// configuration. Hand-written like the other namespaces. Routed in dispatch.ts.
+export function suggestionBoxToolDefinitions(): ToolDefinition[] {
+  return [
+    {
+      name: suggestionBoxPrefixed("submit"),
+      description:
+        "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. " +
+        "title and body are the whole post: they must name no person, entity, matter, document or path. " +
+        "Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; " +
+        "the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
+      inputSchema: objectSchema([
+        { name: "title", type: "str" },
+        { name: "body", type: "str" },
+      ], ["title", "body"]),
+    },
+    {
+      name: suggestionBoxPrefixed("configure_credential"),
+      description:
+        "One-time setup: store the private GitHub repo (owner/name) that suggestions are posted to and a token limited to that repo with Issues: Read and write. " +
+        "The pair is checked against GitHub before it is saved and refused unless the repo is private. Persisted host-side encrypted at rest, and never logged or echoed back.",
+      inputSchema: objectSchema([
+        { name: "repo", type: "str" },
+        { name: "token", type: "str" },
+      ], ["repo", "token"]),
+      annotations: { destructiveHint: true },
+    },
+    {
+      name: suggestionBoxPrefixed("configure_status"),
+      description:
+        "Report whether this machine has a Suggestion Box credential, the repo it names, and a redacted hint " +
+        "identifying the token. Never returns the token itself.",
+      inputSchema: objectSchema([], []),
+      annotations: { readOnlyHint: true },
+    },
+  ];
+}
+
 // The one tool list every host and every session sees: the layer-3 legal-commons
-// pool namespace and the troubleshooting store namespace. Local practice and
-// case data live in the Probanda plugin.
+// pool namespace, the troubleshooting store namespace and the Suggestion Box
+// namespace. Local practice and case data live in the Probanda plugin.
 export function buildToolDefinitions(): ToolDefinition[] {
   return [
     ...legalCommonsToolDefinitions(),
     ...troubleshootToolDefinitions(),
+    ...suggestionBoxToolDefinitions(),
   ];
 }

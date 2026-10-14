@@ -11,7 +11,7 @@ A push to `main` is the release. claude.ai installs the four plugins from this r
 ## Two repositories
 
 - `Mharbulous/probanda-plugins` is this repository. It is private, and all development happens here. It stays private: its history holds schema files.
-- `Probanda-app/litigation` is the public repository that users install from.
+- `Probanda-app/plugins` is the public repository that users install from.
 
 `public/` is the Public Folder: the only source of the public repository, so it never holds a Trade Secret or User Data. A skill lives under `public/plugins/<plugin>/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
 
@@ -42,7 +42,7 @@ Cowork runs plugins in a sandboxed Linux VM.
 
 ## Never commit
 
-- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in the built folders under `plugins/`, so the publish-readiness check fails by design until the schema-split rebuild removes them. Nothing else may add any.
+- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in the built folders under `plugins/`, so the publish-readiness check fails by design until the schema-split rebuild removes them. Until that rebuild, a schema hop may add lines to those legacy schemas when Brahm allows that hop in conversation, and the `--new-since` check below then reports those lines, and each schema file the hop edits as a forbidden file, and nothing else. Nothing else may add any.
 - Databases.
 - Built `.plugin` archives.
 - Handovers or E2E reports.

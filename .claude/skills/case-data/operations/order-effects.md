@@ -134,6 +134,8 @@ VALUES (?, 'procedural', ?,
 
 `case_data__execute` regenerates `evidence.sql` on success; there is no separate dump step.
 
+Once the changes are applied, add one entry to the matter's `ProceduralHistory.md` under today's date (`../../shared/procedural-history.md`): that case data was updated from the instrument, named by its title and its path relative to the matter folder. The entry names no trial date and no other date the instrument sets.
+
 **Declined proposals are recorded in the run report only** — no database write, and no nagging marker. A later re-ingest re-diffs from live values and will re-propose a declined change only if the values still differ, which is correct: a practitioner may decline for timing and want it later.
 
 **A deferred pass clears its marker.** When the order's source carries `ORDER-EFFECTS-PENDING: order-effects pass not yet run` (`../shared/conventions.md` §11), an ingest deferred this pass. Once the pass has run to its end, clear the marker with §11's clear statement: in this step's transaction when changes were approved, or in its own `case_data__execute` call when the diff was empty or every proposal was declined. A pass that stopped to ask which proceeding the order governs (Step 3) has not run to its end, and leaves the marker.

@@ -180,7 +180,7 @@ _Avoid_: compound document; container (engineer-facing); book (the court's word 
 The general body of law describing a cause of action (a kind of Legal Concept), independent of any matter.
 
 **Clause**:
-One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are four clause types. **Element**, **Exception** and **Factor** are a test's conditions, and a **Rationale** explains a test. A clause takes its type from the test that uses it. The clause a test entails is that test's **Consequence**. One clause may be an element of one test and the consequence of another.
+One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are four clause types. **Element**, **Exception** and **Factor** are a proposition's conditions, and a **Rationale** explains a proposition. A clause takes its type from the proposition that uses it. The clause a proposition entails is that proposition's **Consequence**. One clause may be an element of one proposition and the consequence of another.
 _Avoid_: clause for a numbered provision of a contract or statute (say provision, or contract clause); statement (taken by **Statement of fact** and **Statement of law**). The drafting database's `clauses` table is a frozen code name for a clause of a Writing, not this sense.
 
 **Close as superseded**:
@@ -196,7 +196,7 @@ A part of a Mockup — caption (style of proceeding), orders, paragraphs, excerp
 _Avoid_: section (a schema term); part (Form 32's own word).
 
 **Consequence**:
-The legal outcome a test produces: what may, must or does follow. In the pool it is the clause a test points at as its outcome. A clause is a consequence only because some test points at it that way, and one clause may be the consequence of several tests. It may be compound: where the prose makes a second outcome depend on the first, both stay in one consequence. A new part begins only where the prose gives a new actor with its own main verb, so two linked outcomes of one actor are one part. Each part records three reading aids: its actor, whether it is discretionary (true where a person or a court is given a choice, as with "the court may order", and false otherwise, including a "may" that states only what is possible, as with "service may be proven") and its polarity (negative when the part says something does not happen or may not be done, otherwise affirmative). A consequence that is not compound has one part. The aids are shown beside a search result because similarity search blurs them. A consequence is the hub of a **Rule** and the entry a search looks for. Two consequences judged to mean the same are both kept and linked, never merged.
+The legal outcome a proposition produces: what may, must or does follow. In the pool it is the clause a proposition points at as its outcome. A clause is a consequence only because some proposition points at it that way, and one clause may be the consequence of several propositions. It may be compound: where the prose makes a second outcome depend on the first, both stay in one consequence. A new part begins only where the prose gives a new actor with its own main verb, so two linked outcomes of one actor are one part. Each part records three reading aids: its actor, whether it is discretionary (true where a person or a court is given a choice, as with "the court may order", and false otherwise, including a "may" that states only what is possible, as with "service may be proven") and its polarity (negative when the part says something does not happen or may not be done, otherwise affirmative). A consequence that is not compound has one part. The aids are shown beside a search result because similarity search blurs them. A consequence is the hub of a **Rule** and the entry a search looks for. Two consequences judged to mean the same are both kept and linked, never merged.
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
@@ -222,7 +222,7 @@ A `ticket_proposals` key whose Proposal no longer derives from the render's inve
 _Avoid_: stale job (the job may hold other live keys); moved item (a reworded item is reported separately).
 
 **Defence**:
-A matter the responding party raises that defeats liability or relief, often with the burden on that party. The pool has no type for it, and how a defence is stored follows the prose. Stated as a carve-out from a test ("unless", "except"), it is an **Exception** to that test, which may point at another test that sets out the defence's own conditions. Stated as a rule of its own ("relief does not follow where"), it is a **Test** whose consequence has negative polarity.
+A matter the responding party raises that defeats liability or relief, often with the burden on that party. The pool has no type for it, and how a defence is stored follows the prose. Stated as a carve-out from a proposition ("unless", "except"), it is an **Exception** to that proposition, which may point at another proposition that sets out the defence's own conditions. Stated as a rule of its own ("relief does not follow where"), it is a **Proposition** whose consequence has negative polarity.
 
 **Dismissed**:
 The **terminal** disposition on a theorized fact's provenance: our own investigation concluded the fact is **likely untrue**. Recorded on the provenance row, never by deletion — the record of what was considered and rejected is the point. An argument may not rest on a dismissed fact. "Dismissed" is a fact-investigation disposition, **not** a party position and **not** a posture, and it is knowable only for **our own** side — there is no way to know what an opposing party has privately dismissed. (Distinct from a *proceeding* status or an *issue* status — see **Fact Posture**.)
@@ -248,7 +248,7 @@ Every criterion of a Writing kind except the Gate criterion.
 _Avoid_: all criteria.
 
 **Element**:
-A requirement that must be satisfied for a test's consequence to follow. In the pool it is a clause linked to a test with the type element. It is met or not met, and a test is met only when every one of its elements is met. The party relying on the test establishes it. Case data stores elements under the frozen code name `legal_criteria`.
+A requirement that must be satisfied for a proposition's consequence to follow. In the pool it is a clause linked to a proposition with the type element. It is met or not met, and a proposition is met only when every one of its elements is met. The party relying on the proposition establishes it. Case data stores elements under the frozen code name `legal_criteria`.
 _Avoid_: criterion, condition, requirement (name the clause type: element, exception or factor).
 
 **Eligible**:
@@ -259,7 +259,7 @@ _Avoid_: one-step (necessary, not sufficient); ripe (every Ready job is ripe).
 Non-privileged material linked to a fact as support (or contradiction) for it.
 
 **Exception**:
-A circumstance that takes a case out of a test: when it is present, the consequence does not follow even though every element is met. In the pool it is a clause linked to a test with the type exception, or, in place of a clause, a pointer to another test whose conditions set the exception out. It attaches to a test and never to one element, exception or factor. The party resisting the test raises it.
+A circumstance that takes a case out of a proposition: when it is present, the consequence does not follow even though every element is met. In the pool it is a clause linked to a proposition with the type exception, or, in place of a clause, a pointer to another proposition whose conditions set the exception out. It attaches to a proposition and never to one element, exception or factor. The party resisting the proposition raises it.
 _Avoid_: exception for a negative element (an absence the relying party must establish is an **Element**); **Limit**; criterion, condition (name the clause type).
 
 **Exhibit**:
@@ -274,7 +274,7 @@ The practical state of a fact given all current positions on it — **derived, n
 _Avoid_: status. **"Status" is a lifecycle word and must never be used for posture.** Status describes the state of a proceeding or a source's ingestion; posture describes where a fact currently stands between the parties. Do not conflate the two, and do not invent a "fact status" term.
 
 **Factor**:
-A consideration weighed in deciding whether a consequence follows. In the pool it is a clause linked to a test with the type factor. It is a matter of degree, weighed with the test's other factors to reach a judgment, and is never met or unmet alone. Case data stores factors under the frozen code name `legal_criteria`.
+A consideration weighed in deciding whether a consequence follows. In the pool it is a clause linked to a proposition with the type factor. It is a matter of degree, weighed with the proposition's other factors to reach a judgment, and is never met or unmet alone. Case data stores factors under the frozen code name `legal_criteria`.
 _Avoid_: criterion, consideration (name the clause type: element, exception or factor).
 
 **Fast-path job**:
@@ -348,12 +348,12 @@ A boundary on a rule's scope. Outside it, the rule never applied, where an excep
 _Avoid_: limitation (reserved for limitation periods and the Limitation Act).
 
 **Litigation Strategy**:
-One page for a matter, `Litigation Strategy.html` at the top of its `0. DRAFT` folder, and the first page `/draft` presents. The matter's open **To-dos** lead it, each with its BF date as a plain date and, when it points to a Writing, that Writing's line beneath it. Below them each Writing, and each **pre-filing proceeding**, is one line: name, lifecycle state, mockup status and jobs in progress. Each open **Standalone Job Board** is one line under "Job Boards", and a closed one is listed with the retired Writings as "Closed <date>". Each Writing's own jobs, steps and Proposals stay on its Job Board. A folder holding the older `Matter Board.html` or `To Do List.html` has it retired once `Litigation Strategy.html` is written there. Internal names are unchanged: `matter_board_path`, `render-matter-board.ts`, `matter-board-shell.ts` and the page's data key.
+One page for a matter, `Litigation Strategy.html` at the top of its `0. DRAFT` folder, which `/draft` presents when the practitioner asks for it. The matter's open **To-dos** lead it, each with its BF date as a plain date and, when it points to a Writing, that Writing's line beneath it. Below them each Writing, and each **pre-filing proceeding**, is one line: name, lifecycle state, mockup status and jobs in progress. Each open **Standalone Job Board** is one line under "Job Boards", and a closed one is listed with the retired Writings as "Closed <date>". Each Writing's own jobs, steps and Proposals stay on its Job Board. A folder holding the older `Matter Board.html` or `To Do List.html` has it retired once `Litigation Strategy.html` is written there. Internal names are unchanged: `matter_board_path`, `render-matter-board.ts`, `matter-board-shell.ts` and the page's data key.
 _Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; Job Board (one Writing's page); dashboard.
 
 **Loose thread**:
 Two senses, told apart by where each appears:
-- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). It never counts toward a completion criterion.
+- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. A resolved thread is one that is not open: discarded, else suggested to Probanda, else outlined into a job that is not deleted; a deferred thread is never resolved. It never counts toward a completion criterion.
 - on a mockup, the 🧵 work marker, defined in `.claude/skills/drafting-data/references/work-markers.md`, which counts toward the open-items criterion.
 The Job Board's own "Ideas for later" section already renders the first sense in the lawyer-facing word — the deferred vocabulary pass (design doc §11) covers only widget labels and prompts elsewhere, not the board's own headings, which were lawyer-facing from the start (that is the point of a rendered surface). Internal names are unchanged: the `seeds` table, `review_points.seed_id`, `seeds.charted_into`, the `seed` CSS class, element ids and data key.
 _Avoid_: note (a different, unstored concept this schema deliberately excludes); seed.
@@ -424,7 +424,7 @@ A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL)
 _Avoid_: pre-litigation matter (the matter exists either way); undecided forum as a stored value (it is NULL, not a sentinel); pre-filing for a proceeding whose only Writing is a demand letter (nothing has gone to a forum, but it has a Writing, so it is not one).
 
 **Principle**:
-A statement of law in the words an authority uses. In the pool it is a record holding that prose, kept as stated and matter-free, and linked to each **Authority** that supports it. That link carries the pinpoint: where in the authority the prose is found. Tests are decomposed from a principle, and each test records each principle that states it. One principle may state several propositions, and one proposition may be stated by several principles.
+A statement of law in the words an authority uses. In the pool it is a record holding that prose, kept as stated and matter-free, and linked to each **Authority** that supports it. That link carries the pinpoint: where in the authority the prose is found. Propositions are decomposed from a principle, and each records each principle that states it. One principle may state several propositions, and one proposition may be stated by several principles.
 _Avoid_: principle for a rule, a test or a proposition; principle for a foundational norm that justifies rules (name the norm); concept, doctrine (as the stored entity).
 
 **Privileged Source**:
@@ -455,12 +455,12 @@ Where a fact was learned; this may be privileged (e.g. a client interview) even 
 A single **admit** position where the limiting language is recorded verbatim (never split into a separate admit row and a separate deny row, and never paraphrased).
 
 **Ratio decidendi**:
-A proposition necessary to the decision, and so the part of a decision capable of binding. Whether it binds a given forum is a separate question of law. In the pool it is recorded on the link between a test and a principle that states it, so that two propositions drawn from one principle can be marked apart. The pool's older `obiter` field, on the link from a principle to its authority, marks a whole principle at once and is not changed.
+A proposition necessary to the decision, and so the part of a decision capable of binding. Whether it binds a given forum is a separate question of law. In the pool it is recorded on the link between a proposition and a principle that states it, so that two propositions drawn from one principle can be marked apart. The pool's older `obiter` field, on the link from a principle to its authority, marks a whole principle at once and is not changed.
 _Avoid_: ratio for "the court's own words" (obiter is also the court's own words), or for a text-similarity score.
 
 **Rationale**:
-A clause that states why a test exists: its purpose, basis or justification. The test for one: it is the "because" that justifies the proposition, and it is not a statement of the rule. It helps a decision maker understand the test, and decide when and how to exercise a discretion the test grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two tests are compared. It attaches to a test, with the principle that states it, and one rationale may be shared by several tests. It is kept, never discarded.
-_Avoid_: rationale for a condition (an **Element**, **Exception** or **Factor**); a rationale attached to a single condition or to a consequence (it attaches to a test, and its own words name what it explains); **Ratio decidendi**.
+A clause that states why a proposition exists: its purpose, basis or justification. The way to tell one: it is the "because" that justifies the proposition, and it is not a statement of the rule. It helps a decision maker understand the proposition, and decide when and how to exercise a discretion the proposition grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two propositions are compared. It attaches to a proposition, with the principle that states it, and one rationale may be shared by several propositions. It is kept, never discarded.
+_Avoid_: rationale for a condition (an **Element**, **Exception** or **Factor**); a rationale attached to a single condition or to a consequence (it attaches to a proposition, and its own words name what it explains); **Ratio decidendi**.
 
 **Recommendation**:
 An answer formed from information already within reach — the repository, the matter's files, tool results, the conversation — without sending a separate agent off to research the point.
@@ -501,7 +501,7 @@ A job that is `queued`, unlocked, every blocker completed, and (if it has one) n
 _Avoid_: available (generic English — "ready" here means specifically classified so by the renderer, per the CHECK-and-conflict logic above).
 
 **Rule**:
-A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Test** that points at any of them. A consequence with no such link is a rule on its own.
+A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Proposition** that points at any of them. A consequence with no such link is a rule on its own.
 _Avoid_: bare "rule" where the same file also means a **Court Rule** or one of the plugin's own working rules. Say which.
 
 **Scope**:
@@ -513,13 +513,17 @@ The push-time act of stripping everything matter-identifying from a principle be
 
 **Shelve**:
 The practitioner's instruction, given in a session, that moves a Proposal, or a queued or in-progress job, to the Job Board's Shelved angles list until the practitioner restores it ("shelved by you"). A shelved Proposal comes back to Proposed if its marker or its item changes from what it read when shelved. A shelved job keeps its place in the work history and is never assigned. Internal names are unchanged: `tickets.rejected_at`, the `proposal_rejections` table, the `rejected` category and lane values, and the `rejected-angles` section id.
-_Avoid_: reject, rejection; dismissal; drop (a loose thread's removal, or `dropped_on` on substance); supersession.
+_Avoid_: reject, rejection; dismissal; drop (a loose thread's discard, or `dropped_on` on substance); supersession.
 
 **Source**:
 Case-specific recorded material belonging to a matter: a document, but also a recording, photograph, or transcript — anything that captures information in a fixed, referenceable form. Sources are the case-specific evidentiary record. A key boundary: **unrecorded anticipated testimony is NOT a source** until it is captured in some record (an affidavit, a transcript, a will-say statement). Until captured, it cannot be cited or linked as evidence — it is merely anticipated.
 
 **Source Citation**:
 A computed reference of the form `<file_path>#<locator>`, used to pinpoint where in a source a fact or position comes from (e.g. a paragraph, a page/line range in a transcript). A page-less source (a Word document, an email) is located by an ordinal body paragraph or its header block, so that an independent reader re-deriving the same text reaches the same place.
+
+**Source to get**:
+A court decision, an enactment or a file that a job's work has named and is about to retrieve or read, recorded on the job before the work that gets it. It is open until it is closed as got or as not retrieved. It is the job's own record beside its **Steps** and never one of them: the steps are the practitioner's plan, and a source to get is found by the work. Its label is a citation, an instrument or a file name, never what an authority holds. Not a **Source**: that is the matter's own evidentiary record. Internal name: the `ticket_sources` table.
+_Avoid_: discovered item; sub-step; download (it also covers legislation and files to read); source (alone).
 
 **Stage**:
 One of the outlining sessions in which `/prepare` is re-run: opening the bundle, after the gate job completes, and after responses arrive.

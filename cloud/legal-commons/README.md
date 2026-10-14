@@ -25,9 +25,14 @@ and only at the plan's phase 3:
    `migrations/0001_down.sql` undoes it and step 5.
 5. `consequence_functions.sql` — the six functions over those tables. Idempotent.
 
-`supabase/` holds the three Edge Functions that run the embedding model.
+`supabase/` holds the four Edge Functions that run the embedding model.
+`commons-find` is the one the plugin's search tool calls.
+`tools/find.mjs` asks it one question.
 `tools/reembed.mjs` re-embeds the pool through one of them after a change of model.
 `tools/check_functions.mjs` checks the three once deployed.
+`tools/contribute.mjs` contributes decompositions through one of them.
+`tools/recall_check.mjs` checks the search over the pooled clauses.
+`tools/contribute_verdicts.mjs` stores meaning verdicts.
 `tests/` holds the tests of steps 4 and 5: `node tests/build_scratch_test.mjs
 <output.sql>` writes one script that runs them in a scratch schema and drops it.
 

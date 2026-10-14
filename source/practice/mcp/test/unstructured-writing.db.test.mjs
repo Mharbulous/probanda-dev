@@ -319,13 +319,16 @@ test("the Sent write records a written Unstructured Writing from a pasted copy, 
     { db_path: g.dbPath, filing_id: id, sent_on: "2026-10-08", sent_copy_text: `IN THE SUPREME COURT OF BRITISH COLUMBIA\n\n${BODY}\n\nPat Example` },
     g.seams.env
   );
-  assert.equal(sent.offer_delivered, false, "a venue's Writing gets no retirement offer on sending");
+  assert.equal("offer_delivered" in sent, false, "recording a Writing as sent never leads to a retirement offer (ADR 0042)");
   assert.deepEqual(sent.deliver, { ticket_id: 21 });
   assert.equal(g.query("SELECT filed_on FROM filings WHERE id = ?", [id])[0].filed_on, "2026-10-08");
 
   // Accepted: §3h's call 1, call 2's recovery, and call 3 with no retirement step on a venue's Writing.
   const text = readFileSync(JOBS_STOCK, "utf-8").replace(/\r\n/g, "\n");
-  const blocks = [...text.slice(text.indexOf("## 3h.")).matchAll(/```sql\n([\s\S]*?)\n```/g)].map((m) => m[1]);
+  // §3h alone: the sections after it carry SQL of their own.
+  const from = text.indexOf("## 3h.");
+  const end = text.indexOf("\n## ", from + 1);
+  const blocks = [...text.slice(from, end === -1 ? undefined : end).matchAll(/```sql\n([\s\S]*?)\n```/g)].map((m) => m[1]);
   assert.equal(blocks.length, 2, "§3h's call 1 and call 3");
   await g.execute(blocks[0].replace("VALUES (1, 9,", `VALUES (2, ${id},`).replaceAll("Notice of discontinuance", TITLE));
   const jobTitle = `Make ${TITLE} a Structured Writing`;

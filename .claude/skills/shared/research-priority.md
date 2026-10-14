@@ -65,7 +65,8 @@ text in the prompt.
 How tier 2 is audited depends on what the running component holds:
 
 - **A component whose tool grant includes the pooled-layer read tools** audits it
-  directly: `legal_commons__find_candidates` (several rephrasings, so paraphrases
+  directly: `legal_commons__search` (the question in its own words, matched by
+  meaning), `legal_commons__find_candidates` (several rephrasings, so paraphrases
   are caught), `legal_commons__lookup_by_citation` where a citation is already
   known, `legal_commons__browse` for keyword substring, `legal_commons__resolve_by_id`
   and `legal_commons__treatment_chain` for note-up. Reads only — never a write tool.

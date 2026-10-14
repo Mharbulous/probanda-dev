@@ -64,7 +64,7 @@ The chambers judge made no error.
 
 ## PART 3 - ARGUMENT
 
-5. **The chambers judge applied the correct test.**
+5. The chambers judge applied the correct test.
 
 6. The arbitration was commenced on 12 May 2026. (Appeal Record, Vol. 1, p. 12)
 
@@ -75,7 +75,7 @@ The chambers judge made no error.
    ```
    > *Housen v Nikolaisen*, 2002 SCC 33, para 8
 
-8. **The order was within the judge's discretion.**
+8. The order was within the judge's discretion.
 
 9. A court may stay proceedings in favour of arbitration.
 

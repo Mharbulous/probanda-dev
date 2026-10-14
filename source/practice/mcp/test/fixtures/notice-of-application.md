@@ -54,7 +54,7 @@ This matter is within the jurisdiction of an associate judge.
 ## PART 3: LEGAL BASIS
 
 
-1. **Corbin Vasey is in default under the Rules.** 🧵 <!-- submission_id 1 --> <!-- supporting fact paragraphs: 1 -->
+1. Corbin Vasey is in default under the Rules. 🧵 <!-- submission_id 1 --> <!-- supporting fact paragraphs: 1 -->
 
 2. a defendant who fails to file a response to civil claim within the prescribed time is in default 🏅 <!-- law_assertion_id 1 -->
 

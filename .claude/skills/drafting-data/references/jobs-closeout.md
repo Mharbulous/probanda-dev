@@ -44,7 +44,7 @@ NULL means the guard matched nothing — a `wip` job appeared between the read-f
 
 A job outlined from Proposals whose marker no longer shows is closed on the practitioner's instruction, never on a session's own initiative and never by the render (the 2026-09-21 design §4.7). It is the practitioner-visible act for that case: not a shelving, which reads as an angle they chose not to pursue, and not a completion, which would stamp work that was never done.
 
-**When it may run.** Only when the job's card (`drafting_forms__board_card` with `jobs`), read after a current render, shows every key on its `keys:` line as `(now: dead)`. If this session has written substance since its last render, render first. One widening (the 2026-09-21 design §4.8): a fast-path job whose item changed may be closed while its key still derives. A fast-path job here means a one-step job whose title is the Proposal's own `<work name>: <old item>`, and the practitioner chose "close it as superseded" from the three-choice form. It is available wherever shelving and restoring are (§10a), for any job except the session's own. A job in progress in another session is left to that session or a take-over, and the guard below refuses it.
+**When it may run.** Only when the job's card (`drafting_forms__board_card` with `jobs`), read after a current render, shows every key on its `keys:` line as `(now: dead)`. If this session has written substance since its last render, render first. One widening (the 2026-09-21 design §4.8): a fast-path job whose item changed may be closed while its key still derives. A fast-path job here means a one-step job holding at least one key whose title and intent are the same text, and the practitioner chose "close it as superseded" from the three-choice form. It is available wherever shelving and restoring are (§10a), for any job except the session's own. A job in progress in another session is left to that session or a take-over, and the guard below refuses it.
 
 ```sql
 UPDATE tickets SET status = 'superseded', superseded_marker_gone_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
@@ -200,7 +200,17 @@ A job the practitioner wants held until a set day carries that day in `tickets.b
 
 **A BF date is a start date, never a deadline** (`shared/deadline-isolation.md`). It is printed as a plain date, with no day count, no overdue marking and no "due". Never label, compute or reason about it as a deadline or a limitation date, and never send it to `practice:docket-clerk`.
 
-**Only on the practitioner's word.** A session sets, changes or clears a BF date only when the practitioner says so and names the date. It is never proposed, offered, inferred from a document or computed from another date. The date is the one job value typed as the practitioner gave it and not computed in SQL (`jobs-common.md` §0). Like a shelving, the write is bookkeeping: permitted in every session, and never a licence to edit the job's title, intent or steps.
+**Only on the practitioner's word.** A session sets, changes or clears a BF date only when the practitioner says so and names the date, either as a calendar date or as a calendar phrase counted from today ("next Monday", "the week after next", "the first business day of the week after next"). It is never proposed, offered, inferred from a document or computed from another date: a phrase counted from anything but today ("two weeks after the hearing") names no date, so ask for one. Like a shelving, the write is bookkeeping: permitted in every session, and never a licence to edit the job's title, intent or steps.
+
+**A date given as a phrase.** Resolve it with a read-only `drafting_data__query` using SQLite date modifiers on `date('now', 'localtime')`, never by your own arithmetic, for example "Monday of the week after next":
+
+```sql
+WITH d(bf_on) AS (SELECT date('now', 'localtime', '+1 day', 'weekday 1', '+7 days'))
+SELECT bf_on, CASE strftime('%w', bf_on) WHEN '0' THEN 'Sunday' WHEN '1' THEN 'Monday' WHEN '2' THEN 'Tuesday'
+  WHEN '3' THEN 'Wednesday' WHEN '4' THEN 'Thursday' WHEN '5' THEN 'Friday' ELSE 'Saturday' END AS weekday FROM d;
+```
+
+Print the result in plain text as the weekday and the date ("Monday, 2026-11-02") and write it only on the practitioner's bare yes. The query's date, not the phrase, is what is confirmed and written, and the write below still takes a literal `YYYY-MM-DD`. A date the practitioner changes in reply replaces the phrase and is read back the same way. A phrase with more than one reasonable reading ("the Monday of the week after next" against "the second Monday from now") is never resolved silently: resolve each reading, show the two or three dates, and ask which. A business day is Monday to Friday: a "business day" phrase skips Saturday and Sunday and nothing else, since the session holds no holiday calendar and the read-back is where the practitioner catches a holiday. A weekday named outright resolves to that weekday, a Saturday or Sunday included.
 
 **Setting or changing the date** — a `queued`, unshelved job only. A `wip` job is not moved by a date, so release it first (`jobs-run.md` §10) if the practitioner wants it held; a shelved one is restored first (§10a):
 

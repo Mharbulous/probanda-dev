@@ -46,7 +46,7 @@ export function buildNote(running: string, current: string, installed: string | 
 }
 
 /** The stamp line of `<install>/mcp/dist/litigation-mcp.js`, or null when unreadable or unstamped. */
-function installedStamp(): string | null {
+export function installedStamp(): string | null {
   try {
     return STAMP_LINE.exec(readFileSync(join(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
   } catch {

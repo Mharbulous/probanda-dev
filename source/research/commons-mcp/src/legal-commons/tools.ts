@@ -34,6 +34,8 @@ export function callLegalCommonsTool(
       return lookupByCitation(client, args);
     case "legal_commons__browse":
       return browse(client, args);
+    case "legal_commons__search":
+      return search(client, args);
     case "legal_commons__treatment_chain":
       return treatmentChain(client, args);
     case "legal_commons__push":
@@ -164,15 +166,25 @@ async function lookupByCitation(client: LegalCommonsClient, args: Record<string,
   return client.rpc("lookup_by_citation", { p_citation: String(args.citation) });
 }
 
-// browse — keyword browse via PostgREST ILIKE (spec §3 D7).
+// browse — keyword browse (spec §3 D7). An RPC, not a table GET: Supabase's API
+// log keeps every request's address and not its body, so the keyword must
+// travel in the body.
 async function browse(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
-  const keyword = String(args.keyword);
-  const limit = typeof args.limit === "number" ? args.limit : 50;
-  return client.get(
-    "principle",
-    { text: `ilike.*${keyword}*`, select: "principle_id,text,jurisdiction,variant_of,doctrine_tag" },
-    { limit }
-  );
+  return client.rpc("browse_principles", {
+    p_keyword: String(args.keyword),
+    p_limit: typeof args.limit === "number" ? args.limit : 50,
+  });
+}
+
+// search — meaning search. The commons-find Edge Function embeds the text and
+// replies with only the matching principles' prose and their authorities'
+// citations and pinpoints, best match first: the pool's finer structure stays in
+// the cloud (Commandment 4). The text travels in the body, never the address.
+async function search(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
+  return client.callFunction("commons-find", {
+    text: String(args.text),
+    limit: typeof args.limit === "number" ? args.limit : 5,
+  });
 }
 
 async function treatmentChain(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {

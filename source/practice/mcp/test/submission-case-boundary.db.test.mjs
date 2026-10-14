@@ -47,6 +47,11 @@ const PREDATING_WORDS = new Set([
   "relief_items", "scope", "sources", "verified",
 ]);
 
+// A case-data identifier that one file must write because another contract names it: `lawyer_name` is
+// a key of the publish sidecar (publish-bcsc-form's assembly-input-contract.md), filled from the
+// runtime's own counsel_name. Allowed in that file only.
+const CONTRACT_KEYS = new Set(["publish-sidecar.ts: lawyer_name"]);
+
 function tsFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory() ? tsFiles(join(dir, e.name)) : e.name.endsWith(".ts") ? [join(dir, e.name)] : []
@@ -72,5 +77,5 @@ test("no case-data table or column name appears in the TypeScript under src/subm
       if (new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(text)) hits.push(`${relative(SRC, file)}: ${name}`);
     }
   }
-  assert.deepEqual(hits, []);
+  assert.deepEqual(hits.filter((hit) => !CONTRACT_KEYS.has(hit)), []);
 });

@@ -424,6 +424,7 @@ function drawPage(file) {
       return this.children.flatMap((c) => [c, ...c.all()]);
     }
     querySelector(selector) {
+      if (!selector.startsWith(".")) return this.all().find((n) => n.tag === selector) ?? null;
       return this.all().find((n) => n.className.split(" ").includes(selector.slice(1))) ?? null;
     }
   }
@@ -537,13 +538,14 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   const { header, main } = drawPage(jobBoard);
   const rowOf = (className) => header.children.find((n) => n.className === className);
   const labelled = (row) => row.children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`);
+  assert.equal(header.children[0].textContent, "Job Board 1: Notice of Application", "the heading names the page's number and its Writing");
   const metaRow = rowOf("meta");
   assert.deepEqual(labelled(metaRow), ["Matter: L9999", "Client: Lookup Client Ltd. (C-9999)"], "the meta row names the matter and the client with its number");
   assert.equal(metaRow.children.some((n) => n.attrs["data-k"] === "Rev" || n.attrs["data-k"] === "Rendered"), false, "no Rev or Rendered is drawn");
   assert.deepEqual(
     rowOf("meta proceeding").children.map((n) => (n.attrs["data-k"] === undefined ? n.textContent : `${n.attrs["data-k"]}: ${n.textContent}`)),
-    ["BCSC", "Vancouver Registry", "Court File No.: S-901433"],
-    "the proceeding row draws the venue and registry unlabelled, then the court file number"
+    ["BCSC", " · ", "Vancouver Registry", " · ", "Court File No.: S-901433", " · ", "Halloway v. Vasey"],
+    "the proceeding row draws the venue and registry unlabelled, the court file number, then the style of proceeding, a dot between each two; a page with a Goal card draws no state chip there"
   );
   assert.deepEqual(
     labelled(rowOf("meta writing")),
@@ -553,6 +555,11 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   assert.deepEqual(labelled(rowOf("meta dates")), [`Trial date: ${TRIAL}`, `Trial brief: ${BRIEF}`], "the matter's row carries the anchor linked to no filing on this page");
   const goal = main.all().find((n) => n.tag === "details" && n.className === "goal");
   const head = goal.children[0];
+  assert.deepEqual(
+    head.children.slice(0, 3).map((n) => [n.className, n.className === "sentence" ? "" : n.textContent]),
+    [["sentence", ""], ["", " "], ["lifecycle", "Drafting"]],
+    "the Writing's state is a pill right after the Completion Criteria sentence"
+  );
   assert.deepEqual(
     head.children.filter((n) => n.className === "deadline").map((n) => n.children.map((c) => c.textContent).join(" ")),
     [`Application response ${RESPONSE} limited_day`, `Application record ${RECORD}`],
@@ -567,32 +574,34 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   });
 });
 
-test("the Job Board header omits a blank proceeding line and an empty Writing-dates row", (t) => {
+test("a pre-filing Job Board's header names its proceeding, draws its state as a chip on a blank proceeding line, and omits an empty Writing-dates row", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-job-board-header-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const section = {
     meta: { revision: 1, matter: "", client: "", file: "", filing: "", filing_id: null, proceeding_id: 1, rendered: "2026-10-05 09:00", state: null, state_label: "No filing yet", state_since: null, ready_to_retire: false },
-    tickets: [], seeds: [], deleted: [], proposals: [], lapsed_keys: [],
+    tickets: [], seeds: [], discardedSeeds: [], deleted: [], proposals: [], lapsed_keys: [],
   };
   const draw = (name, dates) => {
     const file = join(dir, name);
     writeFileSync(
       file,
-      renderWorkBoardHtml({ meta: { revision: 1, matter: "L1", client: "C", rendered: "2026-10-05 09:00", client_no: "", forum: "", registry: "", file_number: "" }, sections: [section], dates }),
+      renderWorkBoardHtml({ meta: { revision: 1, matter: "L1", client: "C", rendered: "2026-10-05 09:00", client_no: "", forum: "", registry: "", file_number: "", style_of_cause: "" }, sections: [section], dates }),
       "utf-8"
     );
     return drawPage(file).header;
   };
 
   const none = draw("none.html", { writing: [], header: [], criteria: {} });
-  assert.deepEqual(none.children.map((n) => n.className), ["", "meta", "meta dates"], "no proceeding row and no Writing row");
+  assert.equal(none.children[0].textContent, "Job Board: Proceeding 1", "a page with no filing is named by its proceeding");
+  assert.deepEqual(none.children.map((n) => n.className), ["", "meta", "meta proceeding", "meta dates"], "a proceeding row for the state chip, and no Writing row");
   assert.deepEqual(none.children[1].children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`), ["Matter: L1", "Client: C"], "no brackets without a client number");
-  const matterRow = none.children[2];
+  assert.deepEqual(none.children[2].children.map((n) => [n.className, n.textContent]), [["chip", "No filing yet"]], "a blank proceeding line holds the state chip alone, with no dot");
+  const matterRow = none.children[3];
   assert.equal(matterRow.children.length, 1);
   assert.equal(matterRow.children[0].textContent, "No date is recorded for this matter.");
 
   const writingOnly = draw("writing.html", { writing: [{ label: "Trial date", date: "2027-03-01", flag: null }], header: [], criteria: {} });
-  assert.deepEqual(writingOnly.children.map((n) => n.className), ["", "meta", "meta writing"], "every date is this Writing's, so no matter row");
+  assert.deepEqual(writingOnly.children.map((n) => n.className), ["", "meta", "meta proceeding", "meta writing"], "every date is this Writing's, so no matter row");
 });
 
 test("a filing's Job Board page draws its Writings in the render's order between the Goal card and Ready; a page given none draws no strip", async (t) => {
@@ -879,10 +888,10 @@ test("board_card(key) prints the live job holding the key, else the Proposal und
   }
 });
 
-// The seven lists, in order, then board_card's Proposed count: a wip job with every step stamped
+// The eight lists, in order, then board_card's Proposed count: a wip job with every step stamped
 // stays In Progress, a queued job whose blocker was superseded is Blocked, and an unheld Proposal is
 // counted on the card but never drawn on the page.
-test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Superseded, Loose Threads, then Proposed, and the page draws no Proposed section", async () => {
+test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed, Shelved, Superseded, Loose Threads, then Proposed, and the page draws no Proposed section", async () => {
   const f = seededDbFixture();
   try {
     await seededBoard(
@@ -894,7 +903,7 @@ test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Supe
 
     const lines = cardOf(f, { lanes: ["live"] }).split("\n");
     const headings = lines.filter((l) => l.startsWith("## ")).map((l) => l.replace(/ \(.*$/, ""));
-    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Loose Threads", "## Proposed"]);
+    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Bring Forward", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Loose Threads", "## Proposed"]);
     const lane = (heading) => {
       const start = lines.findIndex((l) => l.startsWith(`## ${heading} (`));
       const end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
@@ -908,7 +917,7 @@ test("the live lane prints Ready, In Progress, Blocked, Completed, Shelved, Supe
     const { draft } = draftFolder(f);
     const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const sections = drawPage(board.path).main.all().filter((n) => n.tag === "section").map((n) => n.id);
-    assert.deepEqual(sections, ["ready", "in-progress", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"]);
+    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"]);
     assert.equal(readFileSync(board.path, "utf-8").includes('<section id="proposed">'), false);
   } finally {
     f.cleanup();

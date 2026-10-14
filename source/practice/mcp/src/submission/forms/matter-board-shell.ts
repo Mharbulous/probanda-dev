@@ -16,7 +16,7 @@
 // on arrival and trip the stall guard.
 
 import type { MatterBoardData } from "./render-matter-board.js";
-import { WORKBOARD_CSS } from "./workboard-assets.js";
+import { BOARD_CSS } from "./board-template.js";
 
 export const MATTER_BOARD_FILE = "Litigation Strategy.html";
 
@@ -51,7 +51,7 @@ const HEAD = String.raw`<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Litigation Strategy</title>
 <style>
-${WORKBOARD_CSS}${MATTER_CSS}</style>
+${BOARD_CSS}${MATTER_CSS}</style>
 </head>
 <body>
 <main>

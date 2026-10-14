@@ -560,6 +560,22 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     {
+      name: caseDataPrefixed("ingest_authority"),
+      description:
+        "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). " +
+        "Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. " +
+        "A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. " +
+        "Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "result_path", type: "str" },
+        { name: "file_path", type: "str" },
+        { name: "file_hash", type: "str" },
+        { name: "bundled_pages", type: "str" },
+      ], ["matter_root", "result_path", "file_path", "file_hash"]),
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: caseDataPrefixed("migrate"),
       description:
         "Upgrade a matter's case databases to the current schema. Two-phase and gated: " +
@@ -1510,6 +1526,60 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("track_source"),
+      description:
+        "Record the sources to get on the job (a tickets row) this session holds, and close them, in one call. A source " +
+        "to get is a decision, an enactment or a file the job's work has named and is about to retrieve or read; it is the " +
+        "job's own record beside its steps and never a step. add takes {kind, label} items, kind one of decision, " +
+        "legislation, file, label one line of at most 200 characters: a citation, an instrument's title and citation, or a " +
+        "file name, with no statement of law, no deadline and no date other than the one inside a citation. Adding an item " +
+        "already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, " +
+        "reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only " +
+        "a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. " +
+        "session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints " +
+        "none. The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another " +
+        "session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was " +
+        "written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: " +
+        "invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's " +
+        "database needs the v76 migration, and carry on with the work). Returns ticket_id, outcome, sources (every source " +
+        "on the job, open and closed), open, unknown (close items naming no source on the job), locked_by, status, " +
+        "rejected_at and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+          add: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { kind: { type: "string", enum: ["decision", "legislation", "file"] }, label: { type: "string" } },
+              required: ["kind", "label"],
+              additionalProperties: false,
+            },
+          },
+          close: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                kind: { type: "string", enum: ["decision", "legislation", "file"] },
+                label: { type: "string" },
+                outcome: { type: "string", enum: ["got", "not_retrieved"] },
+                reason: { type: "string" },
+              },
+              required: ["kind", "label", "outcome"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description:
         "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. " +
@@ -1802,11 +1872,13 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "order: each job asked for, in board order, as its live-lane line without the tags, then " +
         "`  kind: <kind> · priority: <N>` (with ` · locked: <locked_at> · holder: <tag> · last activity: <stamp>` on an In " +
         "Progress job, the last activity being the latest of its lock, its done steps, the loose threads " +
-        "captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held " +
+        "captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held " +
         "key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), " +
         "`  scope: … · waits on: … · either-or: …`, `  steps:` when it has steps, `  loose threads:` with each open loose thread " +
         "captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it " +
-        "(`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: " +
+        "(`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open " +
+        "(`☐ <kind>: <label>`) or closed not retrieved (`☒ <kind>: <label> (not retrieved: <reason>)`), which are the job's " +
+        "own record and never steps of its plan, each when it has any, and on a completed job `  completed: " +
         "<completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded " +
         "by: … · reason: …`. Then each lane asked for: criteria, the `🎯 Completion criteria: <state>[ — <text>]` " +
         "line and each criterion in board order as `- <glyph> <id>: <text>[ (after …)][ (counts)][ — items]`, the " +
@@ -1874,8 +1946,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
         "filings at all (issue 351) -- call " +
         "drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the " +
-        "installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- rebuild/reinstall " +
-        "the plugin, not drafting_data__migrate. Every response also reports build_stamp and current_build_stamp; " +
+        "installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- never " +
+        "drafting_data__migrate; the note names the next step for its case: fully restart the app when the plugin " +
+        "installed on disk is a newer build than the one running, otherwise run /repackage, reinstall the plugin and " +
+        "fully restart the app. Every response also reports build_stamp and current_build_stamp; " +
         "server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also " +
         "carries schema_target_version (what the migration source would apply), bundle_schema_version (what this " +
         "bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge " +
@@ -1984,7 +2058,11 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. " +
         "It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its " +
         "ingest inputs not yet in the case database, checked only when that filing has a Ready job; status " +
-        "not_applicable or unavailable means the check did not run. " +
+        "not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns " +
+        "records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: " +
+        "verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; " +
+        "source_id is the case-data source behind the verdict, and possible_version_of the source that file may " +
+        "be another version of; each is null when there is none. " +
         "When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, " +
         "matched by number and deponent code against the file names in the matter's COURT FILE folder, with its " +
         "court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, " +

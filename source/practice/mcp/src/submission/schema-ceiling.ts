@@ -19,7 +19,9 @@
 // is committed but not yet packaged -- the repo's state for most of 2026-09-22 -- passes a
 // git check and still breaks every renderer.
 
+import { BUILD_STAMP, installedStamp } from "../build-stamp.js";
 import { DataServerError } from "../errors.js";
+import { INSTALL_ROOT, pluginManifest } from "../repo-root.js";
 
 declare const __LITIGATION_SUBMISSION_SCHEMA_VERSION__: number;
 
@@ -72,6 +74,35 @@ export function renderableSchemaVersion(engineTarget: number, env: NodeJS.Proces
   return bundleSchemaVersion(env) ?? engineTarget;
 }
 
+/**
+ * The one next step for a bundle that cannot serve this database, by which of three cases applies.
+ *
+ * - The install on disk holds a different build from the one running: the plugin was updated and
+ *   the app was not restarted, so the newer install never loaded.
+ * - The migration source is ahead of this bundle ("source"): a build was released without its
+ *   bundle rebuilt.
+ * - The database is ahead of this bundle ("database"): a newer build migrated it.
+ *
+ * Names this server's build and plugin version, so a session running an install other than the
+ * one just updated can see which it is.
+ */
+export function bundleNextStep(ahead: "source" | "database"): string {
+  const version = pluginManifest(INSTALL_ROOT).version;
+  const runs = `This server runs build ${BUILD_STAMP ?? "(unstamped)"}${version ? ` of Probanda ${version}` : ""}.`;
+  const installed = installedStamp();
+  if (BUILD_STAMP !== null && installed !== null && installed !== BUILD_STAMP) {
+    return (
+      `${runs} The plugin installed on disk is build ${installed}, so the plugin was updated but the app was not ` +
+      "restarted. Next step: fully restart the app (quit it, not just close the window), then open the session again."
+    );
+  }
+  const why =
+    ahead === "source"
+      ? "Its migration source is ahead of its own bundle, so this build was released without a rebuilt bundle."
+      : "The database was migrated by a newer build than this one.";
+  return `${runs} ${why} Next step: run /repackage, reinstall the plugin, and fully restart the app.`;
+}
+
 export interface SchemaSourceStatus {
   /** TARGET_SCHEMA_VERSION in the working tree's migrate_engine.py -- what a migration would apply. */
   schema_target_version: number;
@@ -111,8 +142,8 @@ export function schemaSourceStatus(engineTarget: number, env: NodeJS.ProcessEnv 
       schema_source_ahead: true,
       schema_note:
         `The migration source targets schema version ${engineTarget}; this bundle was built against ${ceiling}. ` +
-        "Migrations are being withheld until the plugin is rebuilt and reinstalled, so no database is pushed to a " +
-        "schema this bundle cannot read.",
+        "Migrations are being withheld, so no database is pushed to a schema this bundle cannot read. " +
+        bundleNextStep("source"),
     };
   }
   if (override) {
@@ -145,8 +176,7 @@ export function assertMigrationWithinBundle(
     `Migration withheld for ${dbPath}: the migration source would take this database to schema version ` +
       `${engineTarget}, but this plugin bundle was built against ${ceiling} and cannot read ${engineTarget}. ` +
       "The database, its recorded schema version and its backups are unchanged; nothing was copied aside. " +
-      "Rebuild and reinstall the Probanda plugin so its bundle matches the migration source, then start a new " +
-      `session. To apply an in-progress hop on purpose, set ${OVERRIDE_ENV}=1 in the server's environment and ` +
+      `${bundleNextStep("source")} To apply an in-progress hop on purpose, set ${OVERRIDE_ENV}=1 in the server's environment and ` +
       "restart it -- every database migrated that way stays unrenderable until a matching bundle is installed.",
     "schema_ahead_of_bundle"
   );

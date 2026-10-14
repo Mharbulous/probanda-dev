@@ -14,11 +14,12 @@ import { join } from "node:path";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { startPageApi } = await import("../build/page-api/server.js");
 const { pageApiToken } = await import("../build/page-api/token.js");
 const { buildLooseIdeasData, LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
+const { fetchResolvedSeeds } = await import("../build/submission/forms/render-work-board.js");
 const { renderViewPageHtml } = await import("../build/submission/view-pages.js");
 
 function freePort() {
@@ -42,19 +43,18 @@ async function fixture(t) {
   const env = { ...process.env, COCLERK_CONFIG_PATH: configPath };
   const dbPath = join(dir, "submission.sqlite");
   await freshSubmissionDb(dbPath);
-  await submissionDataExecute(
-    dbPath,
-    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL), (2, 'L8470 - Larchmont', NULL);
+  await submissionDataExecute(dbPath, SEED);
+  return { dir, port, env, dbPath };
+}
+
+const SEED = `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL), (2, 'L8470 - Larchmont', NULL);
      INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (10, 1, 'Live job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
      INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, deleted_at) VALUES (11, 1, 'Deleted job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-02T09:00');
      INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea, charted_into) VALUES
        (1, 1, '2026-10-01T10:00', 'noticed', 'An open thread.', NULL),
        (2, 2, '2026-10-01T10:01', 'noticed', 'Another proceeding''s thread.', NULL),
        (3, 1, '2026-10-01T10:02', 'noticed', 'Outlined into a live job.', 10),
-       (4, 1, '2026-10-01T10:03', 'noticed', 'Outlined into a deleted job.', 11);`
-  );
-  return { dir, port, env, dbPath };
-}
+       (4, 1, '2026-10-01T10:03', 'noticed', 'Outlined into a deleted job.', 11);`;
 
 async function listening(t, f, options = {}) {
   const lines = [];
@@ -196,7 +196,7 @@ test("a busy port never throws: the second listener logs once, retries, and bind
 function drawLooseThreads(html, fetchImpl) {
   class Node {
     constructor(tag) {
-      Object.assign(this, { tag, children: [], attrs: {}, className: "", text: "", listeners: {}, parent: null });
+      Object.assign(this, { tag, children: [], attrs: {}, className: "", text: "", listeners: {}, parent: null, hidden: false });
       const node = this;
       this.classList = { add: (c) => { node.className = `${node.className} ${c}`.trim(); } };
     }
@@ -247,7 +247,7 @@ function drawLooseThreads(html, fetchImpl) {
   runInNewContext(script, { window: { VIEW_PAGE: JSON.parse(line) }, document, fetch: fetchImpl, AbortController, setTimeout, clearTimeout, JSON, String });
   const cards = board.all().filter((n) => n.tag === "article");
   const card = (id) => cards.find((n) => n.all().some((c) => c.className === "where" && c.textContent.startsWith(`Loose thread ${id} `)));
-  return { header, card };
+  return { header, board, card };
 }
 
 test("the Loose Threads page carries deferred_at and the api block; a deferred thread draws collapsed with no button, an open one defers through the listener", async (t) => {
@@ -278,4 +278,131 @@ test("the Loose Threads page carries deferred_at and the api block; a deferred t
   assert.equal(on.card(1).all().some((n) => n.className === "defer"), false);
   assert.match(deferredAt(f, 1), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
   assert.equal(on.header.all().some((n) => n.className === "api-off"), false);
+});
+
+/** Added to the fixture: a discarded thread, a suggested one, one discarded after it was outlined, one
+ * outlined into a later live job, created the minute thread 6 was suggested, and a discarded thread of
+ * another proceeding. */
+const RESOLVED = `INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (12, 1, 'Later job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-03T08:00');
+  INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea, charted_into, discarded_at, suggested_at) VALUES
+    (5, 1, '2026-10-01T10:04', 'noticed', 'Discarded.', NULL, '2026-10-05T12:00', NULL),
+    (6, 1, '2026-10-01T10:05', 'noticed', 'Suggested.', NULL, NULL, '2026-10-03T08:00'),
+    (7, 1, '2026-10-01T10:06', 'noticed', 'Discarded after outlining.', 10, '2026-10-04T10:00', NULL),
+    (8, 1, '2026-10-01T10:07', 'noticed', 'Outlined into the later job.', 12, NULL, NULL),
+    (9, 2, '2026-10-01T10:08', 'noticed', 'Another proceeding''s discarded thread.', NULL, '2026-10-06T09:00', NULL);`;
+
+test("fetchResolvedSeeds lists the discarded, the suggested and the threads outlined into a live job, newest first, each once", async (t) => {
+  const f = await fixture(t);
+  await submissionDataExecute(f.dbPath, RESOLVED);
+  // Absent: thread 1 is open, thread 4's job is deleted, and threads 2 and 9 are another proceeding's.
+  assert.deepEqual(fetchResolvedSeeds(f.dbPath, 1), [
+    { id: 5, idea: "Discarded.", how: "discarded", at: "2026-10-05T12:00", job_id: null, job_title: null },
+    { id: 7, idea: "Discarded after outlining.", how: "discarded", at: "2026-10-04T10:00", job_id: null, job_title: null },
+    { id: 6, idea: "Suggested.", how: "suggested", at: "2026-10-03T08:00", job_id: null, job_title: null },
+    { id: 8, idea: "Outlined into the later job.", how: "job", at: "2026-10-03T08:00", job_id: 12, job_title: "Later job" },
+    { id: 3, idea: "Outlined into a live job.", how: "job", at: "2026-10-01T09:00", job_id: 10, job_title: "Live job" },
+  ]);
+  assert.deepEqual(fetchResolvedSeeds(f.dbPath, 2).map((s) => [s.id, s.how]), [[9, "discarded"]]);
+});
+
+test("on a database held at v74, fetchResolvedSeeds lists only the threads outlined into a live job", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "coclerk-page-api-v74-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+  const dbPath = join(dir, "submission.sqlite");
+  submissionDbAt(dbPath, 74);
+  await submissionDataExecute(dbPath, SEED);
+  assert.deepEqual(submissionDataQuery(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at')").rows, []);
+  assert.deepEqual(fetchResolvedSeeds(dbPath, 1), [{ id: 3, idea: "Outlined into a live job.", how: "job", at: "2026-10-01T09:00", job_id: 10, job_title: "Live job" }]);
+});
+
+test("the Loose Threads page draws four tabs and a Resolved section, shown under its own tab and under All only while the checkbox is on", async (t) => {
+  const f = await fixture(t);
+  await submissionDataExecute(f.dbPath, RESOLVED);
+  const draw = () => {
+    const data = buildLooseIdeasData(f.dbPath, { id: 1, proceeding_id: 1 }, f.env);
+    const html = renderViewPageHtml(LOOSE_IDEAS_PAGE, { filing: "", matter: "L8470", client: "", revision: 1, rendered: "2026-10-08 09:00" }, data);
+    const { board } = drawLooseThreads(html, () => Promise.reject(new Error("connection refused")));
+    const nodes = board.all();
+    return {
+      extra: JSON.parse(/^window\.VIEW_PAGE = (.*);$/m.exec(html)[1]).extra,
+      nodes,
+      tablist: nodes.find((n) => n.attrs.role === "tablist"),
+      tabs: nodes.filter((n) => n.attrs.role === "tab"),
+      folder: nodes.find((n) => n.attrs.role === "tabpanel"),
+      // Ranked, Unranked, Resolved.
+      sections: nodes.filter((n) => n.tag === "section"),
+      box: nodes.find((n) => n.className === "resolved-toggle"),
+    };
+  };
+  const hidden = (p) => p.sections.map((s) => s.hidden);
+
+  // Nothing ranked: the Ranked heading is hidden, so the checkbox ends the tab row.
+  const unranked = draw();
+  assert.deepEqual(unranked.extra, [["Threads", "2"], ["Ranked", "0"], ["Unranked", "2"], ["Resolved", "5"]]);
+  assert.deepEqual(unranked.tablist.children.map((n) => n.className || n.attrs["data-filter"]), ["all", "ranked", "unranked", "resolved", "resolved-toggle"]);
+  assert.equal(unranked.nodes.some((n) => n.className === "switch"), false, "no All groups switch with nothing ranked");
+  assert.deepEqual(hidden(unranked), [true, false, true]);
+
+  // One ranked: the checkbox sits in the Ranked heading, before the All groups switch.
+  await submissionDataExecute(f.dbPath, "UPDATE seeds SET rank = 1, rank_group = 'tooling', rank_reason = 'Blocks the others.' WHERE id = 1;");
+  const p = draw();
+  assert.deepEqual(p.extra, [["Threads", "2"], ["Ranked", "1"], ["Unranked", "1"], ["Resolved", "5"]]);
+  assert.deepEqual(p.tabs.map((b) => [b.attrs["data-filter"], b.textContent]), [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]]);
+  assert.equal(p.tablist.children.length, 4, "the tab row holds the tabs alone");
+  assert.equal(p.box.parent.tag, "h2");
+  assert.equal(p.box.parent.text, "Ranked");
+  assert.deepEqual(p.box.parent.children.map((n) => n.className), ["resolved-toggle", "switch"]);
+  assert.deepEqual(p.sections.map((s) => s.children[0].text), ["Ranked", "Unranked", "Resolved"]);
+
+  // All, the checkbox off: the resolved section is hidden until a click, and hidden again on the next.
+  assert.equal(p.box.attrs.role, "checkbox");
+  assert.equal(p.box.textContent, "☐ Show/Hide Resolved Threads");
+  assert.equal(p.box.attrs["aria-checked"], "false");
+  assert.equal(p.box.hidden, false);
+  assert.deepEqual(hidden(p), [false, false, true]);
+  p.box.listeners.click();
+  assert.equal(p.box.textContent, "☑ Show/Hide Resolved Threads");
+  assert.equal(p.box.attrs["aria-checked"], "true");
+  assert.deepEqual(hidden(p), [false, false, false]);
+  p.box.listeners.click();
+  assert.equal(p.box.textContent, "☐ Show/Hide Resolved Threads");
+  assert.equal(p.box.attrs["aria-checked"], "false");
+  assert.deepEqual(hidden(p), [false, false, true]);
+
+  // The other tabs: Resolved shows its section with the checkbox off, and none of them shows the checkbox.
+  const [all, ranked, unrankedTab, resolved] = p.tabs;
+  resolved.listeners.click();
+  assert.deepEqual(hidden(p), [true, true, false]);
+  assert.equal(resolved.attrs["aria-selected"], "true");
+  assert.equal(all.attrs["aria-selected"], "false");
+  assert.equal(p.box.hidden, true);
+  ranked.listeners.click();
+  assert.deepEqual(hidden(p), [false, true, true]);
+  assert.equal(p.box.hidden, true);
+  unrankedTab.listeners.click();
+  assert.deepEqual(hidden(p), [true, false, true]);
+  assert.equal(p.box.hidden, true);
+  all.listeners.click();
+  assert.deepEqual(hidden(p), [false, false, true]);
+  assert.equal(p.box.hidden, false);
+
+  // One inert line per resolved thread, newest first.
+  assert.deepEqual(p.sections[2].children[1].children.map((n) => n.textContent), [
+    "Loose thread 5:  Discarded. *DISCARDED* Restore Discarded 2026-10-05",
+    "Loose thread 7:  Discarded after outlining. *DISCARDED* Restore Discarded 2026-10-04",
+    "Loose thread 6:  Suggested. *SUGGESTED* Suggested 2026-10-03",
+    "Loose thread 8:  Outlined into the later job. Taken up by Job #12: Later job",
+    "Loose thread 3:  Outlined into a live job. Taken up by Job #10: Live job",
+  ]);
+
+  // Nothing resolved: no checkbox is drawn, and the Resolved tab says it holds nothing.
+  await submissionDataExecute(f.dbPath, "UPDATE seeds SET charted_into = NULL, discarded_at = NULL, suggested_at = NULL WHERE proceeding_id = 1;");
+  const none = draw();
+  assert.equal(none.extra[3][1], "0");
+  assert.equal(none.box, undefined);
+  assert.equal(none.tabs.length, 4);
+  none.tabs[3].listeners.click();
+  assert.deepEqual(hidden(none), [true, true, true]);
+  assert.equal(none.folder.children.at(-1).textContent, "No loose thread under this tab.");
+  assert.equal(none.folder.children.at(-1).hidden, false);
 });

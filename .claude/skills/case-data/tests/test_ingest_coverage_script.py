@@ -86,8 +86,35 @@ class IngestCoverageScriptTests(unittest.TestCase):
         self.assertEqual(out["status"], "ok")
         self.assertEqual(out["to_ingest"], [r"7. DISCOVERY\list of documents.pdf"])
         self.assertEqual(out["missing"], ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*"])
+        self.assertEqual(out["records"], [
+            {"path": r"7. DISCOVERY\list of documents.pdf", "verdict": "none",
+             "source_id": None, "possible_version_of": None}])
         self.assertEqual(
-            set(out), {"status", "to_ingest", "damaged", "unreadable", "missing", "newest_correspondence"})
+            set(out),
+            {"status", "to_ingest", "records", "damaged", "unreadable", "missing", "newest_correspondence"})
+
+    def test_each_file_to_ingest_has_its_record_in_the_same_order(self):
+        self.build()
+        hm = self.place(r"5. COURT FILE#1\aff draft.pdf", b"draft")
+        hp = self.place(r"5. COURT FILE#1\order.pdf", b"order")
+        self.place(r"7. DISCOVERY\list of documents.pdf", b"lod")
+        insert = ("INSERT INTO sources (source_id, category, title, file_path, file_hash, "
+                  "ingestion_status, notes) VALUES (?, 'court', ?, ?, ?, 'partial', ?)")
+        self.write("main", insert, (7, "Affidavit", r"5. COURT FILE#1\aff draft.pdf", hm,
+                                    "SUPERSEDE-PENDING: possible other version of source #34."))
+        self.write("main", insert, (8, "Order", r"5. COURT FILE#1\order.pdf", hp,
+                                    "DISCREPANCY: possible duplicate of source #34."))
+        out = self.run_script()
+        self.assertEqual(out["to_ingest"], [
+            r"5. COURT FILE#1\aff draft.pdf", r"5. COURT FILE#1\order.pdf",
+            r"7. DISCOVERY\list of documents.pdf"])
+        self.assertEqual(out["records"], [
+            {"path": r"5. COURT FILE#1\aff draft.pdf", "verdict": "partial", "source_id": 7,
+             "possible_version_of": 34},
+            {"path": r"5. COURT FILE#1\order.pdf", "verdict": "partial", "source_id": 8,
+             "possible_version_of": None},
+            {"path": r"7. DISCOVERY\list of documents.pdf", "verdict": "none", "source_id": None,
+             "possible_version_of": None}])
 
     def test_a_court_file_folder_with_a_file_number_is_walked(self):
         self.build()

@@ -58,7 +58,7 @@ import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path
 import { buildStampStatus, type BuildStampStatus } from "../build-stamp.js";
 import { submissionDataQuery } from "./backend.js";
 import { currentSchemaVersion } from "./migrate.js";
-import { renderableSchemaVersion, type SchemaSourceStatus, schemaSourceStatus } from "./schema-ceiling.js";
+import { bundleNextStep, renderableSchemaVersion, type SchemaSourceStatus, schemaSourceStatus } from "./schema-ceiling.js";
 import {
   freshManifest,
   legacyMockupDirs,
@@ -784,7 +784,7 @@ function selectDocuments<T extends { document_type: string }>(documents: T[], wa
  * `0. DRAFT*` folder and end with this filing's own sanitized title, so the one matter-tree write
  * this server makes cannot land anywhere else. `realpathSync.native` resolves a junction to its
  * true target (which then fails containment) and reads OneDrive placeholders as ordinary files. */
-function resolvePresentationDir(presentationDir: string, filingTitle: string): string {
+function resolvePresentationDir(presentationDir: string, filingTitle: string, styleOfCause: string | null): string {
   if (!isAbsolute(presentationDir)) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
   }
@@ -799,7 +799,11 @@ function resolvePresentationDir(presentationDir: string, filingTitle: string): s
   if (!/^0\. DRAFT/i.test(basename(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
   if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   const ending = ` ${sanitizeForPath(filingTitle)}`;
-  if (!basename(dir).endsWith(ending)) throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  // A folder made while the title still ended in the style of proceeding keeps that name (oldTitle).
+  const oldEnding = styleOfCause ? ` ${sanitizeForPath(oldTitle(filingTitle, styleOfCause))}` : null;
+  if (!basename(dir).endsWith(ending) && (oldEnding === null || !basename(dir).endsWith(oldEnding))) {
+    throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  }
   if (existsSync(dir) && dirname(realpathSync.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
@@ -827,10 +831,16 @@ export function resolveDraftDir(draftDir: string, param = "drafting_forms__boots
 /** #689: the presentation folder's name, `<code> <filing folder>`. The code is the `folder_code` the
  * filing's type file declares (shared/declared-layout.md), read from its stored layout; a row with
  * no stored layout (a seeded test row) reads it from /draft's shipped tree, which needs the forum. */
-function presentationFolder(proceeding: ProceedingRow, filing: FilingRow): string {
+function presentationFolder(proceeding: ProceedingRow, filing: FilingRow, title = filing.title): string {
   const stored = layoutFor(filing);
   const code = stored !== null ? stored.layout.folder_code : resolveTypeFile(requireForum(proceeding, true).forum, filing.kind).block.folder_code;
-  return `${code} ${sanitizeForPath(filing.title)}`;
+  return `${code} ${sanitizeForPath(title)}`;
+}
+
+/** A Writing's title as it read while titles still ended in the style of proceeding. A presentation
+ * folder made under that title keeps its name: the render uses it as it is and renames nothing. */
+function oldTitle(title: string, styleOfCause: string): string {
+  return `${title} - ${styleOfCause}`;
 }
 
 /** A dated presentation folder may be renamed to the undated form only if it holds at least one
@@ -861,11 +871,15 @@ function presentationDirFromDraft(draftDir: string, proceeding: ProceedingRow, f
   const undated = presentationFolder(proceeding, filing);
   // Case-insensitive, as NTFS is. An undated match resolves to the canonical spelling, which
   // opens the same folder and passes resolvePresentationDir's title-ending check.
-  const isUndated = (name: string) => name.toLowerCase() === undated.toLowerCase();
+  // A folder under the old name (oldTitle) matches too, and is returned under the name it has.
+  const old = proceeding.style_of_cause ? presentationFolder(proceeding, filing, oldTitle(filing.title, proceeding.style_of_cause)) : null;
+  const isOld = (name: string) => old !== null && name.toLowerCase() === old.toLowerCase();
+  const isUndated = (name: string) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
   const matches = readdirSync(draft, { withFileTypes: true })
     .filter((e) => e.isDirectory() && (isUndated(e.name) || (/^\d{4}-\d{2}-\d{2} /.test(e.name) && isUndated(e.name.slice(11)))))
     .map((e) => e.name)
     .sort();
+  if (matches.length === 1 && isOld(matches[0])) return join(draft, matches[0]);
   if (matches.length === 0 || (matches.length === 1 && isUndated(matches[0]))) return join(draft, undated);
   const candidates = matches.map((name) => {
     const path = join(draft, name);
@@ -1031,7 +1045,7 @@ export function submissionFormsRender(
     );
   }
   const requestedDir = draftDir === undefined || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
-  const projectionDir = requestedDir === undefined ? undefined : resolvePresentationDir(requestedDir, filing.title);
+  const projectionDir = requestedDir === undefined ? undefined : resolvePresentationDir(requestedDir, filing.title, proceeding.style_of_cause);
   const pagesDir =
     jobOnly && draftDir !== undefined ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === undefined ? undefined : dirname(projectionDir);
   const revision = fetchRevision(dbPath);
@@ -2249,8 +2263,7 @@ export function submissionFormsBootstrap(
       note:
         `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. ` +
         "No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can " +
-        "crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than " +
-        "this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__bootstrap again.",
+        "crash inside a renderer or produce wrong output. " + bundleNextStep("database"),
       timings: withTotal(timings, started),
     };
   }
@@ -2271,8 +2284,7 @@ export function submissionFormsBootstrap(
           `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it ` +
           `to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. ` +
           "The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and " +
-          "nothing was copied aside. No filing was listed and nothing was rendered. Rebuild and reinstall the Probanda " +
-          "plugin so its bundle matches the migration source, then start a new session.",
+          "nothing was copied aside. No filing was listed and nothing was rendered. " + bundleNextStep("source"),
         timings: withTotal(timings, started),
       };
     }
@@ -2355,7 +2367,8 @@ function renderStateOf(dbPath: string, filingId: number, client: ClientContext):
  * only when all three client fields were supplied (#588 §6): a stamp built from the fallbacks would
  * miss at step 6 anyway. An empty queue still starts a job, which writes `done` at once and so
  * replaces a status file a killed job left behind. After each filing it renders, the job rewrites
- * the matter's pages bootstrap wrote (#1365), with the to-dos the last registry read recorded
+ * that filing's pages and the Litigation Strategy, and after the last every page bootstrap wrote
+ * (#1365), so the work per filing does not grow with the matter's size, with the to-dos the last registry read recorded
  * and the hearing dates its caller read, held in this closure and never persisted (ADR 0013,
  * 2026-10-04 amendment); a page write that fails is recorded on failed[] like a render that fails.
  */
@@ -2365,6 +2378,8 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
   const complete = client.clientName !== undefined && client.clientNo !== undefined && client.matterNo !== undefined;
   // A Job Board with no Writing has no mockup to render.
   const queue = complete ? result.filings.filter((f) => !f.retired_on && !f.job_board_only && f.render_state !== "fresh").map((f) => f.filing_id) : [];
+  const pages = (only?: number) =>
+    writeMatterPages(dbPath, dirname(result.matter_board_path as string), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === undefined ? {} : { only });
   return startRenderJob({
     dbPath,
     ...(result.matter_board_path ? { draftDir: dirname(result.matter_board_path) } : {}),
@@ -2372,10 +2387,9 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
       if (rendered.note) throw new Error(rendered.note);
-      if (result.matter_board_path) {
-        writeMatterPages(dbPath, dirname(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, []);
-      }
+      if (result.matter_board_path) pages(filingId);
     },
     isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh",
+    ...(result.matter_board_path ? { settle: () => pages() } : {}),
   });
 }

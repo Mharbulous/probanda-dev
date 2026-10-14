@@ -10,6 +10,7 @@ import { dispatchTool, type DispatchContext } from "./dispatch.js";
 import { LegalCommonsClient } from "./legal-commons/client.js";
 import { loadLegalCommonsConfig } from "./legal-commons/config.js";
 import { buildToolDefinitions } from "./schema-gen.js";
+import { loadSuggestionBoxConfig } from "./suggestion-box/config.js";
 import { loadTroubleshootConfig } from "./troubleshoot/config.js";
 
 export { buildToolDefinitions } from "./schema-gen.js";
@@ -19,14 +20,16 @@ export { callTool, dispatchTool } from "./dispatch.js";
 // static-credential Supabase project: the layer-3 `legal_commons__*` pool and
 // the `troubleshoot__*` store of generic tooling fixes. Both are matter-free
 // with no per-session login/unlock gate, so the context holds one client per
-// project. Local practice/case data lives in the Probanda plugin's runtime.
+// project. A third namespace, `suggestion_box__*`, posts an expressly submitted
+// suggestion about the plugin as a GitHub issue on the private repo held in its
+// own stored credential. Local practice/case data lives in the Probanda plugin's runtime.
 export async function createDispatchContext(env: NodeJS.ProcessEnv = process.env): Promise<DispatchContext> {
   const poolConfig = await loadLegalCommonsConfig(env);
   const legalCommons = new LegalCommonsClient(poolConfig);
   // The store's env guard compares against the pool's loaded URL and key, so it
   // is handed this config rather than loading the pool's credential a second time.
   const troubleshoot = new LegalCommonsClient(await loadTroubleshootConfig(env, poolConfig));
-  return { legalCommons, troubleshoot };
+  return { legalCommons, troubleshoot, suggestionBox: await loadSuggestionBoxConfig(env) };
 }
 
 export async function start(): Promise<void> {

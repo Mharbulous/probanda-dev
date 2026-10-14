@@ -30,6 +30,7 @@ tools:
   - mcp__plugin_research_commons__legal_commons__find_candidates
   - mcp__plugin_research_commons__legal_commons__lookup_by_citation
   - mcp__plugin_research_commons__legal_commons__resolve_by_id
+  - mcp__plugin_research_commons__legal_commons__search
   - mcp__plugin_research_commons__legal_commons__treatment_chain
   - mcp__remote-devices__plugin_practice_data__skill_source__read
   - mcp__remote-devices__plugin_practice_data__case_data__query
@@ -42,6 +43,7 @@ tools:
   - mcp__remote-devices__plugin_research_commons__legal_commons__find_candidates
   - mcp__remote-devices__plugin_research_commons__legal_commons__lookup_by_citation
   - mcp__remote-devices__plugin_research_commons__legal_commons__resolve_by_id
+  - mcp__remote-devices__plugin_research_commons__legal_commons__search
   - mcp__remote-devices__plugin_research_commons__legal_commons__treatment_chain
 ---
 

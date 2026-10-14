@@ -97,8 +97,31 @@ class LooseThreadTriageTest(unittest.TestCase):
             "## 8. Loose-thread capture",
             "## 9. Complete",
         )
-        self.assertIn("DELETE FROM seeds WHERE id IN (", drop)
+        self.assertIn(
+            "UPDATE seeds SET discarded_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') "
+            "WHERE id IN (3, 7, 12) AND discarded_at IS NULL;",
+            drop,
+        )
         self.assertIn("never `NOT IN`", drop)
+
+    def test_jobs_run_deletes_no_loose_thread(self):
+        drop = section(
+            JOBS_RUN.read_text(encoding="utf-8"),
+            "## 8. Loose-thread capture",
+            "## 9. Complete",
+        )
+        self.assertNotIn("DELETE FROM seeds", drop)
+        self.assertIn("never delete the row instead", drop)
+
+    def test_a_discard_is_confirmed_as_discarded(self):
+        self.assertNotIn("the ids gone", self.triage)
+        self.assertEqual(self.triage.count("confirm-read the lane (the ids discarded, the count)"), 2)
+
+    def test_tooling_threads_go_to_the_suggestion_box(self):
+        box = paragraph(self.triage, "**Tooling threads go to the Suggestion Box.**")
+        self.assertIn("run `references/suggestion-box.md` over every open `tooling` thread that is not deferred", box)
+        self.assertIn("no thread is discarded or sent without the practitioner's answer", box)
+        self.assertTrue((DRAFT / "references" / "suggestion-box.md").is_file())
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Workspace output rule
 
-When a skill writes a file for a litigation matter, the file's kind picks the destination. Data goes to the matter's case-data folder; documents go to the matter's draft folder. There is no third place, with two exceptions, below.
+When a skill writes a file for a litigation matter, the file's kind picks the destination. Data goes to the matter's case-data folder; documents go to the matter's draft folder. There is no third place, with three exceptions, below.
 
 **1. Documents** — anything written for the practitioner or the forum to read: Word (`.docx`/`.doc`) and PDF deliverables, a mockup's presentation copy, and a Markdown draft or report meant for the practitioner to read (a client letter's draft, an overstatement review, a blackline):
 
@@ -28,6 +28,8 @@ The case-data folder is the matter's `..\0. CASE DATA\<matter name>\`, the folde
 **The first exception:** research-agent answers are filed under `6. LAW\`, which `shared/legal-research.md` owns, because tier-3 audits read them there.
 
 **The second exception:** the research agent's internal notes go to `<draft folder>\AI Scratchpad\research-agent\`, written only through `research_filing__write_scratch`, by the practitioner's decision of 2026-10-05, so the practitioner can open them beside the drafts. It is the one folder named for an agent that anything writes into.
+
+**The third exception:** the matter's `ProceduralHistory.md` sits at the top of the matter folder, where `shared/procedural-history.md` puts it, so the practitioner finds it without opening a folder. It is rewritten in place.
 
 No skill creates `4. LAWYER BRIEF` or any `CoWork` folder, and no skill writes matter files to `.claude`, `AI\`, or dated folders named for a specific agent such as `Claude` or `Codex`. Copying the firm's own matter template into a new matter (`/case-data`'s matter skeleton) is not a skill output and is unaffected.
 

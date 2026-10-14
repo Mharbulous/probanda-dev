@@ -81,6 +81,7 @@
         "verify-law"
       ],
       "agents": [
+        "equivalence-checker",
         "legislation-fetcher",
         "research-agent",
         "research-paralegal",
@@ -117,7 +118,8 @@
       "agents": [
         "marshal-facts",
         "rules-improviser",
-        "rules-reorienter"
+        "rules-reorienter",
+        "suggestion-evaluator"
       ],
       "hooks": {
         "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",

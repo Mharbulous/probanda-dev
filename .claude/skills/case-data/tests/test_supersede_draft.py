@@ -153,6 +153,70 @@ class CandidateTests(unittest.TestCase):
         b = registered(31, "2024-05-02 NOCC.pdf", notes=f"[NOT-VERSION-OF:#34 {DATE} strict-test]")
         self.assertEqual(self.pairs([], [a, b]), [{"source_ids": [3, 31]}])
 
+    # -- same_title: two copies named by hand ---------------------------------
+
+    def copies(self, a, b):
+        """The draft and the filed copy of one pair of names, as file names."""
+        return f"2024-04-20 {a} DRAFT.pdf", f"2024-05-02 {b} FILED.pdf"
+
+    def every_route(self, a, b, pages=(10, 12)):
+        """The pairs `candidates` returns for two names in one court folder, by each of its three routes."""
+        draft, filed = (FOLDER + "\\" + name for name in self.copies(a, b))
+        count = {draft: pages[0], filed: pages[1]}
+        row, other = registered(20, draft.split("\\")[1]), registered(21, filed.split("\\")[1])
+        return draft, filed, (self.pairs([draft, filed], [], count), self.pairs([filed], [row], count),
+                              self.pairs([], [row, other], count))
+
+    def test_the_title_words_expand_codes_and_drop_filler_words(self):
+        words = FN["title_words"]
+        self.assertEqual(words("2024-05-02 AFF#1 of Smith re DJ FILED.pdf"),
+                         ({1}, {"affidavit", "smith", "default", "judgment"}))
+        self.assertEqual(words("2024-05-02 RNOCC.pdf"), (set(), {"response", "civil", "claim"}))
+        self.assertEqual(FN["_edits"]("judgment", "judgmetn"), 2)
+        self.assertEqual(FN["_edits"]("smith", "smiths"), 1)
+
+    def test_names_differing_by_a_filler_word_a_code_or_a_typo_pair(self):
+        cases = {
+            "a filler word": ("AFF Smith", "AFF of Smith"),
+            "a code": ("REQ DJ", "REQ default judgment"),
+            "a typo": ("REQ default judgment", "REQ default judgmetn"),
+            "all three": ("AFF Smith DJ", "AFF of Smith default judgmetn"),
+        }
+        for label, (a, b) in cases.items():
+            with self.subTest(label):
+                draft, filed, found = self.every_route(a, b)
+                self.assertTrue(FN["same_title"](draft, filed))
+                self.assertTrue(FN["same_title"](filed, draft))
+                self.assertEqual(found, ([{"newcomers": [draft, filed]}], [{"newcomer": filed, "source_id": 20}],
+                                         [{"source_ids": [20, 21]}]))
+            with self.subTest(label + ", three pages apart"):
+                self.assertEqual(self.every_route(a, b, pages=(10, 13))[2], ([], [], []))
+            with self.subTest(label + ", another court folder"):
+                draft, filed = self.copies(a, b)
+                elsewhere = r"5. COURT FILE#S-2" + "\\" + filed
+                self.assertEqual(self.pairs([FOLDER + "\\" + draft, elsewhere], []), [])
+                self.assertEqual(self.pairs([elsewhere], [registered(20, draft)]), [])
+
+    def test_a_typo_counts_only_in_a_word_of_six_letters_or_more(self):
+        draft, filed, found = self.every_route("AFF Smith", "AFF Smyth")
+        self.assertFalse(FN["same_title"](draft, filed))
+        self.assertEqual(found, ([], [], []))
+
+    def test_names_with_different_numbers_or_unrelated_titles_do_not_pair(self):
+        cases = {
+            "AFF#1 against AFF#2": ("AFF#1 Smith", "AFF#2 Smith"),
+            "a numbered name against an unnumbered one": ("AFF#1 Smith", "AFF Smith"),
+            "an unnumbered name against a numbered one": ("AFF Smith", "AFF#1 Smith"),
+            "two unrelated documents": ("NOCC", "AFF Smith"),
+            "two unrelated documents sharing words": ("REQ default judgment", "NOA default judgment"),
+        }
+        for label, (a, b) in cases.items():
+            with self.subTest(label):
+                draft, filed, found = self.every_route(a, b, pages=(10, 10))
+                self.assertFalse(FN["same_title"](draft, filed))
+                self.assertFalse(FN["same_title"](filed, draft))
+                self.assertEqual(found, ([], [], []))
+
 
 class RankTests(unittest.TestCase):
     def test_filed_over_affirmed_over_draft(self):

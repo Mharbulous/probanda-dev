@@ -470,6 +470,33 @@ def atomic_replace_set(resolved, copies):
         shutil.rmtree(sidecar, ignore_errors=True)
 
 
+def run_statements(con, req):
+    """The other way to supply an execute's writes: a list of statements, each run with the same
+    named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
+    returns is a reason to write nothing: the transaction rolls back before the next write and
+    the reasons are returned. Otherwise each statement's rowcount and rows are returned."""
+    con.isolation_level = None
+    params = req.get('params') or {}
+    results, refused = [], []
+    con.execute("BEGIN")
+    try:
+        for statement in req['statements']:
+            if refused and not statement.get('refuse'):
+                break
+            cur = con.execute(statement['sql'], params)
+            cols = [d[0] for d in cur.description] if cur.description else []
+            rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+            if statement.get('refuse'):
+                refused.extend(next(iter(r.values())) for r in rows)
+            results.append({"rowcount": cur.rowcount, "rows": rows})
+        con.execute("ROLLBACK" if refused else "COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        raise
+    return {"refused": refused} if refused else {"results": results}
+
+
 def do_execute(req, resolved):
     triggers_sql = req.get('triggers_sql')
     if not triggers_sql or not triggers_sql.strip():
@@ -485,21 +512,27 @@ def do_execute(req, resolved):
         # skipped, and a failure raises before any copy-back.
         bootstrap = databases_are_empty(copies)
         con = open_attached(copies, '' if bootstrap else triggers_sql)
+        outcome = {}
         try:
-            try:
-                con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
-            except Exception:
-                con.execute("ROLLBACK")
-                raise
+            if 'statements' in req:
+                outcome = run_statements(con, req)
+            else:
+                try:
+                    con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
+                except Exception:
+                    con.execute("ROLLBACK")
+                    raise
             if bootstrap:
                 con.executescript(triggers_sql)
         finally:
             con.close()
+        if 'refused' in outcome:
+            return {"ok": False, "warning": resolved.get('warning'), **outcome}
         # Commit the mutated binaries to native storage only after a successful
         # commit and a closed connection (I2), and all-or-nothing (I5).
         atomic_replace_set(resolved, copies)
         write_dump(resolved, copies)
-        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning')}
+        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning'), **outcome}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -536,12 +569,23 @@ interface CaseLocateRequest {
   matter_root: string;
 }
 
-interface CaseExecuteRequest {
-  op: "execute";
-  matter_root: string;
-  sql_script: string;
-  triggers_sql: string;
+/** One statement of a statement-list execute. `refuse` marks a guard: a row it returns stops the write. */
+export interface CaseStatement {
+  sql: string;
+  refuse?: boolean;
 }
+
+/** An execute's writes: one script, or a list of statements sharing one set of named params. */
+type CaseExecuteWork =
+  | { sql_script: string }
+  | { statements: CaseStatement[]; params: Record<string, unknown> };
+
+type CaseExecuteRequest = { op: "execute"; matter_root: string; triggers_sql: string } & CaseExecuteWork;
+
+export type CaseStatementsResult =
+  | { ok: true; evidence_sql: string; warning?: string | null; results: Array<{ rowcount: number; rows: Record<string, unknown>[] }> }
+  /** A guard returned rows: nothing was written, and `refused` holds each row's first value. */
+  | { ok: false; refused: unknown[]; warning?: string | null };
 
 // A kill skips atomic_replace_set's undo and its sidecar cleanup, so a kill landing between
 // its renames leaves a mixed set and the sidecar behind (issue #612). The message says so.
@@ -607,15 +651,37 @@ export async function caseDataExecute(
   sqlScript: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<{ ok: true; evidence_sql: string; warning?: string | null }> {
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env) as { ok: true; evidence_sql: string; warning?: string | null };
+}
+
+/**
+ * `caseDataExecute` for a list of statements that share one set of named params: the same lock,
+ * staging, trigger layer, single transaction, commit to disk and evidence.sql dump. The SQL comes
+ * from a script in the /case-data skill tree, never from this server. A refusal writes nothing.
+ */
+export async function caseDataExecuteStatements(
+  matterRoot: string,
+  statements: CaseStatement[],
+  params: Record<string, unknown>,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CaseStatementsResult> {
+  return await executeUnderLock(matterRoot, { statements, params }, env) as CaseStatementsResult;
+}
+
+async function executeUnderLock(
+  matterRoot: string,
+  work: CaseExecuteWork,
+  env: NodeJS.ProcessEnv
+): Promise<{ warning?: string | null }> {
   const triggersSql = caseDataTriggersSql(env);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,
-      sql_script: sqlScript,
       triggers_sql: triggersSql,
-    }, env) as { ok: true; evidence_sql: string; warning?: string | null };
+      ...work,
+    }, env) as { warning?: string | null };
     if (lock.brokeStale) {
       // An execute never legitimately holds the lock for 15 minutes, so a stale
       // one almost certainly means a crashed migrate -- say so rather than

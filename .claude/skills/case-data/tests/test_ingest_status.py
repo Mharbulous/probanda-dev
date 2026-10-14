@@ -167,6 +167,60 @@ class IngestStatusTests(unittest.TestCase):
                     notes="SUPERSEDE-PENDING: possible other version of source #7.")
         self.assertEqual(self.one(r"5. COURT FILE\nocc filed.pdf", h)["pending"], ["supersede"])
 
+    # -- possible_version_of: the id a SUPERSEDE-PENDING marker names ----------
+
+    def marker(self, source_id):
+        return f"SUPERSEDE-PENDING: possible other version of source #{source_id}."
+
+    def test_a_supersede_pending_marker_names_the_possible_version(self):
+        cases = {
+            "the marker alone": (self.marker(34), 34),
+            "a one-digit id": (self.marker(3), 3),
+            "a longer id": (self.marker(340), 340),
+            "after an earlier note": ("Earlier note.\n" + LINKAGE + "\n" + self.marker(34), 34),
+            "before a later note": (self.marker(34) + "\nRegistry stamp on page 1.", 34),
+            "beside a free-text note naming another source":
+                ("DISCREPANCY: possible duplicate of source #7.\n" + self.marker(34), 34),
+            "two markers, the first in the notes": (self.marker(34) + "\n" + self.marker(3), 34),
+        }
+        for status in ("partial", "complete"):
+            for label, (notes, expected) in cases.items():
+                with self.subTest(label, status=status):
+                    self.con.execute("DELETE FROM main.sources")
+                    h = self.place(r"5. COURT FILE\aff filed.pdf", b"filed")
+                    self.source(1, h, r"5. COURT FILE\aff filed.pdf", status, notes=notes)
+                    out = self.one(r"5. COURT FILE\aff filed.pdf", h)
+                    self.assertEqual(out["possible_version_of"], expected)
+                    self.assertIn("supersede", out["pending"])
+
+    def test_a_marker_written_by_the_append_statement_names_the_possible_version(self):
+        h = self.place(r"5. COURT FILE\aff filed.pdf", b"filed")
+        self.source(1, h, r"5. COURT FILE\aff filed.pdf", "partial", notes="Earlier note.")
+        append = fenced(CONVENTIONS_PATH, "sql", "-- pending marker: append")
+        self.con.execute(append, {"marker": self.marker(34), "source_id": 1})
+        self.assertEqual(self.one(r"5. COURT FILE\aff filed.pdf", h)["possible_version_of"], 34)
+
+    def test_no_marker_names_no_possible_version(self):
+        cases = {
+            "no note": None,
+            "another pending marker": LINKAGE,
+            "a free-text note": "DISCREPANCY: possible duplicate of source #34.",
+            "a free-text note of another version": "Possible other version of source #34.",
+            "a decided pair": "[NOT-VERSION-OF:#34 2026-10-05 strict-test]",
+        }
+        for label, notes in cases.items():
+            with self.subTest(label):
+                self.con.execute("DELETE FROM main.sources")
+                h = self.place(r"5. COURT FILE\aff filed.pdf", b"filed")
+                self.source(1, h, r"5. COURT FILE\aff filed.pdf", "partial", notes=notes)
+                out = self.one(r"5. COURT FILE\aff filed.pdf", h)
+                self.assertEqual((out["verdict"], out["possible_version_of"]), ("partial", None))
+                self.assertNotIn("supersede", out["pending"])
+
+    def test_a_file_with_no_record_names_no_possible_version(self):
+        h = self.place("new.pdf", b"new")
+        self.assertIsNone(self.one("new.pdf", h)["possible_version_of"])
+
     # -- a superseded version (supersede-draft.md, design-decisions #64) ------
 
     SUPERSEDED = "DISCREPANCY: rejected filing\n[SUPERSEDED-BY:#34 2026-10-05 practitioner]"

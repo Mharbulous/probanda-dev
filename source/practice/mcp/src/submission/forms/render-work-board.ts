@@ -35,7 +35,8 @@ import {
   type ProposalSlug,
   withNoteUpSteps,
 } from "./proposal-inventory.js";
-import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveTicketClause, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
+import { ticketSourcesHeld } from "./track-source.js";
+import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveSeedClause, liveTicketClause, seedClosedColumns, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WritingLabel } from "./writing-label.js";
 
@@ -73,6 +74,17 @@ interface DeletedTicket {
   id: number;
   title: string;
   filing_id: number | null;
+}
+
+/** A loose thread that left the board without being outlined (schema v75): discarded, or else suggested. */
+export interface DiscardedSeed {
+  id: number;
+  idea: string;
+  filing_id: number | null;
+  /** The minute the practitioner dropped it; null on a suggested thread. */
+  discarded_at: string | null;
+  /** The minute it was sent to Probanda as a suggestion; null when it was not. */
+  suggested_at: string | null;
 }
 
 interface StepRow {
@@ -124,6 +136,16 @@ interface AnswerRow {
   ticket_id: number;
   file_path: string;
   saved_at: string;
+}
+
+interface SourceRow {
+  ticket_id: number;
+  kind: string;
+  label: string;
+  added_at: string;
+  closed_at: string | null;
+  outcome: string | null;
+  reason: string | null;
 }
 
 interface ProposalRow {
@@ -237,8 +259,13 @@ export interface WorkBoardTicket {
    * were saved: each file's path from its `6. LAW` segment, and the minute it was saved. Empty on a
    * database held below v52. */
   answers: { file_path: string; saved_at: string }[];
+  /** The sources to get recorded on this job by `drafting_data__track_source` (schema v76), in the
+   * order they were added: the job's own record beside its steps, never part of its plan. `outcome`
+   * is null while a source is open. Empty on a database held below v76. */
+  sources: { kind: string; label: string; outcome: string | null; reason: string | null }[];
   /** The job's latest recorded activity: the latest of its lock, its done steps, the loose threads
-   * captured from it and the answers saved for it. Null when it has none of them. The idle tag measures from it. */
+   * captured from it, the answers saved for it and the sources to get added to it or closed on it.
+   * Null when it has none of them. The idle tag measures from it. */
   last_activity_at: string | null;
   /** `idle past <N> h` on an In progress job idle longer than the firm's `idle_flag_hours` (N), set by
    * the section builders; absent, which reads as null, within it, with nothing to measure, or with no
@@ -367,6 +394,10 @@ export interface WorkBoardData {
   /** The deleted jobs this section's page draws as struck lines in Completed (schema v54), in id
    * order. Nothing else reads them: the summary and board_card name no deleted job. */
   deleted: { id: number; title: string }[];
+  /** The discarded and suggested loose threads this section's pages draw as lines (schema v75), in id
+   * order: a discarded one struck, a suggested one plain. Nothing else reads them: the summary and
+   * board_card name none. Empty on a database held below v75. */
+  discardedSeeds: Omit<DiscardedSeed, "filing_id">[];
   /** The drafts attached to this board (schema v67, ADR 0042), in id order (fetchAttachments): on a
    * filing's board its own rows, plus, on the proceeding's lowest-id live Writing only, the
    * proceeding's rows with no Writing; on a pre-filing board every row of the proceeding. Empty on a
@@ -386,7 +417,7 @@ export interface WorkBoardData {
 /** One Job Board page (#1365, ADR 0033's 2026-10-05 amendment): the matter's meta and one section, a
  * live filing's or a pre-filing proceeding's. `meta.revision` stays the data line's first key, so
  * readExistingRevision still reads it. The client number and the section's proceeding's forum,
- * registry and file number are "" when unknown. */
+ * registry, file number and style of proceeding are "" when unknown. */
 export interface MatterJobBoardData {
   meta: {
     revision: number;
@@ -397,6 +428,7 @@ export interface MatterJobBoardData {
     forum: string;
     registry: string;
     file_number: string;
+    style_of_cause: string;
   };
   sections: WorkBoardData[];
   /** The matter's dates (ADR 0013, 2026-10-04 amendments): drawn on the page, in no section. */
@@ -543,6 +575,8 @@ export interface ProceedingBoard {
   holders: Map<string, { ticket_id: number; filing_id: number | null }>;
   /** The proceeding's deleted jobs, in id order. They are on no card, in no count and in no summary. */
   deleted: DeletedTicket[];
+  /** The proceeding's discarded and suggested loose threads, in id order. They are in no count and in no summary. */
+  discardedSeeds: DiscardedSeed[];
 }
 
 /** Today's local date, `YYYY-MM-DD`, which a bring-forward date reads against as a string. */
@@ -586,6 +620,10 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
     proceedingIds.length === 0 || !ticketAnswersHeld(dbPath)
       ? []
       : rows<AnswerRow>(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows =
+    proceedingIds.length === 0 || !ticketSourcesHeld(dbPath)
+      ? []
+      : rows<SourceRow>(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
 
   const blockersOf = new Map<number, number[]>(); // blocked_id -> [blocker_id]
   for (const b of blocks) blockersOf.set(b.blocked_id, [...(blockersOf.get(b.blocked_id) ?? []), b.blocker_id]);
@@ -599,6 +637,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const proposalsByTicket = groupBy(proposalRows, (p) => p.ticket_id);
   const capturesByTicket = groupBy(captures, (s) => s.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a) => a.ticket_id);
+  const sourcesByTicket = groupBy(sourceRows, (s) => s.ticket_id);
   const retiredOn = new Map(rows<FilingRetiredRow>(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f) => [f.id, f.retired_on]));
   const edge = (id: number): WorkBoardEdge => {
     const other = ticketById.get(id);
@@ -650,11 +689,13 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
       dispatch_skips: [],
       lock_note: category === "wip" && t.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t.id) ?? []).map((a) => ({ file_path: a.file_path, saved_at: a.saved_at })),
+      sources: (sourcesByTicket.get(t.id) ?? []).map((s) => ({ kind: s.kind, label: s.label, outcome: s.outcome, reason: s.reason })),
       last_activity_at: latestStamp([
         t.locked_at,
         ...(stepsByTicket.get(t.id) ?? []).map((s) => s.done_at),
         ...(capturesByTicket.get(t.id) ?? []).map((s) => s.created),
         ...(answersByTicket.get(t.id) ?? []).map((a) => a.saved_at),
+        ...(sourcesByTicket.get(t.id) ?? []).flatMap((s) => [s.added_at, s.closed_at]),
       ]),
     };
     return { filing_id: t.filing_id, ticket };
@@ -673,7 +714,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
     }
   }
 
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
 }
 
 function columnHeld(dbPath: string, table: string, column: string): boolean {
@@ -681,11 +722,61 @@ function columnHeld(dbPath: string, table: string, column: string): boolean {
 }
 
 /** What makes a loose thread open, given its proceeding's deleted job ids: never outlined, or outlined
- * into a deleted job. fetchOpenSeeds reads with it and the Loose Threads page's Defer write guards with it. */
-export function openSeedCondition(deletedIds: ReadonlySet<number>): { sql: string; params: number[] } {
+ * into a deleted job, and neither discarded nor suggested (schema v75; a database below it holds none
+ * of either). fetchOpenSeeds reads with it and the Loose Threads page's Defer write guards with it. */
+export function openSeedCondition(dbPath: string, deletedIds: ReadonlySet<number>): { sql: string; params: number[] } {
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})`, params: deletedList };
+  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
+}
+
+/** The proceeding's discarded and suggested loose threads, in id order; none on a database held below v75. */
+export function fetchDiscardedSeeds(dbPath: string, proceedingId: number): DiscardedSeed[] {
+  if (seedClosedColumns(dbPath).length < 2) return [];
+  return rows<DiscardedSeed>(
+    dbPath,
+    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
+    [proceedingId]
+  );
+}
+
+/** A section's discarded and suggested loose threads, as its page draws them. */
+const discardedSeedLines = (seeds: readonly DiscardedSeed[]): WorkBoardData["discardedSeeds"] =>
+  seeds.map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
+
+/** A loose thread that is not open: discarded, else suggested, else outlined into a job that is not deleted. */
+export interface ResolvedSeed {
+  id: number;
+  idea: string;
+  how: "discarded" | "suggested" | "job";
+  /** `discarded_at`, `suggested_at`, or the job's `created`: `seeds` stores no time for the outlining,
+   * and the job is created in the script that sets `charted_into`. */
+  at: string;
+  /** The job it was outlined into, and that job's title; null unless `how` is `job`. */
+  job_id: number | null;
+  job_title: string | null;
+}
+
+/** The proceeding's resolved loose threads, newest first, ties by id: the Loose Threads page's Resolved
+ * section. A thread outlined into a deleted job is open again, so the join keeps live jobs only. A
+ * database held below v75 lists its outlined threads. */
+export function fetchResolvedSeeds(dbPath: string, proceedingId: number): ResolvedSeed[] {
+  const closed = seedClosedColumns(dbPath);
+  const column = (name: string): string => (closed.includes(name) ? `s.${name}` : `NULL AS ${name}`);
+  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  return rows<{ id: number; idea: string; discarded_at: string | null; suggested_at: string | null; job_id: number | null; job_title: string | null; job_created: string | null }>(
+    dbPath,
+    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
+     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
+     WHERE s.proceeding_id = ? AND (${resolved})`,
+    [proceedingId]
+  )
+    .map((r): ResolvedSeed => {
+      if (r.discarded_at !== null) return { id: r.id, idea: r.idea, how: "discarded", at: r.discarded_at, job_id: null, job_title: null };
+      if (r.suggested_at !== null) return { id: r.id, idea: r.idea, how: "suggested", at: r.suggested_at, job_id: null, job_title: null };
+      return { id: r.id, idea: r.idea, how: "job", at: r.job_created as string, job_id: r.job_id, job_title: r.job_title };
+    })
+    .sort((a, b) => (a.at === b.at ? a.id - b.id : a.at < b.at ? 1 : -1));
 }
 
 /** Every open loose thread in one proceeding, in id order: the board's and the Loose Threads page's one
@@ -695,7 +786,7 @@ export function fetchOpenSeeds(
   proceedingId: number,
   deletedIds: ReadonlySet<number> = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d) => d.id))
 ): Omit<WorkBoardSeed, "from_filing">[] {
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(dbPath, deletedIds);
   // The ranking (schema v66); a database below it holds every loose thread unranked.
   const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
   // The job description (schema v70); a database below it holds none.
@@ -1474,6 +1565,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     tickets: gated,
     seeds,
     deleted: board.deleted.filter((d) => onFilingBoard(d.filing_id, ctx.filing.id)).map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
@@ -1519,6 +1611,7 @@ function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
     tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered, idleHours)),
     seeds: board.seeds.filter((s) => s.filing_id === own).map((s) => ({ ...s, from_filing: null })),
     deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s) => s.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: [],
@@ -1552,6 +1645,7 @@ export function buildPreFilingBoardData(
     tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered, idleHours)),
     seeds: board.seeds.map((s) => ({ ...s, from_filing: null })),
     deleted: board.deleted.map((d) => ({ id: d.id, title: d.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: [],

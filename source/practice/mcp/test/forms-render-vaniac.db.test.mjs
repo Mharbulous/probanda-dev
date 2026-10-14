@@ -16,7 +16,7 @@ const { renderWrittenArguments } = await import("../build/submission/forms/rende
 const { fetchReviewState, renderWitnessStatements } = await import("../build/submission/forms/render-vaniac-submissions.js");
 const { currentSchemaVersion } = await import("../build/submission/migrate.js");
 
-// Ticket 2026-09-01: a submission's body opens with its own bold contention
+// Ticket 2026-09-01: a submission's body opens with its own contention
 // paragraph, followed by several standalone numbered paragraphs (one per
 // postulate/proposition it rests on or requires). The contention sentence
 // also prints elsewhere in the document (the Counsel Brief's submission
@@ -60,12 +60,12 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     // of law -- issue #321 moves ⚠️/🚨 off the contention line onto each
     // statement's own block-quote line (they no longer collapse onto one
     // shared line the way the old argument-level marker string did). The
-    // block's first line is the submission's own bold contention paragraph.
+    // block's first line is the submission's own contention paragraph.
     const submission1Block = submissionBlock(writtenArgument, 1);
     assert.match(
       submission1Block.split("\n")[0],
-      /^\d+\. \*\*The Respondent owes \$150,000 under the plain words of the Asset Purchase Agreement\.\*\*/,
-      "expected the submission's first paragraph to be its own bold contention"
+      /^\d+\. The Respondent owes \$150,000 under the plain words of the Asset Purchase Agreement\./,
+      "expected the submission's first paragraph to be its own contention"
     );
     assert.doesNotMatch(
       submission1Block.split("\n")[0],
@@ -229,7 +229,7 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     assert.match(counselBrief, /## Held in reserve/, "expected the Held in reserve section heading");
     assert.match(
       counselBrief,
-      /^R1\. \*\*A reserved fallback argument, held for reply\.\*\*.*🂡 <!-- submission_id 3 -->$/m,
+      /^R1\. A reserved fallback argument, held for reply\..*🂡 <!-- submission_id 3 -->$/m,
       "expected the reserved submission R-numbered, still marked 🂡"
     );
 
@@ -349,7 +349,7 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
 
     const writtenArgument = replaceStamp(result.documents.find((d) => d.file_name === "Written Arguments.md").markdown);
     assert.doesNotMatch(writtenArgument, /a reserved account not yet deployed|A reserved fallback argument/, "expected reserved content gone from the filed face");
-    assert.match(writtenArgument, /^1\. \*\*The Respondent owes \$150,000 under the plain words of the Asset Purchase Agreement\.\*\*$/m, "expected the contention sentence as the submission's own bold opening paragraph, even in filed mode");
+    assert.match(writtenArgument, /^1\. The Respondent owes \$150,000 under the plain words of the Asset Purchase Agreement\.$/m, "expected the contention sentence as the submission's own opening paragraph, even in filed mode");
     assert.match(writtenArgument, /contractual interpretation principles/, "expected submission 1's law assertion to survive as its own paragraph");
     assertMatchesGolden("written-argument-filed", writtenArgument);
 
@@ -470,14 +470,14 @@ test("a submission with no linked facts and no linked law still renders a number
     const submission1Block = submissionBlock(writtenArgument, 1);
     assert.equal(
       submission1Block.trim(),
-      "1. **An empty submission with nothing linked yet.** 🧾📚 <!-- submission_id 1 -->",
+      "1. An empty submission with nothing linked yet. 🧾📚 <!-- submission_id 1 -->",
       "expected the empty submission's contention as a numbered paragraph, carrying 🧾 and 📚 for its missing facts and law"
     );
 
     const submission2Line = writtenArgument.split("\n").find((l) => l.includes("<!-- submission_id 2 -->"));
     assert.match(
       submission2Line,
-      /^2\. \*\*A submission with real content\.\*\* 🧾/,
+      /^2\. A submission with real content\. 🧾/,
       "expected submission 2's contention to consume paragraph 2, proving submission 1's contention consumed paragraph 1"
     );
     const lawLine = writtenArgument.split("\n").find((l) => l.includes("<!-- law_assertion_id 1 -->"));
@@ -489,7 +489,7 @@ test("a submission with no linked facts and no linked law still renders a number
     assert.doesNotMatch(filedWrittenArgument, /🧾|📚|submission_id/, "expected marker glyphs and id-trace comments stripped in filed mode");
     assert.match(
       filedWrittenArgument,
-      /^1\. \*\*An empty submission with nothing linked yet\.\*\*$/m,
+      /^1\. An empty submission with nothing linked yet\.$/m,
       "expected the empty submission's contention to survive as filed-face paragraph 1"
     );
     assert.match(
@@ -540,7 +540,7 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
     const decided = render("mockup");
     for (const type of ["Written_arguments", "Counsel_brief"]) {
       const line = contentionLine(decided, type);
-      assert.match(line, /^1\. \*\*The tribunal has jurisdiction\.\*\* \(no stated fact needed, per counsel 2026-10-04\)/, `${type}: ${line}`);
+      assert.match(line, /^1\. The tribunal has jurisdiction\. \(no stated fact needed, per counsel 2026-10-04\)/, `${type}: ${line}`);
       assert.doesNotMatch(line, /🧾/, `${type}: ${line}`);
     }
     assert.deepEqual(factualBasisEntries(decided), [], "no factual-basis key is recorded");
@@ -548,13 +548,13 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
     const filed = render("filed");
     assertFiledFaceDocumentsClean(filed.documents);
     const filedWrittenArgument = filed.documents.find((d) => d.document_type === "Written_arguments").markdown;
-    assert.match(filedWrittenArgument, /^1\. \*\*The tribunal has jurisdiction\.\*\*$/m);
+    assert.match(filedWrittenArgument, /^1\. The tribunal has jurisdiction\.$/m);
     assert.doesNotMatch(filedWrittenArgument, /no stated fact needed/);
 
     await submissionDataExecute(f.dbPath, "UPDATE submissions SET contention = 'The tribunal has jurisdiction over the counterclaim.' WHERE id = 1;");
     const reworded = render("mockup");
     const line = contentionLine(reworded, "Written_arguments");
-    assert.match(line, /^1\. \*\*The tribunal has jurisdiction over the counterclaim\.\*\* 🧾/, line);
+    assert.match(line, /^1\. The tribunal has jurisdiction over the counterclaim\. 🧾/, line);
     assert.doesNotMatch(line, /no stated fact needed/);
     assert.ok(factualBasisEntries(reworded).length > 0, "the factual-basis key is recorded again");
   } finally {
@@ -594,7 +594,7 @@ test("a submission with a recorded no-facts-needed decision and a linked fact pr
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Law", clientNo: "9999", matterNo: "L9999" });
     for (const type of ["Written_arguments", "Counsel_brief"]) {
       const line = result.documents.find((d) => d.document_type === type).markdown.split("\n").find((l) => l.includes("<!-- submission_id 1 -->"));
-      assert.match(line, /^1\. \*\*The tribunal has jurisdiction\.\*\*/, `${type}: ${line}`);
+      assert.match(line, /^1\. The tribunal has jurisdiction\./, `${type}: ${line}`);
       assert.doesNotMatch(line, /no stated fact needed|🧾/, `${type}: ${line}`);
     }
   } finally {
@@ -646,8 +646,8 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     // Neither submission links a proposition: 📚 on each contention line, and no 🧐 beside it.
     const bare = render("mockup");
     for (const type of ["Written_arguments", "Counsel_brief"]) {
-      assert.match(contentionLine(bare, type, 1), /^1\. \*\*The respondent received the notice\.\*\* 📚 <!-- submission_id 1 -->$/, type);
-      assert.match(contentionLine(bare, type, 2), /^\d+\. \*\*The notice was delivered on time\.\*\* 📚 <!-- submission_id 2 -->$/, type);
+      assert.match(contentionLine(bare, type, 1), /^1\. The respondent received the notice\. 📚 <!-- submission_id 1 -->$/, type);
+      assert.match(contentionLine(bare, type, 2), /^\d+\. The notice was delivered on time\. 📚 <!-- submission_id 2 -->$/, type);
     }
     assert.deepEqual(propositionEntries(bare), ["proposition:submissions:1", "proposition:submissions:2"]);
 
@@ -655,7 +655,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     await submissionDataExecute(f.dbPath, "INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);");
     const linked = render("mockup");
     const linkedLine = contentionLine(linked, "Written_arguments", 1);
-    assert.match(linkedLine, /^1\. \*\*The respondent received the notice\.\*\* 🧐 <!-- submission_id 1 -->$/, linkedLine);
+    assert.match(linkedLine, /^1\. The respondent received the notice\. 🧐 <!-- submission_id 1 -->$/, linkedLine);
     assert.deepEqual(propositionEntries(linked), ["proposition:submissions:2"]);
 
     // Counsel records that submission 2 needs no stated law: no 📚, the tag on the mockup only.
@@ -667,7 +667,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     const decided = render("mockup");
     for (const type of ["Written_arguments", "Counsel_brief"]) {
       const line = contentionLine(decided, type, 2);
-      assert.match(line, /^\d+\. \*\*The notice was delivered on time\.\*\* \(no stated law needed, per counsel 2026-10-06\)/, `${type}: ${line}`);
+      assert.match(line, /^\d+\. The notice was delivered on time\. \(no stated law needed, per counsel 2026-10-06\)/, `${type}: ${line}`);
       assert.doesNotMatch(line, /📚/, `${type}: ${line}`);
     }
     assert.deepEqual(propositionEntries(decided), [], "no proposition key is recorded");
@@ -675,14 +675,14 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     const filed = render("filed");
     assertFiledFaceDocumentsClean(filed.documents);
     const filedWrittenArgument = filed.documents.find((d) => d.document_type === "Written_arguments").markdown;
-    assert.match(filedWrittenArgument, /^\d+\. \*\*The notice was delivered on time\.\*\*$/m);
+    assert.match(filedWrittenArgument, /^\d+\. The notice was delivered on time\.$/m);
     assert.doesNotMatch(filedWrittenArgument, /no stated law needed|📚/);
 
     // Rewording the contention clears the decision, so 📚 returns.
     await submissionDataExecute(f.dbPath, "UPDATE submissions SET contention = 'The notice was delivered before the deadline.' WHERE id = 2;");
     const reworded = render("mockup");
     const line = contentionLine(reworded, "Written_arguments", 2);
-    assert.match(line, /^\d+\. \*\*The notice was delivered before the deadline\.\*\* 📚 <!-- submission_id 2 -->$/, line);
+    assert.match(line, /^\d+\. The notice was delivered before the deadline\. 📚 <!-- submission_id 2 -->$/, line);
     assert.deepEqual(propositionEntries(reworded), ["proposition:submissions:2"], "the proposition key is recorded again");
   } finally {
     f.cleanup();

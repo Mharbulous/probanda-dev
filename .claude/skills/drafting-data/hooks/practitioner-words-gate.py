@@ -98,6 +98,9 @@ persisted to a file. A ticket_steps.text is also exempt when it equals, characte
 character, a Proposal item such a result printed: the item on a detail line under Proposed
 or Shelved, a string on a job's `keys:` line, or a board_data proposal's item (a
 grouped intake job's steps, jobs-create.md §3e). An item never passes as a title or intent.
+A tickets.title or ticket_steps.text is also exempt when it is an unbroken run of a job card's own
+words such a result printed: the card's head line, its intent or one of its steps (/draft's pickup
+review shortens a title or splits a step by cutting, adding no word). Never a tickets.intent.
 No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
 The gate cannot see which job holds a key, so this trusts the record as the title exemption
 does: printed by a drafting_forms__* result in this session.
@@ -648,14 +651,36 @@ def summary_items(text):
     return items
 
 
+JOB_HEAD = re.compile(r"^- Job #\d+ (.+)$")
+STEP_MARK = re.compile(r"(?:^| · )\d+ [☐☑] ")
+DONE_STAMP = re.compile(r" \([^()]*\)$")
+
+
+def card_texts(text):
+    """Every job card's own words a card prints: the head line after `- Job #<id> ` (the title and
+    its chips), the `  intent: ` text, and each step's text on the `  steps: ` line, its done stamp
+    dropped. /draft's pickup review cuts a short title or a split step from these
+    (draft/references/job-session.md, the pickup review)."""
+    texts = set()
+    for line in text.split("\n"):
+        head = JOB_HEAD.match(line)
+        if head:
+            texts.add(head.group(1))
+        elif line.startswith("  intent: "):
+            texts.add(line[len("  intent: "):])
+        elif line.startswith("  steps: "):
+            texts |= {DONE_STAMP.sub("", s) for s in STEP_MARK.split(line[len("  steps: "):]) if s}
+    return texts
+
+
 def proposal_text(result_text):
-    """(Proposal titles, Proposal items) in one tool result's JSON text: a board_data-shaped
-    `proposals` list's, and those printed in any string value, such as a board_card result's
-    `card`."""
+    """(Proposal titles, Proposal items, job card texts) in one tool result's JSON text: a
+    board_data-shaped `proposals` list's, and those printed in any string value, such as a
+    board_card result's `card`."""
     try:
-        stack, titles, items = [json.loads(result_text)], set(), set()
+        stack, titles, items, cards = [json.loads(result_text)], set(), set(), set()
     except ValueError:
-        return set(), set()
+        return set(), set(), set()
     while stack:
         node = stack.pop()
         if isinstance(node, dict):
@@ -669,7 +694,8 @@ def proposal_text(result_text):
         elif isinstance(node, str):
             titles |= summary_titles(node)
             items |= summary_items(node)
-    return titles, items
+            cards |= card_texts(node)
+    return titles, items, cards
 
 
 def words(text):
@@ -703,7 +729,7 @@ def read_transcript(path):
     SendUserMessage messages) between the previous practitioner turn and the last, and the
     scripts of drafting_data__execute calls since the last practitioner turn that a result
     has answered)."""
-    turns, widget_values, forms_calls, titles, items = [], set(), set(), set(), set()
+    turns, widget_values, forms_calls, titles, items, cards = [], set(), set(), set(), set(), set()
     pending, confirmed = set(), set()
     visible, proposal = [], []
     last_raw, last_fences = "", ()
@@ -745,9 +771,10 @@ def read_transcript(path):
                         result = text_of(part.get("content"))
                         if result.startswith("<persisted-output>"):
                             result = text_of(rec.get("toolUseResult"))  # the full result the stub stands in for
-                        printed_titles, printed_items = proposal_text(result)
+                        printed_titles, printed_items, printed_cards = proposal_text(result)
                         titles |= printed_titles
                         items |= printed_items
+                        cards |= printed_cards
                 origin = rec.get("origin")
                 if rec.get("isMeta") or not isinstance(origin, dict) or origin.get("kind") != "human":
                     continue
@@ -783,7 +810,7 @@ def read_transcript(path):
                         proposal = visible if approval(turns[-1]) else []
                         visible = []
     # a block no turn followed is dropped
-    return turns, titles, items, confirmed, proposal, last_raw, last_fences, executed
+    return turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed
 
 
 def norm(text):
@@ -876,7 +903,7 @@ def main():
         return refuse("the hook input names no transcript_path, so there is no record of "
                       "what the practitioner said to check the job's wording against.")
     try:
-        turns, titles, items, confirmed, proposal, last_raw, last_fences, executed = read_transcript(path)
+        turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
     if wording and any(wrote_wording(earlier) for earlier in executed):
@@ -890,6 +917,10 @@ def main():
     # never passes as counsel's suppression note, which is only ever their own words.
     written = [(f, v, flagged) for f, v, flagged in written
                if (f == NOTE_FIELD or v not in titles) and not (f == STEP_TEXT and v in items)]
+    # A title or step cut from a job card's own printed words adds none (/draft's pickup review).
+    cut = {norm(c) for c in cards}
+    written = [(f, v, flagged) for f, v, flagged in written
+               if not (f in ("title", STEP_TEXT) and any(norm(v) in c for c in cut))]
     if not written:
         return 0
     if not turns:
@@ -930,7 +961,8 @@ def main():
                   "only those words, one block per value, and pass once the practitioner replies "
                   "after the block. A title or intent the session showed in its visible reply passes "
                   "when the exact text stood there, the next and last practitioner turn is a bare "
-                  "yes, and the write sets tickets.session_proposed = 1. For wording the session "
+                  "yes, and the write sets tickets.session_proposed = 1. A title or step cut from "
+                  "a job card a drafting_forms__ result printed, no word added, passes. For wording the session "
                   "proposes: Show the proposed wording in one code block, introduce it with the "
                   "fixed sentence in shared/paralegal-posture.md section 3, and ask the practitioner "
                   "to copy it, edit it if needed, and paste it back.")

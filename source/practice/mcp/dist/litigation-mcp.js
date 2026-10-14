@@ -1,4 +1,4 @@
-// build-stamp: 516d79291d07
+// build-stamp: 8942d6e48a35
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6260,7 +6260,7 @@ var require_discriminator = __commonJS({
       error: error2,
       code(cxt) {
         const { gen, data, schema, parentSchema, it: it3 } = cxt;
-        const { oneOf: oneOf2 } = parentSchema;
+        const { oneOf: oneOf3 } = parentSchema;
         if (!it3.opts.discriminator) {
           throw new Error("discriminator: requires discriminator option");
         }
@@ -6269,7 +6269,7 @@ var require_discriminator = __commonJS({
           throw new Error("discriminator: requires propertyName");
         if (schema.mapping)
           throw new Error("discriminator: mapping is not supported");
-        if (!oneOf2)
+        if (!oneOf3)
           throw new Error("discriminator: requires oneOf keyword");
         const valid = gen.let("valid", false);
         const tag = gen.const("tag", (0, codegen_1._)`${data}${(0, codegen_1.getProperty)(tagName)}`);
@@ -6297,8 +6297,8 @@ var require_discriminator = __commonJS({
           const oneOfMapping = {};
           const topRequired = hasRequired(parentSchema);
           let tagRequired = true;
-          for (let i3 = 0; i3 < oneOf2.length; i3++) {
-            let sch = oneOf2[i3];
+          for (let i3 = 0; i3 < oneOf3.length; i3++) {
+            let sch = oneOf3[i3];
             if ((sch === null || sch === void 0 ? void 0 : sch.$ref) && !(0, util_1.schemaHasRulesButRef)(sch, it3.self.RULES)) {
               const ref = sch.$ref;
               sch = compile_1.resolveRef.call(it3.self, it3.schemaEnv.root, it3.baseId, ref);
@@ -77323,6 +77323,18 @@ function caseDataToolDefinitions() {
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
     {
+      name: caseDataPrefixed("ingest_authority"),
+      description: "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "result_path", type: "str" },
+        { name: "file_path", type: "str" },
+        { name: "file_hash", type: "str" },
+        { name: "bundled_pages", type: "str" }
+      ], ["matter_root", "result_path", "file_path", "file_hash"]),
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
       name: caseDataPrefixed("migrate"),
       description: "Upgrade a matter's case databases to the current schema. Two-phase and gated: mode 'plan' dry-runs the whole migration chain on temp copies and returns a plan_token plus the exact user_confirmation string the practitioner must approve; mode 'apply' requires that plan_token and that confirmation, takes a host-local backup, and commits all three databases together or none. mode 'restore' reverts to a backup set; mode 'backups' lists them. This is the only tool that bypasses the schema-version guard, and the only one that may run against an out-of-date database. Run plan first, always. Only the /case-data skill may call this tool -- invoke it (Skill: practice:case-data) and follow its operations/migrate.md, which runs this tool through the migration-runner subagent rather than inline.",
       inputSchema: objectSchema([
@@ -78077,6 +78089,44 @@ function submissionDataToolDefinitions() {
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
+      name: submissionDataPrefixed("track_source"),
+      description: "Record the sources to get on the job (a tickets row) this session holds, and close them, in one call. A source to get is a decision, an enactment or a file the job's work has named and is about to retrieve or read; it is the job's own record beside its steps and never a step. add takes {kind, label} items, kind one of decision, legislation, file, label one line of at most 200 characters: a citation, an instrument's title and citation, or a file name, with no statement of law, no deadline and no date other than the one inside a citation. Adding an item already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's database needs the v76 migration, and carry on with the work). Returns ticket_id, outcome, sources (every source on the job, open and closed), open, unknown (close items naming no source on the job), locked_by, status, rejected_at and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+          add: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { kind: { type: "string", enum: ["decision", "legislation", "file"] }, label: { type: "string" } },
+              required: ["kind", "label"],
+              additionalProperties: false
+            }
+          },
+          close: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                kind: { type: "string", enum: ["decision", "legislation", "file"] },
+                label: { type: "string" },
+                outcome: { type: "string", enum: ["got", "not_retrieved"] },
+                reason: { type: "string" }
+              },
+              required: ["kind", "label", "outcome"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description: "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. Only the status (back to queued) and the lock change; the plan, its approval, the steps and their stamps, scope and proposals stay. By default the write matches only a wip job holding this session's token. expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with jobs), releases another session's job instead, and the write lands only while that holder is still on the row and the job is not shelved; pass it only after the practitioner chose Return it to Ready on /draft's take-over form. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: released (changes 1), taken_over (another holder is on the row, or with expected_holder the holder changed since the card was read: nothing was written; re-render), shelved (no lock, rejected_at set), completed, no_match (the guards matched nothing, and the returned status shows why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at and a note.",
       inputSchema: {
@@ -78190,7 +78240,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78213,7 +78263,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("bootstrap"),
-      description: "Session entry for every submissions skill: checks the database's schema version and lists every filing with its title, lifecycle, render_state and whatever mockup paths are already on disk. Renders nothing and returns no markdown -- call drafting_forms__render on the one filing the practitioner confirms, to read its content and write its mockups. filings comes back in the order to present them in; present that order as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with no paths. A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with job_board_only true, no paths and no render_state: it is not a Writing, has a Job Board page and no view page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind schema version 42, the oldest this runtime reads, migration_required is true and the response carries no filings at all (issue 351) -- call drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- rebuild/reinstall the plugin, not drafting_data__migrate. Every response also reports build_stamp and current_build_stamp; server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also carries schema_target_version (what the migration source would apply), bundle_schema_version (what this bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812). When a migration is due but would exceed bundle_schema_version, migration_withheld is true, migration_required is false, nothing is migrated and note says so. On success it also carries session_token (ADR 0009, issue 609) -- a FRESH random identity minted for THIS session on every bootstrap call, which a job-driven /draft session uses as tickets.locked_by and passes to every later drafting_forms__render so it keeps one identity throughout. It is deliberately not derived from the server process: under Cowork one server is shared by every session on the machine, so a process-derived token could not tell two sessions apart. Optional unattended true (an unattended /draft run, which the practitioner launched and left) mints the token as sess-unattended-<hex> instead of sess-<hex>, so the Job Board shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose locked_at precedes it was locked before this session existed and belongs to another session whatever its locked_by says (see /drafting-data's jobs.md section 1). And legacy_workboard_artifact_url -- the hosted Work Board URL this matter still records, or null, whose one-time cleanup /draft step 2 offers. Optional draft_dir (issue 585) is the absolute host path of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no Writing, never more than one Writing on a page (ADR 0033, 2026-10-05 amendments): `Job Board <id>.html` and `Job Board - proceeding <id>.html`, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. job_board_paths lists them, [{filing_id, proceeding_id, path}] in page order, filing_id null on a proceeding's page; bootstrap returns no job_board_path. Beside them it writes each view page (ADR 0033, 2026-10-07 amendment), `<page name> - Job Board <id>.html` per live Writing, and returns view_page_paths [{name, filing_id, path}], null without draft_dir. A session never reads a page (shared/html-pages.md): the board's content comes from a render naming Work_board. On success pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet chosen -- render one with drafting_forms__render's proceeding_id. Without draft_dir nothing is written and matter_board_path and job_board_paths are null. A draft_dir that is not an existing 0. DRAFT folder, or lies in a privileged or disclosed tree, is refused, and so is an existing Litigation Strategy.html or Job Board page that does not carry its page's marker, before any page is written. Each page is written atomically (temp file, then rename); a page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. On success bootstrap also starts a background job (issue 589) that renders every listed filing whose render_state is not fresh, one at a time, and rewrites the matter's pages after each, when client_name, client_no and matter_no were all given, and returns background_job: its status (state running, done, stalled, aborted or idle; queued, done and failed filing ids; joined true when another job already held the matter). Nothing waits on it, and the filing picker can be answered at once. timings carries per-phase durations in ms, for profiling.",
+      description: "Session entry for every submissions skill: checks the database's schema version and lists every filing with its title, lifecycle, render_state and whatever mockup paths are already on disk. Renders nothing and returns no markdown -- call drafting_forms__render on the one filing the practitioner confirms, to read its content and write its mockups. filings comes back in the order to present them in; present that order as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with no paths. A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with job_board_only true, no paths and no render_state: it is not a Writing, has a Job Board page and no view page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind schema version 42, the oldest this runtime reads, migration_required is true and the response carries no filings at all (issue 351) -- call drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- never drafting_data__migrate; the note names the next step for its case: fully restart the app when the plugin installed on disk is a newer build than the one running, otherwise run /repackage, reinstall the plugin and fully restart the app. Every response also reports build_stamp and current_build_stamp; server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also carries schema_target_version (what the migration source would apply), bundle_schema_version (what this bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812). When a migration is due but would exceed bundle_schema_version, migration_withheld is true, migration_required is false, nothing is migrated and note says so. On success it also carries session_token (ADR 0009, issue 609) -- a FRESH random identity minted for THIS session on every bootstrap call, which a job-driven /draft session uses as tickets.locked_by and passes to every later drafting_forms__render so it keeps one identity throughout. It is deliberately not derived from the server process: under Cowork one server is shared by every session on the machine, so a process-derived token could not tell two sessions apart. Optional unattended true (an unattended /draft run, which the practitioner launched and left) mints the token as sess-unattended-<hex> instead of sess-<hex>, so the Job Board shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose locked_at precedes it was locked before this session existed and belongs to another session whatever its locked_by says (see /drafting-data's jobs.md section 1). And legacy_workboard_artifact_url -- the hosted Work Board URL this matter still records, or null, whose one-time cleanup /draft step 2 offers. Optional draft_dir (issue 585) is the absolute host path of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no Writing, never more than one Writing on a page (ADR 0033, 2026-10-05 amendments): `Job Board <id>.html` and `Job Board - proceeding <id>.html`, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. job_board_paths lists them, [{filing_id, proceeding_id, path}] in page order, filing_id null on a proceeding's page; bootstrap returns no job_board_path. Beside them it writes each view page (ADR 0033, 2026-10-07 amendment), `<page name> - Job Board <id>.html` per live Writing, and returns view_page_paths [{name, filing_id, path}], null without draft_dir. A session never reads a page (shared/html-pages.md): the board's content comes from a render naming Work_board. On success pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet chosen -- render one with drafting_forms__render's proceeding_id. Without draft_dir nothing is written and matter_board_path and job_board_paths are null. A draft_dir that is not an existing 0. DRAFT folder, or lies in a privileged or disclosed tree, is refused, and so is an existing Litigation Strategy.html or Job Board page that does not carry its page's marker, before any page is written. Each page is written atomically (temp file, then rename); a page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. On success bootstrap also starts a background job (issue 589) that renders every listed filing whose render_state is not fresh, one at a time, and rewrites the matter's pages after each, when client_name, client_no and matter_no were all given, and returns background_job: its status (state running, done, stalled, aborted or idle; queued, done and failed filing ids; joined true when another job already held the matter). Nothing waits on it, and the filing picker can be answered at once. timings carries per-phase durations in ms, for profiling.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78231,7 +78281,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("open_session"),
-      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its coclerk.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. coclerk.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or coclerk.json is absent) and names /case-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user coclerk.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
+      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its coclerk.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. coclerk.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or coclerk.json is absent) and names /case-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user coclerk.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the case-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
       inputSchema: {
         type: "object",
         properties: {
@@ -80803,6 +80853,33 @@ def atomic_replace_set(resolved, copies):
         shutil.rmtree(sidecar, ignore_errors=True)
 
 
+def run_statements(con, req):
+    """The other way to supply an execute's writes: a list of statements, each run with the same
+    named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
+    returns is a reason to write nothing: the transaction rolls back before the next write and
+    the reasons are returned. Otherwise each statement's rowcount and rows are returned."""
+    con.isolation_level = None
+    params = req.get('params') or {}
+    results, refused = [], []
+    con.execute("BEGIN")
+    try:
+        for statement in req['statements']:
+            if refused and not statement.get('refuse'):
+                break
+            cur = con.execute(statement['sql'], params)
+            cols = [d[0] for d in cur.description] if cur.description else []
+            rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+            if statement.get('refuse'):
+                refused.extend(next(iter(r.values())) for r in rows)
+            results.append({"rowcount": cur.rowcount, "rows": rows})
+        con.execute("ROLLBACK" if refused else "COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        raise
+    return {"refused": refused} if refused else {"results": results}
+
+
 def do_execute(req, resolved):
     triggers_sql = req.get('triggers_sql')
     if not triggers_sql or not triggers_sql.strip():
@@ -80818,21 +80895,27 @@ def do_execute(req, resolved):
         # skipped, and a failure raises before any copy-back.
         bootstrap = databases_are_empty(copies)
         con = open_attached(copies, '' if bootstrap else triggers_sql)
+        outcome = {}
         try:
-            try:
-                con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
-            except Exception:
-                con.execute("ROLLBACK")
-                raise
+            if 'statements' in req:
+                outcome = run_statements(con, req)
+            else:
+                try:
+                    con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
+                except Exception:
+                    con.execute("ROLLBACK")
+                    raise
             if bootstrap:
                 con.executescript(triggers_sql)
         finally:
             con.close()
+        if 'refused' in outcome:
+            return {"ok": False, "warning": resolved.get('warning'), **outcome}
         # Commit the mutated binaries to native storage only after a successful
         # commit and a closed connection (I2), and all-or-nothing (I5).
         atomic_replace_set(resolved, copies)
         write_dump(resolved, copies)
-        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning')}
+        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning'), **outcome}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -80886,14 +80969,20 @@ function caseDataTriggersSql(env) {
   return readFileSync6(path, "utf-8");
 }
 async function caseDataExecute(matterRoot, sqlScript, env = process.env) {
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env);
+}
+async function caseDataExecuteStatements(matterRoot, statements, params, env = process.env) {
+  return await executeUnderLock(matterRoot, { statements, params }, env);
+}
+async function executeUnderLock(matterRoot, work, env) {
   const triggersSql = caseDataTriggersSql(env);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,
-      sql_script: sqlScript,
-      triggers_sql: triggersSql
+      triggers_sql: triggersSql,
+      ...work
     }, env);
     if (lock.brokeStale) {
       result.warning = [
@@ -81387,6 +81476,60 @@ function resolveParticipant(matterRoot, name, env = process.env) {
   } catch (err) {
     return { status: "unavailable", reason: `resolving the participant failed: ${err.message}` };
   }
+}
+
+// src/case/ingest-authority.ts
+var DRIVER2 = String.raw`
+import json, sys
+
+
+def main():
+    request = json.loads(sys.stdin.read())
+    try:
+        from ingest_authority import plan
+        sys.stdout.write(json.dumps({"ok": True, "result": plan(request)}))
+    except BaseException as exc:
+        sys.stdout.write(json.dumps({"ok": False, "error": "%s: %s" % (type(exc).__name__, exc)}))
+
+
+main()
+`.trim();
+async function ingestAuthority(request2, env = process.env) {
+  const parsed = runPythonDriver({
+    label: "case-data authority ingest planner",
+    driver: pythonDriverFile("case-ingest-authority-driver", DRIVER2),
+    payload: JSON.stringify(request2),
+    env,
+    timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
+    extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) }
+  });
+  if (!parsed.ok || !parsed.result) {
+    throw new DataServerError(`case_data__ingest_authority could not read the result: ${parsed.error ?? "no result"}. Nothing was written.`);
+  }
+  const plan = parsed.result;
+  if ("problems" in plan) return { ok: false, problems: plan.problems };
+  const done = await caseDataExecuteStatements(request2.matter_root, plan.statements, plan.params, env);
+  if (!done.ok) return { ok: false, problems: done.refused.map(String) };
+  const counts2 = {};
+  const named = {};
+  plan.statements.forEach((statement, i3) => {
+    const { rowcount, rows: rows21 } = done.results[i3];
+    if (statement.count) {
+      const count = counts2[statement.count.table] ??= { inserted: 0, skipped: 0 };
+      count.inserted += rowcount;
+      count.skipped += statement.count.of - rowcount;
+    }
+    if (statement.value_as) named[statement.value_as] = Object.values(rows21[0])[0];
+    if (statement.rows_as) named[statement.rows_as] = rows21;
+  });
+  return {
+    ok: true,
+    ...named,
+    counts: counts2,
+    treats_prior: plan.treats_prior ?? null,
+    evidence_sql: done.evidence_sql,
+    warning: done.warning
+  };
 }
 
 // src/time-pipeline/backend.ts
@@ -82447,7 +82590,7 @@ async function submissionDataWriteAll(dbPath, statements, env = process.env) {
 
 // src/submission/migrate.ts
 import { existsSync as existsSync13, statSync as statSync8 } from "node:fs";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 
 // src/submission/parties-drift.ts
 import { dirname as dirname5 } from "node:path";
@@ -84539,6 +84682,12 @@ function courtRecordDocumentColumns(dbPath, alias) {
 function liveTicketClause(dbPath, alias) {
   return deletedAtHeld(dbPath) ? ` AND ${alias === void 0 ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
+function seedClosedColumns(dbPath) {
+  return rows(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at') ORDER BY name").map((c3) => c3.name);
+}
+function liveSeedClause(dbPath) {
+  return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
+}
 function fetchFilingLaw(dbPath, filingId) {
   return rows(
     dbPath,
@@ -84577,7 +84726,7 @@ function fetchLatestActivity(dbPath, proceedingId) {
        UNION ALL SELECT filing_id, plan_approved_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT filing_id, completed_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT t.filing_id, s.done_at FROM ticket_steps s JOIN tickets t ON t.id = s.ticket_id WHERE t.proceeding_id = ?${liveTicketClause(dbPath, "t")}
-       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL
+       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL${liveSeedClause(dbPath)}
      ) WHERE ts IS NOT NULL GROUP BY filing_id`,
     [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
   );
@@ -84598,7 +84747,7 @@ function opposingPartyIds(parties2) {
 // src/case/parties-of-record.ts
 import { existsSync as existsSync12 } from "node:fs";
 import { join as join12 } from "node:path";
-var DRIVER2 = String.raw`
+var DRIVER3 = String.raw`
 import json, sys
 
 
@@ -84626,7 +84775,7 @@ function read(caseDataDir, request2, env) {
   try {
     const parsed = runPythonDriver({
       label: "case-data parties-of-record reader",
-      driver: pythonDriverFile("case-parties-of-record-driver", DRIVER2),
+      driver: pythonDriverFile("case-parties-of-record-driver", DRIVER3),
       payload: JSON.stringify({ case_data_dir: caseDataDir, ...request2 }),
       env,
       timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
@@ -84752,8 +84901,54 @@ function withPartiesDriftLines(markdown, rows21) {
   return withLeadLines(markdown, partiesDriftLines(rows21));
 }
 
+// src/build-stamp.ts
+import { readFileSync as readFileSync13 } from "node:fs";
+import { join as join13 } from "node:path";
+var BUILD_STAMP = false ? null : "8942d6e48a35";
+var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
+function noComparison(build_note) {
+  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
+}
+function buildNote(running, current, installed) {
+  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the practice plugin, then restart the app fully.";
+  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
+}
+function installedStamp() {
+  try {
+    return STAMP_LINE.exec(readFileSync13(join13(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+function buildStampStatus(env = process.env) {
+  if (BUILD_STAMP === null) {
+    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
+  }
+  let current;
+  try {
+    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
+    const tracked = join13(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+    current = STAMP_LINE.exec(readFileSync13(tracked, "utf-8"))?.[1] ?? null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
+  }
+  if (current === null) {
+    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
+  }
+  if (current === BUILD_STAMP) {
+    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
+  }
+  return {
+    build_stamp: BUILD_STAMP,
+    current_build_stamp: current,
+    server_outdated: true,
+    build_note: buildNote(BUILD_STAMP, current, installedStamp())
+  };
+}
+
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 74;
+var BAKED_SCHEMA_VERSION = false ? null : 76;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -84768,6 +84963,16 @@ function bundleSchemaVersion(env = process.env) {
 }
 function renderableSchemaVersion(engineTarget, env = process.env) {
   return bundleSchemaVersion(env) ?? engineTarget;
+}
+function bundleNextStep(ahead) {
+  const version2 = pluginManifest(INSTALL_ROOT).version;
+  const runs = `This server runs build ${BUILD_STAMP ?? "(unstamped)"}${version2 ? ` of Probanda ${version2}` : ""}.`;
+  const installed = installedStamp();
+  if (BUILD_STAMP !== null && installed !== null && installed !== BUILD_STAMP) {
+    return `${runs} The plugin installed on disk is build ${installed}, so the plugin was updated but the app was not restarted. Next step: fully restart the app (quit it, not just close the window), then open the session again.`;
+  }
+  const why = ahead === "source" ? "Its migration source is ahead of its own bundle, so this build was released without a rebuilt bundle." : "The database was migrated by a newer build than this one.";
+  return `${runs} ${why} Next step: run /repackage, reinstall the plugin, and fully restart the app.`;
 }
 function schemaSourceStatus(engineTarget, env = process.env) {
   const ceiling = bundleSchemaVersion(env);
@@ -84786,7 +84991,7 @@ function schemaSourceStatus(engineTarget, env = process.env) {
       schema_target_version: engineTarget,
       bundle_schema_version: ceiling,
       schema_source_ahead: true,
-      schema_note: `The migration source targets schema version ${engineTarget}; this bundle was built against ${ceiling}. Migrations are being withheld until the plugin is rebuilt and reinstalled, so no database is pushed to a schema this bundle cannot read.`
+      schema_note: `The migration source targets schema version ${engineTarget}; this bundle was built against ${ceiling}. Migrations are being withheld, so no database is pushed to a schema this bundle cannot read. ` + bundleNextStep("source")
     };
   }
   if (override) {
@@ -84803,7 +85008,7 @@ function assertMigrationWithinBundle(dbPath, engineTarget, env = process.env) {
   const ceiling = bundleSchemaVersion(env);
   if (ceiling === null || engineTarget <= ceiling || overrideActive(env)) return;
   throw new DataServerError(
-    `Migration withheld for ${dbPath}: the migration source would take this database to schema version ${engineTarget}, but this plugin bundle was built against ${ceiling} and cannot read ${engineTarget}. The database, its recorded schema version and its backups are unchanged; nothing was copied aside. Rebuild and reinstall the Probanda plugin so its bundle matches the migration source, then start a new session. To apply an in-progress hop on purpose, set ${OVERRIDE_ENV}=1 in the server's environment and restart it -- every database migrated that way stays unrenderable until a matching bundle is installed.`,
+    `Migration withheld for ${dbPath}: the migration source would take this database to schema version ${engineTarget}, but this plugin bundle was built against ${ceiling} and cannot read ${engineTarget}. The database, its recorded schema version and its backups are unchanged; nothing was copied aside. ${bundleNextStep("source")} To apply an in-progress hop on purpose, set ${OVERRIDE_ENV}=1 in the server's environment and restart it -- every database migrated that way stays unrenderable until a matching bundle is installed.`,
     "schema_ahead_of_bundle"
   );
 }
@@ -84907,7 +85112,7 @@ function assertCounselReconciled(dbPath, staged, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync8(join13(scriptsDir, "migrate_engine.py"));
+  const engine = statSync8(join14(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver3("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
@@ -84946,52 +85151,6 @@ function runDriver3(label, driver, payload, env, defaultTimeoutMs) {
 import { createHash as createHash8 } from "node:crypto";
 import { existsSync as existsSync18, mkdirSync as mkdirSync8, readdirSync as readdirSync8, readFileSync as readFileSync17, realpathSync as realpathSync3, renameSync as renameSync3, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
-
-// src/build-stamp.ts
-import { readFileSync as readFileSync13 } from "node:fs";
-import { join as join14 } from "node:path";
-var BUILD_STAMP = false ? null : "516d79291d07";
-var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
-function noComparison(build_note) {
-  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
-}
-function buildNote(running, current, installed) {
-  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the practice plugin, then restart the app fully.";
-  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
-}
-function installedStamp() {
-  try {
-    return STAMP_LINE.exec(readFileSync13(join14(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-function buildStampStatus(env = process.env) {
-  if (BUILD_STAMP === null) {
-    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
-  }
-  let current;
-  try {
-    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked = join14(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
-    current = STAMP_LINE.exec(readFileSync13(tracked, "utf-8"))?.[1] ?? null;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
-  }
-  if (current === null) {
-    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
-  }
-  if (current === BUILD_STAMP) {
-    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
-  }
-  return {
-    build_stamp: BUILD_STAMP,
-    current_build_stamp: current,
-    server_outdated: true,
-    build_note: buildNote(BUILD_STAMP, current, installedStamp())
-  };
-}
 
 // src/files/skill-source.ts
 import { createHash as createHash5 } from "node:crypto";
@@ -85347,7 +85506,16 @@ function step(job) {
       job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
     }
     job.status.current = job.status.queued.shift() ?? null;
-    if (job.status.current === null) job.status.state = "done";
+    if (job.status.current === null) {
+      job.status.state = "done";
+      if (job.settle && job.rendered.length > 0) {
+        try {
+          job.settle();
+        } catch (err) {
+          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+        }
+      }
+    }
     try {
       utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
     } catch {
@@ -85432,6 +85600,7 @@ function startRenderJob(options) {
     skip: /* @__PURE__ */ new Set(),
     render: options.render,
     isFresh: options.isFresh,
+    ...options.settle ? { settle: options.settle } : {},
     promise,
     resolve: resolve7
   };
@@ -88589,6 +88758,22 @@ function recordFactStatementGlyphs(inv, glyphs, row3, factPostulate) {
 var SLUG_ORDER = Object.fromEntries(
   Object.keys(WORK_NAMES).map((slug, i3) => [slug, i3])
 );
+var RECORD_NOUNS = {
+  submissions: "submission",
+  facts: "fact",
+  statements_of_fact: "statement of fact",
+  statements_of_law: "statement of law",
+  law_assertions: "law assertion",
+  order_sought: "order",
+  admissions: "admission",
+  clauses: "clause"
+};
+function itemLabel(table, id, qualifier, item) {
+  if (item.length <= 80 && !/[\r\n]/.test(item)) return item;
+  const noun = Object.hasOwn(RECORD_NOUNS, table) ? RECORD_NOUNS[table] : table.replaceAll("_", " ");
+  const words = item.trim().split(/\s+/).slice(0, 8).join(" ");
+  return `${noun} ${id}${qualifier === void 0 ? "" : `, ${qualifier}`}, "${words}\u2026"`;
+}
 function isCurrentRung(entries, has) {
   const first = entries[0];
   switch (first.slug) {
@@ -88639,6 +88824,7 @@ function deriveProposals(inventory, holders, rejections) {
         lane = "rejected";
       }
     }
+    const label = first.slug === "note-up" ? first.item : itemLabel(first.table, first.id, first.qualifier, first.item);
     proposals.push({
       key,
       slug: first.slug,
@@ -88647,7 +88833,8 @@ function deriveProposals(inventory, holders, rejections) {
       id: first.id,
       ...first.qualifier === void 0 ? {} : { qualifier: first.qualifier },
       item: first.item,
-      title: `${WORK_NAMES[first.slug]}: ${first.item}`,
+      label,
+      title: `${WORK_NAMES[first.slug]}: ${label}`,
       lane,
       holder,
       ...first.table === "witnesses" ? { count: new Set(entries.map((e3) => e3.statement_id)).size } : {}
@@ -89530,6 +89717,14 @@ async function submissionDataCreateWriting(args, seams = {}) {
     throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Job Board with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
   }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
+  const styleSuffix = proceeding.style_of_cause ? ` - ${proceeding.style_of_cause}` : null;
+  const title = args.title.trim();
+  if (styleSuffix !== null && title.endsWith(styleSuffix)) {
+    throw new ValidationError(
+      `${TOOL}.title "${title}" ends with the proceeding's style of proceeding; a title names the Writing only. Nothing was written. Pass "${title.slice(0, -styleSuffix.length).trim()}" instead.`,
+      "title_holds_style"
+    );
+  }
   const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding }, seams);
   const signer = chooseSigner(built.stored.layout, args, proceeding, env, seams.caseDataRoot);
   const statements = [
@@ -89938,6 +90133,112 @@ function renderGeneral(ctx, stored, cited2) {
   return { markdown: [header, ...lines2].join("\n").trimEnd() + "\n", unwritten: [...new Set(state.unwritten)], currency_withheld: state.currency_withheld, prose_format: state.prose_format };
 }
 
+// src/submission/forms/track-source.ts
+var TOOL3 = "drafting_data__track_source";
+var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var KINDS = ["decision", "legislation", "file"];
+var OUTCOMES = ["got", "not_retrieved"];
+var LABEL_MAX = 200;
+var REASON_MAX = 60;
+var ticketSourcesHeldDbs = /* @__PURE__ */ new Set();
+function ticketSourcesHeld(dbPath) {
+  if (ticketSourcesHeldDbs.has(dbPath)) return true;
+  const [{ n: n3 }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows;
+  if (n3 > 0) ticketSourcesHeldDbs.add(dbPath);
+  return n3 > 0;
+}
+function oneLine(value, field, max) {
+  if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
+    throw new ValidationError(`${TOOL3}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
+  }
+  return value.trim();
+}
+function oneOf2(value, field, allowed) {
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new ValidationError(`${TOOL3}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
+  }
+  return value;
+}
+async function submissionDataTrackSource(args, env = process.env) {
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL3}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const id = args.ticket_id;
+  const token = args.session_token;
+  const add = (args.add ?? []).map((a3) => ({ kind: oneOf2(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
+  const close = (args.close ?? []).map((c3) => ({
+    kind: oneOf2(c3.kind, "close.kind", KINDS),
+    label: oneLine(c3.label, "close.label", LABEL_MAX),
+    outcome: oneOf2(c3.outcome, "close.outcome", OUTCOMES),
+    reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
+  }));
+  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
+    throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+  }
+  if (!ticketSourcesHeld(args.db_path)) {
+    throw new ValidationError(
+      `${TOOL3}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
+      "schema_below_v76"
+    );
+  }
+  const held = "EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const statements = [
+    ...add.flatMap((a3) => [
+      {
+        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
+        params: [id, a3.kind, a3.label, id, token]
+      },
+      {
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`,
+        params: [a3.kind, a3.label, id, token]
+      }
+    ]),
+    ...close.map((c3) => ({
+      sql: `UPDATE ticket_sources SET closed_at = ${NOW}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
+      params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, token]
+    }))
+  ];
+  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, statements, env);
+  const [read2] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows;
+  if (read2 === void 0) throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+  const sources = submissionDataQuery(args.db_path, "SELECT id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id = ? ORDER BY id", [id]).rows;
+  const open = sources.filter((s3) => s3.closed_at === null).length;
+  const on2 = new Set(sources.map((s3) => `${s3.kind}: ${s3.label}`));
+  let outcome;
+  let note;
+  let unknown2 = [];
+  if (read2.locked_by === token) {
+    outcome = "recorded";
+    unknown2 = close.map((c3) => `${c3.kind}: ${c3.label}`).filter((k3) => !on2.has(k3));
+    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown2.length > 0 ? ` ${unknown2.length} close item${unknown2.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
+  } else if (read2.locked_by !== null) {
+    outcome = "not_held";
+    note = `Nothing was written: another session holds job ${id} (taken over). Dispatch nothing for this job; report it and stop.`;
+  } else if (read2.rejected_at !== null) {
+    outcome = "shelved";
+    note = `Nothing was written: job ${id} is shelved (rejected_at ${read2.rejected_at}). Dispatch nothing for this job; report it and stop.`;
+  } else if (read2.status === "completed") {
+    outcome = "completed";
+    note = `Nothing was written: job ${id} is completed. Dispatch nothing for this job; report it and stop.`;
+  } else {
+    outcome = "no_match";
+    note = `Nothing was written: job ${id} is status=${read2.status} with no holder, so the guards matched nothing. Dispatch nothing for this job; report it and stop.`;
+  }
+  return {
+    ticket_id: id,
+    outcome,
+    sources,
+    open,
+    unknown: unknown2,
+    locked_by: read2.locked_by,
+    status: read2.status,
+    rejected_at: read2.rejected_at,
+    note,
+    ...written?.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms/render-work-board.ts
 function rows4(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -90028,6 +90329,7 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const proposalRows = proceedingIds.length === 0 ? [] : rows4(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
   const captures = proceedingIds.length === 0 ? [] : rows4(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
   const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows4(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows4(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
   const blockersOf = /* @__PURE__ */ new Map();
   for (const b3 of blocks2) blockersOf.set(b3.blocked_id, [...blockersOf.get(b3.blocked_id) ?? [], b3.blocker_id]);
   const conflictsOf = /* @__PURE__ */ new Map();
@@ -90040,6 +90342,7 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const proposalsByTicket = groupBy(proposalRows, (p3) => p3.ticket_id);
   const capturesByTicket = groupBy(captures, (s3) => s3.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a3) => a3.ticket_id);
+  const sourcesByTicket = groupBy(sourceRows, (s3) => s3.ticket_id);
   const retiredOn = new Map(rows4(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
   const edge = (id) => {
     const other = ticketById.get(id);
@@ -90087,11 +90390,13 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
       dispatch_skips: [],
       lock_note: category === "wip" && t3.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t3.id) ?? []).map((a3) => ({ file_path: a3.file_path, saved_at: a3.saved_at })),
+      sources: (sourcesByTicket.get(t3.id) ?? []).map((s3) => ({ kind: s3.kind, label: s3.label, outcome: s3.outcome, reason: s3.reason })),
       last_activity_at: latestStamp([
         t3.locked_at,
         ...(stepsByTicket.get(t3.id) ?? []).map((s3) => s3.done_at),
         ...(capturesByTicket.get(t3.id) ?? []).map((s3) => s3.created),
-        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at)
+        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at),
+        ...(sourcesByTicket.get(t3.id) ?? []).flatMap((s3) => [s3.added_at, s3.closed_at])
       ])
     };
     return { filing_id: t3.filing_id, ticket };
@@ -90107,18 +90412,43 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
       if (material.length > 0) ticket.dispatch_skips.push({ reason: "shared_material", job: held.id, material });
     }
   }
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
 }
 function columnHeld(dbPath, table, column) {
   return rows4(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
 }
-function openSeedCondition(deletedIds) {
+function openSeedCondition(dbPath, deletedIds) {
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})`, params: deletedList };
+  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
+}
+function fetchDiscardedSeeds(dbPath, proceedingId) {
+  if (seedClosedColumns(dbPath).length < 2) return [];
+  return rows4(
+    dbPath,
+    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
+    [proceedingId]
+  );
+}
+var discardedSeedLines = (seeds) => seeds.map((s3) => ({ id: s3.id, idea: s3.idea, discarded_at: s3.discarded_at, suggested_at: s3.suggested_at }));
+function fetchResolvedSeeds(dbPath, proceedingId) {
+  const closed = seedClosedColumns(dbPath);
+  const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
+  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  return rows4(
+    dbPath,
+    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
+     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
+     WHERE s.proceeding_id = ? AND (${resolved})`,
+    [proceedingId]
+  ).map((r3) => {
+    if (r3.discarded_at !== null) return { id: r3.id, idea: r3.idea, how: "discarded", at: r3.discarded_at, job_id: null, job_title: null };
+    if (r3.suggested_at !== null) return { id: r3.id, idea: r3.idea, how: "suggested", at: r3.suggested_at, job_id: null, job_title: null };
+    return { id: r3.id, idea: r3.idea, how: "job", at: r3.job_created, job_id: r3.job_id, job_title: r3.job_title };
+  }).sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1);
 }
 function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(dbPath, deletedIds);
   const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
   const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
   const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
@@ -90584,6 +90914,7 @@ function buildWorkBoardData(ctx, deadlines3 = []) {
     tickets: gated,
     seeds,
     deleted: board.deleted.filter((d3) => onFilingBoard(d3.filing_id, ctx.filing.id)).map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
@@ -90620,6 +90951,7 @@ function buildJobOnlyBoardData(ctx) {
     tickets: board.tickets.filter((t3) => t3.filing_id === own).map((t3) => withIdleFlag(t3.ticket, ctx.rendered, idleHours)),
     seeds: board.seeds.filter((s3) => s3.filing_id === own).map((s3) => ({ ...s3, from_filing: null })),
     deleted: board.deleted.filter((d3) => d3.filing_id === own).map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s3) => s3.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: []
@@ -90646,6 +90978,7 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
     tickets: board.tickets.map((t3) => withIdleFlag(t3.ticket, meta2.rendered, idleHours)),
     seeds: board.seeds.map((s3) => ({ ...s3, from_filing: null })),
     deleted: board.deleted.map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: []
@@ -90653,13 +90986,13 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
 }
 
 // src/submission/forms/sent-write.ts
-var TOOL3 = "drafting_data__record_sent";
-var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL4 = "drafting_data__record_sent";
+var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 function refused(message, code) {
-  return new DataServerError(`${TOOL3}: ${message}`, code);
+  return new DataServerError(`${TOOL4}: ${message}`, code);
 }
 function rows5(dbPath, sql, params) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -90710,7 +91043,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     const job = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
     const statements2 = [
       {
-        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
+        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW2} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
         params: [filing.proceeding_id, filing.id, PRE_SEND_TITLE, PRE_SEND_INTENT, filing.id, anchor.billing_anchor, filing.id, PRE_SEND_TITLE],
         expect_changes: 1
       },
@@ -90733,7 +91066,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     if (step2.text.includes(WAIVER2) || label === void 0) continue;
     const c3 = byId.get(id);
     statements.push(
-      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
+      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW2} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
     );
   }
   let next = Math.max(0, ...steps.map((s3) => s3.ordinal));
@@ -90774,25 +91107,25 @@ function isCalendarDate(text4) {
 }
 function checkArgs(args) {
   if (!isCalendarDate(args.sent_on)) {
-    throw new ValidationError(`${TOOL3}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
+    throw new ValidationError(`${TOOL4}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
   }
   if (args.sent_copy_path === void 0 === (args.sent_copy_text === void 0)) {
-    throw new ValidationError(`${TOOL3} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
+    throw new ValidationError(`${TOOL4} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
   }
   if (args.sent_copy_path !== void 0) {
     if (![".eml", ".pdf", ".msg"].includes(extname(args.sent_copy_path).toLowerCase())) {
-      throw new ValidationError(`${TOOL3}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
+      throw new ValidationError(`${TOOL4}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync20(args.sent_copy_path)) throw new ValidationError(`${TOOL3}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync20(args.sent_copy_path)) throw new ValidationError(`${TOOL4}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
-    throw new ValidationError(`${TOOL3}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
+    throw new ValidationError(`${TOOL4}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
   }
 }
 async function submissionDataRecordSent(args, env = process.env) {
   checkArgs(args);
   const [filing] = rows5(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
-  if (filing === void 0) throw new NotFoundError(`${TOOL3}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL4}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
@@ -90811,7 +91144,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       "no_stored_text"
     );
   }
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL3, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL4, env);
   const held = unmetHeldCriteria(args.db_path, filing, latestInventory(args.db_path, filing, revision));
   const currency = unmetCurrencyCriterion(args.db_path, filing);
   if (currency !== null) held.push(currency);
@@ -90860,12 +91193,12 @@ async function submissionDataRecordSent(args, env = process.env) {
     statements.push(...gate.statements);
     if (waived.length > 0) {
       statements.push({
-        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
+        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW2} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
         params: [WAIVER2, args.send_anyway, ...job.params]
       });
     }
     statements.push({
-      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
+      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
       params: [...job.params, ...job.params],
       expect_changes: 1
     });
@@ -90874,8 +91207,8 @@ async function submissionDataRecordSent(args, env = process.env) {
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
-      { sql: `UPDATE ticket_steps SET done_at = ${NOW} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
-      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
+      { sql: `UPDATE ticket_steps SET done_at = ${NOW2} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
+      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);
@@ -90906,14 +91239,14 @@ async function submissionDataRecordSent(args, env = process.env) {
 }
 
 // src/submission/forms/filed-write.ts
-var TOOL4 = "drafting_data__record_filed";
+var TOOL5 = "drafting_data__record_filed";
 function refused2(message, code) {
-  return new DataServerError(`${TOOL4}: ${message}`, code);
+  return new DataServerError(`${TOOL5}: ${message}`, code);
 }
 async function submissionDataRecordFiled(args, env = process.env) {
-  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL4}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
+  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL5}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
-  if (filing === void 0) throw new NotFoundError(`${TOOL4}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL5}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused2(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused2(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused2(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
@@ -90921,7 +91254,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
     throw refused2(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL4, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL5, env);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -90950,19 +91283,19 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/assign-job.ts
-var TOOL5 = "drafting_data__assign_job";
-var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL6 = "drafting_data__assign_job";
+var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL5}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL6}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL5}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.takeover === true && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL5}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL6}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   if (args.takeover !== true && args.expected_holder !== void 0) {
-    throw new ValidationError(`${TOOL5}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL6}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
   const takeover = args.takeover === true;
   const live = liveTicketClause(args.db_path);
@@ -90972,11 +91305,11 @@ async function submissionDataAssignJob(args, env = process.env) {
   const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
   const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const params = [args.session_token, args.ticket_id, ...takeover ? [args.expected_holder.trim()] : [], ...creatorHeld ? [args.session_token, args.session_token] : []];
-  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW2} WHERE id = ? AND ${guard}`, params }], env);
+  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW3} WHERE id = ? AND ${guard}`, params }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
   const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read2] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL5}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL6}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
@@ -91022,25 +91355,25 @@ function createdAny(dbPath, sessionToken) {
 }
 
 // src/submission/forms/approve-plan.ts
-var TOOL6 = "drafting_data__approve_plan";
-var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL7 = "drafting_data__approve_plan";
+var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL6}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const [job] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps FROM tickets WHERE id = ?", [id]).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL6}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL6}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL7}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW3} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
+    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW4} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL6}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (changes === 1) {
@@ -94133,8 +94466,8 @@ function courtFileAffidavits(dbPath, filingId, matterRoot) {
   });
 }
 
-// src/submission/forms/workboard-assets.ts
-var WORKBOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
+// src/submission/forms/board-template.ts
+var BOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
    network fetch, so the board reads offline and inside a sandboxed pane. One
    accent, used three times: the Ready heading, the in-progress chip, links.
    Palette and heading font evoke the Logica Law brand sheet (2026-09-18)
@@ -94218,12 +94551,16 @@ ol.steps li.done::before{border-color:var(--done);background-color:var(--done);b
 :root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 ol.steps li.next{font-weight:500}
 ol.steps li.next::before{border-color:var(--ink)}
+p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
 
 /* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
    two spaces after the colon. */
 p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
 p.deleted s{white-space:pre-wrap}
 p.deleted a{color:inherit}
+/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
+   line in ordinary ink, unstruck. */
+p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
 
 /* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
    line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
@@ -94252,47 +94589,6 @@ section>p.cue{margin:12px 0 0;font-size:12px;color:var(--muted)}
   details.ticket>.body,details.seed>.body,details.goal>ul.criteria,details.items>ul.items{display:flex}
   .chip,.bar,.bar i,ol.steps li.done::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-`;
-var WORKBOARD_JS = String.raw`(function () {
-  var cards = document.querySelectorAll("details.ticket, details.seed");
-  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var printing = null;
-  function centre(d) {
-    requestAnimationFrame(function () {
-      d.scrollIntoView({ block: "center", inline: "nearest", behavior: reduce ? "auto" : "smooth" });
-    });
-  }
-  cards.forEach(function (d) {
-    d.addEventListener("toggle", function () {
-      if (!d.open || printing) return;
-      cards.forEach(function (o) { if (o !== d && o.open) o.open = false; });
-      centre(d);
-    });
-  });
-  function openHash() {
-    var t = location.hash && document.querySelector(location.hash);
-    if (t && t.matches("details")) t.open = true;
-  }
-  addEventListener("hashchange", openHash);
-  // CSS cannot show a closed card's body, so printing opens every card and afterprint puts each back.
-  // The shared name attribute lets the browser keep only one card open, so it is lifted meanwhile.
-  addEventListener("beforeprint", function () {
-    printing = Array.prototype.map.call(document.querySelectorAll("details.ticket, details.seed, details.goal, details.items"), function (d) {
-      var was = [d, d.open, d.getAttribute("name")];
-      d.removeAttribute("name");
-      d.open = true;
-      return was;
-    });
-  });
-  addEventListener("afterprint", function () {
-    if (!printing) return;
-    printing.forEach(function (p) { p[0].open = p[1]; });
-    // Names go back only once the open cards are down to their old state, or the browser would close some.
-    printing.forEach(function (p) { if (p[2] !== null) p[0].setAttribute("name", p[2]); });
-    printing = null;
-  });
-  openHash();
-})();
 `;
 
 // src/submission/forms/matter-board-shell.ts
@@ -94325,7 +94621,7 @@ var HEAD = String.raw`<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Litigation Strategy</title>
 <style>
-${WORKBOARD_CSS}${MATTER_CSS}</style>
+${BOARD_CSS}${MATTER_CSS}</style>
 </head>
 <body>
 <main>
@@ -94707,14 +95003,15 @@ function buildLooseIdeasData(dbPath, filing, env = process.env) {
   );
   const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
   const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  return { groups, ideas, api };
+  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
 }
 function looseIdeasMeta(data) {
   const ranked = data.ideas.filter((i3) => i3.rank !== null).length;
   return [
     ["Threads", String(data.ideas.length)],
     ["Ranked", String(ranked)],
-    ["Unsorted", String(data.ideas.length - ranked)]
+    ["Unranked", String(data.ideas.length - ranked)],
+    ["Resolved", String(data.resolved.length)]
   ];
 }
 var PAGE_CSS = String.raw`
@@ -94749,6 +95046,9 @@ article.idea.deferred{opacity:.55}
 .switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
 .switch[aria-checked=true] .knob{transform:translateX(13px)}
 .switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}
+.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
+.resolved-toggle:not([hidden]) + .switch{margin-left:0}
 .chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}
 .chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}
@@ -94840,7 +95140,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
     var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
-    if (i.rank === null) rank.title = "Unsorted";
+    if (i.rank === null) rank.title = "Unranked";
     tags.appendChild(rank);
     if (i.rank !== null && i.group_label) {
       var group = el("span", "tag group", i.group_label);
@@ -94861,6 +95161,37 @@ var PAGE_SCRIPT = String.raw`(function () {
     });
     c.set(false);
     return c;
+  }
+
+  // A resolved thread, as its section's inert card: one line ending in how it left the board. A
+  // discarded one is struck, with a Restore link that only copies the instruction to paste into a
+  // session; a suggested one and one taken up by a job are plain lines. Discarded and suggested lines
+  // carry their date. A job's line names the job only: the thread was either outlined into it or
+  // worked inside the loose-threads job, the data does not say which, and no date records either.
+  function resolvedLine(d) {
+    var date = d.at.slice(0, 10);
+    var thread = "Loose thread " + d.id + ":  " + d.idea;
+    if (d.how === "suggested") return { node: el("p", "suggested", thread + " *SUGGESTED* Suggested " + date), inert: true };
+    if (d.how === "job") return { node: el("p", "suggested", thread + " Taken up by Job #" + d.job_id + ": " + d.job_title), inert: true };
+    var line = el("p", "deleted");
+    line.appendChild(el("s", "", thread));
+    line.appendChild(document.createTextNode(" *DISCARDED* "));
+    var restore = el("a", "", "Restore");
+    restore.href = "#";
+    var instruction = "restore loose thread #" + d.id;
+    // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
+    function showInstruction() { restore.textContent = instruction; }
+    restore.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { showInstruction(); return; }
+      navigator.clipboard.writeText(instruction).then(function () {
+        restore.textContent = "Copied";
+        setTimeout(function () { restore.textContent = "Restore"; }, 1500);
+      }, showInstruction);
+    });
+    line.appendChild(restore);
+    line.appendChild(document.createTextNode(" Discarded " + date));
+    return { node: line, inert: true };
   }
 
   var tablist = el("div", "tabs");
@@ -94915,7 +95246,8 @@ var PAGE_SCRIPT = String.raw`(function () {
 
   var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unsorted", "Unsorted", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("resolved", "Resolved", [], data.resolved.map(resolvedLine));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
@@ -94927,7 +95259,24 @@ var PAGE_SCRIPT = String.raw`(function () {
   var track = el("span", "track");
   track.appendChild(el("span", "knob"));
   toggle.appendChild(track);
-  if (rankedCards.length > 0) sections.ranked.h2.appendChild(toggle);
+  var showResolved = false;
+  var resolvedToggle = null;
+  if (data.resolved.length > 0) {
+    resolvedToggle = el("button", "resolved-toggle", "☐ Show/Hide Resolved Threads");
+    resolvedToggle.type = "button";
+    resolvedToggle.setAttribute("role", "checkbox");
+    resolvedToggle.setAttribute("aria-checked", "false");
+    resolvedToggle.addEventListener("click", function () {
+      showResolved = !showResolved;
+      resolvedToggle.textContent = showResolved ? "☑ Show/Hide Resolved Threads" : "☐ Show/Hide Resolved Threads";
+      resolvedToggle.setAttribute("aria-checked", String(showResolved));
+      apply();
+    });
+  }
+  if (rankedCards.length > 0) {
+    if (resolvedToggle) sections.ranked.h2.appendChild(resolvedToggle);
+    sections.ranked.h2.appendChild(toggle);
+  }
 
   // The break-out: every chip from a small cluster behind the switch to its place, at once, with
   // the row's height on the same timing. Reversed, the same motion gathers them back.
@@ -94965,7 +95314,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unsorted", "Unsorted"]];
+  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -94976,6 +95325,8 @@ var PAGE_SCRIPT = String.raw`(function () {
     tablist.appendChild(b);
     return b;
   });
+  // With nothing ranked the Ranked heading is hidden, so the checkbox ends the tab row.
+  if (resolvedToggle && rankedCards.length === 0) tablist.appendChild(resolvedToggle);
 
   var current = "all";
   function apply() {
@@ -94983,7 +95334,8 @@ var PAGE_SCRIPT = String.raw`(function () {
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var on = (current === "all" || current === name) && sections[name].cards.length > 0;
+      var shown = current === name || (current === "all" && (name !== "resolved" || showResolved));
+      var on = shown && sections[name].cards.length > 0;
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
@@ -94994,6 +95346,7 @@ var PAGE_SCRIPT = String.raw`(function () {
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
     empty.hidden = any;
+    if (resolvedToggle) resolvedToggle.hidden = current !== "all";
   }
   function select(b) {
     current = b.getAttribute("data-filter");
@@ -95037,6 +95390,172 @@ var LOOSE_IDEAS_PAGE = {
   metaExtra: looseIdeasMeta
 };
 
+// src/submission/forms/workboard-assets.ts
+var WORKBOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
+   network fetch, so the board reads offline and inside a sandboxed pane. One
+   accent, used three times: the Ready heading, the in-progress chip, links.
+   Palette and heading font evoke the Logica Law brand sheet (2026-09-18)
+   without embedding its logo or its exact typeface -- teal/mint/gold, and a
+   system geometric-sans stack in place of the brand's Sackers/Questrial.
+   Mid Teal, Mint and Bronze (2026-09-19, ticket #691) dress the section
+   panel, the card frame, the count pill and the title's gradient rule. */
+:root{
+  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;
+  --accent:#8A5F1F;--accent-soft:#F7ECD6;--done:#025056;
+  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);
+  --deleted:#A3221B;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
+  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
+  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
+  --deleted:#FF8A80;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
+  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
+  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
+  --deleted:#FF8A80;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+main{padding:28px}
+header{display:flex;flex-direction:column;gap:6px;margin-bottom:28px}
+header h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}
+header h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}
+header .meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
+header .meta span::before{content:attr(data-k) " ";color:var(--line-strong)}
+header .notice{margin:4px 0 0;font-size:13px;color:var(--wip);background:var(--wip-soft);border:1px solid var(--wip);border-radius:6px;padding:8px 12px}
+
+/* One vertical list at every width (practitioner, 2026-09-15): sections stack,
+   and each section's cards stack one per row. No card grid and no width
+   breakpoint, however wide the pane or window. */
+.board{display:flex;flex-direction:column;gap:28px}
+section{background:var(--panel);border-radius:12px;padding:16px 18px}
+section>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}
+#ready>h2{color:var(--accent)}
+section>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}
+section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* Cards. */
+details.ticket,details.seed{background:var(--card);border:2px solid var(--frame);border-radius:10px;overflow:hidden;transition:border-color .15s}
+details.ticket:hover,details.seed:hover{border-color:var(--line-strong)}
+details.ticket[open],details.seed[open]{border-color:var(--ink)}
+details.ticket[data-status="superseded"],details.ticket[data-status="completed"]{opacity:.7}
+details.ticket>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;padding:12px 14px}
+details.seed>summary{list-style:none;cursor:pointer;display:block;padding:12px 14px}
+details.ticket>summary::-webkit-details-marker,details.seed>summary::-webkit-details-marker{display:none}
+details.ticket>summary:focus-visible,details.seed>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ref{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.title{font-weight:500}
+details.seed .title{font-weight:400}
+.progress{grid-column:1/-1;font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
+.bar{width:64px;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pill-bg);width:var(--pct)}
+.chip{font-size:11px;font-weight:500;padding:0 7px;border-radius:999px;white-space:nowrap;border:1px solid var(--muted);color:var(--muted);line-height:1.6}
+.chip.wip{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+.chip.done{background:var(--line);border-color:var(--line);color:var(--muted)}
+.body{border-top:1px solid var(--line);padding:14px 14px 16px;display:flex;flex-direction:column;gap:14px;max-width:72ch}
+.body p{margin:0}
+.body dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}
+.body dt{color:var(--muted)}
+.body dd{margin:0}
+.body dd.mono{font-family:var(--mono);font-size:12px}
+.body a{color:var(--accent)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+ol.steps li{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;font-size:13.5px}
+ol.steps li::before{content:"";width:14px;height:14px;margin-top:3px;border:1.5px solid var(--line-strong);border-radius:3px}
+ol.steps li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+ol.steps li.done::before{border-color:var(--done);background-color:var(--done);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-size:11px;background-repeat:no-repeat;background-position:center}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}}
+:root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
+ol.steps li.next{font-weight:500}
+ol.steps li.next::before{border-color:var(--ink)}
+p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
+
+/* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
+   two spaces after the colon. */
+p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
+p.deleted s{white-space:pre-wrap}
+p.deleted a{color:inherit}
+/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
+   line in ordinary ink, unstruck. */
+p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
+
+/* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
+   line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
+   whole line. */
+.proposal{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:12px 14px}
+.proposal .head{margin:0 0 6px;font-weight:500}
+.proposal ul.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.proposal ul.lines li{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;font-size:13.5px}
+/* The row's text and glyph stay together and left-aligned: only the text truncates, and the glyph
+   never shrinks, so the ellipsis can never eat it. overflow:hidden is what lets the text shrink
+   past its own content width. */
+.proposal .line{flex:1 1 12ch;display:flex;align-items:baseline;overflow:hidden}
+.proposal .line .text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proposal .line .glyph{flex:0 0 auto;white-space:pre}
+/* Pinned right beside the line where it fits, on its own right-aligned row where it does not --
+   a status long enough to squeeze the line away would leave nothing legible at 268px. */
+.proposal .status{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+section>p.cue{margin:12px 0 0;font-size:12px;color:var(--muted)}
+
+@media (prefers-reduced-motion: reduce){details.ticket,details.seed{transition:none}}
+
+/* Print: the same vertical list on paper, everything open. */
+@media print{
+  section{break-inside:avoid}
+  details.ticket,details.seed,details.goal,.proposal{opacity:1;break-inside:avoid}
+  details.ticket>.body,details.seed>.body,details.goal>ul.criteria,details.items>ul.items{display:flex}
+  .chip,.bar,.bar i,ol.steps li.done::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+`;
+var WORKBOARD_JS = String.raw`(function () {
+  var cards = document.querySelectorAll("details.ticket, details.seed");
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var printing = null;
+  function centre(d) {
+    requestAnimationFrame(function () {
+      d.scrollIntoView({ block: "center", inline: "nearest", behavior: reduce ? "auto" : "smooth" });
+    });
+  }
+  cards.forEach(function (d) {
+    d.addEventListener("toggle", function () {
+      if (!d.open || printing) return;
+      cards.forEach(function (o) { if (o !== d && o.open) o.open = false; });
+      centre(d);
+    });
+  });
+  function openHash() {
+    var t = location.hash && document.querySelector(location.hash);
+    if (t && t.matches("details")) t.open = true;
+  }
+  addEventListener("hashchange", openHash);
+  // CSS cannot show a closed card's body, so printing opens every card and afterprint puts each back.
+  // The shared name attribute lets the browser keep only one card open, so it is lifted meanwhile.
+  addEventListener("beforeprint", function () {
+    printing = Array.prototype.map.call(document.querySelectorAll("details.ticket, details.seed, details.goal, details.items"), function (d) {
+      var was = [d, d.open, d.getAttribute("name")];
+      d.removeAttribute("name");
+      d.open = true;
+      return was;
+    });
+  });
+  addEventListener("afterprint", function () {
+    if (!printing) return;
+    printing.forEach(function (p) { p[0].open = p[1]; });
+    // Names go back only once the open cards are down to their old state, or the browser would close some.
+    printing.forEach(function (p) { if (p[2] !== null) p[0].setAttribute("name", p[2]); });
+    printing = null;
+  });
+  openHash();
+})();
+`;
+
 // src/submission/forms/workboard-shell.ts
 var HEAD2 = String.raw`<!doctype html>
 <html lang="en" data-workboard-shell>
@@ -95056,7 +95575,9 @@ ${WORKBOARD_CSS}</style>
 details.goal>summary{cursor:pointer}
 details.goal>summary::-webkit-details-marker{display:none}
 details.goal>summary:focus-visible{outline:2px solid var(--pill-bg);outline-offset:4px}
-.goal .sentence{display:block;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.goal .sentence{display:inline;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+/* The Writing's lifecycle state, a pill beside the sentence in the criterion state's own style. */
+.goal .head .lifecycle{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
 details.goal .sentence::before{content:"\25B8\00A0" / ""}
 details.goal[open] .sentence::before{content:"\25BE\00A0" / ""}
 .goal .text{display:block;margin-top:4px;font-size:13.5px}
@@ -95074,10 +95595,16 @@ details.ticket>summary .subtitle{grid-column:1/-1;font-size:12.5px;color:var(--m
 details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)}
 .body .reason{font-size:13px;color:var(--muted)}
 /* The header rows under the title, each in the meta row's own label-and-value style: the matter and
-   client; the proceeding's venue, registry and court file number, the first two unlabelled; then the
-   dates (ADR 0013, 2026-10-04 amendments), this Writing's row and the matter's row, plain text with
-   no control, each date as stored and its flag after it. A deadline a Goal card carries is drawn on
-   that card instead: in its head while unmet, and on its criterion row. */
+   client; the proceeding's venue, registry, court file number and style of proceeding, joined by
+   dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
+   Writing's row and the matter's row, plain text with no control, each date as stored and its flag
+   after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
+   and on its criterion row. The margin under the header is this page's own: board-template.ts
+   still has the 28px margin it copied. */
+header{margin-bottom:16px}
+/* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
+header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
+header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
@@ -95158,12 +95685,38 @@ var TAIL2 = String.raw`</script>
   metaSpan(metaRow, "Matter", meta.matter);
   metaSpan(metaRow, "Client", meta.client ? meta.client + (meta.client_no ? " (" + meta.client_no + ")" : "") : "");
 
-  // The section's proceeding: its venue (the forum's last segment) and registry, unlabelled, then
-  // its court file number. No row when all three are blank.
+  // A section's lifecycle state, with its date when it has one.
+  function stateText(smeta) {
+    return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
+  }
+
+  // The page's one section names the page: "Job Board <id>", the id the file name's, then the
+  // heading's gold rule, then the Writing's title on its own line.
+  var first = data.sections[0];
+  if (first) {
+    var h1 = header.querySelector("h1");
+    if (first.meta.filing_id === null) {
+      h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
+    } else {
+      h1.textContent = "Job Board " + first.meta.filing_id;
+      if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
+    }
+  }
+
+  // The section's proceeding: its venue (the forum's last segment), registry, court file number and
+  // style of proceeding, a dot between each two drawn, only the file number labelled. A page with no
+  // Goal card shows the section's state here, as a chip. No row when there is nothing to draw.
   var venueRow = el("div", "meta proceeding");
-  metaSpan(venueRow, "", (meta.forum || "").split("/").pop());
-  metaSpan(venueRow, "", meta.registry ? meta.registry + " Registry" : "");
-  metaSpan(venueRow, "Court File No.", meta.file_number || "");
+  function proceedingPart(label, value) {
+    if (!value) return;
+    if (venueRow.children.length > 0) venueRow.appendChild(document.createTextNode(" · "));
+    metaSpan(venueRow, label, value);
+  }
+  proceedingPart("", (meta.forum || "").split("/").pop());
+  proceedingPart("", meta.registry ? meta.registry + " Registry" : "");
+  proceedingPart("Court File No.", meta.file_number || "");
+  proceedingPart("", meta.style_of_cause || "");
+  if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
   if (venueRow.children.length > 0) header.appendChild(venueRow);
 
   // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
@@ -95187,16 +95740,10 @@ var TAIL2 = String.raw`</script>
     }
   }
 
-  // One section per live filing, then one per pre-filing proceeding, each under a heading naming it
-  // and its state, with its own Goal card and lanes drawn as a filing's board always drew them.
+  // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
+  // filing's board always drew them.
   data.sections.forEach(function (section) {
     var smeta = section.meta;
-    var head = el("h2", "section-head", smeta.filing_id === null ? "Proceeding " + smeta.proceeding_id : smeta.filing);
-    head.appendChild(document.createTextNode(" "));
-    var chip = el("span", "", smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since);
-    chip.setAttribute("data-k", "State");
-    head.appendChild(chip);
-    main.appendChild(head);
     if (smeta.ready_to_retire) {
       main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
     }
@@ -95298,6 +95845,18 @@ var TAIL2 = String.raw`</script>
         });
         body.appendChild(ol);
       }
+      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
+      // under a heading of their own and outside the step count.
+      if (t.sources.length > 0) {
+        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
+        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
+        var sources = el("ol", "steps");
+        t.sources.forEach(function (s) {
+          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
+          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
+        });
+        body.appendChild(sources);
+      }
 
       var dl = el("dl");
       if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
@@ -95320,16 +95879,11 @@ var TAIL2 = String.raw`</script>
       return card;
     }
 
-    // A deleted job (schema v54): one struck line in Completed, never a card. Its Restore link only
-    // copies the instruction for the practitioner to paste into a session. It writes to no database,
-    // file or server (ADR 0015, 2026-10-05 amendment). Two spaces follow the colon; the stylesheet keeps them.
-    function deletedLine(d) {
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
-      line.appendChild(document.createTextNode(" *DELETED* "));
+    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
+    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
+    function restoreLink(instruction) {
       var restore = el("a", "", "Restore");
       restore.href = "#";
-      var instruction = "restore job #" + d.id;
       // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
       function showInstruction() { restore.textContent = instruction; }
       restore.addEventListener("click", function (event) {
@@ -95340,7 +95894,27 @@ var TAIL2 = String.raw`</script>
           setTimeout(function () { restore.textContent = "Restore"; }, 1500);
         }, showInstruction);
       });
-      line.appendChild(restore);
+      return restore;
+    }
+
+    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
+    // colon; the stylesheet keeps them.
+    function deletedLine(d) {
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
+      line.appendChild(document.createTextNode(" *DELETED* "));
+      line.appendChild(restoreLink("restore job #" + d.id));
+      return line;
+    }
+
+    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
+    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
+    function discardedSeedLine(s) {
+      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
+      line.appendChild(document.createTextNode(" *DISCARDED* "));
+      line.appendChild(restoreLink("restore loose thread #" + s.id));
       return line;
     }
 
@@ -95423,10 +95997,10 @@ var TAIL2 = String.raw`</script>
     // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
     var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
 
-    // The card header's work name: the title without its trailing ": " + item. Derived rather than
+    // The card header's work name: the title without its trailing ": " + label. Derived rather than
     // listed, because one work name carries a colon of its own.
     function workName(p) {
-      var tail = ": " + p.item;
+      var tail = ": " + p.label;
       return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
     }
     // A witnesses-keyed count is displayed beside the item, never inside it (design §8).
@@ -95534,6 +96108,9 @@ var TAIL2 = String.raw`</script>
       card.setAttribute("data-state", goal.state);
       var head = el(expands ? "summary" : "div", "head");
       head.appendChild(el("span", "sentence", goal.sentence));
+      // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "lifecycle", stateText(data.meta)));
       if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
       // An unmet deadline stays in the head, so it shows whether the card is open or closed.
       criteria.forEach(function (c) {
@@ -95657,13 +96234,14 @@ var TAIL2 = String.raw`</script>
     jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
     // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them.
+    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
+    // Either way the count is the open threads'.
     var threadsPage = views.filter(function (v) { return v.name === ${JSON.stringify(LOOSE_THREADS_PAGE_NAME)}; })[0];
-    if (threadsPage && data.seeds.length > 0) {
+    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
     } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard));
+      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
     }
     section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
@@ -96604,7 +97182,7 @@ function renderViewPageHtml(page2, meta2, data) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${name}</title>
 <style>
-${WORKBOARD_CSS}${page2.css}</style>
+${BOARD_CSS}${page2.css}</style>
 </head>
 <body>
 <main>
@@ -96711,7 +97289,6 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const targets = pageTargets(live, preFiling);
     const names = targets.map((t3) => t3.file);
     const views = viewTargets(live);
-    refuseForeignPages(draftDir, names, views);
     const meta2 = {
       revision,
       matter: client.matterNo ?? "",
@@ -96719,8 +97296,14 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       rendered: now
     };
     const own = reuse.section;
+    const { only } = reuse;
+    const liveWritten = only === void 0 ? live : live.filter((r3) => r3.filing.id === only);
+    const preFilingWritten = only === void 0 ? preFiling : [];
+    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+    const viewsWritten = only === void 0 ? views : views.filter((v3) => v3.filing.id === only);
+    refuseForeignPages(draftDir, targetsWritten.map((t3) => t3.file), viewsWritten);
     const pages = [
-      ...live.map((r3) => {
+      ...liveWritten.map((r3) => {
         const manifest = isJobOnlyBoard(r3.filing) ? null : readManifest(mockupDir(dbPath, r3.filing.id));
         return {
           proceeding: r3.proceeding,
@@ -96729,7 +97312,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
           views: views.filter((v3) => v3.filing.id === r3.filing.id).map((v3) => ({ name: v3.page.name, file: v3.file }))
         };
       }),
-      ...preFiling.map((p3) => ({
+      ...preFilingWritten.map((p3) => ({
         proceeding: p3,
         section: own !== void 0 && own.meta.filing_id === null && own.meta.proceeding_id === p3.id ? own : buildPreFilingBoardData(dbPath, p3, { revision, matter: meta2.matter, client: client.clientName ?? p3.matter_reference, rendered: now }),
         writings: [],
@@ -96739,7 +97322,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos));
     const jobBoards = pages.map(
       ({ proceeding, section: section2, writings, views: pageViews }) => renderWorkBoardHtml({
-        meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "" },
+        meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
         sections: [section2],
         dates: pageDates(dates, [section2]),
         writings,
@@ -96748,18 +97331,18 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
         court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname10(draftDir)).filter((a3) => a3.mismatch !== null)
       })
     );
-    const viewPages = views.map(
+    const viewPages = viewsWritten.map(
       (v3) => renderViewPageHtml(
         v3.page,
         { filing: v3.filing.title, matter: meta2.matter, client: meta2.client, revision, rendered: now },
         v3.page.data({ dbPath, filing: v3.filing, proceeding: v3.proceeding, now, revision })
       )
     );
-    const swept = sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]);
+    const swept = only === void 0 ? sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]) : {};
     const matterBoardPath = join23(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targets.forEach((t3, i3) => writePage(join23(draftDir, t3.file), jobBoards[i3]));
-    views.forEach((v3, i3) => writePage(join23(draftDir, v3.file), viewPages[i3]));
+    targetsWritten.forEach((t3, i3) => writePage(join23(draftDir, t3.file), jobBoards[i3]));
+    viewsWritten.forEach((v3, i3) => writePage(join23(draftDir, v3.file), viewPages[i3]));
     return {
       job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join23(draftDir, t3.file) })),
       matter_board_path: matterBoardPath,
@@ -96927,6 +97510,11 @@ function tagTail(t3, rendered) {
   const idle = idleTag(t3, rendered);
   return (idle === null ? "" : ` \xB7 ${idle}`) + (t3.idle_flag ? ` \xB7 ${t3.idle_flag}` : "");
 }
+function sourcesText(sources) {
+  const got = sources.filter((s3) => s3.outcome === "got").length;
+  const rest = sources.filter((s3) => s3.outcome !== "got").map((s3) => s3.outcome === null ? `\u2610 ${s3.kind}: ${s3.label}` : `\u2612 ${s3.kind}: ${s3.label} (not retrieved${s3.reason === null ? "" : `: ${s3.reason}`})`);
+  return [`${got} of ${sources.length} got`, ...rest].join(" \xB7 ");
+}
 function jobCardLines(t3, derived, seeds) {
   const head = collapsedText(t3);
   if (t3.category === "superseded") {
@@ -96943,6 +97531,7 @@ function jobCardLines(t3, derived, seeds) {
   const own = seeds.filter((s3) => s3.origin_ticket_id === t3.id);
   if (own.length > 0) lines2.push(`  loose threads: ${own.map((s3) => `loose thread ${s3.id}: ${JSON.stringify(s3.idea)} (${s3.created})`).join("; ")}`);
   if (t3.answers.length > 0) lines2.push(`  answers: ${t3.answers.map((a3) => `${a3.file_path} (${a3.saved_at})`).join("; ")}`);
+  if (t3.sources.length > 0) lines2.push(`  sources to get: ${sourcesText(t3.sources)}`);
   if (t3.category === "bring_forward") lines2.push(`  bring forward: ${t3.bf_on}`);
   if (t3.category === "completed") lines2.push(`  completed: ${t3.completed_at ?? "(unknown time)"}`);
   if (t3.category === "rejected") lines2.push(`  shelved: ${t3.rejected_at ?? "(unknown time)"}`);
@@ -97591,7 +98180,7 @@ function renderBccaBookFiledFace(ctx) {
 
 // src/submission/forms/emit-bcca-factum.ts
 var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
-function oneLine(text4) {
+function oneLine2(text4) {
   return text4.replace(/\s*\n\s*/g, " ").trim();
 }
 function pushExcerpt(lines2, excerpt, cite) {
@@ -97680,24 +98269,24 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referenced]);
   const body = [];
   body.push("## OPENING STATEMENT", "");
-  opening.forEach((p3) => body.push(oneLine(p3), ""));
+  opening.forEach((p3) => body.push(oneLine2(p3), ""));
   let n3 = 0;
-  const rhetoricLines = (row3) => renderRhetoricFiled({ ...row3, wording: oneLine(row3.wording) }, ++n3, "", "cite: ");
+  const rhetoricLines = (row3) => renderRhetoricFiled({ ...row3, wording: oneLine2(row3.wording) }, ++n3, "", "cite: ");
   body.push("## PART 1 - STATEMENT OF FACTS", "");
-  factsPosition.forEach((p3) => body.push(`${++n3}. ${oneLine(p3)}`));
+  factsPosition.forEach((p3) => body.push(`${++n3}. ${oneLine2(p3)}`));
   for (const entry of interleave(facts, factsRhetoric, (f3) => f3.filing_ordinal)) {
     if (entry.kind === "rhetoric") {
       body.push(...rhetoricLines(entry.row));
       continue;
     }
     const f3 = entry.item;
-    body.push(`${++n3}. ${oneLine(f3.postulate)}`);
+    body.push(`${++n3}. ${oneLine2(f3.postulate)}`);
     const cite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
     if (cite) body.push(`cite: ${cite}`);
   }
   body.push("");
   body.push("## PART 2 - ISSUES ON APPEAL", "");
-  submissions.forEach((s3) => body.push(`${++n3}. ${oneLine(s3.contention)}`));
+  submissions.forEach((s3) => body.push(`${++n3}. ${oneLine2(s3.contention)}`));
   body.push("");
   body.push("## PART 3 - ARGUMENT", "");
   const lawParas = /* @__PURE__ */ new Map();
@@ -97707,10 +98296,10 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       continue;
     }
     const s3 = entry.item;
-    body.push(`${++n3}. ${oneLine(s3.contention)}`);
+    body.push(`${++n3}. ${oneLine2(s3.contention)}`);
     for (const f3 of factsBySubmission.get(s3.id) ?? []) {
       const cite = courtRecordCitation(f3.courtRecord, f3.courtRecordPinpoint);
-      body.push(`${++n3}. ${oneLine(f3.postulate)}${cite ? ` ${cite}` : ""}`);
+      body.push(`${++n3}. ${oneLine2(f3.postulate)}${cite ? ` ${cite}` : ""}`);
       for (const st3 of f3.statements) {
         if (st3.purpose !== "impeachment") pushExcerpt(body, st3.exhibit_id !== null ? st3.exhibit_excerpt : st3.excerpt, factCite(exhibitMap, labelMap, st3));
       }
@@ -97719,19 +98308,19 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       const prior = lawParas.get(la2.lawAssertionId);
       n3 += 1;
       if (prior !== void 0) {
-        body.push(`${n3}. As set out in paragraph ${prior}, above, ${oneLine(la2.proposition)}`);
+        body.push(`${n3}. As set out in paragraph ${prior}, above, ${oneLine2(la2.proposition)}`);
         continue;
       }
       lawParas.set(la2.lawAssertionId, n3);
-      body.push(`${n3}. ${oneLine(la2.proposition)}`);
+      body.push(`${n3}. ${oneLine2(la2.proposition)}`);
       for (const st3 of printedLaw(la2)) pushExcerpt(body, st3.excerpt, lawCite(st3));
     }
   }
   body.push("");
   body.push("## PART 4 - NATURE OF ORDER SOUGHT", "");
-  for (const row3 of fetchRhetoric(ctx.dbPath, filing.id, "form", "orders")) body.push(`${++n3}. ${oneLine(row3.wording)}`);
-  body.push(`${++n3}. The ${signer.roleLabel.toLowerCase()}${signer.roleLabel.endsWith("s") ? "seek" : "seeks"} an Order:`);
-  orders.forEach((o3) => body.push(oneLine(o3.wording_override ?? o3.wording)));
+  for (const row3 of fetchRhetoric(ctx.dbPath, filing.id, "form", "orders")) body.push(`${++n3}. ${oneLine2(row3.wording)}`);
+  body.push(`${++n3}. The ${signer.roleLabel.toLowerCase()} ${signer.roleLabel.endsWith("s") ? "seek" : "seeks"} an Order:`);
+  orders.forEach((o3) => body.push(oneLine2(o3.wording_override ?? o3.wording)));
   body.push(`${++n3}. All of which is respectfully submitted.`);
   const { enactments } = factumEnactments(ctx.dbPath, lawParas);
   const bare2 = enactments.find((e3) => e3.excerpts.length === 0);
@@ -97775,7 +98364,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   put("filing_party_phrase", formatNameList(clientGroup.names));
   put("party_groups", JSON.stringify(partyGroups));
   put("contacts", JSON.stringify(contacts));
-  put("chronology", JSON.stringify(chronology.map((c3) => ({ date: c3.event_date, event: oneLine(c3.event) }))));
+  put("chronology", JSON.stringify(chronology.map((c3) => ({ date: c3.event_date, event: oneLine2(c3.event) }))));
   put("authorities", JSON.stringify(factumAuthorities(ctx.dbPath, lawParas).map(({ authority_id, ...a3 }) => a3)));
   put("enactments", JSON.stringify(enactments.map(({ authority_id, ...e3 }) => e3)));
   put("signing_place", place);
@@ -99061,7 +99650,7 @@ function selectDocuments(documents, wanted) {
   }
   return documents.filter((doc) => wanted.includes(doc.document_type));
 }
-function resolvePresentationDir(presentationDir, filingTitle) {
+function resolvePresentationDir(presentationDir, filingTitle, styleOfCause) {
   if (!isAbsolute5(presentationDir)) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
   }
@@ -99076,7 +99665,10 @@ function resolvePresentationDir(presentationDir, filingTitle) {
   if (!/^0\. DRAFT/i.test(basename4(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
   if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   const ending = ` ${sanitizeForPath(filingTitle)}`;
-  if (!basename4(dir).endsWith(ending)) throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  const oldEnding = styleOfCause ? ` ${sanitizeForPath(oldTitle(filingTitle, styleOfCause))}` : null;
+  if (!basename4(dir).endsWith(ending) && (oldEnding === null || !basename4(dir).endsWith(oldEnding))) {
+    throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  }
   if (existsSync27(dir) && dirname12(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
@@ -99096,10 +99688,13 @@ function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir
   if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
   return dir;
 }
-function presentationFolder(proceeding, filing) {
+function presentationFolder(proceeding, filing, title = filing.title) {
   const stored = layoutFor(filing);
   const code = stored !== null ? stored.layout.folder_code : resolveTypeFile(requireForum(proceeding, true).forum, filing.kind).block.folder_code;
-  return `${code} ${sanitizeForPath(filing.title)}`;
+  return `${code} ${sanitizeForPath(title)}`;
+}
+function oldTitle(title, styleOfCause) {
+  return `${title} - ${styleOfCause}`;
 }
 function renameable(dir) {
   const entries = readdirSync15(dir, { withFileTypes: true });
@@ -99111,8 +99706,11 @@ function renameable(dir) {
 function presentationDirFromDraft(draftDir, proceeding, filing) {
   const draft = resolveDraftDir(draftDir, "drafting_forms__render.draft_dir");
   const undated = presentationFolder(proceeding, filing);
-  const isUndated = (name) => name.toLowerCase() === undated.toLowerCase();
+  const old = proceeding.style_of_cause ? presentationFolder(proceeding, filing, oldTitle(filing.title, proceeding.style_of_cause)) : null;
+  const isOld = (name) => old !== null && name.toLowerCase() === old.toLowerCase();
+  const isUndated = (name) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
   const matches = readdirSync15(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory() && (isUndated(e3.name) || /^\d{4}-\d{2}-\d{2} /.test(e3.name) && isUndated(e3.name.slice(11)))).map((e3) => e3.name).sort();
+  if (matches.length === 1 && isOld(matches[0])) return join25(draft, matches[0]);
   if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join25(draft, undated);
   const candidates = matches.map((name) => {
     const path = join25(draft, name);
@@ -99196,7 +99794,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     );
   }
   const requestedDir = draftDir === void 0 || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
-  const projectionDir = requestedDir === void 0 ? void 0 : resolvePresentationDir(requestedDir, filing.title);
+  const projectionDir = requestedDir === void 0 ? void 0 : resolvePresentationDir(requestedDir, filing.title, proceeding.style_of_cause);
   const pagesDir = jobOnly && draftDir !== void 0 ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === void 0 ? void 0 : dirname12(projectionDir);
   const revision = fetchRevision(dbPath);
   const approvals = fetchApprovalsMark(dbPath);
@@ -99828,7 +100426,7 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
       migration_required: false,
       bundle_outdated: true,
       filings: [],
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__bootstrap again.`,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. ` + bundleNextStep("database"),
       timings: withTotal(timings, started)
     };
   }
@@ -99844,7 +100442,7 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
         migration_withheld: true,
         bundle_outdated: false,
         filings: [],
-        note: `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and nothing was copied aside. No filing was listed and nothing was rendered. Rebuild and reinstall the Probanda plugin so its bundle matches the migration source, then start a new session.`,
+        note: `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and nothing was copied aside. No filing was listed and nothing was rendered. ` + bundleNextStep("source"),
         timings: withTotal(timings, started)
       };
     }
@@ -99901,6 +100499,7 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== void 0 && client.clientNo !== void 0 && client.matterNo !== void 0;
   const queue = complete ? result.filings.filter((f3) => !f3.retired_on && !f3.job_board_only && f3.render_state !== "fresh").map((f3) => f3.filing_id) : [];
+  const pages = (only) => writeMatterPages(dbPath, dirname12(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
   return startRenderJob({
     dbPath,
     ...result.matter_board_path ? { draftDir: dirname12(result.matter_board_path) } : {},
@@ -99908,17 +100507,16 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
       if (rendered.note) throw new Error(rendered.note);
-      if (result.matter_board_path) {
-        writeMatterPages(dbPath, dirname12(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, []);
-      }
+      if (result.matter_board_path) pages(filingId);
     },
-    isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh"
+    isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh",
+    ...result.matter_board_path ? { settle: () => pages() } : {}
   });
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL7 = "drafting_data__complete_job";
-var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL8 = "drafting_data__complete_job";
+var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read2, client, todos, dates) {
   try {
     let filingId = read2.filing_id;
@@ -99952,9 +100550,9 @@ function rewritePages(args, read2, client, todos, dates) {
   }
 }
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -99967,7 +100565,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
         params: [id, id, id, id, token]
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW4}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW5}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
         params: [id, token]
       }
     ],
@@ -99980,7 +100578,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read2.status === "completed" && read2.locked_by === null) {
@@ -100013,14 +100611,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL8 = "drafting_data__release_job";
+var TOOL9 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL8}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL9}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -100031,7 +100629,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read2.locked_by !== null && (holder === null ? read2.locked_by === args.session_token : read2.locked_by.endsWith(holder));
   let outcome;
@@ -100072,7 +100670,7 @@ import { basename as basename5, dirname as dirname13, join as join27 } from "nod
 // src/case/ingest-coverage.ts
 import { existsSync as existsSync28 } from "node:fs";
 import { join as join26 } from "node:path";
-var DRIVER3 = String.raw`
+var DRIVER4 = String.raw`
 import json, sys
 
 
@@ -100098,7 +100696,7 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS,
     const timeoutMs = pythonTimeoutMs(env, COVERAGE_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS");
     const parsed = runPythonDriver({
       label: "case-data ingest-coverage reader",
-      driver: pythonDriverFile("case-ingest-coverage-driver", DRIVER3),
+      driver: pythonDriverFile("case-ingest-coverage-driver", DRIVER4),
       payload: JSON.stringify({
         case_data_dir: caseDataDir,
         matter_root: matterRoot,
@@ -100360,7 +100958,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 // src/submission/bcsc-form-harness.ts
 import { existsSync as existsSync30, readdirSync as readdirSync17, readFileSync as readFileSync23, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
 import { win32 as pathWin3214 } from "node:path";
-var DRIVER4 = `import contextlib, io, json, runpy, sys
+var DRIVER5 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 sys.argv = [payload["harness"], *payload["argv"]]
 buf = io.StringIO()
@@ -100435,7 +101033,7 @@ function bcscFormHarness(args, env = process.env, installRoot) {
   }
   const action = runPythonDriver({
     label: `publish-bcsc-form harness (${args.command})`,
-    driver: pythonDriverFile("bcsc-form-harness", DRIVER4),
+    driver: pythonDriverFile("bcsc-form-harness", DRIVER5),
     payload: JSON.stringify({ harness: bcscFormHarnessPath(env, installRoot), argv }),
     env,
     timeoutMs: pythonTimeoutMs(env, HARNESS_TIMEOUT_MS, "COCLERK_BCSC_HARNESS_TIMEOUT_MS"),
@@ -100548,7 +101146,7 @@ import { win32 as pathWin3216 } from "node:path";
 // src/submission/publish-host.ts
 import { existsSync as existsSync31, readdirSync as readdirSync18 } from "node:fs";
 import { win32 as pathWin3215 } from "node:path";
-var DRIVER5 = `import contextlib, io, json, runpy, sys
+var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 code, last = 0, None
 for argv in payload["runs"]:
@@ -100623,7 +101221,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
 function runSubskillScript(run, env, installRoot) {
   return runPythonDriver({
     label: run.label,
-    driver: pythonDriverFile("publish-fill", DRIVER5),
+    driver: pythonDriverFile("publish-fill", DRIVER6),
     payload: JSON.stringify({ script: subskillScriptPath(run.skill, run.subskill, run.script, env, installRoot), runs: run.runs }),
     env,
     timeoutMs: pythonTimeoutMs(env, PUBLISH_FILL_TIMEOUT_MS, run.timeoutVariable),
@@ -100769,7 +101367,7 @@ import { win32 as pathWin3219 } from "node:path";
 // src/case/authority-source.ts
 import { homedir as homedir7 } from "node:os";
 import { win32 as pathWin3218 } from "node:path";
-var DRIVER6 = String.raw`
+var DRIVER7 = String.raw`
 import json, sys
 
 
@@ -100788,7 +101386,7 @@ var AUTHORITY_SOURCE_TIMEOUT_MS = 4e4;
 function resolveAuthoritySource(request2, env = process.env, installRoot) {
   const parsed = runPythonDriver({
     label: "case-data authority-source resolver",
-    driver: pythonDriverFile("case-authority-source-driver", DRIVER6),
+    driver: pythonDriverFile("case-authority-source-driver", DRIVER7),
     payload: JSON.stringify({
       case_data_dir: request2.caseDataDir,
       matter_root: request2.matterRoot,
@@ -103319,7 +103917,7 @@ function skillRulesCoverage(skill) {
 
 // src/files/rules-position.ts
 var POSITION_SCHEMA_VERSION = 73;
-var NOW5 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
+var NOW6 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
 var MAIN = "main";
 var DB_FACTS = ["job_held", "job_steps"];
 var SESSION_FACTS = ["unattended", "host"];
@@ -103433,7 +104031,7 @@ function serve(composed, skill, prior) {
 async function logServed(dbPath, token, path, sent, env) {
   if (sent.length === 0) return null;
   const statements = sent.map(({ rule }) => ({
-    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW5})`,
+    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW6})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
   try {
@@ -103455,9 +104053,9 @@ function block(dag, composed, served, options) {
   if (options.logError !== null) extra.push(`  <log_error message="${xmlAttr(options.logError)}"/>`);
   return renderRules(dag, { ...composed, rules: served.sent }, { attrs, left: options.left, head, extra });
 }
-var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW5}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
-var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW5}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
-var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW5}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
+var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW6}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
+var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
+var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
 async function rulesMove(args, env = process.env) {
   const tool = "rules__move";
   checkArgs2(tool, args.db_path, args.session_token);
@@ -103537,7 +104135,7 @@ async function rulesMove(args, env = process.env) {
   ];
   if (entersOutOfBounds) {
     statements.push({
-      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW5})`,
+      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW6})`,
       params: [token, (stored ?? [skill]).join(" ")]
     });
   }
@@ -103684,7 +104282,7 @@ async function rulesBranch(args, env = process.env) {
     statements = [
       { sql: "DELETE FROM session_position WHERE session_token = ? AND branch = ?", params: [token, label] },
       {
-        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW5} WHERE session_token = ? AND branch = ?`,
+        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW6} WHERE session_token = ? AND branch = ?`,
         params: [JSON.stringify(served.inForce), token, MAIN]
       }
     ];
@@ -104103,7 +104701,7 @@ import { win32 as pathWin3227 } from "node:path";
 // src/housekeeping/name-gate.ts
 import { existsSync as existsSync36 } from "node:fs";
 import { win32 as pathWin3225 } from "node:path";
-var DRIVER7 = `import contextlib, io, json, sys
+var DRIVER8 = `import contextlib, io, json, sys
 import name_gate
 payload = json.load(sys.stdin)
 out = []
@@ -104141,7 +104739,7 @@ function runNameGate(groups, env = process.env) {
   const dir = fileNamingSkillDir(env);
   const parsed = runPythonDriver({
     label: "file-naming name gate",
-    driver: pythonDriverFile("housekeeping-name-gate", DRIVER7),
+    driver: pythonDriverFile("housekeeping-name-gate", DRIVER8),
     payload: JSON.stringify({ registry: pathWin3225.join(dir, "references", "code-registry.md"), groups: live }),
     env,
     timeoutMs: READ_TIMEOUT_MS,
@@ -106657,8 +107255,8 @@ function sectionBlocks(chunks) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL9 = "research_filing__save_answer";
-var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL10 = "research_filing__save_answer";
+var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
@@ -106666,20 +107264,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL9} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named < 3) throw new ValidationError(`${TOOL10} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL9}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL10}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL9}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL10}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -106688,7 +107286,7 @@ async function saveAnswerTool(args, env = process.env) {
   try {
     written = await submissionDataWrite(
       dbPath,
-      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW6} FROM tickets WHERE id = ? AND locked_by = ?`,
+      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW7} FROM tickets WHERE id = ? AND locked_by = ?`,
       [lawRelativePath(saved.path), id, token],
       env
     );
@@ -106748,6 +107346,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "case_data__resolve_participant") {
     return resolveParticipant(args.matter_root, args.name);
+  }
+  if (name === "case_data__ingest_authority") {
+    return ingestAuthority(args);
   }
   if (name === "case_data__migrate") {
     const mode = args.mode;
@@ -106822,6 +107423,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "drafting_data__approve_plan") {
     return submissionDataApprovePlan(args);
+  }
+  if (name === "drafting_data__track_source") {
+    return submissionDataTrackSource(args);
   }
   if (name === "drafting_data__release_job") {
     return submissionDataReleaseJob(args);
@@ -107223,16 +107827,16 @@ import { isAbsolute as isAbsolute6 } from "node:path";
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
   const deletedIds = new Set(fetchDeletedTickets(args.db_path, args.proceeding_id).map((d3) => d3.id));
-  const open = openSeedCondition(deletedIds);
+  const open = openSeedCondition(args.db_path, deletedIds);
   const sql = args.action === "defer" ? `UPDATE seeds SET deferred_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NULL` : `UPDATE seeds SET deferred_at = NULL WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NOT NULL`;
   const written = await submissionDataWriteAll(args.db_path, [{ sql, params: [args.seed_id, args.proceeding_id, ...open.params], expect_changes: 1 }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
-  const [read2] = submissionDataQuery(args.db_path, "SELECT proceeding_id, charted_into, deferred_at FROM seeds WHERE id = ?", [args.seed_id]).rows;
+  const [read2] = submissionDataQuery(args.db_path, `SELECT proceeding_id, charted_into, deferred_at${seedClosedColumns(args.db_path).map((c3) => `, ${c3}`).join("")} FROM seeds WHERE id = ?`, [args.seed_id]).rows;
   let outcome;
   if (read2 === void 0) outcome = "not_found";
   else if (changes === 1) outcome = args.action === "defer" ? "deferred" : "undeferred";
   else if (read2.proceeding_id !== args.proceeding_id) outcome = "wrong_proceeding";
-  else if (read2.charted_into !== null && !deletedIds.has(read2.charted_into)) outcome = "not_open";
+  else if (read2.charted_into !== null && !deletedIds.has(read2.charted_into) || read2.discarded_at != null || read2.suggested_at != null) outcome = "not_open";
   else outcome = "already";
   return {
     seed_id: args.seed_id,

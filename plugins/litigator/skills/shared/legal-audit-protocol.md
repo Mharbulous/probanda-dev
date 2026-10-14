@@ -246,8 +246,9 @@ proposition, and that its text was not read.
 
 End every offer with ` live_issue: yes` when it bears on the spawn prompt's `Question:`
 as asked, and ` live_issue: no` when it does not, such as an adjacent point the audit
-turned up. The tag says only which question an offer serves, never what the law is. The
-caller relays the `yes` offers and may put the `no` offers on a board instead.
+turned up. The tag says only which question an offer serves, never what the law is. With
+a board, the caller sorts every offer against it (`shared/legal-research.md`, "After the
+answer"). With none, it relays the `yes` offers.
 
 ### Step 6 — Return shape (opinion mode only)
 

@@ -272,6 +272,10 @@ function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "m
  * `draftDir` is already confined (resolveDraftDir, or the parent of a confined presentation folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
+ * `reuse.only` names the one filing whose Job Board page and view pages are built and written, with
+ * the Litigation Strategy: the background render job passes the filing it just rendered, and writes
+ * every page once after its last, because building them all after every filing costs the square of
+ * the filing count.
  */
 export function writeMatterPages(
   dbPath: string,
@@ -284,7 +288,7 @@ export function writeMatterPages(
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
   timings: PhaseTimings,
-  reuse: { ranked?: Ranked[]; section?: WorkBoardData } = {}
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
 ): PagesWritten {
   return timed(timings, "matter_pages", () => {
     const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
@@ -293,7 +297,6 @@ export function writeMatterPages(
     const targets = pageTargets(live, preFiling);
     const names = targets.map((t) => t.file);
     const views = viewTargets(live);
-    refuseForeignPages(draftDir, names, views);
     const meta = {
       revision,
       matter: client.matterNo ?? "",
@@ -301,8 +304,15 @@ export function writeMatterPages(
       rendered: now,
     };
     const own = reuse.section;
+    // What this call builds and writes: every page, or one filing's.
+    const { only } = reuse;
+    const liveWritten = only === undefined ? live : live.filter((r) => r.filing.id === only);
+    const preFilingWritten = only === undefined ? preFiling : [];
+    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+    const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
+    refuseForeignPages(draftDir, targetsWritten.map((t) => t.file), viewsWritten);
     const pages = [
-      ...live.map((r) => {
+      ...liveWritten.map((r) => {
         // A Job Board with no Writing has no mockup folder, so none is looked up for it.
         const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
         return {
@@ -312,7 +322,7 @@ export function writeMatterPages(
           views: views.filter((v) => v.filing.id === r.filing.id).map((v) => ({ name: v.page.name, file: v.file })),
         };
       }),
-      ...preFiling.map((p) => ({
+      ...preFilingWritten.map((p) => ({
         proceeding: p,
         section:
           own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
@@ -325,7 +335,7 @@ export function writeMatterPages(
     const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
     const jobBoards = pages.map(({ proceeding, section, writings, views: pageViews }) =>
       renderWorkBoardHtml({
-        meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "" },
+        meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
         sections: [section],
         dates: pageDates(dates, [section]),
         writings,
@@ -335,18 +345,19 @@ export function writeMatterPages(
           section.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null),
       })
     );
-    const viewPages = views.map((v) =>
+    const viewPages = viewsWritten.map((v) =>
       renderViewPageHtml(
         v.page,
         { filing: v.filing.title, matter: meta.matter, client: meta.client, revision, rendered: now },
         v.page.data({ dbPath, filing: v.filing, proceeding: v.proceeding, now, revision })
       )
     );
-    const swept = sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]);
+    // One filing's call leaves the sweep to the job's last, full call.
+    const swept = only === undefined ? sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]) : {};
     const matterBoardPath = join(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targets.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));
-    views.forEach((v, i) => writePage(join(draftDir, v.file), viewPages[i]));
+    targetsWritten.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));
+    viewsWritten.forEach((v, i) => writePage(join(draftDir, v.file), viewPages[i]));
     return {
       job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: matterBoardPath,
@@ -581,8 +592,8 @@ function elapsedText(minutes: number): string {
 }
 
 /** An In progress job's idle tag, measured to the section's Rendered minute from its last activity:
- * the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it
- * (`last_activity_at`). None within the threshold, and none with nothing to measure from. */
+ * the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it
+ * and the sources to get added to it or closed on it (`last_activity_at`). None within the threshold, and none with nothing to measure from. */
 function idleTag(t: WorkBoardTicket, rendered: string): string | null {
   const now = localMinutes(rendered);
   const last = t.last_activity_at === null ? null : localMinutes(t.last_activity_at);
@@ -608,8 +619,19 @@ function tagTail(t: WorkBoardTicket, rendered: string): string {
   return (idle === null ? "" : ` · ${idle}`) + (t.idle_flag ? ` · ${t.idle_flag}` : "");
 }
 
+/** A job's sources to get as its card prints them: the count got, then every source that is open
+ * (☐) or closed not retrieved (☒, with its reason). A source got is counted and not listed. They are
+ * the job's own record beside its steps, never part of its plan. */
+function sourcesText(sources: WorkBoardTicket["sources"]): string {
+  const got = sources.filter((s) => s.outcome === "got").length;
+  const rest = sources
+    .filter((s) => s.outcome !== "got")
+    .map((s) => (s.outcome === null ? `☐ ${s.kind}: ${s.label}` : `☒ ${s.kind}: ${s.label} (not retrieved${s.reason === null ? "" : `: ${s.reason}`})`));
+  return [`${got} of ${sources.length} got`, ...rest].join(" · ");
+}
+
 /** A job as board_card prints it. A live, completed or shelved job carries its detail, ending with
- * the open loose threads captured from it and the answers saved for it, then, on a completed or
+ * the open loose threads captured from it, the answers saved for it and its sources to get, then, on a completed or
  * shelved one, when it was completed or shelved; a superseded one its pointer and reason. `seeds`
  * are the section's open loose threads. */
 function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | null, seeds: WorkBoardData["seeds"]): string[] {
@@ -632,6 +654,7 @@ function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | 
   const own = seeds.filter((s) => s.origin_ticket_id === t.id);
   if (own.length > 0) lines.push(`  loose threads: ${own.map((s) => `loose thread ${s.id}: ${JSON.stringify(s.idea)} (${s.created})`).join("; ")}`);
   if (t.answers.length > 0) lines.push(`  answers: ${t.answers.map((a) => `${a.file_path} (${a.saved_at})`).join("; ")}`);
+  if (t.sources.length > 0) lines.push(`  sources to get: ${sourcesText(t.sources)}`);
   if (t.category === "bring_forward") lines.push(`  bring forward: ${t.bf_on}`);
   if (t.category === "completed") lines.push(`  completed: ${t.completed_at ?? "(unknown time)"}`);
   if (t.category === "rejected") lines.push(`  shelved: ${t.rejected_at ?? "(unknown time)"}`);
