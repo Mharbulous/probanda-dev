@@ -29,6 +29,8 @@ and only at the plan's phase 3:
 `tools/reembed.mjs` re-embeds the pool through one of them after a change of model.
 `tools/check_functions.mjs` checks the three once deployed.
 `tools/contribute.mjs` contributes decompositions through one of them.
+`tools/recall_check.mjs` checks the search over the pooled clauses.
+`tools/contribute_verdicts.mjs` stores meaning verdicts.
 `tests/` holds the tests of steps 4 and 5: `node tests/build_scratch_test.mjs
 <output.sql>` writes one script that runs them in a scratch schema and drops it.
 
