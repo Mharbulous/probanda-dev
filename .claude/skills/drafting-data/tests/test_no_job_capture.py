@@ -75,7 +75,15 @@ class NoJobCaptureTests(unittest.TestCase):
         self.assertIn("`origin_ticket_id` NULL", text)
         self.assertIn("ask the practitioner once which proceeding the draft serves", text)
         self.assertIn("None: there is no board.", text)
-        self.assertIn("Never create a proceeding or a job here, and never assign anything", text)
+        self.assertIn(
+            '("With a board, the return\'s open items are sorted against it")', text
+        )
+        self.assertIn(
+            "Never create a proceeding here, never create a job other than §3i's research offer job, "
+            "and never assign anything: a loose thread is consumed only by a later outlining session "
+            "(§3) or by §3i's add path.",
+            text,
+        )
 
 
 if __name__ == "__main__":
