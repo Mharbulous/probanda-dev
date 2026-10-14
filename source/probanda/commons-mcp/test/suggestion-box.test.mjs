@@ -93,7 +93,8 @@ test("submit is refused when nothing is configured, before any call", async (t) 
 const REFUSALS = [
   ["email", { title: "Sign-in fails for jdoe@example.com" }, ["jdoe@example.com", "jdoe"]],
   ["email", { body: "Write to jdoe@example.com when it is fixed" }, ["jdoe@example.com", "jdoe"]],
-  ["user_path", { body: "It reads C:\\Users\\jdoe\\AppData\\Local\\x.json" }, ["jdoe"]],
+  // Joined here so that no line of this file holds a path that looks real.
+  ["user_path", { body: `It reads ${["C:", "Users", "jdoe", "AppData", "x.json"].join("\\")}` }, ["jdoe"]],
   ["user_path", { title: "open /home/jdoe/.config/x.json failed" }, ["jdoe"]],
   ["matter_folder", { body: "Seen in C:\\Docs\\0. CASE DATA\\Smith v Jones\\notes" }, ["Smith"]],
   ["matter_folder", { title: "Litigation - Documents/Smith v Jones is slow" }, ["Smith"]],
