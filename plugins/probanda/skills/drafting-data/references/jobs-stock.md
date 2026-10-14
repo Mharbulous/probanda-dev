@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), or the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or a `/legal-research` return's Step 5 offer is on the board's application or is a relayed offer the practitioner names to add (§3i).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -323,3 +323,56 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (30, 2, 'Run /localiz
 ```
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads. Completing it follows §9.
+
+## 3i. Research offer jobs
+
+One fixed-text job per follow-up research offer that bears on the application the board is for. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
+
+**Who creates it.** The session relaying the return, in the same turn, with no closing read-back and no question: once for each offer the sort in `shared/legal-research.md` ("After the answer") puts on the application, and once for an uncertain offer the practitioner then names to add. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `session_proposed`, no `ticket_proposals` row and no `ticket_blocks` edge.
+
+The job's words come from the offer and from this section, never from the session.
+
+- Title and intent: the offer's text, character for character, with only its trailing ` live_issue: yes` or ` live_issue: no` tag removed. Single quotes are doubled in the SQL literal.
+- Step 1: `Put this question to /legal-research and save the answer under this job`. It differs from the title, so `/draft`'s pre-claim check passes it, and the job runs on its intent as any one-step job does.
+- No scope rows: the job writes no substance table (`jobs-common.md` §2 allows a job with none).
+
+`kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Job Board's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is one below the lowest §3's priority read returns, or `0` when no row returns.
+
+`filing_id` and `proceeding_id`: in a session holding a job, the held job's. Otherwise the board's: a Writing's id and proceeding, a Job Board with no Writing's own id and proceeding, or `filing_id` NULL where §8a step 2 resolves to the proceeding alone or to a retired Writing.
+
+**Guarded create**, on §3g's shape, one offer per call 1. Call 1 inserts the row and deletes it again, in the same script, when any job in the proceeding, of any status, shelved included, and not deleted, carries the same title and a step. The row just inserted has no step yet, so it can never match its own guard. An offer a later return repeats, or one a completed job already answered, is never written again.
+
+```sql
+INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
+  VALUES (1, 1, 'Would you like me to research whether the example rule applies to the example situation?', 'Would you like me to research whether the example rule applies to the example situation?', 'work', 3, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+DELETE FROM tickets WHERE id = last_insert_rowid()
+  AND EXISTS (
+    SELECT 1 FROM tickets t JOIN ticket_steps s ON s.ticket_id = t.id
+      WHERE t.proceeding_id = 1 AND t.deleted_at IS NULL
+        AND t.title = 'Would you like me to research whether the example rule applies to the example situation?');
+```
+
+**Call 2 recovers its id**, with no `LIMIT`: the one queued job in the proceeding with that title that holds no step yet.
+
+```sql
+SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Would you like me to research whether the example rule applies to the example situation?' AND status = 'queued' AND deleted_at IS NULL
+  AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id);
+```
+
+No row means the guard fired: take the existing job's number from `drafting_forms__board_card` with `lanes: ["live"]`, or `lanes: ["completed"]` when it is not there, and say "already a job: Job #K" in one line. One row is the new job. More than one: stop and ask.
+
+**Call 3 writes the one step** on the recovered literal id (here `31`):
+
+```sql
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Put this question to /legal-research and save the answer under this job');
+```
+
+**Consuming the thread on "add".** An uncertain offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:
+
+```sql
+UPDATE seeds SET charted_into = 31 WHERE id = 7;
+```
+
+This is the one `charted_into` write outside an outlining session. It runs in the session the sort ran in, and only on a thread that sort captured. An offer already on the application was never captured, so it has no thread to consume.
+
+The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.

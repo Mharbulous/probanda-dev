@@ -155,7 +155,7 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
 
 ### 8a. With no job held
 
-`shared/legal-research.md`'s after-the-answer step ("With an origin, the return's open items go on the board") captures a research return's open items for the draft the question came from, in a session holding no job. Same write, same `idea` and `surfaced_by` rules, with `origin_ticket_id` NULL: no job surfaced it, so there is no lock to guard and no job's idle clock to restart. The thread renders under "Loose Threads" with no origin job, like one whose job was deleted (`jobs-closeout.md` §10a).
+`shared/legal-research.md`'s after-the-answer step ("With a board, the return's open items are sorted against it") captures a research return's open items for the draft the question came from, in a session holding no job. Same write, same `idea` and `surfaced_by` rules, with `origin_ticket_id` NULL: no job surfaced it, so there is no lock to guard and no job's idle clock to restart. The thread renders under "Loose Threads" with no origin job, like one whose job was deleted (`jobs-closeout.md` §10a).
 
 1. **Session entry.** `drafting_forms__open_session` with the matter root gives `db_path` and `draft_dir`. A refusal, or no drafting database for the matter, means there is no board: capture nothing and report that.
 2. **Resolve the board from the origin.**
@@ -172,9 +172,9 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
 4. **Confirm-read**, expected one row per thread written: `SELECT id, idea FROM seeds WHERE proceeding_id = ? AND origin_ticket_id IS NULL AND surfaced_by = ? AND charted_into IS NULL ORDER BY id`.
 5. **Re-render** with `draft_dir` (the Writing, or the proceeding's live Writing or the proceeding itself), so its Job Board page lists the threads. `pages_refused` means the page is stale: say so.
 
-Never create a proceeding or a job here, and never assign anything: a loose thread is consumed only by a later outlining session (§3).
+Never create a proceeding here, never create a job other than §3i's research offer job, and never assign anything: a loose thread is consumed only by a later outlining session (§3) or by §3i's add path.
 
-**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. No table references a loose thread, so the delete stands alone:
+**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. Or, in any session, a thread the research-offer sort (`shared/legal-research.md`, "After the answer") captured in that session, when the practitioner names that offer to drop. No table references a loose thread, so the delete stands alone:
 
 ```sql
 DELETE FROM seeds WHERE id = 1;

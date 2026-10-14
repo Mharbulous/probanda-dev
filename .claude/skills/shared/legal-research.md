@@ -312,30 +312,62 @@ Record nothing without the practitioner's yes. A `/draft` session holding a job
 handles them by its own rule instead (`/draft` `references/job-session.md`,
 "Case-data flags in a research return"). A return with no flag adds no line.
 
-**With an origin, the return's open items go on the board.** This step runs after the
-persistence steps above, for a return they persisted, when the spawn prompt's `Origin:` was
-not `none` and the caller holds no `/draft` job. A `/draft` session holding a job captures by
-its own rule instead (`/draft` SKILL.md section 14, "Captured ideas"). Capture these as loose
-threads through `/drafting-data`'s capture with no job held, in the same turn the return
-arrives, each verbatim from the return and at most five sentences, with no recommendation:
+**With a board, the return's open items are sorted against it.** This step runs after the
+persistence steps above, for a return they persisted, wherever a board resolves. In a
+`/draft` session the board is the open one, whatever the spawn prompt's `Origin:` says. In
+any other session it is the one `/drafting-data` §8a step 2 resolves from the origin: a
+Writing's own filing, or, for a plain draft file, the proceeding it serves.
+
+Capture these as loose threads in the same turn the return arrives, each verbatim from the
+return and at most five sentences, with no recommendation:
 
 - each `origin-correction:` line in the notes, one thread each;
-- each Step 5 offer, `live_issue: yes` or `no`, one thread each;
 - each `case-data:` flag: every `pinpoint` flag together as one thread, each other flag its
   own. The one-line offer above to record it through `/case-data` is still relayed.
 
-Name the saved answer file as what surfaced each one. Never edit the draft. A captured thread
-is never ripe, never a blocker and never assigned to anyone: only a later `/draft` outlining
-session takes it up. The board is the one `/drafting-data` resolves from the origin: a
-Writing's own filing, or, for a plain draft file, the proceeding it serves. When none
-resolves, capture nothing, relay as below with every offer, and say in one line that the
-matter has no board to capture to.
+A session holding no job captures them through `/drafting-data`'s capture with no job held
+(§8a). A `/draft` session holding a job captures them by its own rule instead (`/draft`
+SKILL.md, "Captured ideas").
 
-Then relay the confidence summary and the `live_issue: yes` offers, each word for word, and
-one line counting the rest: `<n> more offers are on the board as loose threads.` Name each
+Then sort every Step 5 offer, whatever its `live_issue` tag, against the board. Read the
+board without opening a page: `board_summary` (its `To Do:` line, its completion criteria or
+`State:` line, and the board's title), `drafting_forms__board_card` with `lanes: ["live"]`
+for the open jobs' titles, the same tool with `jobs` naming every id that lane lists for
+their intents, and the spawn prompt's `Origin:` words. In a session holding a job, the held
+job's title and intent count too. Put each offer in one class:
+
+| Class | Test | What happens |
+|---|---|---|
+| On the application | The offer serves words the session can point to on the board: the linked to-do, an open job's title or intent, a completion criterion, the board's own title, or the origin text | A research job by `/drafting-data` §3i, in the same turn, with no read-back and no question |
+| Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured, not relayed, counted |
+| Uncertain | Everything else, including a new angle on the board's own subject. Any doubt lands here | Captured as a loose thread at once (`/drafting-data` §8 with a job held, §8a without) and relayed word for word |
+
+The sort reads what an offer is about, never whether it is right. It states no law and
+rewords nothing.
+
+Name the saved answer file as what surfaced each thread. Never edit the draft. A captured
+thread is never ripe, never a blocker and never assigned to anyone: only a later `/draft`
+outlining session takes it up, or the practitioner's "add" below.
+
+Then relay, in this order:
+
+1. The confidence summary, word for word.
+2. Each uncertain offer, word for word.
+3. One line: `<a> offers added as research jobs: Job #N (matches: <the board words matched>), Job #M (...). <d> offers dropped as off this application.` Either count may be 0. An offer
+   whose §3i guard fired is listed as `already a job: Job #K` and is not counted as added.
+4. One line saying they may name any relayed offer to add or drop, and that the rest stay on
+   the board as loose threads.
+
+On "add", write that offer's job by §3i, which also consumes the thread this sort captured.
+On "drop", delete that thread by `/drafting-data` §8's drop write. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
-memo's words as advice on the draft. Only offers that landed on the board are left out of
-the relay. A return with `Origin: none` is relayed as before this step existed.
+memo's words as advice on the draft.
+
+A closed gate captures nothing, adds no job and relays nothing new. When no board resolves,
+capture nothing, add no job, relay the confidence summary and every offer, each word for
+word, and say in one line that the matter has no board to capture to. A return
+with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
+it is relayed as before this step existed.
 
 **Statute currency.** In a research question the check runs at the end of duty 4.
 When a caller such as `/draft` asks for a currency check on its own, call the canlii

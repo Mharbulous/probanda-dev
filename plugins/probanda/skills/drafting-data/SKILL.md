@@ -67,13 +67,14 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Stock bundle jobs and the Letter save idiom | `/prepare` offers a Writing kind's stock jobs, or a letter or `internal-memo` is saved | `references/jobs-stock.md` §3b |
 | Counsel's review jobs | The pre-review passes leave nothing open and every completion criterion above counsel's review holds | `references/jobs-stock.md` §3c |
 | Create a pass finding job | A pre-review pass (`/draft`'s letter passes or overstatement review) leaves a finding undecided in the turn it states it | `references/jobs-stock.md` §3g |
+| Create a research offer job | A `/legal-research` return's Step 5 offer is on the board's application, or the practitioner names a relayed offer to add | `references/jobs-stock.md` §3i |
 | Create a scrutiny review job | A scrutiny return is recorded `'failed'` on a statement linked to a live Writing, or a failed statement is linked to one again | `references/jobs-stock.md` §3d |
 | Assign a job (`drafting_data__assign_job`; semantics §4) | The practitioner picks a Ready job, or says yes to a take-over prompt | `references/jobs-run.md` §4 |
 | Approve a plan | `/draft` stamps the plan it announced for the job this session holds, under the standing announce-and-proceed rule, or the practitioner changes it | `references/jobs-run.md` §5 |
 | Tick a step | A step of the approved plan is done | `references/jobs-run.md` §6 |
 | Expand scope | The practitioner widens the scope of the job this session holds | `references/jobs-run.md` §7 |
 | Capture a loose thread | An out-of-scope idea surfaces mid-job, or the practitioner says to drop a quoted loose thread in an outlining session, or asks for the loose threads ranked there, or corrects a ranked thread's job description | `references/jobs-run.md` §8 |
-| Capture a loose thread with no job held | `/legal-research` captures a research return's open items for the draft its question came from, in a session holding no job | `references/jobs-run.md` §8a |
+| Capture a loose thread with no job held | `/legal-research` captures a research return's open items for the draft its question came from, and sorts its Step 5 offers, in a session holding no job | `references/jobs-run.md` §8a |
 | Defer or undefer a loose thread | The practitioner tells a session to defer a loose thread or bring a deferred one back (the Loose Threads page's Defer button writes the deferral itself); a deferred thread reads ` · deferred` on board_card's loose_threads lane | `references/jobs-run.md` §8, "Deferring a loose thread" |
 | Complete a job (`drafting_data__complete_job`; semantics §9) | Every step of the job this session holds is done, then Gate job check §14 | `references/jobs-run.md` §9 |
 | Release an unfinished job (`drafting_data__release_job`; semantics §10) | The practitioner types "release job #N" about the job this session holds, or chooses Return it to Ready on `/draft`'s take-over form for another session's job, or says yes to a §3f spin-off (an unfinished job otherwise stays `wip`, §10) | `references/jobs-run.md` §10 |
