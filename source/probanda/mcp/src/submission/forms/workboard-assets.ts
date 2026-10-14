@@ -8,6 +8,9 @@
 // written to disk as its own file any more (local-only design, amended).
 //
 // Nothing here is templated, and neither string carries matter data.
+//
+// WORKBOARD_CSS is the Job Board's own copy and the prototype for board-template.ts, which the other
+// board pages use. A proven change here is promoted there (shared/html-pages.md, One design template).
 
 export const WORKBOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
    network fetch, so the board reads offline and inside a sandboxed pane. One

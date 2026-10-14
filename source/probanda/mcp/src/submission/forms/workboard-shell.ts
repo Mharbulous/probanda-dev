@@ -56,8 +56,8 @@ details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)
    dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
    Writing's row and the matter's row, plain text with no control, each date as stored and its flag
    after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
-   and on its criterion row. The margin under the header is this page's own: workboard-assets.ts is
-   shared with the other pages. */
+   and on its criterion row. The margin under the header is this page's own: board-template.ts
+   still has the 28px margin it copied. */
 header{margin-bottom:16px}
 /* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
 header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}

@@ -18,7 +18,7 @@ import { LOOSE_IDEAS_PAGE } from "./forms/loose-ideas-page.js";
 import { PROVABLE_FACTS } from "./forms/provable-facts-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
 import { RAW_RESEARCH_PAGE } from "./forms/raw-research-page.js";
-import { WORKBOARD_CSS } from "./forms/workboard-assets.js";
+import { BOARD_CSS } from "./forms/board-template.js";
 
 /** On every view page's root element: the overwrite guard and the old-page sweep recognise this
  * server's own view page by it. */
@@ -125,7 +125,7 @@ export function renderViewPageHtml(page: ViewPage, meta: ViewPageMeta, data: unk
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${name}</title>
 <style>
-${WORKBOARD_CSS}${page.css}</style>
+${BOARD_CSS}${page.css}</style>
 </head>
 <body>
 <main>
