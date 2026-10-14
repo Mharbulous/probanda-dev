@@ -359,7 +359,7 @@ Then relay, in this order:
    the board as loose threads.
 
 On "add", write that offer's job by §3i, which also consumes the thread this sort captured.
-On "drop", delete that thread by `/drafting-data` §8's drop write. Name each
+On "drop", discard that thread by `/drafting-data` §8's drop write. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
 memo's words as advice on the draft.
 
