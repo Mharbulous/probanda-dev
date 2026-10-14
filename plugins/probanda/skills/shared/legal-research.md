@@ -228,6 +228,16 @@ Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue.
 
+**Sources to get, on a held job.** A caller working a `/draft` job records each
+decision, instrument and file on the job before the dispatch or ingest that gets
+it, and closes it once it has landed. That covers the Westlaw duty's citation
+dispatch, the legislation duty's fetcher dispatch, the `needs_download` dispatch
+below, and the cited-decision dispatch and the ingest under "After the answer".
+The rule is `/drafting-data`'s (`jobs-common.md` §2, "Sources to get"), and its
+call is the lock read before each of those dispatches. A deep-research run is not
+a source: its record is the answer saved under the job. A caller holding no job
+records nothing.
+
 **A `needs_download` or hand-off-packet return is a pipeline step, not a closed
 gate.** When the agent returns a `needs_download` list or a hand-off packet on an
 issue of the question, execute it without asking, whatever its other gaps
