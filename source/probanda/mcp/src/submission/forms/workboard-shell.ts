@@ -275,6 +275,18 @@ const TAIL = String.raw`</script>
         });
         body.appendChild(ol);
       }
+      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
+      // under a heading of their own and outside the step count.
+      if (t.sources.length > 0) {
+        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
+        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
+        var sources = el("ol", "steps");
+        t.sources.forEach(function (s) {
+          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
+          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
+        });
+        body.appendChild(sources);
+      }
 
       var dl = el("dl");
       if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);

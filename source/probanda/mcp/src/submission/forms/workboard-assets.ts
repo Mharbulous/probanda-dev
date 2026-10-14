@@ -93,6 +93,7 @@ ol.steps li.done::before{border-color:var(--done);background-color:var(--done);b
 :root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 ol.steps li.next{font-weight:500}
 ol.steps li.next::before{border-color:var(--ink)}
+p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
 
 /* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
    two spaces after the colon. */

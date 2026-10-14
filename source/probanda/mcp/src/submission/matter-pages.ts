@@ -581,8 +581,8 @@ function elapsedText(minutes: number): string {
 }
 
 /** An In progress job's idle tag, measured to the section's Rendered minute from its last activity:
- * the latest of its lock, its done steps, the loose threads captured from it and the answers saved for it
- * (`last_activity_at`). None within the threshold, and none with nothing to measure from. */
+ * the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it
+ * and the sources to get added to it or closed on it (`last_activity_at`). None within the threshold, and none with nothing to measure from. */
 function idleTag(t: WorkBoardTicket, rendered: string): string | null {
   const now = localMinutes(rendered);
   const last = t.last_activity_at === null ? null : localMinutes(t.last_activity_at);
@@ -608,8 +608,19 @@ function tagTail(t: WorkBoardTicket, rendered: string): string {
   return (idle === null ? "" : ` · ${idle}`) + (t.idle_flag ? ` · ${t.idle_flag}` : "");
 }
 
+/** A job's sources to get as its card prints them: the count got, then every source that is open
+ * (☐) or closed not retrieved (☒, with its reason). A source got is counted and not listed. They are
+ * the job's own record beside its steps, never part of its plan. */
+function sourcesText(sources: WorkBoardTicket["sources"]): string {
+  const got = sources.filter((s) => s.outcome === "got").length;
+  const rest = sources
+    .filter((s) => s.outcome !== "got")
+    .map((s) => (s.outcome === null ? `☐ ${s.kind}: ${s.label}` : `☒ ${s.kind}: ${s.label} (not retrieved${s.reason === null ? "" : `: ${s.reason}`})`));
+  return [`${got} of ${sources.length} got`, ...rest].join(" · ");
+}
+
 /** A job as board_card prints it. A live, completed or shelved job carries its detail, ending with
- * the open loose threads captured from it and the answers saved for it, then, on a completed or
+ * the open loose threads captured from it, the answers saved for it and its sources to get, then, on a completed or
  * shelved one, when it was completed or shelved; a superseded one its pointer and reason. `seeds`
  * are the section's open loose threads. */
 function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | null, seeds: WorkBoardData["seeds"]): string[] {
@@ -632,6 +643,7 @@ function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | 
   const own = seeds.filter((s) => s.origin_ticket_id === t.id);
   if (own.length > 0) lines.push(`  loose threads: ${own.map((s) => `loose thread ${s.id}: ${JSON.stringify(s.idea)} (${s.created})`).join("; ")}`);
   if (t.answers.length > 0) lines.push(`  answers: ${t.answers.map((a) => `${a.file_path} (${a.saved_at})`).join("; ")}`);
+  if (t.sources.length > 0) lines.push(`  sources to get: ${sourcesText(t.sources)}`);
   if (t.category === "bring_forward") lines.push(`  bring forward: ${t.bf_on}`);
   if (t.category === "completed") lines.push(`  completed: ${t.completed_at ?? "(unknown time)"}`);
   if (t.category === "rejected") lines.push(`  shelved: ${t.rejected_at ?? "(unknown time)"}`);

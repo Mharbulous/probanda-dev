@@ -35,6 +35,7 @@ import {
   type ProposalSlug,
   withNoteUpSteps,
 } from "./proposal-inventory.js";
+import { ticketSourcesHeld } from "./track-source.js";
 import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveSeedClause, liveTicketClause, seedClosedColumns, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WritingLabel } from "./writing-label.js";
@@ -135,6 +136,16 @@ interface AnswerRow {
   ticket_id: number;
   file_path: string;
   saved_at: string;
+}
+
+interface SourceRow {
+  ticket_id: number;
+  kind: string;
+  label: string;
+  added_at: string;
+  closed_at: string | null;
+  outcome: string | null;
+  reason: string | null;
 }
 
 interface ProposalRow {
@@ -248,8 +259,13 @@ export interface WorkBoardTicket {
    * were saved: each file's path from its `6. LAW` segment, and the minute it was saved. Empty on a
    * database held below v52. */
   answers: { file_path: string; saved_at: string }[];
+  /** The sources to get recorded on this job by `drafting_data__track_source` (schema v76), in the
+   * order they were added: the job's own record beside its steps, never part of its plan. `outcome`
+   * is null while a source is open. Empty on a database held below v76. */
+  sources: { kind: string; label: string; outcome: string | null; reason: string | null }[];
   /** The job's latest recorded activity: the latest of its lock, its done steps, the loose threads
-   * captured from it and the answers saved for it. Null when it has none of them. The idle tag measures from it. */
+   * captured from it, the answers saved for it and the sources to get added to it or closed on it.
+   * Null when it has none of them. The idle tag measures from it. */
   last_activity_at: string | null;
   /** `idle past <N> h` on an In progress job idle longer than the firm's `idle_flag_hours` (N), set by
    * the section builders; absent, which reads as null, within it, with nothing to measure, or with no
@@ -603,6 +619,10 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
     proceedingIds.length === 0 || !ticketAnswersHeld(dbPath)
       ? []
       : rows<AnswerRow>(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows =
+    proceedingIds.length === 0 || !ticketSourcesHeld(dbPath)
+      ? []
+      : rows<SourceRow>(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
 
   const blockersOf = new Map<number, number[]>(); // blocked_id -> [blocker_id]
   for (const b of blocks) blockersOf.set(b.blocked_id, [...(blockersOf.get(b.blocked_id) ?? []), b.blocker_id]);
@@ -616,6 +636,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const proposalsByTicket = groupBy(proposalRows, (p) => p.ticket_id);
   const capturesByTicket = groupBy(captures, (s) => s.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a) => a.ticket_id);
+  const sourcesByTicket = groupBy(sourceRows, (s) => s.ticket_id);
   const retiredOn = new Map(rows<FilingRetiredRow>(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f) => [f.id, f.retired_on]));
   const edge = (id: number): WorkBoardEdge => {
     const other = ticketById.get(id);
@@ -667,11 +688,13 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
       dispatch_skips: [],
       lock_note: category === "wip" && t.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t.id) ?? []).map((a) => ({ file_path: a.file_path, saved_at: a.saved_at })),
+      sources: (sourcesByTicket.get(t.id) ?? []).map((s) => ({ kind: s.kind, label: s.label, outcome: s.outcome, reason: s.reason })),
       last_activity_at: latestStamp([
         t.locked_at,
         ...(stepsByTicket.get(t.id) ?? []).map((s) => s.done_at),
         ...(capturesByTicket.get(t.id) ?? []).map((s) => s.created),
         ...(answersByTicket.get(t.id) ?? []).map((a) => a.saved_at),
+        ...(sourcesByTicket.get(t.id) ?? []).flatMap((s) => [s.added_at, s.closed_at]),
       ]),
     };
     return { filing_id: t.filing_id, ticket };

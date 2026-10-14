@@ -1872,11 +1872,13 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "order: each job asked for, in board order, as its live-lane line without the tags, then " +
         "`  kind: <kind> · priority: <N>` (with ` · locked: <locked_at> · holder: <tag> · last activity: <stamp>` on an In " +
         "Progress job, the last activity being the latest of its lock, its done steps, the loose threads " +
-        "captured from it and the answers saved for it), then `  intent:`, `  keys:` with each held " +
+        "captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held " +
         "key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), " +
         "`  scope: … · waits on: … · either-or: …`, `  steps:` when it has steps, `  loose threads:` with each open loose thread " +
         "captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it " +
-        "(`<path from 6. LAW> (<saved_at>)`), each when it has any, and on a completed job `  completed: " +
+        "(`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open " +
+        "(`☐ <kind>: <label>`) or closed not retrieved (`☒ <kind>: <label> (not retrieved: <reason>)`), which are the job's " +
+        "own record and never steps of its plan, each when it has any, and on a completed job `  completed: " +
         "<completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded " +
         "by: … · reason: …`. Then each lane asked for: criteria, the `🎯 Completion criteria: <state>[ — <text>]` " +
         "line and each criterion in board order as `- <glyph> <id>: <text>[ (after …)][ (counts)][ — items]`, the " +
