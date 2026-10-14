@@ -83,11 +83,11 @@ class IngestCoverageTests(unittest.TestCase):
         path.write_bytes(data)
         return sha(data)
 
-    def source(self, source_id, file_hash, file_path, status, date=None):
+    def source(self, source_id, file_hash, file_path, status, date=None, notes=None):
         self.con.execute(
             "INSERT INTO main.sources (source_id, category, title, file_path, file_hash, "
-            "ingestion_status, date) VALUES (?, 'court', ?, ?, ?, ?, ?)",
-            (source_id, f"Source {source_id}", file_path, file_hash, status, date),
+            "ingestion_status, date, notes) VALUES (?, 'court', ?, ?, ?, ?, ?, ?)",
+            (source_id, f"Source {source_id}", file_path, file_hash, status, date, notes),
         )
 
     def privileged(self, source_id, file_hash, file_path, date=None):
@@ -237,6 +237,72 @@ class IngestCoverageTests(unittest.TestCase):
         self.assertEqual(scope["files"], [])
         self.assertEqual(scope["unreadable"][0]["path"], r"3. CORRESPONDENCE\b.pdf")
         self.assertIn("locked", scope["unreadable"][0]["error"])
+
+    # -- records: why each file is not held ------------------------------------
+
+    PENDING = "SUPERSEDE-PENDING: possible other version of source #34."
+
+    def test_a_partial_row_gives_a_record_with_its_verdict_and_source(self):
+        h = self.place(r"5. COURT FILE#1\p.pdf", b"p")
+        self.source(7, h, r"5. COURT FILE#1\p.pdf", "partial")
+        out = self.run_op()
+        self.assertEqual(out["records"], [
+            {"path": r"5. COURT FILE#1\p.pdf", "verdict": "partial", "source_id": 7,
+             "possible_version_of": None}])
+        self.assertEqual(out["to_ingest"], [r"5. COURT FILE#1\p.pdf"])
+
+    def test_a_marked_row_carries_the_possible_version(self):
+        h = self.place(r"5. COURT FILE#1\aff draft.pdf", b"draft")
+        self.source(7, h, r"5. COURT FILE#1\aff draft.pdf", "partial",
+                    notes="DISCREPANCY: possible duplicate of source #3.\n" + self.PENDING)
+        self.assertEqual(self.run_op()["records"], [
+            {"path": r"5. COURT FILE#1\aff draft.pdf", "verdict": "partial", "source_id": 7,
+             "possible_version_of": 34}])
+
+    def test_a_free_text_note_alone_carries_no_possible_version(self):
+        h = self.place(r"5. COURT FILE#1\aff draft.pdf", b"draft")
+        self.source(7, h, r"5. COURT FILE#1\aff draft.pdf", "partial",
+                    notes="DISCREPANCY: possible duplicate of source #34.")
+        self.assertIsNone(self.run_op()["records"][0]["possible_version_of"])
+
+    def test_records_and_to_ingest_keep_one_length_and_order(self):
+        hm = self.place(r"3. CORRESPONDENCE\marked.pdf", b"marked")
+        self.place(r"3. CORRESPONDENCE\new.pdf", b"new")
+        hi = self.place(r"3. CORRESPONDENCE\held.pdf", b"held")
+        hf = self.place(r"5. COURT FILE#1\f.pdf", b"f")
+        self.place(r"5. COURT FILE#1\new copy.pdf", b"new")
+        hp = self.place(r"5. COURT FILE#1\p.pdf", b"p")
+        self.place(r"5. COURT FILE#1\Old\marked copy.pdf", b"marked")
+        hs = self.place(r"5. COURT FILE#1\superseded.pdf", b"superseded")
+        self.source(1, hm, r"3. CORRESPONDENCE\marked.pdf", "partial", notes=self.PENDING)
+        self.source(2, hi, r"3. CORRESPONDENCE\held.pdf", "complete")
+        self.source(3, hf, r"5. COURT FILE#1\f.pdf", "failed")
+        self.source(4, hp, r"5. COURT FILE#1\p.pdf", "partial")
+        self.source(5, hs, r"5. COURT FILE#1\superseded.pdf", "partial",
+                    notes="[SUPERSEDED-BY:#4 2026-10-05 practitioner]")
+        out = self.run_op()
+        self.assertEqual(out["to_ingest"], [
+            r"3. CORRESPONDENCE\marked.pdf", r"3. CORRESPONDENCE\new.pdf",
+            r"5. COURT FILE#1\f.pdf", r"5. COURT FILE#1\p.pdf"])
+        self.assertEqual([r["path"] for r in out["records"]], out["to_ingest"])
+        self.assertEqual([(r["verdict"], r["source_id"], r["possible_version_of"]) for r in out["records"]],
+                         [("partial", 1, 34), ("none", None, None), ("failed", 3, None), ("partial", 4, None)])
+        for record in out["records"]:
+            self.assertEqual(set(record), {"path", "verdict", "source_id", "possible_version_of"})
+
+    def test_a_path_named_by_a_copy_takes_the_copys_verdict_and_the_twins_source(self):
+        h = self.place(r"0. DRAFT\order.pdf", b"order")
+        self.place(r"5. COURT FILE#1\order.pdf", b"order")
+        self.place(r"5. COURT FILE#2\order.pdf", b"order")
+        self.source(7, h, r"0. DRAFT\order.pdf", "partial", notes=self.PENDING)
+        self.assertEqual(self.run_op()["records"], [
+            {"path": r"0. DRAFT\order.pdf", "verdict": "none", "source_id": 7, "possible_version_of": 34}])
+
+    def test_nothing_to_ingest_gives_no_records(self):
+        h = self.place(r"5. COURT FILE#1\nocc.pdf", b"nocc")
+        self.source(1, h, r"5. COURT FILE#1\nocc.pdf", "complete", notes=self.PENDING)
+        out = self.run_op()
+        self.assertEqual((out["to_ingest"], out["records"]), ([], []))
 
     # -- newest correspondence -------------------------------------------------
 
