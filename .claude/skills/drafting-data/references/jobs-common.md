@@ -17,7 +17,7 @@ Every `created` / `locked_at` / `plan_approved_at` / `done_at` / `completed_at` 
 strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
 ```
 
-`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Job Board. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a `YYYY-MM-DD` the practitioner states, typed exactly as given.
+`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Job Board. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a literal `YYYY-MM-DD`, either the calendar date the practitioner states or the date a read-only query resolved from their calendar phrase and they confirmed.
 
 ## 1. Session identity (`locked_by`)
 

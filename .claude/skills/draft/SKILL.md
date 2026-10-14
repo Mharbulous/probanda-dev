@@ -111,7 +111,7 @@ The rules map serves the rules already moved off those operations, by position. 
 | `enter`, `open`, `proposals`, `ingest_coverage`, `form_currency`, `idle_report`, `announce`, `route_reply` | the opening, in that order where each applies, then the practitioner's instruction or reply |
 | `dispatch`, `skip_reasons`, `assign_refused`, `input_check`, `pre_claim`, `premise_check`, `plan_readback`, `change`, `note_up`, `execute`, `obstacle`, `opposing_points`, `complete` | a job, from choosing to completing it |
 | `take_over` | a job named in progress elsewhere, or reading back a job with steps done |
-| `shelve`, `suppress`, `release`, `restore`, `new_work`, `tangent`, `triage`, `board`, `render`, `view_page`, `forum_change` | that act |
+| `shelve`, `suppress`, `release`, `restore`, `bring_forward`, `new_work`, `tangent`, `triage`, `board`, `render`, `view_page`, `forum_change` | that act |
 | `setup`, `counsel_of_record`, `venue_lookup`, `filing_picker`, `substance`, `revise_on_the_fly`, `authorities`, `scrutiny_review`, `evidence`, `overstatement`, `letter`, `reply_route`, `unstructured`, `counsel_review`, `assemble`, `court_ready`, `pre_filing`, `retire`, `hand_off`, `present_file`, `presentation_folder`, `tools_not_found`, `legacy`, `unattended_run`, `nightly`, `court_oral` | the work each names |
 
 | Fact | Values | Meaning |
