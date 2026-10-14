@@ -1,4 +1,4 @@
-// build-stamp: 133868e6638d
+// build-stamp: 47fc7c24e559
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -3637,21 +3637,21 @@ var require_fast_uri = __commonJS({
         normalizeString(uri, options);
       } else if (typeof uri === "object") {
         uri = /** @type {T} */
-        parse3(serialize(uri, options), options);
+        parse4(serialize2(uri, options), options);
       }
       return uri;
     }
     function resolve7(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
-      const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
+      const resolved = resolveComponent(parse4(baseURI, schemelessOptions), parse4(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
-      return serialize(resolved, schemelessOptions);
+      return serialize2(resolved, schemelessOptions);
     }
     function resolveComponent(base, relative2, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
-        base = parse3(serialize(base, options), options);
-        relative2 = parse3(serialize(relative2, options), options);
+        base = parse4(serialize2(base, options), options);
+        relative2 = parse4(serialize2(relative2, options), options);
       }
       options = options || {};
       if (!options.tolerant && relative2.scheme) {
@@ -3705,7 +3705,7 @@ var require_fast_uri = __commonJS({
       const normalizedB = normalizeComparableURI(uriB, options);
       return normalizedA !== void 0 && normalizedB !== void 0 && normalizedA.toLowerCase() === normalizedB.toLowerCase();
     }
-    function serialize(cmpts, opts) {
+    function serialize2(cmpts, opts) {
       const component = {
         host: cmpts.host,
         scheme: cmpts.scheme,
@@ -3874,7 +3874,7 @@ var require_fast_uri = __commonJS({
       }
       return { parsed, malformedAuthorityOrPort };
     }
-    function parse3(uri, opts) {
+    function parse4(uri, opts) {
       return parseWithStatus(uri, opts).parsed;
     }
     function normalizeString(uri, opts) {
@@ -3883,7 +3883,7 @@ var require_fast_uri = __commonJS({
     function normalizeStringWithStatus(uri, opts) {
       const { parsed, malformedAuthorityOrPort } = parseWithStatus(uri, opts);
       return {
-        normalized: malformedAuthorityOrPort ? uri : serialize(parsed, opts),
+        normalized: malformedAuthorityOrPort ? uri : serialize2(parsed, opts),
         malformedAuthorityOrPort
       };
     }
@@ -3893,7 +3893,7 @@ var require_fast_uri = __commonJS({
         return malformedAuthorityOrPort ? void 0 : normalized2;
       }
       if (typeof uri === "object") {
-        return serialize(uri, opts);
+        return serialize2(uri, opts);
       }
     }
     var fastUri = {
@@ -3902,8 +3902,8 @@ var require_fast_uri = __commonJS({
       resolve: resolve7,
       resolveComponent,
       equal,
-      serialize,
-      parse: parse3
+      serialize: serialize2,
+      parse: parse4
     };
     module.exports = fastUri;
     module.exports.default = fastUri;
@@ -8935,7 +8935,7 @@ function compileCharString(e3, t3, r3, a3) {
   }
   const n3 = [];
   let i3 = 0, s3 = 0, o3 = 0, c3 = null;
-  !(function parse3(e4) {
+  !(function parse4(e4) {
     let c4 = 0;
     for (; c4 < e4.length; ) {
       let l3, h3, u3, d3, f3, g3, p3, m3, b3, y3 = false, w3 = e4[c4++];
@@ -9003,7 +9003,7 @@ function compileCharString(e3, t3, r3, a3) {
               }
             } else warn("Invalid fd index for glyph index.");
           } else b3 = r3.subrs[m3 + r3.subrsBias];
-          b3 && parse3(b3);
+          b3 && parse4(b3);
           break;
         case 11:
           return;
@@ -9163,7 +9163,7 @@ function compileCharString(e3, t3, r3, a3) {
         case 29:
           m3 = n3.pop() + r3.gsubrsBias;
           b3 = r3.gsubrs[m3];
-          b3 && parse3(b3);
+          b3 && parse4(b3);
           break;
         case 30:
           for (; n3.length > 0; ) {
@@ -12332,7 +12332,7 @@ var init_pdf_worker_min = __esm({
       };
     }, 5781: (e3, t3, r3) => {
       var a3 = r3(6518), n3 = r3(7751), i3 = r3(2812), s3 = r3(655), o3 = r3(7416), c3 = n3("URL");
-      a3({ target: "URL", stat: true, forced: !o3 }, { parse: function parse3(e4) {
+      a3({ target: "URL", stat: true, forced: !o3 }, { parse: function parse4(e4) {
         var t4 = i3(arguments.length, 1), r4 = s3(e4), a4 = t4 < 2 || void 0 === arguments[1] ? void 0 : s3(arguments[1]);
         try {
           return new c3(r4, a4);
@@ -51508,7 +51508,7 @@ var init_pdf_min = __esm({
       };
     }, 5781: (t3, e3, i3) => {
       var s3 = i3(6518), n3 = i3(7751), r3 = i3(2812), a3 = i3(655), o3 = i3(7416), l3 = n3("URL");
-      s3({ target: "URL", stat: true, forced: !o3 }, { parse: function parse3(t4) {
+      s3({ target: "URL", stat: true, forced: !o3 }, { parse: function parse4(t4) {
         var e4 = r3(arguments.length, 1), i4 = a3(t4), s4 = e4 < 2 || void 0 === arguments[1] ? void 0 : a3(arguments[1]);
         try {
           return new l3(i4, s4);
@@ -52051,7 +52051,7 @@ var init_pdf_min = __esm({
       })), L3 = v3 && !m3((function() {
         return 1 / _3("-0 	") != -1 / 0;
       }));
-      s3({ target: "JSON", stat: true, forced: R3 }, { parse: function parse3(t4, e4) {
+      s3({ target: "JSON", stat: true, forced: R3 }, { parse: function parse4(t4, e4) {
         return L3 && !h3(e4) ? _3(t4) : (function(t5, e5) {
           t5 = p3(t5);
           var i4 = new Context(t5, 0, ""), s4 = i4.parse(), n4 = s4.value, r4 = i4.skip(I3, s4.end);
@@ -77356,6 +77356,19 @@ function caseDataToolDefinitions() {
       // destructive for every mode, including plan: pointer resolution rewrites
       // coclerk.json and may move binaries out of the legacy `9. AI` folder.
       annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: caseDataPrefixed("procedural_history_append"),
+      description: "The only way to write a matter's ProceduralHistory.md (shared/procedural-history.md), at the top of matter_root. With date (YYYY-MM-DD, the event's date) and line (what happened, one line), it adds the bullet `- <line>` under the `## <date>` heading, creating the file, and the heading in newest-first order, when missing; source_path (the source file, relative to the matter folder) appends it in backticks, or told_on (YYYY-MM-DD) appends `(the practitioner, <told_on>)` for an event the practitioner told the session. Refused, writing nothing: the same bullet already under that heading (duplicate_entry); a line holding a date later than its heading (date_after_heading) -- record the event without the date it sets. Optional replaces, the full text of one existing entry, removes it first: the correction path, used only where case data contradicts the entry. With neither date nor line it stamps the file alone (the currency check's 'no'). Every call rewrites last_updated from this host's own clock, local time with its UTC offset. Asks nothing; never announce it. Returns {ok, path, last_updated, created, added, heading_created, replaced}. Called by /draft and /case-data at the writes shared/procedural-history.md names, and by any session recording an event the practitioner told it.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "date", type: "str" },
+        { name: "line", type: "str" },
+        { name: "source_path", type: "str" },
+        { name: "told_on", type: "str" },
+        { name: "replaces", type: "str" }
+      ], ["matter_root"]),
+      annotations: { destructiveHint: false, openWorldHint: false }
     }
   ];
 }
@@ -78193,7 +78206,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("render"),
-      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), never more than one Writing on a page: `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
+      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir or presentation_dir, markdown returns only for the documents named in documents; every other document carries markdown_chars, its length, in its place, so to read a document's work markers name its document_type in documents. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), never more than one Writing on a page: `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78258,7 +78271,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("open_session"),
-      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its coclerk.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. coclerk.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or coclerk.json is absent) and names /case-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user coclerk.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the case-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
+      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its coclerk.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. coclerk.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or coclerk.json is absent) and names /case-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user coclerk.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the case-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. With status ok it also returns folders, every folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from folders, never from opened.ingest_inputs alone. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
       inputSchema: {
         type: "object",
         properties: {
@@ -82208,8 +82221,160 @@ async function ingestAuthority(request2, env = process.env) {
   };
 }
 
-// src/time-pipeline/backend.ts
+// src/case/procedural-history.ts
+import { existsSync as existsSync13, readFileSync as readFileSync12, renameSync as renameSync3, writeFileSync as writeFileSync5 } from "node:fs";
 import { join as join12 } from "node:path";
+var FILE_NAME = "ProceduralHistory.md";
+var TITLE = "# Procedural history";
+var HEADING = /^## (\d{4}-\d{2}-\d{2})\s*$/;
+var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+function localIsoWithOffset(d3 = /* @__PURE__ */ new Date()) {
+  const pad = (n3) => String(n3).padStart(2, "0");
+  const offset = -d3.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const abs = Math.abs(offset);
+  return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}T${pad(d3.getHours())}:${pad(d3.getMinutes())}:${pad(d3.getSeconds())}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+function checkIsoDate(value, field) {
+  const [y3, m3, d3] = value.split("-").map(Number);
+  const date3 = new Date(Date.UTC(y3, m3 - 1, d3));
+  if (!ISO_DATE2.test(value) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
+    throw new ValidationError(`case_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
+  }
+}
+function datesIn(text5) {
+  const found = [];
+  const iso2 = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}`;
+  const month = (name) => MONTHS.findIndex((full) => full.startsWith(name.toLowerCase().replace(/\.$/, ""))) + 1;
+  for (const m3 of text5.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
+  for (const m3 of text5.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
+    const mo2 = month(m3[1]);
+    if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[2]));
+  }
+  for (const m3 of text5.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
+    const mo2 = month(m3[2]);
+    if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[1]));
+  }
+  return found;
+}
+function parse3(text5) {
+  const lines2 = text5.split(/\r?\n/);
+  let i3 = 0;
+  if (lines2[0] === "---") {
+    const end = lines2.indexOf("---", 1);
+    if (end < 0) throw new ValidationError(`${FILE_NAME} has an unclosed YAML header; fix the file by hand first`, "malformed_file");
+    i3 = end + 1;
+  }
+  const sections = [];
+  for (; i3 < lines2.length; i3++) {
+    const heading = HEADING.exec(lines2[i3]);
+    if (heading) {
+      sections.push({ date: heading[1], lines: [] });
+    } else if (sections.length > 0) {
+      sections[sections.length - 1].lines.push(lines2[i3]);
+    } else if (lines2[i3].trim() !== "" && lines2[i3].trim() !== TITLE) {
+      throw new ValidationError(
+        `${FILE_NAME} has text before its first date heading that this tool would drop: ${JSON.stringify(lines2[i3])}`,
+        "malformed_file"
+      );
+    }
+  }
+  return { sections };
+}
+function trimTrailingBlank(lines2) {
+  const out = [...lines2];
+  while (out.length > 0 && out[out.length - 1].trim() === "") out.pop();
+  return out;
+}
+function serialize(stamp2, sections, eol) {
+  const out = ["---", `last_updated: ${stamp2}`, "---", TITLE];
+  for (const section2 of sections) {
+    out.push("", `## ${section2.date}`, ...trimTrailingBlank(section2.lines));
+  }
+  return out.join(eol) + eol;
+}
+function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
+  const root = validateMatterRoot(args.matter_root);
+  const path = join12(root, FILE_NAME);
+  const hasEntry = args.date !== void 0 || args.line !== void 0;
+  if (hasEntry && (args.date === void 0 || args.line === void 0)) {
+    throw new ValidationError("case_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
+  }
+  if (!hasEntry && (args.source_path !== void 0 || args.told_on !== void 0 || args.replaces !== void 0)) {
+    throw new ValidationError("case_data__procedural_history_append: source_path, told_on and replaces need an entry (date and line)", "invalid_entry");
+  }
+  if (args.source_path !== void 0 && args.told_on !== void 0) {
+    throw new ValidationError("case_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
+  }
+  const existing = existsSync13(path) ? readFileSync12(path, "utf-8") : void 0;
+  const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
+  const { sections } = existing === void 0 ? { sections: [] } : parse3(existing);
+  let bullet;
+  let headingCreated = false;
+  let replaced = false;
+  if (hasEntry) {
+    const date3 = args.date;
+    checkIsoDate(date3, "date");
+    const line = args.line.trim().replace(/^- /, "");
+    if (line === "" || /[\r\n]/.test(line)) {
+      throw new ValidationError("case_data__procedural_history_append.line must be one non-empty line", "invalid_entry");
+    }
+    const later = datesIn(line).filter((d3) => d3 > date3);
+    if (later.length > 0) {
+      throw new ValidationError(
+        `case_data__procedural_history_append.line holds ${later.join(", ")}, later than its heading ${date3}. No entry holds a date later than its own heading: record the event without that date (shared/procedural-history.md)`,
+        "date_after_heading"
+      );
+    }
+    if (args.told_on !== void 0) checkIsoDate(args.told_on, "told_on");
+    const source = args.source_path !== void 0 ? ` \`${args.source_path.trim()}\`` : args.told_on !== void 0 ? ` (the practitioner, ${args.told_on})` : "";
+    bullet = `- ${line}${source}`;
+    if (args.replaces !== void 0) {
+      const target = `- ${args.replaces.trim().replace(/^- /, "")}`;
+      const hits = sections.flatMap((s3) => s3.lines.filter((l3) => l3.trim() === target).map(() => s3));
+      if (hits.length !== 1) {
+        throw new ValidationError(
+          `case_data__procedural_history_append.replaces matches ${hits.length} entries; pass the full text of exactly one existing entry`,
+          "replaces_not_found"
+        );
+      }
+      const owner = hits[0];
+      owner.lines = owner.lines.filter((l3) => l3.trim() !== target);
+      if (!owner.lines.some((l3) => l3.trim() !== "")) sections.splice(sections.indexOf(owner), 1);
+      replaced = true;
+    }
+    let section2 = sections.find((s3) => s3.date === date3);
+    if (section2 === void 0) {
+      section2 = { date: date3, lines: [] };
+      const at = sections.findIndex((s3) => s3.date < date3);
+      sections.splice(at < 0 ? sections.length : at, 0, section2);
+      headingCreated = true;
+    }
+    if (section2.lines.some((l3) => l3.trim() === bullet)) {
+      throw new ValidationError(`case_data__procedural_history_append: ${date3} already holds ${JSON.stringify(bullet)}`, "duplicate_entry");
+    }
+    section2.lines = [...trimTrailingBlank(section2.lines), bullet];
+  }
+  const stamp2 = localIsoWithOffset(now);
+  const temp = `${path}.tmp-${process.pid}`;
+  writeFileSync5(temp, serialize(stamp2, sections, eol), "utf-8");
+  renameSync3(temp, path);
+  return {
+    ok: true,
+    path,
+    last_updated: stamp2,
+    created: existing === void 0,
+    added: bullet ?? null,
+    heading_created: headingCreated,
+    replaced
+  };
+}
+
+// src/time-pipeline/backend.ts
+import { join as join13 } from "node:path";
+
+// src/kv/backend.ts
 var PY_HELPER3 = String.raw`
 import datetime, json, os, sqlite3, sys
 
@@ -82396,30 +82561,39 @@ def main():
 print(json.dumps(main()))
 `.trim();
 function helperFile3() {
-  return pythonDriverFile("time-pipeline-sqlite", PY_HELPER3);
+  return pythonDriverFile("kv-sqlite", PY_HELPER3);
 }
+function isKvRead(op) {
+  return op === "get" || op === "list" || op === "export";
+}
+function runKv(request2, options) {
+  return runPythonDriver({
+    label: options.label,
+    driver: helperFile3(),
+    payload: JSON.stringify(request2),
+    env: options.env,
+    timeoutMs: options.timeoutMs,
+    timeoutAdvice: options.timeoutAdvice
+  });
+}
+
+// src/time-pipeline/backend.ts
 function resolveTimePipelineDbPath(env = process.env) {
   if (env.COCLERK_TIME_PIPELINE_DB_PATH) return env.COCLERK_TIME_PIPELINE_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join12(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
+  return join13(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
 }
 function timePipelineTimeoutMs(op, env = process.env) {
-  const defaultMs = isRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
+  const defaultMs = isKvRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
   return pythonTimeoutMs(env, defaultMs, "COCLERK_TIME_PIPELINE_PYTHON_TIMEOUT_MS");
-}
-function isRead(op) {
-  return op === "get" || op === "list" || op === "export";
 }
 var KILLED_WRITE_ADVICE2 = "The write may already have committed: verify it by reading it back before retrying (/time-pipeline-data Conventions).";
 function runHelper2(request2, env) {
-  const read2 = isRead(request2.op);
-  return runPythonDriver({
+  return runKv(request2, {
     label: "time-pipeline sqlite helper",
-    driver: helperFile3(),
-    payload: JSON.stringify(request2),
     env,
     timeoutMs: timePipelineTimeoutMs(request2.op, env),
-    timeoutAdvice: read2 ? void 0 : KILLED_WRITE_ADVICE2
+    timeoutAdvice: isKvRead(request2.op) ? void 0 : KILLED_WRITE_ADVICE2
   });
 }
 function timePipelineGet(namespace, key, env = process.env) {
@@ -82448,11 +82622,11 @@ function timePipelineExport(namespace, prefix, path, env = process.env) {
 }
 
 // src/timecamping/backend.ts
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 
 // src/timecamping/lock.ts
 import { createHash as createHash4, randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync5, existsSync as existsSync13, mkdirSync as mkdirSync5, openSync as openSync5, readFileSync as readFileSync12, statSync as statSync7, writeSync as writeSync5 } from "node:fs";
+import { closeSync as closeSync5, existsSync as existsSync14, mkdirSync as mkdirSync5, openSync as openSync5, readFileSync as readFileSync13, statSync as statSync7, writeSync as writeSync5 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
 import { win32 as pathWin327 } from "node:path";
 var LOCK_ATTEMPTS3 = 5;
@@ -82513,7 +82687,7 @@ function isStale3(lock) {
 }
 function holderOf3(lock) {
   try {
-    return (existsSync13(lock) ? readFileSync12(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+    return (existsSync14(lock) ? readFileSync13(lock, "utf-8").trim() : "released") + orphanClaims(lock);
   } catch {
     return "unreadable";
   }
@@ -82526,7 +82700,7 @@ function sleep3(ms2) {
 function resolveTimecampingDbPath(env = process.env) {
   if (env.COCLERK_TIMECAMPING_DB_PATH) return env.COCLERK_TIMECAMPING_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join13(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
+  return join14(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
 }
 var PY_HELPER4 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
@@ -83188,8 +83362,8 @@ async function submissionDataWriteAll(dbPath, statements, env = process.env) {
 }
 
 // src/submission/migrate.ts
-import { existsSync as existsSync15, statSync as statSync9 } from "node:fs";
-import { join as join16 } from "node:path";
+import { existsSync as existsSync16, statSync as statSync9 } from "node:fs";
+import { join as join17 } from "node:path";
 
 // src/submission/parties-drift.ts
 import { dirname as dirname6 } from "node:path";
@@ -84467,7 +84641,7 @@ function admissionCaptureMarkers(row2, state) {
 }
 
 // src/submission/forms/query.ts
-import { readFileSync as readFileSync14 } from "node:fs";
+import { readFileSync as readFileSync15 } from "node:fs";
 
 // src/knowledge/declared-layout.ts
 function fail(file, field, rule) {
@@ -84739,7 +84913,7 @@ function substituteLayout(raw, kind, corrections, file, context) {
 }
 
 // src/knowledge/tree.ts
-import { readFileSync as readFileSync13, readdirSync as readdirSync6, realpathSync as realpathSync2, statSync as statSync8 } from "node:fs";
+import { readFileSync as readFileSync14, readdirSync as readdirSync6, realpathSync as realpathSync2, statSync as statSync8 } from "node:fs";
 import { win32 as pathWin328 } from "node:path";
 var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
 var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
@@ -84940,7 +85114,7 @@ function entryType(root, label, original) {
 }
 function readLayerBytes(abs, label) {
   try {
-    return readFileSync13(abs);
+    return readFileSync14(abs);
   } catch (err) {
     const code = err.code;
     if (code === "ENOENT") throw new DataServerError(`${label} not found: ${abs}`, "not_found");
@@ -85050,7 +85224,7 @@ function shippedVenueBlock(filing, forum) {
   const { layer } = shippedLayer("draft", parseKnowledgePath(path, `filing ${filing.id}'s venue`).rest, {});
   let content;
   try {
-    content = readFileSync14(layer.abs, "utf-8");
+    content = readFileSync15(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`Filing ${filing.id}: forum "${forum}" has no venue.md in /draft's shipped tree (${layer.abs})`, "venue_missing");
@@ -85344,8 +85518,8 @@ function opposingPartyIds(parties2) {
 }
 
 // src/case/parties-of-record.ts
-import { existsSync as existsSync14 } from "node:fs";
-import { join as join14 } from "node:path";
+import { existsSync as existsSync15 } from "node:fs";
+import { join as join15 } from "node:path";
 var DRIVER3 = String.raw`
 import json, sys
 
@@ -85368,7 +85542,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read(caseDataDir, request2, env) {
-  if (!existsSync14(join14(caseDataDir, "main.sqlite"))) {
+  if (!existsSync15(join15(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
   }
   try {
@@ -85501,9 +85675,9 @@ function withPartiesDriftLines(markdown, rows21) {
 }
 
 // src/build-stamp.ts
-import { readFileSync as readFileSync15 } from "node:fs";
-import { join as join15 } from "node:path";
-var BUILD_STAMP = false ? null : "133868e6638d";
+import { readFileSync as readFileSync16 } from "node:fs";
+import { join as join16 } from "node:path";
+var BUILD_STAMP = false ? null : "47fc7c24e559";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85514,7 +85688,7 @@ function buildNote(running, current, installed) {
 }
 function installedStamp() {
   try {
-    return STAMP_LINE.exec(readFileSync15(join15(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
+    return STAMP_LINE.exec(readFileSync16(join16(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
   } catch {
     return null;
   }
@@ -85526,8 +85700,8 @@ function buildStampStatus(env = process.env) {
   let current;
   try {
     const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked = join15(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
-    current = STAMP_LINE.exec(readFileSync15(tracked, "utf-8"))?.[1] ?? null;
+    const tracked = join16(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+    current = STAMP_LINE.exec(readFileSync16(tracked, "utf-8"))?.[1] ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
@@ -85681,7 +85855,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
 }
 var COUNSEL_COPY_DROPPED = 43;
 function storedSchemaVersion(dbPath) {
-  if (!existsSync15(dbPath)) return null;
+  if (!existsSync16(dbPath)) return null;
   const [meta2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'db_meta'").rows;
   if (meta2.n === 0) return null;
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows;
@@ -85711,7 +85885,7 @@ function assertCounselReconciled(dbPath, staged, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync9(join16(scriptsDir, "migrate_engine.py"));
+  const engine = statSync9(join17(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver3("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
@@ -85748,12 +85922,12 @@ function runDriver3(label, driver, payload, env, defaultTimeoutMs) {
 
 // src/knowledge/tools.ts
 import { createHash as createHash8 } from "node:crypto";
-import { existsSync as existsSync19, mkdirSync as mkdirSync8, readdirSync as readdirSync8, readFileSync as readFileSync18, realpathSync as realpathSync3, renameSync as renameSync3, unlinkSync as unlinkSync4 } from "node:fs";
+import { existsSync as existsSync20, mkdirSync as mkdirSync8, readdirSync as readdirSync8, readFileSync as readFileSync19, realpathSync as realpathSync3, renameSync as renameSync4, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 
 // src/files/skill-source.ts
 import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync16, readFileSync as readFileSync16, readdirSync as readdirSync7, statSync as statSync10 } from "node:fs";
+import { existsSync as existsSync17, readFileSync as readFileSync17, readdirSync as readdirSync7, statSync as statSync10 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
@@ -85809,7 +85983,7 @@ function resolveReference(relative2, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync16(pathWin329.join(root, candidate))) return candidate;
+    if (existsSync17(pathWin329.join(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -85841,7 +86015,7 @@ function skillSourceRead(relative2, env, from, match, installRoot) {
       "not_found"
     );
   }
-  const bytes = readFileSync16(resolved);
+  const bytes = readFileSync17(resolved);
   const path = toPosixRelative(root, resolved);
   const slash = path.lastIndexOf("/");
   const whole = bytes.toString("utf-8");
@@ -85951,11 +86125,11 @@ function walk(dirPath, root, recursive, shipped, out) {
 import { createHash as createHash7 } from "node:crypto";
 import { mkdirSync as mkdirSync7 } from "node:fs";
 import * as https from "node:https";
-import { join as join18 } from "node:path";
+import { join as join19 } from "node:path";
 
 // src/knowledge/sidecar.ts
 import { createHash as createHash6, randomUUID as randomUUID7 } from "node:crypto";
-import { closeSync as closeSync6, existsSync as existsSync17, mkdirSync as mkdirSync6, openSync as openSync6, statSync as statSync11, writeSync as writeSync6 } from "node:fs";
+import { closeSync as closeSync6, existsSync as existsSync18, mkdirSync as mkdirSync6, openSync as openSync6, statSync as statSync11, writeSync as writeSync6 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 function passageHash(passage) {
   return createHash6("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
@@ -86128,7 +86302,7 @@ function writeBytesAtomic(target, bytes) {
   writeTextAtomic(target, bytes);
 }
 function readRows(sidecarAbs, knowledgePath) {
-  if (!existsSync17(sidecarAbs)) return [];
+  if (!existsSync18(sidecarAbs)) return [];
   const text5 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
   return parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, sidecarAbs, knowledgePath);
 }
@@ -86145,8 +86319,8 @@ async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
 }
 
 // src/sources/hosts.ts
-import { existsSync as existsSync18, readFileSync as readFileSync17 } from "node:fs";
-import { join as join17 } from "node:path";
+import { existsSync as existsSync19, readFileSync as readFileSync18 } from "node:fs";
+import { join as join18 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
   const hosts = /* @__PURE__ */ new Set();
@@ -86165,7 +86339,7 @@ function admittedHost(entry) {
 function readHostEntries(path) {
   let text5;
   try {
-    text5 = readFileSync17(path, "utf-8");
+    text5 = readFileSync18(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
@@ -86192,13 +86366,13 @@ function overlayFirmHosts(env = process.env) {
     if (err instanceof ValidationError && !caseDataRootConfigured(env)) return [];
     throw err;
   }
-  return loadFirmHosts(join17(root, "_practice", "knowledge", "_hosts.json"));
+  return loadFirmHosts(join18(root, "_practice", "knowledge", "_hosts.json"));
 }
 function caseDataRootConfigured(env) {
   const configFile = configPath(env);
-  if (!existsSync18(configFile)) return false;
+  if (!existsSync19(configFile)) return false;
   try {
-    const root = JSON.parse(readFileSync17(configFile, "utf-8")).case_data_root;
+    const root = JSON.parse(readFileSync18(configFile, "utf-8")).case_data_root;
     return typeof root === "string" && root !== "";
   } catch {
     return true;
@@ -86402,9 +86576,9 @@ function saveFetchedPdf(fetchedRoot2, fetched) {
   if (fetched.bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
     throw new DataServerError(`${fetched.final_url} did not return a PDF`, "not_pdf");
   }
-  const dir = join18(fetchedRoot2, new URL(fetched.final_url).hostname);
+  const dir = join19(fetchedRoot2, new URL(fetched.final_url).hostname);
   mkdirSync7(dir, { recursive: true });
-  const path = join18(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
+  const path = join19(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
   writeBytesAtomic(path, fetched.bytes);
   return path;
 }
@@ -87281,7 +87455,7 @@ function grammarCheck(kp, type, label) {
 }
 function mkdirInside(root, dir, label, original) {
   let existing = dir;
-  while (!existsSync19(existing)) {
+  while (!existsSync20(existing)) {
     const parent = pathWin3211.dirname(existing);
     if (parent === existing) break;
     existing = parent;
@@ -87446,7 +87620,7 @@ async function writeDocument(kp, args, matter, seams, label) {
         "exists"
       );
     }
-    const old = existing === "file" ? readFileSync18(target.abs, "utf-8") : null;
+    const old = existing === "file" ? readFileSync19(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
     writeTextAtomic(target.abs, text5);
     return { old, stale_check };
@@ -87478,7 +87652,7 @@ function savedCopyOf(raw, record2, front, seams) {
   const canon = overlayCanon(seams, label);
   const inboxAbs = pathWin3211.join(canon, "_inbox");
   const abs = pathWin3211.join(inboxAbs, ...kp.rest);
-  const inboxCanon = existsSync19(inboxAbs) ? realpathSync3.native(inboxAbs) : null;
+  const inboxCanon = existsSync20(inboxAbs) ? realpathSync3.native(inboxAbs) : null;
   if (inboxCanon !== null) assertContained(canon, inboxCanon, label, kp.path);
   const type = entryType({ canon: inboxCanon, abs }, label, kp.path);
   if (type === null) throw new DataServerError(`${label}: ${kp.path} is not in the overlay`, "not_found");
@@ -87504,7 +87678,7 @@ function savedCopyOf(raw, record2, front, seams) {
 function moveSavedCopy(saved, seams, label) {
   if (!saved.pdf) return { path: saved.path, moved: false, reason: "not_pdf" };
   try {
-    renameSync3(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
+    renameSync4(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
   } catch (err) {
     const code = err.code;
     if (typeof code !== "string") throw err;
@@ -87522,12 +87696,12 @@ function liveKnowledgeTexts(canon, seams) {
     for (const entry of readdirSync8(dir, { withFileTypes: true })) {
       const abs = pathWin3211.join(dir, entry.name);
       if (entry.isDirectory()) walk4(abs);
-      else if (entry.isFile() && entry.name.endsWith(".md")) texts.push(readFileSync18(abs, "utf-8").toLowerCase());
+      else if (entry.isFile() && entry.name.endsWith(".md")) texts.push(readFileSync19(abs, "utf-8").toLowerCase());
     }
   };
   for (const skill of KNOWLEDGE_SKILLS) {
     const dir = pathWin3211.join(canon, skill);
-    if (existsSync19(dir)) walk4(dir);
+    if (existsSync20(dir)) walk4(dir);
     const shipped = shippedLayer(skill, [], seams).layer.canon;
     if (shipped === null) continue;
     for (const entry of readdirSync8(shipped, { withFileTypes: true })) {
@@ -87540,7 +87714,7 @@ function deleteUnreferencedPdfs(hashes, seams, label) {
   if (hashes.length === 0) return [];
   const canon = overlayCanon(seams, label);
   const fetched = pathWin3211.join(canon, "_fetched");
-  if (!existsSync19(fetched)) return [];
+  if (!existsSync20(fetched)) return [];
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
@@ -87549,7 +87723,7 @@ function deleteUnreferencedPdfs(hashes, seams, label) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
       const pdf = pathWin3211.join(fetched, host.name, name);
-      if (!existsSync19(pdf)) continue;
+      if (!existsSync20(pdf)) continue;
       try {
         unlinkSync4(pdf);
       } catch (err) {
@@ -87658,7 +87832,7 @@ async function writeIndexRow(kp, index, args, seams, label) {
     const existing = entryType(target, label, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text5 = readFileSync18(target.abs, "utf-8");
+      const text5 = readFileSync19(target.abs, "utf-8");
       try {
         doc = JSON.parse(text5.startsWith("\uFEFF") ? text5.slice(1) : text5);
       } catch (err) {
@@ -87816,17 +87990,17 @@ async function retireOne(kp, seams, label) {
       const type = entryType(source, label, kp.path);
       if (type === null) throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
       if (type === "dir") throw new DataServerError(`${label}: ${kp.path} is a folder; retire moves one file and its sidecar`, "not_a_file");
-      const hasSidecar = existsSync19(sidecar2);
+      const hasSidecar = existsSync20(sidecar2);
       const to2 = pathWin3211.join(source.canon, ...dest.segments);
       for (const abs of [to2, ...hasSidecar ? [`${to2}${SIDECAR_SUFFIX}`] : []]) {
-        if (existsSync19(abs)) {
+        if (existsSync20(abs)) {
           throw new DataServerError(`${abs} already holds a retired copy, which is never overwritten; nothing was moved`, "superseded_exists");
         }
       }
       const target = writableOverlayPath(dest, seams, label);
-      const text5 = readFileSync18(source.abs, "utf-8");
-      renameSync3(source.abs, target.abs);
-      if (hasSidecar) renameSync3(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
+      const text5 = readFileSync19(source.abs, "utf-8");
+      renameSync4(source.abs, target.abs);
+      if (hasSidecar) renameSync4(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
         path: kp.path,
         to: dest.path,
@@ -90188,25 +90362,25 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 }
 
 // src/submission/forms/sent-write.ts
-import { existsSync as existsSync21 } from "node:fs";
-import { extname, join as join20 } from "node:path";
+import { existsSync as existsSync22 } from "node:fs";
+import { extname, join as join21 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash9 } from "node:crypto";
-import { existsSync as existsSync20, readdirSync as readdirSync9, readFileSync as readFileSync19, renameSync as renameSync4, writeFileSync as writeFileSync5 } from "node:fs";
-import { dirname as dirname8, join as join19 } from "node:path";
+import { existsSync as existsSync21, readdirSync as readdirSync9, readFileSync as readFileSync20, renameSync as renameSync5, writeFileSync as writeFileSync6 } from "node:fs";
+import { dirname as dirname8, join as join20 } from "node:path";
 var RENDER_MANIFEST_FILE = "render-manifest.json";
 function sha256(text5) {
   return createHash9("sha256").update(text5, "utf-8").digest("hex");
 }
 function manifestPath(baseDir) {
-  return join19(baseDir, RENDER_MANIFEST_FILE);
+  return join20(baseDir, RENDER_MANIFEST_FILE);
 }
 function readManifest(baseDir) {
   const file = manifestPath(baseDir);
-  if (!existsSync20(file)) return null;
+  if (!existsSync21(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync19(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync20(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
       return null;
     }
@@ -90216,7 +90390,7 @@ function readManifest(baseDir) {
   }
 }
 function writeManifest(baseDir, manifest) {
-  writeFileSync5(manifestPath(baseDir), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  writeFileSync6(manifestPath(baseDir), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
 }
 function stampsEqual(a3, b3) {
   return a3.filing_id === b3.filing_id && a3.revision === b3.revision && a3.approvals === b3.approvals && a3.schema_version === b3.schema_version && a3.build_stamp === b3.build_stamp && a3.client_name === b3.client_name && a3.client_no === b3.client_no && a3.matter_no === b3.matter_no && a3.date === b3.date;
@@ -90225,18 +90399,18 @@ function renderState(baseDir, stamp2, partiesDrift) {
   const manifest = readManifest(baseDir);
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
-  return manifest.files.every((f3) => existsSync20(join19(baseDir, f3.file_name))) ? "fresh" : "stale";
+  return manifest.files.every((f3) => existsSync21(join20(baseDir, f3.file_name))) ? "fresh" : "stale";
 }
 function freshManifest(baseDir, stamp2, partiesDrift) {
   const manifest = readManifest(baseDir);
   if (manifest === null || !stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return null;
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
-    const file = join19(baseDir, f3.file_name);
-    if (!existsSync20(file)) return null;
+    const file = join20(baseDir, f3.file_name);
+    if (!existsSync21(file)) return null;
     let text5;
     try {
-      text5 = readFileSync19(file, "utf-8");
+      text5 = readFileSync20(file, "utf-8");
     } catch {
       return null;
     }
@@ -90246,7 +90420,7 @@ function freshManifest(baseDir, stamp2, partiesDrift) {
   return { manifest, contents };
 }
 function mockupsRoot(dbPath) {
-  return join19(dirname8(dbPath), "mockups");
+  return join20(dirname8(dbPath), "mockups");
 }
 function filingFolderName(filingId) {
   return `Filing ${filingId}`;
@@ -90254,10 +90428,10 @@ function filingFolderName(filingId) {
 function legacyMockupDirs(dbPath) {
   const root = mockupsRoot(dbPath);
   const found = /* @__PURE__ */ new Map();
-  if (!existsSync20(root)) return /* @__PURE__ */ new Map();
+  if (!existsSync21(root)) return /* @__PURE__ */ new Map();
   for (const entry of readdirSync9(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const dir = join19(root, entry.name);
+    const dir = join20(root, entry.name);
     const manifest = readManifest(dir);
     if (manifest === null || entry.name === filingFolderName(manifest.stamp.filing_id)) continue;
     const held = found.get(manifest.stamp.filing_id);
@@ -90267,15 +90441,15 @@ function legacyMockupDirs(dbPath) {
   return new Map([...found].map(([id, { dir }]) => [id, dir]));
 }
 function mockupDir(dbPath, filingId, legacy = () => legacyMockupDirs(dbPath)) {
-  const own = join19(mockupsRoot(dbPath), filingFolderName(filingId));
-  return existsSync20(own) ? own : legacy().get(filingId) ?? own;
+  const own = join20(mockupsRoot(dbPath), filingFolderName(filingId));
+  return existsSync21(own) ? own : legacy().get(filingId) ?? own;
 }
 function mockupDirForRender(dbPath, filingId) {
-  const own = join19(mockupsRoot(dbPath), filingFolderName(filingId));
+  const own = join20(mockupsRoot(dbPath), filingFolderName(filingId));
   const dir = mockupDir(dbPath, filingId);
   if (dir !== own) {
     try {
-      renameSync4(dir, own);
+      renameSync5(dir, own);
     } catch (err) {
       const code = err.code ?? String(err);
       throw new DataServerError(`could not rename filing ${filingId}'s mockup folder ${dir} to ${own} (${code}); render again once the sync client releases it`);
@@ -91422,7 +91596,7 @@ function storedParagraphs(dbPath, filing, stored) {
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
     label: "sent-copy comparison",
-    driver: join20(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
+    driver: join21(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
@@ -91446,7 +91620,7 @@ function checkArgs(args) {
     if (![".eml", ".pdf", ".msg"].includes(extname(args.sent_copy_path).toLowerCase())) {
       throw new ValidationError(`${TOOL4}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync21(args.sent_copy_path)) throw new ValidationError(`${TOOL4}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync22(args.sent_copy_path)) throw new ValidationError(`${TOOL4}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
     throw new ValidationError(`${TOOL4}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
@@ -91740,8 +91914,8 @@ async function submissionDataApprovePlan(args, env = process.env) {
 
 // src/submission/forms.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { existsSync as existsSync28, mkdirSync as mkdirSync13, readdirSync as readdirSync15, readFileSync as readFileSync23, realpathSync as realpathSync8, renameSync as renameSync6, unlinkSync as unlinkSync6, writeFileSync as writeFileSync8 } from "node:fs";
-import { basename as basename4, dirname as dirname13, extname as extname2, isAbsolute as isAbsolute5, join as join26, resolve as resolve5 } from "node:path";
+import { existsSync as existsSync29, mkdirSync as mkdirSync13, readdirSync as readdirSync15, readFileSync as readFileSync24, realpathSync as realpathSync8, renameSync as renameSync7, unlinkSync as unlinkSync6, writeFileSync as writeFileSync9 } from "node:fs";
+import { basename as basename4, dirname as dirname13, extname as extname2, isAbsolute as isAbsolute5, join as join27, resolve as resolve5 } from "node:path";
 
 // src/submission/filing-order.ts
 var DAY_MS = 864e5;
@@ -91785,7 +91959,7 @@ function orderByRecency(filings) {
 }
 
 // src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync20 } from "node:fs";
+import { readFileSync as readFileSync21 } from "node:fs";
 
 // src/submission/forms/render-application-response.ts
 function rows6(dbPath, sql, params = []) {
@@ -92667,11 +92841,11 @@ function pushGap(ctx, lines2, line, field, item) {
 var WORDS_PER_PAGE = 300;
 var PARTS_PAGE_LIMIT = 30;
 var OPENING_STATEMENT_PAGE_LIMIT = 1;
-var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var MONTHS2 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function longDate(iso2) {
   const m3 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso2);
   if (!m3) return iso2;
-  return `${MONTHS[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
+  return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
 }
 function fetchChronology(dbPath, filingId) {
   return rows8(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
@@ -94399,7 +94573,7 @@ function readShipped(path, seams) {
   const kp = parseKnowledgePath(path, "type file lookup");
   const { layer } = shippedLayer(kp.skill, kp.rest, seams);
   try {
-    return readFileSync20(layer.abs, "utf-8");
+    return readFileSync21(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
@@ -94451,18 +94625,18 @@ function composeFiller(venue, kind, seams = {}) {
 }
 
 // src/submission/matter-pages.ts
-import { existsSync as existsSync25, mkdirSync as mkdirSync11, readdirSync as readdirSync13, readFileSync as readFileSync22 } from "node:fs";
-import { dirname as dirname11, join as join24 } from "node:path";
+import { existsSync as existsSync26, mkdirSync as mkdirSync11, readdirSync as readdirSync13, readFileSync as readFileSync23 } from "node:fs";
+import { dirname as dirname11, join as join25 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync as existsSync22,
+  existsSync as existsSync23,
   lstatSync,
   mkdirSync as mkdirSync9,
   readdirSync as readdirSync10,
   realpathSync as realpathSync4,
-  renameSync as renameSync5,
+  renameSync as renameSync6,
   statSync as statSync12
 } from "node:fs";
 import { win32 as pathWin3212 } from "node:path";
@@ -94486,7 +94660,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   for (let dir = pathWin3212.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3212.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync22(pathWin3212.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync23(pathWin3212.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
@@ -94518,7 +94692,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync10(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
   mkdirSync9(pathWin3212.dirname(dest), { recursive: true });
   try {
-    renameSync5(target, dest);
+    renameSync6(target, dest);
   } catch (err) {
     if (err.code === "EXDEV") {
       throw new DataServerError(
@@ -94537,7 +94711,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   return result;
 }
 function isFile2(path) {
-  return existsSync22(path) && statSync12(path).isFile();
+  return existsSync23(path) && statSync12(path).isFile();
 }
 function present(path) {
   try {
@@ -94553,8 +94727,8 @@ function stamp(d3) {
 }
 
 // src/submission/board-attachments.ts
-import { closeSync as closeSync7, existsSync as existsSync23, openSync as openSync7, readdirSync as readdirSync11, readSync, realpathSync as realpathSync5, statSync as statSync13 } from "node:fs";
-import { dirname as dirname9, isAbsolute as isAbsolute3, join as join21, relative, resolve as resolve3, sep } from "node:path";
+import { closeSync as closeSync7, existsSync as existsSync24, openSync as openSync7, readdirSync as readdirSync11, readSync, realpathSync as realpathSync5, statSync as statSync13 } from "node:fs";
+import { dirname as dirname9, isAbsolute as isAbsolute3, join as join22, relative, resolve as resolve3, sep } from "node:path";
 var REVIEW_LINE = /^Counsel['’]s review:\s*/;
 var FIRST_LINE_BYTES = 4096;
 function firstLine(file) {
@@ -94568,7 +94742,7 @@ function firstLine(file) {
   }
 }
 function reviewStatuses(abs, name, isFolder) {
-  const files = isFolder ? readdirSync11(abs, { withFileTypes: true }).filter((e3) => e3.isFile() && /\.md$/i.test(e3.name)).map((e3) => ({ file: join21(abs, e3.name), label: e3.name })).sort((x3, y3) => x3.label.localeCompare(y3.label)) : /\.md$/i.test(abs) ? [{ file: abs, label: name }] : [];
+  const files = isFolder ? readdirSync11(abs, { withFileTypes: true }).filter((e3) => e3.isFile() && /\.md$/i.test(e3.name)).map((e3) => ({ file: join22(abs, e3.name), label: e3.name })).sort((x3, y3) => x3.label.localeCompare(y3.label)) : /\.md$/i.test(abs) ? [{ file: abs, label: name }] : [];
   const found = [];
   for (const { file, label } of files) {
     let line;
@@ -94600,7 +94774,7 @@ function attachedDrafts(draftDir, section2) {
       proceeding_wide: section2.meta.filing_id !== null && a3.filing_id === null
     };
     if (leavesDraftFolder(relative(draftDir, abs))) return { ...entry, state: "outside", review: [] };
-    if (!existsSync23(abs)) return { ...entry, state: "missing", review: [] };
+    if (!existsSync24(abs)) return { ...entry, state: "missing", review: [] };
     try {
       const real = realpathSync5.native(abs);
       if (leavesDraftFolder(relative(realpathSync5.native(draftDir), real)) || real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) {
@@ -94616,7 +94790,7 @@ function attachedDrafts(draftDir, section2) {
 
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync12 } from "node:fs";
-import { join as join22 } from "node:path";
+import { join as join23 } from "node:path";
 var STATUSES = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
@@ -94642,9 +94816,9 @@ function courtFileFolder(matterRoot, fileNumber) {
     return { note: `the matter folder could not be listed (${err.code ?? "error"})` };
   }
   if (names.length === 0) return { note: "the matter has no COURT FILE folder" };
-  if (names.length === 1) return { path: join22(matterRoot, names[0]) };
+  if (names.length === 1) return { path: join23(matterRoot, names[0]) };
   const fitting = fileNumber ? names.filter((n3) => n3.toUpperCase().includes(fileNumber.toUpperCase())) : [];
-  if (fitting.length === 1) return { path: join22(matterRoot, fitting[0]) };
+  if (fitting.length === 1) return { path: join23(matterRoot, fitting[0]) };
   return { note: `no single COURT FILE folder names this proceeding's file number (${names.map((n3) => `"${n3}"`).join(", ")})` };
 }
 function fileNames(dir) {
@@ -94654,7 +94828,7 @@ function fileNames(dir) {
   } catch {
     return [];
   }
-  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join22(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
+  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join23(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
 }
 function newest(names) {
   return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
@@ -95010,15 +95184,15 @@ function buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos) {
 
 // src/page-api/token.ts
 import { createHmac, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync24, linkSync as linkSync2, mkdirSync as mkdirSync10, readFileSync as readFileSync21, unlinkSync as unlinkSync5, writeFileSync as writeFileSync6 } from "node:fs";
-import { dirname as dirname10, join as join23 } from "node:path";
+import { existsSync as existsSync25, linkSync as linkSync2, mkdirSync as mkdirSync10, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
+import { dirname as dirname10, join as join24 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
-  if (!existsSync24(path)) return DEFAULT_PAGE_API_PORT;
-  const value = JSON.parse(readFileSync21(path, "utf-8"))?.page_api_port;
+  if (!existsSync25(path)) return DEFAULT_PAGE_API_PORT;
+  const value = JSON.parse(readFileSync22(path, "utf-8"))?.page_api_port;
   if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
@@ -95026,14 +95200,14 @@ function pageApiPort(env = process.env) {
   return value;
 }
 function pageApiSecretPath(env = process.env) {
-  return join23(dirname10(configPath(env)), SECRET_FILE);
+  return join24(dirname10(configPath(env)), SECRET_FILE);
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
-  if (!existsSync24(path)) {
+  if (!existsSync25(path)) {
     mkdirSync10(dirname10(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes2(6).toString("hex")}.tmp`;
-    writeFileSync6(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
+    writeFileSync7(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
     try {
       linkSync2(temp, path);
     } catch (err) {
@@ -95042,7 +95216,7 @@ function pageApiSecret(env) {
       unlinkSync5(temp);
     }
   }
-  const secret = readFileSync21(path);
+  const secret = readFileSync22(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -97342,12 +97516,12 @@ function pagePathFor(pages, section2) {
 }
 function refuseForeignPages(draftDir, names, views) {
   const targets = [
-    [join24(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
-    ...names.map((name) => [join24(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
-    ...views.map((v3) => [join24(draftDir, v3.file), VIEW_PAGE_MARKER, v3.page.name])
+    [join25(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
+    ...names.map((name) => [join25(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
+    ...views.map((v3) => [join25(draftDir, v3.file), VIEW_PAGE_MARKER, v3.page.name])
   ];
   for (const [file, marker, page] of targets) {
-    if (existsSync25(file) && !readFileSync22(file, "utf-8").includes(marker)) {
+    if (existsSync26(file) && !readFileSync23(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page}'s marker, so this renderer did not write it`);
     }
   }
@@ -97361,19 +97535,19 @@ function stem(fileName) {
 }
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+)\.html$/i;
 function generatorWrote(file) {
-  const text5 = readFileSync22(file, "utf-8");
+  const text5 = readFileSync23(file, "utf-8");
   return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
   const moved = [];
   const skipped = [];
   const targets = [...names, MATTER_BOARD_FILE].map((name) => name.toLowerCase());
-  const subfolders = readdirSync13(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join24(draftDir, e3.name));
+  const subfolders = readdirSync13(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join25(draftDir, e3.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync13(dir, { withFileTypes: true })) {
       if (!entry.isFile() || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
       if (dir === draftDir && targets.includes(entry.name.toLowerCase())) continue;
-      const file = join24(dir, entry.name);
+      const file = join25(dir, entry.name);
       try {
         if (!generatorWrote(file)) continue;
         const result = fileOpsTrash(file);
@@ -97444,21 +97618,21 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       )
     );
     const swept = only === void 0 ? sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]) : {};
-    const matterBoardPath = join24(draftDir, MATTER_BOARD_FILE);
+    const matterBoardPath = join25(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targetsWritten.forEach((t3, i3) => writePage(join24(draftDir, t3.file), jobBoards[i3]));
-    viewsWritten.forEach((v3, i3) => writePage(join24(draftDir, v3.file), viewPages[i3]));
+    targetsWritten.forEach((t3, i3) => writePage(join25(draftDir, t3.file), jobBoards[i3]));
+    viewsWritten.forEach((v3, i3) => writePage(join25(draftDir, v3.file), viewPages[i3]));
     return {
-      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join24(draftDir, t3.file) })),
+      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join25(draftDir, t3.file) })),
       matter_board_path: matterBoardPath,
-      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join24(draftDir, v3.file) })),
+      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join25(draftDir, v3.file) })),
       ...swept
     };
   });
 }
 var MAX_SESSIONS = 20;
 function statePath(dbPath) {
-  return join24(mockupsRoot(dbPath), PAGES_STATE_FILE);
+  return join25(mockupsRoot(dbPath), PAGES_STATE_FILE);
 }
 function isTodos(value) {
   if (typeof value !== "object" || value === null) return false;
@@ -97475,7 +97649,7 @@ function isRecord(value) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync22(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync23(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -98284,7 +98458,7 @@ function renderBccaBookFiledFace(ctx) {
 }
 
 // src/submission/forms/emit-bcca-factum.ts
-var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var ISO_DATE3 = /^\d{4}-\d{2}-\d{2}$/;
 function oneLine2(text5) {
   return text5.replace(/\s*\n\s*/g, " ").trim();
 }
@@ -98328,7 +98502,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       `Filing ${filing.id} has kind "${filing.kind}", not "bcca_factum" -- the bcca-factum.md emitter only handles BCCA respondent's factum filings.`
     );
   }
-  if (!ISO_DATE2.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
+  if (!ISO_DATE3.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
   if (!proceeding.file_number) refuse(`proceeding ${proceeding.id} has no file_number recorded`);
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const groups = groupPartiesByRole(captionParties2);
@@ -99104,8 +99278,8 @@ function formCurrency(formKey, today2, seams = {}) {
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync26, readdirSync as readdirSync14, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
-import { basename as basename3, dirname as dirname12, isAbsolute as isAbsolute4, join as join25, resolve as resolve4 } from "node:path";
+import { existsSync as existsSync27, readdirSync as readdirSync14, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
+import { basename as basename3, dirname as dirname12, isAbsolute as isAbsolute4, join as join26, resolve as resolve4 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -99123,7 +99297,7 @@ function isOneDigitTypo(a3, b3) {
   const [i3, j3] = diff;
   return diff.length === 2 && j3 === i3 + 1 && a3[i3] === b3[j3] && a3[j3] === b3[i3];
 }
-var MONTHS2 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+var MONTHS3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 var MONTH = "(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\.?";
 var DATE_RE = new RegExp(
   `\\b${MONTH}\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})\\b|\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MONTH}\\s*,?\\s+(\\d{4})\\b|\\b(\\d{4})-(\\d{2})-(\\d{2})\\b`,
@@ -99134,7 +99308,7 @@ var iso = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).pad
 function extractDates(line) {
   const out = [];
   for (const m3 of line.matchAll(DATE_RE)) {
-    const [y3, mo2, d3] = m3[1] ? [Number(m3[3]), MONTHS2.indexOf(m3[1].slice(0, 3).toLowerCase()) + 1, Number(m3[2])] : m3[5] ? [Number(m3[6]), MONTHS2.indexOf(m3[5].slice(0, 3).toLowerCase()) + 1, Number(m3[4])] : [Number(m3[7]), Number(m3[8]), Number(m3[9])];
+    const [y3, mo2, d3] = m3[1] ? [Number(m3[3]), MONTHS3.indexOf(m3[1].slice(0, 3).toLowerCase()) + 1, Number(m3[2])] : m3[5] ? [Number(m3[6]), MONTHS3.indexOf(m3[5].slice(0, 3).toLowerCase()) + 1, Number(m3[4])] : [Number(m3[7]), Number(m3[8]), Number(m3[9])];
     if (mo2 >= 1 && mo2 <= 12 && d3 >= 1 && d3 <= 31) out.push({ raw: m3[0], iso: iso(y3, mo2, d3) });
   }
   return out;
@@ -99379,7 +99553,7 @@ function resolvePackageDir(packageDir) {
   if (!isAbsolute4(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve4(packageDir);
   const refuse = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync26(dir) || !statSync14(dir).isDirectory()) throw refuse("it does not exist or is not a folder");
+  if (!existsSync27(dir) || !statSync14(dir).isDirectory()) throw refuse("it does not exist or is not a folder");
   const real = realpathSync6.native(dir);
   const parts = real.split(/[\\/]/);
   if (parts.some((p3) => /^(privileged|disclosed)$/i.test(p3))) throw refuse("it lies inside a privileged or disclosed tree");
@@ -99391,7 +99565,7 @@ function resolvePackageDir(packageDir) {
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join25(dir, e3.name)).sort((a3, b3) => basename3(a3).localeCompare(basename3(b3)));
+  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join26(dir, e3.name)).sort((a3, b3) => basename3(a3).localeCompare(basename3(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -99453,7 +99627,7 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync27, mkdirSync as mkdirSync12, realpathSync as realpathSync7, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync28, mkdirSync as mkdirSync12, realpathSync as realpathSync7, writeFileSync as writeFileSync8 } from "node:fs";
 import { win32 as pathWin3213 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
@@ -99473,12 +99647,12 @@ function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTA
   const dirs = folders.map((_3, i3) => pathWin3213.join(caseData, ...folders.slice(0, i3 + 1)));
   const path = pathWin3213.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
-    if (existsSync27(p3) && realpathSync7.native(p3).toLowerCase() !== p3.toLowerCase()) {
+    if (existsSync28(p3) && realpathSync7.native(p3).toLowerCase() !== p3.toLowerCase()) {
       throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync7.native(p3)})`);
     }
   }
-  for (const dir of dirs) if (!existsSync27(dir)) mkdirSync12(dir);
-  writeFileSync7(path, markdown, "utf-8");
+  for (const dir of dirs) if (!existsSync28(dir)) mkdirSync12(dir);
+  writeFileSync8(path, markdown, "utf-8");
   return path;
 }
 
@@ -99488,8 +99662,8 @@ function sanitizeForPath(name) {
 }
 function existingMockupPaths(baseDir) {
   const manifest = readManifest(baseDir);
-  const paths = (manifest?.files ?? []).map((f3) => join26(baseDir, f3.file_name)).filter((p3) => existsSync28(p3));
-  const board = [join26(baseDir, "Job Board.html"), join26(baseDir, "Work Board.html")].find((p3) => existsSync28(p3));
+  const paths = (manifest?.files ?? []).map((f3) => join27(baseDir, f3.file_name)).filter((p3) => existsSync29(p3));
+  const board = [join27(baseDir, "Job Board.html"), join27(baseDir, "Work Board.html")].find((p3) => existsSync29(p3));
   if (board) paths.push(board);
   return paths;
 }
@@ -99515,8 +99689,8 @@ function newSessionToken(unattended) {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes3(9).toString("hex")}`;
 }
 function readExistingRevision(filePath) {
-  if (!existsSync28(filePath)) return void 0;
-  const text5 = readFileSync23(filePath, "utf-8");
+  if (!existsSync29(filePath)) return void 0;
+  const text5 = readFileSync24(filePath, "utf-8");
   const match = text5.match(/^Revision:[ \t]*(\d+)/m) ?? text5.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text5.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
@@ -99526,19 +99700,19 @@ function archiveIfStale(filePath, formLabel, currentRevision) {
   archiveFile(filePath, formLabel, existingRevision);
 }
 function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join26(dirname13(filePath), "archive");
+  const archiveDir = join27(dirname13(filePath), "archive");
   mkdirSync13(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join26(archiveDir, `${name}${extname2(filePath)}`);
-  for (let n3 = 2; existsSync28(archivePath); n3++) archivePath = join26(archiveDir, `${name} (${n3})${extname2(filePath)}`);
-  renameSync6(filePath, archivePath);
+  let archivePath = join27(archiveDir, `${name}${extname2(filePath)}`);
+  for (let n3 = 2; existsSync29(archivePath); n3++) archivePath = join27(archiveDir, `${name} (${n3})${extname2(filePath)}`);
+  renameSync7(filePath, archivePath);
 }
 function archiveDroppedFiles(baseDir, previous, written) {
   if (!previous) return;
   for (const file of previous.files) {
     if (written.has(file.file_name) || basename4(file.file_name) !== file.file_name) continue;
     try {
-      archiveFile(join26(baseDir, file.file_name), file.document_type, previous.stamp.revision);
+      archiveFile(join27(baseDir, file.file_name), file.document_type, previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -99546,7 +99720,7 @@ function archiveDroppedFiles(baseDir, previous, written) {
 }
 function writeDocument2(baseDir, output, revision) {
   mkdirSync13(baseDir, { recursive: true });
-  const filePath = join26(baseDir, output.fileName);
+  const filePath = join27(baseDir, output.fileName);
   archiveIfStale(filePath, output.documentType, revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
@@ -99555,9 +99729,9 @@ function writeDocument2(baseDir, output, revision) {
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
-    const file = join26(dir, name);
+    const file = join27(dir, name);
     try {
-      if (existsSync28(file)) unlinkSync6(file);
+      if (existsSync29(file)) unlinkSync6(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -99565,11 +99739,11 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 }
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeStaleWorkBoardMarkdown(baseDir) {
-  const stale = join26(baseDir, STALE_WORKBOARD_MARKDOWN);
-  if (existsSync28(stale)) unlinkSync6(stale);
+  const stale = join27(baseDir, STALE_WORKBOARD_MARKDOWN);
+  if (existsSync29(stale)) unlinkSync6(stale);
 }
 function ownStaleWorkBoardMarkdown(dir) {
-  return readExistingRevision(join26(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  return readExistingRevision(join27(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
 }
 function partiesFor(dbPath, proceeding, filing) {
   if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
@@ -99774,7 +99948,7 @@ function resolvePresentationDir(presentationDir, filingTitle, styleOfCause) {
   if (!basename4(dir).endsWith(ending) && (oldEnding === null || !basename4(dir).endsWith(oldEnding))) {
     throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
   }
-  if (existsSync28(dir) && dirname13(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+  if (existsSync29(dir) && dirname13(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
   }
   return dir;
@@ -99805,7 +99979,7 @@ function renameable(dir) {
   const entries = readdirSync15(dir, { withFileTypes: true });
   const isBoard = (name) => name === "Job Board.html" || name === "Work Board.html";
   return entries.length > 0 && entries.every(
-    (e3) => e3.isFile() && (isBoard(e3.name) || RETIRED_BOARD_FILES.includes(e3.name) || readExistingRevision(join26(dir, e3.name)) !== void 0)
+    (e3) => e3.isFile() && (isBoard(e3.name) || RETIRED_BOARD_FILES.includes(e3.name) || readExistingRevision(join27(dir, e3.name)) !== void 0)
   );
 }
 function presentationDirFromDraft(draftDir, proceeding, filing) {
@@ -99815,10 +99989,10 @@ function presentationDirFromDraft(draftDir, proceeding, filing) {
   const isOld = (name) => old !== null && name.toLowerCase() === old.toLowerCase();
   const isUndated = (name) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
   const matches = readdirSync15(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory() && (isUndated(e3.name) || /^\d{4}-\d{2}-\d{2} /.test(e3.name) && isUndated(e3.name.slice(11)))).map((e3) => e3.name).sort();
-  if (matches.length === 1 && isOld(matches[0])) return join26(draft, matches[0]);
-  if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join26(draft, undated);
+  if (matches.length === 1 && isOld(matches[0])) return join27(draft, matches[0]);
+  if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join27(draft, undated);
   const candidates = matches.map((name) => {
-    const path = join26(draft, name);
+    const path = join27(draft, name);
     return isUndated(name) ? `"${path}" (undated)` : `"${path}" (dated, renameable: ${renameable(path) ? "yes" : "no"})`;
   });
   throw new ValidationError(
@@ -99830,23 +100004,23 @@ function symbolNotes(notes) {
   return notes.length > 0 ? { symbol_notes: notes } : {};
 }
 function projectDocuments(dir, documents, wanted) {
-  const targets = documents.map((doc) => join26(dir, doc.file_name));
+  const targets = documents.map((doc) => join27(dir, doc.file_name));
   for (const target of targets) {
-    if (existsSync28(target) && readExistingRevision(target) === void 0) {
+    if (existsSync29(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(
         `drafting_forms__render.presentation_dir: refusing to overwrite ${target} -- it carries no render revision stamp, so this renderer did not write it`
       );
     }
   }
   mkdirSync13(dir, { recursive: true });
-  for (const doc of documents) writeFileSync8(join26(dir, doc.file_name), doc.markdown, "utf-8");
+  for (const doc of documents) writeFileSync9(join27(dir, doc.file_name), doc.markdown, "utf-8");
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...ownStaleWorkBoardMarkdown(dir)]);
   removeRetiredBoardFiles(dirname13(dir));
   return documents.map((doc) => ({
     document_type: doc.document_type,
     ...doc.path ? { path: doc.path } : {},
     file_name: doc.file_name,
-    presentation_path: join26(dir, doc.file_name),
+    presentation_path: join27(dir, doc.file_name),
     markdown_chars: doc.markdown.length,
     ...wanted?.includes(doc.document_type) ? { markdown: doc.markdown, ...symbolNotes(doc.symbol_notes ?? []) } : {}
   }));
@@ -100001,7 +100175,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       const markdown = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
-        path: join26(baseDir, f3.file_name),
+        path: join27(baseDir, f3.file_name),
         file_name: f3.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f3.document_type))
@@ -100510,7 +100684,7 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
 }
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync28(dbPath)) {
+  if (!existsSync29(dbPath)) {
     throw new ValidationError(`No submission database found at ${dbPath}. Run drafting_data__migrate first.`);
   }
   const draft = draftDir === void 0 ? void 0 : resolveDraftDir(draftDir);
@@ -100769,12 +100943,12 @@ async function submissionDataReleaseJob(args, env = process.env) {
 }
 
 // src/submission/open-session.ts
-import { existsSync as existsSync30, readdirSync as readdirSync16 } from "node:fs";
-import { basename as basename5, dirname as dirname14, join as join28 } from "node:path";
+import { existsSync as existsSync31, readdirSync as readdirSync16 } from "node:fs";
+import { basename as basename5, dirname as dirname14, join as join29 } from "node:path";
 
 // src/case/ingest-coverage.ts
-import { existsSync as existsSync29 } from "node:fs";
-import { join as join27 } from "node:path";
+import { existsSync as existsSync30 } from "node:fs";
+import { join as join28 } from "node:path";
 var DRIVER4 = String.raw`
 import json, sys
 
@@ -100794,7 +100968,7 @@ var FOLDER_GLOBS = ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*", "
 var CORRESPONDENCE_GLOBS = FOLDER_GLOBS.slice(0, 2);
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS, env = process.env) {
-  if (!existsSync29(join27(caseDataDir, "main.sqlite"))) {
+  if (!existsSync30(join28(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
   }
   try {
@@ -100880,7 +101054,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join28(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join29(draftDir, MATTER_BOARD_FILE),
         job_board_path: board.path,
         ...written.pages ? { job_board_paths: written.pages.job_board_paths, view_page_paths: written.pages.view_page_paths } : {},
         ...trashReport(rendered)
@@ -100979,7 +101153,7 @@ function practiceConfigBlocking(dbPath) {
 function backups(dbPath) {
   const dir = dirname14(dbPath);
   const prefix = `${basename5(dbPath)}.bak-`;
-  return new Set(existsSync30(dir) ? readdirSync16(dir).filter((name) => name.startsWith(prefix)) : []);
+  return new Set(existsSync31(dir) ? readdirSync16(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
   const started = performance.now();
@@ -101020,7 +101194,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
       result = submissionFormsBootstrap(dbPath, identity, void 0, void 0, void 0, unattended);
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
-    if (to2 !== null && to2 !== from) migrated = { from, to: to2, backup: written.length > 0 ? join28(dirname14(dbPath), written[0]) : null };
+    if (to2 !== null && to2 !== from) migrated = { from, to: to2, backup: written.length > 0 ? join29(dirname14(dbPath), written[0]) : null };
   }
   for (const t3 of result.timings) timings.push({ phase: `bootstrap: ${t3.phase}`, ms: t3.ms });
   const refused3 = result.migration_required || result.bundle_outdated || result.migration_withheld === true;
@@ -101061,7 +101235,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync31, readdirSync as readdirSync17, readFileSync as readFileSync24, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
+import { existsSync as existsSync32, readdirSync as readdirSync17, readFileSync as readFileSync25, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
 import { win32 as pathWin3214 } from "node:path";
 var DRIVER5 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -101097,7 +101271,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3214.join(shipped.root, ...rel);
-  if (!existsSync31(path)) {
+  if (!existsSync32(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -101162,7 +101336,7 @@ function assertSegment(value, label) {
 }
 function confinedSessionsDir(caseData) {
   const dir = pathWin3214.join(caseData, "form-sessions");
-  if (existsSync31(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync32(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync9.native(dir)})`);
   }
   return dir;
@@ -101170,7 +101344,7 @@ function confinedSessionsDir(caseData) {
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
   const dir = pathWin3214.join(sessions, sessionId);
-  if (existsSync31(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync32(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync9.native(dir)})`);
   }
   return dir;
@@ -101186,12 +101360,12 @@ function confineWritingFolder(root, writingFolder) {
 }
 function checkSession(root, caseData, sessions, sessionId) {
   const ctxPath = pathWin3214.join(confineSessionDir(sessions, sessionId), "ctx.json");
-  if (!existsSync31(ctxPath)) {
+  if (!existsSync32(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
-  const ctx = JSON.parse(readFileSync24(ctxPath).toString("utf-8").replace(/\0+$/, ""));
+  const ctx = JSON.parse(readFileSync25(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same = (stored, expected) => {
-    if (typeof stored !== "string" || stored === "" || !existsSync31(stored)) return false;
+    if (typeof stored !== "string" || stored === "" || !existsSync32(stored)) return false;
     return realpathSync9.native(stored).toLowerCase() === expected.toLowerCase() && statSync15(stored).isDirectory();
   };
   if (!same(ctx.matter_path, root) || !same(ctx.case_data_folder, caseData)) {
@@ -101223,7 +101397,7 @@ function confineLocatePaths(caseData, resultJson) {
     if (typeof value !== "string" || !pathWin3214.isAbsolute(value)) {
       throw new PathOutOfScopeError(`${label} must be an absolute path inside the case-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
-    const resolved = existsSync31(value) ? realpathSync9.native(value) : pathWin3214.resolve(value);
+    const resolved = existsSync32(value) ? realpathSync9.native(value) : pathWin3214.resolve(value);
     assertContained(caseData, resolved, label, value);
   }
 }
@@ -101245,11 +101419,11 @@ function timeoutAdvice(command, sessionId) {
 }
 
 // src/submission/publish-tools.ts
-import { existsSync as existsSync33, readdirSync as readdirSync19 } from "node:fs";
+import { existsSync as existsSync34, readdirSync as readdirSync19 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/submission/publish-host.ts
-import { existsSync as existsSync32, readdirSync as readdirSync18 } from "node:fs";
+import { existsSync as existsSync33, readdirSync as readdirSync18 } from "node:fs";
 import { win32 as pathWin3215 } from "node:path";
 var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -101315,7 +101489,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
     installRoot
   });
   const path = pathWin3215.join(shipped.root, ...rel);
-  if (!existsSync32(path)) {
+  if (!existsSync33(path)) {
     throw new DataServerError(
       `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -101400,7 +101574,7 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
   const target = publishTarget(args.matter_root, args.db_path, args.writing_folder, env);
   const dataFolders = ["vaniac-submissions", vaniacFilingFolder(args.writing_folder)];
   const pkg = writingSubfolder(target, "Package");
-  const previous = existsSync33(pkg) ? readdirSync19(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
+  const previous = existsSync34(pkg) ? readdirSync19(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
   if (previous.length > 0) {
     return {
       success: false,
@@ -101461,11 +101635,11 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync35, readdirSync as readdirSync21 } from "node:fs";
+import { existsSync as existsSync36, readdirSync as readdirSync21 } from "node:fs";
 import { win32 as pathWin3220 } from "node:path";
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync, existsSync as existsSync34, mkdirSync as mkdirSync14, mkdtempSync, readdirSync as readdirSync20, readFileSync as readFileSync25, realpathSync as realpathSync10, renameSync as renameSync7, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
+import { copyFileSync, existsSync as existsSync35, mkdirSync as mkdirSync14, mkdtempSync, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3219 } from "node:path";
 
@@ -101572,7 +101746,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const scratch = mkdtempSync(pathWin3219.join(tmpdir3(), "coclerk-scrutiny-"));
   try {
     const excerptFile = pathWin3219.join(scratch, "excerpt.txt");
-    writeFileSync9(excerptFile, read2.excerpt ?? "", "utf-8");
+    writeFileSync10(excerptFile, read2.excerpt ?? "", "utf-8");
     const ctx = {
       env,
       installRoot,
@@ -101594,7 +101768,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
     if (finding.answer_file === null && finding.text !== null) {
       const name = `${pathWin3219.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
       const from = pathWin3219.join(scratch, "finding.txt");
-      writeFileSync9(from, finding.text, "utf-8");
+      writeFileSync10(from, finding.text, "utf-8");
       current.files.push({ from, name });
       findingFile = pathWin3219.join(folder, name);
     }
@@ -101687,7 +101861,7 @@ function findingParas(finding, pinpoint) {
   return [...found].sort((x3, y3) => x3 - y3);
 }
 function foreignEntries(folder) {
-  if (!existsSync34(folder)) return [];
+  if (!existsSync35(folder)) return [];
   return readdirSync20(folder, { withFileTypes: true }).filter((entry) => !(entry.isFile() && OWN_FILE.test(entry.name))).map((entry) => entry.name);
 }
 function confineMatterFile(root, given, label) {
@@ -101712,12 +101886,12 @@ function confineMatterFile(root, given, label) {
 function answerFile(root, named) {
   if (named === null) return null;
   const path = confineMatterFile(root, named, "the answer file the finding names");
-  return { named, path, exists: existsSync34(path) };
+  return { named, path, exists: existsSync35(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
   const path = pathWin3219.join(shipped.root, ...rel);
-  if (!existsSync34(path)) {
+  if (!existsSync35(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -101753,7 +101927,7 @@ function buildPackage(ctx, spec) {
     cited: cited2.extract,
     context: context.extract,
     files: [...cited2.files, ...context.files],
-    proposedExcerpt: spec.span ? readFileSync25(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
+    proposedExcerpt: spec.span ? readFileSync26(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
   };
 }
 function resolve6(ctx, authority) {
@@ -101946,7 +102120,7 @@ function publish2(folder, files) {
   for (const file of files) {
     const final = pathWin3219.join(folder, file.name);
     copyFileSync(file.from, `${final}.tmp`);
-    renameSync7(`${final}.tmp`, final);
+    renameSync8(`${final}.tmp`, final);
   }
 }
 
@@ -102056,7 +102230,7 @@ function writeEmlPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3220.join(shipped.root, ...rel);
-  if (!existsSync35(path)) {
+  if (!existsSync36(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -102066,7 +102240,7 @@ function writeEmlPath(env = process.env, installRoot) {
 }
 
 // src/correspondence/message.ts
-import { readdirSync as readdirSync22, readFileSync as readFileSync26, realpathSync as realpathSync11, statSync as statSync16 } from "node:fs";
+import { readdirSync as readdirSync22, readFileSync as readFileSync27, realpathSync as realpathSync11, statSync as statSync16 } from "node:fs";
 import { extname as extname3, win32 as pathWin3221 } from "node:path";
 
 // src/correspondence/cfb.ts
@@ -102972,7 +103146,7 @@ function scanMessageHeaders(root) {
       if (seen >= SCAN_LIMIT) return false;
       seen += 1;
       try {
-        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync26(full), extname3(entry.name)) });
+        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync27(full), extname3(entry.name)) });
       } catch {
       }
     }
@@ -103013,7 +103187,7 @@ function readMessage(args) {
     if (!MESSAGE_EXTENSIONS.has(ext)) {
       throw new DataServerError(`not a message file: ${relative2} (only .msg and .eml)`, "unsupported_extension");
     }
-    return { path: relative2, ...parseMessage(readFileSync26(full2), ext) };
+    return { path: relative2, ...parseMessage(readFileSync27(full2), ext) };
   }
   const needle = args.from.trim().toLowerCase();
   const scan = scanMessageHeaders(root);
@@ -103028,14 +103202,14 @@ function readMessage(args) {
   const full = pathWin3221.join(root, newest2.path);
   return {
     path: newest2.path,
-    ...parseMessage(readFileSync26(full), extname3(full)),
+    ...parseMessage(readFileSync27(full), extname3(full)),
     other_candidates: matches.slice(1, 1 + OTHER_CANDIDATES),
     scan_truncated: scan.truncated
   };
 }
 
 // src/correspondence/reply-draft.ts
-import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync23, readFileSync as readFileSync27, realpathSync as realpathSync12, writeSync as writeSync7 } from "node:fs";
+import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync23, readFileSync as readFileSync28, realpathSync as realpathSync12, writeSync as writeSync7 } from "node:fs";
 import { basename as basename6, extname as extname4, win32 as pathWin3222 } from "node:path";
 
 // src/correspondence/zip.ts
@@ -103293,7 +103467,7 @@ function exportDocx(args, root) {
   }
   if (extname4(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
   const stem2 = basename6(source, extname4(source));
-  const docx = markdownToDocx(readFileSync27(source, "utf-8"));
+  const docx = markdownToDocx(readFileSync28(source, "utf-8"));
   const written = writeNextFree(dir, stem2, ".docx", docx);
   const wanted = pathWin3222.join(dir, `${stem2}.docx`);
   return {
@@ -104455,7 +104629,7 @@ function rulesLifecycle(dbPath, since) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync36, mkdirSync as mkdirSync15, readFileSync as readFileSync28, statSync as statSync17, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync37, mkdirSync as mkdirSync15, readFileSync as readFileSync29, statSync as statSync17, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3223 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -104478,7 +104652,7 @@ function repoDocsWrite(relative2, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative2, "path");
   const resolved = resolveWithin(root, relative2, "path", false);
-  const exists = existsSync36(resolved);
+  const exists = existsSync37(resolved);
   if (exists && statSync17(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative2}`,
@@ -104492,7 +104666,7 @@ function repoDocsWrite(relative2, content, overwrite = false, env) {
     );
   }
   mkdirSync15(pathWin3223.dirname(resolved), { recursive: true });
-  writeFileSync10(resolved, content, "utf-8");
+  writeFileSync11(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
     bytes: Buffer.byteLength(content, "utf-8"),
@@ -104511,7 +104685,7 @@ function repoDocsRead(relative2, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync28(resolved, "utf-8")
+    content: readFileSync29(resolved, "utf-8")
   };
 }
 
@@ -104520,14 +104694,14 @@ import { createHash as createHash10 } from "node:crypto";
 import {
   appendFileSync as appendFileSync2,
   copyFileSync as copyFileSync2,
-  existsSync as existsSync37,
+  existsSync as existsSync38,
   mkdirSync as mkdirSync16,
   readdirSync as readdirSync24,
-  readFileSync as readFileSync33,
-  renameSync as renameSync8,
+  readFileSync as readFileSync34,
+  renameSync as renameSync9,
   statSync as statSync18,
   unlinkSync as unlinkSync8,
-  writeFileSync as writeFileSync11
+  writeFileSync as writeFileSync12
 } from "node:fs";
 import { homedir as homedir8 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
@@ -104585,11 +104759,11 @@ function checkCoverageLine(text5) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync32 } from "node:fs";
+import { readFileSync as readFileSync33 } from "node:fs";
 import { win32 as pathWin3224 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync29 } from "node:fs";
+import { readFileSync as readFileSync30 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -104730,7 +104904,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync29(path));
+  const streams = cfbStreams(readFileSync30(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -104778,7 +104952,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync30 } from "node:fs";
+import { readFileSync as readFileSync31 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -104815,12 +104989,12 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync30(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync31(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync31 } from "node:fs";
+import { readFileSync as readFileSync32 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -104853,7 +105027,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync31(path));
+  const data = new Uint8Array(readFileSync32(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -104906,7 +105080,7 @@ async function extractText(path) {
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync32(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync33(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const pages = await pdfPages(path);
       const text5 = pages.join("\n\f\n");
@@ -104982,19 +105156,19 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3225.join(downloadsDir(env), sourceFilename);
-  if (!existsSync37(source) || !statSync18(source).isFile()) {
+  if (!existsSync38(source) || !statSync18(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3225.join(dir, destName);
-  if (existsSync37(dest)) {
+  if (existsSync38(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync18(source).size;
   try {
-    renameSync8(source, dest);
+    renameSync9(source, dest);
   } catch (err) {
     if (err.code !== "EXDEV") throw err;
     copyFileSync2(source, dest);
@@ -105009,7 +105183,7 @@ function appendManifest(destinationDir, record2) {
   }
   const path = pathWin3225.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync33(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync34(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text5, fromScratch) {
@@ -105039,7 +105213,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3225.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync37(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
+  let law = existsSync38(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
   while (pathWin3225.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3225.dirname(law);
   const root = validateMatterRoot(pathWin3225.dirname(law));
   const draft = findDraftDir(root);
@@ -105056,7 +105230,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (!statSync18(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync33(source);
+  const body = readFileSync34(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -105124,7 +105298,7 @@ async function lawFolderText(matterRoot, destinationDir) {
     }
     const textPath = pathWin3225.join(outDir, `${file}.txt`);
     const body = Buffer.from(read2.text, "utf-8");
-    writeFileSync11(textPath, body);
+    writeFileSync12(textPath, body);
     rows21.push({ file, text_path: textPath, bytes: body.length, method: read2.method, status: "ok" });
   }
   return { out_dir: outDir, files: rows21 };
@@ -105231,7 +105405,7 @@ function writeNewVersion(dir, filename, body) {
     const name = nextVersionName(dir, stem2, ext);
     const path = pathWin3225.join(dir, name);
     try {
-      writeFileSync11(path, body, { flag: "wx" });
+      writeFileSync12(path, body, { flag: "wx" });
     } catch (err) {
       if (err.code === "EEXIST") continue;
       throw err;
@@ -105257,7 +105431,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync37(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync38(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3225.dirname(destinationDir));
   if (PROTECTED_SEGMENTS3.has(pathWin3225.basename(destinationDir).toLowerCase())) {
@@ -105297,8 +105471,8 @@ function assertBareFilename(name, label) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir4 } from "node:os";
-import { join as join29 } from "node:path";
-var PROBE_STEM = join29(tmpdir4(), "coclerk-research-preflight-probe-absent");
+import { join as join30 } from "node:path";
+var PROBE_STEM = join30(tmpdir4(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -105344,7 +105518,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash11 } from "node:crypto";
-import { readFileSync as readFileSync34, statSync as statSync19 } from "node:fs";
+import { readFileSync as readFileSync35, statSync as statSync19 } from "node:fs";
 import { win32 as pathWin3226 } from "node:path";
 var PROTECTED_SEGMENTS4 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
@@ -105371,7 +105545,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}) {
   }
   const ext = pathWin3226.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync34(file);
+  const bytes = readFileSync35(file);
   const { lines: lines2, source } = textLines(file, ext, bytes, range, seams);
   const chunks = sectionChunks(lines2);
   const hits = [];
@@ -105650,6 +105824,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "case_data__ingest_authority") {
     return ingestAuthority(args);
+  }
+  if (name === "case_data__procedural_history_append") {
+    return proceduralHistoryAppend(args);
   }
   if (name === "case_data__migrate") {
     const mode = args.mode;
@@ -106071,7 +106248,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync38 } from "node:fs";
+import { existsSync as existsSync39 } from "node:fs";
 import { createServer } from "node:http";
 import { isAbsolute as isAbsolute6 } from "node:path";
 
@@ -106190,7 +106367,7 @@ async function handle(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute6(dbPath) || !existsSync38(dbPath)) {
+  if (!isAbsolute6(dbPath) || !existsSync39(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);

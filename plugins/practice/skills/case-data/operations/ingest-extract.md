@@ -351,7 +351,7 @@ This step never derives a deadline, never states time remaining, and never calls
 
 ## Procedural history entry (after completion)
 
-After the date-setting check, when the just-registered top-level `main.sources` row has `category` `court` or `correspondence`, add one entry for it to the matter's `ProceduralHistory.md`, as `../../shared/procedural-history.md` says: under the date the document itself states, what the document is in one line, and its path relative to the matter folder. Path B (privileged), a file under the solicitor-client folder rule and Path D never get an entry here. A document that sets a date is entered without the date it sets. This step asks nothing, derives no deadline, and runs the same way in an unattended ingest. An affidavit or a book gets one entry, for its top-level row.
+After the date-setting check, when the just-registered top-level `main.sources` row has `category` `court` or `correspondence`, add one entry for it to the matter's `ProceduralHistory.md` with `case_data__procedural_history_append`, as `../../shared/procedural-history.md` says: under the date the document itself states, what the document is in one line, and its path relative to the matter folder. Path B (privileged), a file under the solicitor-client folder rule and Path D never get an entry here. A document that sets a date is entered without the date it sets. This step asks nothing, derives no deadline, and runs the same way in an unattended ingest. An affidavit or a book gets one entry, for its top-level row.
 
 ---
 

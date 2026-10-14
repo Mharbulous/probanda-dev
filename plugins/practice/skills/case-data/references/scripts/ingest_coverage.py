@@ -9,10 +9,12 @@ this report and the per-letter check can never disagree.
 
 Three statuses:
 
-  {"status": "ok", "to_ingest", "records", "damaged", "unreadable", "missing",
-   "newest_correspondence"}                  the operation's own output;
+  {"status": "ok", "to_ingest", "records", "damaged", "unreadable", "folders",
+   "missing", "newest_correspondence", "checked_at"}
+                                             the operation's own output;
       "records" holds one {"path", "verdict", "source_id",
-      "possible_version_of"} per "to_ingest" path
+      "possible_version_of"} per "to_ingest" path, "folders" the patterns
+      checked, and "checked_at" the UTC time this check ran
   {"status": "not_applicable", "reason": ...}  no case-data database in the folder
   {"status": "unavailable", "reason": ...}     law.sqlite or privileged.sqlite
       missing, or a database behind the current schema
@@ -30,6 +32,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+from datetime import datetime, timezone
 
 import resolve_paths
 
@@ -123,7 +126,8 @@ def run(request):
         shutil.rmtree(tmp, ignore_errors=True)
 
     entries = fn['ingest_status'](scope['files'], rows, matter_root, matter_root)
-    return {"status": "ok", **fn['coverage'](scope, entries, request["correspondence_globs"])}
+    return {"status": "ok", **fn['coverage'](scope, entries, request["correspondence_globs"]),
+            "checked_at": datetime.now(timezone.utc).isoformat(timespec='seconds')}
 
 
 if __name__ == "__main__":

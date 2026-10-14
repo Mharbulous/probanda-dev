@@ -15466,13 +15466,7 @@ var TransportError = class extends DataServerError {
   }
 };
 
-// src/legal-commons/config.ts
-import { join as join2 } from "node:path";
-
-// src/config.ts
-var BAKED_SUPABASE_URL = "https://nbzkuhgiqscjkypedqff.supabase.co";
-
-// src/dpapi-store.ts
+// ../../mcp-shared/dpapi-store.js
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -15487,8 +15481,7 @@ async function readProtectedJson(path, fallback, protect = process.platform === 
     const data = protect ? await unprotectLocalSecret(stored) : stored;
     return JSON.parse(data.toString("utf8"));
   } catch (error2) {
-    const code = error2.code;
-    if (code === "ENOENT") return fallback;
+    if (error2?.code === "ENOENT") return fallback;
     throw error2;
   }
 }
@@ -15502,13 +15495,13 @@ async function writeProtectedJson(path, value, protect = process.platform === "w
 }
 async function protectLocalSecret(data) {
   if (process.platform !== "win32") {
-    throw new ValidationError("Persistent local secret storage is supported only on Windows in v1");
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
   }
   return runDpapi("Protect", data);
 }
 async function unprotectLocalSecret(data) {
   if (process.platform !== "win32") {
-    throw new ValidationError("Persistent local secret storage is supported only on Windows in v1");
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
   }
   return runDpapi("Unprotect", data);
 }
@@ -15526,7 +15519,7 @@ async function runDpapi(action, data) {
     child.on("error", reject);
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new ValidationError(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
+      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
   child.stdin.end(data.toString("base64"));
@@ -15547,36 +15540,39 @@ $plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 
 [Console]::Out.Write([Convert]::ToBase64String($plain))
 `;
 
-// src/legal-commons/config.ts
+// ../../mcp-shared/commons-key.js
+import { join as join2 } from "node:path";
+var BAKED_SUPABASE_URL = "https://nbzkuhgiqscjkypedqff.supabase.co";
 function credentialPath(env = process.env) {
   return join2(defaultStateDir(env), "credential.json.dpapi");
 }
-function loadFromEnv(env) {
-  return {
+async function loadCommonsKey(env = process.env) {
+  const key = {
     supabaseUrl: env.SUPABASE_URL || BAKED_SUPABASE_URL,
     // Deliberately NOT falling back to the public anon key: it has no grants on
     // legal_commons, so a fallback would only turn "not configured" into a
     // confusing "permission denied". Fail with a clear message instead.
-    staticKey: env.LEGAL_COMMONS_SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "",
-    schema: env.LEGAL_COMMONS_SCHEMA || "legal_commons"
+    staticKey: env.LEGAL_COMMONS_SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || ""
   };
-}
-async function loadLegalCommonsConfig(env = process.env) {
-  const config2 = loadFromEnv(env);
-  if (config2.staticKey) return config2;
+  if (key.staticKey) return key;
   try {
     const persisted = await readProtectedJson(credentialPath(env), null);
-    if (persisted?.staticKey) config2.staticKey = persisted.staticKey;
+    if (persisted?.staticKey) key.staticKey = persisted.staticKey;
   } catch (error2) {
     const detail = error2 instanceof Error ? error2.message : String(error2);
-    config2.credentialError = detail.split("\n")[0].trim();
+    key.credentialError = detail.split("\n")[0].trim();
     process.stderr.write(
       `legal-commons: stored credential at ${credentialPath(env)} could not be read \u2014 ${detail}
 Starting unconfigured; call legal_commons__configure_credential to replace it.
 `
     );
   }
-  return config2;
+  return key;
+}
+
+// src/legal-commons/config.ts
+async function loadLegalCommonsConfig(env = process.env) {
+  return { ...await loadCommonsKey(env), schema: env.LEGAL_COMMONS_SCHEMA || "legal_commons" };
 }
 async function persistLegalCommonsCredential(staticKey, env = process.env) {
   const value = { staticKey };
