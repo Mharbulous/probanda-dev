@@ -330,10 +330,12 @@ One fixed-text job per follow-up research offer the practitioner names to add. A
 
 **Who creates it.** The session that relayed the return, only when the practitioner names a relayed offer to add. The sort in `shared/legal-research.md` ("After the answer") creates no job: it captures each offer as a loose thread or drops it. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `session_proposed`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
-The job's words come from the offer and from this section, never from the session.
+The job's words come from the offer's `job:` and `steps:` lines in the return the session relayed (`shared/legal-audit-protocol.md`, Step 5) and from this section, never from the session.
 
-- Title and intent: the offer's text, character for character, with only its trailing ` live_issue: yes` or ` live_issue: no` tag removed. Single quotes are doubled in the SQL literal.
-- Step 1: `Put this question to /legal-research and save the answer under this job`. It differs from the title, so `/draft`'s pre-claim check passes it, and the job runs on its intent as any one-step job does.
+- Title and intent: the offer's `job:` line, character for character, without its `job: ` label. Single quotes are doubled in the SQL literal.
+- Steps: the offer's `steps:` line, without its `steps: ` label, split on ` · `, one `ticket_steps` row per part, character for character, ordinals in the printed order. Step 5 lets no step restate the `job:` line, so `/draft`'s pre-claim check passes them.
+- An offer with no `job:` or `steps:` line gets no job. Write nothing, and say in one line that the offer carries no job line and that the practitioner can outline it in their own words under `/draft`.
+- The offer itself stays on record: the loose thread this add consumes keeps it verbatim (`seeds.idea`, with `charted_into` set to the job), so the job's words can be checked against it.
 - No scope rows: the job writes no substance table (`jobs-common.md` §2 allows a job with none).
 
 `kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Job Board's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is one below the lowest §3's priority read returns, or `0` when no row returns.
@@ -344,27 +346,29 @@ The job's words come from the offer and from this section, never from the sessio
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 1, 'Would you like me to research whether the example rule applies to the example situation?', 'Would you like me to research whether the example rule applies to the example situation?', 'work', 3, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 1, 'Research whether the example rule applies to the example situation', 'Research whether the example rule applies to the example situation', 'work', 3, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 DELETE FROM tickets WHERE id = last_insert_rowid()
   AND EXISTS (
     SELECT 1 FROM tickets t JOIN ticket_steps s ON s.ticket_id = t.id
       WHERE t.proceeding_id = 1 AND t.deleted_at IS NULL
-        AND t.title = 'Would you like me to research whether the example rule applies to the example situation?');
+        AND t.title = 'Research whether the example rule applies to the example situation');
 ```
 
 **Call 2 recovers its id**, with no `LIMIT`: the one queued job in the proceeding with that title that holds no step yet.
 
 ```sql
-SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Would you like me to research whether the example rule applies to the example situation?' AND status = 'queued' AND deleted_at IS NULL
+SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Research whether the example rule applies to the example situation' AND status = 'queued' AND deleted_at IS NULL
   AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id);
 ```
 
 No row means the guard fired: take the existing job's number from `drafting_forms__board_card` with `lanes: ["live"]`, or `lanes: ["completed"]` when it is not there, and say "already a job: Job #K" in one line. One row is the new job. More than one: stop and ask.
 
-**Call 3 writes the one step** on the recovered literal id (here `31`):
+**Call 3 writes the steps** on the recovered literal id (here `31`), one row per part of the `steps:` line:
 
 ```sql
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Put this question to /legal-research and save the answer under this job');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Read the example rule');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 2, 'Put the question to /legal-research');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 3, 'Save the answer under this job');
 ```
 
 **Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:

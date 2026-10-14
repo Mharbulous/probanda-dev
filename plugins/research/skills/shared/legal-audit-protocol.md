@@ -250,6 +250,25 @@ turned up. The tag says only which question an offer serves, never what the law 
 a board, the caller sorts every offer against it (`shared/legal-research.md`, "After the
 answer"). With none, it relays the `yes` offers.
 
+Under each offer line, write two more lines, indented two spaces, so the tag stays at the
+end of the offer's own line. They are the job the offer becomes if the practitioner adds it
+(`/drafting-data` §3i), which copies them character for character:
+
+```
+Would you like me to read the four other example files and check each for the example point? live_issue: yes
+  job: Read the four other example files and check each for the example point
+  steps: Read example file A · Read example file B · Read example file C · Read example file D · Check each for the example point · Put the question to /legal-research · Save the answer under this job
+```
+
+- `job:` is one sentence restating the offer as an imperative statement of the work. It adds
+  no substance, scope, position or statement of law, words any research question no wider
+  than the offer does, and holds no date or deadline.
+- `steps:` lists one step per concrete action the offer names, such as fetching a named
+  source, reading a named file, or checking it for the point the offer names, separated by
+  ` · `. The last two are always `Put the question to /legal-research` and `Save the answer
+  under this job`. A step describes mechanics only, never a conclusion, never restates the
+  `job:` line, and holds no date or deadline.
+
 ### Step 6 — Return shape (opinion mode only)
 
 When Step 4 lets you state law (every issue well supported, mixed coverage, or a

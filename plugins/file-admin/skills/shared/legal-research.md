@@ -364,6 +364,9 @@ The sort reads what an offer is about, never whether it is right. It states no l
 rewords nothing. It creates no job: an offer becomes a job only when the practitioner names
 it to add.
 
+An offer is its tagged line. The `job:` and `steps:` lines under it are neither captured nor
+relayed: §3i reads them from the return on "add".
+
 Name the saved answer file as what surfaced each thread. Never edit the draft. A captured
 thread is never ripe, never a blocker and never assigned to anyone: only a later `/draft`
 outlining session takes it up, or the practitioner's "add" below.
