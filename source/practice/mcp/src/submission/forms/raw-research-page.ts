@@ -120,7 +120,7 @@ function fetchStatements(dbPath: string, proceedingId: number): StatementRow[] {
     `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
             ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
             auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM statements_of_law sl
      JOIN authorities auth ON auth.id = sl.authority_id
      WHERE sl.proceeding_id = ?

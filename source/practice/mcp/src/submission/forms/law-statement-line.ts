@@ -32,6 +32,7 @@ export interface LawStatementLine {
   treatment: string | null;
   authority_kind: string | null;
   currency_status: string | null;
+  currency_checked_on: string | null;
   treatment_note: string | null;
   authority_title: string | null;
   authority_citation: string | null;
@@ -147,7 +148,7 @@ export function lawStatementMarkers(row: LawStatementLine, deployed = true): str
     // 🕰️ (schema v61) is an event, like ⚠️: a case decided before a provision the same
     // proposition cites came into force. It holds back no 🧐 and names no work of its own.
     anachronismMarker(predatedProvision(row, parseLinkedProvisions(row.linked_provisions)) !== null),
-    noteUpMarker(row.authority_kind, row.treatment, row.currency_status),
+    noteUpMarker(row.authority_kind, row.treatment, row.currency_status, row.currency_checked_on),
     doubt,
   ]);
 }

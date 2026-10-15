@@ -88,6 +88,11 @@ points here rather than restating it.
 - **Where the result lives:** `/drafting-data` stores the relayed `currency` value
   as the authority's currency result. Its treatment is not written for these kinds.
 - **What closes 📇:** a `current` result. Any other value, or none, leaves 📇.
+  On a statute or regulation the `current` result stays fresh for 30 days from the
+  date it was relayed, then 📇 returns until the check runs again. This is a
+  freshness window for the check, not a deadline: it only re-raises 📇 and is
+  never shown as a due date. A rule of court keeps its `current` result without
+  the window.
   `repealed` or `archived` finishes the check, so no Note up job is proposed: the
   authority cannot be relied on, and replacing or killing it is the practitioner's
   call.

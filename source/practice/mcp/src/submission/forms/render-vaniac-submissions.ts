@@ -90,6 +90,7 @@ export interface LawAssertionRow {
   treatment: string | null;
   authority_kind: string | null; // authorities.kind -- with currency_status, picks what 📇 reads (#1628)
   currency_status: string | null; // authorities.currency_status
+  currency_checked_on: string | null; // authorities.currency_checked_on -- with currency_status, 📇's freshness window
   treatment_note: string | null; // authorities.treatment_note (schema v51): the note-up note, printed in the note-up tag
   source: string | null; // statements_of_law.source (schema v9, #365); NULL = not yet rated
   verification: string | null; // statements_of_law.verification (schema v25; was authorities.verification, v10 #380); 'lead' -> brief-only cap. NULL only when the LEFT JOIN found no statement at all.
@@ -169,7 +170,7 @@ export function fetchSubmissionLaw(dbPath: string, submissionIds: number[]): Law
             ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
             auth.id AS authority_id,
             auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM submission_law sub_law
      JOIN law_assertions la ON la.id = sub_law.law_assertion_id
      LEFT JOIN statements_of_law sl ON sl.law_assertion_id = la.id
@@ -938,7 +939,7 @@ export function fetchJurisdictionEdges(dbPath: string, orderIds: number[]): Map<
   const edges = rows<{ order_sought_id: number } & JurisdictionRequiresEdge>(
     dbPath,
     `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
-            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.killed_on AS authority_killed_on,
+            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
             auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation
      FROM order_sought_requires req
      LEFT JOIN statements_of_law sl ON sl.id = req.excerpt_id

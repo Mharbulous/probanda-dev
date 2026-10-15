@@ -303,7 +303,9 @@ export const SYMBOLS: readonly SymbolRow[] = [
     slug: "note-up", title: "Note up",
     condition:
       "by `authority.kind` — a case: `treatment` ∅; a statute, regulation or rule: `currency_status` anything " +
-      "but `'current'` (∅ included; shared/statute-currency.md → Noting up legislation); `kind` doctrine (a " +
+      "but `'current'` (∅ included; shared/statute-currency.md → Noting up legislation), and on a statute or " +
+      "regulation also a `'current'` whose `currency_checked_on` is ∅ or more than 30 days old (a freshness " +
+      "window, not a deadline); `kind` doctrine (a " +
       "secondary authority): never — law side only",
     history:
       "column live since v2 (#307; name kept #327 — `check` is SQLite-reserved); marker split off 👃 " +

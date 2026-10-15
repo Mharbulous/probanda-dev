@@ -379,6 +379,7 @@ export interface FilingLawRow {
   treatment: string | null;
   authority_kind: string; // authorities.kind -- with currency_status, picks what 📇 reads (#1628)
   currency_status: string | null;
+  currency_checked_on: string | null;
   treatment_note: string | null; // authorities.treatment_note (schema v51), printed in the note-up tag
   authority_killed_on: string | null;
   settled_on: string | null; // statements_of_law.settled_on (schema v47), printed in the settled tag
@@ -649,7 +650,7 @@ export function fetchFilingLaw(dbPath: string, filingId: number): FilingLawRow[]
     `SELECT sl.id AS statement_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification, ${settledOnColumn(dbPath)},
             ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
             auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation,
-            auth.treatment, auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM filing_law fl
      JOIN statements_of_law sl ON sl.id = fl.statement_id
      JOIN authorities auth ON auth.id = sl.authority_id

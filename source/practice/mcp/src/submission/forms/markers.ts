@@ -72,6 +72,7 @@ export interface JurisdictionRequiresEdge {
   treatment: string | null; // authorities.treatment
   authority_kind: string | null; // authorities.kind -- with currency_status, picks what 📇 reads (#1628)
   currency_status: string | null; // authorities.currency_status
+  currency_checked_on: string | null; // authorities.currency_checked_on -- with currency_status, 📇's freshness window
   source: string | null; // statements_of_law.source -- NULL on a filled edge renders 🏅 (#597)
   verification: string | null; // statements_of_law.verification (schema v25) -- 'lead' renders 🔬 (#502); 'settled' (v47) fills like 'verified'
   // authorities.killed_on -- on a 'filled' edge, set re-fires 🏛️ on the order's own line, which is
@@ -150,7 +151,7 @@ function jurisdictionEdgeMarker(row: JurisdictionRequiresEdge, deployed: boolean
     // deployed on no live Writing (spec R6, schema v47): nothing relies on its basis there.
     deployed ? scrutinizeMarker(row.verification, row.authority_killed_on) : "",
     treatment,
-    noteUpMarker(row.authority_kind, row.treatment, row.currency_status),
+    noteUpMarker(row.authority_kind, row.treatment, row.currency_status, row.currency_checked_on),
   ]);
 }
 
@@ -652,13 +653,31 @@ export function treatmentMarker(treatment: string | null): string {
  * → Noting up legislation). */
 export const LEGISLATION_KINDS: ReadonlySet<string> = new Set(["statute", "regulation", "rule"]);
 
+/** How many days a statute's or regulation's 'current' result stays fresh. A freshness window for
+ * the currency check, never a deadline: it only re-raises 📇, and no date it yields is stored or
+ * shown. A Court Rule (kind `rule`) is not on it: it is noted up at each reliance
+ * (ADR 0003). */
+export const LEGISLATION_CURRENCY_FRESH_DAYS = 30;
+
+/** Today's local date less LEGISLATION_CURRENCY_FRESH_DAYS, `YYYY-MM-DD`. */
+function currencyFreshSince(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - LEGISLATION_CURRENCY_FRESH_DAYS);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** 📇 note up, by `authorities.kind` (#1628): a case -- or any kind outside the schema's five --
  * while `treatment` is NULL (issue #363); a statute, regulation or rule while `currency_status` is
- * anything but 'current', NULL included, treatment playing no part; doctrine, a secondary
- * authority, never. */
-export function noteUpMarker(kind: string | null, treatment: string | null, currencyStatus: string | null): string {
+ * anything but 'current', NULL included, treatment playing no part; a statute or regulation also
+ * while its 'current' result was relayed more than LEGISLATION_CURRENCY_FRESH_DAYS ago, or on no
+ * recorded date; doctrine, a secondary authority, never. */
+export function noteUpMarker(kind: string | null, treatment: string | null, currencyStatus: string | null, currencyCheckedOn: string | null): string {
   if (kind === "doctrine") return "";
-  if (kind !== null && LEGISLATION_KINDS.has(kind)) return currencyStatus === "current" ? "" : "📇";
+  if (kind !== null && LEGISLATION_KINDS.has(kind)) {
+    if (currencyStatus !== "current") return "📇";
+    if (kind === "rule") return "";
+    return currencyCheckedOn !== null && currencyCheckedOn >= currencyFreshSince() ? "" : "📇";
+  }
   return treatment === null ? "📇" : "";
 }
 
