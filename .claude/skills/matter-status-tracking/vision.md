@@ -8,12 +8,12 @@ A Cowork plugin skill. Reads and writes practice data only by invoking `practice
 
 The skill needs to persist two categories of data (schema design is owned by `practice-data`):
 
-- **Status definitions and policies** — status names, descriptions, signal conditions, and auto-advance rules. Ships with defaults; practitioners can modify.
+- **Status definitions and policies** — status names, descriptions, signal conditions, and auto-advance rules. Held by Probanda's Cloud, which checks each status write against them.
 - **Per-matter signal states** — the current state of each tracked signal for each matter (conflict check completed, retainer agreement signed, deposit received, etc.).
 
 To derive signal states, the skill reads data that upstream skills keep in practice data — primarily `retainer-tracking` (retainer balance, deposit records, via `trust-summary`) and `ar-follow-up` (payment standing, via `ar-data`; billing history, via `invoice-data`). It does not call those skills directly; it invokes those `practice-data` operations.
 
-The displayed status label for a matter is derived deterministically from the current signal states against the policy table. The computed label is also persisted to `matters.status` so downstream skills can query it without re-running policy logic.
+The displayed status label for a matter is derived from the current signal states. The label is also persisted as the matter's `status` so downstream skills can query it without re-running the evaluation.
 
 ## 2. Purpose
 
@@ -27,7 +27,7 @@ The business cycle of a law practice — client intake, retainer management, bil
 
 ### Value Proposition
 
-Matter-status-tracking gives every other CoClerk skill an authoritative, current answer to "what is the engagement state of this file?" — without asking the practitioner to reconstruct it. Status is not entered manually; it is computed from signal states against user-configurable policy rules. The system tracks the business cycle so the practitioner doesn't have to.
+Matter-status-tracking gives every other CoClerk skill an authoritative, current answer to "what is the engagement state of this file?" — without asking the practitioner to reconstruct it. Status is not entered manually; it is computed from signal states and checked by Probanda's Cloud. The system tracks the business cycle so the practitioner doesn't have to.
 
 ### Killer Use Case
 
@@ -49,14 +49,14 @@ When the skill cannot locate a signal artifact (a signed retainer agreement, a d
 
 *Violation example:* Auto-setting a file to "no retainer agreement" because no signed document was found in the DB, when in fact the agreement was signed but not yet digitized.
 
-**3. Policy drives automation — and policy is configurable.**
-Each status definition carries its own rule for when auto-advance is appropriate. When a signal can be positively confirmed (e.g., a retainer deposit record exists and matches the matter), the skill advances status automatically. When confirmation is uncertain, it surfaces a suggestion and waits. Practitioners can modify these rules — the defaults ship in the status definitions table, but the practitioner controls how the skill handles each status transition.
+**3. Policy drives automation.**
+Each status definition carries its own rule for when auto-advance is appropriate. When a signal can be positively confirmed (e.g., a retainer deposit record exists and matches the matter), the skill advances status automatically. When confirmation is uncertain, it surfaces a suggestion and waits. Probanda's Cloud holds these rules and checks each status write against them. When it refuses one, the skill relays its question to the practitioner.
 
 **4. Status labels are derived, not entered.**
-The practitioner never manually sets a status label. They update signal states (or configure policies); the label is computed from those inputs. This ensures status labels are consistent, reproducible, and grounded in observable facts — not in whatever the practitioner happened to type last.
+The practitioner never manually sets a status label. They update signal states; the label is computed from those inputs. This ensures status labels are consistent, reproducible, and grounded in observable facts — not in whatever the practitioner happened to type last.
 
 **5. Persisted for consumers.**
-The computed status label is written back to `matters.status` after each evaluation so that downstream skills — executive assistant, AR follow-up, file prioritization — can query current status directly without re-running policy logic. This keeps the skill's internal mechanism invisible to consumers.
+The computed status label is written back as the matter's `status` after each evaluation so that downstream skills — executive assistant, AR follow-up, file prioritization — can query current status directly without re-running the evaluation. This keeps the skill's internal mechanism invisible to consumers.
 
 **6. Pure data layer.**
 This skill tracks signals and derives labels. It never recommends what to do about them. Recommendations — "you should request a retainer top-up on the Smith file" — belong to the executive assistant, which has the full practice picture. Matter-status-tracking supplies the raw material.

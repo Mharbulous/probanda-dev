@@ -53,8 +53,8 @@ File Briefing — [client_name] ([client_num]) / [matt_num]
 Generated: [today's date]
 
 ─── MATTER STATUS ────────────────────────────────────────────────────────────
-Status:  [matters.status, or "not set"]
-Signals: [list of signal_key: state (confirmed_at) per matter_signals row]
+Status:  [the matter's status, or "not set"]
+Signals: [list of signal_key: state (confirmed_at) per signal]
          OR: [Status signals not available]
 
 ─── RETAINER ─────────────────────────────────────────────────────────────────

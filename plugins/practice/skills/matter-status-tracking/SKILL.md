@@ -13,10 +13,10 @@ description: Track and derive the engagement lifecycle status of every client ma
 | Section | Read when |
 |---|---|
 | Scope | Deciding whether a request belongs to this skill |
-| Schema | Asking who owns the signal and policy tables |
+| Schema | Asking who owns signal items and the status rules |
 | Status Labels (defaults) | Looking up what a status label means |
 | Signals (defaults) | Looking up a signal key or its tri-state values |
-| Database | Finding where path resolution and table reads come from |
+| Database | Finding where path resolution and item reads come from |
 | Workflows | Evaluating a status, updating a signal, bulk-refreshing, or auto-advancing retainer_funded |
 | Label Resolution | Deriving a label from signal states |
 | Consumer Contract | A downstream skill reads status or signals, or meets a NULL status |
@@ -24,9 +24,10 @@ description: Track and derive the engagement lifecycle status of every client ma
 
 # Matter Status Tracker
 
-Infrastructure skill that owns the engagement lifecycle layer. Derives a status label for every
-matter from per-matter signal states evaluated against user-configurable policy rules, then writes
-the result back to `matters.status` for downstream consumption. Signals are updated explicitly
+Infrastructure skill that owns the engagement lifecycle layer. Judges a status label for every
+matter from its per-matter signal states, then proposes it as the matter's `status` with
+`set-status` for downstream consumption. Probanda's Cloud checks each status write against the
+signal states and either saves it or asks a question. Signals are updated explicitly
 (practitioner confirms) or auto-advanced when positive evidence exists and data is fresh; they are
 never advanced on absence alone, never advanced on stale data.
 
@@ -39,8 +40,9 @@ full litmus test.
 
 ## Schema
 
-Tables `matter_signals` and `status_policies` are owned by `practice-data`. Both are part of
-the current schema and are initialized on every session. This skill never defines or creates tables.
+Signal items and matter items are owned by `practice-data`. The lifecycle policies that decide
+which status a matter may take are held by Probanda's Cloud, not by any local store, and no tool
+returns them. This skill never defines or creates storage.
 
 ## Status Labels (defaults)
 
@@ -55,8 +57,7 @@ the current schema and are initialized on every session. This skill never define
 | `closed`           | Representation formally ended (off record or file closed)          |
 | `declined`         | Conflict identified or matter not accepted                         |
 
-These defaults ship in `status_policies`. The practitioner can modify `auto_advance` and
-`required_signals` per label at any time.
+Probanda's Cloud holds the policy behind each label and checks every `set-status` write against it.
 
 ## Signals (defaults)
 
@@ -79,22 +80,24 @@ wait. Never auto-set `absent`.
 ## Database
 
 All path resolution, schema initialization, and connection setup owned by `practice-data`. See
-`..`practice-data`/SKILL.md`. This skill reads from `matters`, `retainer_notices`, and (when
-they exist) `matter_signals` and `status_policies`.
+`..`practice-data`/SKILL.md`. This skill reads matters, retainer notices and signals through
+`/practice-data`.
 
 ## Workflows
 
 ### 1. Evaluate and update status for a single matter
 
 1. Invoke ``practice-data`` `matter-lookup` to identify the matter and retrieve its current status.
-2. Invoke ``practice-data`` `read-signals` for the matter — returns all signal states and the
-   policies from `status_policies`.
-3. Determine the highest-fidelity matching label (see "Label Resolution" below).
-4. If the derived label differs from `matters.status`, invoke ``practice-data`` `set-status` to
-   write the new label. Report to the practitioner: old status → new status, which signals drove
-   the change, and the timestamp.
-5. If the derived label is the same as `matters.status`, confirm to the practitioner that status
-   is current.
+2. Invoke ``practice-data`` `read-signals` for the matter — returns all signal states. It returns
+   no policies.
+3. Judge the highest-fidelity matching label (see "Label Resolution" below).
+4. If the judged label differs from the matter's `status`, invoke ``practice-data`` `set-status`
+   to propose the new label. If the write is saved, report to the practitioner: old status → new
+   status, which signals drove the change, and the timestamp. If it is refused, the refusal is a
+   question from Probanda's Cloud about the matter: relay that question to the practitioner as it
+   stands, and change nothing until they answer.
+5. If the judged label is the same as the matter's `status`, confirm to the practitioner that
+   status is current.
 
 ### 2. Update a signal for a matter
 
@@ -117,7 +120,7 @@ refresh:
 
 ### 4. Auto-advance from retainer data
 
-`retainer_funded` can be auto-advanced from `matters.regular_trust`, but only when the data is
+`retainer_funded` can be auto-advanced from the matter's `regular_trust`, but only when the data is
 fresh.
 
 **Step 1: Check sign convention.** Read `accounting.csv_mapping.sign_convention` from `coclerk.json`
@@ -128,7 +131,7 @@ before interpreting the sign of `regular_trust`. If `sign_convention` is missing
 
 Do not default to any assumed sign convention.
 
-**Step 2: Check data freshness.** Read `last_trust_date` from the matter row.
+**Step 2: Check data freshness.** Read `last_trust_date` from the matter.
 
 - If `last_trust_date` is NULL → data has never been imported. Leave `retainer_funded` `unconfirmed`; tell the practitioner trust balance data is missing for this matter.
 - If `last_trust_date` is more than 14 days old → data is stale. Do not auto-advance. Warn:
@@ -144,7 +147,7 @@ Interpret the raw trust balance using the sign convention from `trust-summary`. 
   `retainer_funded`, state=`absent`, confirmed_at=last_trust_date
 - NULL (no import on file) → leave signal `unconfirmed`; do not auto-set `absent`
 
-The 14-day staleness threshold is a default; practitioners can configure it in `status_policies`.
+The 14-day staleness threshold is a default.
 
 ## Label Resolution
 
@@ -156,7 +159,7 @@ Evaluate candidate labels in priority order. Apply the first label whose conditi
 | 2        | `closed`           | `representation_ended` = confirmed                                    |
 | 3        | `closing`          | Work-complete flag set (practitioner-only; no auto-advance)           |
 | 4        | `retainer_depleted`| `retainer_funded` = absent AND `retainer_agreement_signed` = confirmed |
-| 5        | `retainer_warning` | `retainer_funded` = confirmed AND balance ≤ threshold (from policy)   |
+| 5        | `retainer_warning` | `retainer_funded` = confirmed AND balance ≤ replenishment threshold   |
 | 6        | `active`           | `retainer_agreement_signed` = confirmed AND `deposit_received` = confirmed |
 | 7        | `intake`           | `conflict_check_completed` = confirmed                                |
 | 8        | `prospective`      | Default — conflict check not yet confirmed                            |
@@ -169,11 +172,11 @@ from 'prospective' to 'intake'."
 
 Downstream skills depend on these guarantees:
 
-| Field           | Table            | Guarantee                                                          |
+| Field           | Item kind        | Guarantee                                                          |
 |-----------------|------------------|--------------------------------------------------------------------|
-| `status`        | matters          | One of the eight labels above; never NULL for evaluated matters    |
-| `signal_key`    | matter_signals   | One of the five default keys; custom keys may exist if configured  |
-| `state`         | matter_signals   | Always one of: `confirmed`, `unconfirmed`, `absent`               |
+| `status`        | matter           | One of the eight labels above; never NULL for evaluated matters    |
+| `signal_key`    | signal           | One of the five default keys; custom keys may exist if configured  |
+| `state`         | signal           | Always one of: `confirmed`, `unconfirmed`, `absent`               |
 
 **NULL status (never evaluated):** A matter whose status is NULL has never been evaluated by this
 skill. Downstream skills must not silently treat NULL as `prospective` — that hides the
@@ -183,8 +186,8 @@ matter-status-tracking to initialize."
 ## Anti-Patterns
 
 **Setting status manually** instead of updating signals and re-evaluating. Status labels are
-derived; practitioners confirm signals. A manual write bypasses policy and produces a label that
-won't survive the next evaluation cycle.
+derived; practitioners confirm signals. A label set without evaluating the signals won't survive
+the next evaluation cycle.
 
 ---
 
@@ -209,7 +212,7 @@ advancing status from stale data gives the practitioner false confidence. Always
 
 ---
 
-**Overwriting `matters.status` without reporting the change.** If a status overwrites silently —
+**Overwriting a matter's `status` without reporting the change.** If a status overwrites silently —
 especially if it downgrades a matter (e.g., `active` → `retainer_depleted`) due to stale or
 incorrect data — the practitioner has no way to catch the error. Always report old → new, which
 signals drove the transition, and the data source.
@@ -217,14 +220,13 @@ signals drove the transition, and the data source.
 ---
 
 **Silently treating NULL status as `prospective`** in downstream consumers. NULL means the
-`matter_signals` table doesn't exist yet and the skill has never evaluated this matter — not that
-the matter is in the `prospective` state. Treating NULL as `prospective` hides the schema gap.
-Surface the missing-table error.
+skill has never evaluated this matter — not that the matter is in the `prospective` state.
+Treating NULL as `prospective` hides the gap. Surface it.
 
 ---
 
-**Defining schema in this skill.** All table definitions belong to `practice-data`. This skill
-only documents what tables it expects to exist.
+**Defining storage in this skill.** All item storage belongs to `practice-data`. This skill
+only documents what items it expects to exist.
 
 ---
 
@@ -233,6 +235,6 @@ only documents what tables it expects to exist.
 
 ---
 
-**Assuming `matter_signals` rows exist for every matter.** A matter with no signal rows is
+**Assuming signal items exist for every matter.** A matter with no signals is
 `unconfirmed` on all signals — which resolves to `prospective`. Surface this explicitly;
 do not treat an empty result set as an error.

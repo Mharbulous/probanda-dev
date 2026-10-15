@@ -59,11 +59,11 @@ Three upstream dependencies may be absent. Each produces a specific message — 
 
 | Condition | Meaning | Action |
 |-----------|---------|--------|
-| `invoices` table does not exist | Invoice-tracking schema not yet added | Cannot determine billing cutoff. Report all `time_entries` for the matter with note: "No invoice data available — showing all recorded time entries. Billing cutoff unknown." |
-| No `invoices` rows for a matter | No invoices imported for this matter | Same as above for that matter. Other matters with invoice data use their cutoff normally. |
-| `time_entries` empty for a matter (but retainer funded) | Possible unrecorded work | Flag: "No time entries recorded since [cutoff]. This does not mean zero WIP — work may not have been entered." |
-| `matters.regular_trust` is NULL | Retainer data never imported | Cannot compute headroom. Report WIP hours/dollars only. Note: "Trust balance unavailable — retainer headroom cannot be calculated." |
-| `time_entries` table exists but matter has no entries at all | No time data for this matter | Report: "No time entries on file for this matter." |
+| No invoice items at all | Invoices never imported | Cannot determine billing cutoff. Report all time entries for the matter with note: "No invoice data available — showing all recorded time entries. Billing cutoff unknown." |
+| No invoices for a matter | No invoices imported for this matter | Same as above for that matter. Other matters with invoice data use their cutoff normally. |
+| No time entries for a matter (but retainer funded) | Possible unrecorded work | Flag: "No time entries recorded since [cutoff]. This does not mean zero WIP — work may not have been entered." |
+| The matter's `regular_trust` is NULL | Retainer data never imported | Cannot compute headroom. Report WIP hours/dollars only. Note: "Trust balance unavailable — retainer headroom cannot be calculated." |
+| Matter has no time entries at all | No time data for this matter | Report: "No time entries on file for this matter." |
 
 **Implementation:** ``practice-data``'s `wip-hours` operation handles graceful degradation internally — if invoice data is unavailable, it returns results without cutoff filtering and signals that invoice data was absent.
 
@@ -73,7 +73,7 @@ All data access via ``practice-data`` `wip-hours` operation. This skill never wr
 
 ## Billing Rate
 
-WIP in dollars requires a billing rate. The `time_entries` table stores hours only — no rate column.
+WIP in dollars requires a billing rate. Time entries store hours only — no rate field.
 
 - **If the practitioner has previously provided a rate** (stored in conversation context or a future config field): use it to compute `wip_dollars = total_hours * rate`.
 - **If no rate is known:** report WIP in hours only. Do not compute headroom (hours and dollars cannot be compared). State: "Billing rate not provided — WIP reported in hours. Provide a rate to calculate dollar amounts and retainer headroom."
@@ -195,8 +195,8 @@ When WIP dollars or headroom cannot be computed (no rate), omit those columns en
 | Skill | Relationship |
 |-------|-------------|
 | **practice-data** | Owns schema and path resolution. All queries go through the practice DB. |
-| **invoice-tracking** | Provides billing cutoff via `invoices.issue_date`. Without it, cutoff is unknown. |
-| **retainer-tracking** | Provides `matters.regular_trust` for headroom calculation. |
+| **invoice-tracking** | Provides billing cutoff via each invoice's `issue_date`. Without it, cutoff is unknown. |
+| **retainer-tracking** | Provides the matter's `regular_trust` for headroom calculation. |
 | **time-entry-drafting** | Creates time entries that this skill reads. New entries are immediately visible. |
 
 No skill invokes this one. `ar-follow-up` (`ar-data`), `executive-assistant` (`trust-summary` and
@@ -205,10 +205,10 @@ directly.
 
 ## Anti-Patterns
 
-- **Treating absence as zero.** No `time_entries` rows since cutoff ≠ zero WIP. No `invoices` row ≠ billing cutoff of today. No `regular_trust` value ≠ no retainer. Each is a distinct unknown that must be surfaced.
+- **Treating absence as zero.** No time entries since cutoff ≠ zero WIP. No invoice ≠ billing cutoff of today. No `regular_trust` value ≠ no retainer. Each is a distinct unknown that must be surfaced.
 - **Substituting `issue_date` silently for `date_to`.** Always note in output that the cutoff is based on invoice issue date, which is a proxy.
 - **Computing headroom without a rate.** Hours minus dollars is meaningless. When no rate is available, report hours and trust balance separately — do not attempt to compare them.
-- **Caching or storing WIP totals.** WIP is always computed on demand from `time_entries` and `invoices`. Storing a pre-computed value creates a stale-data risk with no performance benefit at sole-practitioner scale.
+- **Caching or storing WIP totals.** WIP is always computed on demand from time entries and invoices. Storing a pre-computed value creates a stale-data risk with no performance benefit at sole-practitioner scale.
 - **Defining schema or CREATE TABLE.** Schema belongs to `practice-data/SKILL.md`.
 - **Querying upstream CSVs directly.** All data enters through the practice database import workflows. Never parse accounting CSVs.
 - **Recommending when to bill or what to write off.** This skill reports the numbers; the practitioner decides what to do with them.

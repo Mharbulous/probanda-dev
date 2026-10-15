@@ -75,7 +75,7 @@ Both deadline pairs are ordinary closure-sensitive **calendar-day** dates — co
 
 ### Chained (second-order) rules
 
-A rule whose Base is another deadline type (not `trial_date` itself) derives its offset from that deadline's own **computed, post-gate date** — the date after any closure-day shift has been applied — not from the raw anchor date. See the docket-clerk agent's "Derive deadlines" workflow for the computation order this requires. Each chained deadline is still stored as its own `deadlines` row and goes through the coverage gate and shift rule independently, exactly like a direct rule.
+A rule whose Base is another deadline type (not `trial_date` itself) derives its offset from that deadline's own **computed, post-gate date** — the date after any closure-day shift has been applied — not from the raw anchor date. See the docket-clerk agent's "Derive deadlines" workflow for the computation order this requires. Each chained deadline is still stored as its own deadline and goes through the coverage gate and shift rule independently, exactly like a direct rule.
 
 
 ---
@@ -444,7 +444,7 @@ Record `fast_track_notice_filed` (Form 61 — notice of fast track action) as an
 
 When a court order contains deadline terms (e.g., a Trial Management Conference Order specifying "witness lists due 14 days before trial"), those terms override the rule defaults above.
 
-Store each order term as a separate `deadlines` row:
+Store each order term as a separate deadline:
 - `source_type = 'order_term'`
 - `rule_ref` = paragraph or term number in the order
 - `rule_description` = the term as written

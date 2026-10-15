@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Draft UTBMS-coded time entries from sorted time blocks (from time-sorting); approved entries commit to the practice database. Use for 'draft today's entries', 'draft entries for [date]', 'generate time entries', or reviewing/correcting draft entries. Does not sort time (time-sorting), read the raw timeline (build-timeline), or report WIP (wip-tracker).
 dependencies:
   - time-pipeline-data # `timesort` namespace (input) and `tedraft` namespace (output)
-  - practice-data  # `time_entries` table (approved entries), `matters` table (matter lookup)
+  - practice-data  # time entries (approved entries), matters (matter lookup)
 ---
 
 ## Contents
@@ -29,7 +29,7 @@ build-timeline → time-sorting → time-entry-drafting → invoice-tracking
 (raw signals)    (matter assignment)  (descriptions + UTBMS)   (billing)
 ```
 
-This skill reads from the `timesort` namespace and writes drafts to the `tedraft` namespace. Approved entries are committed to the `time_entries` table in the practice database.
+This skill reads from the `timesort` namespace and writes drafts to the `tedraft` namespace. Approved entries are committed as time entries through `/practice-data`.
 
 ## Design Principles
 
@@ -64,7 +64,7 @@ Activities with `matter` set are billable. Activities with `category` set are no
 
 ### Output: tedraft Namespace
 
-Draft state, UTBMS metadata, and the pattern database live in the time-pipeline store under the `tedraft` namespace. The practice-data skill owns the `time_entries` table schema, so UTBMS enrichment data is stored separately here.
+Draft state, UTBMS metadata, and the pattern database live in the time-pipeline store under the `tedraft` namespace. The practice-data skill owns the time entry's fields, so UTBMS enrichment data is stored separately here.
 
 | Key pattern | Value | Purpose |
 |-------------|-------|---------|
@@ -121,7 +121,7 @@ When `description_source` is `"insufficient"`, the `description` field contains 
 
 ### Schema Dependency
 
-The practice database records a time entry's matter, date, hours, description, and whether it is billable. This skill needs UTBMS codes per entry but does not own that schema. UTBMS metadata is stored in `tedraft` namespace keys (`utbms:{date}:{entry_id}`) cross-referenced by the `time_entries.id` returned after insertion. If the practice-data schema adds UTBMS columns in the future, this skill should migrate to writing them directly.
+The practice database records a time entry's matter, date, hours, description, and whether it is billable. This skill needs UTBMS codes per entry but does not own the time entry's fields. UTBMS metadata is stored in `tedraft` namespace keys (`utbms:{date}:{entry_id}`) cross-referenced by the time entry `id` returned after insertion. If practice-data's time entries gain UTBMS fields in the future, this skill should migrate to writing them directly.
 
 ## Workflow
 
@@ -306,7 +306,7 @@ Report completion: "Committed {N} time entries for {date} ({B} billable, {NB} no
 |-------|-------------|
 | **time-sorting** | Upstream. Provides classified day objects. Must run before this skill. |
 | **build-timeline** | Upstream of time-sorting. Provides raw data. |
-| **practice-data** | Owns `time_entries` table schema. This skill writes approved entries there. |
-| **wip-tracker** | Downstream. Reads committed `time_entries` to calculate WIP. |
+| **practice-data** | Owns time entries. This skill writes approved entries there. |
+| **wip-tracker** | Downstream. Reads committed time entries to calculate WIP. |
 | **wip-tracker** | Downstream. Aggregates committed entries for WIP and billing reports. |
 | **invoice-tracking** | Downstream. Uses committed entries for invoice generation. |

@@ -13,7 +13,7 @@ Invoice-reviewing is a read-only QA skill within CoClerk, a Claude Cowork plugin
 **1. Read-only — never modify DB state.**
 Invoice-reviewing reads time entries and invoice data; it never writes, updates, or deletes. Any skill that begins annotating records, updating status flags, or writing "reviewed" markers has violated the boundary between QA and action. The practitioner decides what to do with findings; this skill only surfaces them.
 
-**Violation:** After flagging a time entry as likely misattributed, the skill updates `time_entries.description` to reflect the suspected correct matter. This modifies the authoritative record based on a guess, which could corrupt billing data.
+**Violation:** After flagging a time entry as likely misattributed, the skill updates the time entry's `description` to reflect the suspected correct matter. This modifies the authoritative record based on a guess, which could corrupt billing data.
 
 **2. Surface every issue — never silently pass a draft.**
 Every detected anomaly must be reported, even if the list is long. The practitioner may decide each item is intentional — but they cannot decide anything about an issue they were never shown. A clean bill of health means the skill found nothing; it does not mean the skill stopped looking after finding the first problem.

@@ -70,7 +70,7 @@ A secondary signal: the 15-day suspicious-silence flag surfaces actionable gaps 
 ## 5. Foundations
 
 **wip-tracker reads from the shared practice database; it does not own a separate data store.**
-The time_entries and invoices tables are governed by practice-data. wip-tracker queries them; it does not duplicate or cache them elsewhere. This keeps the single source of truth in one place and ensures that entries added by time-entry-drafting are immediately visible to wip-tracker without a sync step.
+Time entries and invoices are governed by practice-data. wip-tracker reads them through `/practice-data`; it does not duplicate or cache them elsewhere. This keeps the single source of truth in one place and ensures that entries added by time-entry-drafting are immediately visible to wip-tracker without a sync step.
 
 **The billing cutoff date is derived from invoice records, not hardcoded or assumed.**
 The WIP period start is always calculated as the day after the `date_to` field on the most recent invoice for that matter in invoice-tracking. If no invoice exists, wip-tracker must say so — it does not substitute a default date or assume the matter's open date.

@@ -6,9 +6,9 @@
 
 `practice-data` is a helper gatekeeper skill within CoClerk, a Claude plugin for BC litigation practice management. It is **not user-invocable** — the practitioner never calls it directly. Every other skill that touches practice data (matters, clients, time entries, invoices, retainers, tasks, deadlines, anchors, court-calendar reference data) delegates to this skill, which routes each operation to a `practice_data__*` MCP tool.
 
-**Where the data lives (B4 end state).** Practice data is a single **local SQLite database** — `0. CASE DATA\_practice\practice.db` — reached exclusively through the `practice_data__*` tools served by the plugin MCP runtime. The runtime's practice backend shells out to the host Python `sqlite3` module (spec §5/§10): no `node:sqlite`, no added build step, and — critically — **no `practice_data__*` read or write touches Supabase.** This is the re-localized end state after the three-layer re-architecture retired the Phase 0 practice-data cloud migration.
+**Where the data lives (B4 end state).** Practice data is a single **local SQLite database** — `0. CASE DATA\_practice\practice.db` — reached exclusively through the `practice_data__*` tools served by the plugin MCP runtime. The runtime's practice backend shells out to the host Python `sqlite3` module (spec §5/§10): no `node:sqlite`, no added build step, and — critically — **no `practice_data__*` read touches Supabase.** Since the practice.db conversion (2026-10-14) a write is checked by Probanda's Cloud first, which receives only IDs, vocabulary values and keyed hashes, never a data value in clear. This is the re-localized end state after the three-layer re-architecture retired the Phase 0 practice-data cloud migration.
 
-**Encapsulation.** This skill is a **router that holds no schema, no SQL, and no database path.** The local schema (14 tables) and path resolution are owned by the MCP runtime's practice backend, the single place any database particular may live. Consumers treat the database as opaque and reach it only by invoking ``practice-data`` with an operation name — never by opening a connection, embedding a query, or knowing the file's location.
+**Encapsulation.** This skill is a **router that holds no schema, no SQL, and no database path.** The local storage (items in one generic table) and path resolution are owned by the MCP runtime's practice backend, the single place any database particular may live. Consumers treat the database as opaque and reach it only by invoking ``practice-data`` with an operation name — never by opening a connection, embedding a query, or knowing the file's location.
 
 ## 2. Purpose
 
@@ -21,7 +21,7 @@ The direct audience is every other CoClerk skill that reads or writes practice d
 - **Schema fragmentation.** Without a single owner, each skill needing persistent state would define its own tables and diverge. One runtime owns the DDL; the gatekeeper skill exposes only named operations.
 - **Uncoordinated connections.** Each skill opening its own `sqlite3.connect()` and constructing its own path produces a system where one file move, rename, or sync event breaks different skills differently. All access funnels through the MCP tools.
 - **Backend churn leaking to consumers.** Practice storage has moved (local → cloud → local) without a single consumer changing: the tool signatures are the stable contract, and the backend behind them is invisible. A future backend change must preserve that invisibility.
-- **Data-sovereignty fragility.** Client practice data must stay on the practitioner's machine (LSBC requirements). Keeping it in local SQLite with no cloud path enforces this structurally, not by policy.
+- **Data-sovereignty fragility.** Client practice data must stay on the practitioner's machine (LSBC requirements). Keeping it in local SQLite, with only IDs, vocabulary values and keyed hashes sent to Probanda's Cloud, enforces this structurally, not by policy.
 
 ### Value proposition
 
@@ -38,7 +38,7 @@ Consumers depend on tool names, arguments, and the documented consumer contract 
 **Why:** this is exactly what let the backend flip Supabase → local SQLite with zero consumer changes. Any future change must keep the signatures and guarantees stable.
 
 **3. Absence is not zero — distinguish unknown from confirmed empty.**
-No `matters` row means retainer status is *unknown*; `regular_trust = 0` means *confirmed depleted*. Reads return `{rows: []}` on no match and never synthesize a placeholder.
+No matter item means retainer status is *unknown*; `regular_trust = 0` means *confirmed depleted*. Reads return `{rows: []}` on no match and never synthesize a placeholder.
 **Why:** treating absence as zero makes a funded file look depleted, so it is deprioritized and work falls behind. `regular_trust` is never positive (UNITY reports credits as negative; the stored value is the raw negative or zero).
 
 **4. Data sovereignty is a hard architectural constraint, not a preference.**

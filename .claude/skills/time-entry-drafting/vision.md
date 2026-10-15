@@ -16,7 +16,7 @@ The skill's architecture — pattern database, description engine, UTBMS classif
 ### Platform Constraints
 
 - **Input:** Classified time blocks from time-sorting (read from the time-pipeline store, `timesort` namespace, `day:{date}`)
-- **Output:** Draft time entries with UTBMS codes and narrative descriptions, written to the `time_entries` table in the shared SQLite database
+- **Output:** Draft time entries with UTBMS codes and narrative descriptions, written as time entries through `/practice-data`
 - **UTBMS coverage:** All litigation codes (L-series task codes, A-series activity codes)
 - **No external API calls:** This skill reads pre-classified data from the local database only
 

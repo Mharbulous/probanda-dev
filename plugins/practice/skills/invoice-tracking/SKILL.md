@@ -31,20 +31,20 @@ CSV parsing and column mapping live here; all database access goes through ``pra
 
 ## Consumer Contract
 
-Downstream skills depend on these column names and semantics. Renaming a column or changing its meaning is a breaking change.
+Downstream skills depend on these field names and semantics. Renaming a field or changing its meaning is a breaking change.
 
-| Field | Table | Guarantee |
+| Field | Item kind | Guarantee |
 |-------|-------|-----------|
-| `matter_id` | invoices | Foreign key into `matters.id` — an internal row key, never displayed. Not the matter number; the CSV's `matterID` column maps to `matters.matt_num` instead. |
-| `invoice_number` | invoices | Raw value from accounting system; may be NULL if export doesn't include it |
-| `issue_date` | invoices | ISO 8601 date string, or NULL if not in export |
-| `date_to` | invoices | ISO 8601 date string — the billing-period end date, when the source export has one; NULL when it doesn't. On re-import, a row that omits this field leaves the stored value untouched (absence of the column isn't evidence the billed period changed); an explicit `null` clears it. |
-| `amount` | invoices | Total invoice amount as a positive number; never NULL, never negative |
-| `amount_paid` | invoices | Amount received against this invoice; NULL = source didn't provide this column; 0 = confirmed nothing paid |
-| `status` | invoices | Normalized to lowercase; raw value from source — not interpreted by this skill |
-| `last_import_at` | invoices | ISO 8601 datetime when this row was last written |
+| `matter_id` | invoice | The `id` of the invoice's matter item — an internal item key, never displayed. Not the matter number; the CSV's `matterID` column maps to the matter's `matt_num` instead. |
+| `invoice_number` | invoice | Raw value from accounting system; may be NULL if export doesn't include it |
+| `issue_date` | invoice | ISO 8601 date string, or NULL if not in export |
+| `date_to` | invoice | ISO 8601 date string — the billing-period end date, when the source export has one; NULL when it doesn't. On re-import, a row that omits this field leaves the stored value untouched (absence of the column isn't evidence the billed period changed); an explicit `null` clears it. |
+| `amount` | invoice | Total invoice amount as a positive number; never NULL, never negative |
+| `amount_paid` | invoice | Amount received against this invoice; NULL = source didn't provide this column; 0 = confirmed nothing paid |
+| `status` | invoice | Normalized to lowercase; raw value from source — not interpreted by this skill |
+| `last_import_at` | invoice | ISO 8601 datetime when this invoice was last written |
 
-**Absence semantics:** No `invoices` row for a matter ≠ no outstanding invoices. It means invoice data has not been imported for that matter. Downstream skills must not treat absence as "paid in full."
+**Absence semantics:** No invoice for a matter ≠ no outstanding invoices. It means invoice data has not been imported for that matter. Downstream skills must not treat absence as "paid in full."
 
 **Stale data:** Before acting on invoice data, downstream skills should check `last_import_at`. If the most recent `last_import_at` across all invoices is more than 7 days old, surface: "Invoice data last imported [date]. Results may not reflect recent payments."
 
@@ -58,12 +58,12 @@ When the user provides an invoice CSV:
 2. **If `invoice_mapping` is missing:** run the **First Import Protocol** below, then continue from step 3.
 3. Load column mapping from `accounting.invoice_mapping`.
 4. Parse the CSV with Python's `csv` module using the confirmed mapping. Build one normalized row object per CSV line with these keys:
-   - `matt_num` — the mapped matter value (matches `matters.matt_num` / `file_number`)
+   - `matt_num` — the mapped matter value (matches the matter's `matt_num` / `file_number`)
    - `invoice_number` — mapped value, or omit/`null` if the export has no invoice-number column
    - `issue_date`, `date_to` (billing-period end — omit the key entirely if the export has no such column; do not send `null` unless you mean to clear a previously-stored value), `amount` (number), `amount_paid` (number or omit), `status` (raw string — the tool lowercases it)
-5. Hand the full array of normalized rows to ``practice-data`` `import-invoices` in a single call. The tool performs matter-matching, skips and separately counts negative amounts (credit notes) and unmatched matters, dedups NULL-invoice-number rows per matter, lowercases `status`, and stamps `last_import_at`. It returns `{ imported, skipped_no_matter, skipped_negative }`.
-6. Report from the tool's return: rows imported, rows skipped (no matter match), rows skipped (credit notes/negative amount). For an outstanding count, call ``practice-data`` `invoice-data` and count rows whose `status` is not one of `paid`, `void`, `voided`, `written_off`, `write-off`, `credited` — computed skill-side over the returned rows.
-7. If `skipped_no_matter` exceeds 20% of the CSV rows, warn the user: "N rows had no matching matter in the database — verify that matter numbers in the CSV match `matters.matt_num`."
+5. Hand the full array of normalized rows to ``practice-data`` `import-invoices` in a single call. The tool performs matter-matching, skips and separately counts negative amounts (credit notes) and unmatched matters, dedups NULL-invoice-number rows per matter, lowercases `status`, and stamps `last_import_at`. It returns `{ imported, skipped_no_matter, skipped_negative, not_saved, questions }`: `not_saved` counts rows Probanda's Cloud did not save, and `questions` holds its question for each refused matter.
+6. Report from the tool's return: rows imported, rows skipped (no matter match), rows skipped (credit notes/negative amount), and rows not saved (`not_saved`), relaying each of `questions` to the practitioner as it stands. For an outstanding count, call ``practice-data`` `invoice-data` and count rows whose `status` is not one of `paid`, `void`, `voided`, `written_off`, `write-off`, `credited` — computed skill-side over the returned rows.
+7. If `skipped_no_matter` exceeds 20% of the CSV rows, warn the user: "N rows had no matching matter in the database — verify that matter numbers in the CSV match the matters' `matt_num`."
 
 **Credit notes / negative amounts:** Some systems export credits as negative-amount invoices. The tool skips these (they would break the positive-`amount` contract) and reports them in `skipped_negative`. Surface that count as "N rows skipped — negative amounts (credit notes) are not supported."
 
@@ -79,7 +79,7 @@ When `accounting.invoice_mapping` is absent:
 
    | Internal field | Meaning |
    |---|---|
-   | `matterID` | Matter or file number matching `matters.matt_num` |
+   | `matterID` | Matter or file number matching the matter's `matt_num` |
    | `invoiceNumber` | Invoice identifier (mark as `null` if absent) |
    | `issueDate` | Date invoice was sent |
    | `dateTo` | Billing-period end date (mark as `null` if the export has no such column) |

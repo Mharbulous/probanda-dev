@@ -293,17 +293,17 @@ Rules:
 - **Assigning tiers from `regular_trust`** — read tiers from `task-prioritization`'s output
 - **Fetching retainer data differently in each mode** — both modes use the same DB queries
 - **Treating the morning briefing as a dump of the ranked to-do list** — it must be temporally framed
-- **Silently skipping matters with no `matters` row** — surface them with `[retainer unknown]`
+- **Silently skipping matters with no matter item** — surface them with `[retainer unknown]`
 - **Treating `regular_trust = NULL` as depleted** — NULL = unknown; only `= 0` is depleted
 - **Drafting notices or invoices** — surface the need; leave execution to the appropriate skill
-- **Re-calculating deadline dates** — read from `deadlines` table; never recalculate
+- **Re-calculating deadline dates** — read the stored deadline items; never recalculate
 - **Advancing nudges on an on-demand run** — only the cron-fired briefing advances; an afternoon "what's next?" must not silently consume tomorrow morning's reminder
 - **Reporting the full deadline listing daily** — the briefing is an exception report; the full list is on request
 - **Fetching deadline data via raw `active-deadlines`** — go through `practice:docket-clerk` workflow 5, or the briefing skips the rule-freshness and anchor-conflict gates
 - **Surfacing an overdue `not_applicable` deadline without stamping `expiry_notified_at`** — this is exactly the bug the status exists to fix: without the stamp, the same other-side deadline resurfaces as "overdue" every single run
 - **Reaching practice data other than by a `practice-data` operation** — invoke the operation; never resolve a database path
-- **Wrapping `deadlines` queries but not `matter_signals` (or vice versa)** — both tables are
-  externally owned and may not exist; handle both symmetrically with try/except
+- **Wrapping deadline reads but not signal reads (or vice versa)** — both are
+  externally owned and may return nothing or fail; handle both symmetrically with try/except
 - **Emailing on an on-demand run** — only the cron-fired briefing emails
 - **Rewriting the briefing in Claudia's voice** — Claudia frames; she does not edit. The body must
   be the Workflow 2 output byte for byte

@@ -30,11 +30,11 @@ are never deleted) and every ranked output shows the reasoning behind each place
 
 **Vocabulary.** A registry row is a **to-do** in everything the practitioner sees: the list, its
 headings, confirmations and questions (ADR 0021 D4). "Task" survives only in internal names: the
-`tasks` table and the `upsert-task`, `complete-task` and `open-tasks` operations.
+`task` item kind and the `upsert-task`, `complete-task` and `open-tasks` operations.
 
-**Reads from:** `matters`, `clients`, `time_entries`, `retainer_notices` (via practice-data)
-**Writes to:** `tasks`, `retainer_notices`
-**Tables defined in:** `practice-data/SKILL.md` — do not redefine here
+**Reads:** matters, clients, time entries and retainer notices through `/practice-data`
+**Writes:** tasks and retainer notices through `/practice-data`
+**Items defined in:** `practice-data/SKILL.md` — do not redefine here
 
 ## Three-Tier Ranking Model
 
@@ -42,11 +42,11 @@ To-dos are ranked into three tiers, in this order:
 
 | Tier | Condition | Action |
 |------|-----------|--------|
-| **Remind** | `regular_trust = 0` AND no `retainer_notices` row for this matter | Send written replenishment notice — quick, high-leverage, creates paper trail |
-| **Work** | Funded matter (`regular_trust < 0`), OR admin/professional to-do, OR retainer status unknown (no matters row) | Active work |
-| **Paused** | `regular_trust = 0` AND a `retainer_notices` row exists (client warned in writing) | Work on hold pending replenishment |
+| **Remind** | `regular_trust = 0` AND no retainer notice recorded for this matter | Send written replenishment notice — quick, high-leverage, creates paper trail |
+| **Work** | Funded matter (`regular_trust < 0`), OR admin/professional to-do, OR retainer status unknown (no matter item) | Active work |
+| **Paused** | `regular_trust = 0` AND a retainer notice is recorded (client warned in writing) | Work on hold pending replenishment |
 
-**Sign convention:** A funded retainer is stored as a negative number (`regular_trust < 0` = funded, `regular_trust = 0` = depleted). No `matters` row = unknown → treat as Work tier with a `[retainer unknown]` flag.
+**Sign convention:** A funded retainer is stored as a negative number (`regular_trust < 0` = funded, `regular_trust = 0` = depleted). No matter item = unknown → treat as Work tier with a `[retainer unknown]` flag.
 
 ### Tie-Breaking Within the Work Tier
 
@@ -75,7 +75,7 @@ filing. Apart from the follow-up and rule-change diary to-dos `practice:docket-c
 skill is the only one that creates a to-do, and a drafting session hands its to-do requests here
 (ADR 0023 D1, D2).
 
-1. If a client to-do: match against `matters.matt_num` or `clients.name`; confirm if ambiguous
+1. If a client to-do: match against the matter's `matt_num` or the client's name; confirm if ambiguous
 2. Read the matter's open to-dos first (``practice-data`` `open-tasks` with the matter ref). If one
    is the same outcome, or points to the same filing, offer to fold the new work into it instead.
    Inside a drafting session that read is blocked by the deadline lane guard, so skip it there:
@@ -119,7 +119,7 @@ When the user confirms a replenishment notice has been sent:
 When a formerly-depleted matter is now funded (after a new import via `retainer-tracking`):
 
 - To-dos automatically re-enter the Work tier on next ranking — no action in this skill
-- Retainer data is live from the `matters` table
+- Retainer data is live from the matter items
 
 ### 6. Surface and advance due nudges
 
@@ -244,7 +244,7 @@ Rules:
 ## Anti-Patterns
 
 - **Ranking by retainer balance within the Work tier** — net trust is a tie-breaker after deadline proximity, not a primary signal
-- **Classifying Remind/Paused when matter has no `matters` row** — unknown retainer status belongs in Work, flagged
+- **Classifying Remind/Paused when matter has no matter item** — unknown retainer status belongs in Work, flagged
 - **Displaying raw negative trust values** — always `abs(regular_trust)`
 - **Deleting completed to-dos** — set `status='completed'`; keep the row for billing and estimate calibration
 - **Completing a to-do to remove it** — a to-do entered in error or merged into another is withdrawn ([workflow 8](#8-withdraw-a-to-do)). Completing it pollutes the actual-hours and estimate data
@@ -252,5 +252,5 @@ Rules:
 - **Creating a `scheduled-tasks` entry for a per-item reminder** — cadence lives on the to-do's row as `next_nudge_date` + `nudge_interval_days` (see ``practice-data``'s Consumer Contract); the scheduler is a clock tick, not a record of what is due
 - **Advancing `next_nudge_date` outside briefing mode, or from the stale stored date instead of from today**
 - **Feeding nudge-due items into the ranking model** — they are a separate surfaced list, not a tier input or tie-breaker
-- **Calculating or storing deadlines** — read `deadline_date` from `tasks` (manual entry) or from `practice:docket-clerk`; never recalculate
+- **Calculating or storing deadlines** — read `deadline_date` from the to-do (manual entry) or from `practice:docket-clerk`; never recalculate
 - **Parsing the accounting CSV directly** — trust data enters only through `retainer-tracking`'s import workflow

@@ -51,9 +51,9 @@ All data accessed via ``practice-data`` operations — this skill never connects
 
 ## Owned State: Payment-in-Flight
 
-This skill owns payment-in-flight tracking via ``practice-data``'s `manage-payment-in-flight` operation. The table is defined in ``practice-data``'s schema.
+This skill owns payment-in-flight tracking via ``practice-data``'s `manage-payment-in-flight` operation. Payment items are defined by ``practice-data``.
 
-**If the table does not yet exist in the database:** payment-in-flight recording is unavailable. If the practitioner asks to record a payment-in-flight, explain that this feature requires the database to be re-initialized and skip suppression logic. The AR list still functions — it just cannot suppress clients with pending payments.
+**If recording a payment-in-flight fails:** nothing was saved. If Probanda's Cloud refused it, relay its question to the practitioner; if the cloud could not be reached, say so, and skip suppression logic for that payment. The AR list still functions — it just cannot suppress clients with pending payments.
 
 ### Clearing Window
 
@@ -184,7 +184,7 @@ Always show the suppressed clients at the bottom so the practitioner knows they 
 When the practitioner says a client has sent payment (e.g., "Smith sent an e-transfer for $2,500"):
 
 1. Resolve the matter by client name or number
-2. Record to `payment_in_flight`: amount, `recorded_at = now`, `expected_clear_by = now + 5 business days`
+2. Record the payment in flight through ``practice-data`` `manage-payment-in-flight` (`record`): amount, `recorded_at = now`, `expected_clear_by = now + 5 business days`
 3. Confirm: "Recorded: Smith (C1234) — $2,500 payment in flight. Suppressing reminders until [clear-by date]. The next trust CSV import will confirm when it clears."
 
 ## Workflow: Check Single Client

@@ -50,10 +50,10 @@ writes SQL, and never reads accounting CSVs directly. Two operations supply ever
   `date_to` is the last day the invoice covers, or NULL when the source export had no such column.
   Powers invoice presence and the invoice-side staleness check.
 
-**Not supported by the practice schema:** per-invoice `hourly_rate`, a billing-period start,
+**Not supported by practice data:** per-invoice `hourly_rate`, a billing-period start,
 and any `invoice_line_items` (per-line linking of entries to a draft). Checks that would need them —
 invoice-total-vs-rate, rate mismatch, and every line-item cross-check — are **not available**. Report
-them as unsupported in the "checks performed" list rather than probing for tables. If the
+them as unsupported in the "checks performed" list rather than probing for them. If the
 practitioner needs line-item verification, say so explicitly; do not fabricate it.
 
 **Billing-period overlap is not performed.** Invoices record a period end (`date_to`) but no period

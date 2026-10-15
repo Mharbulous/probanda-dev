@@ -74,7 +74,7 @@ The morning briefing's value is not just convenience — it is timing. An on-dem
 
 If a required data source is unavailable or returns no data, executive-assistant reports the gap explicitly rather than silently omitting the affected matters. A silent omission would produce a recommendation that looks complete but is not.
 
-**Violation example:** Silently skipping matters that have no `matters` row (and therefore no retainer signal) rather than surfacing them with a `[retainer unknown]` flag.
+**Violation example:** Silently skipping matters that have no matter item (and therefore no retainer signal) rather than surfacing them with a `[retainer unknown]` flag.
 
 ### Litmus Test
 

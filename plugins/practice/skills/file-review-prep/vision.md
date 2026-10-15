@@ -12,11 +12,11 @@ File-review-prep is a Cowork plugin skill that assembles a structured briefing f
 
 #### 1.1 Read-Only, Always
 
-File-review-prep never writes to the database. It invokes only `practice-data` read operations (`matter-lookup`, `read-signals`, `trust-summary`, `open-tasks`, `active-deadlines`, `ar-data`) — it touches no row, updates no column, and creates no record. Any output that looks like an action item is a display artifact, not a DB write.
+File-review-prep never writes to the database. It invokes only `practice-data` read operations (`matter-lookup`, `read-signals`, `trust-summary`, `open-tasks`, `active-deadlines`, `ar-data`) — it touches no item, updates no field, and creates no record. Any output that looks like an action item is a display artifact, not a DB write.
 
 **Why:** The skill is called immediately before the practitioner engages with a file. A read operation at that moment carries no risk of corruption or side effects. Allowing writes would conflate briefing with data entry, violating the separation of concerns that keeps the plugin's data layer clean.
 
-**Violation example:** Updating `matters.status` or inserting a `tasks` row as a side effect of generating the briefing — even if the update looks correct.
+**Violation example:** Updating a matter's status or adding a to-do as a side effect of generating the briefing — even if the update looks correct.
 
 #### 1.2 Synthesize, Don't Recommend
 
@@ -44,9 +44,9 @@ When a data point is missing — no trust import on file, no signals confirmed, 
 
 #### 1.5 Fail Loudly on Upstream Schema Gaps
 
-If a required table (`matter_signals`, `status_policies`) does not yet exist in the database, the briefing must surface that explicitly rather than silently omitting the affected section. Partial briefings that look complete are worse than clearly incomplete ones.
+If a required read (`read-signals`) fails or returns nothing, the briefing must surface that explicitly rather than silently omitting the affected section. Partial briefings that look complete are worse than clearly incomplete ones.
 
-**Violation example:** Silently omitting the "Matter Status" section of the briefing because `matter_signals` hasn't been migrated yet, leaving the practitioner to assume status is current.
+**Violation example:** Silently omitting the "Matter Status" section of the briefing because `read-signals` failed, leaving the practitioner to assume status is current.
 
 ### Litmus Test
 
