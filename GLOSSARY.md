@@ -52,6 +52,7 @@ terms:
   - Issue
   - Job
   - Job Board
+  - Lawyer account
   - Leading document
   - Legal Citation
   - Legal Concept
@@ -330,6 +331,10 @@ _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfin
 **Job Board**:
 The per-Writing page (`Job Board <id>.html` at the top of the draft folder) rendering this Writing's **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceeding's loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Job Board of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Job Board** is a Job Board with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Job Board pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
 _Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
+
+**Lawyer account**:
+One verified, currently practising lawyer's identity with Probanda, matched to that lawyer's law-society directory record. It owns the lawyer's keys, one for each device, and every shared service (the legal commons, the Suggestion Box, the troubleshooting store) answers only a key that belongs to a live account. A firm's lawyers each have their own account, and all of them work in their practice's one tenant.
+_Avoid_: user (also means anyone using the plugin, including staff); install key (one device's key, owned by the account); tenant (the practice, not the person).
 
 **Leading document**:
 The document a bundle exists to deliver: the affidavit body, the cover letter, the Land Title form. The first non-apparatus segment in the file. A bundle may have none (a Book of Authorities, a Record: nothing but apparatus in front of the attachments).
