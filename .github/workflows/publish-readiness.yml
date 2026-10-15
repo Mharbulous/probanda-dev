@@ -19,6 +19,10 @@ jobs:
       - uses: actions/checkout@v7
       # public/ is the source of the public repository: it must be clean on every commit.
       - run: python3 scripts/check_public_tree.py
+      # Every upward reference between plugins, and every file-changing operation outside
+      # file-manager (Commandment 7), has a ruling.
+      - run: python3 scripts/check_layering.py
+      - run: python3 scripts/check_file_ops.py
       - if: github.event_name == 'workflow_dispatch'
         run: python3 scripts/check_publishable.py
       # The checkout is shallow, so the commit to compare against is fetched on its own.

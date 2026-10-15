@@ -95,8 +95,8 @@ CHECK_NAMES = [
     "roster-sanity", "reserved-name", "description-no-xml-tags", "description-length",
     "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "bundle-purity",
     "sources-host-guard", "fetch-grant-allowlist", "recital-rule-mirror", "bundle-no-host-path",
-    "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
-    "hook-matchers", "dependencies", "unique-names", "layering",
+    "bundle-schema-ceiling", "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
+    "hook-matchers", "dependencies", "unique-names", "layering", "file-ops",
 ]
 # One matcher of each kind the hook-matchers check reads, and two it lets through.
 HOOKS = {
@@ -748,11 +748,11 @@ class TestSecondPlugin(FixtureTest):
     def test_each_plugin_is_checked_and_what_it_does_not_ship_is_not_applicable(self):
         self.assertEqual({n: d for n, (ok, d) in self.results("probanda").items() if ok is not True}, {})
         solicitor = self.results("solicitor")
-        self.assertEqual(list(solicitor), CHECK_NAMES[:-2])
+        self.assertEqual(list(solicitor), CHECK_NAMES[:-3])
         self.assertEqual({n: d for n, (ok, d) in solicitor.items() if ok is None},
                          {n: f"does not apply: {why}" for n, why in self.NOT_APPLICABLE.items()})
         self.assertEqual({n: d for n, (ok, d) in solicitor.items() if ok is False}, {})
-        self.assertEqual({n: ok for n, (ok, _) in self.results(None).items()}, {"unique-names": True, "layering": True})
+        self.assertEqual({n: ok for n, (ok, _) in self.results(None).items()}, {"unique-names": True, "layering": True, "file-ops": True})
 
     def test_a_plugin_is_checked_against_its_own_built_folder_and_stamp(self):
         self.fixture.write("plugins/solicitor/skills/shared/legal-audit-protocol.md", "edited in the build\n")

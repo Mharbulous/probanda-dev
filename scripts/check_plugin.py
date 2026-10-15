@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_file_ops  # noqa: E402
 import check_layering  # noqa: E402
 import plugin_layout  # noqa: E402
 
@@ -1332,6 +1333,20 @@ def check_layering_rule(repo):
     return True, f"{len(found)} upward pairs" + (f", {len(todo)} still to fix before cutover" if todo else "")
 
 
+def check_file_ops_rule(repo):
+    """check_file_ops.py's verdict."""
+    try:
+        _findings, ruling, found, unruled, stale, bad_why = check_file_ops.judge(Path(repo))
+    except SystemExit as exc:
+        return False, str(exc)
+    hits = [f"no ruling: {f} {op}" for f, op in unruled]
+    hits += [f"stale ruling (nothing matches it): {f} {op}" for f, op in stale]
+    hits += [f"unknown why '{ruling[pair]}': {pair[0]} {pair[1]}" for pair in bad_why]
+    if hits:
+        return False, "; ".join(hits)
+    return True, f"{len(found)} (file, operation) pairs"
+
+
 CHECKS = (
     ("roster-sanity: every shipped skill maps to a source SKILL.md", check_roster_sanity),
     ("reserved-name: no shipped skill name contains the reserved word 'claude'", check_reserved_name),
@@ -1374,6 +1389,8 @@ REPO_CHECKS = (
     ("unique-names: no skill name and no agent name ships in two plugins", check_unique_names),
     ("layering: every upward reference between the plugins of source/assignment.json has a ruling "
      "(scripts/check_layering.py)", check_layering_rule),
+    ("file-ops: every file-changing operation outside file-manager has a ruling (scripts/check_file_ops.py)",
+     check_file_ops_rule),
 )
 
 
