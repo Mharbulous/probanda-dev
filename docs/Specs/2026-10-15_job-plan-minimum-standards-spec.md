@@ -78,3 +78,18 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - The job-session.md and paralegal-posture §3 passages still read as quoted in §2.
 - No `job-planning` skill or shared planning file already exists.
 - The research-agent's dispatch modes, to choose the planning-stage mode.
+
+## 11. Verification against HEAD (2026-10-15, at a79f681)
+
+| Check | Result | Where |
+|---|---|---|
+| "each step says how the work gets done, not what the job is" reads as quoted in §2 | Holds | `.claude/skills/draft/references/job-session.md`, atom `draft.steps.restated` |
+| "Once it is assigned they are never re-divided or reworded: a replaced step list needs the practitioner's own words (`/drafting-data` §5)" reads as quoted in §2 | Holds | same file, atom `draft.steps` |
+| `shared/paralegal-posture.md` §3 adoption ceremony ("copy and paste it into chat", "A bare yes does not adopt it.") reads as quoted in §2 | Holds | `.claude/skills/shared/paralegal-posture.md` §3, fourth paragraph, now also carrying a79f681's held-job title carve-out |
+| The gate's steps 0–4 read as in §2, with no step returning an issue list or source plan before searching | Holds | `.claude/skills/legal-research/SKILL.md`, "The gate", steps 0–5 (step 5 is the re-invocation loop) |
+| No `job-planning` skill and no shared planning file exists | Holds | no `job-planning` folder or file under `.claude/skills/`, `public/plugins/` or `source/`, and no mention of the name there |
+| A `/draft` rules-map node holds the plan-content rules | No | `.claude/skills/draft/rules/nodes/` holds none; the rules are atoms in `job-session.md` and `take-over.md` |
+| The research-agent's dispatch modes | `opinion` (default), `inventory`, `note-up`; `report: full` / `brief` | `.claude/skills/shared/legal-audit-scoped.md`, "The dispatch fields". `source/research/agents/research-agent.md` is a thin shim and names only `inventory` in its description. `inventory` needs a caller-supplied criteria list and answers a holdings question, so it cannot produce an issue list; a new `mode: plan` is needed. |
+| `/job-planning`'s home (§9 Q2) | litigator, beside `/draft` (Brahm, 2026-10-15) | `source/assignment.json` and `source/litigator/roster.json` list litigator's skills |
+| §4.2 with §9 Q1 as decided (an upgrade written and announced with no adoption): the practitioner-words gate passes a session-written step | No | `.claude/skills/drafting-data/hooks/practitioner-words-gate.py`: a step written in a script that deletes from `ticket_steps` must be an unbroken run of a practitioner turn or of the job card's printed words, and "A step text never passes" as a session proposal. An upgrade that adds a deliverable, an approval point or a completion test adds words the card does not hold, so the gate refuses the write. |
+| §4.2: a step-list write can keep the done steps and their stamps | No | `.claude/skills/drafting-data/references/jobs-run.md` §5: every step change deletes and re-inserts the whole list, so every `done_at` goes; `job-session.md` tells a taken-over job "the inherited stamps will be discarded" before a Change. Freezing done steps needs a new partial-replace write in §5 and a gate route for it. |
