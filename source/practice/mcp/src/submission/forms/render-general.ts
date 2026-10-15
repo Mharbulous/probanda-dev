@@ -119,14 +119,17 @@ const UNCONFIRMED_AUTHORITY_LINE =
 
 /** Whether the Writing's cited authority is unconfirmed (#1231): an unsent general Writing (no
  * forum parts) whose layout declares `primary-authority` and whose `authority_confirmed_on` is
- * NULL. A venue's letter, which needs forum parts, is outside it. */
+ * NULL. A venue's letter, which needs forum parts, is outside it. A layout that declares
+ * `noting-up` is outside it too: the citation scan (citation-scan.ts) computes what the session
+ * attested, counting each untracked citation under that criterion. */
 export function authorityUnconfirmed(filing: FilingRow, layout: StoredLayout["layout"]): boolean {
   return (
     filing.needs_forum_parts === 0 &&
     filing.filed_on === null &&
     filing.authority_confirmed_on === null &&
     Array.isArray(layout.goal_criteria) &&
-    layout.goal_criteria.includes("primary-authority")
+    layout.goal_criteria.includes("primary-authority") &&
+    !layout.goal_criteria.includes("noting-up")
   );
 }
 

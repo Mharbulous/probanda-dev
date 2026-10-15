@@ -132,6 +132,7 @@ import { draftingParties, withLeadLines, withPartiesDriftLines, type DraftingPar
 import { formCurrency, KIND_FORM_KEYS, type FormCurrency } from "./form-currency.js";
 import type { KnowledgeSeams } from "../knowledge/tree.js";
 import { stampDoc } from "./forms/proposal-inventory.js";
+import { scanUntrackedCitations } from "./forms/citation-scan.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { runPreFilingChecks, type PreFilingChecksResult } from "./pre-filing/index.js";
 import { confineCaseDataFolder, writeSubstanceFile } from "./substance-file.js";
@@ -1397,6 +1398,15 @@ export function submissionFormsRender(
     const layout = layoutFor(filing);
     return { filing_id: filingId, revision, documents: selectDocuments(documents, documentTypes), ...changed, ...(layout ? { stored_layout: layout } : {}), timings: withTotal(timings, started) };
   }
+
+  // The citation scan (filing-checklists.md "Citations in the text"): each citation on a document
+  // that reaches the forum that no live authorities row tracks becomes a 📇 entry the noting-up
+  // criterion counts, named in a mockup-only line at the head of the venue document. It runs before
+  // the manifest write, so the pre-send hold reads the entries back. The filed render returned above.
+  const untracked = timed(timings, "citation_scan", () =>
+    scanUntrackedCitations(dbPath, ctx.proceeding.id, built.filter((doc) => !NEVER_DELIVERED_DOCS.has(doc.documentType)), ctx.inventory)
+  );
+  if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
 
   timed(timings, "remove retired board files", () => {
     removeRetiredBoardFiles(mockupsRoot(dbPath));

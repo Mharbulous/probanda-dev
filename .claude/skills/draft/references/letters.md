@@ -62,7 +62,7 @@ Draft argument-first. The first draft's only job is to construct the most compel
 
 Cite a case only where the practitioner asks for authority. Never add one on your own. Give a case's full style of cause and citation at its first mention, and a short form after that.
 
-Record each case the letter's own sentences rely on or characterize, one it answers included, through `/drafting-data` as a lead statement of law linked to this Writing, in the same write that records the statement. A case that appears only inside opposing text the letter quotes is not linked. In that same write, set the letter's `authority_confirmed_on` (`/drafting-data`), and set it once when the letter is written if it cites no case: an unset value holds sending. Scrutinizing such a statement (🔬) checks its fit against the letter's sentence that cites it.
+Record each case the letter's own sentences rely on or characterize, one it answers included, through `/drafting-data` as a lead statement of law linked to this Writing, in the same write that records the statement. A case that appears only inside opposing text the letter quotes is not linked. A case or enactment the letter's text cites, by citation or by a case name in italics, that no authority row tracks prints `📇 Cited but not tracked` on the mockup and holds sending under `noting-up` until it is recorded (`/drafting-data`'s `references/filing-checklists.md` §6b). Scrutinizing such a statement (🔬) checks its fit against the letter's sentence that cites it.
 
 Whatever the audience:
 
@@ -146,7 +146,7 @@ A `.msg` copy is recorded by path and not compared: say so in one line. The Sent
 
 A venue's `letter` takes the pre-send hold like any other letter, and never the pre-filing gate (SKILL.md section 13), which reads an assembled package a letter lacks. Because the hold reads the latest render's inventory, a venue's letter must be rendered before it is recorded as sent.
 
-**An internal memo** is sent the same way, by its own `Deliver` job (`/drafting-data`'s memo text for the two stock jobs): circulated to its addressee in the firm, or put on file, then recorded as sent, with the pre-send hold as above, `authority_confirmed_on` included: set it when the memo is written, as for a letter. Its copy as sent is the email that circulated it or, for a memo to the file, its PDF. Its signer is the lawyer stored at its creation.
+**An internal memo** is sent the same way, by its own `Deliver` job (`/drafting-data`'s memo text for the two stock jobs): circulated to its addressee in the firm, or put on file, then recorded as sent, with the pre-send hold as above, the citation scan included. Its copy as sent is the email that circulated it or, for a memo to the file, its PDF. Its signer is the lawyer stored at its creation.
 
 ## 9. Court correspondence
 

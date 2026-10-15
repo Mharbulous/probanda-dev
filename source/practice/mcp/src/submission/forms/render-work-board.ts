@@ -960,8 +960,9 @@ const EXCERPTS: StockCriterion = {
 };
 const NOTING_UP: StockCriterion = {
   id: "noting-up",
-  text: "Every authority relied on is noted up",
-  // 📇's non-generating instance: a statute, regulation or rule found repealed or archived (#1628).
+  text: "Note up all cited authorities",
+  // 📇's non-generating instances: a statute, regulation or rule found repealed or archived (#1628),
+  // and a citation in the text that no authorities row tracks (citation-scan.ts).
   members: anyOf(slugs("note-up"), glyph("📇")),
 };
 const EVIDENCE: StockCriterion = {

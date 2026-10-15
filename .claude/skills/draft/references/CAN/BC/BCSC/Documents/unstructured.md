@@ -5,7 +5,7 @@
   "folder_code": "UNS",
   "title": "Unstructured",
   "exhibit_numbering": "writing",
-  "goal_criteria": ["open-items", "counsel-review"],
+  "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "parts": [
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "caption" },
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "form-source" },

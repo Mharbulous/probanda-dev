@@ -7,7 +7,7 @@
   "exhibit_numbering": "writing",
   "letterhead": false,
   "signer": "party",
-  "goal_criteria": ["terms-traced", "recipients", "open-items", "counsel-review"],
+  "goal_criteria": ["terms-traced", "noting-up", "recipients", "open-items", "counsel-review"],
   "parts": [
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "slot:date" },
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "slot:preamble" },
