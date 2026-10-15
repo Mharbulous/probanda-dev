@@ -7,10 +7,9 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { UnscopedAdmin } from "../../db/scope.js";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
-import { practiceEntityFor } from "../../practice-registry.js";
+import type { PracticeStore } from "../../practice/store.js";
 import {
   PRACTICE_BOARD_FILE,
   PRACTICE_BOARD_MARKER,
@@ -23,8 +22,6 @@ import { writeStatusFile } from "../../submission/render-job.js";
 import { active_deadlines, open_tasks } from "./reads.js";
 import { isBillable } from "./shared.js";
 
-const matters = practiceEntityFor("practice_matters");
-
 /** How far ahead Coming up reaches, in days (Brahm, 2026-10-14). */
 const HORIZON_DAYS = 14;
 
@@ -35,15 +32,12 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export async function render_practice_board(
-  admin: UnscopedAdmin,
-  ownerId: string
-): Promise<Record<string, unknown>> {
+export async function render_practice_board(store: PracticeStore): Promise<Record<string, unknown>> {
   const now = new Date();
   const today = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
 
-  const matterRows = await admin.query(matters, {});
+  const matterRows = store.rows("matter");
   const matterById = new Map(matterRows.map((row) => [String(row.id), row]));
   const testMatters = new Set(matterRows.filter((row) => row.status === "test").map((row) => String(row.id)));
 
@@ -66,7 +60,7 @@ export async function render_practice_board(
     [humanise(String(type)), text(row.party_label), text(row.proceeding_label)].filter((part) => part !== null).join(" — ");
 
   try {
-    const dates = await active_deadlines(admin, ownerId, {});
+    const dates = await active_deadlines(store, {});
     for (const anchor of dates.anchors.filter(kept)) {
       const isConflicted = anchor.status === "conflicted";
       if (isConflicted) conflicted++;
@@ -96,7 +90,7 @@ export async function render_practice_board(
   }
 
   try {
-    const tasks = await open_tasks(admin, ownerId, {});
+    const tasks = await open_tasks(store, {});
     for (const task of tasks.rows.filter(kept)) {
       items.push({
         kind: "todo",

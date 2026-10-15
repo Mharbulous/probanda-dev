@@ -709,14 +709,14 @@ test("knowledge__write and knowledge__retire carry write annotations and are rou
     assert.equal(err.code, "repo_session", name);
   }
   // Routed with the practice-data matter lookup: a name is looked up as a matter number, matches none, and is refused.
-  const queried = [];
+  let lookups = 0;
   const practiceDb = {
-    async query(entity, filters) {
-      queried.push(filters);
-      return [];
+    items() {
+      lookups += 1;
+      return new Map();
     },
   };
   const err = await rejection(callTool({ practiceDb }, "knowledge__write", { operation: "create", path: RECORD_PATH, matter: "Alpha v Bravo", content: record() }));
   assert.equal(err.code, "matter_unknown");
-  assert.ok(queried.some((filters) => filters.matt_num === "eq.Alpha v Bravo"), JSON.stringify(queried));
+  assert.equal(lookups, 1, "the name was looked up in practice data");
 });

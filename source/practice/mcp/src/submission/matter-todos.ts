@@ -4,8 +4,8 @@
 // field: a row's deadline_date (ADR 0013, ADR 0021 D2) goes no further than this function. Nothing
 // here writes, so the nudge fields stay task-prioritization's to advance.
 
-import type { UnscopedAdmin } from "../db/scope.js";
-import { callPracticeTool } from "../tools/practice/index.js";
+import type { PracticeStore } from "../practice/store.js";
+import { open_tasks } from "../tools/practice/reads.js";
 
 /** One open registry row, as much of it as the Litigation Strategy draws. */
 export interface MatterTodo {
@@ -22,11 +22,11 @@ export type MatterTodos = { rows: MatterTodo[] } | { note: string };
 
 const text = (value: unknown): string | null => (value === null || value === undefined ? null : String(value));
 
-export async function readMatterTodos(practiceDb: UnscopedAdmin, matterNo: string | undefined): Promise<MatterTodos> {
+export async function readMatterTodos(practiceDb: PracticeStore, matterNo: string | undefined): Promise<MatterTodos> {
   if (matterNo === undefined) return { note: "No matter number was given, so this matter's to-dos were not read." };
   let rows: Record<string, unknown>[];
   try {
-    rows = ((await callPracticeTool(practiceDb, "local", "practice_data__open_tasks", { matt_num: matterNo })) as { rows: Record<string, unknown>[] }).rows;
+    rows = (await open_tasks(practiceDb, { matt_num: matterNo })).rows;
   } catch (err) {
     return { note: `This matter's to-dos could not be read (${matterNo}): ${(err as Error).message}` };
   }

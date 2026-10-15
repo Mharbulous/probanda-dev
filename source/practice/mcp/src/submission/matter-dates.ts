@@ -7,8 +7,8 @@
 // section, the state file, a log line or a tool response. The page's header draws the anchors linked
 // to its own Writing on one row and the matter's other anchors on the next.
 
-import type { UnscopedAdmin } from "../db/scope.js";
-import { callPracticeTool } from "../tools/practice/index.js";
+import type { PracticeStore } from "../practice/store.js";
+import { active_deadlines } from "../tools/practice/reads.js";
 import type { GoalCriterion, WorkBoardData } from "./forms/render-work-board.js";
 
 /** One deadline that runs from an anchor, as much of it as the Job Board draws. */
@@ -60,11 +60,11 @@ export interface PageDates {
 
 const text = (value: unknown): string | null => (value === null || value === undefined ? null : String(value));
 
-export async function readMatterDates(practiceDb: UnscopedAdmin, matterNo: string | undefined): Promise<MatterDates> {
+export async function readMatterDates(practiceDb: PracticeStore, matterNo: string | undefined): Promise<MatterDates> {
   if (matterNo === undefined) return { note: "No matter number was given, so this matter's dates were not read." };
   let read: { anchors: Record<string, unknown>[]; deadlines: Record<string, unknown>[] };
   try {
-    read = (await callPracticeTool(practiceDb, "local", "practice_data__active_deadlines", { matt_num: matterNo, include_met: true })) as typeof read;
+    read = await active_deadlines(practiceDb, { matt_num: matterNo, include_met: true });
   } catch (err) {
     return { note: `This matter's dates could not be read (${matterNo}): ${(err as Error).message}` };
   }

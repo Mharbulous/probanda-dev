@@ -11,6 +11,8 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import test, { after } from "node:test";
+
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 import { runInNewContext } from "node:vm";
 
 // open_session starts the background render job (#589): its locks and status mirrors stay out of the
@@ -265,8 +267,8 @@ async function seedOneFiling(dbPath) {
 async function practiceContext(t) {
   const practicePath = join(tmpdir(), `coclerk-matter-pages-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { recursive: true, force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
-  await writes.upsert_client_matter(context.practiceDb, "local", { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
   return context;
 }
 
@@ -464,7 +466,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   const BRIEF = "2031-05-05";
   const DATES = [HEARING, SERVICE, RESPONSE, RECORD, REPLY, TRIAL, BRIEF];
   const anchorOf = async (anchor_type, anchor_date, filing_ref) =>
-    (await writes.upsert_anchor(context.practiceDb, "local", { matt_num: "L9999", anchor_type, anchor_date, source_document: "Fixture notice", stated_date: anchor_date, filing_ref })).anchor;
+    (await writes.upsert_anchor(context.practiceDb, { matt_num: "L9999", anchor_type, anchor_date, source_document: "Fixture notice", stated_date: anchor_date, filing_ref })).anchor;
   const hearing = await anchorOf("application_hearing_date", HEARING, "filing:1");
   const trial = await anchorOf("trial_date", TRIAL, undefined);
   for (const [anchor, deadline_type, deadline_date, status, review_flag] of [
@@ -474,7 +476,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
     [hearing, "application_reply", REPLY, "not_applicable"],
     [trial, "trial_brief", BRIEF, "active"],
   ]) {
-    await writes.upsert_deadline(context.practiceDb, "local", {
+    await writes.upsert_deadline(context.practiceDb, {
       matt_num: "L9999",
       anchor_id: anchor.id,
       deadline_type,

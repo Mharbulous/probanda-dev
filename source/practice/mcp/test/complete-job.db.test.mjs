@@ -10,6 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
+
 // open_session starts the background render job (#589): its locks and status mirrors stay out of the
 // practitioner's %LOCALAPPDATA%.
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-complete-job-locks-"));
@@ -49,8 +51,8 @@ async function seedOneFiling(dbPath) {
 async function practiceContext(t) {
   const practicePath = join(tmpdir(), `coclerk-complete-job-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { recursive: true, force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
-  await writes.upsert_client_matter(context.practiceDb, "local", { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
   return context;
 }
 

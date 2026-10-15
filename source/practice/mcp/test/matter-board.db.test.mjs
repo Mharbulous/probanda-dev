@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test, { after } from "node:test";
 
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
+
 // Bootstrap through the dispatch starts the background render job (#589): its locks and status
 // mirrors stay out of the practitioner's %LOCALAPPDATA%.
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-todo-list-locks-"));
@@ -129,21 +131,21 @@ const todo = (id, description, bf_date, filing_ref = null) => ({ id, description
 async function practice(t) {
   const practicePath = join(tmpdir(), `coclerk-todo-list-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
   for (const [num, name] of [["L8470", "Larchmont"], ["L9999", "Other Client"]]) {
-    await writes.upsert_client_matter(context.practiceDb, "local", { client_num: `C-${num}`, name, matt_num: num, file_number: `F-${num}` });
+    await writes.upsert_client_matter(context.practiceDb, { client_num: `C-${num}`, name, matt_num: num, file_number: `F-${num}` });
   }
-  const addTask = (args) => writes.upsert_task(context.practiceDb, "local", { task_type: "client", ...args });
+  const addTask = (args) => writes.upsert_task(context.practiceDb, { task_type: "client", ...args });
   return { context, practicePath, addTask };
 }
 
-/** Every task row's nudge fields and updated_at, as SQLite stores them. */
+/** Every practice item as practice.db stores it, nudge fields and updated_at included. */
 function nudgeSnapshot(practicePath) {
   const python = process.env.COCLERK_PYTHON || "python";
   const script =
     "import json, sqlite3, sys\n" +
     "db = sqlite3.connect(sys.argv[1])\n" +
-    "print(json.dumps([list(r) for r in db.execute('SELECT id, quote(next_nudge_date), quote(nudge_interval_days), quote(last_nudged_at), updated_at FROM practice_tasks ORDER BY id')]))\n";
+    "print(json.dumps([list(r) for r in db.execute(\"SELECT key, value FROM kv_store WHERE namespace = 'item' ORDER BY key\")]))\n";
   const result = spawnSync(python, ["-c", script, practicePath], { encoding: "utf-8" });
   assert.equal(result.status, 0, result.stderr);
   return result.stdout;
@@ -450,7 +452,7 @@ test("through the dispatch, the page lists this matter's open to-dos and no othe
     await p.addTask({ matt_num: "L8470", description: "Settle the first requisition", next_nudge_date: "2026-09-20", filing_ref: "filing:1" });
     await p.addTask({ matt_num: "L8470", description: "Report to the client", next_nudge_date: "2026-09-10" });
     const done = await p.addTask({ matt_num: "L8470", description: "Collect the retainer" });
-    await writes.complete_task(p.context.practiceDb, "local", { id: done.id });
+    await writes.complete_task(p.context.practiceDb, { id: done.id });
     await p.addTask({ matt_num: "L9999", description: "Another matter's to-do" });
     await p.addTask({ task_type: "admin", description: "CLE reporting" });
 

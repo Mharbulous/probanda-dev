@@ -11,6 +11,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
+
 // Every lock and status mirror this file creates lands here, never in the practitioner's %LOCALAPPDATA%.
 const LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-render-job-locks-"));
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = LOCK_ROOT;
@@ -82,9 +84,9 @@ test("bootstrap's job renders each stale filing once, skips fresh and retired on
   // The to-dos come from the practice database, reached through the dispatch as a session reaches it.
   const practicePath = join(tmpdir(), `coclerk-render-job-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
-  await writes.upsert_client_matter(context.practiceDb, "local", { client_num: "C-7001", name: "Ashgrove Holdings", matt_num: "L7001", file_number: "F-7001" });
-  await writes.upsert_task(context.practiceDb, "local", { task_type: "client", matt_num: "L7001", description: "Settle the first notice", next_nudge_date: "2026-09-20", filing_ref: "filing:1" });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-7001", name: "Ashgrove Holdings", matt_num: "L7001", file_number: "F-7001" });
+  await writes.upsert_task(context.practiceDb, { task_type: "client", matt_num: "L7001", description: "Settle the first notice", next_nudge_date: "2026-09-20", filing_ref: "filing:1" });
   try {
     // Retire first: the write bumps the revision, which would make an earlier render stale.
     await submissionDataExecute(m.dbPath, "UPDATE filings SET retired_on = '2026-09-01', retirement_reason = 'abandoned' WHERE id = 4");

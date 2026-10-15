@@ -17,11 +17,11 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { readIngestCoverage, type IngestCoverage } from "../case/ingest-coverage.js";
-import type { UnscopedAdmin } from "../db/scope.js";
+import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
 import { resolveCaseDataRoot } from "../practice/backend.js";
-import { callPracticeTool } from "../tools/practice/index.js";
+import { matter_lookup } from "../tools/practice/reads.js";
 import { courtFileAffidavits, type CourtFileAffidavit } from "./court-file-affidavits.js";
 import {
   type BootstrapResult,
@@ -257,7 +257,7 @@ function elapsedMs(start: number): number {
 
 export async function lookUpMatter(
   root: string,
-  practiceDb: UnscopedAdmin,
+  practiceDb: PracticeStore,
   client: ClientContext
 ): Promise<{ lookup: OpenSessionResult["matter_lookup"]; client: ClientContext }> {
   const token = matterToken(root);
@@ -269,10 +269,7 @@ export async function lookUpMatter(
   }
   let rows: Record<string, unknown>[];
   try {
-    const found = (await callPracticeTool(practiceDb, "local", "practice_data__matter_lookup", { matt_num: token })) as {
-      rows: Record<string, unknown>[];
-    };
-    rows = found.rows;
+    rows = (await matter_lookup(practiceDb, { matt_num: token })).rows;
   } catch (err) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} failed: ${(err as Error).message}` }, client };
   }
@@ -328,7 +325,7 @@ function backups(dbPath: string): Set<string> {
 
 export async function submissionFormsOpenSession(
   matterRoot: string,
-  practiceDb: UnscopedAdmin,
+  practiceDb: PracticeStore,
   client: ClientContext = {},
   /** Passed to bootstrap, which then mints an unattended-class session token (Goal card design §5.4). */
   unattended = false,

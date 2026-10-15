@@ -149,9 +149,16 @@ _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re
 
 # The data server's bundle, inside that server's folder.
 DATA_BUNDLE = ("dist", "litigation-mcp.js")
-# Servers whose bundles must carry no Supabase or commons tool namespace. commons
-# is exempt: it is the plugins' one Supabase surface.
+# Servers whose bundles are checked for Supabase and the commons tool namespace. commons
+# is exempt: it is the plugins' Supabase surface. canlii and files must carry neither
+# 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
+# go to Probanda's Cloud, but only through the three items functions: every
+# 'functions/v1/' path in it must be items-write, items-sync or items-seed, and it must
+# carry no other functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
+# bundle is not checked for any other Supabase use, such as a Supabase client library.
 PURITY_SERVERS = ("data", "canlii", "files")
+DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed")
+_FUNCTIONS_PATH = re.compile(r"functions/v1/[a-z0-9_-]*")
 HOST_PATH_SERVERS = ("data", "canlii", "commons", "files")
 
 FETCH_TOOL = "sources__fetch"
@@ -1129,6 +1136,16 @@ def check_entry_point_registry(repo, plugin):
     return not ep_hits, "; ".join(ep_hits)
 
 
+def bundle_purity_hits(server, text):
+    """The purity tokens one server's bundle text carries (see PURITY_SERVERS)."""
+    lowered = text.lower()
+    if server != "data":
+        return [token for token in ("supabase", "legal_commons__") if token in lowered]
+    hits = [token for token in ("/rest/v1/", "legal_commons__") if token in lowered]
+    hits += sorted({path for path in _FUNCTIONS_PATH.findall(lowered) if path not in DATA_FUNCTION_PATHS})
+    return hits
+
+
 def check_bundle_purity(repo, plugin):
     servers = [s for s in PURITY_SERVERS if s in plugin["servers"]]
     if not servers:
@@ -1148,10 +1165,7 @@ def check_bundle_purity(repo, plugin):
         if not blob:
             continue
         found_any_bundle = True
-        lowered = blob.lower()
-        for token in ("supabase", "legal_commons__"):
-            if token in lowered:
-                purity_hits.append(f"{dist_rel}/dist: {token}")
+        purity_hits.extend(f"{dist_rel}/dist: {hit}" for hit in bundle_purity_hits(server, blob))
     if not found_any_bundle:
         return False, "no bundle found"
     return not purity_hits, ("found: " + ", ".join(purity_hits)) if purity_hits else ""
@@ -1327,8 +1341,9 @@ CHECKS = (
      check_reference_resolution),
     ("entry-point-registry: pinned Python entry-point symbols exist and match their consumers' imports",
      check_entry_point_registry),
-    ("bundle-purity: no data or canlii dist bundle carries 'supabase' or 'legal_commons__'",
-     check_bundle_purity),
+    ("bundle-purity: no canlii or files dist bundle carries 'supabase' or 'legal_commons__'; the data "
+     "bundle carries no 'legal_commons__', no '/rest/v1/' and no 'functions/v1/' path but items-write, "
+     "items-sync and items-seed", check_bundle_purity),
     ("sources-host-guard: the data server's sources module fetches only over https from allowed "
      "hosts, SOURCES_ALLOWED_HOSTS as expected, guarded before every request", check_sources_host_guard),
     ("fetch-grant-allowlist: only allowlisted agents grant sources__fetch, each present one under "

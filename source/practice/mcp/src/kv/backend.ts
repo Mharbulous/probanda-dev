@@ -40,6 +40,21 @@ def connect(db_path):
     return con
 
 
+def other_tables(db_path):
+    """True when the file holds any table but kv_store. Opens nothing that is absent."""
+    if not os.path.exists(db_path):
+        return False
+    con = sqlite3.connect(db_path)
+    try:
+        row = con.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type = 'table' "
+            "AND name <> 'kv_store' AND substr(name, 1, 7) <> 'sqlite_'"
+        ).fetchone()
+        return row[0] > 0
+    finally:
+        con.close()
+
+
 UPSERT = (
     "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES (?, ?, ?, ?) "
     "ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
@@ -151,11 +166,47 @@ def export(con, namespace, prefix, path):
     return {"items": items, "path": path}
 
 
+def dump(con, namespaces):
+    out = {}
+    for namespace in namespaces:
+        rows = con.execute(
+            "SELECT key, value FROM kv_store WHERE namespace = ? ORDER BY key", (namespace,)
+        ).fetchall()
+        out[namespace] = [{"key": k, "value": v} for k, v in rows]
+    return {"namespaces": out}
+
+
+def apply(con, writes):
+    """Sets and deletes across namespaces in ONE transaction: all land or none."""
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"])
+            )
+            counts["deletes"] += 1
+        else:
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return counts
+
+
 def main():
     req = json.load(sys.stdin)
+    # exclusive: the caller keeps nothing but kv_store in this file, so a file
+    # holding any other table is refused before it is touched.
+    if req.get("exclusive") and other_tables(req["db_path"]):
+        return {"other_tables": True}
     con = connect(req["db_path"])
     try:
         op = req["op"]
+        if op == "dump":
+            return dump(con, req["namespaces"])
+        if op == "apply":
+            return apply(con, req["writes"])
         namespace = req["namespace"]
         if op == "get":
             row = con.execute(
@@ -197,16 +248,30 @@ function helperFile(): string {
   return pythonDriverFile("kv-sqlite", PY_HELPER);
 }
 
-export type KvOp = "get" | "set" | "list" | "delete" | "bulk_apply" | "export";
+export type KvOp = "get" | "set" | "list" | "delete" | "bulk_apply" | "export" | "dump" | "apply";
+
+/** One write of an `apply` call. */
+export interface KvWrite {
+  op: "set" | "delete";
+  namespace: string;
+  key: string;
+  value?: string;
+}
 
 export interface KvRequest {
   op: KvOp;
   db_path: string;
-  namespace: string;
+  namespace?: string;
   key?: string;
   value?: string;
   prefix?: string;
   path?: string;
+  /** dump: the namespaces to return, each as [{key, value}] sorted by key. */
+  namespaces?: string[];
+  /** apply: sets and deletes across namespaces, applied in one transaction. */
+  writes?: KvWrite[];
+  /** Refuse a file holding any table but kv_store: the reply is then {other_tables: true}. */
+  exclusive?: boolean;
 }
 
 export interface KvCallOptions {
@@ -218,7 +283,7 @@ export interface KvCallOptions {
 
 /** export writes a file but never the store, so it counts as a read. */
 export function isKvRead(op: KvOp): boolean {
-  return op === "get" || op === "list" || op === "export";
+  return op === "get" || op === "list" || op === "export" || op === "dump";
 }
 
 export function runKv(request: KvRequest, options: KvCallOptions): Record<string, unknown> {

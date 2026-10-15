@@ -3,8 +3,9 @@ import { dirname } from "node:path";
 import { DataServerError, ValidationError } from "./errors.js";
 import { buildToolDefinitions, type ToolDefinition } from "./schema-gen.js";
 import { validateToolInput } from "./validate.js";
-import type { UnscopedAdmin } from "./db/scope.js";
+import type { PracticeStore } from "./practice/store.js";
 import { callPracticeTool } from "./tools/practice/index.js";
+import { matter_lookup } from "./tools/practice/reads.js";
 import { caseDataQuery, caseDataExecute } from "./case/backend.js";
 import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
@@ -92,15 +93,10 @@ import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matt
 import type { KnowledgeSeams } from "./knowledge/tree.js";
 
 export interface DispatchContext {
-  // Local practice-data backend (SQLite via host Python — spec §5/§10). Local, so
-  // it needs no login/unlock and a routine practice read/write makes zero cloud
-  // calls (PP-3).
-  practiceDb: UnscopedAdmin;
+  // The practice store: practice.db's items (SQLite via host Python — spec §5/§10), read
+  // locally with no cloud call; a write is saved only when Probanda's Cloud accepts it.
+  practiceDb: PracticeStore;
 }
-
-// The local practice backend is single-user and plaintext, so it has no owner
-// scoping; the ownerId parameter the tools inherit is unused.
-const LOCAL_PRACTICE_OWNER = "local";
 
 let definitions: Map<string, ToolDefinition> | undefined;
 
@@ -135,7 +131,7 @@ export async function callTool(
   const args = validateToolInput(definition, rawArgs);
 
   if (name.startsWith("practice_data__")) {
-    return callPracticeTool(context.practiceDb, LOCAL_PRACTICE_OWNER, name, args);
+    return callPracticeTool(context.practiceDb, name, args);
   }
 
   if (name === "case_data__query") {
@@ -512,9 +508,7 @@ export async function callTool(
   if (name === "knowledge__write") {
     return knowledgeWrite(args, {
       lookUpMatter: async (mattNum) =>
-        ((await callPracticeTool(context.practiceDb, LOCAL_PRACTICE_OWNER, "practice_data__matter_lookup", { matt_num: mattNum })) as {
-          rows: Record<string, unknown>[];
-        }).rows,
+        (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows,
     });
   }
 

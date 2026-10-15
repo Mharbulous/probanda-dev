@@ -4,7 +4,7 @@ import { loadCommonsKey } from "../../../mcp-shared/commons-key.js";
 // and baked URL as the commons server (source/mcp-shared/commons-key.js), so
 // the practitioner configures one credential for both
 // (docs/Plans/2026-10-14_practice-db-conversion.md, decision 3 and step 3).
-// Nothing calls this yet: the practice writes use it from step 5.
+// The practice writes use it (practice/cloud.ts), and config_status reports it.
 
 export type CloudKey =
   | { configured: true; supabaseUrl: string; staticKey: string }
@@ -19,6 +19,6 @@ export async function loadCloudKey(env: NodeJS.ProcessEnv = process.env): Promis
   return {
     configured: false,
     supabaseUrl,
-    reason: `${reason}; set it with the commons server's legal_commons__configure_credential tool`,
+    reason: `${reason}; set it with the commons server's configure_credential tool`,
   };
 }

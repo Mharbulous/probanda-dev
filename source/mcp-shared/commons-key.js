@@ -52,7 +52,7 @@ export async function loadCommonsKey(env = process.env) {
     key.credentialError = detail.split("\n")[0].trim();
     process.stderr.write(
       `legal-commons: stored credential at ${credentialPath(env)} could not be read — ` +
-      `${detail}\nStarting unconfigured; call legal_commons__configure_credential to replace it.\n`
+      `${detail}\nStarting unconfigured; call the commons server's configure_credential tool to replace it.\n`
     );
   }
   return key;

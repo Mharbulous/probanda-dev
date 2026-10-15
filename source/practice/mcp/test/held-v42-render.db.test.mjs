@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
+
 // open_session starts the background render job (#589): keep its locks out of %LOCALAPPDATA%.
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-held-v42-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
@@ -86,8 +88,8 @@ async function heldMatter(t) {
 
   const practicePath = join(tmpdir(), `coclerk-held-v42-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
-  await writes.upsert_client_matter(context.practiceDb, "local", { client_num: CLIENT.clientNo, name: CLIENT.clientName, matt_num: CLIENT.matterNo });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: CLIENT.clientNo, name: CLIENT.clientName, matt_num: CLIENT.matterNo });
   return { matterRoot, dbPath, context };
 }
 

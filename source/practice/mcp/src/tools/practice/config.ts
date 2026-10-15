@@ -1,6 +1,7 @@
 // The per-user settings file (config-path.ts): report what it holds, and repair a missing or
 // broken `case_data_root` (spec 2026-10-06_practice-db-config-repair). Files, not practice.db
-// rows: neither tool opens the DB, and neither ever creates `_practice` or `practice.db`.
+// rows: neither tool ever creates `_practice` or `practice.db`. config_status also reports
+// whether Probanda's Cloud credential is present and how many writes practice.db holds pending.
 //
 // config_set_root is repair-only: a root that already resolves to an existing practice.db is
 // never repointed, because repointing redirects every running session (planning/CLAUDE.md).
@@ -10,9 +11,12 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync,
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 
+import { loadCloudKey } from "../../cloud-key.js";
 import { configPath } from "../../config-path.js";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { caseDataRootFromMatterRoot } from "../../files/matter-root.js";
+import { resolvePracticeDbPath } from "../../practice/backend.js";
+import { PracticeStore } from "../../practice/store.js";
 
 // The top-level keys practice-data/SKILL.md § Configuration documents.
 export const DOCUMENTED_KEYS = [
@@ -86,6 +90,21 @@ export interface ConfigStatus {
   candidates: { root: string; source: "matter_root"; practice_db_exists: boolean }[];
   candidate_error?: string;
   redirected_copies: string[];
+  /** Whether Probanda's Cloud credential, which every practice write needs, is configured. */
+  cloud_credential: "present" | "missing";
+  /** Writes the cloud saved that practice.db has not applied yet; null when practice.db cannot be read. */
+  pending_writes: number | null;
+}
+
+/** The pending writes of the practice.db this machine resolves; 0 when it has none or is empty. */
+function pendingWrites(env: NodeJS.ProcessEnv): number | null {
+  try {
+    const path = resolvePracticeDbPath(env);
+    if (!isFile(path) || statSync(path).size === 0) return 0;
+    return new PracticeStore(env).pendingCount();
+  } catch {
+    return null;
+  }
 }
 
 export async function config_status(
@@ -103,6 +122,8 @@ export async function config_status(
     practice_db_exists: false,
     candidates: [],
     redirected_copies: redirectedCopies(env),
+    cloud_credential: (await loadCloudKey(env)).configured ? "present" : "missing",
+    pending_writes: pendingWrites(env),
   };
   try {
     status.path = configPath(env);

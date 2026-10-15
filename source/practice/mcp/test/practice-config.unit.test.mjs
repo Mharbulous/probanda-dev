@@ -65,6 +65,7 @@ test("config_status reports a missing file and names the candidate root from a m
   assert.equal(status.candidates[0].practice_db_exists, true);
   assert.equal(status.candidates[0].root, realpathSync.native(f.root), "canonical, as the helper returns it");
   assert.deepEqual(status.redirected_copies, []);
+  assert.equal(status.pending_writes, null, "with no root there is no practice.db to read");
   assert.equal(existsSync(f.configPath), false, "config_status never creates the file");
 });
 
@@ -88,6 +89,11 @@ test("config_status reports a configured root and whether it holds practice.db",
   assert.equal(ok.root_exists, true);
   assert.equal(ok.practice_db_exists, true);
   assert.deepEqual(ok.keys_missing, []);
+  assert.equal(ok.cloud_credential, "missing", "no commons credential in this machine's scratch LOCALAPPDATA");
+  assert.equal(ok.pending_writes, 0, "an empty practice.db holds no pending write, and is not opened");
+  assert.equal(readFileSync(join(f.root, "_practice", "practice.db"), "utf-8"), "");
+  const keyed = await config_status({}, { ...f.env, LEGAL_COMMONS_SUPABASE_KEY: "sb_secret_X" });
+  assert.equal(keyed.cloud_credential, "present");
 
   const empty = join(f.scratch, "empty root");
   mkdirSync(empty);

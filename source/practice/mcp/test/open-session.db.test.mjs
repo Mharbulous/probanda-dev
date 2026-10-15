@@ -11,6 +11,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
+
 // open_session starts the background render job (#589): its locks and status mirrors stay out of the
 // practitioner's %LOCALAPPDATA%, and each fixture waits for its job before deleting the matter.
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-open-session-locks-"));
@@ -74,9 +76,9 @@ const OPENING_PAGE = "Job Board 1.html";
 async function practiceContext(t, { withMatter = true, dbPath } = {}) {
   const practicePath = dbPath ?? join(tmpdir(), `coclerk-open-session-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { recursive: true, force: true }));
-  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
   if (withMatter) {
-    await writes.upsert_client_matter(context.practiceDb, "local", {
+    await writes.upsert_client_matter(context.practiceDb, {
       client_num: "C-9999",
       name: "Lookup Client Ltd.",
       matt_num: "L9999",
@@ -437,8 +439,8 @@ test("one live filing: session entry opens it and returns its board as opened", 
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
   const context = await practiceContext(t);
-  await writes.upsert_client_matter(context.practiceDb, "local", { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999", description: "Test v. Example" });
-  await writes.upsert_task(context.practiceDb, "local", { matt_num: "L9999", task_type: "client", description: "Settle the opening submissions", filing_ref: "filing:1" });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999", description: "Test v. Example" });
+  await writes.upsert_task(context.practiceDb, { matt_num: "L9999", task_type: "client", description: "Settle the opening submissions", filing_ref: "filing:1" });
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
@@ -673,7 +675,7 @@ test("the Litigation Strategy open_session writes carries the matter's open to-d
   mkdirSync(join(m.matterRoot, "0. DRAFT"));
   const practicePath = join(tmpdir(), `coclerk-open-session-practice-${randomUUID()}.db`);
   const context = await practiceContext(t, { dbPath: practicePath });
-  await writes.upsert_task(context.practiceDb, "local", {
+  await writes.upsert_task(context.practiceDb, {
     matt_num: "L9999",
     task_type: "client",
     description: "Settle the submissions",
@@ -686,7 +688,7 @@ test("the Litigation Strategy open_session writes carries the matter's open to-d
   const snapshot = () => {
     const res = spawnSync(
       process.env.COCLERK_PYTHON || "python",
-      ["-c", "import json, sqlite3, sys; print(json.dumps([list(r) for r in sqlite3.connect(sys.argv[1]).execute('SELECT quote(next_nudge_date), quote(nudge_interval_days), quote(last_nudged_at), updated_at FROM practice_tasks')]))", practicePath],
+      ["-c", "import json, sqlite3, sys; print(json.dumps([list(r) for r in sqlite3.connect(sys.argv[1]).execute(\"SELECT key, value FROM kv_store WHERE namespace = 'item' ORDER BY key\")]))", practicePath],
       { encoding: "utf-8" }
     );
     assert.equal(res.status, 0, res.stderr);
@@ -758,7 +760,7 @@ function boardData(path) {
 }
 
 async function seedTask(context) {
-  await writes.upsert_task(context.practiceDb, "local", { matt_num: "L9999", task_type: "client", description: "Settle the submissions", next_nudge_date: "2026-09-01" });
+  await writes.upsert_task(context.practiceDb, { matt_num: "L9999", task_type: "client", description: "Settle the submissions", next_nudge_date: "2026-09-01" });
 }
 
 // #883: the firm's `{client}.{matter}` reference names the same matter as the bare matter number.

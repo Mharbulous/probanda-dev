@@ -185,8 +185,7 @@ test("the timecamping-data migrate driver fails with a named timeout when it out
 // Both helpers apply each write as one SQLite transaction in DELETE journal mode, so a kill leaves
 // the write whole or absent: the message asks for a read-back, never a staging-folder check.
 
-const { LocalPracticeAdmin, practiceTimeoutMs } = await import("../build/practice/backend.js");
-const { practiceEntityFor } = await import("../build/practice-registry.js");
+const { SqlitePracticeKv, practiceTimeoutMs } = await import("../build/practice/backend.js");
 const {
   timePipelineBulkApply,
   timePipelineGet,
@@ -216,7 +215,7 @@ function practiceFixture(t) {
   const scratch = mkdtempSync(join(tmpdir(), "coclerk-practice-timeout-"));
   t.after(() => rmSync(scratch, { recursive: true, force: true }));
   const env = { ...process.env, COCLERK_DB_PATH: join(scratch, "practice.db") };
-  return { env, clients: practiceEntityFor("practice_clients") };
+  return { env };
 }
 
 function timePipelineFixture(t) {
@@ -225,31 +224,31 @@ function timePipelineFixture(t) {
   return { scratch, env: { ...process.env, COCLERK_TIME_PIPELINE_DB_PATH: join(scratch, "time_pipeline.db") } };
 }
 
-test("a practice query that outlives its budget fails with a named read timeout, and the next query recovers", async (t) => {
+test("a practice read that outlives its budget fails with a named read timeout, and the next read recovers", (t) => {
   const f = practiceFixture(t);
-  const admin = new LocalPracticeAdmin(f.env);
-  await admin.query(f.clients);
-  const hung = new LocalPracticeAdmin({ ...f.env, [PRACTICE_VAR]: "1" });
-  await assert.rejects(() => hung.query(f.clients), (err) => {
+  const kv = new SqlitePracticeKv(f.env);
+  kv.dump(["item"]);
+  const hung = new SqlitePracticeKv({ ...f.env, [PRACTICE_VAR]: "1" });
+  assert.throws(() => hung.dump(["item"]), (err) => {
     isReadTimeout(err);
     assert.match(err.message, /^practice-data sqlite helper \(/);
     return true;
   });
-  assert.deepEqual(await admin.query(f.clients), []);
+  assert.deepEqual(kv.dump(["item"]), { item: [] });
 });
 
-test("a killed practice write fails with a verify-before-retry timeout and leaves the table whole and readable", async (t) => {
+test("a killed practice write fails with a verify-before-retry timeout and leaves the store whole and readable", (t) => {
   const f = practiceFixture(t);
-  const admin = new LocalPracticeAdmin(f.env);
-  await admin.query(f.clients);
-  const rows = Array.from({ length: 200 }, (_, i) => ({ id: `c${i}`, name: `Client ${i}` }));
-  const hung = new LocalPracticeAdmin({ ...f.env, [PRACTICE_VAR]: "1" });
-  await assert.rejects(() => hung.insertMany(f.clients, rows), isWriteTimeout);
-  const after = await admin.query(f.clients);
-  assert.ok(after.length === 0 || after.length === rows.length, `partial write: ${after.length} rows`);
+  const kv = new SqlitePracticeKv(f.env);
+  kv.dump(["item"]);
+  const writes = Array.from({ length: 200 }, (_, i) => ({ op: "set", namespace: "item", key: `c${i}`, value: "{}" }));
+  const hung = new SqlitePracticeKv({ ...f.env, [PRACTICE_VAR]: "1" });
+  assert.throws(() => hung.apply(writes), isWriteTimeout);
+  const after = kv.dump(["item"]).item;
+  assert.ok(after.length === 0 || after.length === writes.length, `partial write: ${after.length} rows`);
   // The server is not left blocked: the same backend writes on the next call.
-  await admin.insert(f.clients, { id: "next", name: "Next" });
-  assert.equal((await admin.query(f.clients, { id: "eq.next" })).length, 1);
+  kv.apply([{ op: "set", namespace: "item", key: "next", value: "{}" }]);
+  assert.ok(kv.dump(["item"]).item.some((entry) => entry.key === "next"));
 });
 
 test("time-pipeline get and set that outlive their budget fail with named timeouts, and the next call recovers", (t) => {
@@ -284,8 +283,8 @@ test("a time-pipeline bulk_apply killed mid-transaction leaves the database unch
 
 test("with no override each practice and time-pipeline operation takes its brief's budget", () => {
   const env = {};
-  assert.equal(practiceTimeoutMs("query", env), READ_TIMEOUT_MS);
-  for (const op of ["insert", "insertMany", "update", "delete"]) assert.equal(practiceTimeoutMs(op, env), EXECUTE_TIMEOUT_MS);
+  assert.equal(practiceTimeoutMs("dump", env), READ_TIMEOUT_MS);
+  assert.equal(practiceTimeoutMs("apply", env), EXECUTE_TIMEOUT_MS);
   for (const op of ["get", "list"]) assert.equal(timePipelineTimeoutMs(op, env), READ_TIMEOUT_MS);
   for (const op of ["set", "delete"]) assert.equal(timePipelineTimeoutMs(op, env), EXECUTE_TIMEOUT_MS);
   assert.equal(timePipelineTimeoutMs("bulk_apply", env), WRITE_TIMEOUT_MS);
@@ -295,8 +294,8 @@ test("an invalid practice or time-pipeline timeout override is rejected naming t
   const f = practiceFixture(t);
   const tp = timePipelineFixture(t);
   for (const bad of ["0", "-5", "soon"]) {
-    await assert.rejects(
-      () => new LocalPracticeAdmin({ ...f.env, [PRACTICE_VAR]: bad }).query(f.clients),
+    assert.throws(
+      () => new SqlitePracticeKv({ ...f.env, [PRACTICE_VAR]: bad }).dump(["item"]),
       (err) => err.name === "ValidationError" && err.message.includes(PRACTICE_VAR),
     );
     assert.throws(

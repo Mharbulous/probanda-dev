@@ -6,7 +6,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { pathToFileURL } from "node:url";
 
-import { LocalPracticeAdmin } from "./practice/backend.js";
+import { PracticeStore } from "./practice/store.js";
 import { dispatchTool, type DispatchContext } from "./dispatch.js";
 import { startPageApi } from "./page-api/server.js";
 import { buildToolDefinitions } from "./schema-gen.js";
@@ -16,10 +16,11 @@ export { callTool, dispatchTool } from "./dispatch.js";
 
 // Every namespace this runtime serves is local-backed: SQLite through the host
 // Python `sqlite3` module, or the host file system. The full tool list is
-// buildToolDefinitions(). There is no Supabase surface and no per-session
-// login/unlock gate, so the context holds only the local practice backend.
+// buildToolDefinitions(). The one cloud call is a practice write, which Probanda's
+// Cloud must accept (practice/store.ts); there is no per-session login/unlock gate,
+// so the context holds only the practice store.
 export async function createDispatchContext(env: NodeJS.ProcessEnv = process.env): Promise<DispatchContext> {
-  const practiceDb = new LocalPracticeAdmin(env);
+  const practiceDb = new PracticeStore(env);
   return { practiceDb };
 }
 

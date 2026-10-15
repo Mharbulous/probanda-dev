@@ -55,7 +55,7 @@ function practicePrefixed(name: string): string {
 }
 
 // The rule overlay record (deadline-rule-overlay spec §6). Documentation for the caller:
-// the runtime's validateRuleOverlayRecord enforces it, nested fields included.
+// Probanda's Cloud enforces it, nested fields included.
 function ruleOverlayRecordSchema(): Record<string, unknown> {
   const text = { type: "string" };
   const isoDate = { type: "string", description: "ISO date, YYYY-MM-DD" };
@@ -172,7 +172,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("read_signals"),
-      description: "All signal states and the derived status label for a matter. Seeds default lifecycle policies on first use.",
+      description: "All signal states and the derived status label for a matter.",
       inputSchema: objectSchema([...matterRef]),
     },
     {
@@ -388,7 +388,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("set_status"),
-      description: "Write a derived status label to a matter and return the old label. Seeds default lifecycle policies on first use.",
+      description: "Write a derived status label to a matter and return the old label.",
       inputSchema: objectSchema([
         ...matterRef,
         { name: "status_label", type: "str" },
@@ -479,7 +479,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
   // through, so the body validates each row (F4).
   tools.push({
     name: practicePrefixed("import_invoices"),
-    description: "Import normalized invoice rows (from an accounting CSV). Negative amounts are skipped; rows resolving to a non-billable matter (billable: false) are skipped and counted separately; NULL invoice_number rows replace the matter's existing NULL-number rows; non-NULL invoices upsert by (matter, invoice_number). A row's date_to is only written when the row carries the key -- omitting it on a re-import preserves whatever date_to was already stored, an explicit null clears it. Refuses (no rows written) if this import would move any touched matter's effective billing cutoff backward, unless confirm_regression is true -- the error names every regressed matter with its old and new cutoff dates.",
+    description: "Import normalized invoice rows (from an accounting CSV). Negative amounts are skipped; rows Probanda's Cloud does not save (a non-billable matter's, billable: false) are counted in not_saved, with its question in questions; NULL invoice_number rows replace the matter's existing NULL-number rows; non-NULL invoices upsert by (matter, invoice_number). A row's date_to is only written when the row carries the key -- omitting it on a re-import preserves whatever date_to was already stored, an explicit null clears it. Refuses (no rows written) if this import would move any touched matter's effective billing cutoff backward, unless confirm_regression is true -- the error names every regressed matter with its old and new cutoff dates.",
     inputSchema: {
       type: "object",
       properties: {

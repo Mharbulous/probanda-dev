@@ -1,25 +1,24 @@
-import type { UnscopedAdmin } from "../../db/scope.js";
 import { ValidationError } from "../../errors.js";
-import { practiceEntityFor } from "../../practice-registry.js";
+import { rowsOf, type Item, type Row } from "../../practice/items.js";
+import type { OpSpec } from "../../practice/ops.js";
+import type { PracticeStore } from "../../practice/store.js";
 import {
   effectiveCutoff,
-  insertRow,
-  isBillable,
+  newId,
   nowIso,
-  patchById,
   requireMatter,
   resolveMatter,
   type EffectiveCutoff,
   type ResolvedMatter,
 } from "./shared.js";
 
-const invoices = practiceEntityFor("practice_invoices");
-
 interface InvoiceImportResult {
   imported: number;
   skipped_no_matter: number;
   skipped_negative: number;
-  skipped_non_billable: number;
+  /** Rows Probanda's Cloud did not save; each refused matter's question is in `questions`. */
+  not_saved: number;
+  questions: string[];
 }
 
 function isEmpty(value: unknown): boolean {
@@ -83,21 +82,25 @@ interface ResolvedImportRow {
   matter: ResolvedMatter;
 }
 
+function invoicesOf(items: Map<string, Item>, matterId: string): Row[] {
+  return rowsOf(items, "invoice").filter((row) => row.matter_id === matterId);
+}
+
 export async function import_invoices(
-  admin: UnscopedAdmin,
-  ownerId: string,
+  store: PracticeStore,
   args: Record<string, unknown>
 ): Promise<InvoiceImportResult> {
   const rows = args.rows;
   if (!Array.isArray(rows)) throw new ValidationError("import_invoices requires a rows array");
   const confirmRegression = args.confirm_regression === true;
 
-  const result: InvoiceImportResult = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, skipped_non_billable: 0 };
+  const result: InvoiceImportResult = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, not_saved: 0, questions: [] };
+  const items = store.items();
 
-  // Pass 1: validate every row and resolve its matter. No writes yet -- this
+  // Pass 1: validate every row and resolve its matter. Nothing is sent yet -- this
   // is what lets the regression gate below refuse the whole import before
-  // anything commits, rather than leaving a partial import behind it.
-  const resolved: ResolvedImportRow[] = [];
+  // anything is saved, rather than leaving a partial import behind it.
+  const byMatter = new Map<string, ResolvedImportRow[]>();
   for (const raw of rows) {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       throw new ValidationError("import_invoices rows must be objects");
@@ -110,38 +113,25 @@ export async function import_invoices(
       continue;
     }
 
-    const matter = await resolveMatter(admin, ownerId, row);
+    const matter = resolveMatter(items, row);
     if (!matter) {
       result.skipped_no_matter += 1;
       continue;
     }
-    // Refuse before the row ever reaches the cutoff-regression gate or a write --
-    // a non-billable matter (e.g. the practitioner's own internal file) must
-    // never acquire an invoice.
-    if (!isBillable(matter.row)) {
-      result.skipped_non_billable += 1;
-      continue;
-    }
-
-    resolved.push({ row, matter });
+    const list = byMatter.get(matter.id) ?? [];
+    list.push({ row, matter });
+    byMatter.set(matter.id, list);
   }
 
-  // Cutoff-regression gate (Step 2, 2026-08-26): for every matter this import
-  // touches, compare its effective cutoff (see shared.ts effectiveCutoff)
-  // before vs. after this import would apply. A matter with no prior
-  // invoices has no old cutoff to regress from, so a first-ever or
+  // Cutoff-regression gate (Step 2, 2026-08-26; L1, kept on this machine because it
+  // orders dates): for every matter this import touches, compare its effective cutoff
+  // (see shared.ts effectiveCutoff) before vs. after this import would apply. A matter
+  // with no prior invoices has no old cutoff to regress from, so a first-ever or
   // forward-only import never trips this.
   if (!confirmRegression) {
-    const byMatter = new Map<string, ResolvedImportRow[]>();
-    for (const entry of resolved) {
-      const list = byMatter.get(entry.matter.id) ?? [];
-      list.push(entry);
-      byMatter.set(entry.matter.id, list);
-    }
-
     const regressions: string[] = [];
     for (const [matterId, entries] of byMatter) {
-      const existingRows = await admin.query(invoices, { matter_id: `eq.${matterId}` });
+      const existingRows = invoicesOf(items, matterId);
       const oldCutoff: EffectiveCutoff | null = effectiveCutoff(existingRows);
       const simulated = simulatePostImportRows(existingRows, entries.map((entry) => entry.row));
       const newCutoff: EffectiveCutoff | null = effectiveCutoff(simulated);
@@ -162,75 +152,54 @@ export async function import_invoices(
     }
   }
 
-  // Pass 2: write.
+  // Pass 2: one write per matter, so each matter's NULL-number rows are replaced once.
+  // Non-NULL invoices upsert by (matter, invoice_number). date_to is sent only when the
+  // incoming row carries the key: absence of that column is not evidence the billed period
+  // changed, and a new invoice without it holds null.
   const importedAt = nowIso();
-  const purgedNullFor = new Set<string>();
-
-  for (const { row, matter } of resolved) {
-    const status = typeof row.status === "string" ? row.status.toLowerCase() : row.status ?? null;
-    const fields: Record<string, unknown> = {
-      matter_id: matter.id,
-      invoice_number: row.invoice_number ?? null,
-      issue_date: row.issue_date ?? null,
-      amount: row.amount,
-      amount_paid: row.amount_paid ?? null,
-      status,
-      last_import_at: importedAt,
-    };
-    // date_to: only set when the incoming row carries the key at all. On a
-    // PATCH this preserves whatever was already stored when a routine
-    // re-import comes from an export without a billing-period column --
-    // absence of that column is not evidence the billed period changed. An
-    // INSERT has nothing to preserve, so it always writes explicitly
-    // (defaulting to null), handled below at each insertRow call.
-    if (row.date_to !== undefined) fields.date_to = row.date_to;
-
-    if (isEmpty(row.invoice_number)) {
-      // NULL invoice_number: delete the matter's existing NULL-number rows once,
-      // then insert fresh (invoice-tracking dedup semantics).
-      if (!purgedNullFor.has(matter.id)) {
-        await admin.delete(invoices, {
-          matter_id: `eq.${matter.id}`,
-          invoice_number: "is.null",
-        });
-        purgedNullFor.add(matter.id);
+  let savedMatters = 0;
+  for (const [matterId, entries] of byMatter) {
+    const ops: OpSpec[] = entries.map(({ row }) => ({
+      op: "upsert", id: newId(), kind: "invoice",
+      links: { matter: matterId },
+      data: {
+        invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
+        issue_date: row.issue_date ?? null,
+        date_to: row.date_to,
+        amount: row.amount,
+        amount_paid: row.amount_paid ?? null,
+        status: typeof row.status === "string" ? row.status.toLowerCase() : row.status ?? null,
+        last_import_at: importedAt,
+      },
+    }));
+    try {
+      await store.write("import_invoices", {}, ops);
+    } catch (err) {
+      if ((err as { code?: string }).code === "refused") {
+        result.not_saved += entries.length;
+        result.questions.push((err as Error).message);
+        continue;
       }
-      await insertRow(admin, ownerId, invoices, { ...fields, date_to: fields.date_to ?? null });
-      result.imported += 1;
-      continue;
+      if (savedMatters > 0) {
+        (err as Error).message = `The invoices of ${savedMatters} matter(s) were saved before this. ${(err as Error).message}`;
+      }
+      throw err;
     }
-
-    // Non-NULL: lookup on (matter_id, invoice_number) → PATCH the
-    // existing row (id stable) else INSERT (P-D9, never on_conflict).
-    const existing = await admin.query(invoices, {
-      matter_id: `eq.${matter.id}`,
-      invoice_number: `eq.${String(row.invoice_number)}`,
-    }, { limit: 2 });
-
-    if (existing.length >= 1) {
-      await patchById(admin, ownerId, invoices, String(existing[0].id), fields);
-    } else {
-      await insertRow(admin, ownerId, invoices, { ...fields, date_to: fields.date_to ?? null });
-    }
-    result.imported += 1;
+    savedMatters += 1;
+    result.imported += entries.length;
   }
 
   return result;
 }
 
 export async function invoices_query(
-  admin: UnscopedAdmin,
-  ownerId: string,
+  store: PracticeStore,
   args: Record<string, unknown>
-): Promise<{ rows: Record<string, unknown>[]; last_import_at: string | null }> {
-  const filters: Record<string, string> = {};
-  if (args.matt_num || args.matter_id) {
-    const matter = await requireMatter(admin, ownerId, args);
-    filters.matter_id = `eq.${matter.id}`;
-  }
-  if (args.status) filters.status = `eq.${String(args.status)}`;
-
-  const rows = await admin.query(invoices, filters, { limit: 1000 });
+): Promise<{ rows: Row[]; last_import_at: string | null }> {
+  const items = store.items();
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
+  const rows = rowsOf(items, "invoice").filter((row) =>
+    (!matterId || row.matter_id === matterId) && (!args.status || row.status === String(args.status)));
   let lastImport: string | null = null;
   for (const row of rows) {
     const value = typeof row.last_import_at === "string" ? row.last_import_at : null;
