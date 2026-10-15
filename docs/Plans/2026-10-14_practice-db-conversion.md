@@ -2,11 +2,11 @@
 
 > **Do not rebuild the data bundle until step 7.** Step 5's source is on `main`. A data bundle built from it refuses every practice.db not yet migrated and sends practice writes to Probanda's Cloud. The next build of `source/practice/mcp/dist/` must be the step 7 release, with Brahm present for the migration. Steps 1 to 6 and 8 are done (2026-10-14). Steps 7, 9 and 10 wait for Brahm.
 
-Written 2026-10-14. On completion, practice-data is the first legacy store to leave the list in Exception 4 of `COMMANDMENTS.md`.
+Written 2026-10-14. On completion, practice-data is the first legacy store to leave the list in Exception 2 of `COMMANDMENTS.md`.
 
 ## Context
 
-Exception 4 lets four legacy local stores keep Trade Secrets while they are converted: case-data, drafting-data, timecamping-data and practice-data. A store leaves the list once it complies with Commandments 4 and 5. practice-data goes first because no skill embeds SQL against it. Skills reach it only through the `practice_data__*` tools of the `data` server.
+Exception 2 lets four legacy local stores keep Trade Secrets while they are converted: case-data, drafting-data, timecamping-data and practice-data. A store leaves the list once it complies with Commandments 4 and 5. practice-data goes first because no skill embeds SQL against it. Skills reach it only through the `practice_data__*` tools of the `data` server.
 
 Today the data server ships the store's rulebook to the user's machine. That is the violation this plan removes:
 
@@ -23,7 +23,7 @@ The outcome: practice.db becomes one generic table holding items, tags and links
 2. The rulebook and the write checks live in a private Postgres schema, `rules`, that is not among the project's exposed API schemas and grants nothing to `anon` or `authenticated`. Only edge functions reach it, server-side.
 3. Users keep the one credential they already configure for the commons server. No second credential.
 4. Free plan. On 2026-10-14: database 30 MB of 500 MB, edge function calls 946 of 500,000 a month.
-5. Added 2026-10-14: a link that a local read needs (a time entry's matter, a deadline's anchor) is Cross Data. It is stored locally in generic form and the cloud holds a copy. Exception 1 then covers only links that the rules alone use, which stay in the cloud.
+5. Added 2026-10-14: a link that a local read needs (a time entry's matter, a deadline's anchor) is Cross Data. It is stored locally in generic form and the cloud holds a copy. The Commandment 4 allowance then covers only links that the rules alone use, which stay in the cloud.
 
 ## What the files show (2026-10-14)
 
@@ -104,7 +104,7 @@ Three edge functions in `cloud/legal-commons/supabase/functions/` (the project's
 Every op is built by one generic function. It sends:
 
 - **Raw:** item IDs and the tenant ID (Cross Data: data IDs), `kind`, tags and state (vocabulary values, Metadata), links (IDs, Cross Data by decision 5), the tool name and its intent flags (`resolve`, `amend`, `occurred`, `action`).
-- **Hashed:** every `data` field, each as HMAC-SHA256 of its canonical JSON value under `hash_key`. A null field is sent as null. The hash takes the value only, not the field name, so the cloud can compare an anchor's `anchor_date` with a source's `asserted_date`. This is Exception 2: the key never leaves the user's machine.
+- **Hashed:** every `data` field, each as HMAC-SHA256 of its canonical JSON value under `hash_key`. A null field is sent as null. The hash takes the value only, not the field name, so the cloud can compare an anchor's `anchor_date` with a source's `asserted_date`. This is the hash allowance in Commandment 3: the key never leaves the user's machine.
 - **Cross:** only the rule overlay record, which the plugin creates, which is firm-wide, and which must hold no matter content. It is checked locally first (L3 below).
 - **Never:** any `data` value in clear, `batch_tag` (resolved to IDs locally), and `hash_key`.
 
@@ -165,7 +165,7 @@ If step 4 fails after the cloud saved, the `pending` entry stays. Every practice
 | R10 | A confirmed calendar year needs at least one day, and a year's days are replaced whole | `writes.ts` `ingest_court_calendar_year` |
 | R11 | One signal per (matter, signal_key) | `writes.ts` `upsert_signal` |
 
-**Kept local as Cross Data under Exception 3**, each because it works better on the user's machine:
+**Kept local as Cross Data under Exception 1**, each because it works better on the user's machine:
 
 - **L1. Billing cutoff and the invoice regression gate** (`effectiveCutoff`, `simulatePostImportRows`, the refusal of negative amounts and positive trust balances). Each orders or compares User Data values (dates, amounts), which keyed hashes cannot order. `wip_hours` and `ar_data` also need the cutoff offline.
 - **L2. What each read returns by default** (`open_tasks` returns open to-dos, `active_deadlines` leaves out dismissed, met, notified and superseded rows, and `ar_data` and `wip_hours` leave out closed and non-billable work). Reads must work offline.
@@ -197,7 +197,7 @@ Skill and agent changes (step 8):
 
 ## Migration of existing databases
 
-The plugin runs only on Brahm's machines (Exception 4), and practice.db is one SharePoint-synced file under each machine's `case_data_root`, so there is normally one database. The migration is a private script, `scripts/migrate_practice_db.py`, run from this repo's checkout and never shipped. It holds the old table list, which is allowed because Brahm's machines count as Probanda's Cloud for Commandment 4 until the store leaves the list.
+The plugin runs only on Brahm's machines (Exception 2), and practice.db is one SharePoint-synced file under each machine's `case_data_root`, so there is normally one database. The migration is a private script, `scripts/migrate_practice_db.py`, run from this repo's checkout and never shipped. It holds the old table list, which is allowed because Brahm's machines count as Probanda's Cloud for Commandment 4 until the store leaves the list.
 
 1. **Inventory.** On each machine, `config_status` (with `redirected_copies`) and a search of `case_data_root\_practice\` list every practice.db. Every file found is migrated or named as abandoned by Brahm.
 2. **Freeze.** Brahm closes every session that uses practice data on every machine, and SharePoint shows the file synced.
@@ -244,12 +244,12 @@ Each has a default the executing session takes if he says nothing before the ste
 2. **Status policies (steps 5 and 8).** `read_signals` stops returning `policies`, and `matter-status-tracking` proposes a status and relays the cloud's question when refused, instead of computing the next status itself. The alternative is a read endpoint that lists the statuses a matter may move to, which comes close to stating a rule (Commandment 6). Recommendation: the first.
 3. **Setting the credential after the split.** Today one plugin ships both servers. After the cutover, `practice` writes need a credential that only `research`'s `legal_commons__configure_credential` can set. Recommendation: at the cutover, give the data server a tool that writes the same credential file (still one credential), so `practice` works alone. Until then nothing changes.
 4. **Tenant identity.** The credential is one shared secret key with no user identity, so a random tenant ID in practice.db separates one practice's ledger from another's. Anyone holding the key and a tenant ID could read that tenant's states and links, never its data. Recommendation: accept while Brahm is the only user, and give each user their own credential before a second practice uses this.
-5. **Rule prose in skills and tool descriptions.** `practice-data/SKILL.md` and the tool descriptions in `schema-gen.ts` state rules that the cloud now enforces (the supersession key, one open to-do per filing). This plan changes only table and column names and statements that become false. Recommendation: leave the rest. Exception 4 limits local databases to the store list, but the Development Plugin may still hold Trade Secrets on Probanda's machines, and the callers need the guidance. Moving it out is the Published Plugin's job.
+5. **Rule prose in skills and tool descriptions.** `practice-data/SKILL.md` and the tool descriptions in `schema-gen.ts` state rules that the cloud now enforces (the supersession key, one open to-do per filing). This plan changes only table and column names and statements that become false. Recommendation: leave the rest. Exception 2 limits local databases to the store list, but the Development Plugin may still hold Trade Secrets on Probanda's machines, and the callers need the guidance. Moving it out is the Published Plugin's job.
 6. **Tool input enums.** The input schemas list vocabularies (`task_type`, statuses, review flags). Recommendation: keep them as Cross Data, since the plugin must send valid vocabulary values. The transitions between them move to `rules`.
 
 ## Wording for COMMANDMENTS.md (step 10, Brahm only)
 
-In Exception 4, replace:
+In Exception 2, replace:
 
 ```text
 For local databases, this exception covers only these legacy stores: case-data, drafting-data, timecamping-data and practice-data.

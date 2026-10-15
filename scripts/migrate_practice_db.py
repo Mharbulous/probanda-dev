@@ -32,7 +32,7 @@ win, as the data server does. The key is never printed. --cloud-url replaces the
 project URL (the tests point it at a local fake).
 
 Private to this repository and never shipped: it names the legacy tables, which
-Exception 4 allows on Probanda's own machines until practice-data leaves its list.
+Exception 2 allows on Probanda's own machines until practice-data leaves its list.
 """
 
 import argparse

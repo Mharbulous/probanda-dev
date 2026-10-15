@@ -14,7 +14,7 @@ Every Rule Library fetches its own copy of the same public text. The legal commo
 
 ## Consequences
 
-- This rests on two changes to COMMANDMENTS.md that only a human may make: an exception to Commandment 3 for the official published text of the rules of procedure and practice directions of a court, tribunal or arbitral body, saved to the legal commons database, and Commandment 6 limited to responses to a write. Nothing is contributed before both are in. Statutes stay User Data, so the procedural sections of an enabling Act stay with legislation-fetcher.
+- This rests on Commandment 3, which lets the legal commons database hold the official published text of rules of procedure and practice directions, and on Commandment 6, which limits only responses to a write. Statutes stay User Data, so the procedural sections of an enabling Act stay with legislation-fetcher.
 - A Rule Set may stay partly filled for a long time. The commons records which parts and versions it holds, and the clerk states which parts it searched. It never reports that a Rule Set has no rule on a point unless the whole Rule Set is held.
 - A contribution records no contributor, because which rules a firm uses can hint at its matters.
 - A contribution is the publisher's text as fetched, with its source address, currency marker and sha256. A second contribution of the same version is checked against the first, not added again.
