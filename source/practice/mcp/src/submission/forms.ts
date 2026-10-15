@@ -131,7 +131,7 @@ import { gapMarker, MOCKUP_ONLY_TAG } from "./forms/markers.js";
 import { draftingParties, withLeadLines, withPartiesDriftLines, type DraftingParties, type PartiesDrift, type PartiesDriftRow } from "./parties-drift.js";
 import { formCurrency, KIND_FORM_KEYS, type FormCurrency } from "./form-currency.js";
 import type { KnowledgeSeams } from "../knowledge/tree.js";
-import { stampDoc } from "./forms/proposal-inventory.js";
+import { noteUpDue, stampDoc } from "./forms/proposal-inventory.js";
 import { scanUntrackedCitations } from "./forms/citation-scan.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { runPreFilingChecks, type PreFilingChecksResult } from "./pre-filing/index.js";
@@ -717,6 +717,10 @@ export interface RenderResult {
   /** On a mockup render of a kind whose venue document is a court form (form-currency.ts KIND_FORM_KEYS):
    * that form's currency (ADR 0038). A non-null warning also heads the venue document as a mockup-only line. */
   form_currency?: FormCurrency;
+  /** On a mockup render of a Writing, only when its Proposed lane holds a note-up Proposal no live
+   * job holds and the practitioner has not shelved: those keys, in the lane's order (noteUpDue). The
+   * session writes them into the Writing's note-up job (`/drafting-data` jobs-create.md §3k). */
+  note_up_due?: string[];
   /** Present on the bundle_outdated, citation_gate_failed, associate_judge_gate_failed,
    * template_key_gate_failed, confirmation_gate_failed, unwritten_gate_failed, prose_format_gate_failed,
    * currency_gate_failed, parties_drift_gate_failed or filing_retired refusal -- what was skipped and what to do. */
@@ -1193,7 +1197,14 @@ export function submissionFormsRender(
    * markdown. Either way the board's summary only when the board is named in `documents`. The Job
    * Board is the last document either way. */
   const finishMockup = (documents: Projectable[], section: WorkBoardData, renderedAt: string): RenderResult => {
-    const tail = { ...report, ...(sessionToken ? { session_token: sessionToken } : {}), rendered_at: renderedAt, ...(currency ? { form_currency: currency } : {}) };
+    const due = noteUpDue(section.proposals);
+    const tail = {
+      ...report,
+      ...(sessionToken ? { session_token: sessionToken } : {}),
+      rendered_at: renderedAt,
+      ...(currency ? { form_currency: currency } : {}),
+      ...(due.length > 0 ? { note_up_due: due } : {}),
+    };
     if (projectionDir) {
       selectDocuments([...documents, { document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
       refuseForeignMatterPages(dirname(projectionDir), dbPath);

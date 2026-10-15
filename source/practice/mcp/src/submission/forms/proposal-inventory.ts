@@ -531,6 +531,13 @@ export function deriveProposals(
   return { proposals, lapsed_keys };
 }
 
+/** The keys of the note-up Proposals in the Proposed lane: unheld and unshelved. A render reports
+ * them as `note_up_due`, and the session writes them into the Writing's one `Note up all cited
+ * authorities` job or adds them to it (`/drafting-data` jobs-create.md §3k). */
+export function noteUpDue(proposals: readonly Proposal[]): string[] {
+  return proposals.filter((p) => p.slug === "note-up" && p.lane === "proposed").map((p) => p.key);
+}
+
 /** A provision as a pinpoint or running text cites it: a rule or section word, then its number --
  * "r. 9-6(3)", "Rule 14-1(12)", "s 21(1)(a)". */
 const PROVISION = /(?<![\w'’])((?:sub)?(?:rule|section)s?\s+|(?:rr?|ss?)(?:\.\s*|\s+))(\d+(?:[-.]\d+)*(?:\([0-9a-z.]+\))*)/gi;

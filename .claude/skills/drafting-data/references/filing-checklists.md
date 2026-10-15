@@ -217,7 +217,7 @@ One row per Proposal key type, the text of a key before its first `:` (`jobs-cre
 | `authority-excerpt` | `statements_of_law` | `Capture and record the passage verbatim from the authority's own text: <item>` | — | no |
 | `authority-pinpoint` | `statements_of_law`, `clauses` | `Find and record the pinpoint in the authority: <item>` | — | no |
 | `scrutinize` | `statements_of_law` | `Confirm and record whether the excerpt supports the proposition as the court's own reasoning: <item>` | — | no |
-| `note-up` | `authorities` | a case: `Note up and record the treatment of: <item>`; a statute, regulation or rule: the card's `step <n>:` lines, one per provision (`jobs-create.md` §3e) | `provision_currency` (a statute, regulation or rule) | no |
+| `note-up` | `authorities` | a case: `Note up and record the treatment of: <item>`; a statute, regulation or rule: the card's `step <n>:` lines, one per provision, or, where it prints `steps: none`, `Note up and record the currency of: <item>`. Every note-up is one job per Writing, `Note up all cited authorities`, with these steps for each of its Proposals (`jobs-create.md` §3k); a single authority's `Note up: <item>` job is written only when the practitioner picks that Proposal (§3's fast path) | `provision_currency` (a statute, regulation or rule) | no |
 | `authority-rating` | `authorities` | `Rate and record the source of each statement of law on: <item>` | `statements_of_law` | no |
 | `exhibit-excerpt` | `statements_of_fact`, `admissions`, `clauses` | `Capture and record the document's passage verbatim: <item>` | — | no |
 | `testimony-excerpt` | `statements_of_fact`, `admissions` | `Capture and record the witness's words verbatim: <item>` | — | no |

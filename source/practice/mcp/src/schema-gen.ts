@@ -1823,7 +1823,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-" +
         "mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this " +
         "render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy " +
-        "files are reused and rendered_at is the minute they were last rendered. Optional session_token (ADR 0009, issue 609) is the " +
+        "files are reused and rendered_at is the minute they were last rendered. A mockup render of a Writing whose Proposed " +
+        "lane holds a note-up Proposal that no live job holds and the practitioner has not shelved also carries note_up_due, " +
+        "those keys in the lane's order: the session writes them into the Writing's one `Note up all cited authorities` " +
+        "job, or adds them to it (/drafting-data jobs-create.md §3k). Optional session_token (ADR 0009, issue 609) is the " +
         "caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a " +
         "job-driven session and the response ECHOES it back, so the session keeps one identity for " +
         "tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit " +

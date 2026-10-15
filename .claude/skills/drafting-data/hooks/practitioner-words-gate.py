@@ -102,8 +102,8 @@ bundle jobs' fixed title, intent and step text, §3c's counsel's review jobs' fi
 review job's title by its "Counsel's review of " prefix), §3d's scrutiny review job's
 fixed intent and step (its title by its "Review scrutiny finding: " prefix), §3g's pass finding
 jobs' fixed titles and intents, §3h's conversion job when its title and intent in one inserted row
-name the same Writing, §3j's loose-threads step, jobs-create.md §3e's grouped intake title on a new
-job only, and a value
+name the same Writing, §3j's loose-threads step, jobs-create.md §3e's grouped intake title and
+§3k's note-up job title on a new job only, and a value
 equal, character for character, to a Proposal title an earlier drafting_forms__*
 tool result printed (a fast-path job's fixed text from the record), inline or
 persisted to a file. A ticket_steps.text is also exempt when it equals, character for
@@ -212,8 +212,9 @@ FIXED_TEXT = {
     # §3j's loose-threads job's step.
     "Rank the open loose threads if any is unranked, then work the top thread that is not deferred and not tooling",
 }
-# jobs-create.md §3e's grouped intake job: fixed text for a new job only, never an existing job's rewrite.
-NEW_JOB_TEXT = {"Locate pinpoint references for the following facts"}
+# jobs-create.md §3e's grouped intake job and §3k's note-up job: fixed text for a new job only, never an
+# existing job's rewrite.
+NEW_JOB_TEXT = {"Locate pinpoint references for the following facts", "Note up all cited authorities"}
 # jobs-stock.md §3h's conversion job: its title and intent carry the same Writing title.
 CONVERSION_TITLE = re.compile(r"Make (.+) a Structured Writing", re.S)
 CONVERSION_INTENT = re.compile(r"Turn this Writing into a type file so the next (.+) is a Structured Writing\. "
