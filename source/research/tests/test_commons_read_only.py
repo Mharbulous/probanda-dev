@@ -30,7 +30,7 @@ WRITE = {
     "rule_period_record_verification", "rule_period_retire",
 }
 READ = {
-    "browse", "find_candidates", "lookup_by_citation", "resolve_by_id", "treatment_chain",
+    "browse", "search", "find_candidates", "lookup_by_citation", "resolve_by_id", "treatment_chain",
     "rule_period_find", "configure_credential", "configure_status",
 }
 TROUBLESHOOT = {"search", "record", "confirm_fix", "configure_credential", "configure_status"}
