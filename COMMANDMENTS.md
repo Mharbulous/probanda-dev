@@ -31,6 +31,9 @@
 
 6. A cloud response to a write never states a rule. It reports whether the write was saved and, when it wasn't, asks a guiding question about the *Item*.
 
+7. The file-manager plugin is the only Probanda plugin that modifies, moves or deletes files on the *User's Machine* unless they were created by Probanda.  Without the file-manager plugin Probanda treats files not created by itself as read-only.
+
+
 ## Exceptions
 
 1. Rules that work better if run on the user's machine may be permitted as *Cross Data*.
