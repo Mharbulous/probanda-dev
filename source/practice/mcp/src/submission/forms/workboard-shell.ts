@@ -65,6 +65,15 @@ header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
+/* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
+   and collapse. Its body keeps the stored statement's indentation and line breaks; an inferred one is
+   italic under its caption, and a board with none says so in a muted line. */
+.goals .head .label{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
+.goals .goals-body{margin-top:14px;padding-top:12px;border-top:1px solid currentColor;font-size:13.5px}
+.goals .statement{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.goals[data-status="inferred"] .statement{font-style:italic}
+.goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
+.goals .none{margin:0;opacity:.75}
 .goal .deadline{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-top:6px;font-size:13.5px}
 .goal .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
 .goal .dflag{font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
@@ -610,6 +619,31 @@ const TAIL = String.raw`</script>
       card.appendChild(list);
       return card;
     }
+    // The statement of goals' card, labelled Goal, on every board, at the top of the section above the
+    // Completion Criteria card. Closed, it shows the description; open, the statement as stored. The
+    // server sends both finished, so the shell derives neither. Printing opens it, as it opens every
+    // details.goal.
+    function goalsCard(g) {
+      var card = el("details", "goal goals");
+      card.id = "goals";
+      card.setAttribute("data-status", g.status || "none");
+      var head = el("summary", "head");
+      head.appendChild(el("span", "sentence", g.description));
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "label", "Goal"));
+      card.appendChild(head);
+      var body = el("div", "goals-body");
+      if (g.statement === null) {
+        body.appendChild(el("p", "none", "No statement of goals yet"));
+      } else {
+        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
+        body.appendChild(el("p", "statement", g.statement));
+      }
+      card.appendChild(body);
+      return card;
+    }
+    board.appendChild(goalsCard(data.goals));
+
     if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
 
     // The filing's Writings, in its last render's document order, between the Goal card and Ready:

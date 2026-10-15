@@ -15,6 +15,7 @@ import { DataServerError } from "../../errors.js";
 import { idleFlagHours } from "../../tools/practice/firm-profile.js";
 import { submissionDataQuery } from "../backend.js";
 import type { CourtFileAffidavit } from "../court-file-affidavits.js";
+import { type BoardGoals, fetchBoardGoals } from "./board-goals.js";
 import type { PageDates } from "../matter-dates.js";
 import { storedLayout } from "./layout-snapshot.js";
 import { LIFECYCLE_LABELS, type LifecycleState } from "./lifecycle.js";
@@ -407,6 +408,9 @@ export interface WorkBoardData {
   proposals: Proposal[];
   /** Keys whose stored rejection no longer describes the work; the next Opening deletes those rows. */
   lapsed_keys: string[];
+  /** Every board's statement of goals (board-goals.ts), drawn as the card labelled Goal above the
+   * Completion Criteria card. Not `goal`, which is the Completion Criteria card's. */
+  goals: BoardGoals;
   /** A filing's board only: a pre-filing proceeding's board has no Goal card (design §2.1). */
   goal?: Goal;
   /** The stored layout's `goal_criteria` in their declared order, then `gate`, then `hearing-date`
@@ -1570,6 +1574,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, `${ctx.filing.title} Drafting`),
     goal,
     criteria,
   };
@@ -1616,6 +1621,7 @@ function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: [],
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: own, proceeding_id: ctx.proceeding.id }, ctx.filing.title),
   };
 }
 
@@ -1650,5 +1656,6 @@ export function buildPreFilingBoardData(
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: [],
+    goals: fetchBoardGoals(dbPath, { filing_id: null, proceeding_id: proceeding.id }, `Proceeding ${proceeding.id}`),
   };
 }

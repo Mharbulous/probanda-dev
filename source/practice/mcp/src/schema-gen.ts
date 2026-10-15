@@ -1661,6 +1661,45 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("set_board_goal"),
+      description:
+        "Record one Job Board's statement of goals: the card labelled Goal at the top of the board, " +
+        "drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly " +
+        "one of filing_id (a Writing's board or a Job Board with no Writing) and proceeding_id (a pre-filing " +
+        "proceeding's board; one that has a Writing is refused, proceeding_has_writing). status is confirmed (the " +
+        "statement the practitioner approved), inferred (the session's own wording after the practitioner declined, " +
+        "never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement " +
+        "is the whole text, stored verbatim with its indentation and line breaks; it is required for confirmed and " +
+        "inferred and refused for declined. description is the line the closed card shows; omitted, the stored one " +
+        "stays, else the board's default: `<Writing title> Drafting`, a Job Board with no Writing's own title, or " +
+        "`Proceeding <id>`. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap " +
+        "returned. A confirmed write passes the practitioner-words gate: the statement is an unbroken run of one " +
+        "practitioner turn, or the one fenced code block in the session's reply before the practitioner's last turn, " +
+        "character for character, and that turn is a bare yes. An inferred or declined write needs no approval. One " +
+        "db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON " +
+        "{description, statement, status, approved_at, session_token, updated_at}, approved_at set only for " +
+        "confirmed. The write replaces the board's row and removes the rows of boards that no longer exist " +
+        "(stale_keys_removed). It moves no revision. Re-render to show it. Refusals write nothing: invalid_board, " +
+        "invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, " +
+        "proceeding_has_writing. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
+        "status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          proceeding_id: { type: "number" },
+          description: { type: "string" },
+          statement: { type: ["string", "null"] },
+          status: { type: "string", enum: ["confirmed", "inferred", "declined"] },
+          session_token: { type: "string" },
+        },
+        required: ["db_path", "status", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("resnapshot_writing"),
       description:
         "Re-snapshot a Writing's stored layout (the dedicated re-snapshot write), run only on the practitioner's explicit " +
@@ -1793,7 +1832,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as " +
         "a short fixed-grammar summary: `# Job Board — Matter <matter no> <matter description> · Client <client " +
         "name> (<client no>) · Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or " +
-        "`none linked`, or why the to-dos were not read), `Unmet completion criteria:` with one line per unmet or " +
+        "`none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of " +
+        "goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined or none; the " +
+        "statement itself is board_card's goals lane), `Unmet completion criteria:` with one line per unmet or " +
         "pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet " +
         "completion criteria: none` when every criterion is met), and `Met " +
         "completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ — " +
@@ -1887,7 +1928,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "opened. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
-        "lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +
+        "lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +
         "lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs " +
         "draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job " +
         "ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). " +
@@ -1907,7 +1948,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "(`☐ <kind>: <label>`) or closed not retrieved (`☒ <kind>: <label> (not retrieved: <reason>)`), which are the job's " +
         "own record and never steps of its plan, each when it has any, and on a completed job `  completed: " +
         "<completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded " +
-        "by: … · reason: …`. Then each lane asked for: criteria, the `🎯 Completion criteria: <state>[ — <text>]` " +
+        "by: … · reason: …`. Then each lane asked for: goals, the board's statement of goals " +
+        "(drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none>)`, its description on the next " +
+        "line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board; " +
+        "criteria, the `🎯 Completion criteria: <state>[ — <text>]` " +
         "line and each criterion in board order as `- <glyph> <id>: <text>[ (after …)][ (counts)][ — items]`, the " +
         "counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met " +
         "counts the items the practitioner shelved or suppressed (🤫) and total the items still flagged, shelved or suppressed, since an item " +
@@ -1948,7 +1992,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
           client_no: { type: "string" },
           matter_no: { type: "string" },
           jobs: { type: "array", items: { type: "number" } },
-          lanes: { type: "array", items: { type: "string", enum: ["criteria", "live", "goal", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"] } },
+          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"] } },
           key: { type: "string" },
           loose_threads_from_jobs: { type: "array", items: { type: "number" } },
           draft_dir: { type: "string" },

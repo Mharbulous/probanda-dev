@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Refuse a job's wording that is not the practitioner's own words or a set pattern (#784).
 
-Hook event: PreToolUse on drafting_data__execute. A job is created only on the practitioner's
+Hook event: PreToolUse on drafting_data__execute and drafting_data__set_board_goal. A job is created only on the practitioner's
 explicit request or from a pattern they set up in advance, and the gate reads every creation of
 one (jobs-create.md §3, "Who may create a job", lists each path and its route). It checks every
 tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ... SELECT,
@@ -116,6 +116,14 @@ review shortens a title or splits a step by cutting, adding no word). Never a ti
 No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
 The gate cannot see which job holds a key, so this trusts the record as the title exemption
 does: printed by a drafting_forms__* result in this session.
+
+The gate also runs on drafting_data__set_board_goal, which records a Job Board's statement of
+goals (2026-10-14 Job Board goal card spec). A confirmed statement is the practitioner's: it passes
+when it is an unbroken run of one practitioner turn, or when it is, character for character, the one
+fenced code block in the session's visible reply before the practitioner's last turn and that turn
+is a bare yes (APPROVALS, the whole turn), as an on-the-fly revision is approved. An inferred or
+declined write passes unchecked: the tool records an inferred statement as the session's wording,
+never as confirmed, and a declined one carries no statement.
 
 Exit 0 allows the call; exit 2 refuses it and the session reads stderr. A refusal
 echoes the nearest turn, bounded: whole within 300 characters, else 300 characters
@@ -232,6 +240,8 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "fenced code block in the reply before their last turn, exactly as saved, and approved by a bare "
                     "yes typed as that turn. One approval admits one write. Its UPDATE writes the same literal as "
                     "new_text, and 'current' writes old_text unchanged.")
+GOAL_TOOL = "drafting_data__set_board_goal"  # a Job Board's statement of goals
+GOAL_FIELD = "drafting_data__set_board_goal.statement"
 MOVE_ENTITY = "filing_facts"  # a fact move (paragraph-revision.md §6): the ordinals, no wording
 MOVE_FIELD = "paragraph_revisions.old_text/new_text"
 MOVE_CLOSING = ("A fact move records field 'ordinal', choice 'move' and origin 'practitioner', with old_text and new_text "
@@ -955,9 +965,40 @@ def refuse(message):
     return 2
 
 
+def board_goal(payload):
+    """A confirmed statement of goals: a run of one practitioner turn, or the one fenced block shown
+    before the last turn, approved by a bare yes. Inferred and declined pass: the session's wording."""
+    tool_input = payload.get("tool_input") or {}
+    statement = tool_input.get("statement")
+    if tool_input.get("status") != "confirmed" or not isinstance(statement, str) or not statement.strip():
+        return 0  # not confirmed, or a confirmed write with no statement, which the tool itself refuses
+    path = payload.get("transcript_path") or ""
+    if not path:
+        return refuse("the hook input names no transcript_path, so there is no record of what the "
+                      "practitioner approved to check the statement of goals against.")
+    try:
+        turns, _, _, _, _, _, last_raw, last_fences, _, _ = read_transcript(path)
+    except OSError as exc:
+        return refuse(f"cannot read the session transcript at {path}: {exc}")
+    if any(norm(statement) in norm(turn) for turn in turns):
+        return 0
+    if len(last_fences) == 1 and last_fences[0] == statement and approval(last_raw):
+        return 0
+    nearest_turn = f"\n  nearest turn: {echo(statement, nearest(statement, turns))}" if turns else ""
+    return refuse(f"a confirmed statement of goals is neither an unbroken run of one thing the practitioner "
+                  f"said in this session nor the one fenced code block in the session's reply before the "
+                  f"practitioner's last turn, approved by a bare yes.\n  field: {GOAL_FIELD}\n"
+                  f"  wrote: {statement}\n  shown: {len(last_fences)} fenced block(s){nearest_turn}\n"
+                  "Show the whole statement as the only fenced code block in one reply, exactly as it will be "
+                  "saved, and record it as confirmed only after the practitioner's next turn is a bare yes. "
+                  "Until then it is not confirmed: record it as inferred if the practitioner declined.")
+
+
 def main():
     start = time.monotonic()
     payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    if (payload.get("tool_name") or "").endswith(GOAL_TOOL):
+        return board_goal(payload)
     script = (payload.get("tool_input") or {}).get("sql_script") or ""
     try:
         revisions, stmts = revision_writes(script)

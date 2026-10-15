@@ -503,8 +503,8 @@ export function recordPagesState(
 
 // ---------------------------------------------------------------------------------------------
 // board_summary (R3) and board_card: one section as fixed-grammar text, the only board content a
-// session reads. The summary is short: the matter, the client, the revision, the linked to-do and
-// the unmet and met completion criteria. board_card prints the rest on request: its `live` lane
+// session reads. The summary is short: the matter, the client, the revision, the linked to-do, the
+// statement of goals' description and status, and the unmet and met completion criteria. board_card prints the rest on request: its `live` lane
 // each job as the page's collapsed card text, then a tag tail only the model sees, and its other
 // lanes and jobs what a card holds when it is opened.
 // ---------------------------------------------------------------------------------------------
@@ -687,6 +687,17 @@ export function criterionLine(c: GoalCriterion, criteria: readonly GoalCriterion
   return `- ${CRITERION_GLYPH[c.state]} ${c.id}: ${c.text}${after}${countText(c)}${items}`;
 }
 
+/** board_summary's Goal line: the statement of goals' description and its status, `none` when none is stored. */
+function goalsHead(section: WorkBoardData): string {
+  return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})`;
+}
+
+/** board_card's goals lane: `## Goal (<status>)`, the description, then the statement verbatim when there is one. */
+function goalsLines(section: WorkBoardData): string[] {
+  const g = section.goals;
+  return [`## Goal (${g.status ?? "none"})`, g.description, ...(g.statement === null ? [] : [g.statement])];
+}
+
 /** board_card's criteria lane: the head line and one line per criterion in board order, with items. */
 function goalLines(section: WorkBoardData): string[] {
   if (section.goal === undefined) return [];
@@ -737,7 +748,8 @@ function todoText(section: WorkBoardData, todos: MatterTodos): string {
 
 /**
  * The rendered section's summary, deterministic text with a fixed line grammar, unwrapped: the
- * header (matter number and description, client name and number, revision), `To Do:`, then
+ * header (matter number and description, client name and number, revision), `To Do:`,
+ * `Goal: <description> (<status>)` (the statement of goals; `none` when none is stored), then
  * `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as
  * board_card's criteria lane prints it without the items, and `Met completion criteria:` with the
  * met ids, or `none`. A section with no criteria to list (a pre-filing proceeding, a retired filing,
@@ -756,7 +768,7 @@ export function renderBoardSummary(section: WorkBoardData, client: ClientContext
   const m = section.meta;
   const matter = [m.matter, client.matterDescription].filter((part) => part).join(" ");
   const header = [matter && `Matter ${matter}`, m.client && `Client ${m.client}${client.clientNo ? ` (${client.clientNo})` : ""}`, `Rev ${m.revision}`];
-  const lines = [`# Job Board — ${header.filter((part) => part).join(" · ")}`, `To Do: ${todoText(section, todos)}`];
+  const lines = [`# Job Board — ${header.filter((part) => part).join(" · ")}`, `To Do: ${todoText(section, todos)}`, goalsHead(section)];
   const criteria = section.criteria ?? [];
   if (section.goal === undefined || criteria.length === 0) {
     const state = m.state_since === null ? m.state_label : `${m.state_label} ${m.state_since}`;
@@ -799,11 +811,11 @@ export function renderLiveLanes(section: WorkBoardData): string[] {
   return lines;
 }
 
-/** `goal` is the criteria lane's former name, still accepted for it. */
-export type CardLane = "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "loose_threads" | "attached" | "court_file";
+/** `goal` is the criteria lane's former name, still accepted for it; `goals` is the statement of goals. */
+export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "loose_threads" | "attached" | "court_file";
 
 /** board_card's lanes, in the order a card prints them. */
-export const CARD_LANES: readonly CardLane[] = ["criteria", "live", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"];
+export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"];
 
 const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_letter: "client letter", reply: "reply" };
 
@@ -876,6 +888,7 @@ function renderBoardCard(
     if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== undefined)) continue;
     // A Job Board with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
     if (section.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
+    if (lane === "goals") lines.push(...goalsLines(section));
     if (lane === "criteria") lines.push(...goalLines(section));
     if (lane === "live") lines.push(...renderLiveLanes(section));
     if (lane === "proposed") lines.push(proposedHeading(section), ...proposedOf(section).flatMap(proposalLines));
