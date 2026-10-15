@@ -146,20 +146,17 @@ DELETE FROM proposal_rejections WHERE proposal_key IN ('note-up:authorities:5', 
 
 `marker` and `item` are compared exactly, with no normalisation of any kind — no case folding, no whitespace collapsing, no punctuation allowance. Rewording an item therefore lapses its shelving, which is the accepted cost of catching a reused row id. A shelving whose Proposal no longer derives at all has not lapsed: it is dormant, shows nowhere, and is left where it is, like a `killed_on` date.
 
-**Deleting a mistaken job** — only on the practitioner's typed instruction to delete that job, for a job that should never have been written. It is received, never offered, and it is not a way to finish, drop or tidy work: a job the practitioner chose not to pursue is shelved (above), and one whose marker has gone is closed by §9b. While a marker-derived job is deleted its Proposals return to Proposed, and the next Opening's intake (§3e) writes them afresh while the marker still fires. To be rid of the work, shelve the Proposal or the job instead. Only a `queued` job, shelved or not, can be deleted. A `wip`, `completed` or `superseded` job is refused by the guard. The delete stamps the job and moves nothing (schema v54):
+**Deleting a mistaken job** — only on the practitioner's typed instruction to delete that job, for a job that should never have been written. It is received, never offered, and it is not a way to finish, drop or tidy work: a job the practitioner chose not to pursue is shelved (above), and one whose marker has gone is closed by §9b. While a marker-derived job is deleted its Proposals return to Proposed, and the next Opening's intake (§3e) writes them afresh while the marker still fires. To be rid of the work, shelve the Proposal or the job instead. A `queued` job, shelved or not, can be deleted, and so can a `wip` job held by this session. Another session's `wip` job is never deleted, and a `completed` or `superseded` job is refused. The delete stamps the job and moves nothing else (schema v54).
 
-```sql
-UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  WHERE id = 42 AND status = 'queued' AND deleted_at IS NULL;
-```
+The delete is one `drafting_data__delete_job` call, `{db_path, ticket_ids, session_token}`, never a hand-written `UPDATE`. Several jobs named in one instruction go in one call. Each job's holder check and its `deleted_at` stamp are one guarded statement, so no session can claim the job between them. A `wip` job held by this session goes back to `queued` with its lock cleared in the same write, so a restore returns it as a Ready job with no lock, and from then on this session holds no job, as after a release (§10). The tool runs the confirm-read itself and returns one outcome per job:
 
-Then run the confirm-read:
+- `deleted`: it landed.
+- `held_elsewhere`: the job is in progress in another session, and nothing was written. Say so in one line and stop. The delete never clears another session's lock; the practitioner can return the job to Ready through `/draft`'s take-over form first.
+- `refused_status`: the job is `completed` or `superseded`.
+- `already_deleted`: it was deleted earlier.
+- `not_found`: no job has that number.
 
-```sql
-SELECT status, rejected_at, deleted_at FROM tickets WHERE id = 42;
-```
-
-`changes` 1 with `deleted_at` stamped means it landed. `changes` 0 means the guard matched nothing and the row says why: `wip`, `completed` or `superseded` is refused by its status, and `queued` with `deleted_at` already stamped was deleted earlier. Report which it was and stop.
+Every outcome but `deleted` wrote nothing for that job. Report each one and never re-run to win.
 
 **What the deletion leaves.** Nothing is deleted, so the restore below returns the job exactly as it was. Every row that points at the job stays where it is: its steps, scope rows, waits-on and either/or edges, Proposal keys, shelving-snapshot rows, the loose threads captured under it or outlined into it, the practitioner's comments on it and the answers saved for it. Every reader skips the job and reads those rows as if it were gone: a job that waited on it no longer waits on it; its either/or partner is no longer held back by it; a job it superseded (a stale gate job pointed at it) reads as superseded with no pointer; a loose thread outlined into it shows again in "Loose Threads", and a loose thread captured under it shows with no origin job; its Proposals return to Proposed; and its snapshot rows hide nothing and are never reported lapsed, so the Opening's lapsed-row deletion never takes them. A job carrying comments or saved answers deletes like any other. Accepted cost: a loose thread outlined into a new job while this one is deleted moves to that job, and the restore does not take it back. A deleted job on a Writing later retired is left as it was by §9a, and restoring it afterwards is accepted, putting a `queued` job back on the retired Writing for the practitioner to shelve or close.
 

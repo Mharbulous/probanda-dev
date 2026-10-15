@@ -31,6 +31,7 @@ import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/fo
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
+import { submissionDataDeleteJob, type DeleteJobArgs } from "./submission/forms/delete-job.js";
 import { submissionDataRecordSent, type RecordSentArgs } from "./submission/forms/sent-write.js";
 import { resnapshotWriting } from "./submission/writing-snapshot.js";
 import {
@@ -255,6 +256,10 @@ export async function callTool(
 
   if (name === "drafting_data__release_job") {
     return submissionDataReleaseJob(args as unknown as ReleaseJobArgs);
+  }
+
+  if (name === "drafting_data__delete_job") {
+    return submissionDataDeleteJob(args as unknown as DeleteJobArgs);
   }
 
   if (name === "drafting_data__complete_job") {

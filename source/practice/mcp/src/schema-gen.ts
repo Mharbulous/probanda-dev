@@ -1313,7 +1313,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "drafting_data__record_filed, a drafting Writing's stored layout is " +
         "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
         "a job's unchanged plan is approved through drafting_data__approve_plan, " +
-        "a job is completed through drafting_data__complete_job, and a job is released through drafting_data__release_job. " +
+        "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +
+        "and a job is deleted through drafting_data__delete_job. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
         "nothing and nothing was written. " +
@@ -1600,6 +1601,32 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           expected_holder: { type: "string" },
         },
         required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("delete_job"),
+      description:
+        "Delete one or several mistaken jobs (tickets rows) in one call, only on the practitioner's typed instruction: a " +
+        "guarded stamping write per job, all in one transaction, then a confirm-read per job. A job is deleted when it is " +
+        "queued (shelved or not), or wip and held by this session's token; the holder check and the deleted_at stamp are " +
+        "one statement. A wip job held by this session goes back to queued with its lock cleared in the same write, so a " +
+        "restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
+        "pointing at the job stays. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap " +
+        "returned; this tool mints none. Per job, the outcome is read off the confirm-read: deleted (changes 1), " +
+        "held_elsewhere (wip in another session: nothing written; never re-run), refused_status (completed or superseded), " +
+        "already_deleted, not_found. It moves no revision. Refusals write nothing: invalid_ticket_ids, " +
+        "invalid_session_token. Returns jobs, one {ticket_id, outcome, changes, status, locked_at, rejected_at, " +
+        "deleted_at, note} per id.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_ids: { type: "array", items: { type: "number" }, minItems: 1 },
+          session_token: { type: "string" },
+        },
+        required: ["db_path", "ticket_ids", "session_token"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },

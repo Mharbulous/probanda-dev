@@ -27,5 +27,8 @@
 <!-- rule id=draft.shelve.no-confirm provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
 - **No confirmation,** with one exception. A typed instruction is the practitioner's own act, and a restore only undoes a shelving, so a confirm could only be answered yes. The exception is a job in progress in another session, never the session's own: one decision form, "Job #7 is in progress in another session. Shelve it anyway?", offering *Shelve it* and *Leave it in progress*. *Shelve it* clears that lock. It and the take-over form's *Return it to Ready* (`references/take-over.md`) are the only places a session clears a lock it does not hold.
 
+<!-- rule id=draft.shelve.delete provenance="2026-10-14: delete of an in-progress job, plugin fix" -->
+- **Delete:** a typed "delete job #N", for one job or several, is applied at once with no confirmation, through one `drafting_data__delete_job` call (`/drafting-data` §10a). It deletes a Ready or shelved job, and the session's own in-progress job. A job in progress in another session comes back `held_elsewhere`, and nothing is written: say in one line that it is in progress in another session and was not deleted. Ask no decision form about it, and never say a delete clears a lock. The take-over form's *Return it to Ready* (`references/take-over.md`) stays available if the practitioner asks for it. After the session's own job is deleted, the session holds no job, as after a release. Delete is received, never offered.
+
 <!-- rule id=draft.shelve.after provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
-- **After applying** a shelve, restore or release, re-render per section 11 so the board shows it.
+- **After applying** a shelve, restore, delete or release, re-render per section 11 so the board shows it.
