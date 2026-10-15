@@ -179,7 +179,7 @@ Before completing a job converted from Proposals, re-render and check which of i
 <!-- atom id=draft.outline ops=new_work -->
 ## Branch B: new work (outlining)
 
-Records jobs, dependencies, blockers, conflicts, priorities. Never substance: no proceeding or Writing row either (section 7). The practitioner supplies everything the record cannot; the session asks, records and reads back. Where the record holds the candidates, it proposes them per `shared/paralegal-posture.md` section 3. It proposes nothing the record cannot supply and never fills a silence.
+Records jobs, dependencies, blockers, conflicts, priorities. Never substance: no proceeding or Writing row either (section 7). The practitioner supplies everything the record cannot; the session asks, records and reads back. Where the record holds the candidates, it proposes them per `shared/paralegal-posture.md` section 3. It proposes nothing the record cannot supply and never fills a silence. It never asks for the board's statement of goals: that is the Opening's (`references/dispatch.md` section 14, "Statement of goals"), asked once per board.
 
 <!-- atom id=draft.outline.start ops=new_work -->
 - **An empty board:** say so and ask what work the application needs. Ask who to interview, what to locate, what to ask the client, and their theory of the case. Offer no candidates. Where the board carries Proposals but no job and no loose thread, the routing here is unchanged but the wording is not: say the board has no jobs yet, never that it is empty, because it still carries Proposals. On a Job Board with no Writing, ask what work the board is for in place of what the application needs, and write each job to that board, never proceeding-wide.
