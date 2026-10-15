@@ -377,8 +377,10 @@ class PractitionerWordsGateTest(unittest.TestCase):
 
     def test_compares_punctuation_as_written(self):
         self.write_transcript(turn_line("I want the list of documents. Verified by affidavit is what I am after."))
-        self.assertRefused(self.run_hook(update("the list of documents verified by affidavit",
-                                                intent="I want the list of documents.")), "field: title")
+        # A title's spelling cleanup compares word for word, so the intent carries the check.
+        self.assertRefused(self.run_hook(update("the list of documents",
+                                                intent="the list of documents verified by affidavit")),
+                           "field: intent")
 
     def test_refuses_a_composed_intent(self):
         self.assertRefused(self.run_hook(update(CUT, intent="The practitioner wants a verified list.")),
