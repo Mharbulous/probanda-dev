@@ -76,7 +76,7 @@ class HookTestCase(unittest.TestCase):
         self.assertEqual(out["permissionDecision"], "deny")
         self.assertNotIn("updatedInput", out)
         self.assertTrue(out["permissionDecisionReason"].startswith(
-            "Do not delete this directly - call the file-admin tool file_ops__trash with this path;"
+            "Do not delete this directly - call the file-manager tool file_ops__trash with this path;"
         ))
 
     def assertRewritten(self, result, expected_command, original_input):
@@ -101,38 +101,20 @@ class DeviceBashGateTests(HookTestCase):
                 self.assertAllowedSilently(self.call(tool, 'rm "' + DEVICE_ROOT + '/0. DRAFT/*.md"'))
 
 
-class RewriteTests(HookTestCase):
-    def test_bash_rm_in_matter_becomes_move_to_trash(self):
+class NoMoveTests(HookTestCase):
+    """A delete the hook once rewrote into a move to TRASH is now refused: moving a
+    file is the file-manager plugin's work (file_ops__trash), never the hook's."""
+
+    def test_bash_rm_in_matter_is_denied_not_moved(self):
         command = 'rm "' + self.m + '/0. DRAFT/x.md"'
-        extra = {"description": "Remove stale draft", "timeout": 30000}
-        expected = (
-            'mkdir -p "' + self.m + '/TRASH/0. DRAFT" && mv --backup=numbered "'
-            + self.m + '/0. DRAFT/x.md" "' + self.m + '/TRASH/0. DRAFT/x.md"'
-        )
-        self.assertRewritten(self.call("Bash", command, **extra), expected, {"command": command, **extra})
+        self.assertDenied(self.call("Bash", command, description="Remove stale draft", timeout=30000))
 
-    def test_device_bash_rm_keeps_home_literal(self):
-        command = 'rm -r "' + DEVICE_ROOT + '/0. DRAFT/SUB Claimant Opening Submissions"'
-        extra = {"description": "Trash stale mockup folder"}
-        expected = (
-            'mkdir -p "$HOME/mnt/L4801 Merrow v. Tidewater/TRASH/0. DRAFT" && mv --backup=numbered '
-            '"$HOME/mnt/L4801 Merrow v. Tidewater/0. DRAFT/SUB Claimant Opening Submissions" '
-            '"$HOME/mnt/L4801 Merrow v. Tidewater/TRASH/0. DRAFT/SUB Claimant Opening Submissions"'
-        )
-        for tool in (DEVICE, "mcp__foo__device_bash"):
-            with self.subTest(tool=tool):
-                self.assertRewritten(self.call(tool, command, **extra), expected, {"command": command, **extra})
-
-    def test_multiple_targets_chain_one_move_each(self):
-        command = 'rm -f "' + DEVICE_ROOT + '/a.md" ' + '"' + DEVICE_ROOT + '/0. DRAFT/b.md"'
-        expected = (
-            'mkdir -p "$HOME/mnt/L4801 Merrow v. Tidewater/TRASH" && mv --backup=numbered '
-            '"$HOME/mnt/L4801 Merrow v. Tidewater/a.md" "$HOME/mnt/L4801 Merrow v. Tidewater/TRASH/a.md"'
-            ' && mkdir -p "$HOME/mnt/L4801 Merrow v. Tidewater/TRASH/0. DRAFT" && mv --backup=numbered '
-            '"$HOME/mnt/L4801 Merrow v. Tidewater/0. DRAFT/b.md" '
-            '"$HOME/mnt/L4801 Merrow v. Tidewater/TRASH/0. DRAFT/b.md"'
-        )
-        self.assertRewritten(self.call(DEVICE, command), expected, {"command": command})
+    def test_device_bash_rm_in_mount_is_denied_not_moved(self):
+        for command in ('rm -r "' + DEVICE_ROOT + '/0. DRAFT/SUB Claimant Opening Submissions"',
+                        'rm -f "' + DEVICE_ROOT + '/a.md" "' + DEVICE_ROOT + '/0. DRAFT/b.md"'):
+            for tool in (DEVICE, "mcp__foo__device_bash"):
+                with self.subTest(tool=tool, command=command):
+                    self.assertDenied(self.call(tool, command))
 
 
 class ExemptTests(HookTestCase):

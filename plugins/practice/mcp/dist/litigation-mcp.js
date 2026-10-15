@@ -1,4 +1,4 @@
-// build-stamp: 8ba7586b15e1
+// build-stamp: a44486b34528
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -409,11 +409,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -430,10 +430,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -494,8 +494,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names, constants2) {
+        this.code = optimizeExpr(this.code, names, constants2);
         return this;
       }
       get names() {
@@ -524,12 +524,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         const { nodes } = this;
         let i3 = nodes.length;
         while (i3--) {
           const n3 = nodes[i3];
-          if (n3.optimizeNames(names, constants))
+          if (n3.optimizeNames(names, constants2))
             continue;
           subtractNames(names, n3.names);
           nodes.splice(i3, 1);
@@ -582,12 +582,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a4;
-        this.else = (_a4 = this.else) === null || _a4 === void 0 ? void 0 : _a4.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a4 = this.else) === null || _a4 === void 0 ? void 0 : _a4.optimizeNames(names, constants2);
+        if (!(super.optimizeNames(names, constants2) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names, constants2);
         return this;
       }
       get names() {
@@ -610,10 +610,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names, constants2);
         return this;
       }
       get names() {
@@ -649,10 +649,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names, constants2);
         return this;
       }
       get names() {
@@ -694,11 +694,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a4, _b;
-        super.optimizeNames(names, constants);
-        (_a4 = this.catch) === null || _a4 === void 0 ? void 0 : _a4.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names, constants2);
+        (_a4 = this.catch) === null || _a4 === void 0 ? void 0 : _a4.optimizeNames(names, constants2);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants2);
         return this;
       }
       get names() {
@@ -999,7 +999,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names, constants2) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1014,14 +1014,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n3) {
-        const c3 = constants[n3.str];
+        const c3 = constants2[n3.str];
         if (c3 === void 0 || names[n3.str] !== 1)
           return n3;
         delete names[n3.str];
         return c3;
       }
       function canOptimize(e3) {
-        return e3 instanceof code_1._Code && e3._items.some((c3) => c3 instanceof code_1.Name && names[c3.str] === 1 && constants[c3.str] !== void 0);
+        return e3 instanceof code_1._Code && e3._items.some((c3) => c3 instanceof code_1.Name && names[c3.str] === 1 && constants2[c3.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -76915,7 +76915,7 @@ function fileToolDefinitions() {
   return [
     {
       name: "skill_source__read",
-      description: "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across the statement that creates it, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: an installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin` (the name of the plugin the file came from: this plugin, or one installed beside it; null for a checkout), `plugin_version` (that plugin's version; for a checkout, this plugin's) and `build_stamp`. A skill folder this plugin bundles is always served from it; a folder that another Probanda plugin installed beside it (research, litigator, solicitor or file-admin) bundles is served from that plugin; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
+      description: "Read one file from the skills tree (`.claude/skills`, or the installed plugin's bundled copy of it). Served content has no location on your filesystem, so every file reference inside it must be fetched with this same tool, never with a native file read. To follow a reference, pass it as `path` EXACTLY as written in the text -- no joining, stripping or rewriting -- and pass the returned `path` of the file you found it in as `from`. The server resolves it against the containing directory, then the skill root, then the tree root; the returned `path` is tree-relative. Omit `from` only for a path you already know is tree-relative (e.g. \"publish/subskills/publish-bcsc-form/references/assembly-input-contract.md\"). Repo-rooted `.claude/skills/...` paths (a legacy `.agents/skills/...` prefix is accepted and means the same tree), absolute paths containing that prefix, `..` segments and either slash direction are accepted verbatim. Returns the file's content plus `dir`, the directory holding it. By default that content is the whole file. When you need one named thing out of a large reference -- a table's contract, a marker, a rule by name -- pass `match` (a term, or an array of terms OR-ed together) and receive only the blank-line-delimited blocks containing it, alongside the whole file's `size`, `sha256`, and `blocks_matched`/`blocks_total` so you can see the response is a slice. Blocks, not lines: one table's contract is scattered across the statement that creates it, its triggers and a guard trigger far below, and every one of those blocks names the table while the column lines inside them do not. Zero matches is an error, never an empty result. Read whole when you need the file's shape, or do not yet know the term to ask for. Every result reports `shipped_from` (`install`: an installed plugin's bundled copy; `checkout`: a Coclerk checkout), `plugin` (the name of the plugin the file came from: this plugin, or one installed beside it; null for a checkout), `plugin_version` (that plugin's version; for a checkout, this plugin's) and `build_stamp`. A skill folder this plugin bundles is always served from it; a folder that another Probanda plugin installed beside it (research, litigator, solicitor or file-manager) bundles is served from that plugin; any other folder needs a Coclerk checkout, and without one fails `skills_root_missing`.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77144,7 +77144,7 @@ function fileToolDefinitions() {
     },
     {
       name: "knowledge__write",
-      description: "Write the firm's knowledge overlay (`<case_data_root>\\_practice\\knowledge\\`), never the shipped tree. `path` is a knowledge path as `knowledge__read` takes it, starting with a tree-owning skill, or the reserved `_hosts.json`; every name holds only letters, digits, `.`, `_` and `-`. `matter` is the live matter's number (practice data's `matt_num`, e.g. `L1234`), never its name; the repo-run marker `repo-run` is refused, because a repo session writes the shipped tree through the scratchpad and never confirms. `operation`: `create` writes a `.md` document whole (text only, capped at 200 KB, temp file plus rename; refused for a path the shipped tree holds, for the `.confirmations.local.json` suffix, and with `exists` when the overlay already holds it, unless `overwrite: true`; on `exists`, re-read and return that path), or one `row` of `venues.local.json` or `kinds.local.json` (upserted by `code`, not-venue `name`, or `file` under a lock; refused for a duplicate alias, an alias equal after normalization to a code, file name or official name, and a `name` on a shipped code or file; `venues.json` and `kinds.json` are never written). A document's front matter is required; the runtime stamps `learned_by: agent`, `matter`, `plugin_version` and `shipped_from` into it. The `matter` stamp is the `matt_num` of the one practice-data matter `matter` names, never the caller's string; when no single matter has that number, the create is refused with `matter_unknown` and nothing is written. A /draft type file or venue.md layout block and a /publish format.md block must validate. Every item of a source record (front matter with `page_url`) not marked `checked_by: file_sha256` must appear in this session's memoized fetch of that page (`sources__fetch` or `sources__check`): a miss refuses the write with `excerpt_mismatch` naming the rule_refs, and no live memo refuses with `memo_expired` naming the URL. An overwrite whose page shows a currency marker older than the recorded one is refused as `stale_body`, and an overwrite deletes any `_fetched` PDF no excerpt records any more. On a source record's `create`, `saved_copy` names the practitioner's saved copy after a failed fetch, a knowledge path under `_inbox` (e.g. `_inbox/rules.pdf`): the file is read before the write, and a PDF (by its bytes) is hashed into the record's `pdf_sha256`, replacing any the content carried, then moved to `_fetched\\<host>\\<first 12 hex of the sha256>.pdf` (the host of `pdf_url`, else of `page_url`) once the record is written. Any other file stays in `_inbox`, unhashed. A refused write moves nothing. The result's `saved_copy` is {path, moved: true, to, sha256}, {path, moved: false, reason: \"not_pdf\"}, or {path, moved: false, error} when the move failed after the record was written (the file stays). `saved_copy` outside `_inbox`, on a record without `page_url`, or on a file that is not a PDF when the content carries `pdf_sha256`, is refused as `invalid_saved_copy`; a file that is not there as `not_found`, a folder as `not_a_file`. `confirm` and `correct` upsert one row, keyed by `rule_ref`, into the file's confirmation sidecar under a lock: `by` is this machine's `person`, which must be a lawyer on the firm roster (`person_unset` names the missing key; a staff key is refused); `confirmed_against` records the item's passage hash and currency marker; `correct` takes `value`, the item's value in the shape its file contract declares, validated by substitution into the merged file. A Sources excerpt is not correctable. At `_hosts.json`, `create` takes one `row` {host, category, page_url} and records the practitioner's yes to a fetch host (ask first, on a `host_not_allowed` refusal): `category` is `venue`, `statute` or `regulator`; the runtime stamps `added` and `approved_by: \"practitioner\"`, and `sources__fetch` admits the host on its next call. Keyed by host under a lock: an entry already there for the host is left unchanged and returns `status: \"exists\"`. An invalid hostname, another category, a missing or extra field, and a malformed `_hosts.json` (`invalid_hosts_file`) are refused. Every other reserved entry is refused with `reserved_entry`.",
+      description: "Write the firm's knowledge overlay (`<case_data_root>\\_practice\\knowledge\\`), never the shipped tree. `path` is a knowledge path as `knowledge__read` takes it, starting with a tree-owning skill, or the reserved `_hosts.json`; every name holds only letters, digits, `.`, `_` and `-`. `matter` is the live matter's number (practice data's `matt_num`, e.g. `L1234`), never its name; the repo-run marker `repo-run` is refused, because a repo session writes the shipped tree through the scratchpad and never confirms. `operation`: `create` writes a `.md` document whole (text only, capped at 200 KB, temp file plus rename; refused for a path the shipped tree holds, for the `.confirmations.local.json` suffix, and with `exists` when the overlay already holds it, unless `overwrite: true`; on `exists`, re-read and return that path), or one `row` of `venues.local.json` or `kinds.local.json` (upserted by `code`, not-venue `name`, or `file` under a lock; refused for a duplicate alias, an alias equal after normalization to a code, file name or official name, and a `name` on a shipped code or file; `venues.json` and `kinds.json` are never written). A document's front matter is required; the runtime stamps `learned_by: agent`, `matter`, `plugin_version` and `shipped_from` into it. The `matter` stamp is the `matt_num` of the one practice-data matter `matter` names, never the caller's string; when no single matter has that number, the create is refused with `matter_unknown` and nothing is written. A /draft type file or venue.md layout block and a /publish format.md block must validate. Every item of a source record (front matter with `page_url`) not marked `checked_by: file_sha256` must appear in this session's memoized fetch of that page (`sources__fetch` or `sources__check`): a miss refuses the write with `excerpt_mismatch` naming the rule_refs, and no live memo refuses with `memo_expired` naming the URL. An overwrite whose page shows a currency marker older than the recorded one is refused as `stale_body`, and an overwrite deletes any `_fetched` PDF no excerpt records any more. On a source record's `create`, `saved_copy` names the practitioner's saved copy after a failed fetch, a knowledge path under `_inbox` (e.g. `_inbox/rules.pdf`): the file is read before the write, and a PDF (by its bytes) is hashed into the record's `pdf_sha256`, replacing any the content carried, then copied to `_fetched\\<host>\\<first 12 hex of the sha256>.pdf` (the host of `pdf_url`, else of `page_url`) once the record is written. The original always stays in `_inbox`, and any other file stays there unhashed. A refused write copies nothing. The result's `saved_copy` is {path, copied: true, to, sha256}, {path, copied: false, reason: \"not_pdf\"}, or {path, copied: false, error} when the copy failed after the record was written. `saved_copy` outside `_inbox`, on a record without `page_url`, or on a file that is not a PDF when the content carries `pdf_sha256`, is refused as `invalid_saved_copy`; a file that is not there as `not_found`, a folder as `not_a_file`. `confirm` and `correct` upsert one row, keyed by `rule_ref`, into the file's confirmation sidecar under a lock: `by` is this machine's `person`, which must be a lawyer on the firm roster (`person_unset` names the missing key; a staff key is refused); `confirmed_against` records the item's passage hash and currency marker; `correct` takes `value`, the item's value in the shape its file contract declares, validated by substitution into the merged file. A Sources excerpt is not correctable. At `_hosts.json`, `create` takes one `row` {host, category, page_url} and records the practitioner's yes to a fetch host (ask first, on a `host_not_allowed` refusal): `category` is `venue`, `statute` or `regulator`; the runtime stamps `added` and `approved_by: \"practitioner\"`, and `sources__fetch` admits the host on its next call. Keyed by host under a lock: an entry already there for the host is left unchanged and returns `status: \"exists\"`. An invalid hostname, another category, a missing or extra field, and a malformed `_hosts.json` (`invalid_hosts_file`) are refused. Every other reserved entry is refused with `reserved_entry`.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77251,7 +77251,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__file_download",
-      description: "Move one completed download out of the OS Downloads folder into an existing matter `6. LAW` subfolder. `source_filename` and optional `destination_filename` (default: same name) are bare filenames -- no separators. Refuses, touching nothing: `not_found` (no such file in Downloads); `in_progress` (.crdownload/.tmp/.partial); `dest_exists` (destination filename collision -- record status failed, never overwrite); `not_law_folder`/`protected`/`invalid_path` on the destination. Returns {path, bytes}.",
+      description: "Copy one completed download from the OS Downloads folder into an existing matter `6. LAW` subfolder, leaving the download where it is (Probanda never moves a file it did not create). `source_filename` and optional `destination_filename` (default: same name) are bare filenames -- no separators. Refuses, touching nothing: `not_found` (no such file in Downloads); `in_progress` (.crdownload/.tmp/.partial); `dest_exists` (destination filename collision -- record status failed, never overwrite); `not_law_folder`/`protected`/`invalid_path` on the destination. Returns {path, bytes}.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79216,7 +79216,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["practice", "research", "litigator", "solicitor", "file-admin"];
+var SIBLING_PLUGINS = ["practice", "research", "litigator", "solicitor", "file-manager"];
 function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -79316,7 +79316,7 @@ function rosterLine(installRoot, segment) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (practice, research, litigator, solicitor or file-admin) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (practice, research, litigator, solicitor or file-manager) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("case-data", env, installRoot);
@@ -81481,6 +81481,7 @@ async function ingestAuthority(request2, env = process.env) {
     ...named,
     counts: counts2,
     treats_prior: plan.treats_prior ?? null,
+    held_back: plan.held_back ?? [],
     evidence_sql: done.evidence_sql,
     warning: done.warning
   };
@@ -84747,7 +84748,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join18 } from "node:path";
-var BUILD_STAMP = false ? null : "8ba7586b15e1";
+var BUILD_STAMP = false ? null : "a44486b34528";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84992,7 +84993,7 @@ function runDriver3(label, driver, payload, env, defaultTimeoutMs) {
 
 // src/knowledge/tools.ts
 import { createHash as createHash8 } from "node:crypto";
-import { existsSync as existsSync20, mkdirSync as mkdirSync8, readdirSync as readdirSync8, readFileSync as readFileSync19, realpathSync as realpathSync3, renameSync as renameSync4, unlinkSync as unlinkSync4 } from "node:fs";
+import { copyFileSync, existsSync as existsSync20, mkdirSync as mkdirSync8, readdirSync as readdirSync8, readFileSync as readFileSync19, realpathSync as realpathSync3, renameSync as renameSync4, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 
 // src/files/skill-source.ts
@@ -86702,7 +86703,7 @@ async function writeDocument(kp, args, matter, seams, label) {
     size: Buffer.byteLength(text4, "utf-8"),
     header: stamp2,
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
-    ...saved ? { saved_copy: moveSavedCopy(saved, seams, label) } : {},
+    ...saved ? { saved_copy: copySavedCopy(saved, seams, label) } : {},
     fetched_deleted: previous.old === null ? [] : deleteUnreferencedPdfs(pdfHashesIn(previous.old), seams, label),
     ...provenance3(loc.shipped_from, seams)
   };
@@ -86745,16 +86746,16 @@ function savedCopyOf(raw, record2, front, seams) {
   grammarCheck(to2, "file", label);
   return { path: kp.path, abs, pdf: { sha256: sha2562, to: to2 } };
 }
-function moveSavedCopy(saved, seams, label) {
-  if (!saved.pdf) return { path: saved.path, moved: false, reason: "not_pdf" };
+function copySavedCopy(saved, seams, label) {
+  if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
   try {
-    renameSync4(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
+    copyFileSync(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
   } catch (err) {
     const code = err.code;
     if (typeof code !== "string") throw err;
-    return { path: saved.path, moved: false, error: code };
+    return { path: saved.path, copied: false, error: code };
   }
-  return { path: saved.path, moved: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
+  return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
 }
 var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
 function pdfHashesIn(text4) {
@@ -101046,7 +101047,7 @@ import { existsSync as existsSync36, readdirSync as readdirSync21 } from "node:f
 import { win32 as pathWin3220 } from "node:path";
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync, existsSync as existsSync35, mkdirSync as mkdirSync14, mkdtempSync, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync10 } from "node:fs";
+import { copyFileSync as copyFileSync2, existsSync as existsSync35, mkdirSync as mkdirSync14, mkdtempSync, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3219 } from "node:path";
 
@@ -101526,7 +101527,7 @@ function publish2(folder, files) {
   }
   for (const file of files) {
     const final = pathWin3219.join(folder, file.name);
-    copyFileSync(file.from, `${final}.tmp`);
+    copyFileSync2(file.from, `${final}.tmp`);
     renameSync8(`${final}.tmp`, final);
   }
 }
@@ -104100,14 +104101,13 @@ function repoDocsRead(relative2, env) {
 import { createHash as createHash10 } from "node:crypto";
 import {
   appendFileSync as appendFileSync2,
-  copyFileSync as copyFileSync2,
+  constants,
+  copyFileSync as copyFileSync3,
   existsSync as existsSync38,
   mkdirSync as mkdirSync16,
   readdirSync as readdirSync24,
   readFileSync as readFileSync34,
-  renameSync as renameSync9,
   statSync as statSync18,
-  unlinkSync as unlinkSync8,
   writeFileSync as writeFileSync12
 } from "node:fs";
 import { homedir as homedir9 } from "node:os";
@@ -104574,13 +104574,7 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync18(source).size;
-  try {
-    renameSync9(source, dest);
-  } catch (err) {
-    if (err.code !== "EXDEV") throw err;
-    copyFileSync2(source, dest);
-    unlinkSync8(source);
-  }
+  copyFileSync3(source, dest, constants.COPYFILE_EXCL);
   return { path: dest, bytes };
 }
 function appendManifest(destinationDir, record2) {

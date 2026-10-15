@@ -261,7 +261,7 @@ test("a practitioner layout's create writes the form's source record, a learned 
   ].join("\n");
   const saved = await write({ path: `${DIR}/Sources/notice-of-discontinuance.md`, content: record, saved_copy: "_inbox/form-36.pdf" });
   assert.equal(saved.status, "created");
-  assert.equal(saved.saved_copy.moved, true);
+  assert.equal(saved.saved_copy.copied, true);
 
   const part = (source, extra = {}) => ({ heading: null, heading_numbering: "none", paragraph_numbering: "none", source, ...extra });
   const layout = {

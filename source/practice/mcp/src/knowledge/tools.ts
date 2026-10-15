@@ -14,7 +14,7 @@
 // namespace touches the network: excerpts are checked against the fetch memo.
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, unlinkSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, unlinkSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { BUILD_STAMP } from "../build-stamp.js";
@@ -783,7 +783,7 @@ async function writeDocument(kp: KnowledgePath, args: Args, matter: string, seam
     size: Buffer.byteLength(text, "utf-8"),
     header: stamp,
     ...(previous.stale_check ? { stale_check: previous.stale_check } : {}),
-    ...(saved ? { saved_copy: moveSavedCopy(saved, seams, label) } : {}),
+    ...(saved ? { saved_copy: copySavedCopy(saved, seams, label) } : {}),
     fetched_deleted: previous.old === null ? [] : deleteUnreferencedPdfs(pdfHashesIn(previous.old), seams, label),
     ...provenance(loc.shipped_from, seams),
   };
@@ -795,7 +795,7 @@ interface SavedCopy {
   /** The knowledge path the caller named, under `_inbox\`. */
   path: string;
   abs: string;
-  /** Present when the file is a PDF: its hash and the `_fetched\` path it moves to. */
+  /** Present when the file is a PDF: its hash and the `_fetched\` path it is copied to. */
   pdf: { sha256: string; to: KnowledgePath } | null;
 }
 
@@ -845,19 +845,20 @@ function savedCopyOf(raw: unknown, record: string, front: FrontMatter, seams: Kn
 }
 
 /**
- * Move a saved PDF into `_fetched\` once its record is written. The record already holds
- * its hash, so a failed move is reported in the result, not thrown, and the file stays.
+ * Copy a saved PDF into `_fetched\` once its record is written, leaving the original in
+ * `_inbox\`: a file Probanda did not create is only ever read or copied, never moved. The
+ * record already holds its hash, so a failed copy is reported in the result, not thrown.
  */
-function moveSavedCopy(saved: SavedCopy, seams: KnowledgeSeams, label: string): Record<string, unknown> {
-  if (!saved.pdf) return { path: saved.path, moved: false, reason: "not_pdf" };
+function copySavedCopy(saved: SavedCopy, seams: KnowledgeSeams, label: string): Record<string, unknown> {
+  if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
   try {
-    renameSync(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
+    copyFileSync(saved.abs, writableOverlayPath(saved.pdf.to, seams, label).abs);
   } catch (err) {
     const code = (err as { code?: unknown }).code;
     if (typeof code !== "string") throw err;
-    return { path: saved.path, moved: false, error: code };
+    return { path: saved.path, copied: false, error: code };
   }
-  return { path: saved.path, moved: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
+  return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
 }
 
 // ------------------------------------------------------------ fetched PDFs --

@@ -19,14 +19,13 @@
 import { createHash } from "node:crypto";
 import {
   appendFileSync,
+  constants,
   copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
-  renameSync,
   statSync,
-  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -131,14 +130,10 @@ export function fileDownload(
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
 
+  // A copy, never a move: the download stays in Downloads, because Probanda only reads or
+  // copies a file it did not create (the file-manager plugin holds every move).
   const bytes = statSync(source).size;
-  try {
-    renameSync(source, dest);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== "EXDEV") throw err;
-    copyFileSync(source, dest);
-    unlinkSync(source);
-  }
+  copyFileSync(source, dest, constants.COPYFILE_EXCL);
   return { path: dest, bytes };
 }
 

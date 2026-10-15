@@ -550,7 +550,7 @@ test("a stem-form kinds row with an alias resolves through the alias to the stem
 // ------------------------------------------------------------ saved copies --
 //
 // #1143: a practitioner's saved copy in `_inbox\`, named by `saved_copy` on a source
-// record's create. A PDF is hashed into `pdf_sha256` and moved to `_fetched\` once the
+// record's create. A PDF is hashed into `pdf_sha256` and copied to `_fetched\` once the
 // record is written; any other file is left where it is, unhashed.
 
 const SAVED_PDF = "%PDF-1.4\nfixture saved copy\n%%EOF\n";
@@ -565,7 +565,7 @@ function inbox(f, name, text) {
   writeFileSync(f.localPath(`_inbox/${name}`), text);
 }
 
-test("a saved PDF is hashed into pdf_sha256, replacing any the content carried, and moved to _fetched under the page_url host", async (t) => {
+test("a saved PDF is hashed into pdf_sha256, replacing any the content carried, and copied to _fetched under the page_url host", async (t) => {
   const { f, write } = await setup(t, []);
   inbox(f, "rules.pdf", SAVED_PDF);
   const result = await write({
@@ -575,8 +575,8 @@ test("a saved PDF is hashed into pdf_sha256, replacing any the content carried, 
     saved_copy: "_inbox/rules.pdf",
   });
   const to = `_fetched/fixture.test/${SAVED_SHA.slice(0, 12)}.pdf`;
-  assert.deepEqual(result.saved_copy, { path: "_inbox/rules.pdf", moved: true, to, sha256: SAVED_SHA });
-  assert.equal(existsSync(f.localPath("_inbox/rules.pdf")), false);
+  assert.deepEqual(result.saved_copy, { path: "_inbox/rules.pdf", copied: true, to, sha256: SAVED_SHA });
+  assert.equal(readFileSync(f.localPath("_inbox/rules.pdf"), "utf-8"), SAVED_PDF);
   assert.equal(readFileSync(f.localPath(to), "utf-8"), SAVED_PDF);
   const text = readFileSync(f.localPath(RECORD_PATH), "utf-8");
   assert.match(text, new RegExp(`^pdf_sha256: "${SAVED_SHA}"$`, "m"));
@@ -615,13 +615,13 @@ test("a saved page that is not a PDF is left in _inbox with no hash stamped, and
   inbox(f, "rules.html", "<html><body><p>Echo was transcribed from the saved copy.</p></body></html>");
   const result = await write({ operation: "create", path: RECORD_PATH, content: record({ items: SAVED_ITEMS }), saved_copy: "_inbox/rules.html" });
   assert.equal(result.status, "created");
-  assert.deepEqual(result.saved_copy, { path: "_inbox/rules.html", moved: false, reason: "not_pdf" });
+  assert.deepEqual(result.saved_copy, { path: "_inbox/rules.html", copied: false, reason: "not_pdf" });
   assert.ok(existsSync(f.localPath("_inbox/rules.html")));
   assert.doesNotMatch(readFileSync(f.localPath(RECORD_PATH), "utf-8"), /pdf_sha256/);
   assert.equal(existsSync(f.localPath("_fetched")), false);
 });
 
-test("the moved PDF survives a refresh of its record and is deleted when the record is retired", async (t) => {
+test("the copied PDF survives a refresh of its record and is deleted when the record is retired", async (t) => {
   const { f, seams, write } = await setup(t); // a refresh compares currency markers against the memoized page
   inbox(f, "rules.pdf", SAVED_PDF);
   const { saved_copy } = await write({ operation: "create", path: RECORD_PATH, content: record({ items: SAVED_ITEMS }), saved_copy: "_inbox/rules.pdf" });
@@ -676,14 +676,14 @@ test("saved_copy is refused on an index row, a confirm and _hosts.json", async (
   assert.equal(hosts.name, "ValidationError");
 });
 
-test("a move that fails after the record is written is reported, not thrown, and the saved copy stays", async (t) => {
+test("a copy that fails after the record is written is reported, not thrown, and the saved copy stays", async (t) => {
   const { f, write } = await setup(t, []);
   inbox(f, "rules.pdf", SAVED_PDF);
   const to = `_fetched/fixture.test/${SAVED_SHA.slice(0, 12)}.pdf`;
   mkdirSync(join(f.localPath(to), "blocker"), { recursive: true }); // a folder where the PDF would go
   const result = await write({ operation: "create", path: RECORD_PATH, content: record({ items: SAVED_ITEMS }), saved_copy: "_inbox/rules.pdf" });
   assert.equal(result.status, "created");
-  assert.equal(result.saved_copy.moved, false);
+  assert.equal(result.saved_copy.copied, false);
   assert.equal(typeof result.saved_copy.error, "string");
   assert.ok(existsSync(f.localPath("_inbox/rules.pdf")));
   assert.match(readFileSync(f.localPath(RECORD_PATH), "utf-8"), new RegExp(`pdf_sha256: "${SAVED_SHA}"`));

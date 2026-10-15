@@ -20,11 +20,11 @@ exception, listed in `docs/agents/context-optimization.md`. Do not add the line 
 
 Owns the firm's file naming grammar, the code registry, and the mechanics of
 checking names. Knows nothing about which folders exist or what belongs in
-them — that is the folder profiles of the `file-admin` plugin, or a caller's
+them — that is the folder profiles of the `file-manager` plugin, or a caller's
 own logic. This skill answers exactly two questions: **does this name
 conform?** and **what should this file be named?** It renames nothing:
 applying an approved rename or routing manifest is `/file-apply`, in the
-`file-admin` plugin.
+`file-manager` plugin.
 
 **A file renamed *incorrectly* is worse than one left alone** — a wrong name
 can hide a triggered deadline or break a keyword search. Every intent below
@@ -82,8 +82,8 @@ request: run **gate** on the current name first. If it conforms, say so — no
 further work. If it fails, read the file yourself, derive a proposed name
 under **propose**, and present it to the user for confirmation. Once they approve, the
 rename is `/file-apply`'s **apply** intent. If `/file-apply` is not available in
-this session, the `file-admin` plugin is not enabled: stop, tell the
-practitioner that this step renames a file and needs `file-admin`, and do
+this session, the `file-manager` plugin is not enabled: stop, tell the
+practitioner that this step renames a file and needs `file-manager`, and do
 nothing else. Never fall back to a shell `mv` or `rm` or the Write tool.
 
 ## For callers building their own review pipeline (e.g. housekeeping)

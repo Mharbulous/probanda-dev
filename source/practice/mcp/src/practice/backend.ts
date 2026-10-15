@@ -6,7 +6,7 @@
 // storage"). It has no table, column or file per kind of item.
 //
 // This module imports nothing that reaches Probanda's Cloud: housekeeping
-// (built into the file-admin bundle) imports resolveCaseDataRoot from here.
+// (built into the file-manager bundle) imports resolveCaseDataRoot from here.
 
 import { join } from "node:path";
 

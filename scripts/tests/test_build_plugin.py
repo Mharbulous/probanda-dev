@@ -11,10 +11,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("practice", "research", "litigator", "solicitor", "file-admin")
+PLUGINS = ("practice", "research", "litigator", "solicitor", "file-manager")
 BUNDLES = {"practice": ("mcp/dist/litigation-mcp.js",),
            "research": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
-           "file-admin": ("files-mcp/dist/file-admin-mcp.js",)}
+           "file-manager": ("files-mcp/dist/file-manager-mcp.js",)}
 
 
 def build(*args):

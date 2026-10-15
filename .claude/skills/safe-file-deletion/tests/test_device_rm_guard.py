@@ -88,11 +88,9 @@ class DeviceRmRewriteTests(HookTestCase):
             with self.subTest(command=command):
                 self.assertDenied(self.call(DEVICE, command))
 
-    def test_mount_file_keeps_todays_soft_delete(self):
-        command = 'rm "$HOME/mnt/L1/keep.txt"'
-        expected = ('mkdir -p "$HOME/mnt/L1/TRASH" && mv --backup=numbered '
-                    '"$HOME/mnt/L1/keep.txt" "$HOME/mnt/L1/TRASH/keep.txt"')
-        self.assertRewritten(self.call(DEVICE, command), expected, {"command": command})
+    def test_mount_file_is_denied_not_moved(self):
+        # Moving a file to TRASH is file-manager's file_ops__trash, never the hook's.
+        self.assertDenied(self.call(DEVICE, 'rm "$HOME/mnt/L1/keep.txt"'))
 
 
 class DeviceRmExecutionTests(HookTestCase):

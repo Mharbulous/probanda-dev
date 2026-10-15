@@ -117,8 +117,15 @@ assignment as "position-based, not content-verified."
 
 If `rename_mapping` is non-empty, ask the user per `/show-me`, as one
 plain-text question ending the turn, with options:
-- "Yes, rename files" → invoke `subskills/assemble-affidavit/scripts/rename_exhibits.py` with the
-  mapping (never use bash `mv`/`cp`/`shutil` directly on exhibit files).
+- "Yes, rename files" → apply the mapping through `/file-apply` (intent
+  apply): one pair per mapping entry, each `src` and `dst` the exhibit
+  folder joined to `from` and `to`, and `expected_total` the count shown to
+  the user. It runs a swap in two passes with rollback. Never use a shell
+  `mv`/`cp`/`shutil` on exhibit files.
+
+Offer "Yes, rename files" only when `/file-apply` is available in this
+session. When it is not, the `file-manager` plugin is not enabled: offer the
+other two options and say that renaming the exhibits needs `file-manager`.
 - "No, I'll fix manually" → stop here, do not assemble.
 - "Skip renames, proceed anyway" → proceed with files as-named, carry the
   mismatch warnings forward into the assembly report.

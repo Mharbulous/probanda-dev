@@ -25,8 +25,9 @@ draft/final workflow: Stage 1 produces a reviewable draft; Stage 2
 - **Sources are read-only.** Never mutate the original affidavit DOCX or
   the original exhibit PDFs. Every script stages its own working copies.
 - **Never `mv`/`cp`/`shutil` on exhibit files directly.** Renames only
-  happen through `subskills/assemble-affidavit/scripts/rename_exhibits.py` (it has cycle-safe two-pass
-  logic and a rollback path that ad hoc shell commands don't).
+  happen through `/file-apply`, in the `file-manager` plugin (it has
+  cycle-safe two-pass logic and a rollback path that ad hoc shell commands
+  don't). Without `file-manager`, no exhibit is renamed.
 - **Never auto-advance Stage 1 → Stage 2.** Pagination is user-triggered
   only — never run `paginate.py` right after `assemble.py` without the
   user asking for it. They need to review and prune pages first (cover

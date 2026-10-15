@@ -45,7 +45,7 @@ SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
 # Tool families of a server, for a name written without its plugin prefix: the
-# research plugin's commons server, and the file-admin plugin's files server, whose
+# research plugin's commons server, and the file-manager plugin's files server, whose
 # tools rename, move or delete a user's file.
 SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__", "suggestion_box__"),
                         "files": ("file_ops__", "housekeeping__")}

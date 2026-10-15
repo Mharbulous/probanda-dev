@@ -126,7 +126,7 @@ operative primary — lives in the citation-download playbook.)
 
 - Never open, parse, quote, or summarize a downloaded file — the memo
   included. You have no tool that reads a file: your only filesystem
-  operations are the `research_filing__*` tools, which list and move files by
+  operations are the `research_filing__*` tools, which list and copy files by
   filename, never by content.
 - Never report, repeat, or summarize decision text rendered on any source page
   — Westlaw and CanLII alike. Page reads (`read_page`, `get_page_text`,
@@ -153,8 +153,8 @@ Downloads — the server finds Downloads itself.
 - `list_law_folder` — the destination's existing filenames, for the
   already-on-file dedupe; a `not_found` is the "destination does not exist,
   fail immediately naming the path" rule.
-- `file_download` — moves one completed download to
-  `<destination>/<filename>`. A `dest_exists` refusal is a destination filename
+- `file_download` — copies one completed download to
+  `<destination>/<filename>`, leaving it in Downloads. A `dest_exists` refusal is a destination filename
   collision: do not retry under another name — record `status: failed`,
   `reason: "destination filename collision"`, and move on. Watch for Chrome's
   ` (1)`, ` (2)` collision suffixes on repeat downloads of similarly-named

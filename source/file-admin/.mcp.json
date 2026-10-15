@@ -1,8 +1,0 @@
-{
-  "files": {
-    "command": "node",
-    "args": [
-      "${CLAUDE_PLUGIN_ROOT}/files-mcp/dist/file-admin-mcp.js"
-    ]
-  }
-}

@@ -1,6 +1,6 @@
 ---
 name: file-apply
-description: Apply an approved rename manifest (files renamed in place) or an approved routing manifest (files moved to other folders), and hash a set of files before a move. The mechanical rename and move engine of the file-admin plugin, used by a caller that already holds the practitioner's approval (/route-accounting, /housekeeping, /publish's renumber-affidavit). Never proposes a name and never decides what is approved. Naming grammar -> /file-naming.
+description: Apply an approved rename manifest (files renamed in place) or an approved routing manifest (files moved to other folders), and hash a set of files before a move. The mechanical rename and move engine of the file-manager plugin, used by a caller that already holds the practitioner's approval (/route-accounting, /housekeeping, /publish's renumber-affidavit). Never proposes a name and never decides what is approved. Naming grammar -> /file-naming.
 ---
 
 ## Contents
@@ -18,7 +18,7 @@ through the Skill tool, which refuses a skill carrying that line.
 
 Executes renames and moves that a caller has already had approved. The grammar and
 the code registry belong to `/file-naming`, in the `practice` plugin. This skill
-ships in `file-admin`, so disabling that plugin removes it with every other
+ships in `file-manager`, so disabling that plugin removes it with every other
 Probanda tool that renames, moves or deletes a user's file.
 
 **A file renamed *incorrectly* is worse than one left alone.** This skill never

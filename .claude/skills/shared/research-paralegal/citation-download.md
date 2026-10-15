@@ -86,7 +86,7 @@ Westlaw names the file, so identify it by snapshot diff with
 
 (CanLII instead sets the name via the `download` attribute, so it is
 identified by exact filename without a snapshot diff — per the fetched CanLII
-mechanics.) Then move the file with `research_filing__file_download` and
+mechanics.) Then file it with `research_filing__file_download` and
 handle a `dest_exists` collision per the core agent's Filing section.
 
 ## Westlaw specifics

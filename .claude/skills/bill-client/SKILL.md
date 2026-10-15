@@ -41,7 +41,7 @@ Before reading file names to find the last invoice, confirm housekeeping has alr
 1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
 2. Invoke the `case-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.
 3. If every non-conforming file already has a review row (matched by name or hash), housekeeping is up to date — no action needed.
-4. If there are files that fail the naming grammar (`file-naming/scripts/name_gate.py`, against `file-naming/references/code-registry.md`) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-admin` plugin: if it is not available in this session, say that naming those files needs `file-admin` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
+4. If there are files that fail the naming grammar (`file-naming/scripts/name_gate.py`, against `file-naming/references/code-registry.md`) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-manager` plugin: if it is not available in this session, say that naming those files needs `file-manager` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
 
 ## Step 3 — Find the most recently sent bill
 
@@ -93,10 +93,10 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 The download lands in the user's Downloads folder, which is outside the reach of the Read/Write/Edit file tools — use computer-use (File Explorer) instead:
 
 1. `request_access` to File Explorer.
-2. Locate the newest `TimeCamp Time report.xlsx` in Downloads, rename it (F2) to `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date).
-3. Cut it (right-click → Cut, not Ctrl+X — more reliable to trigger via context menu).
-4. **Navigate to the destination folder using the sidebar folder tree (click through), never by typing a path into the address bar after cutting.** The `type` action writes through the clipboard internally, which silently overwrites the cut file reference — the paste then does nothing and the mistake is easy to miss. If a path must be entered, do it *before* cutting, or use Back/sidebar navigation instead.
-5. Paste (Ctrl+V) into the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `.claude/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent.
+2. Locate the newest `TimeCamp Time report.xlsx` in Downloads. Copy it (right-click → Copy, not Ctrl+C — more reliable to trigger via context menu). Never cut, rename or delete the download: it stays in Downloads as it is, and only Probanda's copy is renamed and edited.
+3. **Navigate to the destination folder using the sidebar folder tree (click through), never by typing a path into the address bar after copying.** The `type` action writes through the clipboard internally, which silently overwrites the copied file reference — the paste then does nothing and the mistake is easy to miss. If a path must be entered, do it *before* copying, or use Back/sidebar navigation instead.
+4. Paste (Ctrl+V) into the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `.claude/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent.
+5. Rename the pasted copy in `BILLING` (F2) to `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date).
 
 ## Step 8 — Open and clean up the workbook
 
@@ -236,7 +236,7 @@ Any time the underlying "Time Tracking Report - decimal" sheet is edited (rows d
 ## General technique notes (apply throughout)
 
 - **Date/segmented text fields**: prefer clicking calendar pickers over typing formatted date strings — masked inputs frequently garble typed dates.
-- **File Explorer cut/paste**: never type an address-bar path between a Cut and a Paste — the `type` action goes through the clipboard and silently discards the cut file reference. Navigate via the sidebar tree or Back button instead.
+- **File Explorer copy/paste**: never type an address-bar path between a Copy and a Paste — the `type` action goes through the clipboard and silently discards the copied file reference. Navigate via the sidebar tree or Back button instead.
 - **Ribbon flyouts / Format-pane controls**: expect to need two clicks; if still unresponsive, find an alternate control (checkbox, direct object double-click, manual drag) rather than persisting with the same click.
 - **Filtered-row deletion**: always use `Go To Special → Visible cells only` before deleting rows under an active filter. Verify with `Ctrl+End` afterward that only the intended rows are gone.
 - **Never trust a file name for a legal/financial fact** (invoice number, amount, date) — confirm against the actual document content before recording anything to a database.

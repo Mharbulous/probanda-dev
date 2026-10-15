@@ -136,7 +136,7 @@
       "hooks": {},
       "servers": []
     },
-    "file-admin": {
+    "file-manager": {
       "requires": [
         "practice"
       ],

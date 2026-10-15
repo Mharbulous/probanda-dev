@@ -1,5 +1,5 @@
 // The practitioner's "0. CASE DATA" folder, resolved from coclerk.json. Kept out of
-// backend.ts so a server that needs only this (the file-admin plugin's `files`
+// backend.ts so a server that needs only this (the file-manager plugin's `files`
 // server, through housekeeping/resolve.ts) does not bundle the practice database.
 import { existsSync, readFileSync } from "node:fs";
 

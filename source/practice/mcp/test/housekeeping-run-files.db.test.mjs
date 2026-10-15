@@ -334,11 +334,11 @@ test("wait_approval: pending on timeout, approved at once, corrupt when approval
   }
 });
 
-test("the nine tools are registered on the file-admin server only and dispatch through it", async () => {
+test("the nine tools are registered on the file-manager server only and dispatch through it", async () => {
   const { callTool } = await import("../build/dispatch.js");
-  const { callFileAdminTool } = await import("../build/file-admin-dispatch.js");
-  const { buildToolDefinitions, buildFileAdminToolDefinitions } = await import("../build/schema-gen.js");
-  const names = buildFileAdminToolDefinitions().map((d) => d.name);
+  const { callFileManagerTool } = await import("../build/file-manager-dispatch.js");
+  const { buildToolDefinitions, buildFileManagerToolDefinitions } = await import("../build/schema-gen.js");
+  const names = buildFileManagerToolDefinitions().map((d) => d.name);
   for (const name of ["preflight", "new_run", "write_run_file", "serve_page", "wait_approval", "resolve", "reconcile", "journal_append"]) {
     assert.ok(names.includes("housekeeping__" + name), name);
   }
@@ -349,16 +349,16 @@ test("the nine tools are registered on the file-admin server only and dispatch t
   assert.deepEqual(dataNames.filter((n) => n.startsWith("housekeeping__") || n.startsWith("file_ops__")), []);
   await assert.rejects(callTool({}, "file_ops__trash", { path: "x" }), /Unknown tool "file_ops__trash"/);
   // Serving enables the Approve write, so the tool is not annotated read-only.
-  const serve = buildFileAdminToolDefinitions().find((d) => d.name === "housekeeping__serve_page");
+  const serve = buildFileManagerToolDefinitions().find((d) => d.name === "housekeeping__serve_page");
   assert.notEqual(serve.annotations.readOnlyHint, true);
 
   const m = matterFixture({ [LETTER]: "letter" });
   try {
-    const { run_id } = await callFileAdminTool("housekeeping__new_run", { matter_root: m.root });
+    const { run_id } = await callFileManagerTool("housekeeping__new_run", { matter_root: m.root });
     assert.match(run_id, RUN_ID_RE);
-    await assert.rejects(callFileAdminTool("housekeeping__journal_append", { matter_root: m.root, run_id, row_id: "x", outcome: "maybe" }), /must be one of: done, failed/);
+    await assert.rejects(callFileManagerTool("housekeeping__journal_append", { matter_root: m.root, run_id, row_id: "x", outcome: "maybe" }), /must be one of: done, failed/);
     await assert.rejects(
-      callFileAdminTool("file_ops__move", { matter_root: m.root, source: m.at(LETTER), destination: m.at(LETTER), create_folders: "3. CORRESPONDENCE" }),
+      callFileManagerTool("file_ops__move", { matter_root: m.root, source: m.at(LETTER), destination: m.at(LETTER), create_folders: "3. CORRESPONDENCE" }),
       /create_folders must be an array of strings/
     );
   } finally {

@@ -8,7 +8,7 @@ Probanda is a set of five Claude Cowork plugins for legal practice in British Co
 | `research` | What the law is: legal research, citation and verification | `practice` |
 | `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `practice`, `research` |
 | `solicitor` | Reserved. It ships no skills yet | `practice` |
-| `file-admin` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `practice` |
+| `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `practice` |
 
 ## Install
 
@@ -19,12 +19,12 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 /plugin install practice@probanda
 /plugin install research@probanda
 /plugin install litigator@probanda
-/plugin install file-admin@probanda
+/plugin install file-manager@probanda
 ```
 
 Keep to that order. Claude Code installs a required plugin with the plugin that requires it, but claude.ai and Cowork do not: there, a plugin whose required plugin is missing loads with tools and agents absent.
 
-`file-admin` is optional: leave it out to keep Probanda's file tools away from your files. Without it, a step that would move or trash a file stops and says so. The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-admin removes Probanda's file tools, not the host's.
+`file-manager` is optional: leave it out to keep Probanda's file tools away from your files. Without it, a step that would move or trash a file stops and says so. The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-manager removes Probanda's file tools, not the host's.
 
 ## Status
 

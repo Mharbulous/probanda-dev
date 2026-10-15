@@ -158,7 +158,7 @@ test("list_law_folder lists files only", () => {
   }
 });
 
-test("file_download moves a completed download and refuses, touching nothing, on every boundary", () => {
+test("file_download copies a completed download and refuses, touching nothing, on every boundary", () => {
   const f = fixture();
   try {
     for (const bad of ["", "sub/2021 BCSC 963.pdf", "..\\x.pdf", "C:x.pdf", "..", "a\0b"]) {
@@ -176,7 +176,7 @@ test("file_download moves a completed download and refuses, touching nothing, on
     const result = fileDownload(f.law, "2021 BCSC 963.pdf", undefined, f.env);
     assert.equal(result.path.toLowerCase(), join(f.law, "2021 BCSC 963.pdf").toLowerCase());
     assert.equal(result.bytes, Buffer.byteLength("decision\n"));
-    assert.equal(existsSync(join(f.downloads, "2021 BCSC 963.pdf")), false);
+    assert.equal(readFileSync(join(f.downloads, "2021 BCSC 963.pdf"), "utf-8"), "decision\n", "the download stays in Downloads");
     assert.equal(readFileSync(result.path, "utf-8"), "decision\n");
   } finally {
     f.cleanup();

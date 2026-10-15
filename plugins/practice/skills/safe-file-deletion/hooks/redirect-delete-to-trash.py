@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Claude Code PreToolUse hook (matcher: Bash|PowerShell|mcp__(.+__)?device_bash).
 
-Turns hard deletes issued outside a Git worktree into a soft delete: move the
-item to <workspace root>/TRASH/<same relative path>.
+Refuses hard deletes issued outside a Git worktree and the OS temp dir, and
+points to the file-manager plugin's file_ops__trash tool, which moves the item to
+<workspace root>/TRASH/<same relative path>. It never moves a file itself, so
+without file-manager no file Probanda did not create is deleted or moved.
 
 Policy (scope rules, rationale): .claude/skills/safe-file-deletion/SKILL.md
 
@@ -18,9 +20,7 @@ Decision rule
      counts by each match; an rm whose targets cannot be told gets no exemption.
      device_bash runs on another machine, so nothing is exempted
      by probing this one.
-  3. A single `rm`/`unlink` whose every target parses with confidence ->
-     allow, with the command rewritten into mkdir -p + mv --backup=numbered.
-  3a. device_bash only, when 3 does not apply: a lone non-recursive `rm`
+  3. device_bash only: a lone non-recursive `rm`
      (flags only -f/--force), after an optional `cd <word> &&`, whose words
      expand nothing but globs, a leading `$HOME/` or a bare `~/`, with no
      target or cd word spelled under $HOME/mnt, and no hidden script or encoded
@@ -123,7 +123,6 @@ POWERSHELL_PATTERNS = _destructive_patterns(PS_BRACE)
 # (mcp__remote-devices__device_bash); its parameter is also named `command`.
 TOOL_RE = re.compile(r"Bash|PowerShell|mcp__(.+__)?device_bash")
 TRASH_DIRNAME = "TRASH"
-MARKER = "coclerk.json"          # marks the root of a client-matter project
 
 # Tokens: double-quoted, single-quoted, or bare.
 TOKEN_RE = re.compile(r'"([^"]*)"|\'([^\']*)\'|(\S+)')
@@ -139,7 +138,6 @@ EMBEDDED_MSYS_RE = re.compile(r"(?<![\w:])/[A-Za-z]/[^\"'\r\n|<>&;]*")
 WORD_RE = re.compile(r'"([^"\\`]*)"|\'([^\']*)\'|([^\s"\'\\;&|<>()`]+)')
 REWRITE_COMMANDS = {"rm", "unlink"}
 REWRITE_FLAGS = {"-r", "-R", "-f", "-rf", "-fr", "--recursive", "--force"}
-GLOB_CHARS = set("*?[")
 HOME_VAR = "$HOME/"
 DEVICE_MOUNT = "mnt"             # device_bash addresses a matter as $HOME/mnt/<folder>/...
 
@@ -484,14 +482,6 @@ def exempt(path, follow=None):
         return False
 
 
-def workspace_root(path):
-    d = nearest_existing(path)
-    for anc in (d, *d.parents):
-        if os.path.isfile(anc / MARKER):
-            return anc
-    return None
-
-
 def split_simple_command(command):
     """Words of a single simple command, or None when splitting it would take
     real shell parsing (operators, escapes, substitutions, adjacent quotes)."""
@@ -618,104 +608,6 @@ def rm_targets(command, cwd):
     return targets
 
 
-def split_home(text, quoting):
-    """(has leading $HOME, rest) for a target word, or None if it carries any
-    other expansion: a variable, a `~` form, a glob, or a comment."""
-    if GLOB_CHARS & set(text):
-        return None
-    if quoting == "single":
-        return False, text                       # nothing expands in single quotes
-    if quoting == "bare" and text.startswith("~/"):
-        text = HOME_VAR + text[2:]
-    elif quoting == "bare" and text.startswith(("~", "#")):
-        return None
-    has_home = text.startswith(HOME_VAR)
-    rest = text[len(HOME_VAR):] if has_home else text
-    if "$" in rest:
-        return None
-    return has_home, rest
-
-
-def is_protected(rel_parts):
-    """A workspace root, its marker, or anything already in TRASH."""
-    return (
-        not rel_parts
-        or tuple(rel_parts) == (MARKER,)
-        or rel_parts[0].casefold() == TRASH_DIRNAME.casefold()
-    )
-
-
-def shell_quote(text, home_prefix=False):
-    escaped = re.sub(r'(["\\$`])', r"\\\1", text)
-    return '"' + ("$HOME/" if home_prefix else "") + escaped + '"'
-
-
-def device_move(has_home, rest):
-    """$HOME/mnt/<folder>/<rel> on the device: matched textually, never
-    expanded or probed here -- the path exists only on the device."""
-    parts = rest.rstrip("/").split("/")
-    if not has_home or len(parts) < 2 or parts[0] != DEVICE_MOUNT:
-        return None
-    if any(p in ("", ".", "..") for p in parts) or is_protected(parts[2:]):
-        return None
-    root, rel = parts[:2], parts[2:]
-    return (
-        shell_quote("/".join(parts), home_prefix=True),
-        shell_quote("/".join(root + [TRASH_DIRNAME] + rel), home_prefix=True),
-        shell_quote("/".join(root + [TRASH_DIRNAME] + rel[:-1]), home_prefix=True),
-    )
-
-
-def host_move(has_home, rest):
-    """An absolute path on this machine inside a client-matter workspace."""
-    if has_home:
-        home = (os.environ.get("HOME") or os.path.expanduser("~")).replace("\\", "/")
-        rest = home.rstrip("/") + "/" + rest
-    msys = MSYS_ABS_RE.match(rest)
-    if msys:
-        rest = msys.group(1).upper() + ":/" + msys.group(2)
-    if not (WIN_ABS_RE.match(rest) or (os.name != "nt" and rest.startswith("/"))):
-        return None
-    if any(p in (".", "..") for p in re.split(r"[\\/]", rest)):
-        return None
-    if exempt(rest, follows(rest)):
-        return None
-    target = Path(os.path.abspath(rest))
-    root = workspace_root(target)
-    if root is None or target == root:
-        return None
-    rel = target.relative_to(root)
-    if is_protected(rel.parts):
-        return None
-    dest = root / TRASH_DIRNAME / rel
-    return (
-        shell_quote(target.as_posix()),
-        shell_quote(dest.as_posix()),
-        shell_quote(dest.parent.as_posix()),
-    )
-
-
-def rewrite_command(tool_name, command):
-    """The mkdir -p + mv replacement for a delete parsed with confidence, else None."""
-    words = split_simple_command(command)
-    if not words or words[0][0] not in REWRITE_COMMANDS:
-        return None
-    move = host_move if tool_name == "Bash" else device_move
-    steps = []
-    for text, quoting in words[1:]:
-        if text.startswith("-"):
-            if text not in REWRITE_FLAGS:
-                return None
-            continue
-        split = split_home(text, quoting)
-        planned = move(*split) if split is not None else None
-        if planned is None:
-            return None
-        src, dest, dest_parent = planned
-        steps.append("mkdir -p " + dest_parent + " && mv --backup=numbered " + src + " " + dest)
-    return " && ".join(steps) or None
-
-
 DEVICE_RM_FLAGS = {"-f", "--force"}
 
 
@@ -798,15 +690,15 @@ def device_rm_rewrite(command):
 
 def block_message(label, offending):
     lines = [
-        "Do not delete this directly - call the file-admin tool file_ops__trash with this"
+        "Do not delete this directly - call the file-manager tool file_ops__trash with this"
         " path; it moves the item to <root>/" + TRASH_DIRNAME + "/<same relative path>.",
         "Blocked pattern: " + label,
     ]
     if offending is not None:
         lines.append("Location outside any Git worktree: " + str(Path(os.path.abspath(offending))))
     lines.append(
-        "If file_ops__trash is not available in this session, the file-admin plugin is not"
-        " enabled and this deletion is refused: tell the practitioner that it needs file-admin."
+        "If file_ops__trash is not available in this session, the file-manager plugin is not"
+        " enabled and this deletion is refused: tell the practitioner that it needs file-manager."
         " Never fall back to a shell move or delete, or the Write tool."
     )
     lines.append(
@@ -859,13 +751,6 @@ def main():
             None,
         )
         if offending is None and targets is not None:
-            return 0
-
-    if tool_name != "PowerShell":
-        rewritten = rewrite_command(tool_name, command)
-        if rewritten is not None:
-            # updatedInput replaces tool_input wholesale, so carry every other key.
-            emit("allow", "soft delete: moved to TRASH instead", {**tool_input, "command": rewritten})
             return 0
 
     if tool_name not in ("Bash", "PowerShell"):

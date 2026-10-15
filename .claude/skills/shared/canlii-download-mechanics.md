@@ -97,7 +97,7 @@ Run this from the decision's `.html` page — the anchor must be same-origin for
 `download` to bind. The file lands in Downloads under the `download` name you
 set, so confirm it by that name per step 4 — no snapshot diff.
 
-## 4. File identification and move
+## 4. File identification and filing
 
 Chrome saves to the OS Downloads folder, not the destination folder. Filing is
 host-side through the `research_filing__*` tools — no Downloads folder
@@ -108,12 +108,14 @@ click: call `research_filing__list_downloads(filename: "<citation>.pdf")` after
 the click to confirm it arrived (an entry with `in_progress: false`). No
 snapshot diff.
 
-Watch for Chrome's ` (1)`, ` (2)` collision suffixes on repeat downloads of
-similarly-named files: make the same `list_downloads(filename: …)` call
-*before* the click — if it already returns a hit, the new file arrives suffixed
-(`<citation> (1).pdf`) and that is the one to move.
+Filing copies the download and leaves it in Downloads, so an earlier download
+of the same citation may still be there, and Chrome then adds a ` (1)`, ` (2)`
+suffix. Make the same `list_downloads(filename: …)` call *before* the click and
+record its `now` as `t0`. If it already returns a hit, the new file arrives
+under the next free suffix: identify it with `list_downloads(since_mtime: t0)`,
+ignoring entries with `in_progress: true`, and that is the one to file.
 
-Move it with `research_filing__file_download(destination_dir, source_filename)`
+File it with `research_filing__file_download(destination_dir, source_filename)`
 — pass `destination_filename` only to strip a Chrome collision suffix. A
 `dest_exists` refusal means a file of that name already exists at the
 destination: do not overwrite and do not rename around it — mark that citation

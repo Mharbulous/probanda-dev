@@ -6,10 +6,10 @@ import { build } from "esbuild";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outfile = resolve(root, "dist", "litigation-mcp.js");
-// The file-admin plugin's `files` server: a second entry point built from this
+// The file-manager plugin's `files` server: a second entry point built from this
 // same source, serving only the file_ops__* and housekeeping__* tools
-// (src/file-admin-index.ts, docs/Plans/2026-10-14_file-admin-plugin.md).
-const fileAdminOutfile = resolve(root, "..", "..", "file-admin", "files-mcp", "dist", "file-admin-mcp.js");
+// (src/file-manager-index.ts, docs/Plans/2026-10-14_file-admin-plugin.md).
+const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
 
 // The repo root is resolved at RUNTIME now (src/repo-root.ts), not baked in
 // here at build time. A baked root is a per-build-machine literal in a
@@ -66,4 +66,4 @@ async function bundle(entry, out) {
 }
 
 await bundle("index.ts", outfile);
-await bundle("file-admin-index.ts", fileAdminOutfile);
+await bundle("file-manager-index.ts", fileManagerOutfile);
