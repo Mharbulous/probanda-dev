@@ -1,7 +1,7 @@
 {
   "name": "file-admin",
   "displayName": "Probanda File Admin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves and deletes the practitioner's own files: matter housekeeping, routing loose accounting files and applying approved renames. Leave it disabled to keep Probanda's file tools away from your files. Requires the practice plugin: install practice first.",
   "author": {
     "name": "Probanda",

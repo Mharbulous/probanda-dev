@@ -1,4 +1,4 @@
-// build-stamp: 47fc7c24e559
+// build-stamp: 6f48b31a3c5d
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -4314,7 +4314,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text5, msg) => text5 + separator + msg);
+        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text4, msg) => text4 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -6260,7 +6260,7 @@ var require_discriminator = __commonJS({
       error: error2,
       code(cxt) {
         const { gen, data, schema, parentSchema, it: it3 } = cxt;
-        const { oneOf: oneOf3 } = parentSchema;
+        const { oneOf: oneOf2 } = parentSchema;
         if (!it3.opts.discriminator) {
           throw new Error("discriminator: requires discriminator option");
         }
@@ -6269,7 +6269,7 @@ var require_discriminator = __commonJS({
           throw new Error("discriminator: requires propertyName");
         if (schema.mapping)
           throw new Error("discriminator: mapping is not supported");
-        if (!oneOf3)
+        if (!oneOf2)
           throw new Error("discriminator: requires oneOf keyword");
         const valid = gen.let("valid", false);
         const tag = gen.const("tag", (0, codegen_1._)`${data}${(0, codegen_1.getProperty)(tagName)}`);
@@ -6297,8 +6297,8 @@ var require_discriminator = __commonJS({
           const oneOfMapping = {};
           const topRequired = hasRequired(parentSchema);
           let tagRequired = true;
-          for (let i3 = 0; i3 < oneOf3.length; i3++) {
-            let sch = oneOf3[i3];
+          for (let i3 = 0; i3 < oneOf2.length; i3++) {
+            let sch = oneOf2[i3];
             if ((sch === null || sch === void 0 ? void 0 : sch.$ref) && !(0, util_1.schemaHasRulesButRef)(sch, it3.self.RULES)) {
               const ref = sch.$ref;
               sch = compile_1.resolveRef.call(it3.self, it3.schemaEnv.root, it3.baseId, ref);
@@ -66795,9 +66795,9 @@ function stringifyPrimitive(value) {
     return `"${value}"`;
   return `${value}`;
 }
-function optionalKeys(shape2) {
-  return Object.keys(shape2).filter((k3) => {
-    return shape2[k3]._zod.optin === "optional" && shape2[k3]._zod.optout === "optional";
+function optionalKeys(shape) {
+  return Object.keys(shape).filter((k3) => {
+    return shape[k3]._zod.optin === "optional" && shape[k3]._zod.optout === "optional";
   });
 }
 var NUMBER_FORMAT_RANGES = {
@@ -66861,15 +66861,15 @@ function omit(schema, mask) {
   });
   return clone(schema, def);
 }
-function extend(schema, shape2) {
-  if (!isPlainObject(shape2)) {
+function extend(schema, shape) {
+  if (!isPlainObject(shape)) {
     throw new Error("Invalid input to extend: expected a plain object");
   }
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
     const existingShape = schema._zod.def.shape;
-    for (const key in shape2) {
+    for (const key in shape) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== void 0) {
         throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
       }
@@ -66877,20 +66877,20 @@ function extend(schema, shape2) {
   }
   const def = mergeDefs(schema._zod.def, {
     get shape() {
-      const _shape = { ...schema._zod.def.shape, ...shape2 };
+      const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape);
       return _shape;
     }
   });
   return clone(schema, def);
 }
-function safeExtend(schema, shape2) {
-  if (!isPlainObject(shape2)) {
+function safeExtend(schema, shape) {
+  if (!isPlainObject(shape)) {
     throw new Error("Invalid input to safeExtend: expected a plain object");
   }
   const def = mergeDefs(schema._zod.def, {
     get shape() {
-      const _shape = { ...schema._zod.def.shape, ...shape2 };
+      const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape);
       return _shape;
     }
@@ -66924,7 +66924,7 @@ function partial(Class2, schema, mask) {
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
-      const shape2 = { ...oldShape };
+      const shape = { ...oldShape };
       if (mask) {
         for (const key in mask) {
           if (!(key in oldShape)) {
@@ -66932,21 +66932,21 @@ function partial(Class2, schema, mask) {
           }
           if (!mask[key])
             continue;
-          shape2[key] = Class2 ? new Class2({
+          shape[key] = Class2 ? new Class2({
             type: "optional",
             innerType: oldShape[key]
           }) : oldShape[key];
         }
       } else {
         for (const key in oldShape) {
-          shape2[key] = Class2 ? new Class2({
+          shape[key] = Class2 ? new Class2({
             type: "optional",
             innerType: oldShape[key]
           }) : oldShape[key];
         }
       }
-      assignProp(this, "shape", shape2);
-      return shape2;
+      assignProp(this, "shape", shape);
+      return shape;
     },
     checks: []
   });
@@ -66956,29 +66956,29 @@ function required(Class2, schema, mask) {
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
-      const shape2 = { ...oldShape };
+      const shape = { ...oldShape };
       if (mask) {
         for (const key in mask) {
-          if (!(key in shape2)) {
+          if (!(key in shape)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!mask[key])
             continue;
-          shape2[key] = new Class2({
+          shape[key] = new Class2({
             type: "nonoptional",
             innerType: oldShape[key]
           });
         }
       } else {
         for (const key in oldShape) {
-          shape2[key] = new Class2({
+          shape[key] = new Class2({
             type: "nonoptional",
             innerType: oldShape[key]
           });
         }
       }
-      assignProp(this, "shape", shape2);
-      return shape2;
+      assignProp(this, "shape", shape);
+      return shape;
     }
   });
   return clone(schema, def);
@@ -68394,10 +68394,10 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   }
   const _normalized = cached(() => normalizeDef(def));
   defineLazy(inst._zod, "propValues", () => {
-    const shape2 = def.shape;
+    const shape = def.shape;
     const propValues = {};
-    for (const key in shape2) {
-      const field = shape2[key]._zod;
+    for (const key in shape) {
+      const field = shape[key]._zod;
       if (field.values) {
         propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
         for (const v3 of field.values)
@@ -68423,9 +68423,9 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     payload.value = {};
     const proms = [];
-    const shape2 = value.shape;
+    const shape = value.shape;
     for (const key of value.keys) {
-      const el = shape2[key];
+      const el = shape[key];
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
       const r3 = el._zod.run({ value: input[key], issues: [] }, ctx);
@@ -68445,7 +68445,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   $ZodObject.init(inst, def);
   const superParse = inst._zod.parse;
   const _normalized = cached(() => normalizeDef(def));
-  const generateFastpass = (shape2) => {
+  const generateFastpass = (shape) => {
     const doc = new Doc(["shape", "payload", "ctx"]);
     const normalized2 = _normalized.value;
     const parseStr = (key) => {
@@ -68462,7 +68462,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     for (const key of normalized2.keys) {
       const id = ids[key];
       const k3 = esc(key);
-      const schema = shape2[key];
+      const schema = shape[key];
       const isOptionalIn = schema?._zod?.optin === "optional";
       const isOptionalOut = schema?._zod?.optout === "optional";
       doc.write(`const ${id} = ${parseStr(key)};`);
@@ -68536,7 +68536,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     doc.write(`payload.value = newResult;`);
     doc.write(`return payload;`);
     const fn2 = doc.compile();
-    return (payload, ctx) => fn2(shape2, payload, ctx);
+    return (payload, ctx) => fn2(shape, payload, ctx);
   };
   let fastpass;
   const isObject6 = isObject;
@@ -70455,14 +70455,14 @@ var objectProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
   json3.type = "object";
   json3.properties = {};
-  const shape2 = def.shape;
-  for (const key in shape2) {
-    json3.properties[key] = process2(shape2[key], ctx, {
+  const shape = def.shape;
+  for (const key in shape) {
+    json3.properties[key] = process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     });
   }
-  const allKeys = new Set(Object.keys(shape2));
+  const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set([...allKeys].filter((key) => {
     const v3 = def.shape[key]._zod;
     if (ctx.io === "input") {
@@ -71288,18 +71288,18 @@ var ZodObject = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
     }
   });
 });
-function object2(shape2, params) {
+function object2(shape, params) {
   const def = {
     type: "object",
-    shape: shape2 ?? {},
+    shape: shape ?? {},
     ...util_exports.normalizeParams(params)
   };
   return new ZodObject(def);
 }
-function looseObject(shape2, params) {
+function looseObject(shape, params) {
   return new ZodObject({
     type: "object",
-    shape: shape2,
+    shape,
     catchall: unknown(),
     ...util_exports.normalizeParams(params)
   });
@@ -73150,8 +73150,8 @@ var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema) {
-  const shape2 = getObjectShape(schema);
-  const methodSchema = shape2?.method;
+  const shape = getObjectShape(schema);
+  const methodSchema = shape?.method;
   if (!methodSchema) {
     throw new Error("Schema is missing a method literal");
   }
@@ -73262,9 +73262,9 @@ var Protocol = class {
       });
       this.setRequestHandler(ListTasksRequestSchema, async (request2, extra) => {
         try {
-          const { tasks: tasks3, nextCursor } = await this._taskStore.listTasks(request2.params?.cursor, extra.sessionId);
+          const { tasks, nextCursor } = await this._taskStore.listTasks(request2.params?.cursor, extra.sessionId);
           return {
-            tasks: tasks3,
+            tasks,
             nextCursor,
             _meta: {}
           };
@@ -74500,8 +74500,8 @@ var Server = class extends Protocol {
    * Override request handler registration to enforce server-side validation for tools/call.
    */
   setRequestHandler(requestSchema, handler) {
-    const shape2 = getObjectShape(requestSchema);
-    const methodSchema = shape2?.method;
+    const shape = getObjectShape(requestSchema);
+    const methodSchema = shape?.method;
     if (!methodSchema) {
       throw new Error("Schema is missing a method literal");
     }
@@ -74914,16 +74914,8 @@ var StdioServerTransport = class {
 // src/index.ts
 import { pathToFileURL } from "node:url";
 
-// src/practice/backend.ts
-import { join as join4 } from "node:path";
-
-// src/practice/case-data-root.ts
-import { existsSync as existsSync2, readFileSync } from "node:fs";
-
-// src/config-path.ts
-import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+// src/practice/store.ts
+import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 
 // src/errors.ts
 var DataServerError = class extends Error {
@@ -74946,7 +74938,170 @@ var PythonTimeoutError = class extends DataServerError {
 var AmbiguousMatchError = class extends DataServerError {
 };
 
+// ../../mcp-shared/commons-key.js
+import { join as join2 } from "node:path";
+
+// ../../mcp-shared/dpapi-store.js
+import { spawn } from "node:child_process";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+function defaultStateDir(env = process.env, name = "legal-commons") {
+  const root = env.LOCALAPPDATA || env.APPDATA || homedir();
+  return join(root, "Coclerk", name);
+}
+async function readProtectedJson(path, fallback, protect = process.platform === "win32") {
+  try {
+    const stored = await readFile(path);
+    const data = protect ? await unprotectLocalSecret(stored) : stored;
+    return JSON.parse(data.toString("utf8"));
+  } catch (error2) {
+    if (error2?.code === "ENOENT") return fallback;
+    throw error2;
+  }
+}
+async function unprotectLocalSecret(data) {
+  if (process.platform !== "win32") {
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
+  }
+  return runDpapi("Unprotect", data);
+}
+async function runDpapi(action, data) {
+  const script = action === "Protect" ? protectScript : unprotectScript;
+  const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+    stdio: ["pipe", "pipe", "pipe"],
+    windowsHide: true
+  });
+  const stdout = [];
+  const stderr = [];
+  child.stdout.on("data", (chunk) => stdout.push(chunk));
+  child.stderr.on("data", (chunk) => stderr.push(chunk));
+  const done = new Promise((resolve7, reject) => {
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) resolve7();
+      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
+    });
+  });
+  child.stdin.end(data.toString("base64"));
+  await done;
+  return Buffer.from(Buffer.concat(stdout).toString("utf8").trim(), "base64");
+}
+var scriptPreamble = `
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Security
+$inputText = [Console]::In.ReadToEnd().Trim()
+$bytes = [Convert]::FromBase64String($inputText)`;
+var protectScript = `${scriptPreamble}
+$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+[Console]::Out.Write([Convert]::ToBase64String($protected))
+`;
+var unprotectScript = `${scriptPreamble}
+$plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+[Console]::Out.Write([Convert]::ToBase64String($plain))
+`;
+
+// ../../mcp-shared/commons-key.js
+var BAKED_SUPABASE_URL = "https://nbzkuhgiqscjkypedqff.supabase.co";
+function credentialPath(env = process.env) {
+  return join2(defaultStateDir(env), "credential.json.dpapi");
+}
+async function loadCommonsKey(env = process.env) {
+  const key = {
+    supabaseUrl: env.SUPABASE_URL || BAKED_SUPABASE_URL,
+    // Deliberately NOT falling back to the public anon key: it has no grants on
+    // legal_commons, so a fallback would only turn "not configured" into a
+    // confusing "permission denied". Fail with a clear message instead.
+    staticKey: env.LEGAL_COMMONS_SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || ""
+  };
+  if (key.staticKey) return key;
+  try {
+    const persisted = await readProtectedJson(credentialPath(env), null);
+    if (persisted?.staticKey) key.staticKey = persisted.staticKey;
+  } catch (error2) {
+    const detail = error2 instanceof Error ? error2.message : String(error2);
+    key.credentialError = detail.split("\n")[0].trim();
+    process.stderr.write(
+      `legal-commons: stored credential at ${credentialPath(env)} could not be read \u2014 ${detail}
+Starting unconfigured; call the commons server's configure_credential tool to replace it.
+`
+    );
+  }
+  return key;
+}
+
+// src/cloud-key.ts
+async function loadCloudKey(env = process.env) {
+  const { supabaseUrl, staticKey, credentialError } = await loadCommonsKey(env);
+  if (staticKey) return { configured: true, supabaseUrl, staticKey };
+  const reason = credentialError ? `the stored credential could not be read (${credentialError})` : "no credential is configured";
+  return {
+    configured: false,
+    supabaseUrl,
+    reason: `${reason}; set it with the commons server's configure_credential tool`
+  };
+}
+
+// src/practice/cloud.ts
+var PATHS = {
+  write: "functions/v1/items-write",
+  sync: "functions/v1/items-sync",
+  seed: "functions/v1/items-seed"
+};
+var CloudUnreachableError = class extends DataServerError {
+  constructor(detail) {
+    super(
+      `Probanda's Cloud did not answer (${detail}). Nothing was saved, in the cloud or in practice.db. If this persists, check whether the Supabase project is paused.`,
+      "cloud_unreachable"
+    );
+    this.detail = detail;
+  }
+  detail;
+};
+var CloudNotConfiguredError = class extends DataServerError {
+  constructor(reason) {
+    super(`Probanda's Cloud is not configured: ${reason}. Nothing was saved.`, "cloud_not_configured");
+  }
+};
+async function cloudCredential(env) {
+  const key = await loadCloudKey(env);
+  if (!key.configured) throw new CloudNotConfiguredError(key.reason);
+  return key;
+}
+async function callItems(env, fn2, body) {
+  const { supabaseUrl, staticKey } = await cloudCredential(env);
+  let res;
+  try {
+    res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn2]}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: staticKey },
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    const cause = err.cause;
+    throw new CloudUnreachableError([err.message, cause?.code ?? cause?.message].filter(Boolean).join(": "));
+  }
+  if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
+  let json3;
+  try {
+    json3 = JSON.parse(await res.text());
+  } catch {
+    throw new CloudUnreachableError("a reply that is not JSON");
+  }
+  if (json3 === null || typeof json3 !== "object" || Array.isArray(json3)) throw new CloudUnreachableError("a reply that is not a JSON object");
+  return json3;
+}
+
+// src/practice/backend.ts
+import { join as join6 } from "node:path";
+
+// src/practice/case-data-root.ts
+import { existsSync as existsSync2, readFileSync } from "node:fs";
+
 // src/config-path.ts
+import { existsSync } from "node:fs";
+import { homedir as homedir2 } from "node:os";
+import { join as join3 } from "node:path";
 function configPath(env) {
   const override = env.COCLERK_CONFIG_PATH;
   if (override) {
@@ -74957,7 +75112,7 @@ function configPath(env) {
     }
     return override;
   }
-  return join(env.APPDATA || join(homedir(), "AppData", "Roaming"), "Coclerk", "coclerk.json");
+  return join3(env.APPDATA || join3(homedir2(), "AppData", "Roaming"), "Coclerk", "coclerk.json");
 }
 
 // src/practice/case-data-root.ts
@@ -74990,41 +75145,14 @@ function resolveCaseDataRoot(env = process.env, fallback) {
   return root;
 }
 
-// src/db/scope.ts
-var UnscopedAdmin = class {
-  mustOverride(method) {
-    throw new Error(`UnscopedAdmin.${method} must be overridden by a concrete backend`);
-  }
-  async query(_entity, _filters = {}, _options = {}) {
-    return this.mustOverride("query");
-  }
-  async insert(_entity, _row, _onConflict) {
-    return this.mustOverride("insert");
-  }
-  async insertMany(_entity, _rows, _onConflict) {
-    return this.mustOverride("insertMany");
-  }
-  async update(_entity, _filters, _row) {
-    return this.mustOverride("update");
-  }
-  async delete(_entity, _filters) {
-    return this.mustOverride("delete");
-  }
-};
-function exactlyOne(rows21, what, action = "query") {
-  if (rows21.length === 0) throw new NotFoundError(`No ${what} row matched the ${action}`);
-  if (rows21.length > 1) throw new AmbiguousMatchError(`${rows21.length} ${what} rows matched the ${action}`);
-  return rows21[0];
-}
-
 // src/python-driver.ts
 import { createHash } from "node:crypto";
 import { existsSync as existsSync3, linkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join2 } from "node:path";
+import { join as join4 } from "node:path";
 function pythonDriverFile(name, source) {
   const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
-  const p3 = join2(tmpdir(), `coclerk-${name}-${hash}.py`);
+  const p3 = join4(tmpdir(), `coclerk-${name}-${hash}.py`);
   if (existsSync3(p3)) return p3;
   const temp = `${p3}.${process.pid}.tmp`;
   writeFileSync(temp, source, "utf-8");
@@ -75043,7 +75171,7 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { readdirSync, rmSync } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join3 } from "node:path";
+import { join as join5 } from "node:path";
 var pythonStarts = { count: 0 };
 function runPythonDriver(opts) {
   const { label, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice: timeoutAdvice2, stagingDescription } = opts;
@@ -75095,7 +75223,7 @@ function removeKilledStaging(tag, description = "staging copy of the database") 
   const failed = [];
   for (const name of readdirSync(tmpdir2())) {
     if (!pattern.test(name)) continue;
-    const p3 = join3(tmpdir2(), name);
+    const p3 = join5(tmpdir2(), name);
     try {
       rmSync(p3, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     } catch (err) {
@@ -75103,6 +75231,260 @@ function removeKilledStaging(tag, description = "staging copy of the database") 
     }
   }
   return failed.length ? ` Its ${description} could not be removed; delete it by hand: ${failed.join("; ")}.` : "";
+}
+
+// src/kv/backend.ts
+var PY_HELPER = String.raw`
+import datetime, json, os, sqlite3, sys
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS kv_store (
+  namespace TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (namespace, key)
+);
+CREATE INDEX IF NOT EXISTS idx_kv_prefix ON kv_store(namespace, key);
+""".strip()
+
+
+def now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def escape_like(s):
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def connect(db_path):
+    d = os.path.dirname(os.path.abspath(db_path))
+    if d:
+        os.makedirs(d, exist_ok=True)
+    con = sqlite3.connect(db_path)
+    con.execute("PRAGMA journal_mode = DELETE")
+    con.executescript(SCHEMA)
+    return con
+
+
+def other_tables(db_path):
+    """True when the file holds any table but kv_store. Opens nothing that is absent."""
+    if not os.path.exists(db_path):
+        return False
+    con = sqlite3.connect(db_path)
+    try:
+        row = con.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type = 'table' "
+            "AND name <> 'kv_store' AND substr(name, 1, 7) <> 'sqlite_'"
+        ).fetchone()
+        return row[0] > 0
+    finally:
+        con.close()
+
+
+UPSERT = (
+    "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES (?, ?, ?, ?) "
+    "ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+)
+
+
+def merge_ids(con, namespace, key, add, drop_prefix, line_no):
+    """Treat one value as a JSON array of strings: drop every element starting
+    with drop_prefix, append the new ones not already present, keep order.
+    An array that ends up empty deletes the key -- an absent index and an empty
+    index mean the same thing to every reader."""
+    row = con.execute(
+        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
+    ).fetchone()
+    current = []
+    if row is not None:
+        try:
+            current = json.loads(row[0])
+        except ValueError:
+            raise SystemExit("line %d: merge target %r does not hold JSON" % (line_no, key))
+        if not isinstance(current, list) or any(not isinstance(x, str) for x in current):
+            raise SystemExit(
+                "line %d: merge target %r is not a JSON array of strings" % (line_no, key)
+            )
+    kept = [x for x in current if not (drop_prefix and x.startswith(drop_prefix))]
+    seen = set(kept)
+    for item in add:
+        if item not in seen:
+            kept.append(item)
+            seen.add(item)
+    if kept:
+        con.execute(
+            UPSERT,
+            (namespace, key, json.dumps(kept, ensure_ascii=False, separators=(",", ":")), now_iso()),
+        )
+    else:
+        con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key))
+
+
+def bulk_apply(con, namespace, path):
+    """Apply a whole JSONL file of writes to one namespace in ONE transaction.
+    Reading the file here rather than through tool arguments is what makes a
+    58k-row import possible; one transaction is what makes it one process
+    instead of 58k. Any bad line raises before the commit, so the caller either
+    gets the whole file or none of it."""
+    if not os.path.isfile(path):
+        raise SystemExit("file not found: %s" % path)
+    counts = {"lines": 0, "sets": 0, "deletes": 0, "merges": 0, "deleted_by_prefix": 0}
+    with open(path, "r", encoding="utf-8") as fh:
+        for line_no, raw in enumerate(fh, 1):
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                entry = json.loads(raw)
+            except ValueError as exc:
+                raise SystemExit("line %d is not valid JSON: %s" % (line_no, exc))
+            counts["lines"] += 1
+            op = entry.get("op")
+            if op == "set":
+                con.execute(UPSERT, (namespace, entry["key"], entry["value"], now_iso()))
+                counts["sets"] += 1
+            elif op == "delete":
+                con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                    (namespace, entry["key"]),
+                )
+                counts["deletes"] += 1
+            elif op == "delete_prefix":
+                cur = con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\'",
+                    (namespace, escape_like(entry["prefix"]) + "%"),
+                )
+                counts["deleted_by_prefix"] += cur.rowcount
+            elif op == "merge":
+                merge_ids(
+                    con,
+                    namespace,
+                    entry["key"],
+                    entry.get("add") or [],
+                    entry.get("drop_prefix") or "",
+                    line_no,
+                )
+                counts["merges"] += 1
+            else:
+                raise SystemExit("line %d has unknown op %r" % (line_no, op))
+    con.commit()
+    return counts
+
+
+def export(con, namespace, prefix, path):
+    """The read twin of bulk_apply: write every key under prefix to a JSONL
+    file of bulk_apply "set" lines, sorted by key, so an export re-applies as
+    it stands. The rows go to a file the caller named, never back through tool
+    output."""
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    rows = con.execute(
+        "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+        (namespace, escape_like(prefix) + "%"),
+    )
+    items = 0
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        for key, value in rows:
+            line = {"op": "set", "key": key, "value": value}
+            fh.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
+            items += 1
+    return {"items": items, "path": path}
+
+
+def dump(con, namespaces):
+    out = {}
+    for namespace in namespaces:
+        rows = con.execute(
+            "SELECT key, value FROM kv_store WHERE namespace = ? ORDER BY key", (namespace,)
+        ).fetchall()
+        out[namespace] = [{"key": k, "value": v} for k, v in rows]
+    return {"namespaces": out}
+
+
+def apply(con, writes):
+    """Sets and deletes across namespaces in ONE transaction: all land or none."""
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"])
+            )
+            counts["deletes"] += 1
+        else:
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return counts
+
+
+def main():
+    req = json.load(sys.stdin)
+    # exclusive: the caller keeps nothing but kv_store in this file, so a file
+    # holding any other table is refused before it is touched.
+    if req.get("exclusive") and other_tables(req["db_path"]):
+        return {"other_tables": True}
+    con = connect(req["db_path"])
+    try:
+        op = req["op"]
+        if op == "dump":
+            return dump(con, req["namespaces"])
+        if op == "apply":
+            return apply(con, req["writes"])
+        namespace = req["namespace"]
+        if op == "get":
+            row = con.execute(
+                "SELECT value FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            ).fetchone()
+            return {"value": row[0] if row else None}
+        if op == "set":
+            con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
+            con.commit()
+            return {"ok": True}
+        if op == "list":
+            prefix = req.get("prefix") or ""
+            rows = con.execute(
+                "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+                (namespace, escape_like(prefix) + "%"),
+            ).fetchall()
+            return {"items": [{"key": k, "value": v} for k, v in rows]}
+        if op == "delete":
+            cur = con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            )
+            con.commit()
+            return {"ok": True, "deleted": cur.rowcount > 0}
+        if op == "bulk_apply":
+            return bulk_apply(con, namespace, req["path"])
+        if op == "export":
+            return export(con, namespace, req.get("prefix") or "", req["path"])
+        raise SystemExit("unknown op: %s" % op)
+    finally:
+        con.close()
+
+
+print(json.dumps(main()))
+`.trim();
+function helperFile() {
+  return pythonDriverFile("kv-sqlite", PY_HELPER);
+}
+function isKvRead(op) {
+  return op === "get" || op === "list" || op === "export" || op === "dump";
+}
+function runKv(request2, options) {
+  return runPythonDriver({
+    label: options.label,
+    driver: helperFile(),
+    payload: JSON.stringify(request2),
+    env: options.env,
+    timeoutMs: options.timeoutMs,
+    timeoutAdvice: options.timeoutAdvice
+  });
 }
 
 // src/python-timeout.ts
@@ -75118,782 +75500,17 @@ function pythonTimeoutMs(env, defaultMs, variable) {
 }
 
 // src/practice/backend.ts
-var SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS practice_clients (
-  id TEXT PRIMARY KEY, name TEXT, client_num TEXT, orig_lawyer TEXT,
-  resp_lawyer TEXT, type_of_law TEXT, major_client TEXT,
-  created_at TEXT, updated_at TEXT
-);
-CREATE TABLE IF NOT EXISTS practice_matters (
-  id TEXT PRIMARY KEY, client_id TEXT, description TEXT, file_number TEXT,
-  matt_num TEXT, orig_lawyer TEXT, resp_lawyer TEXT, status TEXT, type_of_law TEXT,
-  billable INTEGER NOT NULL DEFAULT 1,
-  regular_trust REAL CHECK (regular_trust <= 0), term_trust REAL, last_trust_date TEXT,
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (client_id) REFERENCES practice_clients (id)
-);
-CREATE TABLE IF NOT EXISTS practice_time_entries (
-  id TEXT PRIMARY KEY, matter_id TEXT NOT NULL, description TEXT, entry_date TEXT,
-  hours REAL, billable INTEGER NOT NULL DEFAULT 1, batch_tag TEXT,
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_invoices (
-  id TEXT PRIMARY KEY, matter_id TEXT NOT NULL, invoice_number TEXT, issue_date TEXT,
-  date_to TEXT, amount REAL CHECK (amount >= 0), amount_paid REAL, status TEXT, last_import_at TEXT,
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_tasks (
-  id TEXT PRIMARY KEY, matter_id TEXT, description TEXT,
-  task_type TEXT NOT NULL CHECK (task_type IN ('client', 'admin', 'professional')),
-  time_estimate_hours REAL, actual_hours REAL, deadline_date TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'completed', 'paused', 'withdrawn')),
-  completed_at TEXT, next_nudge_date TEXT, nudge_interval_days INTEGER, last_nudged_at TEXT,
-  created_at TEXT, updated_at TEXT, filing_ref TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_retainer_notices (
-  id TEXT PRIMARY KEY, matter_id TEXT NOT NULL, sent_at TEXT NOT NULL,
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_anchors (
-  id TEXT PRIMARY KEY, matter_id TEXT, anchor_type TEXT NOT NULL, anchor_date TEXT NOT NULL,
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'conflicted', 'superseded', 'occurred')),
-  party_label TEXT, proceeding_label TEXT, created_at TEXT, updated_at TEXT, filing_ref TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_anchor_sources (
-  id TEXT PRIMARY KEY, anchor_id TEXT NOT NULL, source_document TEXT, source_excerpt TEXT,
-  stated_date TEXT NOT NULL, asserted_date TEXT NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'conflicted', 'superseded')),
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-);
-CREATE TABLE IF NOT EXISTS practice_deadlines (
-  id TEXT PRIMARY KEY, matter_id TEXT, anchor_id TEXT, source_document TEXT,
-  deadline_type TEXT NOT NULL, deadline_date TEXT NOT NULL, rule_ref TEXT NOT NULL,
-  rule_description TEXT NOT NULL,
-  source_type TEXT NOT NULL CHECK (source_type IN ('bc_rules', 'order_term', 'manual')),
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'stale', 'superseded', 'not_applicable', 'dismissed', 'met')),
-  review_flag TEXT CHECK (review_flag IN ('shift_pending', 'limited_day', 'rule_stale', 'practitioner_choice')),
-  review_note TEXT, party_label TEXT, proceeding_label TEXT, scenario_label TEXT, expiry_notified_at TEXT,
-  created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id),
-  FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-);
-CREATE TABLE IF NOT EXISTS practice_payment_in_flight (
-  id TEXT PRIMARY KEY, matter_id TEXT, notes TEXT, amount REAL, recorded_at TEXT,
-  expected_clear_by TEXT, cleared INTEGER DEFAULT 0, created_at TEXT, updated_at TEXT,
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_matter_signals (
-  id TEXT PRIMARY KEY, matter_id TEXT NOT NULL, note TEXT, signal_key TEXT NOT NULL,
-  state TEXT NOT NULL CHECK (state IN ('confirmed', 'unconfirmed', 'absent')),
-  confirmed_at TEXT, created_at TEXT, updated_at TEXT,
-  UNIQUE (matter_id, signal_key),
-  FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-);
-CREATE TABLE IF NOT EXISTS practice_status_policies (
-  id TEXT PRIMARY KEY, status_label TEXT NOT NULL, required_signals TEXT NOT NULL,
-  blocking_signals TEXT, auto_advance INTEGER NOT NULL DEFAULT 1, description TEXT,
-  created_at TEXT, updated_at TEXT
-);
-CREATE TABLE IF NOT EXISTS practice_court_calendar_coverage (
-  id TEXT PRIMARY KEY, year INTEGER NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('confirmed', 'unavailable')),
-  source_document TEXT, checked_at TEXT NOT NULL, created_at TEXT, updated_at TEXT
-);
-CREATE TABLE IF NOT EXISTS practice_court_calendar_days (
-  id TEXT PRIMARY KEY, calendar_date TEXT NOT NULL,
-  status_category TEXT NOT NULL CHECK (status_category IN ('full_closure', 'limited', 'regional_exception')),
-  status_label TEXT NOT NULL, courthouse_scope TEXT, source_document TEXT,
-  created_at TEXT, updated_at TEXT
-);
-CREATE TABLE IF NOT EXISTS practice_rule_overlay (
-  id TEXT PRIMARY KEY, deadline_type TEXT NOT NULL, rule_ref TEXT NOT NULL,
-  amending_reg TEXT NOT NULL, effective_from TEXT NOT NULL, effective_to TEXT,
-  status TEXT NOT NULL CHECK (status IN ('verified', 'unverified', 'superseded_by_shipped', 'conflict')),
-  record TEXT NOT NULL, created_at TEXT, updated_at TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_practice_time_entries_matter ON practice_time_entries (matter_id);
-CREATE INDEX IF NOT EXISTS idx_practice_invoices_matter ON practice_invoices (matter_id);
-CREATE INDEX IF NOT EXISTS idx_practice_time_entries_batch_tag ON practice_time_entries (batch_tag);
-`.trim();
-var PY_HELPER = String.raw`
-import json, os, sqlite3, sys, datetime
-
-BOOL_COLUMNS = {"cleared", "auto_advance", "billable"}
-
-def now_iso():
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-
-def anchor_source_schema(con):
-    row = con.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='practice_anchor_sources'"
-    ).fetchone()
-    return row[0] if row else None
-
-def migrate_anchor_sources(con):
-    current = anchor_source_schema(con)
-    if current is None or "'superseded'" in current:
-        return
-
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = anchor_source_schema(con)
-        if current is None or "'superseded'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_anchor_sources").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_anchor_sources__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_anchor_sources__upgrade (
-              id TEXT PRIMARY KEY, anchor_id TEXT NOT NULL, source_document TEXT, source_excerpt TEXT,
-              stated_date TEXT NOT NULL, asserted_date TEXT NOT NULL,
-              status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'conflicted', 'superseded')),
-              created_at TEXT, updated_at TEXT,
-              FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-            )
-        """)
-        con.execute("""
-            INSERT INTO practice_anchor_sources__upgrade
-              (id, anchor_id, source_document, source_excerpt, stated_date, asserted_date,
-               status, created_at, updated_at)
-            SELECT id, anchor_id, source_document, source_excerpt, stated_date, asserted_date,
-                   status, created_at, updated_at
-            FROM practice_anchor_sources
-        """)
-        copied_count = con.execute("SELECT count(*) FROM practice_anchor_sources__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_anchor_sources upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_anchor_sources")
-        con.execute("ALTER TABLE practice_anchor_sources__upgrade RENAME TO practice_anchor_sources")
-        final_count = con.execute("SELECT count(*) FROM practice_anchor_sources").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_anchor_sources upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'superseded'" not in (anchor_source_schema(con) or ""):
-            raise RuntimeError("practice_anchor_sources upgrade did not widen the status constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_anchor_sources__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_anchor_sources upgrade left its temporary table behind")
-        if con.execute("PRAGMA foreign_key_check('practice_anchor_sources')").fetchall():
-            raise RuntimeError("practice_anchor_sources upgrade failed its foreign-key check")
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-
-def anchors_schema(con):
-    row = con.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='practice_anchors'"
-    ).fetchone()
-    return row[0] if row else None
-
-def migrate_anchor_status(con):
-    # Widen the anchors status CHECK to admit the 'occurred' terminal state.
-    # Table rebuild (SQLite cannot alter a CHECK); practice_anchors is a parent
-    # of anchor_sources and deadlines, so FK enforcement is suspended for the
-    # rebuild and both children are foreign_key_checked before commit.
-    current = anchors_schema(con)
-    if current is None or "'occurred'" in current:
-        return
-
-    con.execute("PRAGMA foreign_keys = OFF")
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = anchors_schema(con)
-        if current is None or "'occurred'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_anchors").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_anchors__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_anchors__upgrade (
-              id TEXT PRIMARY KEY, matter_id TEXT, anchor_type TEXT NOT NULL, anchor_date TEXT NOT NULL,
-              status TEXT DEFAULT 'active' CHECK (status IN ('active', 'conflicted', 'superseded', 'occurred')),
-              party_label TEXT, proceeding_label TEXT, created_at TEXT, updated_at TEXT,
-              FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-            )
-        """)
-        con.execute("""
-            INSERT INTO practice_anchors__upgrade
-              (id, matter_id, anchor_type, anchor_date, status, party_label, proceeding_label,
-               created_at, updated_at)
-            SELECT id, matter_id, anchor_type, anchor_date, status, party_label, proceeding_label,
-                   created_at, updated_at
-            FROM practice_anchors
-        """)
-        copied_count = con.execute("SELECT count(*) FROM practice_anchors__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_anchors upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_anchors")
-        con.execute("ALTER TABLE practice_anchors__upgrade RENAME TO practice_anchors")
-        final_count = con.execute("SELECT count(*) FROM practice_anchors").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_anchors upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'occurred'" not in (anchors_schema(con) or ""):
-            raise RuntimeError("practice_anchors upgrade did not widen the status constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_anchors__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_anchors upgrade left its temporary table behind")
-        for child in ("practice_anchors", "practice_anchor_sources", "practice_deadlines"):
-            if not con.execute(
-                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s'" % child
-            ).fetchone()[0]:
-                continue
-            if con.execute("PRAGMA foreign_key_check('%s')" % child).fetchall():
-                raise RuntimeError("practice_anchors upgrade failed the %s foreign-key check" % child)
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-    finally:
-        con.execute("PRAGMA foreign_keys = ON")
-
-def deadlines_schema(con):
-    row = con.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='practice_deadlines'"
-    ).fetchone()
-    return row[0] if row else None
-
-def migrate_deadline_status(con):
-    # Widen the deadlines status CHECK to admit 'not_applicable' (the other
-    # side's obligation -- no pre-expiry reminders, exactly one post-expiry
-    # notice) and 'dismissed' (practitioner wants no further notifications;
-    # the row is retained, never deleted). Table rebuild (SQLite cannot alter
-    # a CHECK); practice_deadlines is a leaf (nothing references it by FK), so
-    # only its own two outgoing foreign keys need re-checking after the rebuild.
-    current = deadlines_schema(con)
-    if current is None or "'not_applicable'" in current:
-        return
-
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = deadlines_schema(con)
-        if current is None or "'not_applicable'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_deadlines__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_deadlines__upgrade (
-              id TEXT PRIMARY KEY, matter_id TEXT, anchor_id TEXT, source_document TEXT,
-              deadline_type TEXT NOT NULL, deadline_date TEXT NOT NULL, rule_ref TEXT NOT NULL,
-              rule_description TEXT NOT NULL,
-              source_type TEXT NOT NULL CHECK (source_type IN ('bc_rules', 'order_term', 'manual')),
-              status TEXT DEFAULT 'active' CHECK (status IN ('active', 'stale', 'superseded', 'not_applicable', 'dismissed')),
-              review_flag TEXT CHECK (review_flag IN ('shift_pending', 'limited_day', 'rule_stale')),
-              review_note TEXT, party_label TEXT, proceeding_label TEXT, expiry_notified_at TEXT,
-              created_at TEXT, updated_at TEXT,
-              FOREIGN KEY (matter_id) REFERENCES practice_matters (id),
-              FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-            )
-        """)
-        con.execute("""
-            INSERT INTO practice_deadlines__upgrade
-              (id, matter_id, anchor_id, source_document, deadline_type, deadline_date, rule_ref,
-               rule_description, source_type, status, review_flag, review_note, party_label,
-               proceeding_label, created_at, updated_at)
-            SELECT id, matter_id, anchor_id, source_document, deadline_type, deadline_date, rule_ref,
-                   rule_description, source_type, status, review_flag, review_note, party_label,
-                   proceeding_label, created_at, updated_at
-            FROM practice_deadlines
-        """)
-        copied_count = con.execute("SELECT count(*) FROM practice_deadlines__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_deadlines")
-        con.execute("ALTER TABLE practice_deadlines__upgrade RENAME TO practice_deadlines")
-        final_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'not_applicable'" not in (deadlines_schema(con) or ""):
-            raise RuntimeError("practice_deadlines upgrade did not widen the status constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_deadlines__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_deadlines upgrade left its temporary table behind")
-        if con.execute("PRAGMA foreign_key_check('practice_deadlines')").fetchall():
-            raise RuntimeError("practice_deadlines upgrade failed its foreign-key check")
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-
-def migrate_deadline_met_status(con):
-    # Widen the deadlines status CHECK to admit 'met' (the practitioner marks a
-    # deadline done; active-deadlines returns it only on include_met). Same
-    # rebuild as migrate_deadline_status, which runs first, but it copies every
-    # column the old table has, expiry_notified_at included when present.
-    current = deadlines_schema(con)
-    if current is None or "'met'" in current:
-        return
-
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = deadlines_schema(con)
-        if current is None or "'met'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_deadlines__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_deadlines__upgrade (
-              id TEXT PRIMARY KEY, matter_id TEXT, anchor_id TEXT, source_document TEXT,
-              deadline_type TEXT NOT NULL, deadline_date TEXT NOT NULL, rule_ref TEXT NOT NULL,
-              rule_description TEXT NOT NULL,
-              source_type TEXT NOT NULL CHECK (source_type IN ('bc_rules', 'order_term', 'manual')),
-              status TEXT DEFAULT 'active' CHECK (status IN ('active', 'stale', 'superseded', 'not_applicable', 'dismissed', 'met')),
-              review_flag TEXT CHECK (review_flag IN ('shift_pending', 'limited_day', 'rule_stale')),
-              review_note TEXT, party_label TEXT, proceeding_label TEXT, expiry_notified_at TEXT,
-              created_at TEXT, updated_at TEXT,
-              FOREIGN KEY (matter_id) REFERENCES practice_matters (id),
-              FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-            )
-        """)
-        upgraded = set(columns(con, "practice_deadlines__upgrade"))
-        copied = ", ".join('"%s"' % c for c in columns(con, "practice_deadlines") if c in upgraded)
-        con.execute("INSERT INTO practice_deadlines__upgrade (%s) SELECT %s FROM practice_deadlines" % (copied, copied))
-        copied_count = con.execute("SELECT count(*) FROM practice_deadlines__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines met upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_deadlines")
-        con.execute("ALTER TABLE practice_deadlines__upgrade RENAME TO practice_deadlines")
-        final_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines met upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'met'" not in (deadlines_schema(con) or ""):
-            raise RuntimeError("practice_deadlines met upgrade did not widen the status constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_deadlines__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_deadlines met upgrade left its temporary table behind")
-        if con.execute("PRAGMA foreign_key_check('practice_deadlines')").fetchall():
-            raise RuntimeError("practice_deadlines met upgrade failed its foreign-key check")
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-
-def migrate_deadline_scenario(con):
-    # Widen the review_flag CHECK to admit 'practitioner_choice' (one of several
-    # provisional alternative dates the practitioner must choose between; never
-    # valid) and add scenario_label, which names each alternative so the
-    # alternatives of one deadline do not supersede each other. NULL on every
-    # existing row. Same rebuild as migrate_deadline_met_status, which runs first.
-    current = deadlines_schema(con)
-    if current is None or "'practitioner_choice'" in current:
-        return
-
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = deadlines_schema(con)
-        if current is None or "'practitioner_choice'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_deadlines__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_deadlines__upgrade (
-              id TEXT PRIMARY KEY, matter_id TEXT, anchor_id TEXT, source_document TEXT,
-              deadline_type TEXT NOT NULL, deadline_date TEXT NOT NULL, rule_ref TEXT NOT NULL,
-              rule_description TEXT NOT NULL,
-              source_type TEXT NOT NULL CHECK (source_type IN ('bc_rules', 'order_term', 'manual')),
-              status TEXT DEFAULT 'active' CHECK (status IN ('active', 'stale', 'superseded', 'not_applicable', 'dismissed', 'met')),
-              review_flag TEXT CHECK (review_flag IN ('shift_pending', 'limited_day', 'rule_stale', 'practitioner_choice')),
-              review_note TEXT, party_label TEXT, proceeding_label TEXT, scenario_label TEXT, expiry_notified_at TEXT,
-              created_at TEXT, updated_at TEXT,
-              FOREIGN KEY (matter_id) REFERENCES practice_matters (id),
-              FOREIGN KEY (anchor_id) REFERENCES practice_anchors (id)
-            )
-        """)
-        upgraded = set(columns(con, "practice_deadlines__upgrade"))
-        copied = ", ".join('"%s"' % c for c in columns(con, "practice_deadlines") if c in upgraded)
-        con.execute("INSERT INTO practice_deadlines__upgrade (%s) SELECT %s FROM practice_deadlines" % (copied, copied))
-        copied_count = con.execute("SELECT count(*) FROM practice_deadlines__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines scenario upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_deadlines")
-        con.execute("ALTER TABLE practice_deadlines__upgrade RENAME TO practice_deadlines")
-        final_count = con.execute("SELECT count(*) FROM practice_deadlines").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_deadlines scenario upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'practitioner_choice'" not in (deadlines_schema(con) or ""):
-            raise RuntimeError("practice_deadlines scenario upgrade did not widen the review_flag constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_deadlines__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_deadlines scenario upgrade left its temporary table behind")
-        if con.execute("PRAGMA foreign_key_check('practice_deadlines')").fetchall():
-            raise RuntimeError("practice_deadlines scenario upgrade failed its foreign-key check")
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-
-def migrate_anchor_filing_ref_column(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains the anchor's filing_ref here. NULL = the anchor is linked
-    # to no filing. Runs after migrate_anchor_status, whose rebuild predates it.
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_anchors'"
-    ).fetchone()[0]:
-        return
-    if "filing_ref" in columns(con, "practice_anchors"):
-        return
-    con.execute('ALTER TABLE practice_anchors ADD COLUMN "filing_ref" TEXT')
-    con.commit()
-
-TASK_NUDGE_COLUMNS = (
-    ("next_nudge_date", "TEXT"),
-    ("nudge_interval_days", "INTEGER"),
-    ("last_nudged_at", "TEXT"),
-)
-
-def migrate_task_nudge_columns(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains the nudge columns here. NULL everywhere = not in rotation.
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_tasks'"
-    ).fetchone()[0]:
-        return
-    existing = set(columns(con, "practice_tasks"))
-    missing = [(n, d) for n, d in TASK_NUDGE_COLUMNS if n not in existing]
-    if not missing:
-        return
-    for name, decl in missing:
-        con.execute('ALTER TABLE practice_tasks ADD COLUMN "%s" %s' % (name, decl))
-    con.commit()
-
-def migrate_task_filing_ref_column(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains filing_ref here (ADR 0021 D5). NULL = the to-do points
-    # at no filing.
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_tasks'"
-    ).fetchone()[0]:
-        return
-    if "filing_ref" in columns(con, "practice_tasks"):
-        return
-    con.execute('ALTER TABLE practice_tasks ADD COLUMN "filing_ref" TEXT')
-    con.commit()
-
-def tasks_schema(con):
-    row = con.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='practice_tasks'"
-    ).fetchone()
-    return row[0] if row else None
-
-def migrate_task_status(con):
-    # Widen the tasks status CHECK to admit 'withdrawn' (ADR 0023 D6: a to-do
-    # entered in error or merged into another, kept, never open and never
-    # completed). Table rebuild (SQLite cannot alter a CHECK); practice_tasks is
-    # a leaf (nothing references it by FK), so only its own outgoing foreign key
-    # needs re-checking after the rebuild. Runs after the nudge and filing_ref
-    # column migrations, so every column it copies already exists.
-    current = tasks_schema(con)
-    if current is None or "'withdrawn'" in current:
-        return
-
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        current = tasks_schema(con)
-        if current is None or "'withdrawn'" in current:
-            con.execute("COMMIT")
-            return
-
-        before_count = con.execute("SELECT count(*) FROM practice_tasks").fetchone()[0]
-        con.execute('DROP TABLE IF EXISTS "practice_tasks__upgrade"')
-        con.execute("""
-            CREATE TABLE practice_tasks__upgrade (
-              id TEXT PRIMARY KEY, matter_id TEXT, description TEXT,
-              task_type TEXT NOT NULL CHECK (task_type IN ('client', 'admin', 'professional')),
-              time_estimate_hours REAL, actual_hours REAL, deadline_date TEXT,
-              status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'completed', 'paused', 'withdrawn')),
-              completed_at TEXT, next_nudge_date TEXT, nudge_interval_days INTEGER, last_nudged_at TEXT,
-              created_at TEXT, updated_at TEXT, filing_ref TEXT,
-              FOREIGN KEY (matter_id) REFERENCES practice_matters (id)
-            )
-        """)
-        con.execute("""
-            INSERT INTO practice_tasks__upgrade
-              (id, matter_id, description, task_type, time_estimate_hours, actual_hours,
-               deadline_date, status, completed_at, next_nudge_date, nudge_interval_days,
-               last_nudged_at, created_at, updated_at, filing_ref)
-            SELECT id, matter_id, description, task_type, time_estimate_hours, actual_hours,
-                   deadline_date, status, completed_at, next_nudge_date, nudge_interval_days,
-                   last_nudged_at, created_at, updated_at, filing_ref
-            FROM practice_tasks
-        """)
-        copied_count = con.execute("SELECT count(*) FROM practice_tasks__upgrade").fetchone()[0]
-        if copied_count != before_count:
-            raise RuntimeError(
-                "practice_tasks upgrade row-count mismatch: %s != %s" % (copied_count, before_count)
-            )
-
-        con.execute("DROP TABLE practice_tasks")
-        con.execute("ALTER TABLE practice_tasks__upgrade RENAME TO practice_tasks")
-        final_count = con.execute("SELECT count(*) FROM practice_tasks").fetchone()[0]
-        if final_count != before_count:
-            raise RuntimeError(
-                "practice_tasks upgrade final row-count mismatch: %s != %s" % (final_count, before_count)
-            )
-        if "'withdrawn'" not in (tasks_schema(con) or ""):
-            raise RuntimeError("practice_tasks upgrade did not widen the status constraint")
-        if con.execute(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_tasks__upgrade'"
-        ).fetchone()[0] != 0:
-            raise RuntimeError("practice_tasks upgrade left its temporary table behind")
-        if con.execute("PRAGMA foreign_key_check('practice_tasks')").fetchall():
-            raise RuntimeError("practice_tasks upgrade failed its foreign-key check")
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-
-def migrate_invoice_date_to_column(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains date_to here. NULL = billing-period-end unknown (the
-    # issue_date proxy still applies for that invoice).
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_invoices'"
-    ).fetchone()[0]:
-        return
-    if "date_to" in columns(con, "practice_invoices"):
-        return
-    con.execute('ALTER TABLE practice_invoices ADD COLUMN "date_to" TEXT')
-    con.commit()
-
-def migrate_matter_billable_column(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains billable here. DEFAULT 1 = every existing matter stays
-    # billable (they are all real client/trust matters today).
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_matters'"
-    ).fetchone()[0]:
-        return
-    if "billable" in columns(con, "practice_matters"):
-        return
-    con.execute('ALTER TABLE practice_matters ADD COLUMN "billable" INTEGER NOT NULL DEFAULT 1')
-    con.commit()
-
-def migrate_time_entry_billable_columns(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains the per-entry billable flag and batch_tag here. Existing
-    # entries inherit their matter's billable flag on the one pass that adds the
-    # column -- after that the entry's own value is authoritative and is never
-    # rewritten from the matter again.
-    if not con.execute(
-        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='practice_time_entries'"
-    ).fetchone()[0]:
-        return
-    existing = columns(con, "practice_time_entries")
-    if "billable" not in existing:
-        con.execute('ALTER TABLE practice_time_entries ADD COLUMN "billable" INTEGER NOT NULL DEFAULT 1')
-        if "billable" in columns(con, "practice_matters"):
-            con.execute(
-                'UPDATE practice_time_entries SET "billable" = 0 WHERE matter_id IN '
-                '(SELECT id FROM practice_matters WHERE billable = 0)'
-            )
-    if "batch_tag" not in existing:
-        con.execute('ALTER TABLE practice_time_entries ADD COLUMN "batch_tag" TEXT')
-    con.execute(
-        "CREATE INDEX IF NOT EXISTS idx_practice_time_entries_batch_tag "
-        "ON practice_time_entries (batch_tag)"
-    )
-    con.commit()
-
-def migrate_rule_overlay_table(con):
-    # Additive, idempotent: SCHEMA_SQL only runs on a fresh DB, so an existing
-    # practice.db gains the rule overlay table here. Firm-wide and matter-free
-    # by design: no matter column. record holds the full validated record JSON.
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS practice_rule_overlay (
-          id TEXT PRIMARY KEY, deadline_type TEXT NOT NULL, rule_ref TEXT NOT NULL,
-          amending_reg TEXT NOT NULL, effective_from TEXT NOT NULL, effective_to TEXT,
-          status TEXT NOT NULL CHECK (status IN ('verified', 'unverified', 'superseded_by_shipped', 'conflict')),
-          record TEXT NOT NULL, created_at TEXT, updated_at TEXT
-        )
-    """)
-    con.commit()
-
-def connect(db_path, schema):
-    d = os.path.dirname(os.path.abspath(db_path))
-    if d:
-        os.makedirs(d, exist_ok=True)
-    fresh = not os.path.exists(db_path)
-    con = sqlite3.connect(db_path)
-    con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode = DELETE")
-    con.execute("PRAGMA foreign_keys = ON")
-    if fresh and schema:
-        con.executescript(schema)
-    migrate_anchor_sources(con)
-    migrate_anchor_status(con)
-    migrate_anchor_filing_ref_column(con)
-    migrate_deadline_status(con)
-    migrate_deadline_met_status(con)
-    migrate_deadline_scenario(con)
-    migrate_task_nudge_columns(con)
-    migrate_task_filing_ref_column(con)
-    migrate_task_status(con)
-    migrate_invoice_date_to_column(con)
-    migrate_matter_billable_column(con)
-    migrate_time_entry_billable_columns(con)
-    migrate_rule_overlay_table(con)
-    return con
-
-def columns(con, table):
-    return [r[1] for r in con.execute("PRAGMA table_info('%s')" % table).fetchall()]
-
-def where(filters):
-    clauses, params = [], []
-    for col, spec in (filters or {}).items():
-        op, _, rest = str(spec).partition(".")
-        if op == "is" and rest == "null":
-            clauses.append('"%s" IS NULL' % col); continue
-        sql_op = {"eq": "=", "neq": "!=", "lt": "<", "lte": "<=",
-                  "gt": ">", "gte": ">=", "like": "LIKE"}.get(op)
-        if sql_op is None:
-            raise SystemExit("unsupported filter operator: %s" % op)
-        val = rest
-        if op == "like":
-            val = val.replace("*", "%")
-        elif col in BOOL_COLUMNS:
-            val = 1 if rest == "true" else 0 if rest == "false" else rest
-        clauses.append('"%s" %s ?' % (col, sql_op)); params.append(val)
-    return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
-
-def coerce(row, cols):
-    out = {}
-    for k, v in row.items():
-        if k not in cols:
-            continue
-        if isinstance(v, bool):
-            v = int(v)
-        out[k] = v
-    return out
-
-def dump(con, table, rowids):
-    if not rowids:
-        return []
-    q = 'SELECT * FROM "%s" WHERE _rowid_ IN (%s)' % (table, ",".join("?" * len(rowids)))
-    return read_rows(con, q, rowids)
-
-def read_rows(con, sql, params):
-    rows = []
-    for r in con.execute(sql, params).fetchall():
-        d = dict(r)
-        for b in BOOL_COLUMNS:
-            if b in d and d[b] is not None:
-                d[b] = bool(d[b])
-        rows.append(d)
-    return rows
-
-def main():
-    req = json.load(sys.stdin)
-    con = connect(req["db_path"], req.get("schema", ""))
-    try:
-        op = req["op"]
-        table = req["table"]
-        cols = columns(con, table)
-        if op == "query":
-            clause, params = where(req.get("filters"))
-            sql = 'SELECT * FROM "%s"%s' % (table, clause)
-            if req.get("limit") is not None:
-                sql += " LIMIT %d" % int(req["limit"])
-            return {"rows": read_rows(con, sql, params)}
-        if op in ("insert", "insertMany"):
-            rowids = []
-            con.execute("BEGIN")
-            for raw in req["rows"]:
-                row = coerce(raw, cols)
-                if "created_at" in cols and not row.get("created_at"):
-                    row["created_at"] = now_iso()
-                if "updated_at" in cols:
-                    row["updated_at"] = now_iso()
-                keys = list(row.keys())
-                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % (
-                    table, ",".join('"%s"' % k for k in keys), ",".join("?" * len(keys)))
-                cur = con.execute(sql, [row[k] for k in keys])
-                rowids.append(cur.lastrowid)
-            out = dump(con, table, rowids)
-            con.execute("COMMIT")
-            return {"rows": out}
-        if op == "update":
-            body = coerce(req["row"], cols)
-            body.pop("id", None)
-            if "updated_at" in cols:
-                body["updated_at"] = now_iso()
-            clause, wparams = where(req.get("filters"))
-            sets = ",".join('"%s" = ?' % k for k in body.keys())
-            con.execute("BEGIN")
-            con.execute('UPDATE "%s" SET %s%s' % (table, sets, clause),
-                        [body[k] for k in body.keys()] + wparams)
-            out = read_rows(con, 'SELECT * FROM "%s"%s' % (table, clause), wparams)
-            con.execute("COMMIT")
-            return {"rows": out}
-        if op == "delete":
-            clause, wparams = where(req.get("filters"))
-            con.execute("BEGIN")
-            con.execute('DELETE FROM "%s"%s' % (table, clause), wparams)
-            con.execute("COMMIT")
-            return {"rows": []}
-        raise SystemExit("unknown op: %s" % op)
-    finally:
-        con.close()
-
-print(json.dumps(main()))
-`.trim();
-function helperFile() {
-  return pythonDriverFile("practice-sqlite", PY_HELPER);
-}
 function practiceTimeoutMs(op, env = process.env) {
-  return pythonTimeoutMs(env, op === "query" ? READ_TIMEOUT_MS : EXECUTE_TIMEOUT_MS, "COCLERK_PRACTICE_PYTHON_TIMEOUT_MS");
+  return pythonTimeoutMs(env, isKvRead(op) ? READ_TIMEOUT_MS : EXECUTE_TIMEOUT_MS, "COCLERK_PRACTICE_PYTHON_TIMEOUT_MS");
 }
 var KILLED_WRITE_ADVICE = "The write may already have committed: verify it by reading it back before retrying (/practice-data Conventions).";
 function resolvePracticeDbPath(env = process.env) {
   if (env.COCLERK_DB_PATH) return env.COCLERK_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join4(root, "_practice", env.COCLERK_DB_NAME || "practice.db");
+  return join6(root, "_practice", env.COCLERK_DB_NAME || "practice.db");
 }
-var LocalPracticeAdmin = class extends UnscopedAdmin {
+var SqlitePracticeKv = class {
   constructor(env = process.env) {
-    super();
     this.env = env;
   }
   env;
@@ -75902,39 +75519,307 @@ var LocalPracticeAdmin = class extends UnscopedAdmin {
     if (!this.dbPath) this.dbPath = resolvePracticeDbPath(this.env);
     return this.dbPath;
   }
-  exec(request2) {
-    const payload = JSON.stringify({ db_path: this.path(), schema: SCHEMA_SQL, ...request2 });
-    const timeoutMs = practiceTimeoutMs(request2.op, this.env);
-    const parsed = runPythonDriver({
+  run(request2) {
+    const path = this.path();
+    const reply = runKv({ ...request2, db_path: path, exclusive: true }, {
       label: "practice-data sqlite helper",
-      driver: helperFile(),
-      payload,
       env: this.env,
-      timeoutMs,
-      timeoutAdvice: request2.op === "query" ? void 0 : KILLED_WRITE_ADVICE
+      timeoutMs: practiceTimeoutMs(request2.op, this.env),
+      timeoutAdvice: isKvRead(request2.op) ? void 0 : KILLED_WRITE_ADVICE
     });
-    if (parsed.error) throw new ValidationError(`practice sqlite: ${parsed.error}`);
-    return parsed.rows ?? [];
+    if (reply.other_tables) {
+      throw new DataServerError(
+        `${path} holds tables other than kv_store, so it is a practice.db in the format before Probanda's Cloud. Nothing was read or written. Convert it with the practice.db migration, scripts/migrate_practice_db.py (step 6 of the practice.db conversion), before using practice data.`,
+        "practice_db_legacy"
+      );
+    }
+    return reply;
   }
-  async query(entity, filters = {}, options = {}) {
-    return this.exec({ op: "query", table: entity.table, filters, limit: options.limit });
+  dump(namespaces) {
+    return this.run({ op: "dump", namespaces }).namespaces ?? {};
   }
-  async insert(entity, row2) {
-    return this.exec({ op: "insert", table: entity.table, rows: [row2] });
+  apply(writes) {
+    if (writes.length) this.run({ op: "apply", writes });
   }
-  async insertMany(entity, rows21) {
-    return this.exec({ op: "insertMany", table: entity.table, rows: rows21 });
+};
+
+// src/practice/items.ts
+var STATE_FIELD = { signal: "state", payment: "cleared" };
+function stateValue(field, state) {
+  return field === "cleared" ? state === "true" : state;
+}
+function flatten(id, item) {
+  const row2 = { id, ...item.data, ...item.tags };
+  if (item.state !== null && item.state !== void 0) {
+    const field = STATE_FIELD[item.kind] ?? "status";
+    row2[field] = stateValue(field, item.state);
   }
-  async update(entity, filters, row2) {
-    return this.exec({ op: "update", table: entity.table, filters, row: row2 });
+  for (const [role, target] of Object.entries(item.links)) row2[role === "filing" ? "filing_ref" : `${role}_id`] = target;
+  row2.created_at = item.created_at;
+  row2.updated_at = item.updated_at;
+  return row2;
+}
+function rowsOf(items, kind) {
+  const rows21 = [];
+  for (const [id, item] of items) if (item.kind === kind) rows21.push(flatten(id, item));
+  return rows21.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
+}
+function describe2(id, item) {
+  const data = item?.data ?? {};
+  const label = [data.description, data.name, data.rule_description, data.status_label, data.source_document].find((value) => typeof value === "string" && value !== "");
+  if (label !== void 0) return `${id} "${String(label)}"`;
+  const tags = Object.values(item?.tags ?? {}).filter((value) => typeof value === "string");
+  return tags.length ? `${id} (${tags.join(", ")})` : id;
+}
+
+// src/practice/ops.ts
+import { createHmac } from "node:crypto";
+var VOCABULARY = /^[a-z0-9][a-z0-9_:.-]*$/;
+var MATTER_CODE = /\bL\d{3,4}\b/;
+function refuse(field, why) {
+  throw new ValidationError(`Refused before anything was sent to Probanda's Cloud: ${field} ${why}. Nothing was saved.`);
+}
+function guardCross(value, field) {
+  if (typeof value === "string") {
+    if (MATTER_CODE.test(value)) refuse(field, "carries a client matter code, and cross data never carries matter content");
+  } else if (Array.isArray(value)) {
+    value.forEach((item, index) => guardCross(item, `${field}[${index}]`));
+  } else if (value !== null && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) guardCross(item, `${field}.${key}`);
   }
-  async delete(entity, filters) {
-    return this.exec({ op: "delete", table: entity.table, filters });
+}
+function guardRaw(value, field) {
+  if (value === null || value === void 0 || typeof value === "boolean" || typeof value === "number") return;
+  if (typeof value !== "string") refuse(field, "is not a single value");
+  if (!VOCABULARY.test(value)) refuse(field, "is not a vocabulary value (lower-case letters, digits, _ : . -), so it would leave the machine as raw text");
+  if (MATTER_CODE.test(value)) refuse(field, "carries a client matter code");
+}
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    const entries = Object.keys(value).sort().filter((key) => value[key] !== void 0).map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+function hashValue(hashKey, value) {
+  if (value === null) return null;
+  return createHmac("sha256", hashKey).update(canonicalJson(value)).digest("hex");
+}
+function buildOp(spec, hashKey) {
+  const at = `op ${spec.kind} ${spec.id}`;
+  guardRaw(spec.id, `the id of ${at}`);
+  guardRaw(spec.kind, `the kind of ${at}`);
+  const op = { op: spec.op, id: spec.id, kind: spec.kind, hashes: {} };
+  if (spec.state !== void 0) {
+    guardRaw(spec.state, `the state of ${at}`);
+    op.state = spec.state;
+  }
+  if (spec.tags) {
+    const tags = {};
+    for (const [tag, value] of Object.entries(spec.tags)) {
+      if (value === void 0) continue;
+      guardRaw(tag, `a tag name of ${at}`);
+      if (spec.crossTags?.includes(tag)) guardCross(value, `tag ${tag} of ${at}`);
+      else guardRaw(value, `tag ${tag} of ${at}`);
+      tags[tag] = value;
+    }
+    op.tags = tags;
+  }
+  if (spec.links) {
+    const links = {};
+    for (const [role, target] of Object.entries(spec.links)) {
+      if (target === void 0) continue;
+      guardRaw(role, `a link role of ${at}`);
+      guardRaw(target, `link ${role} of ${at}`);
+      links[role] = target;
+    }
+    op.links = links;
+  }
+  for (const [field, value] of Object.entries(spec.data ?? {})) {
+    if (value === void 0) continue;
+    op.hashes[field] = hashValue(hashKey, spec.blank?.includes(field) && value === "" ? null : value);
+  }
+  if (spec.cross !== void 0) {
+    guardCross(spec.cross, "record");
+    op.cross = spec.cross;
+  }
+  return op;
+}
+
+// src/practice/store.ts
+var ITEM = "item";
+var META = "meta";
+var PENDING = "pending";
+var FORMAT = "items-1";
+function definedOnly(data) {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== void 0));
+}
+function newData(local) {
+  return Object.fromEntries(local.fields.map((field) => [field, field in local.data ? local.data[field] : null]));
+}
+function sameMetadata(item, entry) {
+  return item.state === entry.state && JSON.stringify(item.tags) === JSON.stringify(entry.tags) && JSON.stringify(item.links) === JSON.stringify(entry.links);
+}
+function isOpResult(value) {
+  const r3 = value;
+  return r3 !== null && typeof r3 === "object" && typeof r3.id === "string" && typeof r3.saved === "boolean" && typeof r3.as === "string";
+}
+var PracticeStore = class {
+  constructor(env = process.env, kv = new SqlitePracticeKv(env)) {
+    this.env = env;
+    this.kv = kv;
+  }
+  env;
+  kv;
+  snapshot() {
+    const dump = this.kv.dump([ITEM, META, PENDING]);
+    const items = /* @__PURE__ */ new Map();
+    for (const { key, value } of dump[ITEM] ?? []) items.set(key, JSON.parse(value));
+    const meta2 = {};
+    for (const { key, value } of dump[META] ?? []) meta2[key] = JSON.parse(value);
+    const pending = /* @__PURE__ */ new Map();
+    for (const { key, value } of dump[PENDING] ?? []) pending.set(key, JSON.parse(value));
+    return { items, meta: meta2, pending };
+  }
+  /** Every item, for the reads. */
+  items() {
+    return this.snapshot().items;
+  }
+  /** Every item of one kind, flattened to its row. */
+  rows(kind) {
+    return rowsOf(this.items(), kind);
+  }
+  pendingCount() {
+    return this.snapshot().pending.size;
+  }
+  /**
+   * One write: the ops of one tool call, saved by the cloud or not at all. Returns each op's
+   * result and the items as they stand afterwards. A refusal throws its question.
+   */
+  async write(tool, intent, specs) {
+    const snap = this.snapshot();
+    const init = [];
+    const meta2 = { ...snap.meta };
+    const ensure = (key, value) => {
+      if (meta2[key] !== void 0) return;
+      meta2[key] = value;
+      init.push({ op: "set", namespace: META, key, value: JSON.stringify(value) });
+    };
+    ensure("format", FORMAT);
+    ensure("tenant", randomUUID());
+    ensure("hash_key", randomBytes2(32).toString("base64"));
+    ensure("sync_seq", "0");
+    const hashKey = Buffer.from(meta2.hash_key, "base64");
+    guardRaw(tool, "the tool name");
+    for (const [flag, value] of Object.entries(intent)) guardRaw(value, `the ${flag} flag`);
+    const ops = specs.map((spec) => buildOp(spec, hashKey));
+    const local = {};
+    for (const spec of specs) {
+      if (spec.data) local[spec.id] = { kind: spec.kind, data: definedOnly(spec.data), fields: Object.keys(spec.data) };
+    }
+    const pending = {
+      queued_at: (/* @__PURE__ */ new Date()).toISOString(),
+      write: { tenant: meta2.tenant, write_id: randomUUID(), store: "practice", tool, intent, ops },
+      local
+    };
+    const writeId = pending.write.write_id;
+    this.kv.apply([...init, { op: "set", namespace: PENDING, key: writeId, value: JSON.stringify(pending) }]);
+    let reply;
+    try {
+      reply = await callItems(this.env, "write", pending.write);
+      if (reply.saved !== true && reply.saved !== false) throw new CloudUnreachableError("a reply with no saved field");
+    } catch (err) {
+      this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
+      throw err;
+    }
+    if (reply.saved === false) {
+      this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
+      throw new ValidationError(this.fillQuestion(String(reply.question ?? ""), snap.items, local), "refused");
+    }
+    return this.applySaved(writeId, pending, reply, snap);
+  }
+  /** Replays every pending write with its own write_id, oldest first. A cloud that does not answer leaves them pending. */
+  async replayPending() {
+    const replayed = [];
+    const queue = [...this.snapshot().pending.entries()].sort(([, a3], [, b3]) => a3.queued_at.localeCompare(b3.queued_at));
+    for (const [writeId, pending] of queue) {
+      const reply = await callItems(this.env, "write", pending.write);
+      if (reply.saved === false) {
+        this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
+        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: false });
+      } else if (reply.saved === true) {
+        await this.applySaved(writeId, pending, reply, this.snapshot());
+        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: true });
+      } else {
+        throw new CloudUnreachableError("a reply with no saved field");
+      }
+    }
+    return replayed;
+  }
+  async applySaved(writeId, pending, reply, snap) {
+    const results = Array.isArray(reply.ops) && reply.ops.every(isOpResult) ? reply.ops : null;
+    if (!results) throw this.notApplied(writeId, "its reply named no op results");
+    let sync;
+    try {
+      sync = await callItems(this.env, "sync", { tenant: pending.write.tenant, store: "practice", since: Number(snap.meta.sync_seq ?? 0) });
+    } catch (err) {
+      throw this.notApplied(writeId, err.message);
+    }
+    if (!Array.isArray(sync.items) || typeof sync.seq !== "number") throw this.notApplied(writeId, "its changes could not be read back");
+    const items = new Map(snap.items);
+    const changed = /* @__PURE__ */ new Set();
+    const base = Date.now();
+    results.forEach((result, index) => {
+      const local = pending.local[result.id];
+      if (!result.saved || !local) return;
+      const now2 = new Date(base + index).toISOString();
+      const current = items.get(result.as);
+      items.set(result.as, current ? { ...current, data: { ...current.data, ...local.data }, updated_at: now2 } : { kind: local.kind, data: newData(local), tags: {}, state: null, links: {}, created_at: now2, updated_at: now2 });
+      changed.add(result.as);
+    });
+    const now = new Date(base + results.length).toISOString();
+    for (const entry of sync.items) {
+      if (entry.deleted) {
+        if (items.delete(entry.id)) changed.add(entry.id);
+        continue;
+      }
+      const current = items.get(entry.id);
+      items.set(entry.id, {
+        kind: entry.kind,
+        data: current?.data ?? {},
+        tags: entry.tags ?? {},
+        state: entry.state ?? null,
+        links: entry.links ?? {},
+        created_at: current?.created_at ?? now,
+        updated_at: current && sameMetadata(current, entry) ? current.updated_at : now
+      });
+      changed.add(entry.id);
+    }
+    const writes = [];
+    for (const id of changed) {
+      const item = items.get(id);
+      writes.push(item ? { op: "set", namespace: ITEM, key: id, value: JSON.stringify(item) } : { op: "delete", namespace: ITEM, key: id });
+    }
+    writes.push({ op: "set", namespace: META, key: "sync_seq", value: JSON.stringify(String(sync.seq)) });
+    writes.push({ op: "delete", namespace: PENDING, key: writeId });
+    this.kv.apply(writes);
+    return { ops: results, items };
+  }
+  notApplied(writeId, detail) {
+    return new DataServerError(
+      `Probanda's Cloud saved this write, but it could not be applied to practice.db (${detail}). It is kept as pending write ${writeId} and is applied by the next practice tool call.`,
+      "write_pending"
+    );
+  }
+  /** The question with each {{item:<id>}} replaced by that item's local description. */
+  fillQuestion(question, items, local) {
+    return question.replace(/\{\{item:([^}]+)\}\}/g, (_3, id) => describe2(id, items.get(id) ?? local[id]));
   }
 };
 
 // src/dispatch.ts
-import { dirname as dirname15 } from "node:path";
+import { dirname as dirname16 } from "node:path";
 
 // src/knowledge/index.ts
 var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
@@ -76202,13 +76087,13 @@ function normalizeName(name) {
   if (words.length > 1 && words[0] === "the") words.shift();
   return words.join("");
 }
-function wordsOf(text5) {
-  return text5.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+function wordsOf(text4) {
+  return text4.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 }
 var VENUE_STOPWORDS = [["court"], ["tribunal"], ["of"], ["the"], ["british", "columbia"]];
 var KIND_STOPWORDS = [["of"], ["the"], ["form"]];
-function tokensOf(text5, stopwords) {
-  const words = wordsOf(text5);
+function tokensOf(text4, stopwords) {
+  const words = wordsOf(text4);
   const out = [];
   for (let i3 = 0; i3 < words.length; ) {
     const stop = stopwords.find((phrase) => phrase.every((word, k3) => words[i3 + k3] === word));
@@ -76271,9 +76156,9 @@ function resolveAmong(given, entities, jurisdiction, stopwords) {
     const initials = initialsOf(entity.name);
     if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity, "acronym");
     if (givenTokens.length > 0) {
-      for (const { text: text5, via } of entity.names) {
+      for (const { text: text4, via } of entity.names) {
         if (via === "code") continue;
-        const other = tokensOf(text5, stopwords);
+        const other = tokensOf(text4, stopwords);
         if (other.length === 0) continue;
         const theirs = new Set(other);
         if (givenTokens.every((t3) => theirs.has(t3)) || other.every((t3) => ours2.has(t3))) {
@@ -76305,7 +76190,7 @@ function resolveVenue(view, given, jurisdiction) {
     entities.push({
       code: NO_VENUE,
       name: nv.name,
-      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text5) => ({ text: text5, via: "not_venue" })),
+      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text4) => ({ text: text4, via: "not_venue" })),
       row: NO_VENUE_ROW,
       not_venue: nv,
       affix: false
@@ -76338,286 +76223,8 @@ function resolveKind(view, given, jurisdiction, noVenue, recipient) {
 }
 
 // src/tools/practice/rule-overlay.ts
-import { randomUUID } from "node:crypto";
-
-// src/practice-registry.ts
-var common = [
-  { name: "id", type: "str", system: true },
-  { name: "owner_id", type: "str", system: true },
-  { name: "created_at", type: "str", system: true },
-  { name: "updated_at", type: "str", system: true }
-];
-var PRACTICE_ENTITIES = [
-  {
-    table: "practice_clients",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "name", type: "str" },
-      { name: "client_num", type: "str" },
-      { name: "orig_lawyer", type: "str" },
-      { name: "resp_lawyer", type: "str" },
-      { name: "type_of_law", type: "str" },
-      { name: "major_client", type: "str" }
-    ]
-  },
-  {
-    table: "practice_matters",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "client_id", type: "str" },
-      { name: "description", type: "str" },
-      { name: "file_number", type: "str" },
-      { name: "matt_num", type: "str" },
-      { name: "orig_lawyer", type: "str" },
-      { name: "resp_lawyer", type: "str" },
-      { name: "status", type: "str" },
-      { name: "type_of_law", type: "str" },
-      { name: "billable", type: "bool" },
-      { name: "regular_trust", type: "num" },
-      { name: "term_trust", type: "num" },
-      { name: "last_trust_date", type: "str" }
-    ],
-    fks: [{ field: "client_id", refTable: "practice_clients" }]
-  },
-  {
-    table: "practice_time_entries",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "description", type: "str" },
-      { name: "entry_date", type: "str" },
-      { name: "hours", type: "num" },
-      { name: "billable", type: "bool" },
-      { name: "batch_tag", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_invoices",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "invoice_number", type: "str" },
-      { name: "issue_date", type: "str" },
-      { name: "date_to", type: "str" },
-      { name: "amount", type: "num" },
-      { name: "amount_paid", type: "num" },
-      { name: "status", type: "str" },
-      { name: "last_import_at", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_tasks",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "description", type: "str" },
-      { name: "task_type", type: "str", enum: ["client", "admin", "professional"] },
-      { name: "time_estimate_hours", type: "num" },
-      { name: "actual_hours", type: "num" },
-      { name: "deadline_date", type: "str" },
-      { name: "status", type: "str", enum: ["open", "completed", "paused", "withdrawn"] },
-      { name: "completed_at", type: "str" },
-      { name: "next_nudge_date", type: "str" },
-      { name: "nudge_interval_days", type: "num" },
-      { name: "last_nudged_at", type: "str" },
-      { name: "filing_ref", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_retainer_notices",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "sent_at", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_anchors",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "anchor_type", type: "str" },
-      { name: "anchor_date", type: "str" },
-      { name: "status", type: "str", enum: ["active", "conflicted", "superseded", "occurred"] },
-      { name: "party_label", type: "str" },
-      { name: "proceeding_label", type: "str" },
-      { name: "filing_ref", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_anchor_sources",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "anchor_id", type: "str" },
-      { name: "source_document", type: "str" },
-      { name: "source_excerpt", type: "str" },
-      { name: "stated_date", type: "str" },
-      { name: "asserted_date", type: "str" },
-      { name: "status", type: "str", enum: ["pending", "confirmed", "conflicted", "superseded"] }
-    ],
-    fks: [{ field: "anchor_id", refTable: "practice_anchors" }]
-  },
-  {
-    table: "practice_deadlines",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "anchor_id", type: "str" },
-      { name: "source_document", type: "str" },
-      { name: "deadline_type", type: "str" },
-      { name: "deadline_date", type: "str" },
-      { name: "rule_ref", type: "str" },
-      { name: "rule_description", type: "str" },
-      { name: "source_type", type: "str", enum: ["bc_rules", "order_term", "manual"] },
-      { name: "status", type: "str", enum: ["active", "stale", "superseded", "not_applicable", "dismissed", "met"] },
-      { name: "review_flag", type: "str", enum: ["shift_pending", "limited_day", "rule_stale", "practitioner_choice"] },
-      { name: "review_note", type: "str" },
-      { name: "party_label", type: "str" },
-      { name: "proceeding_label", type: "str" },
-      { name: "scenario_label", type: "str" },
-      { name: "expiry_notified_at", type: "str" }
-    ],
-    fks: [
-      { field: "matter_id", refTable: "practice_matters" },
-      { field: "anchor_id", refTable: "practice_anchors" }
-    ]
-  },
-  {
-    table: "practice_payment_in_flight",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "notes", type: "str" },
-      { name: "amount", type: "num" },
-      { name: "recorded_at", type: "str" },
-      { name: "expected_clear_by", type: "str" },
-      { name: "cleared", type: "bool" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_matter_signals",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "matter_id", type: "str" },
-      { name: "note", type: "str" },
-      { name: "signal_key", type: "str" },
-      { name: "state", type: "str", enum: ["confirmed", "unconfirmed", "absent"] },
-      { name: "confirmed_at", type: "str" }
-    ],
-    fks: [{ field: "matter_id", refTable: "practice_matters" }]
-  },
-  {
-    table: "practice_status_policies",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "status_label", type: "str" },
-      { name: "required_signals", type: "str" },
-      { name: "blocking_signals", type: "str" },
-      { name: "auto_advance", type: "bool" },
-      { name: "description", type: "str" }
-    ]
-  },
-  {
-    table: "practice_court_calendar_coverage",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "year", type: "num" },
-      { name: "status", type: "str", enum: ["confirmed", "unavailable"] },
-      { name: "source_document", type: "str" },
-      { name: "checked_at", type: "str" }
-    ]
-  },
-  {
-    table: "practice_court_calendar_days",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "calendar_date", type: "str" },
-      { name: "status_category", type: "str", enum: ["full_closure", "limited", "regional_exception"] },
-      { name: "status_label", type: "str" },
-      { name: "courthouse_scope", type: "str" },
-      { name: "source_document", type: "str" }
-    ]
-  },
-  {
-    // Firm-wide and matter-free: one row per rule overlay record, id = record_id.
-    table: "practice_rule_overlay",
-    pk: "id",
-    pkGenerated: true,
-    matterScoped: false,
-    fields: [
-      ...common,
-      { name: "deadline_type", type: "str" },
-      { name: "rule_ref", type: "str" },
-      { name: "amending_reg", type: "str" },
-      { name: "effective_from", type: "str" },
-      { name: "effective_to", type: "str" },
-      { name: "status", type: "str", enum: ["verified", "unverified", "superseded_by_shipped", "conflict"] },
-      { name: "record", type: "str" }
-    ]
-  }
-];
-var PRACTICE_BY_TABLE = new Map(PRACTICE_ENTITIES.map((entity) => [entity.table, entity]));
-function practiceEntityFor(table) {
-  const entity = PRACTICE_BY_TABLE.get(table);
-  if (!entity) throw new ValidationError(`Unknown practice table "${table}"`);
-  return entity;
-}
-
-// src/tools/practice/rule-overlay.ts
-var overlay = practiceEntityFor("practice_rule_overlay");
-var MATTER_CODE = /\bL\d{3,4}\b/;
+import { randomUUID as randomUUID2 } from "node:crypto";
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-var SNAKE_CASE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/;
-var SHIPPED_ROW = /^shipped:[a-z][a-z0-9]*(_[a-z0-9]+)*$/;
-var ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 var RULE_OVERLAY_STATUSES = ["verified", "unverified", "superseded_by_shipped", "conflict"];
 var OFFSET_UNITS = ["days", "business_days", "months", "years"];
 var OFFSET_DIRECTIONS = ["before", "after"];
@@ -76629,207 +76236,35 @@ var COUNTING_METHODS = [
 ];
 var SEMANTICS = ["mandatory", "earliest_permissible", "latest_permissible", "permissive"];
 var SOURCE_KINDS = ["oic_pdf", "consolidation", "regulation"];
-var RECORD_FIELDS = [
-  "record_id",
-  "jurisdiction",
-  "enactment",
-  "amending_instrument",
-  "deadline_type",
-  "anchor_type",
-  "base",
-  "rule_ref",
-  "offset",
-  "counting",
-  "semantics",
-  "description",
-  "verbatim",
-  "source",
-  "effective_from",
-  "effective_to",
-  "supersedes",
-  "open_questions",
-  "status",
-  "verified_by",
-  "verified_at",
-  "pool_id"
-];
-var NESTED_FIELDS = {
-  enactment: ["name", "citation", "civix_id"],
-  amending_instrument: ["reg", "oic", "commencement"],
-  offset: ["value", "unit", "direction", "clear"],
-  source: ["url", "fetched_at", "kind"]
-};
-function isPlainObject3(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function shape(value, label, fields, optional2 = []) {
-  if (!isPlainObject3(value)) throw new ValidationError(`${label} must be an object`);
-  const unknown2 = Object.keys(value).filter((key) => !fields.includes(key));
-  if (unknown2.length > 0) {
-    throw new ValidationError(`${label} has unknown field(s) ${unknown2.join(", ")} (allowed: ${fields.join(", ")})`);
-  }
-  const missing = fields.filter((key) => value[key] === void 0 && !optional2.includes(key));
-  if (missing.length > 0) {
-    throw new ValidationError(`${label} is missing ${missing.join(", ")} (a field that may be null is still sent, as null)`);
-  }
-  return Object.fromEntries(fields.filter((key) => value[key] !== void 0).map((key) => [key, value[key]]));
-}
-function refuseMatterCodes(value, label) {
-  if (typeof value === "string") {
-    if (MATTER_CODE.test(value)) {
-      throw new ValidationError(
-        `${label} carries a client matter code. A rule overlay record is firm-wide and never carries matter content (no matter code, party name, file name or fact).`
-      );
-    }
-  } else if (Array.isArray(value)) {
-    value.forEach((item, index) => refuseMatterCodes(item, `${label}[${index}]`));
-  } else if (isPlainObject3(value)) {
-    for (const [key, item] of Object.entries(value)) refuseMatterCodes(item, `${label}.${key}`);
-  }
-}
-function text(value, label) {
-  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label} must be a non-empty string`);
-}
-function oneOf(value, label, allowed) {
-  if (typeof value !== "string" || !allowed.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${allowed.join(", ")}`);
-  }
-}
-function snakeCase(value, label) {
-  if (typeof value !== "string" || !SNAKE_CASE.test(value)) {
-    throw new ValidationError(`${label} must be snake_case, e.g. notice_of_hearing_service`);
-  }
-}
-function isoDate(value, label) {
-  const parts = typeof value === "string" ? ISO_DATE.exec(value) : null;
-  const [year, month, day] = parts ? parts.slice(1).map(Number) : [];
-  const date3 = new Date(Date.UTC(year, month - 1, day));
-  if (!parts || date3.getUTCFullYear() !== year || date3.getUTCMonth() !== month - 1 || date3.getUTCDate() !== day) {
-    throw new ValidationError(`${label} must be an ISO date (YYYY-MM-DD)`);
-  }
-}
-function strings(value, label) {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-    throw new ValidationError(`${label} must be an array of strings`);
-  }
-  return value;
-}
-function isHttpUrl(value) {
-  try {
-    return typeof value === "string" && ["http:", "https:"].includes(new URL(value).protocol);
-  } catch {
-    return false;
-  }
-}
-function validateRuleOverlayRecord(input) {
-  const record2 = shape(input, "record", RECORD_FIELDS, ["record_id", "pool_id"]);
-  for (const key of ["enactment", "amending_instrument", "source"]) {
-    record2[key] = shape(record2[key], `record.${key}`, NESTED_FIELDS[key]);
-  }
-  if (record2.offset !== null) record2.offset = shape(record2.offset, "record.offset", NESTED_FIELDS.offset);
-  refuseMatterCodes(record2, "record");
-  const given = record2.record_id;
+async function upsert_rule_overlay(store, args) {
+  const input = args.record;
+  if (typeof input !== "object" || input === null || Array.isArray(input)) throw new ValidationError("record must be an object");
+  const given = input.record_id;
   if (given !== void 0 && given !== null && (typeof given !== "string" || !UUID.test(given))) {
     throw new ValidationError("record.record_id must be a UUID, or omitted on a first write");
   }
-  const recordId = typeof given === "string" ? given : randomUUID();
-  if (record2.jurisdiction !== "CA-BC") throw new ValidationError('record.jurisdiction must be "CA-BC"');
-  const enactment = record2.enactment;
-  for (const key of NESTED_FIELDS.enactment) text(enactment[key], `record.enactment.${key}`);
-  const instrument = record2.amending_instrument;
-  text(instrument.reg, "record.amending_instrument.reg");
-  if (instrument.oic !== null && typeof instrument.oic !== "string") {
-    throw new ValidationError("record.amending_instrument.oic must be a string or null");
-  }
-  isoDate(instrument.commencement, "record.amending_instrument.commencement");
-  snakeCase(record2.deadline_type, "record.deadline_type");
-  snakeCase(record2.anchor_type, "record.anchor_type");
-  text(record2.rule_ref, "record.rule_ref");
-  if (record2.offset === null) {
-    for (const key of ["counting", "semantics", "base"]) {
-      if (record2[key] !== null) throw new ValidationError(`record.${key} must be null in a repeal record (offset null)`);
-    }
-  } else {
-    const offset = record2.offset;
-    if (!Number.isInteger(offset.value) || offset.value < 0) {
-      throw new ValidationError("record.offset.value must be a non-negative integer");
-    }
-    oneOf(offset.unit, "record.offset.unit", OFFSET_UNITS);
-    oneOf(offset.direction, "record.offset.direction", OFFSET_DIRECTIONS);
-    if (typeof offset.clear !== "boolean") throw new ValidationError("record.offset.clear must be a boolean");
-    for (const key of ["counting", "semantics", "base"]) {
-      if (record2[key] === null) {
-        throw new ValidationError(`record.${key} is required unless the record is a repeal record (offset null)`);
-      }
-    }
-    oneOf(record2.counting, "record.counting", COUNTING_METHODS);
-    oneOf(record2.semantics, "record.semantics", SEMANTICS);
-    snakeCase(record2.base, "record.base");
-  }
-  text(record2.description, "record.description");
-  text(record2.verbatim, "record.verbatim");
-  const source = record2.source;
-  if (!isHttpUrl(source.url)) throw new ValidationError("record.source.url must be an http or https URL");
-  isoDate(source.fetched_at, "record.source.fetched_at");
-  oneOf(source.kind, "record.source.kind", SOURCE_KINDS);
-  isoDate(record2.effective_from, "record.effective_from");
-  if (record2.effective_to !== null) {
-    isoDate(record2.effective_to, "record.effective_to");
-    if (record2.effective_to < record2.effective_from) {
-      throw new ValidationError("record.effective_to must be on or after record.effective_from, or null");
-    }
-  }
-  strings(record2.supersedes, "record.supersedes").forEach((item, index) => {
-    const otherRecord = UUID.test(item) && item.toLowerCase() !== recordId.toLowerCase();
-    if (!SHIPPED_ROW.test(item) && !otherRecord) {
-      throw new ValidationError(
-        `record.supersedes[${index}] must be "shipped:<deadline_type>" or another record's record_id`
-      );
-    }
-  });
-  strings(record2.open_questions, "record.open_questions");
-  oneOf(record2.status, "record.status", RULE_OVERLAY_STATUSES);
-  if (record2.verified_by !== null && record2.verified_by !== "practitioner") {
-    throw new ValidationError('record.verified_by must be "practitioner" or null');
-  }
-  if (record2.verified_at !== null) isoDate(record2.verified_at, "record.verified_at");
-  if (record2.status === "verified" && (record2.verified_by === null || record2.verified_at === null)) {
-    throw new ValidationError('record.status "verified" requires verified_by "practitioner" and an ISO verified_at');
-  }
-  const poolId = record2.pool_id;
-  if (poolId !== void 0 && poolId !== null && (typeof poolId !== "string" || !UUID.test(poolId))) {
-    throw new ValidationError("record.pool_id must be a UUID, null, or omitted");
-  }
-  const { record_id: _given, ...fields } = record2;
-  return { record_id: recordId, ...fields };
-}
-async function upsert_rule_overlay(admin, ownerId, args) {
-  const record2 = validateRuleOverlayRecord(args.record);
+  const { record_id: _given, ...fields } = input;
+  const record2 = { record_id: typeof given === "string" ? given.toLowerCase() : randomUUID2(), ...fields };
   const id = String(record2.record_id);
-  const row2 = {
-    deadline_type: record2.deadline_type,
-    rule_ref: record2.rule_ref,
-    amending_reg: record2.amending_instrument.reg,
-    effective_from: record2.effective_from,
-    effective_to: record2.effective_to,
-    status: record2.status,
-    record: JSON.stringify(record2)
-  };
-  const existing = await admin.query(overlay, { id: `eq.${id}` }, { limit: 1 });
-  const stored = existing.length > 0 ? exactlyOne(await admin.update(overlay, { id: `eq.${id}` }, row2), overlay.table, "update") : exactlyOne(await admin.insert(overlay, { id, ...row2 }), overlay.table, "insert");
-  return JSON.parse(String(stored.record));
+  const instrument = record2.amending_instrument;
+  const { items } = await store.write("upsert_rule_overlay", {}, [{
+    op: "upsert",
+    id,
+    kind: "rule_overlay",
+    state: record2.status,
+    tags: { deadline_type: record2.deadline_type, amending_reg: instrument?.reg },
+    crossTags: ["amending_reg"],
+    data: { record: record2 },
+    cross: record2
+  }]);
+  return items.get(id)?.data.record;
 }
 function compare2(a3, b3) {
   const [x3, y3] = [String(a3 ?? ""), String(b3 ?? "")];
   return x3 < y3 ? -1 : x3 > y3 ? 1 : 0;
 }
-async function rule_overlay(admin, ownerId, args) {
-  const filters = {};
-  for (const key of ["deadline_type", "amending_reg", "status"]) {
-    if (args[key]) filters[key] = `eq.${String(args[key])}`;
-  }
-  const rows21 = await admin.query(overlay, filters);
-  const records = rows21.map((row2) => JSON.parse(String(row2.record)));
+async function rule_overlay(store, args) {
+  const records = store.rows("rule_overlay").filter((row2) => ["deadline_type", "amending_reg", "status"].every((key) => !args[key] || row2[key] === String(args[key]))).map((row2) => row2.record);
   records.sort((a3, b3) => compare2(a3.deadline_type, b3.deadline_type) || compare2(a3.effective_from, b3.effective_from));
   return { records };
 }
@@ -76855,8 +76290,8 @@ function practicePrefixed(name) {
   return `practice_data__${name}`;
 }
 function ruleOverlayRecordSchema() {
-  const text5 = { type: "string" };
-  const isoDate2 = { type: "string", description: "ISO date, YYYY-MM-DD" };
+  const text4 = { type: "string" };
+  const isoDate = { type: "string", description: "ISO date, YYYY-MM-DD" };
   const orNull = (schema) => ({ anyOf: [schema, { type: "null" }] });
   const object3 = (properties2) => ({
     type: "object",
@@ -76867,12 +76302,12 @@ function ruleOverlayRecordSchema() {
   const properties = {
     record_id: { type: "string", description: "UUID; omit on a first write" },
     jurisdiction: { type: "string", enum: ["CA-BC"] },
-    enactment: object3({ name: text5, citation: text5, civix_id: text5 }),
-    amending_instrument: object3({ reg: text5, oic: orNull(text5), commencement: isoDate2 }),
+    enactment: object3({ name: text4, citation: text4, civix_id: text4 }),
+    amending_instrument: object3({ reg: text4, oic: orNull(text4), commencement: isoDate }),
     deadline_type: { type: "string", description: "snake_case" },
     anchor_type: { type: "string", description: "snake_case" },
     base: orNull({ type: "string", description: "snake_case anchor or deadline type counted from; null in a repeal record" }),
-    rule_ref: text5,
+    rule_ref: text4,
     offset: orNull({
       ...object3({
         value: { type: "integer", minimum: 0 },
@@ -76884,16 +76319,16 @@ function ruleOverlayRecordSchema() {
     }),
     counting: orNull({ type: "string", enum: COUNTING_METHODS }),
     semantics: orNull({ type: "string", enum: SEMANTICS }),
-    description: text5,
+    description: text4,
     verbatim: { type: "string", description: "the enacting text, also for a repeal record" },
-    source: object3({ url: text5, fetched_at: isoDate2, kind: { type: "string", enum: SOURCE_KINDS } }),
-    effective_from: isoDate2,
-    effective_to: orNull(isoDate2),
+    source: object3({ url: text4, fetched_at: isoDate, kind: { type: "string", enum: SOURCE_KINDS } }),
+    effective_from: isoDate,
+    effective_to: orNull(isoDate),
     supersedes: { type: "array", items: { type: "string" }, description: "shipped:<deadline_type> or another record's record_id" },
     open_questions: { type: "array", items: { type: "string" } },
     status: { type: "string", enum: RULE_OVERLAY_STATUSES },
     verified_by: orNull({ type: "string", enum: ["practitioner"] }),
-    verified_at: orNull(isoDate2),
+    verified_at: orNull(isoDate),
     pool_id: orNull({ type: "string", description: "UUID of the shared-pool row a pulled record came from; omit otherwise" })
   };
   return { ...object3(properties), required: Object.keys(properties).filter((key) => key !== "record_id" && key !== "pool_id") };
@@ -76962,7 +76397,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("read_signals"),
-      description: "All signal states and the derived status label for a matter. Seeds default lifecycle policies on first use.",
+      description: "All signal states and the derived status label for a matter.",
       inputSchema: objectSchema([...matterRef])
     },
     {
@@ -77177,7 +76612,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("set_status"),
-      description: "Write a derived status label to a matter and return the old label. Seeds default lifecycle policies on first use.",
+      description: "Write a derived status label to a matter and return the old label.",
       inputSchema: objectSchema([
         ...matterRef,
         { name: "status_label", type: "str" }
@@ -77263,7 +76698,7 @@ function practiceToolDefinitions() {
   ];
   tools.push({
     name: practicePrefixed("import_invoices"),
-    description: "Import normalized invoice rows (from an accounting CSV). Negative amounts are skipped; rows resolving to a non-billable matter (billable: false) are skipped and counted separately; NULL invoice_number rows replace the matter's existing NULL-number rows; non-NULL invoices upsert by (matter, invoice_number). A row's date_to is only written when the row carries the key -- omitting it on a re-import preserves whatever date_to was already stored, an explicit null clears it. Refuses (no rows written) if this import would move any touched matter's effective billing cutoff backward, unless confirm_regression is true -- the error names every regressed matter with its old and new cutoff dates.",
+    description: "Import normalized invoice rows (from an accounting CSV). Negative amounts are skipped; rows Probanda's Cloud does not save (a non-billable matter's, billable: false) are counted in not_saved, with its question in questions; NULL invoice_number rows replace the matter's existing NULL-number rows; non-NULL invoices upsert by (matter, invoice_number). A row's date_to is only written when the row carries the key -- omitting it on a re-import preserves whatever date_to was already stored, an explicit null clears it. Refuses (no rows written) if this import would move any touched matter's effective billing cutoff backward, unless confirm_regression is true -- the error names every regressed matter with its old and new cutoff dates.",
     inputSchema: {
       type: "object",
       properties: {
@@ -78569,7 +78004,7 @@ function buildToolDefinitions() {
 // src/validate.ts
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
-  if (!isPlainObject4(input)) {
+  if (!isPlainObject3(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
@@ -78604,7 +78039,7 @@ function validateValue(label, value, schema) {
   if (type === "boolean" && typeof value !== "boolean") {
     throw new ValidationError(`${label} must be a boolean`);
   }
-  if (type === "object" && !isPlainObject4(value)) {
+  if (type === "object" && !isPlainObject3(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
   const allowedValues = schema.enum;
@@ -78613,42 +78048,17 @@ function validateValue(label, value, schema) {
   }
   return value;
 }
-function isPlainObject4(value) {
+function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 // src/tools/practice/shared.ts
-import { randomUUID as randomUUID2 } from "node:crypto";
+import { randomUUID as randomUUID3 } from "node:crypto";
 function nowIso() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function newId() {
-  return randomUUID2();
-}
-function omit2(row2, fields) {
-  const blocked = new Set(fields);
-  return Object.fromEntries(Object.entries(row2).filter(([key]) => !blocked.has(key)));
-}
-async function insertRow(admin, ownerId, entity, fields) {
-  const id = newId();
-  const inserted = await admin.insert(entity, { ...fields, id, owner_id: ownerId });
-  return exactlyOne(inserted, entity.table, "insert");
-}
-async function patchById(admin, ownerId, entity, id, fields) {
-  const body = omit2(fields, ["id", "owner_id", "created_at"]);
-  const updated = await admin.update(entity, { id: `eq.${id}` }, body);
-  return exactlyOne(updated, entity.table, "update");
-}
-async function upsertByKey(admin, ownerId, entity, keyFilters, fields) {
-  const existing = await admin.query(entity, keyFilters, { limit: 2 });
-  if (existing.length > 1) {
-    throw new AmbiguousMatchError(`${existing.length} ${entity.table} rows matched the natural key`);
-  }
-  if (existing.length === 1) {
-    const id = String(existing[0].id);
-    return { row: await patchById(admin, ownerId, entity, id, fields), created: false };
-  }
-  return { row: await insertRow(admin, ownerId, entity, fields), created: true };
+  return randomUUID3();
 }
 function normalizeMattNum(value) {
   return String(value).replace(/^\d*\./, "");
@@ -78656,31 +78066,24 @@ function normalizeMattNum(value) {
 function isBillable(matter) {
   return matter?.billable !== false;
 }
-async function resolveMatter(admin, ownerId, ref) {
-  const matters4 = practiceEntityFor("practice_matters");
-  let filters = null;
-  if (ref.matter_id) filters = { id: `eq.${String(ref.matter_id)}` };
-  else if (ref.matt_num) filters = { matt_num: `eq.${normalizeMattNum(ref.matt_num)}` };
-  else if (ref.file_number) filters = { file_number: `eq.${String(ref.file_number)}` };
-  if (!filters) return null;
-  const rows21 = await admin.query(matters4, filters, { limit: 2 });
+function resolveMatter(items, ref) {
+  let match = null;
+  if (ref.matter_id) match = (row2) => row2.id === String(ref.matter_id);
+  else if (ref.matt_num) match = (row2) => row2.matt_num === normalizeMattNum(ref.matt_num);
+  else if (ref.file_number) match = (row2) => row2.file_number === String(ref.file_number);
+  if (!match) return null;
+  const rows21 = rowsOf(items, "matter").filter(match);
   if (rows21.length === 0) return null;
   if (rows21.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
   return { id: String(rows21[0].id), row: rows21[0] };
 }
-async function requireMatter(admin, ownerId, ref) {
-  const resolved = await resolveMatter(admin, ownerId, ref);
+function requireMatter(items, ref) {
+  const resolved = resolveMatter(items, ref);
   if (!resolved) throw new NotFoundError("No matter matched the supplied reference");
   return resolved;
 }
-async function loadClientsById(admin, ownerId) {
-  const clients2 = practiceEntityFor("practice_clients");
-  const rows21 = await admin.query(clients2, {});
-  const map = /* @__PURE__ */ new Map();
-  for (const row2 of rows21) {
-    map.set(String(row2.id), row2);
-  }
-  return map;
+function loadClientsById(items) {
+  return new Map(rowsOf(items, "client").map((row2) => [String(row2.id), row2]));
 }
 function clientContext(client) {
   return {
@@ -78688,27 +78091,8 @@ function clientContext(client) {
     client_num: client?.client_num ?? null
   };
 }
-var DEFAULT_POLICIES = [
-  { status_label: "prospective", required_signals: "[]", blocking_signals: '["conflict_check_completed"]', auto_advance: true, description: "File opened; conflict check not yet completed" },
-  { status_label: "intake", required_signals: '["conflict_check_completed"]', blocking_signals: '["retainer_agreement_signed"]', auto_advance: true, description: "Conflict check done; retainer agreement not yet signed" },
-  { status_label: "active", required_signals: '["retainer_agreement_signed","deposit_received"]', blocking_signals: null, auto_advance: true, description: "Retainer signed and deposit received; work in progress" },
-  { status_label: "retainer_warning", required_signals: '["retainer_agreement_signed"]', blocking_signals: null, auto_advance: true, description: "Active matter; retainer balance at or below replenishment threshold" },
-  { status_label: "retainer_depleted", required_signals: '["retainer_agreement_signed"]', blocking_signals: null, auto_advance: true, description: "Active matter; retainer balance confirmed zero" },
-  { status_label: "closing", required_signals: "[]", blocking_signals: null, auto_advance: false, description: "Work substantially complete; representation not yet formally ended" },
-  { status_label: "closed", required_signals: '["representation_ended"]', blocking_signals: null, auto_advance: true, description: "Representation formally ended" },
-  { status_label: "declined", required_signals: '["conflict_check_completed"]', blocking_signals: null, auto_advance: false, description: "Conflict identified or matter not accepted" }
-];
-async function ensureDefaultPolicies(admin, ownerId) {
-  const policies = practiceEntityFor("practice_status_policies");
-  const existing = await admin.query(policies, {}, { limit: 1e3 });
-  const present2 = new Set(existing.map((row2) => String(row2.status_label)));
-  const missing = DEFAULT_POLICIES.filter((policy) => !present2.has(String(policy.status_label)));
-  if (missing.length === 0) return;
-  const rows21 = missing.map((policy) => ({ ...policy, owner_id: ownerId }));
-  await admin.insertMany(policies, rows21);
-}
-function addDaysIso(isoDate2, days) {
-  const [y3, m3, d3] = isoDate2.split("-").map(Number);
+function addDaysIso(isoDate, days) {
+  const [y3, m3, d3] = isoDate.split("-").map(Number);
   const dt3 = new Date(Date.UTC(y3, m3 - 1, d3));
   dt3.setUTCDate(dt3.getUTCDate() + days);
   return dt3.toISOString().slice(0, 10);
@@ -78732,80 +78116,67 @@ function asString(value, label) {
   if (typeof value !== "string" || value === "") throw new ValidationError(`${label} is required`);
   return value;
 }
-function normalizeParty(value) {
-  return typeof value === "string" && value !== "" ? value : "";
-}
 
 // src/tools/practice/reads.ts
-var matters = practiceEntityFor("practice_matters");
-var timeEntries = practiceEntityFor("practice_time_entries");
-var invoices = practiceEntityFor("practice_invoices");
-var tasks = practiceEntityFor("practice_tasks");
-var retainerNotices = practiceEntityFor("practice_retainer_notices");
-var anchors = practiceEntityFor("practice_anchors");
-var anchorSources = practiceEntityFor("practice_anchor_sources");
-var deadlines = practiceEntityFor("practice_deadlines");
-var paymentInFlight = practiceEntityFor("practice_payment_in_flight");
-var matterSignals = practiceEntityFor("practice_matter_signals");
-var statusPolicies = practiceEntityFor("practice_status_policies");
-var courtCalendarCoverage = practiceEntityFor("practice_court_calendar_coverage");
-var courtCalendarDays = practiceEntityFor("practice_court_calendar_days");
-function withClient(matter, clients2) {
-  return { ...matter, ...clientContext(clients2.get(String(matter.client_id))) };
+function withClient(matter, clients) {
+  return { ...matter, ...clientContext(clients.get(String(matter.client_id))) };
 }
-async function matter_lookup(admin, ownerId, args) {
-  const clients2 = await loadClientsById(admin, ownerId);
+function byId(rows21) {
+  return new Map(rows21.map((row2) => [String(row2.id), row2]));
+}
+function groupBy(rows21, field) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const row2 of rows21) {
+    const key = String(row2[field]);
+    const list = groups.get(key) ?? [];
+    list.push(row2);
+    groups.set(key, list);
+  }
+  return groups;
+}
+async function matter_lookup(store, args) {
+  const items = store.items();
+  const clients = loadClientsById(items);
+  const matters = rowsOf(items, "matter");
   let matched = [];
   if (args.matter_id) {
-    matched = await admin.query(matters, { id: `eq.${String(args.matter_id)}` });
+    matched = matters.filter((matter) => matter.id === String(args.matter_id));
   } else if (args.matt_num) {
-    matched = await admin.query(matters, { matt_num: `eq.${normalizeMattNum(args.matt_num)}` });
+    matched = matters.filter((matter) => matter.matt_num === normalizeMattNum(args.matt_num));
   } else if (args.file_number) {
-    matched = await admin.query(matters, { file_number: `eq.${String(args.file_number)}` });
+    matched = matters.filter((matter) => matter.file_number === String(args.file_number));
   } else if (args.client_name) {
     const needle = String(args.client_name).toLowerCase();
     const matchingClientIds = new Set(
-      [...clients2.values()].filter((client) => typeof client.name === "string" && client.name.toLowerCase().includes(needle)).map((client) => String(client.id))
+      [...clients.values()].filter((client) => typeof client.name === "string" && client.name.toLowerCase().includes(needle)).map((client) => String(client.id))
     );
-    const rows21 = await admin.query(matters, {});
-    matched = rows21.filter((matter) => matchingClientIds.has(String(matter.client_id)));
+    matched = matters.filter((matter) => matchingClientIds.has(String(matter.client_id)));
   }
-  return { rows: matched.map((matter) => withClient(matter, clients2)) };
+  return { rows: matched.map((matter) => withClient(matter, clients)) };
 }
-async function trust_summary(admin, ownerId, args) {
-  const clients2 = await loadClientsById(admin, ownerId);
-  let filters = {};
+async function trust_summary(store, args) {
+  const items = store.items();
+  const clients = loadClientsById(items);
+  let matters = rowsOf(items, "matter");
   if (args.matt_num) {
-    filters = { matt_num: `eq.${normalizeMattNum(args.matt_num)}` };
+    matters = matters.filter((matter) => matter.matt_num === normalizeMattNum(args.matt_num));
   } else if (args.filter === "funded") {
-    filters = { regular_trust: "lt.0" };
+    matters = matters.filter((matter) => matter.regular_trust !== null && matter.regular_trust !== void 0 && Number(matter.regular_trust) < 0);
   } else if (args.filter === "depleted") {
-    filters = { regular_trust: "eq.0" };
+    matters = matters.filter((matter) => matter.regular_trust !== null && matter.regular_trust !== void 0 && Number(matter.regular_trust) === 0);
   }
-  const rows21 = await admin.query(matters, filters);
-  return { rows: rows21.map((row2) => withClient(row2, clients2)) };
+  return { rows: matters.map((row2) => withClient(row2, clients)) };
 }
-async function wip_hours(admin, ownerId, args) {
-  const clients2 = await loadClientsById(admin, ownerId);
-  const matterRows = await admin.query(matters, {});
-  const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
+async function wip_hours(store, args) {
+  const items = store.items();
+  const clients = loadClientsById(items);
+  const matterById = byId(rowsOf(items, "matter"));
   let target = null;
-  if (args.matt_num || args.matter_id) {
-    const resolved = await requireMatter(admin, ownerId, args);
-    target = resolved.id;
-  }
+  if (args.matt_num || args.matter_id) target = requireMatter(items, args).id;
   const explicitCutoff = typeof args.cutoff_date === "string" && args.cutoff_date ? args.cutoff_date : null;
-  const entryFilters = { billable: "eq.true" };
-  if (target) entryFilters.matter_id = `eq.${target}`;
-  if (explicitCutoff) entryFilters.entry_date = `gte.${explicitCutoff}`;
-  const entries = await admin.query(timeEntries, entryFilters);
-  const entriesByMatter = /* @__PURE__ */ new Map();
-  for (const entry of entries) {
-    const matterId = String(entry.matter_id);
-    const list = entriesByMatter.get(matterId) ?? [];
-    list.push(entry);
-    entriesByMatter.set(matterId, list);
-  }
+  const entries = rowsOf(items, "time_entry").filter((entry) => entry.billable === true && (!target || entry.matter_id === target) && (!explicitCutoff || String(entry.entry_date ?? "") >= explicitCutoff));
+  const entriesByMatter = groupBy(entries, "matter_id");
+  const invoicesByMatter = groupBy(rowsOf(items, "invoice"), "matter_id");
   const rows21 = [];
   for (const [matterId, matterEntries] of entriesByMatter) {
     const matter = matterById.get(matterId);
@@ -78814,8 +78185,7 @@ async function wip_hours(admin, ownerId, args) {
     let cutoffSource = explicitCutoff ? "explicit" : null;
     let scopedEntries = matterEntries;
     if (!explicitCutoff) {
-      const invoiceRows = await admin.query(invoices, { matter_id: `eq.${matterId}` });
-      const derived = effectiveCutoff(invoiceRows);
+      const derived = effectiveCutoff(invoicesByMatter.get(matterId) ?? []);
       if (derived) {
         cutoffDate = derived.cutoff_date;
         cutoffSource = derived.cutoff_source;
@@ -78828,7 +78198,7 @@ async function wip_hours(admin, ownerId, args) {
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
       description: matter?.description ?? null,
-      ...clientContext(matter ? clients2.get(String(matter.client_id)) : void 0),
+      ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0),
       total_hours: totalHours,
       cutoff_date: cutoffDate,
       cutoff_source: cutoffSource
@@ -78836,46 +78206,36 @@ async function wip_hours(admin, ownerId, args) {
   }
   return { rows: rows21 };
 }
-async function time_entries_query(admin, ownerId, args) {
-  const clients2 = await loadClientsById(admin, ownerId);
-  const matterRows = await admin.query(matters, {});
-  const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
-  const filters = {};
-  if (args.matt_num || args.matter_id || args.file_number) {
-    const resolved = await requireMatter(admin, ownerId, args);
-    filters.matter_id = `eq.${resolved.id}`;
-  }
-  if (args.from_date) filters.entry_date = `gte.${String(args.from_date)}`;
-  const entryRows = await admin.query(timeEntries, filters);
+async function time_entries_query(store, args) {
+  const items = store.items();
+  const clients = loadClientsById(items);
+  const matterById = byId(rowsOf(items, "matter"));
+  const matterId = args.matt_num || args.matter_id || args.file_number ? requireMatter(items, args).id : null;
+  const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows21 = entryRows.filter((entry) => !toDate || String(entry.entry_date ?? "") <= toDate).map((entry) => {
+  const rows21 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
     const matter = matterById.get(String(entry.matter_id));
     return {
       ...entry,
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
       matter_description: matter?.description ?? null,
-      ...clientContext(matter ? clients2.get(String(matter.client_id)) : void 0)
+      ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0)
     };
   });
   return { rows: rows21 };
 }
-async function open_tasks(admin, ownerId, args) {
-  const clients2 = await loadClientsById(admin, ownerId);
-  const matterRows = await admin.query(matters, {});
-  const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
-  const filters = { status: "eq.open" };
-  if (args.task_type) filters.task_type = `eq.${String(args.task_type)}`;
-  if (args.matt_num || args.matter_id) filters.matter_id = `eq.${(await requireMatter(admin, ownerId, args)).id}`;
-  const taskRows = await admin.query(tasks, filters, { limit: 1e3 });
-  const notices = await admin.query(retainerNotices, {}, { limit: 1e3 });
+async function open_tasks(store, args) {
+  const items = store.items();
+  const clients = loadClientsById(items);
+  const matterById = byId(rowsOf(items, "matter"));
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
+  const taskRows = rowsOf(items, "task").filter((task) => task.status === "open" && (!args.task_type || task.task_type === String(args.task_type)) && (!matterId || task.matter_id === matterId));
   const latestNotice = /* @__PURE__ */ new Map();
-  for (const notice2 of notices) {
-    const matterId = String(notice2.matter_id);
+  for (const notice2 of rowsOf(items, "retainer_notice")) {
+    const id = String(notice2.matter_id);
     const sentAt = String(notice2.sent_at ?? "");
-    if (!latestNotice.has(matterId) || sentAt > (latestNotice.get(matterId) ?? "")) {
-      latestNotice.set(matterId, sentAt);
-    }
+    if (!latestNotice.has(id) || sentAt > (latestNotice.get(id) ?? "")) latestNotice.set(id, sentAt);
   }
   const rows21 = taskRows.map((task) => {
     const matter = task.matter_id ? matterById.get(String(task.matter_id)) : void 0;
@@ -78884,102 +78244,63 @@ async function open_tasks(admin, ownerId, args) {
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
       matter_description: matter?.description ?? null,
-      ...clientContext(matter ? clients2.get(String(matter.client_id)) : void 0),
+      ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0),
       last_retainer_notice_at: task.matter_id ? latestNotice.get(String(task.matter_id)) ?? null : null
     };
   });
   return { rows: rows21 };
 }
-async function active_deadlines(admin, ownerId, args) {
-  let matterFilter = {};
-  if (args.matt_num || args.matter_id) {
-    const resolved = await requireMatter(admin, ownerId, args);
-    matterFilter = { matter_id: `eq.${resolved.id}` };
-  }
-  const clients2 = await loadClientsById(admin, ownerId);
-  const matterRows = await admin.query(matters, {});
-  const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
-  const matterContext = (matterId) => {
-    const matter = matterById.get(String(matterId));
+async function active_deadlines(store, args) {
+  const items = store.items();
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
+  const inMatter = (row2) => !matterId || row2.matter_id === matterId;
+  const clients = loadClientsById(items);
+  const matterById = byId(rowsOf(items, "matter"));
+  const matterContext = (id) => {
+    const matter = matterById.get(String(id));
     return {
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
       matter_description: matter?.description ?? null,
-      ...clientContext(matter ? clients2.get(String(matter.client_id)) : void 0)
+      ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0)
     };
   };
-  const anchorRows = await admin.query(
-    anchors,
-    { status: "neq.superseded", ...matterFilter },
-    { limit: 1e3 }
-  );
-  const sourceRows = await admin.query(anchorSources, {}, { limit: 1e3 });
-  const sourcesByAnchor = /* @__PURE__ */ new Map();
-  for (const source of sourceRows) {
-    const anchorId = String(source.anchor_id);
-    const list = sourcesByAnchor.get(anchorId) ?? [];
-    list.push(source);
-    sourcesByAnchor.set(anchorId, list);
-  }
+  const sourcesByAnchor = groupBy(rowsOf(items, "anchor_source"), "anchor_id");
   const includeOccurred = args.include_occurred === true;
-  const anchorsOut = anchorRows.filter((anchor) => includeOccurred || anchor.status !== "occurred").map((anchor) => ({
+  const anchorsOut = rowsOf(items, "anchor").filter((anchor) => anchor.status !== "superseded" && inMatter(anchor)).filter((anchor) => includeOccurred || anchor.status !== "occurred").map((anchor) => ({
     ...anchor,
     ...matterContext(anchor.matter_id),
     sources: sourcesByAnchor.get(String(anchor.id)) ?? []
   }));
-  const includeDismissed = args.include_dismissed === true;
-  const includeNotified = args.include_notified === true;
-  const includeMet = args.include_met === true;
-  const activeDeadlineRows = await admin.query(
-    deadlines,
-    { status: "eq.active", ...matterFilter },
-    { limit: 1e3 }
-  );
-  const notApplicableFilters = { status: "eq.not_applicable", ...matterFilter };
-  if (!includeNotified) notApplicableFilters.expiry_notified_at = "is.null";
-  const notApplicableRows = await admin.query(deadlines, notApplicableFilters, { limit: 1e3 });
-  const dismissedRows = includeDismissed ? await admin.query(deadlines, { status: "eq.dismissed", ...matterFilter }, { limit: 1e3 }) : [];
-  const metRows = includeMet ? await admin.query(deadlines, { status: "eq.met", ...matterFilter }, { limit: 1e3 }) : [];
-  const deadlineRows = [...activeDeadlineRows, ...notApplicableRows, ...dismissedRows, ...metRows];
-  const deadlinesOut = deadlineRows.map((deadline) => {
-    return { ...deadline, ...matterContext(deadline.matter_id) };
-  });
-  return { anchors: anchorsOut, deadlines: deadlinesOut };
+  const deadlines = rowsOf(items, "deadline").filter(inMatter);
+  const withStatus = (status) => deadlines.filter((row2) => row2.status === status);
+  const deadlineRows = [
+    ...withStatus("active"),
+    ...withStatus("not_applicable").filter((row2) => args.include_notified === true || row2.expiry_notified_at === null || row2.expiry_notified_at === void 0),
+    ...args.include_dismissed === true ? withStatus("dismissed") : [],
+    ...args.include_met === true ? withStatus("met") : []
+  ];
+  return { anchors: anchorsOut, deadlines: deadlineRows.map((deadline) => ({ ...deadline, ...matterContext(deadline.matter_id) })) };
 }
-async function ar_data(admin, ownerId) {
-  const clients2 = await loadClientsById(admin, ownerId);
-  const matterRows = await admin.query(matters, {});
-  const invoiceRows = await admin.query(invoices, {});
-  const invoicesByMatter = /* @__PURE__ */ new Map();
-  for (const invoice of invoiceRows) {
-    const matterId = String(invoice.matter_id);
-    const list = invoicesByMatter.get(matterId) ?? [];
-    list.push(invoice);
-    invoicesByMatter.set(matterId, list);
-  }
+async function ar_data(store) {
+  const items = store.items();
+  const clients = loadClientsById(items);
   const cutoffByMatter = /* @__PURE__ */ new Map();
-  for (const [matterId, list] of invoicesByMatter) cutoffByMatter.set(matterId, effectiveCutoff(list));
-  const entries = await admin.query(timeEntries, { billable: "eq.true" });
+  for (const [id, list] of groupBy(rowsOf(items, "invoice"), "matter_id")) cutoffByMatter.set(id, effectiveCutoff(list));
   const wipByMatter = /* @__PURE__ */ new Map();
-  for (const entry of entries) {
-    const matterId = String(entry.matter_id);
-    const cutoff = cutoffByMatter.get(matterId);
+  for (const entry of rowsOf(items, "time_entry")) {
+    if (entry.billable !== true) continue;
+    const id = String(entry.matter_id);
+    const cutoff = cutoffByMatter.get(id);
     if (cutoff && String(entry.entry_date ?? "") < cutoff.cutoff_date) continue;
-    wipByMatter.set(matterId, (wipByMatter.get(matterId) ?? 0) + Number(entry.hours ?? 0));
+    wipByMatter.set(id, (wipByMatter.get(id) ?? 0) + Number(entry.hours ?? 0));
   }
-  const pending = await admin.query(paymentInFlight, { cleared: "eq.false" });
-  const pendingByMatter = /* @__PURE__ */ new Map();
-  for (const row2 of pending) {
-    const matterId = String(row2.matter_id);
-    const list = pendingByMatter.get(matterId) ?? [];
-    list.push(row2);
-    pendingByMatter.set(matterId, list);
-  }
-  const rows21 = matterRows.filter((matter) => (matter.status === null || matter.status === void 0 || matter.status !== "closed") && isBillable(matter)).map((matter) => {
+  const pendingByMatter = groupBy(rowsOf(items, "payment").filter((row2) => row2.cleared === false), "matter_id");
+  const rows21 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
     const cutoff = cutoffByMatter.get(String(matter.id)) ?? null;
     return {
       ...matter,
-      ...clientContext(clients2.get(String(matter.client_id))),
+      ...clientContext(clients.get(String(matter.client_id))),
       wip_hours: wipByMatter.get(String(matter.id)) ?? 0,
       cutoff_date: cutoff?.cutoff_date ?? null,
       cutoff_source: cutoff?.cutoff_source ?? null,
@@ -78988,97 +78309,95 @@ async function ar_data(admin, ownerId) {
   });
   return { rows: rows21 };
 }
-async function court_calendar_coverage(admin, ownerId, args) {
+async function court_calendar_coverage(store, args) {
   const years = Array.isArray(args.years) ? args.years.map(Number) : null;
-  const rows21 = await admin.query(courtCalendarCoverage, {}, { limit: 1e3 });
+  const rows21 = store.rows("calendar_year");
   return { rows: years ? rows21.filter((row2) => years.includes(Number(row2.year))) : rows21 };
 }
-async function court_calendar_days(admin, ownerId, args) {
-  const filters = {};
-  if (args.from_date) filters.calendar_date = `gte.${String(args.from_date)}`;
-  const rows21 = await admin.query(courtCalendarDays, filters, { limit: 1e3 });
+async function court_calendar_days(store, args) {
+  const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  return { rows: toDate ? rows21.filter((row2) => String(row2.calendar_date ?? "") <= toDate) : rows21 };
+  const rows21 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
+  return { rows: rows21 };
 }
-async function read_signals(admin, ownerId, args) {
-  await ensureDefaultPolicies(admin, ownerId);
-  const matter = await requireMatter(admin, ownerId, args);
-  const signals = await admin.query(matterSignals, { matter_id: `eq.${matter.id}` }, { limit: 1e3 });
-  const policyRows = await admin.query(statusPolicies, {}, { limit: 1e3 });
-  return {
-    matter_id: matter.id,
-    status: matter.row.status ?? null,
-    signals,
-    policies: policyRows
-  };
+async function read_signals(store, args) {
+  const items = store.items();
+  const matter = requireMatter(items, args);
+  const signals = rowsOf(items, "signal").filter((row2) => row2.matter_id === matter.id);
+  return { matter_id: matter.id, status: matter.row.status ?? null, signals };
 }
 
 // src/tools/practice/writes.ts
-var clients = practiceEntityFor("practice_clients");
-var matters2 = practiceEntityFor("practice_matters");
-var timeEntries2 = practiceEntityFor("practice_time_entries");
-var tasks2 = practiceEntityFor("practice_tasks");
-var retainerNotices2 = practiceEntityFor("practice_retainer_notices");
-var anchors2 = practiceEntityFor("practice_anchors");
-var anchorSources2 = practiceEntityFor("practice_anchor_sources");
-var deadlines2 = practiceEntityFor("practice_deadlines");
-var paymentInFlight2 = practiceEntityFor("practice_payment_in_flight");
-var matterSignals2 = practiceEntityFor("practice_matter_signals");
-var courtCalendarCoverage2 = practiceEntityFor("practice_court_calendar_coverage");
-var courtCalendarDays2 = practiceEntityFor("practice_court_calendar_days");
-async function upsert_client_matter(admin, ownerId, args) {
+var LABELS = ["party_label", "proceeding_label", "scenario_label"];
+function rowOf(items, id) {
+  const item = items.get(id);
+  if (!item) throw new NotFoundError(`Item ${id} is not in practice.db after the write`);
+  return flatten(id, item);
+}
+async function upsert_client_matter(store, args) {
   const clientNum = asString(args.client_num, "client_num");
   if (!args.file_number && !args.matt_num) {
     throw new ValidationError("upsert_client_matter requires a matter key (file_number or matt_num)");
   }
   const mattNum = args.matt_num ? normalizeMattNum(args.matt_num) : args.matt_num;
-  const client = await upsertByKey(admin, ownerId, clients, { client_num: `eq.${clientNum}` }, {
-    name: args.name,
-    client_num: clientNum,
-    orig_lawyer: args.orig_lawyer,
-    resp_lawyer: args.resp_lawyer,
-    type_of_law: args.type_of_law,
-    major_client: args.major_client
-  });
-  const clientId = String(client.row.id);
-  const matterKey = args.file_number ? { file_number: `eq.${String(args.file_number)}` } : { matt_num: `eq.${String(mattNum)}` };
-  const matter = await upsertByKey(admin, ownerId, matters2, matterKey, {
-    client_id: clientId,
-    description: args.description,
-    file_number: args.file_number,
-    matt_num: mattNum,
-    orig_lawyer: args.orig_lawyer,
-    resp_lawyer: args.resp_lawyer,
-    status: args.status,
-    type_of_law: args.type_of_law,
-    billable: typeof args.billable === "boolean" ? args.billable : void 0,
-    regular_trust: args.regular_trust,
-    term_trust: args.term_trust,
-    last_trust_date: args.last_trust_date
-  });
+  const clientOp = newId();
+  const matterOp = newId();
+  const { ops } = await store.write("upsert_client_matter", {}, [
+    {
+      op: "upsert",
+      id: clientOp,
+      kind: "client",
+      data: {
+        name: args.name,
+        client_num: clientNum,
+        orig_lawyer: args.orig_lawyer,
+        resp_lawyer: args.resp_lawyer,
+        type_of_law: args.type_of_law,
+        major_client: args.major_client
+      }
+    },
+    {
+      op: "upsert",
+      id: matterOp,
+      kind: "matter",
+      state: args.status,
+      tags: { billable: typeof args.billable === "boolean" ? args.billable : void 0 },
+      links: { client: clientOp },
+      data: {
+        description: args.description,
+        file_number: args.file_number,
+        matt_num: mattNum,
+        orig_lawyer: args.orig_lawyer,
+        resp_lawyer: args.resp_lawyer,
+        type_of_law: args.type_of_law,
+        regular_trust: args.regular_trust,
+        term_trust: args.term_trust,
+        last_trust_date: args.last_trust_date
+      }
+    }
+  ]);
   return {
-    client_id: clientId,
-    matter_id: String(matter.row.id),
-    client_created: client.created,
-    matter_created: matter.created
+    client_id: ops[0].as,
+    matter_id: ops[1].as,
+    client_created: ops[0].as === clientOp,
+    matter_created: ops[1].as === matterOp
   };
 }
-async function insert_time_entry(admin, ownerId, args) {
-  const matter = await requireMatter(admin, ownerId, args);
-  const row2 = await insertRow(admin, ownerId, timeEntries2, {
-    matter_id: matter.id,
-    entry_date: args.entry_date,
-    hours: args.hours,
-    description: args.description,
-    // The entry inherits the matter's billable flag unless the caller says
-    // otherwise: work recorded against a billable matter that is not itself
-    // billable (e.g. a retirement note-up) passes billable: false explicitly.
-    billable: typeof args.billable === "boolean" ? args.billable : isBillable(matter.row),
-    batch_tag: args.batch_tag
-  });
-  return { id: String(row2.id) };
+async function insert_time_entry(store, args) {
+  const matter = requireMatter(store.items(), args);
+  const id = newId();
+  await store.write("insert_time_entry", {}, [{
+    op: "create",
+    id,
+    kind: "time_entry",
+    // The entry takes the matter's billable flag unless the caller says otherwise.
+    tags: { billable: typeof args.billable === "boolean" ? args.billable : void 0 },
+    links: { matter: matter.id },
+    data: { description: args.description, entry_date: args.entry_date, hours: args.hours, batch_tag: args.batch_tag }
+  }]);
+  return { id };
 }
-async function set_time_entries_billable(admin, ownerId, args) {
+async function set_time_entries_billable(store, args) {
   const ids = Array.isArray(args.entry_ids) ? args.entry_ids.map((value) => String(value)) : null;
   const batchTag = typeof args.batch_tag === "string" && args.batch_tag ? args.batch_tag : null;
   if (ids && batchTag) {
@@ -79093,98 +78412,89 @@ async function set_time_entries_billable(admin, ownerId, args) {
   if (typeof args.billable !== "boolean") {
     throw new ValidationError("set_time_entries_billable requires billable (true or false)");
   }
-  const matterId = args.matt_num || args.matter_id ? (await requireMatter(admin, ownerId, args)).id : null;
+  const items = store.items();
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
   let targetIds;
   if (ids) {
     targetIds = ids;
   } else {
-    const filters = { batch_tag: `eq.${batchTag}` };
-    if (matterId) filters.matter_id = `eq.${matterId}`;
-    const rows21 = await admin.query(timeEntries2, filters);
-    if (rows21.length === 0) throw new NotFoundError(`No time entries carry batch_tag "${batchTag}"`);
-    targetIds = rows21.map((row2) => String(row2.id));
+    targetIds = rowsOf(items, "time_entry").filter((row2) => row2.batch_tag === batchTag && (!matterId || row2.matter_id === matterId)).map((row2) => String(row2.id));
+    if (targetIds.length === 0) throw new NotFoundError(`No time entries carry batch_tag "${batchTag}"`);
   }
-  for (const id of targetIds) {
-    await patchById(admin, ownerId, timeEntries2, id, { billable: args.billable });
-  }
+  await store.write("set_time_entries_billable", {}, targetIds.map((id) => ({
+    op: "update",
+    id,
+    kind: "time_entry",
+    tags: { billable: args.billable }
+  })));
   return { updated: targetIds.length, ids: targetIds };
 }
-async function upsert_task(admin, ownerId, args) {
-  let matterId;
-  if (args.matt_num || args.matter_id) {
-    matterId = (await requireMatter(admin, ownerId, args)).id;
-  }
+async function upsert_task(store, args) {
+  const items = store.items();
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : void 0;
   if (args.nudge_interval_days !== void 0 && args.nudge_interval_days !== null) {
     const interval = Number(args.nudge_interval_days);
     if (!Number.isFinite(interval) || interval < 1) {
       throw new ValidationError("nudge_interval_days must be a whole number of days >= 1");
     }
   }
-  const current = args.id ? (await admin.query(tasks2, { id: `eq.${String(args.id)}` }, { limit: 1 }))[0] : void 0;
   if (args.filing_ref !== void 0 && args.filing_ref !== null) {
     if (!/^(filing|proceeding):[1-9]\d*$/.test(String(args.filing_ref))) {
       throw new ValidationError(`filing_ref must be "filing:<id>" or "proceeding:<id>", not ${JSON.stringify(args.filing_ref)}`);
     }
-    if (!matterId && !current?.matter_id) {
-      throw new ValidationError("filing_ref names a filing in the task's own matter, so the task needs a matter (matt_num or matter_id)");
+  }
+  const creating = !args.id;
+  if (creating && !args.task_type) throw new ValidationError("upsert_task requires task_type when creating a task");
+  if (creating && !args.description) throw new ValidationError("upsert_task requires description when creating a task");
+  const id = creating ? newId() : String(args.id);
+  const { items: after } = await store.write("upsert_task", {}, [{
+    op: creating ? "create" : "update",
+    id,
+    kind: "task",
+    state: args.status,
+    tags: { task_type: args.task_type },
+    links: { matter: matterId, filing: args.filing_ref },
+    data: {
+      description: args.description,
+      time_estimate_hours: args.time_estimate_hours,
+      actual_hours: creating ? null : void 0,
+      deadline_date: args.deadline_date,
+      completed_at: creating ? null : void 0,
+      next_nudge_date: args.next_nudge_date,
+      nudge_interval_days: args.nudge_interval_days,
+      last_nudged_at: args.last_nudged_at
     }
-  }
-  const fields = {
-    matter_id: matterId,
-    task_type: args.task_type,
-    description: args.description,
-    time_estimate_hours: args.time_estimate_hours,
-    deadline_date: args.deadline_date,
-    status: args.status,
-    next_nudge_date: args.next_nudge_date,
-    nudge_interval_days: args.nudge_interval_days,
-    last_nudged_at: args.last_nudged_at,
-    filing_ref: args.filing_ref
-  };
-  if (!args.id || current) await refuseSecondOpenTodo(admin, ownerId, args, matterId, current);
-  if (args.id) {
-    return patchById(admin, ownerId, tasks2, String(args.id), fields);
-  }
-  if (!args.task_type) throw new ValidationError("upsert_task requires task_type when creating a task");
-  if (!args.description) throw new ValidationError("upsert_task requires description when creating a task");
-  return insertRow(admin, ownerId, tasks2, fields);
+  }]);
+  return rowOf(after, id);
 }
-async function refuseSecondOpenTodo(admin, ownerId, args, matterId, current) {
-  if (args.id && matterId === void 0 && args.filing_ref === void 0 && args.status === void 0) return;
-  const matter = matterId ?? current?.matter_id;
-  const filingRef = args.filing_ref !== void 0 ? args.filing_ref : current?.filing_ref;
-  const status = args.status ?? current?.status ?? "open";
-  if (status !== "open" || !filingRef || !matter) return;
-  const open = await admin.query(tasks2, { matter_id: `eq.${String(matter)}`, filing_ref: `eq.${String(filingRef)}`, status: "eq.open" }, { limit: 2 });
-  const holder = open.find((row2) => String(row2.id) !== String(args.id));
-  if (!holder) return;
-  const { id, description } = holder;
-  throw new ValidationError(
-    `${String(filingRef)} already has an open to-do in this matter: ${String(id)} "${String(description)}". A filing has at most one open to-do, so fold this work into that one, or withdraw or complete it first.`
-  );
-}
-async function complete_task(admin, ownerId, args) {
+async function complete_task(store, args) {
   const id = asString(args.id, "id");
-  return patchById(admin, ownerId, tasks2, id, {
-    status: "completed",
-    completed_at: nowIso(),
-    actual_hours: args.actual_hours
-  });
+  const { items } = await store.write("complete_task", {}, [{
+    op: "update",
+    id,
+    kind: "task",
+    state: "completed",
+    data: { completed_at: nowIso(), actual_hours: args.actual_hours }
+  }]);
+  return rowOf(items, id);
 }
-async function record_retainer_notice(admin, ownerId, args) {
-  const matter = await requireMatter(admin, ownerId, args);
-  const row2 = await insertRow(admin, ownerId, retainerNotices2, {
-    matter_id: matter.id,
-    sent_at: asString(args.sent_at, "sent_at")
-  });
-  return { id: String(row2.id) };
+async function record_retainer_notice(store, args) {
+  const matter = requireMatter(store.items(), args);
+  const id = newId();
+  await store.write("record_retainer_notice", {}, [{
+    op: "create",
+    id,
+    kind: "retainer_notice",
+    links: { matter: matter.id },
+    data: { sent_at: asString(args.sent_at, "sent_at") }
+  }]);
+  return { id };
 }
-async function upsert_anchor(admin, ownerId, args) {
-  const matter = await requireMatter(admin, ownerId, args);
+async function upsert_anchor(store, args) {
+  const matter = requireMatter(store.items(), args);
   const anchorType = asString(args.anchor_type, "anchor_type");
   const anchorDate = asString(args.anchor_date, "anchor_date");
-  const partyLabel = normalizeParty(args.party_label);
-  const proceedingLabel = normalizeParty(args.proceeding_label);
+  const statedDate = asString(args.stated_date, "stated_date");
   const resolve7 = args.resolve === true;
   const amend = args.amend === true;
   const occurred = args.occurred === true;
@@ -79195,240 +78505,121 @@ async function upsert_anchor(admin, ownerId, args) {
   if (filingRef !== void 0 && filingRef !== null && !/^filing:[1-9]\d*$/.test(String(filingRef))) {
     throw new ValidationError(`filing_ref must be "filing:<id>", not ${JSON.stringify(filingRef)}`);
   }
-  const linked = async (row2) => filingRef === void 0 || (row2.filing_ref ?? null) === filingRef ? row2 : patchById(admin, ownerId, anchors2, String(row2.id), { filing_ref: filingRef });
-  const existing = await admin.query(anchors2, {
-    matter_id: `eq.${matter.id}`,
-    anchor_type: `eq.${anchorType}`
-  });
-  const sameScope = existing.filter((row2) => normalizeParty(row2.party_label) === partyLabel && normalizeParty(row2.proceeding_label) === proceedingLabel && row2.status !== "superseded");
-  if (sameScope.length > 1) {
-    throw new ValidationError(
-      `${sameScope.length} anchor rows share the key (matter, ${anchorType}, party, proceeding) -- clean up the duplicates before upserting`
-    );
-  }
-  const anchor = sameScope[0];
-  if (!anchor) {
-    if (amend) throw new ValidationError("upsert_anchor amend requires an existing anchor");
-    if (occurred) throw new ValidationError("upsert_anchor occurred requires an existing anchor");
-    const created = await insertRow(admin, ownerId, anchors2, {
-      matter_id: matter.id,
-      anchor_type: anchorType,
-      anchor_date: anchorDate,
-      party_label: args.party_label ?? null,
-      proceeding_label: args.proceeding_label ?? null,
-      status: "active",
-      filing_ref: filingRef ?? null
-    });
-    await insertSource(admin, ownerId, String(created.id), args, anchorDate, "confirmed");
-    return { anchor: created, conflict: false };
-  }
-  const anchorId = String(anchor.id);
-  if (occurred) {
-    if (anchor.status === "conflicted") {
-      throw new ValidationError("upsert_anchor occurred requires an unconflicted anchor -- resolve the conflict first");
-    }
-    if (anchorDate !== anchor.anchor_date) {
-      throw new ValidationError(
-        "upsert_anchor occurred requires the anchor's authoritative date -- if the event actually moved, amend instead"
-      );
-    }
-    await insertSource(admin, ownerId, anchorId, args, anchorDate, "confirmed");
-    const updated = await patchAnchorStatus(admin, ownerId, anchorId, "occurred");
-    return { anchor: await linked(updated), conflict: false };
-  }
-  if (amend) {
-    if (anchorDate === anchor.anchor_date) {
-      throw new ValidationError("upsert_anchor amend requires a changed anchor_date");
-    }
-    const priorAuthoritativeDate = String(anchor.anchor_date);
-    const sources = await admin.query(anchorSources2, { anchor_id: `eq.${anchorId}` }, { limit: 1e3 });
-    const incoming = sources.find((source) => source.source_document === args.source_document && source.asserted_date === anchorDate);
-    if (incoming) {
-      if (incoming.status !== "confirmed") {
-        await patchById(admin, ownerId, anchorSources2, String(incoming.id), { status: "confirmed" });
-      }
-    } else {
-      await insertSource(admin, ownerId, anchorId, args, anchorDate, "confirmed");
-    }
-    for (const source of sources) {
-      if (source.asserted_date === priorAuthoritativeDate && source.status !== "superseded") {
-        await patchById(admin, ownerId, anchorSources2, String(source.id), { status: "superseded" });
+  const anchorOp = newId();
+  const sourceOp = newId();
+  const { ops, items } = await store.write("upsert_anchor", { resolve: resolve7, amend, occurred }, [
+    {
+      op: "upsert",
+      id: anchorOp,
+      kind: "anchor",
+      tags: { anchor_type: anchorType },
+      links: { matter: matter.id, filing: filingRef },
+      data: { anchor_date: anchorDate, party_label: args.party_label ?? null, proceeding_label: args.proceeding_label ?? null },
+      blank: LABELS
+    },
+    {
+      op: "create",
+      id: sourceOp,
+      kind: "anchor_source",
+      links: { anchor: anchorOp },
+      data: {
+        source_document: args.source_document,
+        source_excerpt: args.source_excerpt ?? null,
+        stated_date: statedDate,
+        asserted_date: anchorDate
       }
     }
-    const updated = await patchById(admin, ownerId, anchors2, anchorId, {
-      anchor_date: anchorDate,
-      status: "active"
-    });
-    return { anchor: await linked(updated), conflict: false };
-  }
-  const resolving = resolve7 || anchor.status === "conflicted" && anchorDate === anchor.anchor_date;
-  if (resolving) {
-    const updated = await patchById(admin, ownerId, anchors2, anchorId, {
-      anchor_date: anchorDate,
-      status: "active"
-    });
-    const existingSources = await admin.query(anchorSources2, { anchor_id: `eq.${anchorId}` }, { limit: 1e3 });
-    const sourceAlreadyRecorded = existingSources.some((source) => {
-      return source.source_document === args.source_document && source.asserted_date === anchorDate;
-    });
-    if (!sourceAlreadyRecorded) {
-      await insertSource(admin, ownerId, anchorId, args, anchorDate, "confirmed");
-    }
-    await remarkSources(admin, ownerId, anchorId, anchorDate);
-    return { anchor: await linked(updated), conflict: false };
-  }
-  if (anchorDate !== anchor.anchor_date) {
-    const flagged = await patchAnchorStatus(admin, ownerId, anchorId, "conflicted");
-    await insertSource(admin, ownerId, anchorId, args, anchorDate, "conflicted");
-    return { anchor: await linked(flagged), conflict: true };
-  }
-  await insertSource(admin, ownerId, anchorId, args, anchorDate, "confirmed");
-  return { anchor: await linked(anchor), conflict: false };
+  ]);
+  const anchor = rowOf(items, ops[0].as);
+  return { anchor, conflict: anchor.status === "conflicted" };
 }
-function insertSource(admin, ownerId, anchorId, args, assertedDate, status) {
-  return insertRow(admin, ownerId, anchorSources2, {
-    anchor_id: anchorId,
-    source_document: args.source_document,
-    source_excerpt: args.source_excerpt ?? null,
-    stated_date: asString(args.stated_date, "stated_date"),
-    asserted_date: assertedDate,
-    status
-  });
-}
-async function remarkSources(admin, ownerId, anchorId, authoritativeDate) {
-  const rows21 = await admin.query(anchorSources2, { anchor_id: `eq.${anchorId}` }, { limit: 1e3 });
-  for (const source of rows21) {
-    if (source.status === "superseded") continue;
-    const asserted = source.asserted_date;
-    const status = asserted == null ? "pending" : asserted === authoritativeDate ? "confirmed" : "conflicted";
-    if (source.status !== status) {
-      await patchById(admin, ownerId, anchorSources2, String(source.id), { status });
-    }
-  }
-}
-function patchAnchorStatus(admin, ownerId, id, status) {
-  return patchById(admin, ownerId, anchors2, id, { status });
-}
-async function delete_anchor(admin, ownerId, args) {
+async function delete_anchor(store, args) {
   const anchorId = asString(args.anchor_id, "anchor_id");
-  const found = await admin.query(anchors2, { id: `eq.${anchorId}` }, { limit: 1 });
-  if (found.length === 0) throw new NotFoundError(`No anchor ${anchorId}`);
-  const sources = await admin.query(anchorSources2, { anchor_id: `eq.${anchorId}` }, { limit: 1e3 });
-  const linkedDeadlines = await admin.query(deadlines2, { anchor_id: `eq.${anchorId}` }, { limit: 1e3 });
-  await admin.delete(anchorSources2, { anchor_id: `eq.${anchorId}` });
-  await admin.delete(deadlines2, { anchor_id: `eq.${anchorId}` });
-  await admin.delete(anchors2, { id: `eq.${anchorId}` });
-  return {
-    deleted_anchor: anchorId,
-    deleted_sources: sources.length,
-    deleted_deadlines: linkedDeadlines.length
-  };
+  const items = store.items();
+  if (items.get(anchorId)?.kind !== "anchor") throw new NotFoundError(`No anchor ${anchorId}`);
+  const linked = (kind) => rowsOf(items, kind).filter((row2) => row2.anchor_id === anchorId).length;
+  const counts2 = { deleted_sources: linked("anchor_source"), deleted_deadlines: linked("deadline") };
+  await store.write("delete_anchor", {}, [{ op: "delete", id: anchorId, kind: "anchor" }]);
+  return { deleted_anchor: anchorId, ...counts2 };
 }
-var LABELS = ["party_label", "proceeding_label", "scenario_label"];
-async function upsert_deadline(admin, ownerId, args) {
-  let matterId;
-  if (args.matt_num || args.matter_id) {
-    matterId = (await requireMatter(admin, ownerId, args)).id;
-  }
-  const fields = {
-    matter_id: matterId,
-    anchor_id: args.anchor_id,
-    source_document: args.source_document,
-    deadline_type: args.deadline_type,
-    deadline_date: args.deadline_date,
-    rule_ref: args.rule_ref,
-    rule_description: args.rule_description,
-    source_type: args.source_type,
-    status: args.status,
-    review_flag: args.review_flag,
-    review_note: args.review_note,
-    expiry_notified_at: args.expiry_notified_at
-  };
-  if (args.id) {
-    for (const label of LABELS) if (label in args) fields[label] = args[label] ?? null;
-    if ("scenario_label" in args && !args.scenario_label && args.review_flag !== "rule_stale") {
-      const [row2] = await admin.query(deadlines2, { id: `eq.${String(args.id)}` }, { limit: 1 });
-      if (row2?.review_flag === "rule_stale") {
-        throw new ValidationError(
-          "upsert_deadline cannot resolve a rule_stale alternative: recalculate it once the rule is re-verified, then resolve"
-        );
-      }
-    }
-    return patchById(admin, ownerId, deadlines2, String(args.id), fields);
-  }
-  for (const label of LABELS) fields[label] = args[label] ?? null;
-  const choice = args.review_flag === "practitioner_choice";
-  if (choice && (!args.scenario_label || !args.review_note)) {
-    throw new ValidationError(
-      "review_flag 'practitioner_choice' requires scenario_label (naming this alternative) and review_note (the open question and this alternative's basis)"
-    );
-  }
-  if (!choice && args.scenario_label) {
-    throw new ValidationError("scenario_label names a provisional alternative, so it requires review_flag 'practitioner_choice'");
-  }
-  const deadlineType = asString(args.deadline_type, "deadline_type");
-  const partyLabel = normalizeParty(args.party_label);
-  const proceedingLabel = normalizeParty(args.proceeding_label);
-  const scenarioLabel = normalizeParty(args.scenario_label);
-  const keyFilters = { status: "eq.active", deadline_type: `eq.${deadlineType}` };
-  if (matterId) keyFilters.matter_id = `eq.${matterId}`;
-  keyFilters.anchor_id = args.anchor_id ? `eq.${String(args.anchor_id)}` : "is.null";
-  const existing = await admin.query(deadlines2, keyFilters, { limit: 1e3 });
-  const match = existing.find((row2) => normalizeParty(row2.party_label) === partyLabel && normalizeParty(row2.proceeding_label) === proceedingLabel && normalizeParty(row2.scenario_label) === scenarioLabel);
-  if (match) {
-    await patchById(admin, ownerId, deadlines2, String(match.id), { status: "superseded" });
-  }
-  return insertRow(admin, ownerId, deadlines2, fields);
+async function upsert_deadline(store, args) {
+  const matterId = args.matt_num || args.matter_id ? requireMatter(store.items(), args).id : void 0;
+  const creating = !args.id;
+  if (creating) asString(args.deadline_type, "deadline_type");
+  const labels = Object.fromEntries(LABELS.map((label) => [label, creating ? args[label] ?? null : label in args ? args[label] ?? null : void 0]));
+  const id = creating ? newId() : String(args.id);
+  const { items } = await store.write("upsert_deadline", {}, [{
+    op: creating ? "create" : "update",
+    id,
+    kind: "deadline",
+    state: args.status,
+    tags: {
+      deadline_type: args.deadline_type,
+      source_type: args.source_type,
+      review_flag: creating ? args.review_flag ?? void 0 : args.review_flag
+    },
+    links: { matter: matterId, anchor: args.anchor_id },
+    data: {
+      source_document: args.source_document,
+      deadline_date: args.deadline_date,
+      rule_ref: args.rule_ref,
+      rule_description: args.rule_description,
+      review_note: args.review_note,
+      ...labels,
+      expiry_notified_at: args.expiry_notified_at
+    },
+    blank: LABELS
+  }]);
+  return rowOf(items, id);
 }
-async function manage_payment_in_flight(admin, ownerId, args) {
+async function manage_payment_in_flight(store, args) {
   const action = asString(args.action, "action");
   if (action === "record") {
-    const matter = await requireMatter(admin, ownerId, args);
-    const row2 = await insertRow(admin, ownerId, paymentInFlight2, {
-      matter_id: matter.id,
-      amount: args.amount,
-      recorded_at: args.recorded_at ?? nowIso(),
-      expected_clear_by: args.expected_clear_by,
-      notes: args.notes ?? null,
-      cleared: false
-    });
-    return row2;
+    const matter = requireMatter(store.items(), args);
+    const id = newId();
+    const { items } = await store.write("manage_payment_in_flight", { action }, [{
+      op: "create",
+      id,
+      kind: "payment",
+      state: "false",
+      links: { matter: matter.id },
+      data: {
+        notes: args.notes ?? null,
+        amount: args.amount,
+        recorded_at: args.recorded_at ?? nowIso(),
+        expected_clear_by: args.expected_clear_by
+      }
+    }]);
+    return rowOf(items, id);
   }
   if (action === "clear") {
     const id = asString(args.id, "id");
-    return patchById(admin, ownerId, paymentInFlight2, id, { cleared: true });
+    const { items } = await store.write("manage_payment_in_flight", { action }, [{ op: "update", id, kind: "payment", state: "true" }]);
+    return rowOf(items, id);
   }
   if (action === "query") {
-    const filters = { cleared: "eq.false" };
-    if (args.matt_num || args.matter_id) {
-      const matter = await requireMatter(admin, ownerId, args);
-      filters.matter_id = `eq.${matter.id}`;
-    }
-    const rows21 = await admin.query(paymentInFlight2, filters, { limit: 1e3 });
+    const items = store.items();
+    const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
+    const rows21 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
     return { rows: rows21 };
   }
   throw new ValidationError(`Unknown manage_payment_in_flight action "${action}"`);
 }
-async function upsert_signal(admin, ownerId, args) {
-  const matter = await requireMatter(admin, ownerId, args);
+async function upsert_signal(store, args) {
+  const matter = requireMatter(store.items(), args);
   const signalKey = asString(args.signal_key, "signal_key");
-  const existing = await admin.query(matterSignals2, {
-    matter_id: `eq.${matter.id}`,
-    signal_key: `eq.${signalKey}`
-  }, { limit: 2 });
-  const fields = {
-    matter_id: matter.id,
-    signal_key: signalKey,
+  const { ops, items } = await store.write("upsert_signal", {}, [{
+    op: "upsert",
+    id: newId(),
+    kind: "signal",
     state: args.state,
-    confirmed_at: args.confirmed_at,
-    note: args.note
-  };
-  if (existing.length === 1) {
-    return patchById(admin, ownerId, matterSignals2, String(existing[0].id), fields);
-  }
-  return insertRow(admin, ownerId, matterSignals2, fields);
+    tags: { signal_key: signalKey },
+    links: { matter: matter.id },
+    data: { note: args.note, confirmed_at: args.confirmed_at }
+  }]);
+  return rowOf(items, ops[0].as);
 }
-async function ingest_court_calendar_year(admin, ownerId, args) {
+async function ingest_court_calendar_year(store, args) {
   const year = Number(args.year);
   if (!Number.isInteger(year)) throw new ValidationError("ingest_court_calendar_year requires an integer year");
   const status = asString(args.status, "status");
@@ -79436,46 +78627,50 @@ async function ingest_court_calendar_year(admin, ownerId, args) {
     throw new ValidationError('ingest_court_calendar_year status must be "confirmed" or "unavailable"');
   }
   const days = Array.isArray(args.days) ? args.days : [];
-  if (status === "confirmed" && days.length === 0) {
-    throw new ValidationError("ingest_court_calendar_year requires at least one day when status is confirmed");
-  }
-  const rows21 = days.map((day) => {
+  const yearOp = newId();
+  const dayOps = days.map((day) => {
     const calendarDate = asString(day.calendar_date, "calendar_date");
     if (!calendarDate.startsWith(`${year}-`)) {
       throw new ValidationError(`day ${calendarDate} does not fall within year ${year}`);
     }
     return {
+      op: "create",
       id: newId(),
-      owner_id: ownerId,
-      calendar_date: calendarDate,
-      status_category: asString(day.status_category, "status_category"),
-      status_label: asString(day.status_label, "status_label"),
-      courthouse_scope: day.courthouse_scope ?? null,
-      source_document: day.source_document ?? args.source_document ?? null
+      kind: "calendar_day",
+      tags: { status_category: asString(day.status_category, "status_category") },
+      links: { calendar_year: yearOp },
+      data: {
+        calendar_date: calendarDate,
+        status_label: asString(day.status_label, "status_label"),
+        courthouse_scope: day.courthouse_scope ?? null,
+        source_document: day.source_document ?? args.source_document ?? null
+      }
     };
   });
-  const coverage = await upsertByKey(admin, ownerId, courtCalendarCoverage2, { year: `eq.${year}` }, {
-    year,
-    status,
-    source_document: args.source_document ?? null,
-    checked_at: nowIso()
-  });
-  await admin.delete(courtCalendarDays2, { calendar_date: `like.${year}-*` });
-  const inserted = rows21.length > 0 ? await admin.insertMany(courtCalendarDays2, rows21) : [];
-  return { coverage: coverage.row, days_count: inserted.length };
+  const items = store.items();
+  const priorDays = rowsOf(items, "calendar_day").filter((row2) => String(row2.calendar_date ?? "").startsWith(`${year}-`)).map((row2) => ({ op: "delete", id: String(row2.id), kind: "calendar_day" }));
+  const { ops, items: after } = await store.write("ingest_court_calendar_year", {}, [
+    {
+      op: "upsert",
+      id: yearOp,
+      kind: "calendar_year",
+      state: status,
+      data: { year, source_document: args.source_document ?? null, checked_at: nowIso() }
+    },
+    ...priorDays,
+    ...dayOps
+  ]);
+  return { coverage: rowOf(after, ops[0].as), days_count: dayOps.length };
 }
-async function set_status(admin, ownerId, args) {
-  await ensureDefaultPolicies(admin, ownerId);
-  const matter = await requireMatter(admin, ownerId, args);
+async function set_status(store, args) {
+  const matter = requireMatter(store.items(), args);
   const statusLabel = asString(args.status_label, "status_label");
   const oldStatus = matter.row.status ?? null;
-  const updated = await admin.update(matters2, { id: `eq.${matter.id}` }, { status: statusLabel });
-  exactlyOne(updated, "practice_matters", "update");
+  await store.write("set_status", {}, [{ op: "update", id: matter.id, kind: "matter", state: statusLabel }]);
   return { matter_id: matter.id, old_status: oldStatus, new_status: statusLabel };
 }
 
 // src/tools/practice/invoices.ts
-var invoices2 = practiceEntityFor("practice_invoices");
 function isEmpty(value) {
   return value === void 0 || value === null || value === "";
 }
@@ -79512,12 +78707,16 @@ function simulatePostImportRows(existingRows, incomingRows) {
   }
   return [...nullRows, ...byNumber.values()];
 }
-async function import_invoices(admin, ownerId, args) {
+function invoicesOf(items, matterId) {
+  return rowsOf(items, "invoice").filter((row2) => row2.matter_id === matterId);
+}
+async function import_invoices(store, args) {
   const rows21 = args.rows;
   if (!Array.isArray(rows21)) throw new ValidationError("import_invoices requires a rows array");
   const confirmRegression = args.confirm_regression === true;
-  const result = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, skipped_non_billable: 0 };
-  const resolved = [];
+  const result = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, not_saved: 0, questions: [] };
+  const items = store.items();
+  const byMatter = /* @__PURE__ */ new Map();
   for (const raw of rows21) {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       throw new ValidationError("import_invoices rows must be objects");
@@ -79528,27 +78727,19 @@ async function import_invoices(admin, ownerId, args) {
       result.skipped_negative += 1;
       continue;
     }
-    const matter = await resolveMatter(admin, ownerId, row2);
+    const matter = resolveMatter(items, row2);
     if (!matter) {
       result.skipped_no_matter += 1;
       continue;
     }
-    if (!isBillable(matter.row)) {
-      result.skipped_non_billable += 1;
-      continue;
-    }
-    resolved.push({ row: row2, matter });
+    const list = byMatter.get(matter.id) ?? [];
+    list.push({ row: row2, matter });
+    byMatter.set(matter.id, list);
   }
   if (!confirmRegression) {
-    const byMatter = /* @__PURE__ */ new Map();
-    for (const entry of resolved) {
-      const list = byMatter.get(entry.matter.id) ?? [];
-      list.push(entry);
-      byMatter.set(entry.matter.id, list);
-    }
     const regressions = [];
     for (const [matterId, entries] of byMatter) {
-      const existingRows = await admin.query(invoices2, { matter_id: `eq.${matterId}` });
+      const existingRows = invoicesOf(items, matterId);
       const oldCutoff = effectiveCutoff(existingRows);
       const simulated = simulatePostImportRows(existingRows, entries.map((entry) => entry.row));
       const newCutoff = effectiveCutoff(simulated);
@@ -79565,52 +78756,45 @@ async function import_invoices(admin, ownerId, args) {
     }
   }
   const importedAt = nowIso();
-  const purgedNullFor = /* @__PURE__ */ new Set();
-  for (const { row: row2, matter } of resolved) {
-    const status = typeof row2.status === "string" ? row2.status.toLowerCase() : row2.status ?? null;
-    const fields = {
-      matter_id: matter.id,
-      invoice_number: row2.invoice_number ?? null,
-      issue_date: row2.issue_date ?? null,
-      amount: row2.amount,
-      amount_paid: row2.amount_paid ?? null,
-      status,
-      last_import_at: importedAt
-    };
-    if (row2.date_to !== void 0) fields.date_to = row2.date_to;
-    if (isEmpty(row2.invoice_number)) {
-      if (!purgedNullFor.has(matter.id)) {
-        await admin.delete(invoices2, {
-          matter_id: `eq.${matter.id}`,
-          invoice_number: "is.null"
-        });
-        purgedNullFor.add(matter.id);
+  let savedMatters = 0;
+  for (const [matterId, entries] of byMatter) {
+    const ops = entries.map(({ row: row2 }) => ({
+      op: "upsert",
+      id: newId(),
+      kind: "invoice",
+      links: { matter: matterId },
+      data: {
+        invoice_number: isEmpty(row2.invoice_number) ? null : row2.invoice_number,
+        issue_date: row2.issue_date ?? null,
+        date_to: row2.date_to,
+        amount: row2.amount,
+        amount_paid: row2.amount_paid ?? null,
+        status: typeof row2.status === "string" ? row2.status.toLowerCase() : row2.status ?? null,
+        last_import_at: importedAt
       }
-      await insertRow(admin, ownerId, invoices2, { ...fields, date_to: fields.date_to ?? null });
-      result.imported += 1;
-      continue;
+    }));
+    try {
+      await store.write("import_invoices", {}, ops);
+    } catch (err) {
+      if (err.code === "refused") {
+        result.not_saved += entries.length;
+        result.questions.push(err.message);
+        continue;
+      }
+      if (savedMatters > 0) {
+        err.message = `The invoices of ${savedMatters} matter(s) were saved before this. ${err.message}`;
+      }
+      throw err;
     }
-    const existing = await admin.query(invoices2, {
-      matter_id: `eq.${matter.id}`,
-      invoice_number: `eq.${String(row2.invoice_number)}`
-    }, { limit: 2 });
-    if (existing.length >= 1) {
-      await patchById(admin, ownerId, invoices2, String(existing[0].id), fields);
-    } else {
-      await insertRow(admin, ownerId, invoices2, { ...fields, date_to: fields.date_to ?? null });
-    }
-    result.imported += 1;
+    savedMatters += 1;
+    result.imported += entries.length;
   }
   return result;
 }
-async function invoices_query(admin, ownerId, args) {
-  const filters = {};
-  if (args.matt_num || args.matter_id) {
-    const matter = await requireMatter(admin, ownerId, args);
-    filters.matter_id = `eq.${matter.id}`;
-  }
-  if (args.status) filters.status = `eq.${String(args.status)}`;
-  const rows21 = await admin.query(invoices2, filters, { limit: 1e3 });
+async function invoices_query(store, args) {
+  const items = store.items();
+  const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
+  const rows21 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
   let lastImport = null;
   for (const row2 of rows21) {
     const value = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
@@ -79621,7 +78805,7 @@ async function invoices_query(admin, ownerId, args) {
 
 // src/tools/practice/firm-profile.ts
 import { existsSync as existsSync4, mkdirSync, readFileSync as readFileSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname, join as join5 } from "node:path";
+import { dirname as dirname2, join as join7 } from "node:path";
 import { inflateRawSync } from "node:zlib";
 var ROSTER_FIELDS = ["key", "name", "designation", "role", "email", "direct_line", "closing", "initials", "active"];
 var ROLES = ["lawyer", "staff"];
@@ -79630,11 +78814,11 @@ var TOKENS = ["{{AUTHOR_NAME}}", "{{AUTHOR_EMAIL}}", "{{DIRECT_LINE}}", "{{FILE_
 var HEADER_FOOTER_PART = /^word\/(header|footer)\d*\.xml$/;
 var THEME_PART = "word/theme/theme1.xml";
 function firmPaths(env, fallback) {
-  const dir = join5(resolveCaseDataRoot(env, fallback), "_practice", "firm");
-  return { firm: join5(dir, "firm.json"), letterhead: join5(dir, "letterhead.docx") };
+  const dir = join7(resolveCaseDataRoot(env, fallback), "_practice", "firm");
+  return { firm: join7(dir, "firm.json"), letterhead: join7(dir, "letterhead.docx") };
 }
 function emailSignaturePath(env, key) {
-  return join5(dirname(firmPaths(env).firm), "email-signatures", `${key}.htm`);
+  return join7(dirname2(firmPaths(env).firm), "email-signatures", `${key}.htm`);
 }
 function readJson(path) {
   try {
@@ -79751,15 +78935,15 @@ function readZipParts(zip, source, wanted) {
   return parts;
 }
 var PART_TEXT = /<w:p(?:\s[^>]*?)?(\/?)>|<\/w:p>|<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g;
-function occurrences(text5, token) {
-  return text5.split(token).length - 1;
+function occurrences(text4, token) {
+  return text4.split(token).length - 1;
 }
 function splitTokens(xml) {
   const split = /* @__PURE__ */ new Set();
   const paragraphs = [];
-  for (const [tag, selfClosing, text5] of xml.matchAll(PART_TEXT)) {
-    if (text5 !== void 0) {
-      paragraphs.at(-1)?.push(text5);
+  for (const [tag, selfClosing, text4] of xml.matchAll(PART_TEXT)) {
+    if (text4 !== void 0) {
+      paragraphs.at(-1)?.push(text4);
     } else if (tag === "</w:p>") {
       const texts = paragraphs.pop() ?? [];
       for (const token of TOKENS) {
@@ -79867,7 +79051,7 @@ async function upsert_firm_profile(args, env = process.env) {
   const person = (config2 ?? readJson(configPath(env))).person;
   const preparer = roster.find((entry) => typeof person === "string" && entry.key === person);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person;
-  if (firm || letterhead) mkdirSync(dirname(paths.firm), { recursive: true });
+  if (firm || letterhead) mkdirSync(dirname2(paths.firm), { recursive: true });
   if (firm) {
     writeJson(paths.firm, firm);
     result.written.push(paths.firm);
@@ -79885,29 +79069,29 @@ async function upsert_firm_profile(args, env = process.env) {
 
 // src/tools/practice/config.ts
 import { existsSync as existsSync9, mkdirSync as mkdirSync3, readdirSync as readdirSync5, readFileSync as readFileSync8, renameSync, statSync as statSync4, writeFileSync as writeFileSync3 } from "node:fs";
-import { homedir as homedir4 } from "node:os";
-import { dirname as dirname4, isAbsolute as isAbsolute2, join as join9 } from "node:path";
+import { homedir as homedir5 } from "node:os";
+import { dirname as dirname5, isAbsolute as isAbsolute2, join as join11 } from "node:path";
 
 // src/files/matter-root.ts
 import { existsSync as existsSync8, readdirSync as readdirSync4, readFileSync as readFileSync7, statSync as statSync3 } from "node:fs";
-import { basename as basename2, dirname as dirname3, isAbsolute, join as join8, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
+import { basename as basename2, dirname as dirname4, isAbsolute, join as join10, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
 
 // src/case/backend.ts
 import { existsSync as existsSync7, readFileSync as readFileSync6 } from "node:fs";
-import { join as join7 } from "node:path";
+import { join as join9 } from "node:path";
 
 // src/repo-root.ts
 import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync as readdirSync2, statSync } from "node:fs";
-import { homedir as homedir2 } from "node:os";
-import { basename, dirname as dirname2, join as join6, resolve, win32 as pathWin32 } from "node:path";
+import { homedir as homedir3 } from "node:os";
+import { basename, dirname as dirname3, join as join8, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
-var SKILLS_MARKER = join6(".claude", "skills");
-var CHECKOUT_MARKERS = [join6("source", "practice", "mcp"), join6("plugins", "dev-tools")];
-var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
+var SKILLS_MARKER = join8(".claude", "skills");
+var CHECKOUT_MARKERS = [join8("source", "practice", "mcp"), join8("plugins", "dev-tools")];
+var SELF_DIR = dirname3(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
-  const dir = join6(installRoot, "skills");
-  return isDirectory(join6(dir, "shared")) ? dir : void 0;
+  const dir = join8(installRoot, "skills");
+  return isDirectory(join8(dir, "shared")) ? dir : void 0;
 }
 var AUTODETECT_OFF = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
 function resolveRepoRoot(env = process.env, request2) {
@@ -79947,13 +79131,13 @@ function remember(cacheKey, root, tried) {
   return { root, tried };
 }
 function isRepoRoot(dir) {
-  return isDirectory(join6(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory(join6(dir, marker)));
+  return isDirectory(join8(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory(join8(dir, marker)));
 }
 function walkUp(startDir) {
   let cursor = resolve(startDir);
   for (; ; ) {
     if (isRepoRoot(cursor)) return cursor;
-    const parent = dirname2(cursor);
+    const parent = dirname3(cursor);
     if (parent === cursor) return void 0;
     cursor = parent;
   }
@@ -79976,8 +79160,8 @@ function readConfigRepoRoot(cfgPath, tried) {
   return void 0;
 }
 function conventionalCandidates(env) {
-  const home = env.USERPROFILE || env.HOME || homedir2();
-  return home ? [join6(home, "Git", "Coclerk")] : [];
+  const home = env.USERPROFILE || env.HOME || homedir3();
+  return home ? [join8(home, "Git", "Coclerk")] : [];
 }
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
@@ -79989,7 +79173,7 @@ function pluginVersion(installRoot = INSTALL_ROOT) {
 }
 function pluginManifest(installRoot) {
   try {
-    const manifest = JSON.parse(readFileSync3(join6(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
+    const manifest = JSON.parse(readFileSync3(join8(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
     return {
       name: typeof manifest?.name === "string" ? manifest.name : null,
       version: typeof manifest?.version === "string" ? manifest.version : null
@@ -80002,10 +79186,10 @@ var SIBLING_PLUGINS = ["practice", "research", "litigator", "solicitor", "file-a
 function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
-  const parent = dirname2(own);
+  const parent = dirname3(own);
   const candidates = new Set(childDirs(parent));
   if (basename(own) === pluginManifest(own).version) {
-    for (const branch of childDirs(dirname2(parent))) {
+    for (const branch of childDirs(dirname3(parent))) {
       for (const dir of childDirs(branch)) candidates.add(dir);
     }
   }
@@ -80033,7 +79217,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
 }
 function childDirs(dir) {
   try {
-    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join6(dir, entry.name));
+    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join8(dir, entry.name));
   } catch {
     return [];
   }
@@ -80063,12 +79247,12 @@ function resolveShippedRoot(relPath, env = process.env, request2 = {}) {
   const bundle = installSkillsRoot(installRoot);
   const segment = relPath.split(/[\\/]/)[0];
   if (bundle !== void 0 && segment !== "" && segment !== "." && segment !== ".." && !segment.includes(":")) {
-    if (isDirectory(join6(bundle, segment))) {
+    if (isDirectory(join8(bundle, segment))) {
       const own = pluginManifest(installRoot);
       return { root: bundle, shipped_from: "install", plugin: own.name, plugin_version: own.version };
     }
     for (const sibling of siblingInstalls(installRoot)) {
-      if (isDirectory(join6(sibling.skills, segment))) {
+      if (isDirectory(join8(sibling.skills, segment))) {
         return { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
       }
     }
@@ -80076,7 +79260,7 @@ function resolveShippedRoot(relPath, env = process.env, request2 = {}) {
   const code = request2.code ?? "skills_root_missing";
   try {
     const repoRoot = resolveRepoRoot(env, { code, subject: request2.subject ?? "the skills tree" });
-    return { root: join6(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
+    return { root: join8(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}
@@ -80094,7 +79278,7 @@ function isDirectory(dir) {
 function rosterLine(installRoot, segment) {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length === 0) {
-    return `This plugin bundles no skill source (${join6(installRoot, "skills", "shared")} not found), so every skill needs a Coclerk checkout.`;
+    return `This plugin bundles no skill source (${join8(installRoot, "skills", "shared")} not found), so every skill needs a Coclerk checkout.`;
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
@@ -80141,9 +79325,9 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/case/case-lock.ts
-import { createHash as createHash2, randomUUID as randomUUID3 } from "node:crypto";
+import { createHash as createHash2, randomUUID as randomUUID4 } from "node:crypto";
 import { closeSync as closeSync2, existsSync as existsSync6, mkdirSync as mkdirSync2, openSync as openSync2, readFileSync as readFileSync5, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
-import { homedir as homedir3 } from "node:os";
+import { homedir as homedir4 } from "node:os";
 import { win32 as pathWin323 } from "node:path";
 
 // src/lock-claim.ts
@@ -80151,14 +79335,14 @@ import { closeSync, openSync, readdirSync as readdirSync3, readFileSync as readF
 import { win32 as pathWin322 } from "node:path";
 var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function readLockKey(lock, field) {
-  let text5;
+  let text4;
   try {
-    text5 = readFileSync4(lock, "utf-8");
+    text4 = readFileSync4(lock, "utf-8");
   } catch {
     return null;
   }
   try {
-    const key = JSON.parse(text5)[field];
+    const key = JSON.parse(text4)[field];
     return typeof key === "string" && UUID2.test(key) ? key : "none";
   } catch {
     return "none";
@@ -80224,7 +79408,7 @@ var LOCK_ATTEMPTS = 5;
 var LOCK_RETRY_MS = 400;
 var LOCK_STALE_MS = 9e5;
 function lockDir(env) {
-  const base = env.COCLERK_CASE_LOCK_ROOT || pathWin323.join(env.LOCALAPPDATA || homedir3(), "Coclerk", "case-locks");
+  const base = env.COCLERK_CASE_LOCK_ROOT || pathWin323.join(env.LOCALAPPDATA || homedir4(), "Coclerk", "case-locks");
   mkdirSync2(base, { recursive: true });
   return base;
 }
@@ -80237,7 +79421,7 @@ async function acquireCaseLock(matterRoot, env = process.env) {
   let brokeStale = false;
   for (let attempt = 0; attempt < LOCK_ATTEMPTS; attempt++) {
     try {
-      const token = randomUUID3();
+      const token = randomUUID4();
       const fd = openSync2(lock, "wx");
       writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), matterRoot, token }));
       closeSync2(fd);
@@ -80825,7 +80009,7 @@ function caseDataFolder(matterRoot, env = process.env) {
 }
 function caseDataTriggersSql(env) {
   const shipped = resolveShippedRoot("case-data/references/triggers.sql", env, { subject: "the case-data trigger layer" });
-  const path = join7(shipped.root, "case-data", "references", "triggers.sql");
+  const path = join9(shipped.root, "case-data", "references", "triggers.sql");
   if (!existsSync7(path)) {
     throw new DataServerError(
       `case_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
@@ -80976,7 +80160,7 @@ function findDraftDir(root) {
       "draft_dir_ambiguous"
     );
   }
-  return matches.length === 1 ? join8(root, matches[0]) : void 0;
+  return matches.length === 1 ? join10(root, matches[0]) : void 0;
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
@@ -80987,14 +80171,14 @@ function existingCaseDataFolder(root, env = process.env) {
 }
 function pointerRefusal(root, why) {
   return new DataServerError(
-    `${join8(root, "coclerk.json")} ${why}. Run /case-data on this matter to initialize or repair coclerk.json; drafting_forms__open_session never rewrites it.`,
+    `${join10(root, "coclerk.json")} ${why}. Run /case-data on this matter to initialize or repair coclerk.json; drafting_forms__open_session never rewrites it.`,
     "pointer_unusable"
   );
 }
 function resolveCaseDataDir(root) {
   let pointer;
   try {
-    pointer = JSON.parse(readFileSync7(join8(root, "coclerk.json"), "utf-8").replace(/\0/g, ""));
+    pointer = JSON.parse(readFileSync7(join10(root, "coclerk.json"), "utf-8").replace(/\0/g, ""));
   } catch (err) {
     throw pointerRefusal(root, `is not readable JSON (${err.message})`);
   }
@@ -81006,16 +80190,16 @@ function resolveCaseDataDir(root) {
     throw pointerRefusal(root, "has no case_data_dir");
   }
   const caseDataDir = normalize(isAbsolute(stored) ? stored : resolve2(root, stored));
-  if (caseDataDir.toLowerCase() === normalize(join8(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
+  if (caseDataDir.toLowerCase() === normalize(join10(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
     throw pointerRefusal(root, `still points at the legacy "${LEGACY_ARTIFACTS_DIR}" folder`);
   }
   return caseDataDir;
 }
 function resolveDbPath(root) {
-  return join8(resolveCaseDataDir(root), SUBMISSION_DB_FILE);
+  return join10(resolveCaseDataDir(root), SUBMISSION_DB_FILE);
 }
 function caseDataRootFromCaseDataDir(dir, env) {
-  const parent = dirname3(normalize(dir));
+  const parent = dirname4(normalize(dir));
   const override = env.COCLERK_CASE_DATA_ROOT;
   const named = basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override && normalize(override).toLowerCase() === parent.toLowerCase();
   if (!named) return null;
@@ -81032,7 +80216,7 @@ function caseDataRootFromMatterRoot(matterRoot, env) {
   return caseDataRootFromCaseDataDir(resolveCaseDataDir(root), env);
 }
 function caseDataRootFromDbPath(dbPath, env) {
-  return caseDataRootFromCaseDataDir(dirname3(dbPath), env);
+  return caseDataRootFromCaseDataDir(dirname4(dbPath), env);
 }
 
 // src/tools/practice/config.ts
@@ -81064,7 +80248,7 @@ function isDir(path) {
   }
 }
 function practiceDb(root) {
-  return join9(root, "_practice", "practice.db");
+  return join11(root, "_practice", "practice.db");
 }
 function rootWorks(root) {
   return typeof root === "string" && root !== "" && isDir(root) && isFile(practiceDb(root));
@@ -81073,14 +80257,23 @@ function keysMissing(config2) {
   return DOCUMENTED_KEYS.filter((key) => config2[key] === void 0 || config2[key] === null || config2[key] === "");
 }
 function redirectedCopies(env) {
-  const packages = join9(env.LOCALAPPDATA || join9(homedir4(), "AppData", "Local"), "Packages");
+  const packages = join11(env.LOCALAPPDATA || join11(homedir5(), "AppData", "Local"), "Packages");
   let names;
   try {
     names = readdirSync5(packages);
   } catch {
     return [];
   }
-  return names.map((name) => join9(packages, name, "LocalCache", "Roaming", "Coclerk", "coclerk.json")).filter(isFile);
+  return names.map((name) => join11(packages, name, "LocalCache", "Roaming", "Coclerk", "coclerk.json")).filter(isFile);
+}
+function pendingWrites(env) {
+  try {
+    const path = resolvePracticeDbPath(env);
+    if (!isFile(path) || statSync4(path).size === 0) return 0;
+    return new PracticeStore(env).pendingCount();
+  } catch {
+    return null;
+  }
 }
 async function config_status(args, env = process.env) {
   const status = {
@@ -81093,7 +80286,9 @@ async function config_status(args, env = process.env) {
     root_exists: false,
     practice_db_exists: false,
     candidates: [],
-    redirected_copies: redirectedCopies(env)
+    redirected_copies: redirectedCopies(env),
+    cloud_credential: (await loadCloudKey(env)).configured ? "present" : "missing",
+    pending_writes: pendingWrites(env)
   };
   try {
     status.path = configPath(env);
@@ -81158,7 +80353,7 @@ async function config_set_root(args, env = process.env) {
   }
   const previous = typeof config2.case_data_root === "string" ? config2.case_data_root : null;
   config2.case_data_root = root;
-  mkdirSync3(dirname4(path), { recursive: true });
+  mkdirSync3(dirname5(path), { recursive: true });
   const temp = `${path}.${process.pid}.tmp`;
   writeFileSync3(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
   renameSync(temp, path);
@@ -81167,7 +80362,7 @@ async function config_set_root(args, env = process.env) {
 
 // src/tools/practice/practice-board.ts
 import { existsSync as existsSync12, readFileSync as readFileSync11 } from "node:fs";
-import { dirname as dirname5, join as join11 } from "node:path";
+import { dirname as dirname6, join as join13 } from "node:path";
 
 // src/submission/forms/board-template.ts
 var BOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
@@ -81430,30 +80625,30 @@ ${TAIL}`;
 }
 
 // src/submission/matter-dates.ts
-var text2 = (value) => value === null || value === void 0 ? null : String(value);
+var text = (value) => value === null || value === void 0 ? null : String(value);
 async function readMatterDates(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's dates were not read." };
   let read2;
   try {
-    read2 = await callPracticeTool(practiceDb2, "local", "practice_data__active_deadlines", { matt_num: matterNo, include_met: true });
+    read2 = await active_deadlines(practiceDb2, { matt_num: matterNo, include_met: true });
   } catch (err) {
     return { note: `This matter's dates could not be read (${matterNo}): ${err.message}` };
   }
   return {
     anchors: read2.anchors.map((anchor) => ({
       anchor_type: String(anchor.anchor_type),
-      anchor_date: text2(anchor.anchor_date) ?? "",
-      party_label: text2(anchor.party_label),
-      proceeding_label: text2(anchor.proceeding_label),
-      status: text2(anchor.status),
-      filing_ref: text2(anchor.filing_ref),
-      deadlines: read2.deadlines.filter((deadline) => text2(deadline.anchor_id) === String(anchor.id)).map((deadline) => ({
+      anchor_date: text(anchor.anchor_date) ?? "",
+      party_label: text(anchor.party_label),
+      proceeding_label: text(anchor.proceeding_label),
+      status: text(anchor.status),
+      filing_ref: text(anchor.filing_ref),
+      deadlines: read2.deadlines.filter((deadline) => text(deadline.anchor_id) === String(anchor.id)).map((deadline) => ({
         deadline_type: String(deadline.deadline_type),
-        deadline_date: text2(deadline.deadline_date) ?? "",
-        party_label: text2(deadline.party_label),
-        status: text2(deadline.status),
-        review_flag: text2(deadline.review_flag),
-        scenario_label: text2(deadline.scenario_label)
+        deadline_date: text(deadline.deadline_date) ?? "",
+        party_label: text(deadline.party_label),
+        status: text(deadline.status),
+        review_flag: text(deadline.review_flag),
+        scenario_label: text(deadline.scenario_label)
       })).sort((a3, b3) => a3.deadline_date.localeCompare(b3.deadline_date))
     })).sort((a3, b3) => a3.anchor_date.localeCompare(b3.anchor_date))
   };
@@ -81530,20 +80725,20 @@ function pageDates(dates, sections) {
 }
 
 // src/submission/render-job.ts
-import { randomUUID as randomUUID5 } from "node:crypto";
+import { randomUUID as randomUUID6 } from "node:crypto";
 import { closeSync as closeSync4, existsSync as existsSync11, openSync as openSync4, readFileSync as readFileSync10, renameSync as renameSync2, statSync as statSync6, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync4, writeSync as writeSync4 } from "node:fs";
-import { join as join10 } from "node:path";
+import { join as join12 } from "node:path";
 
 // src/submission/lock.ts
-import { createHash as createHash3, randomUUID as randomUUID4 } from "node:crypto";
+import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
 import { closeSync as closeSync3, existsSync as existsSync10, mkdirSync as mkdirSync4, openSync as openSync3, readFileSync as readFileSync9, statSync as statSync5, writeSync as writeSync3 } from "node:fs";
-import { homedir as homedir5 } from "node:os";
+import { homedir as homedir6 } from "node:os";
 import { win32 as pathWin326 } from "node:path";
 var LOCK_ATTEMPTS2 = 5;
 var LOCK_RETRY_MS2 = 400;
 var LOCK_STALE_MS2 = 9e5;
 function lockDir2(env) {
-  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin326.join(env.LOCALAPPDATA || homedir5(), "Coclerk", "submission-locks");
+  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin326.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
   mkdirSync4(base, { recursive: true });
   return base;
 }
@@ -81559,7 +80754,7 @@ async function acquireDataLock(dbPath, env = process.env) {
   let brokeStale = false;
   for (let attempt = 0; attempt < LOCK_ATTEMPTS2; attempt++) {
     try {
-      const token = randomUUID4();
+      const token = randomUUID5();
       const fd = openSync3(lock, "wx");
       writeSync3(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
       closeSync3(fd);
@@ -81651,7 +80846,7 @@ function holderIsStale(lockFile, holder, stall) {
 }
 function acquire(lockFile, dbPath, stall) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const record2 = { job_id: randomUUID5(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
+    const record2 = { job_id: randomUUID6(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
     try {
       const fd = openSync4(lockFile, "wx");
       try {
@@ -81677,10 +80872,10 @@ function acquire(lockFile, dbPath, stall) {
 function sleepSync2(ms2) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
 }
-function writeStatusFile(target, text5, { attempts = 10, delayMs = 50 } = {}) {
+function writeStatusFile(target, text4, { attempts = 10, delayMs = 50 } = {}) {
   const temp = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync4(temp, text5, "utf-8");
+    writeFileSync4(temp, text4, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
@@ -81830,7 +81025,7 @@ function startRenderJob(options) {
   const job = {
     lockFile,
     mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
-    ...options.draftDir ? { pageFile: join10(options.draftDir, STATUS_FILE) } : {},
+    ...options.draftDir ? { pageFile: join12(options.draftDir, STATUS_FILE) } : {},
     dbPath: options.dbPath,
     status: {
       job_id: result.acquired.job_id,
@@ -81874,18 +81069,17 @@ function markRenderedInForeground(dbPath, filingId, env = process.env) {
 }
 
 // src/tools/practice/practice-board.ts
-var matters3 = practiceEntityFor("practice_matters");
 var HORIZON_DAYS = 14;
-var text3 = (value) => value === null || value === void 0 || value === "" ? null : String(value);
+var text2 = (value) => value === null || value === void 0 || value === "" ? null : String(value);
 function localDate(d3) {
   const pad = (n3) => String(n3).padStart(2, "0");
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}`;
 }
-async function render_practice_board(admin, ownerId) {
+async function render_practice_board(store) {
   const now = /* @__PURE__ */ new Date();
   const today2 = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
-  const matterRows = await admin.query(matters3, {});
+  const matterRows = store.rows("matter");
   const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
   const testMatters = new Set(matterRows.filter((row2) => row2.status === "test").map((row2) => String(row2.id)));
   const items = [];
@@ -81894,36 +81088,36 @@ async function render_practice_board(admin, ownerId) {
   const kept = (row2) => !testMatters.has(String(row2.matter_id));
   const matterOf2 = (row2) => {
     const matter = row2.matter_id ? matterById.get(String(row2.matter_id)) : void 0;
-    const ref = [text3(row2.matt_num), text3(row2.matter_description)].filter((part) => part !== null).join(" \u2014 ");
+    const ref = [text2(row2.matt_num), text2(row2.matter_description)].filter((part) => part !== null).join(" \u2014 ");
     return {
       matter: ref === "" ? "No matter" : ref,
-      client: text3(row2.client_name) ?? "No client",
-      matter_status: matter ? text3(matter.status) : null,
+      client: text2(row2.client_name) ?? "No client",
+      matter_status: matter ? text2(matter.status) : null,
       billable: matter ? isBillable(matter) : true
     };
   };
-  const labelled = (type, row2) => [humanise(String(type)), text3(row2.party_label), text3(row2.proceeding_label)].filter((part) => part !== null).join(" \u2014 ");
+  const labelled = (type, row2) => [humanise(String(type)), text2(row2.party_label), text2(row2.proceeding_label)].filter((part) => part !== null).join(" \u2014 ");
   try {
-    const dates = await active_deadlines(admin, ownerId, {});
+    const dates = await active_deadlines(store, {});
     for (const anchor of dates.anchors.filter(kept)) {
       const isConflicted = anchor.status === "conflicted";
       if (isConflicted) conflicted++;
       items.push({
         kind: "event",
         label: labelled(anchor.anchor_type, anchor),
-        date: text3(anchor.anchor_date),
+        date: text2(anchor.anchor_date),
         flag: isConflicted ? "Conflicted" : null,
         bf_date: null,
         ...matterOf2(anchor)
       });
     }
     for (const deadline of dates.deadlines.filter(kept)) {
-      const scenario = text3(deadline.scenario_label);
-      const review = text3(deadline.review_flag);
+      const scenario = text2(deadline.scenario_label);
+      const review = text2(deadline.review_flag);
       items.push({
         kind: "deadline",
         label: labelled(deadline.deadline_type, deadline) + (deadline.status === "not_applicable" ? " (other side)" : ""),
-        date: text3(deadline.deadline_date),
+        date: text2(deadline.deadline_date),
         flag: scenario !== null ? `Provisional \u2014 ${scenario}` : review !== null ? humanise(review) : null,
         bf_date: null,
         ...matterOf2(deadline)
@@ -81933,14 +81127,14 @@ async function render_practice_board(admin, ownerId) {
     notes.push(`The deadlines and events could not be read: ${err.message}. None of them is shown.`);
   }
   try {
-    const tasks3 = await open_tasks(admin, ownerId, {});
-    for (const task of tasks3.rows.filter(kept)) {
+    const tasks = await open_tasks(store, {});
+    for (const task of tasks.rows.filter(kept)) {
       items.push({
         kind: "todo",
-        label: text3(task.description) ?? "",
-        date: text3(task.deadline_date),
+        label: text2(task.description) ?? "",
+        date: text2(task.deadline_date),
         flag: null,
-        bf_date: text3(task.next_nudge_date),
+        bf_date: text2(task.next_nudge_date),
         ...matterOf2(task)
       });
     }
@@ -81965,7 +81159,7 @@ async function render_practice_board(admin, ownerId) {
     conflicted,
     excluded_test_matters: testMatters.size
   };
-  const file = join11(dirname5(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
+  const file = join13(dirname6(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
   if (existsSync12(file) && !readFileSync11(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
   }
@@ -81987,72 +81181,109 @@ async function render_practice_board(admin, ownerId) {
 }
 
 // src/tools/practice/index.ts
-function callPracticeTool(admin, ownerId, name, args) {
+var FILE_TOOLS = /* @__PURE__ */ new Set([
+  "practice_data__firm_profile",
+  "practice_data__upsert_firm_profile",
+  "practice_data__config_status",
+  "practice_data__config_set_root"
+]);
+var READ_TOOLS = /* @__PURE__ */ new Set([
+  "practice_data__matter_lookup",
+  "practice_data__trust_summary",
+  "practice_data__wip_hours",
+  "practice_data__open_tasks",
+  "practice_data__active_deadlines",
+  "practice_data__ar_data",
+  "practice_data__read_signals",
+  "practice_data__time_entries_query",
+  "practice_data__court_calendar_coverage",
+  "practice_data__court_calendar_days",
+  "practice_data__invoices_query",
+  "practice_data__rule_overlay",
+  "practice_data__render_practice_board"
+]);
+async function callPracticeTool(store, name, args) {
+  if (FILE_TOOLS.has(name)) return route(store, name, args);
+  let replayed = [];
+  if (store.pendingCount() > 0) {
+    try {
+      replayed = await store.replayPending();
+    } catch (err) {
+      if (!READ_TOOLS.has(name)) throw err;
+    }
+  }
+  const result = await route(store, name, args);
+  if (replayed.length && result !== null && typeof result === "object" && !Array.isArray(result)) {
+    return { ...result, replayed_writes: replayed };
+  }
+  return result;
+}
+function route(store, name, args) {
   switch (name) {
     case "practice_data__matter_lookup":
-      return matter_lookup(admin, ownerId, args);
+      return matter_lookup(store, args);
     case "practice_data__trust_summary":
-      return trust_summary(admin, ownerId, args);
+      return trust_summary(store, args);
     case "practice_data__wip_hours":
-      return wip_hours(admin, ownerId, args);
+      return wip_hours(store, args);
     case "practice_data__open_tasks":
-      return open_tasks(admin, ownerId, args);
+      return open_tasks(store, args);
     case "practice_data__active_deadlines":
-      return active_deadlines(admin, ownerId, args);
+      return active_deadlines(store, args);
     case "practice_data__ar_data":
-      return ar_data(admin, ownerId);
+      return ar_data(store);
     case "practice_data__read_signals":
-      return read_signals(admin, ownerId, args);
+      return read_signals(store, args);
     case "practice_data__time_entries_query":
-      return time_entries_query(admin, ownerId, args);
+      return time_entries_query(store, args);
     case "practice_data__upsert_client_matter":
-      return upsert_client_matter(admin, ownerId, args);
+      return upsert_client_matter(store, args);
     case "practice_data__insert_time_entry":
-      return insert_time_entry(admin, ownerId, args);
+      return insert_time_entry(store, args);
     case "practice_data__set_time_entries_billable":
-      return set_time_entries_billable(admin, ownerId, args);
+      return set_time_entries_billable(store, args);
     case "practice_data__upsert_task":
-      return upsert_task(admin, ownerId, args);
+      return upsert_task(store, args);
     case "practice_data__firm_profile":
       return firm_profile();
     case "practice_data__upsert_firm_profile":
       return upsert_firm_profile(args);
     case "practice_data__config_status":
-      return config_status(args);
+      return config_status(args, store.env);
     case "practice_data__config_set_root":
       return config_set_root(args);
     case "practice_data__complete_task":
-      return complete_task(admin, ownerId, args);
+      return complete_task(store, args);
     case "practice_data__record_retainer_notice":
-      return record_retainer_notice(admin, ownerId, args);
+      return record_retainer_notice(store, args);
     case "practice_data__upsert_anchor":
-      return upsert_anchor(admin, ownerId, args);
+      return upsert_anchor(store, args);
     case "practice_data__delete_anchor":
-      return delete_anchor(admin, ownerId, args);
+      return delete_anchor(store, args);
     case "practice_data__upsert_deadline":
-      return upsert_deadline(admin, ownerId, args);
+      return upsert_deadline(store, args);
     case "practice_data__manage_payment_in_flight":
-      return manage_payment_in_flight(admin, ownerId, args);
+      return manage_payment_in_flight(store, args);
     case "practice_data__upsert_signal":
-      return upsert_signal(admin, ownerId, args);
+      return upsert_signal(store, args);
     case "practice_data__set_status":
-      return set_status(admin, ownerId, args);
+      return set_status(store, args);
     case "practice_data__ingest_court_calendar_year":
-      return ingest_court_calendar_year(admin, ownerId, args);
+      return ingest_court_calendar_year(store, args);
     case "practice_data__court_calendar_coverage":
-      return court_calendar_coverage(admin, ownerId, args);
+      return court_calendar_coverage(store, args);
     case "practice_data__court_calendar_days":
-      return court_calendar_days(admin, ownerId, args);
+      return court_calendar_days(store, args);
     case "practice_data__import_invoices":
-      return import_invoices(admin, ownerId, args);
+      return import_invoices(store, args);
     case "practice_data__invoices_query":
-      return invoices_query(admin, ownerId, args);
+      return invoices_query(store, args);
     case "practice_data__upsert_rule_overlay":
-      return upsert_rule_overlay(admin, ownerId, args);
+      return upsert_rule_overlay(store, args);
     case "practice_data__rule_overlay":
-      return rule_overlay(admin, ownerId, args);
+      return rule_overlay(store, args);
     case "practice_data__render_practice_board":
-      return render_practice_board(admin, ownerId);
+      return render_practice_board(store);
     default:
       throw new ValidationError(`Unknown practice tool "${name}"`);
   }
@@ -82223,11 +81454,11 @@ async function ingestAuthority(request2, env = process.env) {
 
 // src/case/procedural-history.ts
 import { existsSync as existsSync13, readFileSync as readFileSync12, renameSync as renameSync3, writeFileSync as writeFileSync5 } from "node:fs";
-import { join as join12 } from "node:path";
+import { join as join14 } from "node:path";
 var FILE_NAME = "ProceduralHistory.md";
 var TITLE = "# Procedural history";
 var HEADING = /^## (\d{4}-\d{2}-\d{2})\s*$/;
-var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 var MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 function localIsoWithOffset(d3 = /* @__PURE__ */ new Date()) {
   const pad = (n3) => String(n3).padStart(2, "0");
@@ -82239,27 +81470,27 @@ function localIsoWithOffset(d3 = /* @__PURE__ */ new Date()) {
 function checkIsoDate(value, field) {
   const [y3, m3, d3] = value.split("-").map(Number);
   const date3 = new Date(Date.UTC(y3, m3 - 1, d3));
-  if (!ISO_DATE2.test(value) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
+  if (!ISO_DATE.test(value) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
     throw new ValidationError(`case_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
   }
 }
-function datesIn(text5) {
+function datesIn(text4) {
   const found = [];
   const iso2 = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}`;
   const month = (name) => MONTHS.findIndex((full) => full.startsWith(name.toLowerCase().replace(/\.$/, ""))) + 1;
-  for (const m3 of text5.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
-  for (const m3 of text5.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
+  for (const m3 of text4.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
+  for (const m3 of text4.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[1]);
     if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[2]));
   }
-  for (const m3 of text5.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
+  for (const m3 of text4.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[2]);
     if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[1]));
   }
   return found;
 }
-function parse3(text5) {
-  const lines2 = text5.split(/\r?\n/);
+function parse3(text4) {
+  const lines2 = text4.split(/\r?\n/);
   let i3 = 0;
   if (lines2[0] === "---") {
     const end = lines2.indexOf("---", 1);
@@ -82296,7 +81527,7 @@ function serialize(stamp2, sections, eol) {
 }
 function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   const root = validateMatterRoot(args.matter_root);
-  const path = join12(root, FILE_NAME);
+  const path = join14(root, FILE_NAME);
   const hasEntry = args.date !== void 0 || args.line !== void 0;
   if (hasEntry && (args.date === void 0 || args.line === void 0)) {
     throw new ValidationError("case_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
@@ -82372,216 +81603,11 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
 }
 
 // src/time-pipeline/backend.ts
-import { join as join13 } from "node:path";
-
-// src/kv/backend.ts
-var PY_HELPER3 = String.raw`
-import datetime, json, os, sqlite3, sys
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS kv_store (
-  namespace TEXT NOT NULL,
-  key TEXT NOT NULL,
-  value TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  PRIMARY KEY (namespace, key)
-);
-CREATE INDEX IF NOT EXISTS idx_kv_prefix ON kv_store(namespace, key);
-""".strip()
-
-
-def now_iso():
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-
-
-def escape_like(s):
-    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-
-def connect(db_path):
-    d = os.path.dirname(os.path.abspath(db_path))
-    if d:
-        os.makedirs(d, exist_ok=True)
-    con = sqlite3.connect(db_path)
-    con.execute("PRAGMA journal_mode = DELETE")
-    con.executescript(SCHEMA)
-    return con
-
-
-UPSERT = (
-    "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES (?, ?, ?, ?) "
-    "ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
-)
-
-
-def merge_ids(con, namespace, key, add, drop_prefix, line_no):
-    """Treat one value as a JSON array of strings: drop every element starting
-    with drop_prefix, append the new ones not already present, keep order.
-    An array that ends up empty deletes the key -- an absent index and an empty
-    index mean the same thing to every reader."""
-    row = con.execute(
-        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
-    ).fetchone()
-    current = []
-    if row is not None:
-        try:
-            current = json.loads(row[0])
-        except ValueError:
-            raise SystemExit("line %d: merge target %r does not hold JSON" % (line_no, key))
-        if not isinstance(current, list) or any(not isinstance(x, str) for x in current):
-            raise SystemExit(
-                "line %d: merge target %r is not a JSON array of strings" % (line_no, key)
-            )
-    kept = [x for x in current if not (drop_prefix and x.startswith(drop_prefix))]
-    seen = set(kept)
-    for item in add:
-        if item not in seen:
-            kept.append(item)
-            seen.add(item)
-    if kept:
-        con.execute(
-            UPSERT,
-            (namespace, key, json.dumps(kept, ensure_ascii=False, separators=(",", ":")), now_iso()),
-        )
-    else:
-        con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key))
-
-
-def bulk_apply(con, namespace, path):
-    """Apply a whole JSONL file of writes to one namespace in ONE transaction.
-    Reading the file here rather than through tool arguments is what makes a
-    58k-row import possible; one transaction is what makes it one process
-    instead of 58k. Any bad line raises before the commit, so the caller either
-    gets the whole file or none of it."""
-    if not os.path.isfile(path):
-        raise SystemExit("file not found: %s" % path)
-    counts = {"lines": 0, "sets": 0, "deletes": 0, "merges": 0, "deleted_by_prefix": 0}
-    with open(path, "r", encoding="utf-8") as fh:
-        for line_no, raw in enumerate(fh, 1):
-            raw = raw.strip()
-            if not raw:
-                continue
-            try:
-                entry = json.loads(raw)
-            except ValueError as exc:
-                raise SystemExit("line %d is not valid JSON: %s" % (line_no, exc))
-            counts["lines"] += 1
-            op = entry.get("op")
-            if op == "set":
-                con.execute(UPSERT, (namespace, entry["key"], entry["value"], now_iso()))
-                counts["sets"] += 1
-            elif op == "delete":
-                con.execute(
-                    "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
-                    (namespace, entry["key"]),
-                )
-                counts["deletes"] += 1
-            elif op == "delete_prefix":
-                cur = con.execute(
-                    "DELETE FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\'",
-                    (namespace, escape_like(entry["prefix"]) + "%"),
-                )
-                counts["deleted_by_prefix"] += cur.rowcount
-            elif op == "merge":
-                merge_ids(
-                    con,
-                    namespace,
-                    entry["key"],
-                    entry.get("add") or [],
-                    entry.get("drop_prefix") or "",
-                    line_no,
-                )
-                counts["merges"] += 1
-            else:
-                raise SystemExit("line %d has unknown op %r" % (line_no, op))
-    con.commit()
-    return counts
-
-
-def export(con, namespace, prefix, path):
-    """The read twin of bulk_apply: write every key under prefix to a JSONL
-    file of bulk_apply "set" lines, sorted by key, so an export re-applies as
-    it stands. The rows go to a file the caller named, never back through tool
-    output."""
-    parent = os.path.dirname(os.path.abspath(path))
-    if parent:
-        os.makedirs(parent, exist_ok=True)
-    rows = con.execute(
-        "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
-        (namespace, escape_like(prefix) + "%"),
-    )
-    items = 0
-    with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        for key, value in rows:
-            line = {"op": "set", "key": key, "value": value}
-            fh.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
-            items += 1
-    return {"items": items, "path": path}
-
-
-def main():
-    req = json.load(sys.stdin)
-    con = connect(req["db_path"])
-    try:
-        op = req["op"]
-        namespace = req["namespace"]
-        if op == "get":
-            row = con.execute(
-                "SELECT value FROM kv_store WHERE namespace = ? AND key = ?",
-                (namespace, req["key"]),
-            ).fetchone()
-            return {"value": row[0] if row else None}
-        if op == "set":
-            con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
-            con.commit()
-            return {"ok": True}
-        if op == "list":
-            prefix = req.get("prefix") or ""
-            rows = con.execute(
-                "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
-                (namespace, escape_like(prefix) + "%"),
-            ).fetchall()
-            return {"items": [{"key": k, "value": v} for k, v in rows]}
-        if op == "delete":
-            cur = con.execute(
-                "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
-                (namespace, req["key"]),
-            )
-            con.commit()
-            return {"ok": True, "deleted": cur.rowcount > 0}
-        if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"])
-        if op == "export":
-            return export(con, namespace, req.get("prefix") or "", req["path"])
-        raise SystemExit("unknown op: %s" % op)
-    finally:
-        con.close()
-
-
-print(json.dumps(main()))
-`.trim();
-function helperFile3() {
-  return pythonDriverFile("kv-sqlite", PY_HELPER3);
-}
-function isKvRead(op) {
-  return op === "get" || op === "list" || op === "export";
-}
-function runKv(request2, options) {
-  return runPythonDriver({
-    label: options.label,
-    driver: helperFile3(),
-    payload: JSON.stringify(request2),
-    env: options.env,
-    timeoutMs: options.timeoutMs,
-    timeoutAdvice: options.timeoutAdvice
-  });
-}
-
-// src/time-pipeline/backend.ts
+import { join as join15 } from "node:path";
 function resolveTimePipelineDbPath(env = process.env) {
   if (env.COCLERK_TIME_PIPELINE_DB_PATH) return env.COCLERK_TIME_PIPELINE_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join13(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
+  return join15(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
 }
 function timePipelineTimeoutMs(op, env = process.env) {
   const defaultMs = isKvRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
@@ -82622,18 +81648,18 @@ function timePipelineExport(namespace, prefix, path, env = process.env) {
 }
 
 // src/timecamping/backend.ts
-import { join as join14 } from "node:path";
+import { join as join16 } from "node:path";
 
 // src/timecamping/lock.ts
-import { createHash as createHash4, randomUUID as randomUUID6 } from "node:crypto";
+import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
 import { closeSync as closeSync5, existsSync as existsSync14, mkdirSync as mkdirSync5, openSync as openSync5, readFileSync as readFileSync13, statSync as statSync7, writeSync as writeSync5 } from "node:fs";
-import { homedir as homedir6 } from "node:os";
+import { homedir as homedir7 } from "node:os";
 import { win32 as pathWin327 } from "node:path";
 var LOCK_ATTEMPTS3 = 5;
 var LOCK_RETRY_MS3 = 400;
 var LOCK_STALE_MS3 = 9e5;
 function lockDir3(env) {
-  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin327.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "timecamping-locks");
+  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin327.join(env.LOCALAPPDATA || homedir7(), "Coclerk", "timecamping-locks");
   mkdirSync5(base, { recursive: true });
   return base;
 }
@@ -82646,7 +81672,7 @@ async function acquireDataLock2(dbPath, env = process.env) {
   let brokeStale = false;
   for (let attempt = 0; attempt < LOCK_ATTEMPTS3; attempt++) {
     try {
-      const token = randomUUID6();
+      const token = randomUUID7();
       const fd = openSync5(lock, "wx");
       writeSync5(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
       closeSync5(fd);
@@ -82700,9 +81726,9 @@ function sleep3(ms2) {
 function resolveTimecampingDbPath(env = process.env) {
   if (env.COCLERK_TIMECAMPING_DB_PATH) return env.COCLERK_TIMECAMPING_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join14(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
+  return join16(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
 }
-var PY_HELPER4 = String.raw`
+var PY_HELPER3 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
 
 
@@ -82880,8 +81906,8 @@ def main():
 
 print(json.dumps(main()))
 `.trim();
-function helperFile4() {
-  return pythonDriverFile("timecamping-sqlite", PY_HELPER4);
+function helperFile3() {
+  return pythonDriverFile("timecamping-sqlite", PY_HELPER3);
 }
 var EXECUTE_TIMEOUT_ADVICE2 = "The write may already have committed: verify before retrying (/timecamping-data Operation Routing). If the database no longer opens, the kill landed while it was being copied back and left it truncated. The newest timecamping.db.bak-* beside it, if a migrate has written one, is the only copy, and it predates every write made since that migrate.";
 function runHelper3(request2, env) {
@@ -82889,7 +81915,7 @@ function runHelper3(request2, env) {
   const defaultMs = request2.op === "bulk_upsert" ? WRITE_TIMEOUT_MS : write ? EXECUTE_TIMEOUT_MS : READ_TIMEOUT_MS;
   return runPythonDriver({
     label: "timecamping-data sqlite helper",
-    driver: helperFile4(),
+    driver: helperFile3(),
     payload: JSON.stringify(request2),
     env,
     timeoutMs: pythonTimeoutMs(env, defaultMs, "COCLERK_TIMECAMPING_PYTHON_TIMEOUT_MS"),
@@ -82997,7 +82023,7 @@ function runDriver2(label, driver, payload, env) {
 
 // src/submission/backend.ts
 import { MessageChannel, receiveMessageOnPort, Worker as Worker2 } from "node:worker_threads";
-var PY_HELPER5 = String.raw`
+var PY_HELPER4 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile, traceback
 
 
@@ -83231,8 +82257,8 @@ process.on("uncaughtException", (err) => {
 parentPort.on("message", (request) => { pending = request; pump(); });
 launch(0);
 `.trim();
-function helperFile5() {
-  return pythonDriverFile("submission-sqlite", PY_HELPER5);
+function helperFile4() {
+  return pythonDriverFile("submission-sqlite", PY_HELPER4);
 }
 var PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
 function pythonTimeoutMs2(env, defaultMs) {
@@ -83247,7 +82273,7 @@ function startSidecar() {
     workerData: {
       port: port2,
       signal,
-      helper: helperFile5(),
+      helper: helperFile4(),
       candidates: PY_CANDIDATES,
       env: { ...process.env, PYTHONIOENCODING: "utf-8" }
     },
@@ -83313,7 +82339,7 @@ function sidecarQuery(request2) {
 function runHelper4(request2, env) {
   return runPythonDriver({
     label: "drafting-data sqlite helper",
-    driver: helperFile5(),
+    driver: helperFile4(),
     payload: JSON.stringify(request2),
     env,
     timeoutMs: pythonTimeoutMs2(env, WRITE_TIMEOUT_MS)
@@ -83363,10 +82389,10 @@ async function submissionDataWriteAll(dbPath, statements, env = process.env) {
 
 // src/submission/migrate.ts
 import { existsSync as existsSync16, statSync as statSync9 } from "node:fs";
-import { join as join17 } from "node:path";
+import { join as join19 } from "node:path";
 
 // src/submission/parties-drift.ts
-import { dirname as dirname6 } from "node:path";
+import { dirname as dirname7 } from "node:path";
 
 // src/submission/forms/symbol-table.ts
 var SYMBOLS = [
@@ -84020,8 +83046,8 @@ function gapMarker(wrapper) {
   }
 }
 var MOCKUP_ONLY_TAG = "<!-- mockup-only -->";
-function mockupMessage(glyph2, text5) {
-  return `${glyph2} ${text5} ${MOCKUP_ONLY_TAG}`;
+function mockupMessage(glyph2, text4) {
+  return `${glyph2} ${text4} ${MOCKUP_ONLY_TAG}`;
 }
 function jurisdictionSlotMarker(state) {
   if (state === "needed") return "\u{1F3DB}\uFE0F";
@@ -84481,8 +83507,8 @@ function ordinaryCostsOrder(wording) {
   return words.includes("costs") && words.every((w3) => ORDINARY_COSTS_WORDS.has(w3));
 }
 function ordinaryCostsSubmission(contention, servedOrderWordings) {
-  const text5 = contention.toLowerCase();
-  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text5.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text5.includes(m3));
+  const text4 = contention.toLowerCase();
+  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text4.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text4.includes(m3));
 }
 function doubtMarker(doubt) {
   return doubt ? "\u{1F443}" : "";
@@ -84647,7 +83673,7 @@ import { readFileSync as readFileSync15 } from "node:fs";
 function fail(file, field, rule) {
   throw new DataServerError(`${file}: ${field}: ${rule}`, "invalid_layout");
 }
-function extractJsonBlock(content, file, exactlyOne2, code = "invalid_layout") {
+function extractJsonBlock(content, file, exactlyOne, code = "invalid_layout") {
   const lines2 = content.split(/\r?\n/);
   let start2 = 0;
   if (lines2[0]?.trimEnd() === "---") {
@@ -84668,7 +83694,7 @@ function extractJsonBlock(content, file, exactlyOne2, code = "invalid_layout") {
     }
   }
   if (opens.length === 0) throw new DataServerError(`${file}: has no fenced json block after its front matter`, code);
-  if (exactlyOne2 && opens.length > 1) throw new DataServerError(`${file}: carries ${opens.length} fenced json blocks; exactly one is allowed`, code);
+  if (exactlyOne && opens.length > 1) throw new DataServerError(`${file}: carries ${opens.length} fenced json blocks; exactly one is allowed`, code);
   const close = lines2.findIndex((line, i3) => i3 > opens[0] && /^```\s*$/.test(line));
   if (close === -1) throw new DataServerError(`${file}: its fenced json block is never closed`, code);
   try {
@@ -85134,13 +84160,13 @@ function readLayerFiles(loc, label) {
     if (type === null) return null;
     if (type === "dir") throw new DataServerError(`${label} is a folder, not a file: ${loc.kp.path} (use knowledge__list)`, "not_a_file");
     const bytes = readLayerBytes(root.abs, label);
-    const text5 = bytes.toString("utf-8");
-    return { layer, abs: root.abs, bytes, text: text5.startsWith("\uFEFF") ? text5.slice(1) : text5 };
+    const text4 = bytes.toString("utf-8");
+    return { layer, abs: root.abs, bytes, text: text4.startsWith("\uFEFF") ? text4.slice(1) : text4 };
   };
   return { shipped: read2("shipped", loc.shipped), local: read2("local", loc.local) };
 }
 function identicalText(a3, b3) {
-  const lf = (text5) => text5.replace(/\r\n?/g, "\n");
+  const lf = (text4) => text4.replace(/\r\n?/g, "\n");
   return lf(a3) === lf(b3);
 }
 function assertTreeFile(kp, label) {
@@ -85281,7 +84307,7 @@ function hasRecipientsSnapshot(dbPath) {
   return held;
 }
 function fetchFilingRecipients(dbPath, filing, parties2) {
-  const byId = new Map(parties2.map((p3) => [p3.id, p3]));
+  const byId2 = new Map(parties2.map((p3) => [p3.id, p3]));
   const fromSnapshot = Boolean(filing.filed_on) && hasRecipientsSnapshot(dbPath);
   const source = fromSnapshot ? "LEFT JOIN recipients_snapshot r ON r.filing_id = fr.filing_id AND r.recipient_id = fr.recipient_id" : "JOIN recipients r ON r.id = fr.recipient_id";
   return rows(
@@ -85305,7 +84331,7 @@ function fetchFilingRecipients(dbPath, filing, parties2) {
       );
     }
     if (r3.party_id === null) return r3;
-    const party = byId.get(r3.party_id);
+    const party = byId2.get(r3.party_id);
     if (party !== void 0) return { ...r3, name: party.counsel_name ?? party.name, email: party.counsel_email, address: party.address_for_service };
     if (!filing.filed_on) {
       throw new DataServerError(
@@ -85519,7 +84545,7 @@ function opposingPartyIds(parties2) {
 
 // src/case/parties-of-record.ts
 import { existsSync as existsSync15 } from "node:fs";
-import { join as join15 } from "node:path";
+import { join as join17 } from "node:path";
 var DRIVER3 = String.raw`
 import json, sys
 
@@ -85542,7 +84568,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read(caseDataDir, request2, env) {
-  if (!existsSync15(join15(caseDataDir, "main.sqlite"))) {
+  if (!existsSync15(join17(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
   }
   try {
@@ -85609,7 +84635,7 @@ function matterPartiesDrift(dbPath, env = process.env) {
   const rows21 = [];
   const uncheckedWhy = [];
   for (const proceeding of fetchAllProceedings(dbPath)) {
-    const { drift } = draftingParties(dirname6(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+    const { drift } = draftingParties(dirname7(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
     rows21.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
@@ -85629,7 +84655,7 @@ function counselOffers(dbPath, env = process.env) {
     const stored = fetchPartiesAsHeld(dbPath, proceeding.id);
     const held = new Map(stored.map((p3) => [p3.id, heldValues(p3)]));
     if (![...held.values()].some((h3) => Object.keys(h3).length > 0)) continue;
-    const { parties: parties2, drift } = draftingParties(dirname6(dbPath), proceeding, stored, env);
+    const { parties: parties2, drift } = draftingParties(dirname7(dbPath), proceeding, stored, env);
     const drifted = new Map(drift.rows.map((r3) => [r3.party_id, r3]));
     for (const p3 of parties2) {
       const values = held.get(p3.id) ?? {};
@@ -85676,8 +84702,8 @@ function withPartiesDriftLines(markdown, rows21) {
 
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
-import { join as join16 } from "node:path";
-var BUILD_STAMP = false ? null : "47fc7c24e559";
+import { join as join18 } from "node:path";
+var BUILD_STAMP = false ? null : "6f48b31a3c5d";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85688,7 +84714,7 @@ function buildNote(running, current, installed) {
 }
 function installedStamp() {
   try {
-    return STAMP_LINE.exec(readFileSync16(join16(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
+    return STAMP_LINE.exec(readFileSync16(join18(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
   } catch {
     return null;
   }
@@ -85700,7 +84726,7 @@ function buildStampStatus(env = process.env) {
   let current;
   try {
     const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked = join16(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+    const tracked = join18(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
     current = STAMP_LINE.exec(readFileSync16(tracked, "utf-8"))?.[1] ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -85885,7 +84911,7 @@ function assertCounselReconciled(dbPath, staged, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync9(join17(scriptsDir, "migrate_engine.py"));
+  const engine = statSync9(join19(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver3("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
@@ -86125,10 +85151,10 @@ function walk(dirPath, root, recursive, shipped, out) {
 import { createHash as createHash7 } from "node:crypto";
 import { mkdirSync as mkdirSync7 } from "node:fs";
 import * as https from "node:https";
-import { join as join19 } from "node:path";
+import { join as join21 } from "node:path";
 
 // src/knowledge/sidecar.ts
-import { createHash as createHash6, randomUUID as randomUUID7 } from "node:crypto";
+import { createHash as createHash6, randomUUID as randomUUID8 } from "node:crypto";
 import { closeSync as closeSync6, existsSync as existsSync18, mkdirSync as mkdirSync6, openSync as openSync6, statSync as statSync11, writeSync as writeSync6 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 function passageHash(passage) {
@@ -86137,10 +85163,10 @@ function passageHash(passage) {
 function invalid2(file, where, rule) {
   throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
 }
-function parseSidecar(text5, file, knowledgePath) {
+function parseSidecar(text4, file, knowledgePath) {
   let doc;
   try {
-    doc = JSON.parse(text5);
+    doc = JSON.parse(text4);
   } catch (err) {
     return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
   }
@@ -86263,7 +85289,7 @@ function lockIsStale(lock) {
 async function acquireLock(lock) {
   for (let attempt = 0; attempt < LOCK_ATTEMPTS4; attempt++) {
     try {
-      const token = randomUUID7();
+      const token = randomUUID8();
       const fd = openSync6(lock, "wx");
       writeSync6(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), token }));
       closeSync6(fd);
@@ -86294,8 +85320,8 @@ async function withFileLock(target, fn2) {
     }
   }
 }
-function writeTextAtomic(target, text5) {
-  const code = writeStatusFile(target, text5);
+function writeTextAtomic(target, text4) {
+  const code = writeStatusFile(target, text4);
   if (code) throw new DataServerError(`could not write ${target}: ${code}`, "write_failed");
 }
 function writeBytesAtomic(target, bytes) {
@@ -86303,8 +85329,8 @@ function writeBytesAtomic(target, bytes) {
 }
 function readRows(sidecarAbs, knowledgePath) {
   if (!existsSync18(sidecarAbs)) return [];
-  const text5 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
-  return parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, sidecarAbs, knowledgePath);
+  const text4 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
+  return parseSidecar(text4.startsWith("\uFEFF") ? text4.slice(1) : text4, sidecarAbs, knowledgePath);
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
   return withFileLock(sidecarAbs, () => {
@@ -86320,7 +85346,7 @@ async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
 
 // src/sources/hosts.ts
 import { existsSync as existsSync19, readFileSync as readFileSync18 } from "node:fs";
-import { join as join18 } from "node:path";
+import { join as join20 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
   const hosts = /* @__PURE__ */ new Set();
@@ -86337,16 +85363,16 @@ function admittedHost(entry) {
   return host.toLowerCase();
 }
 function readHostEntries(path) {
-  let text5;
+  let text4;
   try {
-    text5 = readFileSync18(path, "utf-8");
+    text4 = readFileSync18(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
   }
   let entries;
   try {
-    entries = JSON.parse(text5.startsWith("\uFEFF") ? text5.slice(1) : text5);
+    entries = JSON.parse(text4.startsWith("\uFEFF") ? text4.slice(1) : text4);
   } catch (err) {
     throw new DataServerError(`${path} is not valid JSON: ${err.message}`, "invalid_hosts_file");
   }
@@ -86366,7 +85392,7 @@ function overlayFirmHosts(env = process.env) {
     if (err instanceof ValidationError && !caseDataRootConfigured(env)) return [];
     throw err;
   }
-  return loadFirmHosts(join18(root, "_practice", "knowledge", "_hosts.json"));
+  return loadFirmHosts(join20(root, "_practice", "knowledge", "_hosts.json"));
 }
 function caseDataRootConfigured(env) {
   const configFile = configPath(env);
@@ -86552,8 +85578,8 @@ var NAMED_ENTITIES = {
   sect: "\xA7",
   para: "\xB6"
 };
-function decodeEntities(text5) {
-  return text5.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body) => {
+function decodeEntities(text4) {
+  return text4.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body) => {
     if (body[0] === "#") {
       const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
       return code > 0 && code <= 1114111 ? String.fromCodePoint(code) : whole;
@@ -86562,11 +85588,11 @@ function decodeEntities(text5) {
   });
 }
 function htmlBlocks(html) {
-  const text5 = html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
-  return text5.split("\0").map((block2) => decodeEntities(block2).replace(/\s+/g, " ").trim()).filter((block2) => block2 !== "");
+  const text4 = html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
+  return text4.split("\0").map((block2) => decodeEntities(block2).replace(/\s+/g, " ").trim()).filter((block2) => block2 !== "");
 }
-function foldApostrophe(text5) {
-  return text5.replace(/\u2019/g, "'");
+function foldApostrophe(text4) {
+  return text4.replace(/\u2019/g, "'");
 }
 function passagePresent(joinedBlocks, passage) {
   const needle = foldApostrophe(passage.replace(/\s+/g, " ").trim());
@@ -86576,9 +85602,9 @@ function saveFetchedPdf(fetchedRoot2, fetched) {
   if (fetched.bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
     throw new DataServerError(`${fetched.final_url} did not return a PDF`, "not_pdf");
   }
-  const dir = join19(fetchedRoot2, new URL(fetched.final_url).hostname);
+  const dir = join21(fetchedRoot2, new URL(fetched.final_url).hostname);
   mkdirSync7(dir, { recursive: true });
-  const path = join19(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
+  const path = join21(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
   writeBytesAtomic(path, fetched.bytes);
   return path;
 }
@@ -86623,7 +85649,7 @@ async function sourcesFetch(args, seams = {}) {
   if (terms2 && kept.length === 0) {
     throw new DataServerError(`no block of ${outcome.final_url} contains any of ${JSON.stringify(args.match)}`, "no_match");
   }
-  const text5 = kept.join("\n");
+  const text4 = kept.join("\n");
   return {
     kind: "html",
     url: outcome.url,
@@ -86633,7 +85659,7 @@ async function sourcesFetch(args, seams = {}) {
     sha256: outcome.sha256,
     blocks_total: blocks2.length,
     ...terms2 ? { blocks_matched: kept.length } : {},
-    ...Buffer.byteLength(text5, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text5 }
+    ...Buffer.byteLength(text4, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text4 }
   };
 }
 
@@ -86654,8 +85680,8 @@ function readFrontMatter(content, where) {
   const fail3 = (index, why) => {
     throw new DataServerError(`${where}, front matter line ${index + 2}: ${why}`, "invalid_front_matter");
   };
-  const scalar2 = (text5, index) => {
-    const value2 = text5.trim();
+  const scalar2 = (text4, index) => {
+    const value2 = text4.trim();
     if (value2 === "" || value2 === "null" || value2 === "~") return null;
     if (value2.startsWith('"')) {
       if (!value2.endsWith('"') || value2.length < 2) fail3(index, "unterminated double-quoted value");
@@ -86683,23 +85709,23 @@ function readFrontMatter(content, where) {
     if (raw.length === 0) return ["", i4];
     const depth = Math.min(...raw.filter((line) => line.trim() !== "").map(indentOf));
     const content2 = raw.map((line) => line.slice(Math.min(depth, indentOf(line))));
-    let text5;
+    let text4;
     if (header[0] === "|") {
-      text5 = content2.join("\n");
+      text4 = content2.join("\n");
     } else {
-      text5 = content2.reduce((acc, line) => {
+      text4 = content2.reduce((acc, line) => {
         if (line === "") return `${acc}
 `;
         return acc === "" || acc.endsWith("\n") ? acc + line : `${acc} ${line}`;
       }, "");
     }
-    return [header.endsWith("-") ? text5 : `${text5}
+    return [header.endsWith("-") ? text4 : `${text4}
 `, i4];
   };
   const value = (rest, index, parent) => {
-    const text5 = (rest ?? "").trim();
-    if (text5.startsWith("|") || text5.startsWith(">")) return blockScalar(text5, index + 1, parent);
-    return [scalar2(text5, index), index + 1];
+    const text4 = (rest ?? "").trim();
+    if (text4.startsWith("|") || text4.startsWith(">")) return blockScalar(text4, index + 1, parent);
+    return [scalar2(text4, index), index + 1];
   };
   const out = {};
   let i3 = 0;
@@ -86862,9 +85888,9 @@ function gapOf(outcome) {
   const { ok: _ok, hosts: _hosts, ...gap2 } = outcome;
   return gap2;
 }
-function markersFound(text5, pattern) {
+function markersFound(text4, pattern) {
   const found = /* @__PURE__ */ new Set();
-  for (const match of text5.matchAll(new RegExp(pattern.source, pattern.flags))) {
+  for (const match of text4.matchAll(new RegExp(pattern.source, pattern.flags))) {
     found.add(match.length > 1 ? match[1] ?? "" : match[0]);
   }
   return [...found].sort();
@@ -86955,9 +85981,9 @@ async function checkAll(records, fetcher) {
   for (const record2 of records) sources.push(await checkRecord(record2, fetcher));
   return sources;
 }
-function knowledgeTreeFile(path, text5) {
+function knowledgeTreeFile(path, text4) {
   const slash = path.lastIndexOf("/");
-  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text5 };
+  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text4 };
 }
 async function checkKnowledgeFile(path, label, seams, fetcher) {
   const kp = parseKnowledgePath(path, label);
@@ -87195,8 +86221,8 @@ function sidecarRows(kp, seams, label) {
   const type = entryType(loc.local, label, sidecarKp.path);
   if (type === null) return [];
   if (type === "dir") throw new DataServerError(`${label}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
-  const text5 = readLayerBytes(loc.local.abs, label).toString("utf-8");
-  const rows21 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
+  const text4 = readLayerBytes(loc.local.abs, label).toString("utf-8");
+  const rows21 = parseSidecar(text4.startsWith("\uFEFF") ? text4.slice(1) : text4, loc.local.abs, kp.path);
   if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
     const i3 = rows21.findIndex((row2) => row2.status === "corrected");
     if (i3 !== -1) {
@@ -87312,17 +86338,17 @@ function knowledgeList(args = {}, seams = {}) {
 function listRoot(recursive, seams, entries, breaks) {
   const label = "knowledge__list.dir";
   const root = parseKnowledgePath("", label, true);
-  const overlay2 = readLayerDir(locate(root, seams, label).local, label, "(knowledge root)") ?? [];
+  const overlay = readLayerDir(locate(root, seams, label).local, label, "(knowledge root)") ?? [];
   for (const skill of KNOWLEDGE_SKILLS) {
     const { layer, shipped_from } = shippedLayer(skill, [], seams);
     const layers = [];
     if (entryType(layer, label, skill) === "dir") layers.push("shipped");
-    if (overlay2.some((entry) => entry.name === skill && entry.type === "dir")) layers.push("local");
+    if (overlay.some((entry) => entry.name === skill && entry.type === "dir")) layers.push("local");
     if (layers.length === 0) continue;
     entries.push({ path: skill, type: "dir", layers, shipped_from });
     if (recursive) walk2(parseKnowledgePath(skill, label), true, seams, entries, breaks, false);
   }
-  for (const entry of overlay2) {
+  for (const entry of overlay) {
     if (KNOWLEDGE_SKILLS.includes(entry.name) && entry.type === "dir") continue;
     if (!OVERLAY_RESERVED.includes(entry.name)) {
       breaks.push({ path: entry.name, layer: "local", reason: `"${entry.name}" is neither a skill with a knowledge tree nor a reserved entry (${OVERLAY_RESERVED.join(", ")})` });
@@ -87609,7 +86635,7 @@ async function writeDocument(kp, args, matter, seams, label) {
   checkExcerpts(kp.path, front, fetcher);
   const saved = args.saved_copy === void 0 ? null : savedCopyOf(args.saved_copy, kp.path, front, seams);
   const stamp2 = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };
-  const text5 = stampHeader(content, saved?.pdf ? { ...stamp2, pdf_sha256: saved.pdf.sha256 } : stamp2);
+  const text4 = stampHeader(content, saved?.pdf ? { ...stamp2, pdf_sha256: saved.pdf.sha256 } : stamp2);
   const target = writableOverlayPath(kp, seams, label);
   const previous = await withFileLock(target.abs, () => {
     const existing = entryType(target, label, kp.path);
@@ -87622,14 +86648,14 @@ async function writeDocument(kp, args, matter, seams, label) {
     }
     const old = existing === "file" ? readFileSync19(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
-    writeTextAtomic(target.abs, text5);
+    writeTextAtomic(target.abs, text4);
     return { old, stale_check };
   });
   return {
     path: kp.path,
     layer: "local",
     status: previous.old === null ? "created" : "overwritten",
-    size: Buffer.byteLength(text5, "utf-8"),
+    size: Buffer.byteLength(text4, "utf-8"),
     header: stamp2,
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
     ...saved ? { saved_copy: moveSavedCopy(saved, seams, label) } : {},
@@ -87687,8 +86713,8 @@ function moveSavedCopy(saved, seams, label) {
   return { path: saved.path, moved: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
 }
 var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
-function pdfHashesIn(text5) {
-  return [...new Set([...text5.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
+function pdfHashesIn(text4) {
+  return [...new Set([...text4.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
 }
 function liveKnowledgeTexts(canon, seams) {
   const texts = [];
@@ -87718,7 +86744,7 @@ function deleteUnreferencedPdfs(hashes, seams, label) {
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
-    if (live.some((text5) => text5.includes(hash))) continue;
+    if (live.some((text4) => text4.includes(hash))) continue;
     for (const host of readdirSync8(fetched, { withFileTypes: true })) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
@@ -87832,9 +86858,9 @@ async function writeIndexRow(kp, index, args, seams, label) {
     const existing = entryType(target, label, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text5 = readFileSync19(target.abs, "utf-8");
+      const text4 = readFileSync19(target.abs, "utf-8");
       try {
-        doc = JSON.parse(text5.startsWith("\uFEFF") ? text5.slice(1) : text5);
+        doc = JSON.parse(text4.startsWith("\uFEFF") ? text4.slice(1) : text4);
       } catch (err) {
         throw new DataServerError(`${label}: ${target.abs} is not valid JSON: ${err.message}`, "invalid_index");
       }
@@ -87998,14 +87024,14 @@ async function retireOne(kp, seams, label) {
         }
       }
       const target = writableOverlayPath(dest, seams, label);
-      const text5 = readFileSync19(source.abs, "utf-8");
+      const text4 = readFileSync19(source.abs, "utf-8");
       renameSync4(source.abs, target.abs);
       if (hasSidecar) renameSync4(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
         path: kp.path,
         to: dest.path,
         ...hasSidecar ? { sidecar_to: `${dest.path}${SIDECAR_SUFFIX}` } : {},
-        pdf_hashes: pdfHashesIn(text5)
+        pdf_hashes: pdfHashesIn(text4)
       };
     })
   );
@@ -89350,8 +88376,8 @@ function deriveProposals(inventory, holders, rejections) {
   return { proposals, lapsed_keys };
 }
 var PROVISION = /(?<![\w'’])((?:sub)?(?:rule|section)s?\s+|(?:rr?|ss?)(?:\.\s*|\s+))(\d+(?:[-.]\d+)*(?:\([0-9a-z.]+\))*)/gi;
-function provisionsIn(text5) {
-  return [...text5.matchAll(PROVISION)].map((m3) => {
+function provisionsIn(text4) {
+  return [...text4.matchAll(PROVISION)].map((m3) => {
     const word = /^(?:sub)?r/i.test(m3[1]) ? "r" : "s";
     return { text: m3[0], identity: `${word}:${m3[2].toLowerCase()}`, signature: `${word}:${m3[2].replace(/\(.*$/, "").replace(/\d+/g, "N")}` };
   });
@@ -89499,17 +88525,17 @@ var EXHIBIT_REF_RE = /((?:the[ \t]+)?(?:claimant|respondent|applicant|petitioner
 function sortFindings(findings) {
   return findings.sort((a3, b3) => a3.document.localeCompare(b3.document) || a3.page - b3.page || a3.quote.localeCompare(b3.quote));
 }
-function lineAround(text5, offset) {
-  const start2 = text5.lastIndexOf("\n", offset - 1) + 1;
-  const endIdx = text5.indexOf("\n", offset);
-  const end = endIdx === -1 ? text5.length : endIdx;
-  return text5.slice(start2, end).replace(/\s+/g, " ").trim();
+function lineAround(text4, offset) {
+  const start2 = text4.lastIndexOf("\n", offset - 1) + 1;
+  const endIdx = text4.indexOf("\n", offset);
+  const end = endIdx === -1 ? text4.length : endIdx;
+  return text4.slice(start2, end).replace(/\s+/g, " ").trim();
 }
 function extractExhibitReferences(doc) {
   const refs = [];
-  (doc.text_by_page ?? []).forEach((text5, i3) => {
-    for (const m3 of text5.matchAll(EXHIBIT_REF_RE)) {
-      const quote = lineAround(text5, m3.index ?? 0);
+  (doc.text_by_page ?? []).forEach((text4, i3) => {
+    for (const m3 of text4.matchAll(EXHIBIT_REF_RE)) {
+      const quote = lineAround(text4, m3.index ?? 0);
       const qualified = Boolean(m3[1]);
       const first = Number(m3[2]);
       const numbers = [first];
@@ -89642,8 +88668,8 @@ function isPlaceholder(bracket, preceded) {
 var BRACKET_RE = /\[[^\[\]]{0,200}\]/g;
 function looksSigned(doc) {
   if (/\bsigned\b/i.test(doc.file_name)) return true;
-  const text5 = (doc.text_by_page ?? []).join("\n");
-  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text5);
+  const text4 = (doc.text_by_page ?? []).join("\n");
+  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text4);
 }
 function checkPlaceholders(docs) {
   const findings = [];
@@ -89652,13 +88678,13 @@ function checkPlaceholders(docs) {
     if (!doc.text_by_page || EXHIBIT_FILE_RE.test(doc.file_name)) continue;
     scanned++;
     const signed = looksSigned(doc);
-    doc.text_by_page.forEach((text5, i3) => {
+    doc.text_by_page.forEach((text4, i3) => {
       const seen = /* @__PURE__ */ new Set();
-      for (const m3 of text5.matchAll(BRACKET_RE)) {
-        const preceded = text5.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
+      for (const m3 of text4.matchAll(BRACKET_RE)) {
+        const preceded = text4.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
         const bracket = m3[0].replace(/\s+/g, " ");
         if (!isPlaceholder(bracket, preceded)) continue;
-        const quote = lineAround(text5, m3.index ?? 0);
+        const quote = lineAround(text4, m3.index ?? 0);
         const key = `${quote}|${bracket}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -89896,10 +88922,10 @@ function fetchClauses(dbPath, filingId) {
   ).rows;
 }
 var ENACTMENT_KINDS = /* @__PURE__ */ new Set(["statute", "regulation", "rule"]);
-var normalized = (text5) => text5.toLowerCase().replace(/\s+/g, " ").trim();
+var normalized = (text4) => text4.toLowerCase().replace(/\s+/g, " ").trim();
 function namesEnactment(printed, c3) {
-  const text5 = normalized(printed);
-  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text5.includes(normalized(name)));
+  const text4 = normalized(printed);
+  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text4.includes(normalized(name)));
 }
 function currencyWithheld(c3, printed) {
   if (c3.basis !== "implied" || c3.authority_kind === null || !ENACTMENT_KINDS.has(c3.authority_kind) || !namesEnactment(printed, c3)) return null;
@@ -90321,13 +89347,13 @@ async function submissionDataCreateJobBoard(args, env = process.env) {
 }
 
 // src/submission/forms/parties-snapshot.ts
-import { dirname as dirname7 } from "node:path";
+import { dirname as dirname8 } from "node:path";
 var INSERT = "INSERT INTO parties_snapshot (filing_id, party_id, name, role, ordinal, is_client, is_applicant, to_be_served, address_for_service, address_for_service_filed, counsel_name, counsel_firm, counsel_phone, counsel_email, lower_court_role) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM parties_snapshot WHERE filing_id = ? AND party_id = ?)";
 function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
   const [held] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM parties_snapshot WHERE filing_id = ?", [filing.id]).rows;
   if (held.n > 0) return [];
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const { parties: parties2, drift } = draftingParties(dirname7(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+  const { parties: parties2, drift } = draftingParties(dirname8(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
   if (drift.rows.length > 0) {
     throw new DataServerError(
       `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + (drift.unchecked ? ` (${drift.unchecked.note})` : "") + `. Nothing was written. Confirm each with the practitioner and link it to its case-data party, or correct case data through /case-data first (references/filing-checklists.md \xA70), then call ${tool} again`,
@@ -90363,18 +89389,18 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 
 // src/submission/forms/sent-write.ts
 import { existsSync as existsSync22 } from "node:fs";
-import { extname, join as join21 } from "node:path";
+import { extname, join as join23 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash9 } from "node:crypto";
 import { existsSync as existsSync21, readdirSync as readdirSync9, readFileSync as readFileSync20, renameSync as renameSync5, writeFileSync as writeFileSync6 } from "node:fs";
-import { dirname as dirname8, join as join20 } from "node:path";
+import { dirname as dirname9, join as join22 } from "node:path";
 var RENDER_MANIFEST_FILE = "render-manifest.json";
-function sha256(text5) {
-  return createHash9("sha256").update(text5, "utf-8").digest("hex");
+function sha256(text4) {
+  return createHash9("sha256").update(text4, "utf-8").digest("hex");
 }
 function manifestPath(baseDir) {
-  return join20(baseDir, RENDER_MANIFEST_FILE);
+  return join22(baseDir, RENDER_MANIFEST_FILE);
 }
 function readManifest(baseDir) {
   const file = manifestPath(baseDir);
@@ -90399,28 +89425,28 @@ function renderState(baseDir, stamp2, partiesDrift) {
   const manifest = readManifest(baseDir);
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
-  return manifest.files.every((f3) => existsSync21(join20(baseDir, f3.file_name))) ? "fresh" : "stale";
+  return manifest.files.every((f3) => existsSync21(join22(baseDir, f3.file_name))) ? "fresh" : "stale";
 }
 function freshManifest(baseDir, stamp2, partiesDrift) {
   const manifest = readManifest(baseDir);
   if (manifest === null || !stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return null;
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
-    const file = join20(baseDir, f3.file_name);
+    const file = join22(baseDir, f3.file_name);
     if (!existsSync21(file)) return null;
-    let text5;
+    let text4;
     try {
-      text5 = readFileSync20(file, "utf-8");
+      text4 = readFileSync20(file, "utf-8");
     } catch {
       return null;
     }
-    if (sha256(text5) !== f3.sha256) return null;
-    contents.set(f3.file_name, text5);
+    if (sha256(text4) !== f3.sha256) return null;
+    contents.set(f3.file_name, text4);
   }
   return { manifest, contents };
 }
 function mockupsRoot(dbPath) {
-  return join20(dirname8(dbPath), "mockups");
+  return join22(dirname9(dbPath), "mockups");
 }
 function filingFolderName(filingId) {
   return `Filing ${filingId}`;
@@ -90431,7 +89457,7 @@ function legacyMockupDirs(dbPath) {
   if (!existsSync21(root)) return /* @__PURE__ */ new Map();
   for (const entry of readdirSync9(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const dir = join20(root, entry.name);
+    const dir = join22(root, entry.name);
     const manifest = readManifest(dir);
     if (manifest === null || entry.name === filingFolderName(manifest.stamp.filing_id)) continue;
     const held = found.get(manifest.stamp.filing_id);
@@ -90441,11 +89467,11 @@ function legacyMockupDirs(dbPath) {
   return new Map([...found].map(([id, { dir }]) => [id, dir]));
 }
 function mockupDir(dbPath, filingId, legacy = () => legacyMockupDirs(dbPath)) {
-  const own = join20(mockupsRoot(dbPath), filingFolderName(filingId));
+  const own = join22(mockupsRoot(dbPath), filingFolderName(filingId));
   return existsSync21(own) ? own : legacy().get(filingId) ?? own;
 }
 function mockupDirForRender(dbPath, filingId) {
-  const own = join20(mockupsRoot(dbPath), filingFolderName(filingId));
+  const own = join22(mockupsRoot(dbPath), filingFolderName(filingId));
   const dir = mockupDir(dbPath, filingId);
   if (dir !== own) {
     try {
@@ -90657,7 +89683,7 @@ function oneLine(value, field, max) {
   }
   return value.trim();
 }
-function oneOf2(value, field, allowed) {
+function oneOf(value, field, allowed) {
   if (typeof value !== "string" || !allowed.includes(value)) {
     throw new ValidationError(`${TOOL3}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
   }
@@ -90670,11 +89696,11 @@ async function submissionDataTrackSource(args, env = process.env) {
   }
   const id = args.ticket_id;
   const token = args.session_token;
-  const add = (args.add ?? []).map((a3) => ({ kind: oneOf2(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
+  const add = (args.add ?? []).map((a3) => ({ kind: oneOf(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
   const close = (args.close ?? []).map((c3) => ({
-    kind: oneOf2(c3.kind, "close.kind", KINDS),
+    kind: oneOf(c3.kind, "close.kind", KINDS),
     label: oneLine(c3.label, "close.label", LABEL_MAX),
-    outcome: oneOf2(c3.outcome, "close.outcome", OUTCOMES),
+    outcome: oneOf(c3.outcome, "close.outcome", OUTCOMES),
     reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
   }));
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
@@ -90806,7 +89832,7 @@ function supersededReason(ticket, retiredOn) {
   const retired = ticket.filing_id === null ? null : retiredOn.get(ticket.filing_id) ?? null;
   return retired === null ? null : `Superseded by: retirement of this Writing (${retired})`;
 }
-function groupBy(items, key) {
+function groupBy2(items, key) {
   const map = /* @__PURE__ */ new Map();
   for (const item of items) {
     const list = map.get(key(item)) ?? [];
@@ -90841,12 +89867,12 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
     conflictsOf.set(c3.a_id, [...conflictsOf.get(c3.a_id) ?? [], c3.b_id]);
     conflictsOf.set(c3.b_id, [...conflictsOf.get(c3.b_id) ?? [], c3.a_id]);
   }
-  const stepsByTicket = groupBy(steps, (s3) => s3.ticket_id);
-  const scopeByTicket = groupBy(scopeRows, (s3) => s3.ticket_id);
-  const proposalsByTicket = groupBy(proposalRows, (p3) => p3.ticket_id);
-  const capturesByTicket = groupBy(captures, (s3) => s3.origin_ticket_id);
-  const answersByTicket = groupBy(answerRows, (a3) => a3.ticket_id);
-  const sourcesByTicket = groupBy(sourceRows, (s3) => s3.ticket_id);
+  const stepsByTicket = groupBy2(steps, (s3) => s3.ticket_id);
+  const scopeByTicket = groupBy2(scopeRows, (s3) => s3.ticket_id);
+  const proposalsByTicket = groupBy2(proposalRows, (p3) => p3.ticket_id);
+  const capturesByTicket = groupBy2(captures, (s3) => s3.origin_ticket_id);
+  const answersByTicket = groupBy2(answerRows, (a3) => a3.ticket_id);
+  const sourcesByTicket = groupBy2(sourceRows, (s3) => s3.ticket_id);
   const retiredOn = new Map(rows4(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
   const edge = (id) => {
     const other = ticketById.get(id);
@@ -91079,11 +90105,11 @@ var DECLARABLE = new Map(DECLARABLE_LIST.map((c3) => [c3.id, c3]));
 function openItems(declared) {
   const counted2 = declared.includes("orders-sought") ? "associate-judge" : declared.includes("orders-positioned") ? "unpositioned-order" : null;
   const unchosen = counted2 === null ? glyph("\u2B1C") : unchosenExcept(counted2);
-  const common2 = declared.includes("recipients") ? (e3) => OPEN_ITEMS_COMMON(e3) && !NO_TO_RECIPIENT(e3) : OPEN_ITEMS_COMMON;
+  const common = declared.includes("recipients") ? (e3) => OPEN_ITEMS_COMMON(e3) && !NO_TO_RECIPIENT(e3) : OPEN_ITEMS_COMMON;
   return {
     id: "open-items",
     text: OPEN_ITEMS_TEXT,
-    members: declared.includes("opposing-points") ? anyOf(common2, unchosen) : anyOf(common2, unchosen, glyph("\u21A9\uFE0F"))
+    members: declared.includes("opposing-points") ? anyOf(common, unchosen) : anyOf(common, unchosen, glyph("\u21A9\uFE0F"))
   };
 }
 function declaredCriteria(filing) {
@@ -91165,8 +90191,8 @@ function openJobs(tickets) {
   );
 }
 var WAIVER = " \u2014 WAIVED: ";
-function recordedRevision(text5) {
-  const m3 = text5.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
+function recordedRevision(text4) {
+  const m3 = text4.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
   return m3 ? Number(m3[1]) : null;
 }
 var PRE_FILING = {
@@ -91215,12 +90241,12 @@ function readPreSendGate(ctx, tickets, filed, drafting, jobs2) {
     jobs: jobs2.length
   };
 }
-function cardText(drafting, gate, hearing, deadlines3, send) {
+function cardText(drafting, gate, hearing, deadlines, send) {
   if (gate.jobs > 0) return null;
   if (drafting.every((c3) => c3.state === "met")) {
     if (gate.criterion.state === "met") {
       if (hearing?.state === "unmet") return "Only the hearing date remains to be recorded.";
-      return `Every ${deadlines3.some((c3) => c3.state !== "met") ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : "file"}.`;
+      return `Every ${deadlines.some((c3) => c3.state !== "met") ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : "file"}.`;
     }
     if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
     if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
@@ -91230,7 +90256,7 @@ function cardText(drafting, gate, hearing, deadlines3, send) {
   return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
 }
 var NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
-function goalFor(ctx, tickets, shelved, current, deadlines3) {
+function goalFor(ctx, tickets, shelved, current, deadlines) {
   const sentence = "Completion Criteria";
   if (ctx.lifecycle.state === "retired") {
     const reason = ctx.filing.retirement_reason;
@@ -91245,9 +90271,9 @@ function goalFor(ctx, tickets, shelved, current, deadlines3) {
   const jobs2 = openJobs(tickets);
   const gate = send ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
-  const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines3];
+  const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
   const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines3, send) }, criteria };
+  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send) }, criteria };
 }
 function unmetHeldCriteria(dbPath, filing, inventory) {
   const board = buildProceedingBoard(dbPath, filing.proceeding_id);
@@ -91361,7 +90387,7 @@ function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
     not_one_step: ticket.steps.length !== 1,
     no_proposal_keys: ticket.proposal_keys.length === 0,
     dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
-    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text5) => text5 !== titles.get(key))),
+    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text4) => text4 !== titles.get(key))),
     marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
     live_partner: ticket.conflicts.some(livePartner),
     shared_material: inProgress2.some((held) => held.id !== ticket.id && held.scope.some((h3) => ticket.scope.some((s3) => scopesShare(h3, s3))))
@@ -91379,7 +90405,7 @@ function withIdleFlag(t3, rendered, hours) {
   if (now === null || last === null || now - last <= hours * 60) return t3;
   return { ...t3, idle_flag: `idle past ${hours} h` };
 }
-function buildWorkBoardData(ctx, deadlines3 = []) {
+function buildWorkBoardData(ctx, deadlines = []) {
   if (isJobOnlyBoard(ctx.filing)) return buildJobOnlyBoardData(ctx);
   const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
   const idleHours = idleFlagHours(process.env);
@@ -91394,7 +90420,7 @@ function buildWorkBoardData(ctx, deadlines3 = []) {
     return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed) }, ctx.rendered, idleHours);
   });
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines3);
+  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
   const gate = criteria.find((c3) => c3.id === "gate");
   const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && t3.title.startsWith("File and serve") ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
   const folders = declaredIngestInputs(ctx.filing);
@@ -91560,7 +90586,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
   }
   const ticketId = live[0].id;
   const steps = rows5(dbPath, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]);
-  const byId = new Map(held.map((c3) => [c3.id, c3]));
+  const byId2 = new Map(held.map((c3) => [c3.id, c3]));
   const statements = [];
   const stepped = /* @__PURE__ */ new Set();
   for (const step2 of steps) {
@@ -91568,7 +90594,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     stepped.add(id);
     const label = RESULT.exec(step2.text)?.[1];
     if (step2.text.includes(WAIVER2) || label === void 0) continue;
-    const c3 = byId.get(id);
+    const c3 = byId2.get(id);
     statements.push(
       c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW2} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
     );
@@ -91596,14 +90622,14 @@ function storedParagraphs(dbPath, filing, stored) {
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
     label: "sent-copy comparison",
-    driver: join21(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
+    driver: join23(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
   });
 }
-function isCalendarDate(text5) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text5);
+function isCalendarDate(text4) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text4);
   if (match === null) return false;
   const [year, month, day] = match.slice(1).map(Number);
   const date3 = new Date(Date.UTC(year, month - 1, day));
@@ -91672,7 +90698,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       "sent_copy_mismatch"
     );
   }
-  const describe2 = comparison.method === "msg" ? "sent copy (.msg), recorded by path and not compared" : `sent copy (${comparison.method === "text" ? "pasted text" : `.${comparison.method}`}), compared with the stored text`;
+  const describe3 = comparison.method === "msg" ? "sent copy (.msg), recorded by path and not compared" : `sent copy (${comparison.method === "text" ? "pasted text" : `.${comparison.method}`}), compared with the stored text`;
   const statements = [
     // The revision guard: nothing has moved since the hold read the inventory and the check read the text.
     { sql: "UPDATE db_meta SET value = value WHERE key = 'revision' AND CAST(value AS INTEGER) = ?", params: [revision], expect_changes: 1 },
@@ -91680,7 +90706,7 @@ async function submissionDataRecordSent(args, env = process.env) {
     ...snapshot,
     {
       sql: "INSERT INTO documents (proceeding_id, label, document_date, description, file_path) VALUES (?, ?, ?, ?, ?)",
-      params: [filing.proceeding_id, `Sent copy \u2014 ${filing.title}`, args.sent_on, `${describe2}; recorded by ${recordedBy}`, args.sent_copy_path ?? null],
+      params: [filing.proceeding_id, `Sent copy \u2014 ${filing.title}`, args.sent_on, `${describe3}; recorded by ${recordedBy}`, args.sent_copy_path ?? null],
       expect_changes: 1
     },
     {
@@ -91913,9 +90939,9 @@ async function submissionDataApprovePlan(args, env = process.env) {
 }
 
 // src/submission/forms.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
+import { randomBytes as randomBytes4 } from "node:crypto";
 import { existsSync as existsSync29, mkdirSync as mkdirSync13, readdirSync as readdirSync15, readFileSync as readFileSync24, realpathSync as realpathSync8, renameSync as renameSync7, unlinkSync as unlinkSync6, writeFileSync as writeFileSync9 } from "node:fs";
-import { basename as basename4, dirname as dirname13, extname as extname2, isAbsolute as isAbsolute5, join as join27, resolve as resolve5 } from "node:path";
+import { basename as basename4, dirname as dirname14, extname as extname2, isAbsolute as isAbsolute5, join as join29, resolve as resolve5 } from "node:path";
 
 // src/submission/filing-order.ts
 var DAY_MS = 864e5;
@@ -92317,7 +91343,7 @@ function renderApplicationResponse(ctx) {
       `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
     );
   });
-  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
+  STANDARD_MATERIAL_LINES.forEach((text4, i3) => lines2.push(`${docs.length + i3 + 1}. ${text4}`));
   lines2.push("");
   lines2.push("**Address for service filed:**");
   const afs = afsCheckbox(client);
@@ -92491,9 +91517,9 @@ function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
 function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
   const out = [];
   const parts = [];
-  const newPart = (text5, indent) => {
-    out.push({ text: text5, indent, part: parts.length });
-    parts.push({ bookmark: text5 });
+  const newPart = (text4, indent) => {
+    out.push({ text: text4, indent, part: parts.length });
+    parts.push({ bookmark: text4 });
   };
   out.push({ text: "Cover Page", indent: 0, part: "cover" });
   out.push({ text: "Table of Contents", indent: 0, part: "toc" });
@@ -93242,8 +92268,8 @@ function rows9(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
-function placedDocumentIds(text5) {
-  return [...text5.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
+function placedDocumentIds(text4) {
+  return [...text4.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
 }
 function letterFor(index) {
   let out = "";
@@ -93252,13 +92278,13 @@ function letterFor(index) {
 }
 function exhibitLetters(paragraphTexts) {
   const letters = /* @__PURE__ */ new Map();
-  for (const text5 of paragraphTexts) {
-    for (const id of placedDocumentIds(text5)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
+  for (const text4 of paragraphTexts) {
+    for (const id of placedDocumentIds(text4)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
   }
   return letters;
 }
-function withExhibitLetters(text5, letters) {
-  return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
+function withExhibitLetters(text4, letters) {
+  return text4.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
   return rows9(
@@ -94446,7 +93472,7 @@ function renderNoticeOfApplication(ctx) {
     const printed = printMarkerSets([markers]);
     lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
   });
-  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
+  STANDARD_MATERIAL_LINES.forEach((text4, i3) => lines2.push(`${docs.length + i3 + 1}. ${text4}`));
   lines2.push("");
   lines2.push(checkboxOrderBlock([]));
   lines2.push("");
@@ -94626,7 +93652,7 @@ function composeFiller(venue, kind, seams = {}) {
 
 // src/submission/matter-pages.ts
 import { existsSync as existsSync26, mkdirSync as mkdirSync11, readdirSync as readdirSync13, readFileSync as readFileSync23 } from "node:fs";
-import { dirname as dirname11, join as join25 } from "node:path";
+import { dirname as dirname12, join as join27 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
@@ -94728,7 +93754,7 @@ function stamp(d3) {
 
 // src/submission/board-attachments.ts
 import { closeSync as closeSync7, existsSync as existsSync24, openSync as openSync7, readdirSync as readdirSync11, readSync, realpathSync as realpathSync5, statSync as statSync13 } from "node:fs";
-import { dirname as dirname9, isAbsolute as isAbsolute3, join as join22, relative, resolve as resolve3, sep } from "node:path";
+import { dirname as dirname10, isAbsolute as isAbsolute3, join as join24, relative, resolve as resolve3, sep } from "node:path";
 var REVIEW_LINE = /^Counsel['’]s review:\s*/;
 var FIRST_LINE_BYTES = 4096;
 function firstLine(file) {
@@ -94742,7 +93768,7 @@ function firstLine(file) {
   }
 }
 function reviewStatuses(abs, name, isFolder) {
-  const files = isFolder ? readdirSync11(abs, { withFileTypes: true }).filter((e3) => e3.isFile() && /\.md$/i.test(e3.name)).map((e3) => ({ file: join22(abs, e3.name), label: e3.name })).sort((x3, y3) => x3.label.localeCompare(y3.label)) : /\.md$/i.test(abs) ? [{ file: abs, label: name }] : [];
+  const files = isFolder ? readdirSync11(abs, { withFileTypes: true }).filter((e3) => e3.isFile() && /\.md$/i.test(e3.name)).map((e3) => ({ file: join24(abs, e3.name), label: e3.name })).sort((x3, y3) => x3.label.localeCompare(y3.label)) : /\.md$/i.test(abs) ? [{ file: abs, label: name }] : [];
   const found = [];
   for (const { file, label } of files) {
     let line;
@@ -94760,7 +93786,7 @@ function leavesDraftFolder(rel) {
   return rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute3(rel);
 }
 function attachedDrafts(draftDir, section2) {
-  const matterRoot = dirname9(draftDir);
+  const matterRoot = dirname10(draftDir);
   return section2.attachments.map((a3) => {
     const segments = a3.path.split(/[\\/]+/).filter((s3) => s3 !== "");
     const abs = resolve3(matterRoot, ...segments);
@@ -94790,7 +93816,7 @@ function attachedDrafts(draftDir, section2) {
 
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync12 } from "node:fs";
-import { join as join23 } from "node:path";
+import { join as join25 } from "node:path";
 var STATUSES = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
@@ -94816,9 +93842,9 @@ function courtFileFolder(matterRoot, fileNumber) {
     return { note: `the matter folder could not be listed (${err.code ?? "error"})` };
   }
   if (names.length === 0) return { note: "the matter has no COURT FILE folder" };
-  if (names.length === 1) return { path: join23(matterRoot, names[0]) };
+  if (names.length === 1) return { path: join25(matterRoot, names[0]) };
   const fitting = fileNumber ? names.filter((n3) => n3.toUpperCase().includes(fileNumber.toUpperCase())) : [];
-  if (fitting.length === 1) return { path: join23(matterRoot, fitting[0]) };
+  if (fitting.length === 1) return { path: join25(matterRoot, fitting[0]) };
   return { note: `no single COURT FILE folder names this proceeding's file number (${names.map((n3) => `"${n3}"`).join(", ")})` };
 }
 function fileNames(dir) {
@@ -94828,7 +93854,7 @@ function fileNames(dir) {
   } catch {
     return [];
   }
-  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join23(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
+  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join25(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
 }
 function newest(names) {
   return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
@@ -95183,9 +94209,9 @@ function buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos) {
 }
 
 // src/page-api/token.ts
-import { createHmac, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
+import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
 import { existsSync as existsSync25, linkSync as linkSync2, mkdirSync as mkdirSync10, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
-import { dirname as dirname10, join as join24 } from "node:path";
+import { dirname as dirname11, join as join26 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
@@ -95200,14 +94226,14 @@ function pageApiPort(env = process.env) {
   return value;
 }
 function pageApiSecretPath(env = process.env) {
-  return join24(dirname10(configPath(env)), SECRET_FILE);
+  return join26(dirname11(configPath(env)), SECRET_FILE);
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
   if (!existsSync25(path)) {
-    mkdirSync10(dirname10(path), { recursive: true });
-    const temp = `${path}.${process.pid}.${randomBytes2(6).toString("hex")}.tmp`;
-    writeFileSync7(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
+    mkdirSync10(dirname11(path), { recursive: true });
+    const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
+    writeFileSync7(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
     try {
       linkSync2(temp, path);
     } catch (err) {
@@ -95221,7 +94247,7 @@ function pageApiSecret(env) {
   return secret;
 }
 function pageApiToken(dbPath, proceedingId, env = process.env) {
-  return createHmac("sha256", pageApiSecret(env)).update(`${dbPath}
+  return createHmac2("sha256", pageApiSecret(env)).update(`${dbPath}
 ${proceedingId}`).digest("hex");
 }
 function pageApiTokenValid(token, dbPath, proceedingId, env = process.env) {
@@ -95285,11 +94311,13 @@ function buildLooseIdeasData(dbPath, filing, env = process.env) {
   return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
 }
 function looseIdeasMeta(data) {
-  const ranked = data.ideas.filter((i3) => i3.rank !== null).length;
+  const deferred = data.ideas.filter((i3) => i3.deferred_at !== null).length;
+  const ranked = data.ideas.filter((i3) => i3.deferred_at === null && i3.rank !== null).length;
   return [
     ["Threads", String(data.ideas.length)],
     ["Ranked", String(ranked)],
-    ["Unranked", String(data.ideas.length - ranked)],
+    ["Unranked", String(data.ideas.length - ranked - deferred)],
+    ["Deferred", String(deferred)],
     ["Resolved", String(data.resolved.length)]
   ];
 }
@@ -95310,12 +94338,10 @@ article.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-r
 .idea>.body{display:flex;flex-direction:column;gap:4px}
 .idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}
 .idea>.body>p.thought{white-space:pre-wrap}
-.idea>button.defer{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
-.idea>button.defer:disabled{cursor:default;opacity:.5}
+.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
+.idea>button.status:disabled{cursor:default;opacity:.5}
 .idea>.error{margin:0;font-size:12.5px;color:#b3261e}
-article.idea.deferred{opacity:.55}
-.idea.deferred>.text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:0;cursor:default}
-.idea.deferred>:not(.text){display:none}
+.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}
 .api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
 .switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}
 .switch .label{color:#b9c9c0;transition:color .18s}
@@ -95346,7 +94372,7 @@ var PAGE_SCRIPT = String.raw`(function () {
   var base = "http://127.0.0.1:" + api.port;
   var header = document.querySelector("header");
   var board = document.querySelector(".board");
-  var deferButtons = [];
+  var statusButtons = [];
   var colour = {};
   data.groups.forEach(function (g) { colour[g.key] = g.colour; });
 
@@ -95366,55 +94392,65 @@ var PAGE_SCRIPT = String.raw`(function () {
     line.textContent = message;
   }
 
-  function defer(c, button) {
+  // The section an open loose thread belongs under: deferred, else ranked or unranked.
+  function home(c) { return c.deferred ? "deferred" : c.idea.rank === null ? "unranked" : "ranked"; }
+  function label(c) {
+    c.button.textContent = c.deferred ? "Deferred" : c.idea.rank === null ? "Unranked" : "Ranked";
+    c.button.title = c.deferred ? "Click to bring back" : "Click to defer";
+  }
+
+  function toggleDeferral(c) {
+    var button = c.button;
+    var failed = c.deferred ? "Not brought back: " : "Not deferred: ";
     button.disabled = true;
-    fetch(base + "/seeds/" + c.idea.id + "/defer", {
+    fetch(base + "/seeds/" + c.idea.id + (c.deferred ? "/undefer" : "/defer"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token })
     }).then(function (res) {
       return res.json().then(function (body) { return { ok: res.ok, body: body }; }, function () { return { ok: false, body: { error: "The listener answered " + res.status + "." } }; });
     }).then(function (reply) {
+      button.disabled = false;
       if (reply.ok) {
-        c.node.classList.add("deferred");
-        c.node.removeChild(button);
-        c.set(false);
-        c.inert = true;
-        c.text.tabIndex = -1;
+        var from = sections[home(c)];
+        from.cards.splice(from.cards.indexOf(c), 1);
+        c.deferred = !c.deferred;
+        var to = sections[home(c)];
+        to.cards.push(c);
+        to.stack.appendChild(c.node);
+        label(c);
+        apply();
         return;
       }
-      button.disabled = false;
-      showError(c.node, "Not deferred: " + (reply.body.error || reply.body.outcome || "the listener refused it") + ".");
+      showError(c.node, failed + (reply.body.error || reply.body.outcome || "the listener refused it") + ".");
     }, function () {
       button.disabled = false;
-      showError(c.node, "Not deferred: the listener did not answer. Buttons need the Claude desktop app running.");
+      showError(c.node, failed + "the listener did not answer. Buttons need the Claude desktop app running.");
     });
   }
 
   // A card: its job description, or the idea when it has none, which toggles it and ends in its
   // tags, then its body, which opens with the idea when the job description stood in for it.
   function ideaCard(i) {
-    var node = el("article", i.deferred_at ? "idea deferred" : "idea");
+    var node = el("article", "idea");
     var text = el("p", "text");
     var body = el("div", "body");
-    var c = { node: node, idea: i, text: text, inert: !!i.deferred_at, open: false };
+    var button = el("button", "status");
+    var c = { node: node, idea: i, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
     c.set = function (on) {
       c.open = on;
       node.setAttribute("data-open", String(on));
       text.setAttribute("aria-expanded", String(on));
       body.hidden = !on;
     };
-    if (!c.inert) {
-      var button = el("button", "defer", "Defer");
-      button.type = "button";
-      button.title = "Defer indefinitely";
-      button.disabled = true;
-      button.addEventListener("click", function () { defer(c, button); });
-      node.appendChild(button);
-      deferButtons.push(button);
-    }
+    button.type = "button";
+    button.disabled = true;
+    label(c);
+    button.addEventListener("click", function () { toggleDeferral(c); });
+    node.appendChild(button);
+    statusButtons.push(button);
     text.setAttribute("role", "button");
-    text.tabIndex = c.inert ? -1 : 0;
+    text.tabIndex = 0;
     text.appendChild(document.createTextNode(i.job || i.idea));
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
@@ -95432,9 +94468,9 @@ var PAGE_SCRIPT = String.raw`(function () {
     if (i.reason) body.appendChild(el("p", "why", i.reason));
     body.appendChild(el("p", "where", "Loose thread " + i.id + " · " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
     node.appendChild(body);
-    text.addEventListener("click", function () { if (!c.inert) c.set(!c.open); });
+    text.addEventListener("click", function () { c.set(!c.open); });
     text.addEventListener("keydown", function (e) {
-      if (c.inert || (e.key !== "Enter" && e.key !== " ")) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
       e.preventDefault();
       c.set(!c.open);
     });
@@ -95495,7 +94531,14 @@ var PAGE_SCRIPT = String.raw`(function () {
     folder.appendChild(sec);
     var first = cards.filter(function (c) { return !c.inert; })[0];
     if (first) first.set(true);
-    sections[name] = { node: sec, h2: h2, cards: cards };
+    sections[name] = { node: sec, h2: h2, stack: stack, cards: cards };
+  }
+
+  // A resolved line, ending in its inert status label.
+  function resolvedCard(d) {
+    var r = resolvedLine(d);
+    r.node.appendChild(el("span", "status", "Resolved"));
+    return r;
   }
 
   var allGroups = true;
@@ -95523,10 +94566,12 @@ var PAGE_SCRIPT = String.raw`(function () {
   var noGroups = el("p", "empty", "No groups selected. Choose a group above, or turn on All groups.");
   noGroups.hidden = true;
 
-  var rankedCards = data.ideas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
+  var open = data.ideas.filter(function (i) { return !i.deferred_at; });
+  var rankedCards = open.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], data.ideas.filter(function (i) { return i.rank === null; }).map(ideaCard));
-  section("resolved", "Resolved", [], data.resolved.map(resolvedLine));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], open.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("deferred", "Deferred", [], data.ideas.filter(function (i) { return !!i.deferred_at; }).map(ideaCard));
+  section("resolved", "Resolved", [], data.resolved.map(resolvedCard));
   var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
@@ -95593,7 +94638,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]];
+  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -95609,7 +94654,9 @@ var PAGE_SCRIPT = String.raw`(function () {
 
   var current = "all";
   function apply() {
-    rankedCards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
+    // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
+    sections.deferred.cards.forEach(function (c) { c.node.hidden = false; });
+    sections.ranked.cards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
     var any = false;
     Object.keys(sections).forEach(function (name) {
@@ -95644,7 +94691,7 @@ var PAGE_SCRIPT = String.raw`(function () {
   });
   apply();
 
-  if (deferButtons.length > 0) {
+  if (statusButtons.length > 0) {
     var abort = new AbortController();
     var timer = setTimeout(function () { abort.abort(); }, 2000);
     fetch(base + "/health", { signal: abort.signal }).then(function (res) {
@@ -95652,7 +94699,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     }).then(function (body) {
       clearTimeout(timer);
       if (!body || body.ok !== true) throw new Error("no listener");
-      deferButtons.forEach(function (b) { b.disabled = false; });
+      statusButtons.forEach(function (b) { b.disabled = false; });
     }).catch(function () {
       clearTimeout(timer);
       header.appendChild(el("p", "api-off", "Buttons need the Claude desktop app running."));
@@ -97420,14 +96467,14 @@ var VIEW_PAGES = [
 function viewPageFile(page, filingId) {
   return `${page.name} - Job Board ${filingId}.html`;
 }
-function escapeRegExp(text5) {
-  return text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegExp(text4) {
+  return text4.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function isViewPageFile(fileName) {
   return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)} - Job Board \\d+\\.html$`, "i").test(fileName));
 }
-function escapeHtml(text5) {
-  return text5.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function escapeHtml(text4) {
+  return text4.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 var SHARED_SCRIPT = String.raw`(function () {
   "use strict";
@@ -97516,9 +96563,9 @@ function pagePathFor(pages, section2) {
 }
 function refuseForeignPages(draftDir, names, views) {
   const targets = [
-    [join25(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
-    ...names.map((name) => [join25(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
-    ...views.map((v3) => [join25(draftDir, v3.file), VIEW_PAGE_MARKER, v3.page.name])
+    [join27(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
+    ...names.map((name) => [join27(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
+    ...views.map((v3) => [join27(draftDir, v3.file), VIEW_PAGE_MARKER, v3.page.name])
   ];
   for (const [file, marker, page] of targets) {
     if (existsSync26(file) && !readFileSync23(file, "utf-8").includes(marker)) {
@@ -97535,19 +96582,19 @@ function stem(fileName) {
 }
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+)\.html$/i;
 function generatorWrote(file) {
-  const text5 = readFileSync23(file, "utf-8");
-  return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
+  const text4 = readFileSync23(file, "utf-8");
+  return text4.includes(JOB_BOARD_MARKER) || text4.includes(MATTER_BOARD_MARKER) || text4.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
   const moved = [];
   const skipped = [];
   const targets = [...names, MATTER_BOARD_FILE].map((name) => name.toLowerCase());
-  const subfolders = readdirSync13(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join25(draftDir, e3.name));
+  const subfolders = readdirSync13(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join27(draftDir, e3.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync13(dir, { withFileTypes: true })) {
       if (!entry.isFile() || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
       if (dir === draftDir && targets.includes(entry.name.toLowerCase())) continue;
-      const file = join25(dir, entry.name);
+      const file = join27(dir, entry.name);
       try {
         if (!generatorWrote(file)) continue;
         const result = fileOpsTrash(file);
@@ -97607,7 +96654,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
         writings,
         views: pageViews,
         attached: attachedDrafts(draftDir, section2),
-        court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname11(draftDir)).filter((a3) => a3.mismatch !== null)
+        court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname12(draftDir)).filter((a3) => a3.mismatch !== null)
       })
     );
     const viewPages = viewsWritten.map(
@@ -97618,21 +96665,21 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       )
     );
     const swept = only === void 0 ? sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]) : {};
-    const matterBoardPath = join25(draftDir, MATTER_BOARD_FILE);
+    const matterBoardPath = join27(draftDir, MATTER_BOARD_FILE);
     writePage(matterBoardPath, matterBoard);
-    targetsWritten.forEach((t3, i3) => writePage(join25(draftDir, t3.file), jobBoards[i3]));
-    viewsWritten.forEach((v3, i3) => writePage(join25(draftDir, v3.file), viewPages[i3]));
+    targetsWritten.forEach((t3, i3) => writePage(join27(draftDir, t3.file), jobBoards[i3]));
+    viewsWritten.forEach((v3, i3) => writePage(join27(draftDir, v3.file), viewPages[i3]));
     return {
-      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join25(draftDir, t3.file) })),
+      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join27(draftDir, t3.file) })),
       matter_board_path: matterBoardPath,
-      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join25(draftDir, v3.file) })),
+      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join27(draftDir, v3.file) })),
       ...swept
     };
   });
 }
 var MAX_SESSIONS = 20;
 function statePath(dbPath) {
-  return join25(mockupsRoot(dbPath), PAGES_STATE_FILE);
+  return join27(mockupsRoot(dbPath), PAGES_STATE_FILE);
 }
 function isTodos(value) {
   if (typeof value !== "object" || value === null) return false;
@@ -98012,7 +97059,7 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
       args.key,
       args.loose_threads_from_jobs,
       lanes.includes("attached") && draftDir !== void 0 ? attachedDrafts(draftDir, section2) : [],
-      lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? courtFileAffidavits(args.db_path, args.filing_id, dirname11(draftDir)) : []
+      lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? courtFileAffidavits(args.db_path, args.filing_id, dirname12(draftDir)) : []
     )
   };
 }
@@ -98458,9 +97505,9 @@ function renderBccaBookFiledFace(ctx) {
 }
 
 // src/submission/forms/emit-bcca-factum.ts
-var ISO_DATE3 = /^\d{4}-\d{2}-\d{2}$/;
-function oneLine2(text5) {
-  return text5.replace(/\s*\n\s*/g, " ").trim();
+var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+function oneLine2(text4) {
+  return text4.replace(/\s*\n\s*/g, " ").trim();
 }
 function pushExcerpt(lines2, excerpt, cite) {
   if (excerpt) {
@@ -98494,7 +97541,7 @@ function lawCite(row2) {
 }
 function renderBccaFactumFiledFace(ctx, datedOn) {
   const { filing, proceeding } = ctx;
-  const refuse = (what) => {
+  const refuse2 = (what) => {
     throw new ValidationError(`Filing ${filing.id}: ${what} -- add it before this factum can be assembled.`);
   };
   if (filing.kind !== "bcca_factum") {
@@ -98502,30 +97549,30 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       `Filing ${filing.id} has kind "${filing.kind}", not "bcca_factum" -- the bcca-factum.md emitter only handles BCCA respondent's factum filings.`
     );
   }
-  if (!ISO_DATE3.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
-  if (!proceeding.file_number) refuse(`proceeding ${proceeding.id} has no file_number recorded`);
+  if (!ISO_DATE2.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
+  if (!proceeding.file_number) refuse2(`proceeding ${proceeding.id} has no file_number recorded`);
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const groups = groupPartiesByRole(captionParties2);
-  if (groups.length < 2) refuse(`only ${groups.length} party role group(s) are recorded on proceeding ${proceeding.id}; an appeal needs an appellant and a respondent`);
+  if (groups.length < 2) refuse2(`only ${groups.length} party role group(s) are recorded on proceeding ${proceeding.id}; an appeal needs an appellant and a respondent`);
   const firstAppellant = ctx.parties.find((p3) => p3.role.toLowerCase() === "appellant");
   const firstRespondent = ctx.parties.find((p3) => p3.role.toLowerCase() === "respondent");
-  if (!firstAppellant || !firstRespondent) refuse(`a party with role "Appellant" and a party with role "Respondent" are needed for the short style`);
+  if (!firstAppellant || !firstRespondent) refuse2(`a party with role "Appellant" and a party with role "Respondent" are needed for the short style`);
   const signer = factumSigner(ctx);
-  if (!signer.roleLabel) refuse(`no party is flagged is_client on proceeding ${proceeding.id}`);
+  if (!signer.roleLabel) refuse2(`no party is flagged is_client on proceeding ${proceeding.id}`);
   const client = ctx.parties.find((p3) => p3.is_client === 1);
   const chronology = fetchChronology(ctx.dbPath, filing.id);
-  if (chronology.length === 0) refuse("the chronology has no events");
+  if (chronology.length === 0) refuse2("the chronology has no events");
   const prose = fetchProseParagraphs(ctx.dbPath, filing.id);
   const opening = prose.get("opening_statement") ?? [];
-  if (opening.length === 0) refuse("the opening statement is not recorded");
+  if (opening.length === 0) refuse2("the opening statement is not recorded");
   const place = (prose.get("signing_place") ?? []).join(" ");
-  if (!place) refuse("the place of signing (signing_place) is not recorded");
+  if (!place) refuse2("the place of signing (signing_place) is not recorded");
   const factsPosition = prose.get("facts_position") ?? [];
   const facts = fetchFacts2(ctx.dbPath, filing.id);
   const factsRhetoric = fetchRhetoric(ctx.dbPath, filing.id, "form", "facts");
-  if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse("Part 1 has neither a position on the appellants' facts nor any fact");
+  if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse2("Part 1 has neither a position on the appellants' facts nor any fact");
   const submissions = fetchSubmissions(ctx.dbPath, filing.id, "form");
-  if (submissions.length === 0) refuse("no submission is deployed to this factum (Parts 2 and 3 would be empty)");
+  if (submissions.length === 0) refuse2("no submission is deployed to this factum (Parts 2 and 3 would be empty)");
   const submissionIds = submissions.map((s3) => s3.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
   const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
@@ -98535,9 +97582,9 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const missingCitation = submissions.flatMap(
     (s3) => (lawBySubmission.get(s3.id) ?? []).flatMap((la2) => printedLaw(la2).filter((st3) => st3.authority_citation === null).map((st3) => st3.statement_id))
   );
-  if (missingCitation.length > 0) refuse(`statement(s) of law ${missingCitation.join(", ")} have no authorities.citation`);
+  if (missingCitation.length > 0) refuse2(`statement(s) of law ${missingCitation.join(", ")} have no authorities.citation`);
   const orders = fetchOrdersSought(ctx.dbPath, filing.id, "form").filter((o3) => o3.crossed_out_on === null);
-  if (orders.length === 0) refuse("no order sought is recorded for Part 4");
+  if (orders.length === 0) refuse2("no order sought is recorded for Part 4");
   const docs = fetchFilingDocuments(ctx.dbPath, filing.id);
   const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
   const referenced = new Set(docs.map((d3) => d3.document_id));
@@ -98603,7 +97650,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   body.push(`${++n3}. All of which is respectfully submitted.`);
   const { enactments } = factumEnactments(ctx.dbPath, lawParas);
   const bare2 = enactments.find((e3) => e3.excerpts.length === 0);
-  if (bare2) refuse(`the enactment "${bare2.title}" has no stored excerpt to reproduce in the Enactments appendix`);
+  if (bare2) refuse2(`the enactment "${bare2.title}" has no stored excerpt to reproduce in the Enactments appendix`);
   const clientGroup = groups.find((g3) => g3.role === client.role);
   const lowerCourtRoles = buildLowerCourtRoleByRole(ctx.parties);
   const partyGroups = groups.map((g3) => ({
@@ -98917,7 +97964,7 @@ function renderForm33FiledFace(ctx, warnings) {
   for (const d3 of docs) {
     body.push(`- ${d3.label}${d3.document_date ? `, dated ${d3.document_date}` : ""}`);
   }
-  for (const text5 of STANDARD_MATERIAL_LINES) body.push(`- ${text5}`);
+  for (const text4 of STANDARD_MATERIAL_LINES) body.push(`- ${text4}`);
   return front.join("\n") + "\n" + body.join("\n").trimEnd() + "\n";
 }
 
@@ -99279,14 +98326,14 @@ function formCurrency(formKey, today2, seams = {}) {
 
 // src/submission/pre-filing/index.ts
 import { existsSync as existsSync27, readdirSync as readdirSync14, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
-import { basename as basename3, dirname as dirname12, isAbsolute as isAbsolute4, join as join26, resolve as resolve4 } from "node:path";
+import { basename as basename3, dirname as dirname13, isAbsolute as isAbsolute4, join as join28, resolve as resolve4 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
   return docs.filter((d3) => d3.text_by_page && !EXHIBIT_FILE_RE.test(d3.file_name));
 }
-function lines(text5) {
-  return text5.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
+function lines(text4) {
+  return text4.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
 }
 var norm = (s3) => s3.replace(/\s+/g, " ").trim().toLowerCase();
 var esc2 = (s3) => s3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -99325,8 +98372,8 @@ function checkFigureConsistency(docs, dates, amounts) {
   const scanned = authored(docs);
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text5, i3) => {
-      for (const line of new Set(lines(text5))) {
+    doc.text_by_page.forEach((text4, i3) => {
+      for (const line of new Set(lines(text4))) {
         for (const m3 of line.matchAll(MONEY_RE)) {
           const c3 = cents(m3[1], m3[2]);
           if (amountCents.some((a3) => a3.cents === c3)) continue;
@@ -99386,15 +98433,15 @@ function fileNumberSearch(fileNumber) {
 }
 var nameKey = (s3) => norm(s3).replace(/\.$/, "");
 var digits = (s3) => s3.replace(/\D/g, "");
-function checkPartyNames(docs, anchors3) {
+function checkPartyNames(docs, anchors) {
   const findings = [];
   const scanned = authored(docs);
-  const names = anchors3.party_names.map((name) => ({ name, re: nameSearch(name) }));
-  const fileRe = anchors3.file_number ? fileNumberSearch(anchors3.file_number) : null;
+  const names = anchors.party_names.map((name) => ({ name, re: nameSearch(name) }));
+  const fileRe = anchors.file_number ? fileNumberSearch(anchors.file_number) : null;
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text5, i3) => {
-      for (const line of new Set(lines(text5))) {
+    doc.text_by_page.forEach((text4, i3) => {
+      for (const line of new Set(lines(text4))) {
         for (const { name, re: re3 } of names) {
           for (const m3 of line.matchAll(re3)) {
             if (nameKey(m3[0]) === nameKey(name)) continue;
@@ -99402,7 +98449,7 @@ function checkPartyNames(docs, anchors3) {
           }
         }
         if (!fileRe) continue;
-        const want = anchors3.file_number;
+        const want = anchors.file_number;
         for (const m3 of line.matchAll(fileRe)) {
           if (norm(m3[0]) === norm(want)) continue;
           if (digits(m3[0]) !== digits(want) && !isOneDigitTypo(digits(m3[0]), digits(want))) continue;
@@ -99416,7 +98463,7 @@ function checkPartyNames(docs, anchors3) {
     title: "Party name and style-of-cause consistency",
     status: findings.length === 0 ? "pass" : "fail",
     findings: sortFindings(findings),
-    note: `${anchors3.party_names.length} party names and ${anchors3.file_number ? "the" : "no"} file number checked across ${scanned.length} documents`
+    note: `${anchors.party_names.length} party names and ${anchors.file_number ? "the" : "no"} file number checked across ${scanned.length} documents`
   };
 }
 var AUDIT_PAGE_RE = /Final Audit Report|Signature Certificate|Certificate Of Completion|Document e-signed by|Agreement completed/i;
@@ -99448,7 +98495,7 @@ function checkExecution(docs, instruments) {
       push(1, doc.file_name, `could not be read: ${doc.error ?? "not a PDF or DOCX"}`);
       continue;
     }
-    const pages = doc.text_by_page.map((text5, i3) => ({ text: text5, page: i3 + 1 }));
+    const pages = doc.text_by_page.map((text4, i3) => ({ text: text4, page: i3 + 1 }));
     const audit = pages.filter((x3) => AUDIT_PAGE_RE.test(x3.text));
     const statuses = audit.flatMap((p3) => [...p3.text.matchAll(AUDIT_STATUS_RE)].map((m3) => ({ page: p3.page, quote: m3[0].replace(/\s+/g, " "), value: m3[1] })));
     for (const s3 of statuses.filter((x3) => !/^(completed|signed)$/i.test(x3.value))) {
@@ -99479,7 +98526,7 @@ function checkExecution(docs, instruments) {
 }
 
 // src/submission/pre-filing/extract.ts
-var PY_HELPER6 = String.raw`
+var PY_HELPER5 = String.raw`
 import json, os, re, sys, zipfile
 
 def docx_text(path):
@@ -99528,15 +98575,15 @@ def main():
 
 main()
 `.trim();
-function helperFile6() {
-  return pythonDriverFile("prefiling-extract", PY_HELPER6);
+function helperFile5() {
+  return pythonDriverFile("prefiling-extract", PY_HELPER5);
 }
 function extractDocuments(paths) {
   if (paths.length === 0) return [];
   const payload = JSON.stringify({ paths });
   const out = runPythonDriver({
     label: "pre-filing text extraction",
-    driver: helperFile6(),
+    driver: helperFile5(),
     payload,
     env: process.env,
     timeoutMs: pythonTimeoutMs2(process.env, READ_TIMEOUT_MS)
@@ -99552,20 +98599,20 @@ function queryRows(dbPath, sql, params) {
 function resolvePackageDir(packageDir) {
   if (!isAbsolute4(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve4(packageDir);
-  const refuse = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync27(dir) || !statSync14(dir).isDirectory()) throw refuse("it does not exist or is not a folder");
+  const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
+  if (!existsSync27(dir) || !statSync14(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
   const real = realpathSync6.native(dir);
   const parts = real.split(/[\\/]/);
-  if (parts.some((p3) => /^(privileged|disclosed)$/i.test(p3))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (parts.some((p3) => /^(privileged|disclosed)$/i.test(p3))) throw refuse2("it lies inside a privileged or disclosed tree");
   const draftIdx = parts.findIndex((p3) => /^0\. DRAFT/i.test(p3));
-  if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse("it must lie beneath the matter's 0. DRAFT folder");
-  if (basename3(real).toLowerCase() !== basename3(dir).toLowerCase() || dirname12(real).toLowerCase() !== realpathSync6.native(dirname12(dir)).toLowerCase()) {
-    throw refuse("it resolves outside its 0. DRAFT folder");
+  if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse2("it must lie beneath the matter's 0. DRAFT folder");
+  if (basename3(real).toLowerCase() !== basename3(dir).toLowerCase() || dirname13(real).toLowerCase() !== realpathSync6.native(dirname13(dir)).toLowerCase()) {
+    throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join26(dir, e3.name)).sort((a3, b3) => basename3(a3).localeCompare(basename3(b3)));
+  return readdirSync14(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join28(dir, e3.name)).sort((a3, b3) => basename3(a3).localeCompare(basename3(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -99662,8 +98709,8 @@ function sanitizeForPath(name) {
 }
 function existingMockupPaths(baseDir) {
   const manifest = readManifest(baseDir);
-  const paths = (manifest?.files ?? []).map((f3) => join27(baseDir, f3.file_name)).filter((p3) => existsSync29(p3));
-  const board = [join27(baseDir, "Job Board.html"), join27(baseDir, "Work Board.html")].find((p3) => existsSync29(p3));
+  const paths = (manifest?.files ?? []).map((f3) => join29(baseDir, f3.file_name)).filter((p3) => existsSync29(p3));
+  const board = [join29(baseDir, "Job Board.html"), join29(baseDir, "Work Board.html")].find((p3) => existsSync29(p3));
   if (board) paths.push(board);
   return paths;
 }
@@ -99686,12 +98733,12 @@ function nowStamp() {
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())} ${pad(d3.getHours())}:${pad(d3.getMinutes())}`;
 }
 function newSessionToken(unattended) {
-  return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes3(9).toString("hex")}`;
+  return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
 }
 function readExistingRevision(filePath) {
   if (!existsSync29(filePath)) return void 0;
-  const text5 = readFileSync24(filePath, "utf-8");
-  const match = text5.match(/^Revision:[ \t]*(\d+)/m) ?? text5.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text5.match(/data-k="Rev">(\d+)</);
+  const text4 = readFileSync24(filePath, "utf-8");
+  const match = text4.match(/^Revision:[ \t]*(\d+)/m) ?? text4.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text4.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
 function archiveIfStale(filePath, formLabel, currentRevision) {
@@ -99700,11 +98747,11 @@ function archiveIfStale(filePath, formLabel, currentRevision) {
   archiveFile(filePath, formLabel, existingRevision);
 }
 function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join27(dirname13(filePath), "archive");
+  const archiveDir = join29(dirname14(filePath), "archive");
   mkdirSync13(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join27(archiveDir, `${name}${extname2(filePath)}`);
-  for (let n3 = 2; existsSync29(archivePath); n3++) archivePath = join27(archiveDir, `${name} (${n3})${extname2(filePath)}`);
+  let archivePath = join29(archiveDir, `${name}${extname2(filePath)}`);
+  for (let n3 = 2; existsSync29(archivePath); n3++) archivePath = join29(archiveDir, `${name} (${n3})${extname2(filePath)}`);
   renameSync7(filePath, archivePath);
 }
 function archiveDroppedFiles(baseDir, previous, written) {
@@ -99712,7 +98759,7 @@ function archiveDroppedFiles(baseDir, previous, written) {
   for (const file of previous.files) {
     if (written.has(file.file_name) || basename4(file.file_name) !== file.file_name) continue;
     try {
-      archiveFile(join27(baseDir, file.file_name), file.document_type, previous.stamp.revision);
+      archiveFile(join29(baseDir, file.file_name), file.document_type, previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -99720,7 +98767,7 @@ function archiveDroppedFiles(baseDir, previous, written) {
 }
 function writeDocument2(baseDir, output, revision) {
   mkdirSync13(baseDir, { recursive: true });
-  const filePath = join27(baseDir, output.fileName);
+  const filePath = join29(baseDir, output.fileName);
   archiveIfStale(filePath, output.documentType, revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
@@ -99729,7 +98776,7 @@ function writeDocument2(baseDir, output, revision) {
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
-    const file = join27(dir, name);
+    const file = join29(dir, name);
     try {
       if (existsSync29(file)) unlinkSync6(file);
     } catch (err) {
@@ -99739,15 +98786,15 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 }
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeStaleWorkBoardMarkdown(baseDir) {
-  const stale = join27(baseDir, STALE_WORKBOARD_MARKDOWN);
+  const stale = join29(baseDir, STALE_WORKBOARD_MARKDOWN);
   if (existsSync29(stale)) unlinkSync6(stale);
 }
 function ownStaleWorkBoardMarkdown(dir) {
-  return readExistingRevision(join27(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  return readExistingRevision(join29(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
 }
 function partiesFor(dbPath, proceeding, filing) {
   if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
-  return draftingParties(dirname13(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
+  return draftingParties(dirname14(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
 }
 function partiesDigest({ parties: parties2, drift }) {
   return sha256(
@@ -99934,37 +98981,37 @@ function resolvePresentationDir(presentationDir, filingTitle, styleOfCause) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
   }
   const dir = resolve5(presentationDir);
-  const refuse = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
+  const refuse2 = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
   let parent;
   try {
-    parent = realpathSync8.native(dirname13(dir));
+    parent = realpathSync8.native(dirname14(dir));
   } catch {
-    throw refuse("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
+    throw refuse2("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
   }
-  if (!/^0\. DRAFT/i.test(basename4(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
-  if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (!/^0\. DRAFT/i.test(basename4(parent))) throw refuse2("its parent must be the matter's 0. DRAFT folder");
+  if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse2("it lies inside a privileged or disclosed tree");
   const ending = ` ${sanitizeForPath(filingTitle)}`;
   const oldEnding = styleOfCause ? ` ${sanitizeForPath(oldTitle(filingTitle, styleOfCause))}` : null;
   if (!basename4(dir).endsWith(ending) && (oldEnding === null || !basename4(dir).endsWith(oldEnding))) {
-    throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+    throw refuse2(`the folder name must end with "${ending}" (this filing's title)`);
   }
-  if (existsSync29(dir) && dirname13(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
-    throw refuse("it resolves outside its 0. DRAFT folder");
+  if (existsSync29(dir) && dirname14(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+    throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir") {
-  const refuse = (why) => new ValidationError(`${param2} ${draftDir}: ${why}`);
-  if (!isAbsolute5(draftDir)) throw refuse("must be an absolute path");
+  const refuse2 = (why) => new ValidationError(`${param2} ${draftDir}: ${why}`);
+  if (!isAbsolute5(draftDir)) throw refuse2("must be an absolute path");
   const dir = resolve5(draftDir);
   let real;
   try {
     real = realpathSync8.native(dir);
   } catch {
-    throw refuse("does not exist");
+    throw refuse2("does not exist");
   }
-  if (!/^0\. DRAFT/i.test(basename4(real))) throw refuse("must be the matter's 0. DRAFT folder");
-  if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (!/^0\. DRAFT/i.test(basename4(real))) throw refuse2("must be the matter's 0. DRAFT folder");
+  if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse2("it lies inside a privileged or disclosed tree");
   return dir;
 }
 function presentationFolder(proceeding, filing, title = filing.title) {
@@ -99979,7 +99026,7 @@ function renameable(dir) {
   const entries = readdirSync15(dir, { withFileTypes: true });
   const isBoard = (name) => name === "Job Board.html" || name === "Work Board.html";
   return entries.length > 0 && entries.every(
-    (e3) => e3.isFile() && (isBoard(e3.name) || RETIRED_BOARD_FILES.includes(e3.name) || readExistingRevision(join27(dir, e3.name)) !== void 0)
+    (e3) => e3.isFile() && (isBoard(e3.name) || RETIRED_BOARD_FILES.includes(e3.name) || readExistingRevision(join29(dir, e3.name)) !== void 0)
   );
 }
 function presentationDirFromDraft(draftDir, proceeding, filing) {
@@ -99989,10 +99036,10 @@ function presentationDirFromDraft(draftDir, proceeding, filing) {
   const isOld = (name) => old !== null && name.toLowerCase() === old.toLowerCase();
   const isUndated = (name) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
   const matches = readdirSync15(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory() && (isUndated(e3.name) || /^\d{4}-\d{2}-\d{2} /.test(e3.name) && isUndated(e3.name.slice(11)))).map((e3) => e3.name).sort();
-  if (matches.length === 1 && isOld(matches[0])) return join27(draft, matches[0]);
-  if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join27(draft, undated);
+  if (matches.length === 1 && isOld(matches[0])) return join29(draft, matches[0]);
+  if (matches.length === 0 || matches.length === 1 && isUndated(matches[0])) return join29(draft, undated);
   const candidates = matches.map((name) => {
-    const path = join27(draft, name);
+    const path = join29(draft, name);
     return isUndated(name) ? `"${path}" (undated)` : `"${path}" (dated, renameable: ${renameable(path) ? "yes" : "no"})`;
   });
   throw new ValidationError(
@@ -100004,7 +99051,7 @@ function symbolNotes(notes) {
   return notes.length > 0 ? { symbol_notes: notes } : {};
 }
 function projectDocuments(dir, documents, wanted) {
-  const targets = documents.map((doc) => join27(dir, doc.file_name));
+  const targets = documents.map((doc) => join29(dir, doc.file_name));
   for (const target of targets) {
     if (existsSync29(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(
@@ -100013,14 +99060,14 @@ function projectDocuments(dir, documents, wanted) {
     }
   }
   mkdirSync13(dir, { recursive: true });
-  for (const doc of documents) writeFileSync9(join27(dir, doc.file_name), doc.markdown, "utf-8");
+  for (const doc of documents) writeFileSync9(join29(dir, doc.file_name), doc.markdown, "utf-8");
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...ownStaleWorkBoardMarkdown(dir)]);
-  removeRetiredBoardFiles(dirname13(dir));
+  removeRetiredBoardFiles(dirname14(dir));
   return documents.map((doc) => ({
     document_type: doc.document_type,
     ...doc.path ? { path: doc.path } : {},
     file_name: doc.file_name,
-    presentation_path: join27(dir, doc.file_name),
+    presentation_path: join29(dir, doc.file_name),
     markdown_chars: doc.markdown.length,
     ...wanted?.includes(doc.document_type) ? { markdown: doc.markdown, ...symbolNotes(doc.symbol_notes ?? []) } : {}
   }));
@@ -100074,7 +99121,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   }
   const requestedDir = draftDir === void 0 || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
   const projectionDir = requestedDir === void 0 ? void 0 : resolvePresentationDir(requestedDir, filing.title, proceeding.style_of_cause);
-  const pagesDir = jobOnly && draftDir !== void 0 ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === void 0 ? void 0 : dirname13(projectionDir);
+  const pagesDir = jobOnly && draftDir !== void 0 ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === void 0 ? void 0 : dirname14(projectionDir);
   const revision = fetchRevision(dbPath);
   const approvals = fetchApprovalsMark(dbPath);
   const loadMs = elapsedMs(loadStart);
@@ -100105,7 +99152,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     ...written?.pages.moved_to_trash ? { moved_to_trash: written.pages.moved_to_trash } : {},
     ...written?.pages.trash_skipped ? { trash_skipped: written.pages.trash_skipped } : {}
   });
-  const deadlines3 = deadlineCriteria(dates, filingId);
+  const deadlines = deadlineCriteria(dates, filingId);
   if (jobOnly) {
     const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx));
     selectDocuments([{ document_type: "Work_board" }], documentTypes);
@@ -100127,7 +99174,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     };
   }
   if (retiredMockup) {
-    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines3));
+    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
     if (projectionDir) selectDocuments([{ document_type: "Work_board" }], documentTypes);
     const written = writePages(section3);
     return {
@@ -100155,7 +99202,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     const tail = { ...report, ...sessionToken ? { session_token: sessionToken } : {}, rendered_at: renderedAt, ...currency ? { form_currency: currency } : {} };
     if (projectionDir) {
       selectDocuments([...documents2, { document_type: "Work_board" }], documentTypes);
-      refuseForeignMatterPages(dirname13(projectionDir), dbPath);
+      refuseForeignMatterPages(dirname14(projectionDir), dbPath);
       const projected = timed(timings, "write presentation copies", () => projectDocuments(projectionDir, documents2, documentTypes));
       const written = writePages(section3);
       const board = boardDocument(section3, written, documentTypes?.includes("Work_board") ?? false);
@@ -100170,12 +99217,12 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       removeRetiredBoardFiles(mockupsRoot(dbPath));
       removeStaleWorkBoardMarkdown(baseDir);
     });
-    const section3 = timed(timings, "board_section", () => buildWorkBoardData({ ...ctx, inventory: hit.manifest.inventory }, deadlines3));
+    const section3 = timed(timings, "board_section", () => buildWorkBoardData({ ...ctx, inventory: hit.manifest.inventory }, deadlines));
     const documents2 = hit.manifest.files.map((f3) => {
       const markdown = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
-        path: join27(baseDir, f3.file_name),
+        path: join29(baseDir, f3.file_name),
         file_name: f3.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f3.document_type))
@@ -100309,7 +99356,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       })
     );
   }
-  const section2 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines3));
+  const section2 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
   return finishMockup(documents, section2, ctx.rendered);
 }
 function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {}, now = nowStamp(), sessionToken, draftDir, todos = TODOS_NOT_READ, dates = DATES_NOT_READ) {
@@ -100778,10 +99825,10 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== void 0 && client.clientNo !== void 0 && client.matterNo !== void 0;
   const queue = complete ? result.filings.filter((f3) => !f3.retired_on && !f3.job_board_only && f3.render_state !== "fresh").map((f3) => f3.filing_id) : [];
-  const pages = (only) => writeMatterPages(dbPath, dirname13(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
+  const pages = (only) => writeMatterPages(dbPath, dirname14(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
   return startRenderJob({
     dbPath,
-    ...result.matter_board_path ? { draftDir: dirname13(result.matter_board_path) } : {},
+    ...result.matter_board_path ? { draftDir: dirname14(result.matter_board_path) } : {},
     queue,
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
@@ -100944,11 +99991,11 @@ async function submissionDataReleaseJob(args, env = process.env) {
 
 // src/submission/open-session.ts
 import { existsSync as existsSync31, readdirSync as readdirSync16 } from "node:fs";
-import { basename as basename5, dirname as dirname14, join as join29 } from "node:path";
+import { basename as basename5, dirname as dirname15, join as join31 } from "node:path";
 
 // src/case/ingest-coverage.ts
 import { existsSync as existsSync30 } from "node:fs";
-import { join as join28 } from "node:path";
+import { join as join30 } from "node:path";
 var DRIVER4 = String.raw`
 import json, sys
 
@@ -100968,7 +100015,7 @@ var FOLDER_GLOBS = ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*", "
 var CORRESPONDENCE_GLOBS = FOLDER_GLOBS.slice(0, 2);
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS, env = process.env) {
-  if (!existsSync30(join28(caseDataDir, "main.sqlite"))) {
+  if (!existsSync30(join30(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
   }
   try {
@@ -100998,21 +100045,21 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS,
 }
 
 // src/submission/matter-todos.ts
-var text4 = (value) => value === null || value === void 0 ? null : String(value);
+var text3 = (value) => value === null || value === void 0 ? null : String(value);
 async function readMatterTodos(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's to-dos were not read." };
   let rows21;
   try {
-    rows21 = (await callPracticeTool(practiceDb2, "local", "practice_data__open_tasks", { matt_num: matterNo })).rows;
+    rows21 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
   } catch (err) {
     return { note: `This matter's to-dos could not be read (${matterNo}): ${err.message}` };
   }
   return {
     rows: rows21.map((row2) => ({
       id: String(row2.id),
-      description: text4(row2.description) ?? "",
-      bf_date: text4(row2.next_nudge_date),
-      filing_ref: text4(row2.filing_ref)
+      description: text3(row2.description) ?? "",
+      bf_date: text3(row2.next_nudge_date),
+      filing_ref: text3(row2.filing_ref)
     }))
   };
 }
@@ -101054,7 +100101,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join29(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join31(draftDir, MATTER_BOARD_FILE),
         job_board_path: board.path,
         ...written.pages ? { job_board_paths: written.pages.job_board_paths, view_page_paths: written.pages.view_page_paths } : {},
         ...trashReport(rendered)
@@ -101092,7 +100139,7 @@ function openedIngestCoverage(opened, dbPath, root) {
   if (opened?.filing_id === void 0) return { status: "not_applicable", reason: "no board opened" };
   if (opened.ingest_inputs === void 0) return { status: "not_applicable", reason: "the opened filing declares no ingest inputs" };
   if (opened.ingest_inputs.ready_jobs.length === 0) return { status: "not_applicable", reason: "no Ready job on the opened filing" };
-  return readIngestCoverage(dirname14(dbPath), root, opened.ingest_inputs.folders);
+  return readIngestCoverage(dirname15(dbPath), root, opened.ingest_inputs.folders);
 }
 function openedFormCurrency(opened, dbPath) {
   if (opened?.filing_id === void 0) return void 0;
@@ -101112,8 +100159,7 @@ async function lookUpMatter(root, practiceDb2, client) {
   }
   let rows21;
   try {
-    const found = await callPracticeTool(practiceDb2, "local", "practice_data__matter_lookup", { matt_num: token });
-    rows21 = found.rows;
+    rows21 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
   } catch (err) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} failed: ${err.message}` }, client };
   }
@@ -101122,12 +100168,12 @@ async function lookUpMatter(root, practiceDb2, client) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
   const row2 = rows21[0];
-  const text5 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
+  const text4 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
   const resolved = {
-    clientName: client.clientName ?? text5(row2.client_name),
-    clientNo: client.clientNo ?? text5(row2.client_num),
-    matterNo: client.matterNo ?? text5(row2.matt_num),
-    matterDescription: client.matterDescription ?? text5(row2.description)
+    clientName: client.clientName ?? text4(row2.client_name),
+    clientNo: client.clientNo ?? text4(row2.client_num),
+    matterNo: client.matterNo ?? text4(row2.matt_num),
+    matterDescription: client.matterDescription ?? text4(row2.description)
   };
   return {
     lookup: {
@@ -101151,7 +100197,7 @@ function practiceConfigBlocking(dbPath) {
   }
 }
 function backups(dbPath) {
-  const dir = dirname14(dbPath);
+  const dir = dirname15(dbPath);
   const prefix = `${basename5(dbPath)}.bak-`;
   return new Set(existsSync31(dir) ? readdirSync16(dir).filter((name) => name.startsWith(prefix)) : []);
 }
@@ -101194,7 +100240,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
       result = submissionFormsBootstrap(dbPath, identity, void 0, void 0, void 0, unattended);
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
-    if (to2 !== null && to2 !== from) migrated = { from, to: to2, backup: written.length > 0 ? join29(dirname14(dbPath), written[0]) : null };
+    if (to2 !== null && to2 !== from) migrated = { from, to: to2, backup: written.length > 0 ? join31(dirname15(dbPath), written[0]) : null };
   }
   for (const t3 of result.timings) timings.push({ phase: `bootstrap: ${t3.phase}`, ms: t3.ms });
   const refused3 = result.migration_required || result.bundle_outdated || result.migration_withheld === true;
@@ -101306,8 +100352,8 @@ function bcscFormHarness(args, env = process.env, installRoot) {
     if (args.command === "abandon") confineSessionDir(sessions, sessionId);
     else ctx = checkSession(root, caseData, sessions, sessionId);
     argv.push("--", sessionId);
-    const text5 = TEXT_ARG[args.command];
-    if (text5) argv.push(requireArg(args, text5));
+    const text4 = TEXT_ARG[args.command];
+    if (text4) argv.push(requireArg(args, text4));
     if (args.command === "step" && LOCATE_STEPS.has(ctx?.current_step)) confineLocatePaths(caseData, argv[argv.length - 1]);
   }
   const action = runPythonDriver({
@@ -101475,8 +100521,8 @@ function bindDraftTarget(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
   return { root, caseData: existingCaseDataFolder(root, env), draft: draftFolder(root) };
 }
-function writeWorkingFile(target, folders, fileName, text5) {
-  return writeSubstanceFile(target.caseData, fileName, text5, folders);
+function writeWorkingFile(target, folders, fileName, text4) {
+  return writeSubstanceFile(target.caseData, fileName, text4, folders);
 }
 function writingSubfolder(target, name) {
   return resolveWithin(target.writing, name, `${name} folder`, false);
@@ -101644,7 +100690,7 @@ import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3219 } from "node:path";
 
 // src/case/authority-source.ts
-import { homedir as homedir7 } from "node:os";
+import { homedir as homedir8 } from "node:os";
 import { win32 as pathWin3218 } from "node:path";
 var DRIVER7 = String.raw`
 import json, sys
@@ -101685,7 +100731,7 @@ function resolveAuthoritySource(request2, env = process.env, installRoot) {
   return parsed.result;
 }
 function authorityPdfCacheDir(env) {
-  return pathWin3218.join(env.LOCALAPPDATA || homedir7(), "Coclerk", "scrutiny-review");
+  return pathWin3218.join(env.LOCALAPPDATA || homedir8(), "Coclerk", "scrutiny-review");
 }
 
 // src/submission/scrutiny-review.ts
@@ -102365,10 +101411,10 @@ function dirEntry(raw) {
 
 // src/correspondence/eml.ts
 function splitHead(raw) {
-  const text5 = raw.toString("latin1");
-  const m3 = /\r?\n\r?\n/.exec(text5);
-  if (!m3) return { head: text5, body: Buffer.alloc(0) };
-  return { head: text5.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
+  const text4 = raw.toString("latin1");
+  const m3 = /\r?\n\r?\n/.exec(text4);
+  if (!m3) return { head: text4, body: Buffer.alloc(0) };
+  return { head: text4.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
 }
 function parseHeaders(head) {
   const headers = /* @__PURE__ */ new Map();
@@ -102388,8 +101434,8 @@ function decodeCharset(bytes, charset) {
     return new TextDecoder("windows-1252").decode(bytes);
   }
 }
-function quotedPrintable(text5) {
-  const soft = text5.replace(/=\r?\n/g, "");
+function quotedPrintable(text4) {
+  const soft = text4.replace(/=\r?\n/g, "");
   const out = [];
   for (let i3 = 0; i3 < soft.length; i3 += 1) {
     if (soft[i3] === "=" && /^[0-9A-Fa-f]{2}$/.test(soft.slice(i3 + 1, i3 + 3))) {
@@ -102441,8 +101487,8 @@ function walk3(raw, out, depth) {
     const delimiter = `--${boundary}`;
     const whole = body.toString("latin1");
     const close = whole.indexOf(`${delimiter}--`);
-    const text5 = close >= 0 ? whole.slice(0, close) : whole;
-    const pieces = text5.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
+    const text4 = close >= 0 ? whole.slice(0, close) : whole;
+    const pieces = text4.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
     for (const piece of pieces.slice(1)) {
       if (piece.trim() === "") continue;
       walk3(Buffer.from(piece, "latin1"), out, depth + 1);
@@ -102459,8 +101505,8 @@ function walk3(raw, out, depth) {
   else if (mediaType === "text/html" && out.html === void 0) out.html = decodeCharset(decoded, charset);
   else if ((mediaType === "text/rtf" || mediaType === "application/rtf") && out.rtf === void 0) out.rtf = decoded;
 }
-function escapeRegex2(text5) {
-  return text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex2(text4) {
+  return text4.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // src/correspondence/highlight.ts
@@ -102555,8 +101601,8 @@ var ENTITIES = {
   agrave: "\xE0",
   ccedil: "\xE7"
 };
-function decodeEntities2(text5) {
-  return text5.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body) => {
+function decodeEntities2(text4) {
+  return text4.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body) => {
     if (body[0] === "#") {
       const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
       return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
@@ -102585,8 +101631,8 @@ function readHtml(html) {
     }
     return "";
   };
-  const push = (text6) => {
-    if (hidden === 0 && text6) runs.push({ text: text6, colour: current() });
+  const push = (text5) => {
+    if (hidden === 0 && text5) runs.push({ text: text5, colour: current() });
   };
   const token = /<!--[\s\S]*?-->|<!\[[\s\S]*?\]>|<!(?:[^>]*)>|<\/?([a-zA-Z][\w:-]*)([^>]*)>|([^<]+)|</g;
   let m3;
@@ -102616,8 +101662,8 @@ function readHtml(html) {
     }
     stack.push({ name, colour: INLINE.has(name) ? highlightOf(name, m3[2]) : void 0 });
   }
-  const text5 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-  return { text: text5, highlights: mergeRuns(runs) };
+  const text4 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { text: text4, highlights: mergeRuns(runs) };
 }
 
 // src/correspondence/lzfu.ts
@@ -102714,20 +101760,20 @@ function readRtf(rtf) {
     const rgb = colours[idx];
     return rgb ? colourName(rgb) : null;
   };
-  const emitText = (text6) => {
-    if (!text6 || st3.skip) return;
+  const emitText = (text5) => {
+    if (!text5 || st3.skip) return;
     if (fromHtml) {
       if (st3.htmlRtf && !st3.htmlTag) return;
-      html += st3.htmlTag ? text6 : escapeHtml2(text6);
+      html += st3.htmlTag ? text5 : escapeHtml2(text5);
       return;
     }
-    runs.push({ text: text6, colour: colourOf() ?? "" });
+    runs.push({ text: text5, colour: colourOf() ?? "" });
   };
   const flushBytes = () => {
     if (pendingBytes.length === 0) return;
-    const text6 = decoder.decode(Buffer.from(pendingBytes));
+    const text5 = decoder.decode(Buffer.from(pendingBytes));
     pendingBytes = [];
-    emitText(text6);
+    emitText(text5);
   };
   let i3 = 0;
   while (i3 < src.length) {
@@ -102896,23 +101942,23 @@ function readRtf(rtf) {
     for (const c3 of chunk) pendingBytes.push(c3.charCodeAt(0));
   }
   flushBytes();
-  function emitLiteral(text6) {
+  function emitLiteral(text5) {
     flushBytes();
     if (skipChars > 0) {
       skipChars -= 1;
       return;
     }
-    emitText(text6);
+    emitText(text5);
   }
   if (fromHtml) return { html, text: "", highlights: [] };
-  const text5 = runs.map((r3) => r3.text).join("");
-  return { text: text5, highlights: mergeRuns(runs) };
+  const text4 = runs.map((r3) => r3.text).join("");
+  return { text: text4, highlights: mergeRuns(runs) };
 }
 function hex(n3) {
   return Math.max(0, Math.min(255, n3)).toString(16).padStart(2, "0");
 }
-function escapeHtml2(text5) {
-  return text5.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function escapeHtml2(text4) {
+  return text4.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function textDecoder(codepage) {
   const label = codepage === 65001 ? "utf-8" : codepage === 1200 ? "utf-16le" : `windows-${codepage}`;
@@ -102967,8 +102013,8 @@ var MsgNode = class {
     return this.cfb.read(`${this.prefix}/__substg1.0_${tag}0102`);
   }
 };
-function collapse(text5) {
-  return (text5 ?? "").replace(/\s+/g, " ").trim();
+function collapse(text4) {
+  return (text4 ?? "").replace(/\s+/g, " ").trim();
 }
 function address(node, nameProp, smtpProp, addrProp) {
   const name = collapse(node.text(nameProp));
@@ -102999,12 +102045,12 @@ function msgHeaders(cfb, msg) {
     sent: isoOrNull(dateHeader) ?? msg.time(57) ?? msg.time(3590)
   };
 }
-function splitList(text5) {
-  return (text5 ?? "").split(";").map(collapse).filter(Boolean);
+function splitList(text4) {
+  return (text4 ?? "").split(";").map(collapse).filter(Boolean);
 }
-function isoOrNull(text5) {
-  if (!text5) return null;
-  const t3 = Date.parse(text5);
+function isoOrNull(text4) {
+  if (!text4) return null;
+  const t3 = Date.parse(text4);
   return Number.isNaN(t3) ? null : new Date(t3).toISOString();
 }
 function openMsg(bytes) {
@@ -103057,12 +102103,12 @@ function emlHeaders(headers) {
     sent: isoOrNull(headers.get("date"))
   };
 }
-function splitAddresses(text5) {
+function splitAddresses(text4) {
   const out = [];
   let depth = 0;
   let quoted = false;
   let current = "";
-  for (const c3 of text5) {
+  for (const c3 of text4) {
     if (c3 === '"') quoted = !quoted;
     else if (c3 === "<" && !quoted) depth += 1;
     else if (c3 === ">" && !quoted) depth = Math.max(0, depth - 1);
@@ -103278,11 +102324,11 @@ function zipParts(parts) {
 var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 var QUOTE_INDENT = 720;
 var LIST_INDENT = 360;
-function escapeXml(text5) {
-  return text5.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function escapeXml(text4) {
+  return text4.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 var WORD = /[\p{L}\p{N}]/u;
-function inlineRuns(text5) {
+function inlineRuns(text4) {
   const runs = [];
   let bold = false;
   let italic = false;
@@ -103291,22 +102337,22 @@ function inlineRuns(text5) {
     if (buf) runs.push({ text: buf, bold, italic });
     buf = "";
   };
-  for (let i3 = 0; i3 < text5.length; i3 += 1) {
-    const c3 = text5[i3];
-    if (c3 === "\\" && i3 + 1 < text5.length && "\\*_`#>-".includes(text5[i3 + 1])) {
-      buf += text5[i3 + 1];
+  for (let i3 = 0; i3 < text4.length; i3 += 1) {
+    const c3 = text4[i3];
+    if (c3 === "\\" && i3 + 1 < text4.length && "\\*_`#>-".includes(text4[i3 + 1])) {
+      buf += text4[i3 + 1];
       i3 += 1;
       continue;
     }
-    if (c3 === "*" && text5[i3 + 1] === "*") {
+    if (c3 === "*" && text4[i3 + 1] === "*") {
       flush();
       bold = !bold;
       i3 += 1;
       continue;
     }
     if (c3 === "*" || c3 === "_") {
-      const prev = text5[i3 - 1] ?? " ";
-      const next = text5[i3 + 1] ?? " ";
+      const prev = text4[i3 - 1] ?? " ";
+      const next = text4[i3 + 1] ?? " ";
       const opens = !italic && !/\s/.test(next) && (c3 === "*" || !WORD.test(prev));
       const closes = italic && !/\s/.test(prev) && (c3 === "*" || !WORD.test(next));
       if (opens || closes) {
@@ -103442,9 +102488,9 @@ function realpathOrMissing(path) {
 }
 function save(args, root) {
   const name = args.name;
-  const text5 = args.text;
+  const text4 = args.text;
   if (typeof name !== "string" || name === "") throw new ValidationError("drafting_forms__reply_draft.name is required for step save");
-  if (typeof text5 !== "string" || text5.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
+  if (typeof text4 !== "string" || text4.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
   assertSegment(name, "name");
   if (/\.[a-z0-9]{1,5}$/i.test(name)) throw new ValidationError(`name is a bare file name stem, without an extension: ${name}`);
   if (VERSION_SUFFIX.test(name)) throw new ValidationError(`name is the stem without " vN"; the server picks the version: ${name}`);
@@ -103452,7 +102498,7 @@ function save(args, root) {
     throw new ValidationError(`name must follow the firm's grammar, "YYYY-MM-DD CODE Recipient re Subject" (e.g. an ET or LET code): ${name}`);
   }
   const dir = draftFolder2(root);
-  const written = writeNextFree(dir, name, ".md", text5);
+  const written = writeNextFree(dir, name, ".md", text4);
   return { success: true, path: written.path, version: written.version };
 }
 function exportDocx(args, root) {
@@ -103610,28 +102656,28 @@ function nodePaths(skill) {
   if (paths.length === 0) throw lint(`${dir}: no node files`);
   return paths;
 }
-function ancestorsOf(byId) {
+function ancestorsOf(byId2) {
   const memo = /* @__PURE__ */ new Map();
   const walk4 = (id) => {
     const known = memo.get(id);
     if (known) return known;
     const found = /* @__PURE__ */ new Set();
-    for (const parent of byId.get(id).parents) {
+    for (const parent of byId2.get(id).parents) {
       found.add(parent);
       for (const a3 of walk4(parent)) found.add(a3);
     }
     memo.set(id, found);
     return found;
   };
-  for (const id of byId.keys()) walk4(id);
+  for (const id of byId2.keys()) walk4(id);
   return memo;
 }
 function lintDag(skill, nodes) {
-  const byId = /* @__PURE__ */ new Map();
+  const byId2 = /* @__PURE__ */ new Map();
   for (const node of nodes) {
-    const prior = byId.get(node.id);
+    const prior = byId2.get(node.id);
     if (prior) throw lint(`${node.path}:${node.line}: duplicate node id ${node.id} (also ${prior.path}:${prior.line})`);
-    byId.set(node.id, node);
+    byId2.set(node.id, node);
   }
   const rules = /* @__PURE__ */ new Map();
   for (const node of nodes) {
@@ -103641,20 +102687,20 @@ function lintDag(skill, nodes) {
       rules.set(rule.id, rule);
     }
   }
-  if (!byId.has(skill)) throw lint(`${skill}/rules/nodes: no root node '${skill}'`);
+  if (!byId2.has(skill)) throw lint(`${skill}/rules/nodes: no root node '${skill}'`);
   for (const node of nodes) {
     const where = `${node.path}:${node.line}`;
     if (node.id !== skill && !node.id.startsWith(`${skill}/`)) throw lint(`${where}: node ${node.id} is outside the ${skill} map`);
     if (node.id === skill && node.parents.length > 0) throw lint(`${where}: the root node ${skill} takes no parents`);
     for (const parent of node.parents) {
-      const from = byId.get(parent);
+      const from = byId2.get(parent);
       if (!from) throw lint(`${where}: node ${node.id} names a missing parent '${parent}'`);
       if (!from.edges.some((e3) => e3.to === node.id)) throw lint(`${where}: parent ${parent} has no move edge to ${node.id}`);
     }
   }
   for (const node of nodes) {
     for (const edge of node.edges) {
-      const to2 = byId.get(edge.to);
+      const to2 = byId2.get(edge.to);
       if (!to2) throw lint(`${edge.where}: edge to a missing node '${edge.to}'`);
       if (!to2.parents.includes(node.id)) throw lint(`${edge.where}: edge to ${edge.to}, which does not name ${node.id} as a parent`);
     }
@@ -103665,14 +102711,14 @@ function lintDag(skill, nodes) {
     if (seen === "done") return;
     if (seen === "open") throw lint(`${where}: move edge cycle: ${[...trail, id].join(" -> ")}`);
     state.set(id, "open");
-    for (const edge of byId.get(id).edges) visit(edge.to, [...trail, id], edge.where);
+    for (const edge of byId2.get(id).edges) visit(edge.to, [...trail, id], edge.where);
     state.set(id, "done");
   };
   for (const node of nodes) visit(node.id, [], `${node.path}:${node.line}`);
   const reached = /* @__PURE__ */ new Set([skill]);
   const queue = [skill];
   while (queue.length > 0) {
-    for (const edge of byId.get(queue.shift()).edges) {
+    for (const edge of byId2.get(queue.shift()).edges) {
       if (!reached.has(edge.to)) {
         reached.add(edge.to);
         queue.push(edge.to);
@@ -103713,7 +102759,7 @@ function lintDag(skill, nodes) {
     overrideState.set(id, "done");
   };
   for (const id of rules.keys()) follow(id, []);
-  const ancestors = ancestorsOf(byId);
+  const ancestors = ancestorsOf(byId2);
   for (const rule of rules.values()) {
     if (rule.overrides === null) continue;
     const target = rules.get(rule.overrides);
@@ -103722,7 +102768,7 @@ function lintDag(skill, nodes) {
       throw lint(`${rule.path}:${rule.line} (${rule.id}): overrides ${target.id} on ${target.node}, which is not an ancestor of ${rule.node}`);
     }
   }
-  return { byId, rules, facts: pilot.facts };
+  return { byId: byId2, rules, facts: pilot.facts };
 }
 function loadRulesDag(skill) {
   if (typeof skill !== "string" || !SKILL_RE.test(skill)) {
@@ -103736,8 +102782,8 @@ function loadRulesDag(skill) {
     nodes.push(parseNodeFile(path, read2.content));
     files.push({ path, sha256: read2.sha256 });
   }
-  const { byId, rules, facts } = lintDag(skill, nodes);
-  return { skill, nodes, byId, rules, files, facts };
+  const { byId: byId2, rules, facts } = lintDag(skill, nodes);
+  return { skill, nodes, byId: byId2, rules, files, facts };
 }
 function checkPath(dag, path) {
   if (!Array.isArray(path) || path.length === 0 || path.some((id) => typeof id !== "string")) {
@@ -104018,11 +103064,11 @@ function parseVocabulary(rows21) {
   return { ops, facts };
 }
 function lintAtoms(atoms, ops, facts) {
-  const byId = /* @__PURE__ */ new Map();
+  const byId2 = /* @__PURE__ */ new Map();
   for (const atom of atoms) {
-    const prior = byId.get(atom.id);
+    const prior = byId2.get(atom.id);
     if (prior) throw lint2(`duplicate atom id ${atom.id} (${prior.path}:${prior.start} and ${atom.path}:${atom.start})`);
-    byId.set(atom.id, atom);
+    byId2.set(atom.id, atom);
   }
   for (const atom of atoms) {
     const where = `${atom.path}:${atom.start} (${atom.id})`;
@@ -104043,7 +103089,7 @@ function lintAtoms(atoms, ops, facts) {
     }
     for (const target of atom.defeats) {
       if (target === atom.id) throw lint2(`${where}: an atom cannot defeat itself`);
-      const parent = byId.get(target);
+      const parent = byId2.get(target);
       if (!parent) throw lint2(`${where}: defeats a missing atom '${target}'`);
       if (isSpecial(parent.ops)) throw lint2(`${where}: defeats an always or none atom '${target}'`);
       if (!parent.ops.some((op) => atom.ops.includes(op))) {
@@ -104057,7 +103103,7 @@ function lintAtoms(atoms, ops, facts) {
     if (seen === "done") return;
     if (seen === "open") throw lint2(`defeat cycle: ${[...trail, id].join(" -> ")}`);
     state.set(id, "open");
-    for (const target of byId.get(id).defeats) visit(target, [...trail, id]);
+    for (const target of byId2.get(id).defeats) visit(target, [...trail, id]);
     state.set(id, "done");
   };
   for (const atom of atoms) visit(atom.id, []);
@@ -104266,7 +103312,7 @@ function livePrefix(dag, path) {
 function children(dag, id) {
   return [...dag.byId.get(id).edges].sort((a3, b3) => b3.weight - a3.weight).map((e3) => e3.to);
 }
-function route(dag, from, to2) {
+function route2(dag, from, to2) {
   if (from === to2) return [];
   const parent = /* @__PURE__ */ new Map();
   const queue = [from];
@@ -104287,10 +103333,10 @@ function route(dag, from, to2) {
 }
 function pathTo(dag, current, to2) {
   for (let i3 = current.length - 1; i3 > 0; i3--) {
-    const down = route(dag, current[i3], to2);
+    const down = route2(dag, current[i3], to2);
     if (down !== null) return [...current.slice(0, i3 + 1), ...down];
   }
-  return [current[0], ...route(dag, current[0], to2)];
+  return [current[0], ...route2(dag, current[0], to2)];
 }
 var isPrefix = (a3, b3) => a3.length <= b3.length && a3.every((id, i3) => b3[i3] === id);
 function serve(composed, skill, prior) {
@@ -104407,8 +103453,8 @@ async function rulesMove(args, env = process.env) {
   const pathText = path.join(" ");
   const inBounds = path[path.length - 1] !== outOfBounds;
   const entersOutOfBounds = !inBounds && (stored === null || stored[stored.length - 1] !== outOfBounds);
-  const common2 = current === null ? 0 : current.filter((id, i3) => path[i3] === id).length;
-  const bigJump = takeover === null && inBounds && current !== null && path.length - common2 > 1;
+  const common = current === null ? 0 : current.filter((id, i3) => path[i3] === id).length;
+  const bigJump = takeover === null && inBounds && current !== null && path.length - common > 1;
   const statements = [
     { sql: UPSERT_POSITION, params: [token, MAIN, pathText, JSON.stringify(session), JSON.stringify(served.inForce)] }
   ];
@@ -104703,7 +103749,7 @@ import {
   unlinkSync as unlinkSync8,
   writeFileSync as writeFileSync12
 } from "node:fs";
-import { homedir as homedir8 } from "node:os";
+import { homedir as homedir9 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
 
 // src/files/coverage-line.ts
@@ -104732,8 +103778,8 @@ var TIERS = [
 var PREFIX = "**Coverage:**";
 var SHAPE = TIERS.map((t3) => `${t3.label}: ${t3.expected}`).join(" | ");
 var FIX = `Expected one line: ${SHAPE}. Any tier may instead read NOT AUDITED or NOT AUDITED: <reason>. Nothing in parentheses after a segment and nothing after the Legislation segment; detail goes in the notes below the line.`;
-function checkCoverageLine(text5) {
-  const line = text5.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX) || l3.startsWith("case data:"));
+function checkCoverageLine(text4) {
+  const line = text4.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX) || l3.startsWith("case data:"));
   if (line === void 0) {
     throw new DataServerError(`no coverage line: no line starts "${PREFIX}" or "case data:". ${FIX}`, "coverage_line_malformed");
   }
@@ -104932,20 +103978,20 @@ function docText(path) {
   const n3 = (lcb - 4) / 12;
   if (!Number.isInteger(n3) || n3 < 1) throw new Error("the document's piece table is malformed");
   const total = ccpText + ccpFtn + ccpHdd + ccpAtn + ccpEdn;
-  let text5 = "";
-  for (let i3 = 0; i3 < n3 && text5.length < total; i3++) {
+  let text4 = "";
+  for (let i3 = 0; i3 < n3 && text4.length < total; i3++) {
     const cpStart = plc.readUInt32LE(4 * i3);
     const chars = plc.readUInt32LE(4 * (i3 + 1)) - cpStart;
     const fc2 = plc.readUInt32LE(4 * (n3 + 1) + 8 * i3 + 2);
     if (fc2 & 1073741824) {
       const off = (fc2 & 1073741823) / 2;
-      text5 += cp1252(wd.subarray(off, off + chars));
+      text4 += cp1252(wd.subarray(off, off + chars));
     } else {
-      text5 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
+      text4 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
     }
   }
-  const main = plain(text5.slice(0, ccpText));
-  const notes = [text5.slice(ccpText, ccpText + ccpFtn), text5.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
+  const main = plain(text4.slice(0, ccpText));
+  const notes = [text4.slice(ccpText, ccpText + ccpFtn), text4.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
   return notes.length ? `${main}
 ${notes.join("\n\n")}
 ` : main;
@@ -105055,13 +104101,13 @@ async function pdfPages(path) {
       for (let n3 = 1; n3 <= doc.numPages; n3++) {
         const page = await doc.getPage(n3);
         const content = await page.getTextContent();
-        let text5 = "";
+        let text4 = "";
         for (const item of content.items) {
           if (!("str" in item)) continue;
-          text5 += item.str;
-          if (item.hasEOL) text5 += "\n";
+          text4 += item.str;
+          if (item.hasEOL) text4 += "\n";
         }
-        pages.push(text5);
+        pages.push(text4);
         page.cleanup();
       }
       return pages;
@@ -105083,14 +104129,14 @@ async function extractText(path) {
       result = { status: "ok", kind: "text", method: "copy", text: readFileSync33(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const pages = await pdfPages(path);
-      const text5 = pages.join("\n\f\n");
-      const bytes = Buffer.byteLength(text5.trim(), "utf-8");
+      const text4 = pages.join("\n\f\n");
+      const bytes = Buffer.byteLength(text4.trim(), "utf-8");
       if (bytes < SCANNED_BYTES_PER_PAGE * Math.max(pages.length, 1)) {
         return unread(
           `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
         );
       }
-      result = { status: "ok", kind: "pdf", method: "text", text: text5, pages: pages.length };
+      result = { status: "ok", kind: "pdf", method: "text", text: text4, pages: pages.length };
     } else if (ext === ".docx") {
       result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
     } else if (ext === ".doc") {
@@ -105116,7 +104162,7 @@ var SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
 var MAX_SAVE_ATTEMPTS = 100;
 var LAW_TEXT_SUBFOLDER = "law-text";
 function downloadsDir(env = process.env) {
-  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir8(), "Downloads");
+  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir9(), "Downloads");
   const dir = canonicalRoot(probe, `Downloads folder not found at ${probe}`, "downloads_missing");
   if (!statSync18(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe}`, "downloads_missing");
@@ -105186,23 +104232,23 @@ function appendManifest(destinationDir, record2) {
   const records = readFileSync34(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
-function saveAnswer(destinationDir, filename, text5, fromScratch) {
+function saveAnswer(destinationDir, filename, text4, fromScratch) {
   assertBareFilename(filename, "filename");
   const ext = pathWin3225.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if (text5 === void 0 === (fromScratch === void 0)) {
+  if (text4 === void 0 === (fromScratch === void 0)) {
     throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
   }
   let body;
   if (fromScratch !== void 0) {
     body = scratchBytes(destinationDir, fromScratch);
   } else {
-    if (typeof text5 !== "string" || text5.length === 0) {
+    if (typeof text4 !== "string" || text4.length === 0) {
       throw new DataServerError("text must be a non-empty string", "invalid_argument");
     }
-    body = Buffer.from(text5, "utf-8");
+    body = Buffer.from(text4, "utf-8");
   }
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
@@ -105236,20 +104282,20 @@ function scratchBytes(destinationDir, fromScratch) {
   }
   return body;
 }
-function writeScratch(matterRoot, filename, text5, kind) {
+function writeScratch(matterRoot, filename, text4, kind) {
   assertBareFilename(filename, "filename");
   if (pathWin3225.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if (typeof text5 !== "string" || text5.length === 0) {
+  if (typeof text4 !== "string" || text4.length === 0) {
     throw new DataServerError("text must be a non-empty string", "invalid_argument");
   }
   if (kind !== void 0 && kind !== "research-notes") {
     throw new DataServerError(`kind must be "research-notes" when given: ${kind}`, "invalid_argument");
   }
-  if (kind === "research-notes") checkCoverageLine(text5);
+  if (kind === "research-notes") checkCoverageLine(text4);
   const { dir, created } = researchScratchDir(validateMatterRoot(matterRoot));
-  const body = Buffer.from(text5, "utf-8");
+  const body = Buffer.from(text4, "utf-8");
   const saved = writeNewVersion(dir, filename, body);
   return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created };
 }
@@ -105418,7 +104464,7 @@ function writeNewVersion(dir, filename, body) {
   );
 }
 function nextVersionName(dir, stem2, ext) {
-  const escape2 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escape2 = (text4) => text4.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const version2 = new RegExp(`^${escape2(stem2)}(?: v(\\d+))?${escape2(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync24(dir)) {
@@ -105471,8 +104517,8 @@ function assertBareFilename(name, label) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir4 } from "node:os";
-import { join as join30 } from "node:path";
-var PROBE_STEM = join30(tmpdir4(), "coclerk-research-preflight-probe-absent");
+import { join as join32 } from "node:path";
+var PROBE_STEM = join32(tmpdir4(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -105625,7 +104671,7 @@ function checkPages(pages, ext) {
   return { first, last };
 }
 function textLines(file, ext, bytes, range, seams) {
-  const split = (text5, page) => text5.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page }));
+  const split = (text4, page) => text4.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page }));
   let lines2;
   let source;
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -105636,7 +104682,7 @@ function textLines(file, ext, bytes, range, seams) {
     lines2 = split(htmlBlocks(bytes.toString("utf-8")).join("\n"), null);
   } else if (EXTRACTED_EXTENSIONS.has(ext)) {
     source = ext === ".pdf" ? "pdf" : "docx";
-    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text5, i3) => ({ text: text5, page: i3 + 1 }));
+    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text4, i3) => ({ text: text4, page: i3 + 1 }));
     if (range !== null) {
       if (range.last > pageTexts.length) {
         throw new DataServerError(`pages ${range.first}-${range.last} run past the file's ${pageTexts.length} pages`, "invalid_argument");
@@ -105657,9 +104703,9 @@ function textLines(file, ext, bytes, range, seams) {
   if (lines2.length === 0) throw new DataServerError("the file holds no text", "no_text");
   return { lines: lines2, source };
 }
-function stripFrontMatter(text5) {
-  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text5);
-  return m3 === null ? text5 : text5.slice(m3[0].length);
+function stripFrontMatter(text4) {
+  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text4);
+  return m3 === null ? text4 : text4.slice(m3[0].length);
 }
 function sectionKey(num) {
   return num.split(/[-.]/).map(Number);
@@ -105671,8 +104717,8 @@ function compareKeys(a3, b3) {
   }
   return 0;
 }
-function isHeading(text5) {
-  return text5.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text5) && !SECTION_LINE.test(text5) && !/^[([]/.test(text5);
+function isHeading(text4) {
+  return text4.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text4) && !SECTION_LINE.test(text4) && !/^[([]/.test(text4);
 }
 function sectionChunks(lines2) {
   const chunks = [];
@@ -105784,7 +104830,6 @@ async function saveAnswerTool(args, env = process.env) {
 }
 
 // src/dispatch.ts
-var LOCAL_PRACTICE_OWNER = "local";
 var definitions;
 async function dispatchTool(context, name, rawArgs) {
   try {
@@ -105804,7 +104849,7 @@ async function callTool(context, name, rawArgs) {
   const definition = toolDefinition(name);
   const args = validateToolInput(definition, rawArgs);
   if (name.startsWith("practice_data__")) {
-    return callPracticeTool(context.practiceDb, LOCAL_PRACTICE_OWNER, name, args);
+    return callPracticeTool(context.practiceDb, name, args);
   }
   if (name === "case_data__query") {
     return caseDataQuery(
@@ -106120,7 +105165,7 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "knowledge__write") {
     return knowledgeWrite(args, {
-      lookUpMatter: async (mattNum) => (await callPracticeTool(context.practiceDb, LOCAL_PRACTICE_OWNER, "practice_data__matter_lookup", { matt_num: mattNum })).rows
+      lookUpMatter: async (mattNum) => (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows
     });
   }
   if (name === "knowledge__retire") {
@@ -106195,9 +105240,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname15(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname15(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname15(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname16(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname16(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname16(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
@@ -106409,7 +105454,7 @@ function json2(req, res, status, body) {
 
 // src/index.ts
 async function createDispatchContext(env = process.env) {
-  const practiceDb2 = new LocalPracticeAdmin(env);
+  const practiceDb2 = new PracticeStore(env);
   return { practiceDb: practiceDb2 };
 }
 async function start() {
