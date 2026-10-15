@@ -62,7 +62,7 @@ Draft argument-first. The first draft's only job is to construct the most compel
 
 Cite a case only where the practitioner asks for authority. Never add one on your own. Give a case's full style of cause and citation at its first mention, and a short form after that.
 
-Record each case the letter's own sentences rely on or characterize, one it answers included, through `/drafting-data` as a lead statement of law linked to this Writing, in the same write that records the statement. A case that appears only inside opposing text the letter quotes is not linked. A case or enactment the letter's text cites, by citation or by a case name in italics, that no authority row tracks prints `📇 Cited but not tracked` on the mockup and holds sending under `noting-up` until it is recorded (`/drafting-data`'s `references/filing-checklists.md` §6b). Scrutinizing such a statement (🔬) checks its fit against the letter's sentence that cites it.
+Record each case the letter's own sentences rely on or characterize, one it answers included, through `/drafting-data` as a lead statement of law linked to this Writing, in the same write that records the statement. A case that appears only inside opposing text the letter quotes is not linked. A case or enactment the letter's text cites, by citation or by a case name in italics, that no authority row tracks prints `📇 Cited but not tracked` on the mockup and holds sending under `noting-up` until it is recorded (`/drafting-data`'s `filing-checklists.md` §6b). Scrutinizing such a statement (🔬) checks its fit against the letter's sentence that cites it.
 
 Whatever the audience:
 
