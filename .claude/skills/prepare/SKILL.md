@@ -116,6 +116,7 @@ The same shared doctrines `/draft` binds (`.claude/skills/draft/SKILL.md` §3), 
 | Deadline isolation | `shared/deadline-isolation.md` | Every turn. `/prepare` is in the drafting lane. |
 | Statements of law | `shared/legal-research.md` | Any assertion about what the law requires goes to `/legal-research`. A legal view the practitioner states is recorded as their proposition. |
 | The live-issue test | `shared/live-issue-test.md` | Each job's billing anchor. |
+| Job planning | `shared/job-planning.md` | The steps of each job written at the closing read-back. A stock bundle job keeps `/drafting-data` §3b's fixed text. |
 | Consolidation trigger | `shared/consolidation-trigger.md` | Only at the end of a retirement flow. `/prepare` never runs one, so it does not fire here. |
 | HTML pages | `shared/html-pages.md` | Every turn. The lead Writing's board is read from `board_summary` and `drafting_forms__board_card`, never from a page, and no page is presented, staged or asked for as a screenshot. |
 

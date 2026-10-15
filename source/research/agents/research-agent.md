@@ -9,7 +9,8 @@ description: >
   citation; anything uncited is offered as research, never asserted. Read-only on the
   pool: finds and assesses it directly, never writes it. Also takes a
   scoped `mode: inventory` / `report: brief` dispatch — a cheap holdings check over
-  named criteria that states no law. Hands external
+  named criteria that states no law. Also takes `mode: plan` — a question's issues,
+  sources in order and completion test, before any search, stating no law. Hands external
   research off to /legal-research (westlaw-query-optimizer) + research-paralegal —
   never browses itself. Not for procedural mechanics, deadline arithmetic, or restating a
   party's own pleaded positions.

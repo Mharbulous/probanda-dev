@@ -81,6 +81,20 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
 
 Each replaced step's text is a run of one practitioner turn: their own words, or the block they pasted back by the adoption ceremony (`shared/paralegal-posture.md` section 3). The practitioner-words gate refuses any other.
 
+**The partial replace.** A plan upgrade (`shared/job-planning.md` section 3) rewrites only the steps not yet done, so a step already done keeps its row, its ordinal, its words and its `done_at`. The script deletes only the steps not done and appends each new step after the highest ordinal left, in order, with the stamp, every statement under this section's guard:
+
+```sql
+DELETE FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NULL
+  AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND locked_by = 'sess-a1');
+INSERT INTO ticket_steps (ticket_id, ordinal, text)
+  SELECT 2, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM ticket_steps WHERE ticket_id = 2),
+    'Save the memo in the issue folder under 6. LAW' FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
+UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
+  WHERE id = 2 AND locked_by = 'sess-a1';
+```
+
+One `INSERT` per new step, in the plan's order. The script deletes from `ticket_steps`, so the practitioner-words gate reads every new step as it reads any replaced step. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. Then run the confirm-read below and read it as below.
+
 **The pickup rewrite.** `/draft`'s pickup review (`draft/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with an adopted plan, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
 
 ```sql
