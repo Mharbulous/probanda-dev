@@ -268,6 +268,11 @@ export interface WorkBoardTicket {
    * captured from it, the answers saved for it and the sources to get added to it or closed on it.
    * Null when it has none of them. The idle tag measures from it. */
   last_activity_at: string | null;
+  /** The minute the holding session last ended a turn that worked this job: its `db_meta` row
+   * `job_active:<id>` (jobs-run.md §6a). Not progress, so it never moves `last_activity_at` or the idle
+   * tag. Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
+   * holder's stamp never shows. */
+  active_at: string | null;
   /** `idle past <N> h` on an In progress job idle longer than the firm's `idle_flag_hours` (N), set by
    * the section builders; absent, which reads as null, within it, with nothing to measure, or with no
    * threshold set, so an unset threshold leaves the board data as it was. */
@@ -527,6 +532,12 @@ function latestStamp(stamps: readonly (string | null)[]): string | null {
   return latest;
 }
 
+/** A job's session-active stamp, kept only while it is In progress and no earlier than its lock. */
+function activeAt(ticket: TicketRow, stamp: string | undefined): string | null {
+  if (ticket.status !== "wip" || stamp === undefined || ticket.locked_at === null) return null;
+  return stamp.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp : null;
+}
+
 /** An edge outside this proceeding (status null) is treated as an unresolved, non-superseded
  * blocker -- it can never silently read as "completed" or "no blocker at all" the way
  * filtering it out of the list would. A wip job is In Progress whether or not its steps are all
@@ -642,6 +653,9 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const capturesByTicket = groupBy(captures, (s) => s.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a) => a.ticket_id);
   const sourcesByTicket = groupBy(sourceRows, (s) => s.ticket_id);
+  const activeById = new Map(
+    rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
+  );
   const retiredOn = new Map(rows<FilingRetiredRow>(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f) => [f.id, f.retired_on]));
   const edge = (id: number): WorkBoardEdge => {
     const other = ticketById.get(id);
@@ -701,6 +715,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
         ...(answersByTicket.get(t.id) ?? []).map((a) => a.saved_at),
         ...(sourcesByTicket.get(t.id) ?? []).flatMap((s) => [s.added_at, s.closed_at]),
       ]),
+      active_at: activeAt(t, activeById.get(t.id)),
     };
     return { filing_id: t.filing_id, ticket };
   });

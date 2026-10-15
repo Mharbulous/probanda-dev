@@ -643,7 +643,7 @@ function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | 
   const holder = t.locked_by === null ? "" : ` · holder: ${t.locked_by.slice(-8)}`;
   const locked =
     t.category === "wip"
-      ? ` · locked: ${t.locked_at ?? "(unknown time)"}${holder} · last activity: ${t.last_activity_at ?? "(unknown time)"}`
+      ? ` · taken: ${t.locked_at ?? "(unknown time)"}${holder} · last activity: ${t.last_activity_at ?? "(unknown time)"}${t.active_at === null ? "" : ` · session active: ${t.active_at}`}`
       : "";
   const lines = [head, `  kind: ${t.kind} · priority: ${t.priority}${locked}`, `  intent: ${t.intent}`];
   if (t.proposal_keys.length > 0) lines.push(`  keys: ${t.proposal_keys.map((key) => keyText(key, t.proposal_items[key], derived)).join("; ")}`);

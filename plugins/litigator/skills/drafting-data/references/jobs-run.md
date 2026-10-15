@@ -147,6 +147,18 @@ That `EXISTS` is §5's guard in its child-table shape — the same clause, on a 
 
 **No confirm-read here: read `changes` on each tick.** `changes` 1 means the stamp landed. `changes` 0 means it matched nothing, which means the holder changed: stop, and run §2's scope read, whose row says why. That misses a wrong but valid ordinal, which matches one row: read `ordinal, text` first.
 
+## 6a. Session-active stamp
+
+Reading, research and conversation record no progress, so a holder busy with them reads as idle. The session-active stamp shows that the holder is still working. It is one `db_meta` row per job, `job_active:<id>`, holding the minute. It is written as the last write of every turn in which this session held the job and worked on it, whether by reading, research, drafting or conversation about it. A turn that did not touch the job writes nothing:
+
+```sql
+INSERT OR REPLACE INTO db_meta (key, value)
+  SELECT 'job_active:2', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
+  FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
+```
+
+That `SELECT ... WHERE locked_by` is §5's guard in its insert shape, so only the holder's stamp lands. The stamp is not progress: it never moves the job's last activity or its idle tag, and it is never a reason to skip §6's step stamps. The board shows it as `session active` on an In progress job only, and only when it is no earlier than the lock, so an earlier holder's stamp never shows and is never deleted. Read `changes` as §6 does: 0 means the holder changed, so run §2's scope read and stop.
+
 ## 7. Scope expansion
 
 The practitioner may expand a job's scope at any time (design §6.3); the expansion is itself in scope for the job's current holder. Append, never delete an existing scope row:
@@ -173,7 +185,7 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
   VALUES (1, 1, 2, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'noticed while reconciling the exhibit list', 'Consider a standing exhibit-numbering convention for future filings in this proceeding.');
 ```
 
-`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and the loose thread's `created` counts as the job's latest activity, which the idle tag measures from.
+`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and the loose thread's `created` counts as the job's latest activity, which the idle tag measures from. §6a's session-active stamp does not.
 
 `idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing) — never `TRIGGER`; that column was deliberately not named after the SQLite keyword.
 

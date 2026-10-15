@@ -122,6 +122,21 @@ const TAIL = String.raw`</script>
   function stamp(value) {
     return value.replace("T", " ");
   }
+  // A local minute stamp as a count of minutes, for differences only; null when it is not one.
+  function minutesOf(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(value);
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
+  }
+  // How long before the page's Rendered minute a stamp is, then the stamp itself.
+  function ago(value) {
+    var now = minutesOf(data.meta.rendered);
+    var then = minutesOf(value);
+    if (now === null || then === null) return stamp(value);
+    var e = Math.max(0, now - then);
+    var d = Math.floor(e / 1440), h = Math.floor((e % 1440) / 60), m = e % 60;
+    var text = d > 0 ? d + " d " + h + " h" : h > 0 ? h + " h " + m + " min" : m + " min";
+    return text + " ago (" + stamp(value) + ")";
+  }
 
   if (!data) return;
 
@@ -326,7 +341,13 @@ const TAIL = String.raw`</script>
       }
 
       var dl = el("dl");
-      if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
+      // Progress is recorded progress only, so it agrees with the idle flag; Session active is the
+      // holder's end-of-turn stamp (jobs-run.md §6a), which is not progress; Taken is the lock.
+      if (t.category === "wip") {
+        row(dl, "Progress", t.last_activity_at === null ? "(none recorded)" : ago(t.last_activity_at), true);
+        if (t.active_at) row(dl, "Session active", ago(t.active_at), true);
+        row(dl, "Taken", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
+      }
       if (t.category === "completed" && t.completed_at) row(dl, "Completed", stamp(t.completed_at), true);
       row(dl, "Priority", String(t.priority), true);
       // A job superseded by another job, a stale gate job included (#907), says so only here.
