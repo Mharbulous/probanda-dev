@@ -56,7 +56,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Session identity | `drafting_forms__open_session` or `drafting_forms__bootstrap` returns `session_token`, or a `wip` job's `locked_by` must be read as this session's or another's | `references/jobs-common.md` §1 |
 | Read job state | Before an `execute` script that writes a substance table (the scope read), or after an assign, an outline afresh or a release (their confirm-reads) | `references/jobs-common.md` §2 |
 | Check the lock before a research dispatch | Immediately before each `research-paralegal` dispatch and each law-audit agent spawn made while this session holds a job | `references/jobs-common.md` §2, "Lock read before a dispatch" |
-| Create a job | An outlining session writes the jobs the practitioner selected at the closing read-back, or a Proposal the practitioner picked | `references/jobs-create.md` §3 |
+| Create a job | An outlining session writes the jobs the practitioner selected at the closing read-back, or a Proposal the practitioner picked. Every path that creates a job, and how the practitioner-words gate passes it, is listed in §3, "Who may create a job" | `references/jobs-create.md` §3 |
 | Outline afresh | The practitioner asks to rework a `queued`, unshelved job | `references/jobs-create.md` §3a |
 | Intake | The practitioner pulls Proposals onto the board: a group or filter named, "take the next" with Ready empty, or a typed task naming a submission; the lines are the `proposed` lane's (`drafting_forms__board_card`, `lanes: ["proposed"]`) | `references/jobs-create.md` §3e |
 | Spin off blocker jobs | The practitioner says yes to the spin-off offered on an obstacle in the job this session holds | `references/jobs-create.md` §3f |
@@ -64,6 +64,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Stock bundle jobs and the Letter save idiom | `/prepare` offers a Writing kind's stock jobs, or a letter or `internal-memo` is saved | `references/jobs-stock.md` §3b |
 | Counsel's review jobs | The pre-review passes leave nothing open and every completion criterion above counsel's review holds | `references/jobs-stock.md` §3c |
 | Create a pass finding job | A pre-review pass (`/draft`'s letter passes or overstatement review) leaves a finding undecided in the turn it states it | `references/jobs-stock.md` §3g |
+| Create the conversion job | The practitioner accepts `/draft`'s conversion offer after the Sent write on an `unstructured` or `unstructured-<recipient>` Writing | `references/jobs-stock.md` §3h |
 | Create a research offer job | The practitioner names a relayed `/legal-research` Step 5 offer to add | `references/jobs-stock.md` §3i |
 | Create a scrutiny review job | A scrutiny return is recorded `'failed'` on a statement linked to a live Writing, or a failed statement is linked to one again | `references/jobs-stock.md` §3d |
 | Assign a job (`drafting_data__assign_job`; semantics §4) | The practitioner picks a Ready job, or says yes to a take-over prompt | `references/jobs-run.md` §4 |

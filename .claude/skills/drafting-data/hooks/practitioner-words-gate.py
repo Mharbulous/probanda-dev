@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Refuse new wording on an existing job that is not the practitioner's own words (#784).
+"""Refuse a job's wording that is not the practitioner's own words or a set pattern (#784).
 
-Hook event: PreToolUse on drafting_data__execute. The gate protects an existing job's
-wording and never reads the creation of a job: an INSERT INTO tickets, in any form, is not
-read. It checks every tickets.title and tickets.intent an UPDATE tickets sets; every
-ticket_steps.text an INSERT INTO ticket_steps writes, by VALUES or by INSERT ... SELECT,
+Hook event: PreToolUse on drafting_data__execute. A job is created only on the practitioner's
+explicit request or from a pattern they set up in advance, and the gate reads every creation of
+one (jobs-create.md §3, "Who may create a job", lists each path and its route). It checks every
+tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ... SELECT,
+and refuses an insert that names no title; every tickets.title and tickets.intent an UPDATE
+tickets sets; every ticket_steps.text an INSERT INTO ticket_steps writes, by VALUES or by INSERT ... SELECT,
 in a script that also deletes from ticket_steps (the shape that replaces an existing job's
 steps: jobs-run.md §5, jobs-create.md §3a); and every ticket_steps.text an UPDATE
 ticket_steps sets to a string literal, except a literal ending in " [rev N]" (jobs-gate.md
@@ -26,7 +28,9 @@ counts. The text typed after a slash command's name (the command-args) counts as
 one practitioner turn, though its record has no promptSource. The command's name
 and tags contribute no words, and the isMeta skill body that follows the command
 stays excluded. Case and runs of whitespace are ignored; punctuation and word
-order are not.
+order are not. A new job's title or intent may also close with a full stop the turn lacks, and a
+new job's title may correct a word's spelling, word for word with no word added, dropped or moved
+(jobs-create.md §3's cleanup and presentation). An existing job's wording takes neither.
 
 The harness puts its own context inside those records as <system-reminder> blocks,
 in a text part ahead of the typed text or prefixed to it. A reminder is not the
@@ -51,7 +55,7 @@ A tickets.title or tickets.intent no turn holds also passes as an approved propo
 stood, as an unbroken run of one text part, in the session's visible reply (not a subagent's,
 not a tool call's input) since the previous practitioner turn, the next and last practitioner
 turn is a bare yes (APPROVALS, the whole turn), and the statement writing it sets
-session_proposed = 1. A step text never passes that way: steps carry no session_proposed flag,
+session_proposed = 1 (an INSERT INTO tickets: the row's session_proposed is 1). A step text never passes that way: steps carry no session_proposed flag,
 so a proposed step is adopted by the practitioner pasting it back (shared/paralegal-posture.md
 section 3), which makes it a run of their own turn.
 
@@ -88,17 +92,25 @@ practitioner must have written, and a job session writes filing_facts ungated al
 transcript check applies, a keyword test on the last turn would prove nothing, and a script whose
 only checked write is a passing move needs no transcript.
 
+A new job's tickets.title or tickets.intent also passes as a research offer the practitioner
+named to add (jobs-stock.md §3i): it equals, character for character, the text after `job: ` on a
+line of a subagent's result (an Agent or Task call of this session, not a subagent's own) that came
+before the last practitioner turn, and that turn, its reminders cut, holds the word "add".
+
 Exempt: jobs-gate.md §14's fixed gate job text, jobs-stock.md §3b's stock
 bundle jobs' fixed title, intent and step text, §3c's counsel's review jobs' fixed text (the
 review job's title by its "Counsel's review of " prefix), §3d's scrutiny review job's
-fixed intent and step (its title by its "Review scrutiny finding: " prefix), and a value
+fixed intent and step (its title by its "Review scrutiny finding: " prefix), §3g's pass finding
+jobs' fixed titles and intents, §3h's conversion job when its title and intent in one inserted row
+name the same Writing, §3j's loose-threads step, jobs-create.md §3e's grouped intake title on a new
+job only, and a value
 equal, character for character, to a Proposal title an earlier drafting_forms__*
 tool result printed (a fast-path job's fixed text from the record), inline or
 persisted to a file. A ticket_steps.text is also exempt when it equals, character for
 character, a Proposal item such a result printed: the item on a detail line under Proposed
 or Shelved, a string on a job's `keys:` line, or a board_data proposal's item (a
 grouped intake job's steps, jobs-create.md §3e). An item never passes as a title or intent.
-A tickets.title or ticket_steps.text is also exempt when it is an unbroken run of a job card's own
+An existing job's tickets.title or ticket_steps.text is also exempt when it is an unbroken run of a job card's own
 words such a result printed: the card's head line, its intent or one of its steps (/draft's pickup
 review shortens a title or splits a step by cutting, adding no word). Never a tickets.intent.
 No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
@@ -176,7 +188,32 @@ FIXED_TEXT = {
     "Extract the source pages into the presentation folder",
     "Review every paragraph and resolve every discussion point",
     "Review the finding against the source and confirm, revise or drop the statement",
+    # §3b's Unstructured Writing job.
+    "Draft the Writing",
+    "Draft this Writing and render its mockup for review.",
+    # §3g's pass finding jobs.
+    "Check a date or quotation against its source",
+    "Bring a date, amount, name, quotation or citation in this Writing into line with the source it comes "
+    "from, or locate that source.",
+    "Decide a position our own correspondence contradicts",
+    "Counsel decides whether this Writing keeps, narrows or drops a position the firm's own prior "
+    "correspondence or filings contradict.",
+    "Decide an overstatement finding",
+    "Counsel keeps the assertion as drafted or rewrites it at its source's strength; a source not located "
+    "is found first.",
+    # §3j's loose-threads job's step.
+    "Rank the open loose threads if any is unranked, then work the top thread that is not deferred and not tooling",
 }
+# jobs-create.md §3e's grouped intake job: fixed text for a new job only, never an existing job's rewrite.
+NEW_JOB_TEXT = {"Locate pinpoint references for the following facts"}
+# jobs-stock.md §3h's conversion job: its title and intent carry the same Writing title.
+CONVERSION_TITLE = re.compile(r"Make (.+) a Structured Writing", re.S)
+CONVERSION_INTENT = re.compile(r"Turn this Writing into a type file so the next (.+) is a Structured Writing\. "
+                               r"Unbilled: firm infrastructure\.", re.S)
+JOB_LINE = re.compile(r"^[ \t]*job: (.+?)[ \t]*$", re.M)  # a research offer's job line (§3i)
+ADD = re.compile(r"(?i)\badd\b")
+SUBAGENT_TOOLS = ("Agent", "Task")
+SPELLING = 0.75  # how near a cleaned title's word must be to the typed word (§3's title cleanup)
 # §3c's review job title is its prefix and the Writing's own title; §3d's is its prefix, the
 # authority's title and the statement's id.
 REVIEW_TITLE_PREFIXES = ("Counsel's review of ", "Review scrutiny finding: ")
@@ -310,6 +347,27 @@ def insert_values(toks, j, cols, table):
     return rows, j
 
 
+def job_inserts(toks, j):
+    """Every tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ...
+    SELECT, flagged when the row's session_proposed is 1. A §3h conversion job's title and intent
+    naming the same Writing are fixed text and are not yielded."""
+    cols, j = insert_columns(toks, j, "tickets")
+    if "title" not in cols:
+        raise Unreadable("an INSERT INTO tickets that names no title")
+    rows, j = insert_values(toks, j, cols, "tickets")
+    if ("name", "set") in toks[j:]:
+        raise Unreadable("an INSERT INTO tickets that also sets a column after its values")
+    for row in rows:
+        values = {c: literal(c, row[cols.index(c)]) for c in CHECKED if c in cols}
+        flagged = "session_proposed" in cols and row[cols.index("session_proposed")] == [("num", "1")]
+        title = CONVERSION_TITLE.fullmatch(values["title"])
+        intent = CONVERSION_INTENT.fullmatch(values.get("intent", ""))
+        if title and intent and title.group(1) == intent.group(1):
+            continue
+        for field, value in values.items():
+            yield field, value, flagged, True
+
+
 def step_inserts(toks, j):
     """Every ticket_steps.text an INSERT INTO ticket_steps writes, by VALUES or by INSERT ... SELECT."""
     cols, j = insert_columns(toks, j, "ticket_steps")
@@ -318,7 +376,7 @@ def step_inserts(toks, j):
     k = cols.index("text")
     rows, j = insert_values(toks, j, cols, "ticket_steps")
     for row in rows:
-        yield STEP_TEXT, literal(STEP_TEXT, row[k]), False
+        yield STEP_TEXT, literal(STEP_TEXT, row[k]), False, False
     if ("name", "text") in toks[j:]:
         raise Unreadable("an INSERT INTO ticket_steps that also sets text after its values")
 
@@ -331,7 +389,7 @@ def note_inserts(toks, j):
     k = cols.index("note")
     rows, _ = insert_values(toks, j, cols, SUPPRESSIONS)
     for row in rows:
-        yield NOTE_FIELD, literal(NOTE_FIELD, row[k]), False
+        yield NOTE_FIELD, literal(NOTE_FIELD, row[k]), False, False
 
 
 def note_updates(toks, j):
@@ -346,7 +404,7 @@ def note_updates(toks, j):
             if ("name", "note") in assignment:
                 raise Unreadable(f"an UPDATE {SUPPRESSIONS} that sets note as a row value")
         elif assignment[:2] == [("name", "note"), ("p", "=")]:
-            yield NOTE_FIELD, literal(NOTE_FIELD, assignment[2:]), False
+            yield NOTE_FIELD, literal(NOTE_FIELD, assignment[2:]), False, False
 
 
 def appends(value):
@@ -370,7 +428,7 @@ def step_updates(toks, j):
         elif assignment[:2] == [("name", "text"), ("p", "=")] and not appends(assignment[2:]):
             value = literal(STEP_TEXT, assignment[2:])
             if not REV_TOKEN.search(value):
-                yield STEP_TEXT, value, False
+                yield STEP_TEXT, value, False, False
 
 
 def update_writes(toks, j):
@@ -385,7 +443,7 @@ def update_writes(toks, j):
             if any(t in (("name", "title"), ("name", "intent")) for t in assignment):
                 raise Unreadable("an UPDATE tickets that sets title or intent as a row value")
         elif assignment[:1] and assignment[0][1] in CHECKED and assignment[1:2] == [("p", "=")]:
-            yield assignment[0][1], literal(assignment[0][1], assignment[2:]), flagged
+            yield assignment[0][1], literal(assignment[0][1], assignment[2:]), flagged, False
 
 
 def statements(toks):
@@ -405,12 +463,12 @@ def deletes_steps(stmt):
 
 
 def ticket_writes(script):
-    """Every (field, value, flagged) the script writes that the gate checks: tickets.title and
-    tickets.intent by UPDATE tickets, flagged when the statement sets session_proposed = 1, and
-    ticket_steps.text (field STEP_TEXT, never flagged) by an INSERT INTO ticket_steps in a script
-    that deletes from ticket_steps, or by an UPDATE ticket_steps. An INSERT INTO tickets creates a
-    job and is not read. Also marker_suppressions.note (field NOTE_FIELD, never flagged), counsel's
-    words for a suppression, by INSERT or UPDATE."""
+    """Every (field, value, flagged, new) the script writes that the gate checks: tickets.title and
+    tickets.intent by UPDATE tickets, flagged when the statement sets session_proposed = 1, and by
+    INSERT INTO tickets (new), flagged when the row's session_proposed is 1; ticket_steps.text
+    (field STEP_TEXT, never flagged) by an INSERT INTO ticket_steps in a script that deletes from
+    ticket_steps, or by an UPDATE ticket_steps. Also marker_suppressions.note (field NOTE_FIELD,
+    never flagged), counsel's words for a suppression, by INSERT or UPDATE."""
     if not re.search(r"(?i)\btickets\b|\bticket_steps\b|\bmarker_suppressions\b", script):
         return []
     stmts = statements(tokens(script))
@@ -419,6 +477,9 @@ def ticket_writes(script):
     for stmt in stmts:
         for k, t in enumerate(stmt):
             if t == ("name", "into"):
+                j = table_at(stmt, k + 1, "tickets")
+                if j is not None:
+                    written += job_inserts(stmt, j)
                 j = table_at(stmt, k + 1, "ticket_steps")
                 if j is not None and replaces:
                     written += step_inserts(stmt, j)
@@ -728,9 +789,11 @@ def read_transcript(path):
     struck, every fenced block, as shown, of the session's visible reply (text parts and
     SendUserMessage messages) between the previous practitioner turn and the last, and the
     scripts of drafting_data__execute calls since the last practitioner turn that a result
-    has answered)."""
+    has answered, and the research offers' `job:` lines a subagent's result printed before the
+    last practitioner turn)."""
     turns, widget_values, forms_calls, titles, items, cards = [], set(), set(), set(), set(), set()
     pending, confirmed = set(), set()
+    subagents, returned, offers = set(), set(), set()
     visible, proposal = [], []
     last_raw, last_fences = "", ()
     shown, executes, executed = [], {}, []
@@ -763,10 +826,18 @@ def read_transcript(path):
                                           if (a or b).strip()}
                     elif "drafting_forms__" in name:
                         forms_calls.add(part.get("id"))
+                    elif name in SUBAGENT_TOOLS and not rec.get("isSidechain"):
+                        subagents.add(part.get("id"))
             elif rec.get("type") == "user":
                 for part in parts:
                     if part.get("type") == "tool_result" and part.get("tool_use_id") in executes:
                         executed.append(executes.pop(part.get("tool_use_id")))
+                    if part.get("type") == "tool_result" and part.get("tool_use_id") in subagents:
+                        result = text_of(part.get("content"))
+                        if result.startswith("<persisted-output>"):
+                            full = rec.get("toolUseResult")
+                            result = text_of(full.get("content") if isinstance(full, dict) else full)
+                        returned |= set(JOB_LINE.findall(result))
                     if part.get("type") == "tool_result" and part.get("tool_use_id") in forms_calls:
                         result = text_of(part.get("content"))
                         if result.startswith("<persisted-output>"):
@@ -793,6 +864,7 @@ def read_transcript(path):
                     shown, executes, executed = [], {}, []
                     confirmed |= pending
                     pending = set()
+                    offers |= returned
                     proposal = visible if approval(turns[-1]) else []
                     visible = []
             elif rec.get("type") == "attachment":
@@ -807,14 +879,34 @@ def read_transcript(path):
                         shown, executes, executed = [], {}, []
                         confirmed |= pending
                         pending = set()
+                        offers |= returned
                         proposal = visible if approval(turns[-1]) else []
                         visible = []
     # a block no turn followed is dropped
-    return turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed
+    return turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed, offers
 
 
 def norm(text):
     return " ".join(text.split()).casefold()
+
+
+def in_turn(field, value, new, turn):
+    """Whether value is an unbroken run of turn. A new job's title or intent may also close with a
+    full stop the turn lacks, and a new job's title may correct a word's spelling, word for word, no
+    word added, dropped or moved (jobs-create.md §3's cleanup and presentation)."""
+    v, t = norm(value), norm(turn)
+    if v in t or (new and v.endswith(".") and v[:-1] in t):
+        return True
+    if not (new and field == "title"):
+        return False
+    typed = WORD.findall(v)
+    for part in re.split(r"[\x00\x01]", t):  # a run never spans a struck widget value or a cut reminder
+        said = WORD.findall(part)
+        if typed and any(all(a == b or difflib.SequenceMatcher(None, a, b).ratio() >= SPELLING
+                             for a, b in zip(typed, said[i:i + len(typed)]))
+                         for i in range(len(said) - len(typed) + 1)):
+            return True
+    return False
 
 
 def earlier_turns_matching(blocks, current_path, deadline):
@@ -880,9 +972,10 @@ def main():
         return refuse("\n".join(move_refusals + [MOVE_CLOSING]))
     try:
         # Fixed text is a job's: it never passes as counsel's suppression note.
-        written = [(f, v, flagged) for f, v, flagged in ticket_writes(script)
+        written = [(f, v, flagged, new) for f, v, flagged, new in ticket_writes(script)
                    if f == NOTE_FIELD
-                   or (v not in FIXED_TEXT and not (f == "title" and v.startswith(REVIEW_TITLE_PREFIXES)))]
+                   or (v not in FIXED_TEXT and not (new and v in NEW_JOB_TEXT)
+                       and not (f == "title" and v.startswith(REVIEW_TITLE_PREFIXES)))]
     except Unreadable as exc:
         return refuse(f"cannot read the practitioner's wording this script writes: {exc}. Write "
                       "tickets.title, tickets.intent, ticket_steps.text and marker_suppressions.note as plain "
@@ -903,7 +996,7 @@ def main():
         return refuse("the hook input names no transcript_path, so there is no record of "
                       "what the practitioner said to check the job's wording against.")
     try:
-        turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed = read_transcript(path)
+        turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed, offers = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
     if wording and any(wrote_wording(earlier) for earlier in executed):
@@ -915,18 +1008,23 @@ def main():
         return refuse("\n".join(revision_refusals + [REVISION_CLOSING]))
     # A printed item passes as a step only: a bare item is never a title or intent. A printed title
     # never passes as counsel's suppression note, which is only ever their own words.
-    written = [(f, v, flagged) for f, v, flagged in written
+    written = [(f, v, flagged, new) for f, v, flagged, new in written
                if (f == NOTE_FIELD or v not in titles) and not (f == STEP_TEXT and v in items)]
-    # A title or step cut from a job card's own printed words adds none (/draft's pickup review).
+    # A title or step cut from a job card's own printed words adds none (/draft's pickup review). An
+    # existing job's only: a new job's title is never cut from another job's card.
     cut = {norm(c) for c in cards}
-    written = [(f, v, flagged) for f, v, flagged in written
-               if not (f in ("title", STEP_TEXT) and any(norm(v) in c for c in cut))]
+    written = [(f, v, flagged, new) for f, v, flagged, new in written
+               if not (f in ("title", STEP_TEXT) and not new and any(norm(v) in c for c in cut))]
+    # A research offer the practitioner named to add (jobs-stock.md §3i): its job: line, printed by a
+    # subagent's return before their last turn, and that turn holds the word "add".
+    if ADD.search(last_raw):
+        written = [(f, v, flagged, new) for f, v, flagged, new in written if not (new and v in offers)]
     if not written:
         return 0
     if not turns:
         return refuse(f"the session transcript at {path} holds no practitioner turn to "
                       "check the job's wording against.")
-    failing = [(f, v, flagged) for f, v, flagged in written if not any(norm(v) in norm(turn) for turn in turns)]
+    failing = [(f, v, flagged) for f, v, flagged, new in written if not any(in_turn(f, v, new, turn) for turn in turns)]
     quoted = {norm(v) for f, v, flagged in failing if norm(v) in confirmed}
     # Only a quoted and confirmed value sends the gate to the earlier transcripts.
     proven, searched, total = (earlier_turns_matching(quoted, path, start + DEADLINE_SECONDS)
@@ -962,7 +1060,10 @@ def main():
                   "after the block. A title or intent the session showed in its visible reply passes "
                   "when the exact text stood there, the next and last practitioner turn is a bare "
                   "yes, and the write sets tickets.session_proposed = 1. A title or step cut from "
-                  "a job card a drafting_forms__ result printed, no word added, passes. For wording the session "
+                  "a job card a drafting_forms__ result printed, no word added, passes, on an existing job. A new "
+                  "job's title or intent may close with a full stop, and its title may correct a word's spelling. "
+                  "A research offer's job: line passes as a new job's title and intent when the practitioner's "
+                  "last turn says to add it. For wording the session "
                   "proposes: Show the proposed wording in one code block, introduce it with the "
                   "fixed sentence in shared/paralegal-posture.md section 3, and ask the practitioner "
                   "to copy it, edit it if needed, and paste it back.")

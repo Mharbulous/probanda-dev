@@ -81,7 +81,7 @@ def sql_text(value):
 
 
 def insert(title, intent=TURN):
-    """A new job: the gate never reads it."""
+    """A new job (jobs-create.md §3)."""
     return ("INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)\n"
             f"  VALUES (1, 1, {sql_text(title)}, {sql_text(intent)}, 'work', 4, 'L1|issue', "
             "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));")
@@ -790,14 +790,73 @@ class PractitionerWordsGateTest(unittest.TestCase):
         self.assertEqual(self.run_hook(update(CUT)).returncode, 0)
         self.assertEqual(self.run_hook(proposed_update(title=CUT, intent=TURN)).returncode, 0)
 
-    # The gate covers an existing job's wording only: the creation of a job is never read.
-    def test_a_new_job_passes_whatever_its_title_and_intent(self):
+    # A job is created only on the practitioner's request or from a set pattern (jobs-create.md §3,
+    # "Who may create a job"): the gate reads every INSERT INTO tickets.
+    def test_a_new_job_in_the_sessions_words_is_refused(self):
         self.write_transcript(turn_line("Spin off the blockers."), reply_line(PROPOSAL_REPLY),
                               turn_line("Yes but shorten it"))
-        self.assertEqual(self.run_hook(insert(PROPOSED_TITLE, intent=PROPOSED_INTENT)).returncode, 0)
-        self.assertEqual(self.run_hook(insert(RECOMPOSED, intent="The practitioner wants a verified list.")).returncode, 0)
-        self.assertEqual(self.run_hook("INSERT INTO tickets (proceeding_id, title, intent) "
-                                       "SELECT 1, idea, idea FROM seeds WHERE id = 1;").returncode, 0)
+        self.assertRefused(self.run_hook(insert(PROPOSED_TITLE, intent=PROPOSED_INTENT)), "field: title")
+        self.assertRefused(self.run_hook(insert(RECOMPOSED, intent="The practitioner wants a verified list.")),
+                           "field: title")
+
+    def test_a_new_job_that_is_not_one_literal_fails_closed(self):
+        for sql in ("INSERT INTO tickets (proceeding_id, title, intent) SELECT 1, idea, idea FROM seeds WHERE id = 1;",
+                    "INSERT INTO tickets (proceeding_id, intent) VALUES (1, 'x');"):
+            with self.subTest(sql=sql):
+                self.assertRefused(self.run_hook(sql), "cannot read the practitioner's wording")
+
+    def test_a_new_job_in_the_practitioners_words_passes_cleaned(self):
+        self.write_transcript(turn_line("research whether there is such a think as criminal nuisance in BC"))
+        self.assertEqual(self.run_hook(insert("Research whether there is such a thing as criminal nuisance in BC",
+                                              intent="Research whether there is such a think as criminal nuisance in BC."))
+                         .returncode, 0)
+        self.assertRefused(self.run_hook(insert("Research whether criminal nuisance exists in BC",
+                                                intent="Research whether there is such a think as criminal nuisance in BC.")),
+                           "field: title")
+
+    def test_a_new_job_takes_an_approved_proposal_with_the_flag(self):
+        self.write_transcript(turn_line("Spin off the blockers."), reply_line(PROPOSAL_REPLY), turn_line("Yes"))
+        flagged = insert(PROPOSED_TITLE, intent=PROPOSED_INTENT).replace(
+            "billing_anchor, created)", "billing_anchor, created, session_proposed)").replace("'localtime'))", "'localtime'), 1)")
+        self.assertEqual(self.run_hook(flagged).returncode, 0)
+        self.assertRefused(self.run_hook(insert(PROPOSED_TITLE, intent=PROPOSED_INTENT)), "field: title")
+
+    def test_a_new_job_takes_a_printed_proposal_title(self):
+        self.write_transcript(turn_line("Take the note-up."),
+                              *tool_lines("mcp__plugin_practice_data__drafting_forms__board_card", CARD))
+        self.assertEqual(self.run_hook(insert(PROPOSAL, intent=PROPOSAL)).returncode, 0)
+        # A new job's title is never cut from another job's card.
+        self.assertRefused(self.run_hook(insert("Serve the August notice to admit", intent=PROPOSAL)), "field: title")
+
+    def test_a_new_pattern_job_passes_with_no_transcript(self):
+        for title, intent in [
+                ("Decide an overstatement finding", "Counsel keeps the assertion as drafted or rewrites it at its "
+                 "source's strength; a source not located is found first."),
+                ("Make Notice of discontinuance a Structured Writing", "Turn this Writing into a type file so the next "
+                 "Notice of discontinuance is a Structured Writing. Unbilled: firm infrastructure."),
+                (GATE_TITLE, GATE_INTENT), (SCRUTINY_TITLE, SCRUTINY_INTENT)]:
+            with self.subTest(title=title):
+                self.assertEqual(self.run_hook(insert(title, intent=intent), transcript="").returncode, 0)
+
+    def test_a_conversion_job_naming_two_writings_is_refused(self):
+        self.assertRefused(self.run_hook(insert(
+            "Make Notice of discontinuance a Structured Writing", intent="Turn this Writing into a type file so the "
+            "next Notice of claim is a Structured Writing. Unbilled: firm infrastructure.")), "field: title")
+
+    def test_a_research_offer_becomes_a_job_only_when_the_practitioner_says_add(self):
+        offer = "Research whether the example rule applies to the example situation"
+        result = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "a1", "content": [
+            {"type": "text", "text": f"Would you like me to look into this?\njob: {offer}\nsteps: Find the rule · Apply it"}]}]}}
+        dispatch = {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "id": "a1", "name": "Agent", "input": {}}]}}
+        sql = insert(offer, intent=offer)
+        self.write_transcript(turn_line("What is the test?"), dispatch, result, turn_line("add the second offer"))
+        self.assertEqual(self.run_hook(sql).returncode, 0)
+        self.write_transcript(turn_line("What is the test?"), dispatch, result, turn_line("thanks"))
+        self.assertRefused(self.run_hook(sql), "field: title")
+        # An offer the session wrote itself, not a subagent's return, is never one.
+        self.write_transcript(turn_line("What is the test?"), reply_line(f"job: {offer}"), turn_line("add it"))
+        self.assertRefused(self.run_hook(sql), "field: title")
 
     def test_replaced_steps_in_the_sessions_words_are_refused_naming_the_ceremony(self):
         result = self.run_hook(replace_steps("'Audit the exhibit list'", "'Reconcile against the disclosure log'"))
@@ -853,13 +912,15 @@ class PractitionerWordsGateTest(unittest.TestCase):
                 self.assertRefused(self.run_hook(replace_steps(value)), "cannot read the practitioner's wording")
 
     def test_the_loose_threads_job_scripts_pass_as_jobs_create_md_writes_them(self):
-        # §3j: no script reads the transcript, and the title and intent are the instruction itself.
+        # §3j: the title and intent are the instruction itself, read against the transcript; Calls 2
+        # and 3 write no job and read none.
         text = (STOCK_MD.parent / "jobs-create.md").read_text(encoding="utf-8").replace("\r\n", "\n")
         blocks = re.findall(r"^```sql\n(.*?)\n```$", text.split("## 3j. The loose-threads job", 1)[1], re.S | re.M)
         self.assertEqual(len(blocks), 3, "§3j's Call 1, Call 2 and Call 3")
         self.write_transcript(turn_line("work on loose threads"))
+        self.assertRefused(self.run_hook(blocks[0], transcript=""), "names no transcript_path")
         for sql in blocks:
-            for transcript in (None, ""):
+            for transcript in ((None,) if "INSERT INTO tickets" in sql else (None, "")):
                 with self.subTest(sql=sql[:40], transcript=transcript):
                     self.assertEqual(self.run_hook(sql, transcript=transcript).returncode, 0)
 
