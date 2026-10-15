@@ -195,9 +195,10 @@ Question: <the legal question>
 Facts: <the factual context>
 Origin: <draft file path or Writing id>: "<the draft's words the question came from>" / none
 Matter root: <path>
+Matter: <the live matter's file number, such as 1234.L####>
 Asked by: <the practitioner's name>
 Date: <today, YYYY-MM-DD, from the host clock>
-Memo template: CREAC / IRAC / CRAC   (IRAC or CRAC only when the practitioner expressly asked)
+Memo template: CRAC / IRAC / CREAC   (IRAC or CREAC only when the practitioner expressly asked)
 File stem: YYYY-MM-DD ML re <two to six keywords from the question>
 Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]
@@ -217,7 +218,8 @@ that is not ok with its state (`commons: missing_credential`, `canlii: no_key`,
 
 `Matter root:` is the matter folder's host path, the folder holding `coclerk.json`,
 in the same host form `research_filing__save_answer` takes, because the agent passes
-it to `research_filing__write_scratch`. `Asked by:` is the practitioner who asked:
+it to `research_filing__write_scratch`. `Matter:` is the same file number duty 4 passes
+the fetcher, which the memo's header carries. `Asked by:` is the practitioner who asked:
 if you do not know the name, ask once.
 `Origin:` names the draft the question came from, a plain draft file's path or a Writing's
 id, and quotes the draft's words the question is about, verbatim. A caller that took the
@@ -307,8 +309,9 @@ complete before the session ends: never leave a session with a cited decision un
    `legislation-fetcher` filed in this run. A Point in Time page or bulletin it
    filed beside a consolidation is a currency record, not an authority: never ingest it.
 
-In your relay, account for every court decision the answer cites -- already held,
-ingested now, or "not on disk, not ingested" -- and for cited legislation. A decision
+In your relay, account for every court decision the answer cites in one line of counts --
+already held, ingested now, and "not on disk, not ingested", naming each decision in that
+last group -- and for cited legislation in one more. A decision
 never dispatched is reported the same way as one whose download failed: a decision you
 did not persist is never passed over in silence. The answer file itself is never ingested.
 It is a lead, not an authority, and ingesting it would let the next audit cite it at
@@ -377,7 +380,8 @@ outlining session takes it up, or the practitioner's "add" below.
 
 Then relay, in this order:
 
-1. The confidence summary, word for word.
+1. The return's `Confidence:` line, word for word, and the saved memo as its file card.
+   Restate nothing of the memo: the card is the answer.
 2. Each captured offer, word for word.
 3. One line: `<c> offers captured as loose threads. <k> already on the board. <d> offers dropped as off this application.` Any count may be 0.
 4. One line saying they may name any relayed offer to add as a research job or to drop, and
@@ -392,8 +396,9 @@ On "drop", discard that thread by `/drafting-data` §8's drop write. Name each
 memo's words as advice on the draft.
 
 A closed gate captures nothing, adds no job and relays nothing new. When no board resolves,
-capture nothing, add no job, relay the confidence summary and every offer, each word for
-word, and say in one line that the matter has no board to capture to. A return
+capture nothing, add no job, relay the `Confidence:` line and every offer, each word for
+word, with the saved memo as its file card, and say in one line that the matter has no
+board to capture to. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.
 

@@ -28,9 +28,10 @@ counts. The text typed after a slash command's name (the command-args) counts as
 one practitioner turn, though its record has no promptSource. The command's name
 and tags contribute no words, and the isMeta skill body that follows the command
 stays excluded. Case and runs of whitespace are ignored; punctuation and word
-order are not. A new job's title or intent may also close with a full stop the turn lacks, and a
-new job's title may correct a word's spelling, word for word with no word added, dropped or moved
-(jobs-create.md §3's cleanup and presentation). An existing job's wording takes neither.
+order are not. A new job's title or intent may also close with a full stop the turn lacks, and any
+job's title may correct a word's spelling, word for word with no word added, dropped or moved
+(jobs-create.md §3's cleanup and presentation; on a held job, /draft's title spelling cleanup).
+An existing job's intent and steps take neither, and its title takes no full stop.
 
 The harness puts its own context inside those records as <system-reminder> blocks,
 in a text part ahead of the typed text or prefixed to it. A reminder is not the
@@ -112,7 +113,8 @@ or Shelved, a string on a job's `keys:` line, or a board_data proposal's item (a
 grouped intake job's steps, jobs-create.md §3e). An item never passes as a title or intent.
 An existing job's tickets.title or ticket_steps.text is also exempt when it is an unbroken run of a job card's own
 words such a result printed: the card's head line, its intent or one of its steps (/draft's pickup
-review shortens a title or splits a step by cutting, adding no word). Never a tickets.intent.
+review shortens a title or splits a step by cutting, adding no word). Such a title may also correct a
+word's spelling, as above (/draft's title spelling cleanup on a held job). Never a tickets.intent.
 No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
 The gate cannot see which job holds a key, so this trusts the record as the title exemption
 does: printed by a drafting_forms__* result in this session.
@@ -903,12 +905,13 @@ def norm(text):
 
 def in_turn(field, value, new, turn):
     """Whether value is an unbroken run of turn. A new job's title or intent may also close with a
-    full stop the turn lacks, and a new job's title may correct a word's spelling, word for word, no
-    word added, dropped or moved (jobs-create.md §3's cleanup and presentation)."""
+    full stop the turn lacks, and any job's title may correct a word's spelling, word for word, no
+    word added, dropped or moved (jobs-create.md §3's cleanup and presentation; on a held job,
+    /draft's title spelling cleanup)."""
     v, t = norm(value), norm(turn)
     if v in t or (new and v.endswith(".") and v[:-1] in t):
         return True
-    if not (new and field == "title"):
+    if field != "title":
         return False
     typed = WORD.findall(v)
     for part in re.split(r"[\x00\x01]", t):  # a run never spans a struck widget value or a cut reminder
@@ -1053,10 +1056,11 @@ def main():
     written = [(f, v, flagged, new) for f, v, flagged, new in written
                if (f == NOTE_FIELD or v not in titles) and not (f == STEP_TEXT and v in items)]
     # A title or step cut from a job card's own printed words adds none (/draft's pickup review). An
-    # existing job's only: a new job's title is never cut from another job's card.
+    # existing job's only: a new job's title is never cut from another job's card. A title so cut may
+    # correct a word's spelling (/draft's title spelling cleanup on a held job).
     cut = {norm(c) for c in cards}
     written = [(f, v, flagged, new) for f, v, flagged, new in written
-               if not (f in ("title", STEP_TEXT) and not new and any(norm(v) in c for c in cut))]
+               if not (f in ("title", STEP_TEXT) and not new and any(in_turn(f, v, False, c) for c in cut))]
     # A research offer the practitioner named to add (jobs-stock.md §3i): its job: line, printed by a
     # subagent's return before their last turn, and that turn holds the word "add".
     if ADD.search(last_raw):
@@ -1102,8 +1106,9 @@ def main():
                   "after the block. A title or intent the session showed in its visible reply passes "
                   "when the exact text stood there, the next and last practitioner turn is a bare "
                   "yes, and the write sets tickets.session_proposed = 1. A title or step cut from "
-                  "a job card a drafting_forms__ result printed, no word added, passes, on an existing job. A new "
-                  "job's title or intent may close with a full stop, and its title may correct a word's spelling. "
+                  "a job card a drafting_forms__ result printed, no word added, passes, on an existing job. Any "
+                  "job's title may correct a word's spelling, word for word. A new job's title or intent may "
+                  "close with a full stop. "
                   "A research offer's job: line passes as a new job's title and intent when the practitioner's "
                   "last turn says to add it. For wording the session "
                   "proposes: Show the proposed wording in one code block, introduce it with the "

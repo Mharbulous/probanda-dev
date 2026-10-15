@@ -1,4 +1,4 @@
-// build-stamp: 6f48b31a3c5d
+// build-stamp: 8ba7586b15e1
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -77390,7 +77390,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Job Board with no Writing is created through drafting_data__create_job_board, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, a drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, and a job is released through drafting_data__release_job. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Job Board with no Writing is created through drafting_data__create_job_board, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, a drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, and a job is deleted through drafting_data__delete_job. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77568,6 +77568,21 @@ function submissionDataToolDefinitions() {
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
+      name: submissionDataPrefixed("delete_job"),
+      description: "Delete one or several mistaken jobs (tickets rows) in one call, only on the practitioner's typed instruction: a guarded stamping write per job, all in one transaction, then a confirm-read per job. A job is deleted when it is queued (shelved or not), or wip and held by this session's token; the holder check and the deleted_at stamp are one statement. A wip job held by this session goes back to queued with its lock cleared in the same write, so a restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row pointing at the job stays. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. Per job, the outcome is read off the confirm-read: deleted (changes 1), held_elsewhere (wip in another session: nothing written; never re-run), refused_status (completed or superseded), already_deleted, not_found. It moves no revision. Refusals write nothing: invalid_ticket_ids, invalid_session_token. Returns jobs, one {ticket_id, outcome, changes, status, locked_at, rejected_at, deleted_at, note} per id.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_ids: { type: "array", items: { type: "number" }, minItems: 1 },
+          session_token: { type: "string" }
+        },
+        required: ["db_path", "ticket_ids", "session_token"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
       name: submissionDataPrefixed("complete_job"),
       description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. A wip conflict partner is never touched. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; draft_dir is the draft_dir open_session returned. The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing). Only when this call completed the job (changes 1) are the matter's Job Board pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, job_board_path (the rendered filing's or proceeding's Job Board page), board_changed, board_moves, pages_refused and a note.",
       inputSchema: {
@@ -77579,6 +77594,25 @@ function submissionDataToolDefinitions() {
           draft_dir: { type: "string" }
         },
         required: ["db_path", "ticket_id", "session_token", "draft_dir"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: submissionDataPrefixed("set_board_goal"),
+      description: "Record one Job Board's statement of goals: the card labelled Goal at the top of the board, drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly one of filing_id (a Writing's board or a Job Board with no Writing) and proceeding_id (a pre-filing proceeding's board; one that has a Writing is refused, proceeding_has_writing). status is confirmed (the statement the practitioner approved), inferred (the session's own wording after the practitioner declined, never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement is the whole text, stored verbatim with its indentation and line breaks; it is required for confirmed and inferred and refused for declined. description is the line the closed card shows; omitted, the stored one stays, else the board's default: `<Writing title> Drafting`, a Job Board with no Writing's own title, or `Proceeding <id>`. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned. A confirmed write passes the practitioner-words gate: the statement is an unbroken run of one practitioner turn, or the one fenced code block in the session's reply before the practitioner's last turn, character for character, and that turn is a bare yes. An inferred or declined write needs no approval. One db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON {description, statement, status, approved_at, session_token, updated_at}, approved_at set only for confirmed. The write replaces the board's row and removes the rows of boards that no longer exist (stale_keys_removed). It moves no revision. Re-render to show it. Refusals write nothing: invalid_board, invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, proceeding_has_writing. Returns key, filing_id or proceeding_id, description (null: the default), statement, status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          proceeding_id: { type: "number" },
+          description: { type: "string" },
+          statement: { type: ["string", "null"] },
+          status: { type: "string", enum: ["confirmed", "inferred", "declined"] },
+          session_token: { type: "string" }
+        },
+        required: ["db_path", "status", "session_token"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
@@ -77641,7 +77675,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("render"),
-      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir or presentation_dir, markdown returns only for the documents named in documents; every other document carries markdown_chars, its length, in its place, so to read a document's work markers name its document_type in documents. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), never more than one Writing on a page: `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
+      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir or presentation_dir, markdown returns only for the documents named in documents; every other document carries markdown_chars, its length, in its place, so to read a document's work markers name its document_type in documents. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. A mockup render of a Writing whose Proposed lane holds a note-up Proposal that no live job holds and the practitioner has not shelved also carries note_up_due, those keys in the lane's order: the session writes them into the Writing's one `Note up all cited authorities` job, or adds them to it (/drafting-data jobs-create.md \xA73k). Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined or none; the statement itself is board_card's goals lane), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), never more than one Writing on a page: `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77665,7 +77699,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77676,7 +77710,7 @@ function submissionFormsToolDefinitions() {
           client_no: { type: "string" },
           matter_no: { type: "string" },
           jobs: { type: "array", items: { type: "number" } },
-          lanes: { type: "array", items: { type: "string", enum: ["criteria", "live", "goal", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"] } },
+          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"] } },
           key: { type: "string" },
           loose_threads_from_jobs: { type: "array", items: { type: "number" } },
           draft_dir: { type: "string" }
@@ -82546,7 +82580,7 @@ var SYMBOLS = [
     actor: "research lawyer",
     slug: "note-up",
     title: "Note up",
-    condition: "by `authority.kind` \u2014 a case: `treatment` \u2205; a statute, regulation or rule: `currency_status` anything but `'current'` (\u2205 included; shared/statute-currency.md \u2192 Noting up legislation); `kind` doctrine (a secondary authority): never \u2014 law side only",
+    condition: "by `authority.kind` \u2014 a case: `treatment` \u2205; a statute, regulation or rule: `currency_status` anything but `'current'` (\u2205 included; shared/statute-currency.md \u2192 Noting up legislation), and on a statute or regulation also a `'current'` whose `currency_checked_on` is \u2205 or more than 30 days old (a freshness window, not a deadline); `kind` doctrine (a secondary authority): never \u2014 law side only",
     history: "column live since v2 (#307; name kept #327 \u2014 `check` is SQLite-reserved); marker split off \u{1F443} (ADR-0007); renderer shipped #363 \u2014 doctrinal and jurisdictional alike; by authority kind since #1628"
   },
   {
@@ -83081,7 +83115,7 @@ function jurisdictionEdgeMarker(row2, deployed) {
     // deployed on no live Writing (spec R6, schema v47): nothing relies on its basis there.
     deployed ? scrutinizeMarker(row2.verification, row2.authority_killed_on) : "",
     treatment,
-    noteUpMarker(row2.authority_kind, row2.treatment, row2.currency_status)
+    noteUpMarker(row2.authority_kind, row2.treatment, row2.currency_status, row2.currency_checked_on)
   ]);
 }
 function jurisdictionEdgeMarkers(edges, deployed = true) {
@@ -83407,9 +83441,19 @@ function treatmentMarker(treatment) {
   }
 }
 var LEGISLATION_KINDS = /* @__PURE__ */ new Set(["statute", "regulation", "rule"]);
-function noteUpMarker(kind, treatment, currencyStatus) {
+var LEGISLATION_CURRENCY_FRESH_DAYS = 30;
+function currencyFreshSince() {
+  const d3 = /* @__PURE__ */ new Date();
+  d3.setDate(d3.getDate() - LEGISLATION_CURRENCY_FRESH_DAYS);
+  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+}
+function noteUpMarker(kind, treatment, currencyStatus, currencyCheckedOn) {
   if (kind === "doctrine") return "";
-  if (kind !== null && LEGISLATION_KINDS.has(kind)) return currencyStatus === "current" ? "" : "\u{1F4C7}";
+  if (kind !== null && LEGISLATION_KINDS.has(kind)) {
+    if (currencyStatus !== "current") return "\u{1F4C7}";
+    if (kind === "rule") return "";
+    return currencyCheckedOn !== null && currencyCheckedOn >= currencyFreshSince() ? "" : "\u{1F4C7}";
+  }
   return treatment === null ? "\u{1F4C7}" : "";
 }
 function notBestCopyMarkers(documents) {
@@ -84493,7 +84537,7 @@ function fetchFilingLaw(dbPath, filingId) {
     `SELECT sl.id AS statement_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification, ${settledOnColumn(dbPath)},
             ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
             auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation,
-            auth.treatment, auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM filing_law fl
      JOIN statements_of_law sl ON sl.id = fl.statement_id
      JOIN authorities auth ON auth.id = sl.authority_id
@@ -84703,7 +84747,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join18 } from "node:path";
-var BUILD_STAMP = false ? null : "6f48b31a3c5d";
+var BUILD_STAMP = false ? null : "8ba7586b15e1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84726,8 +84770,8 @@ function buildStampStatus(env = process.env) {
   let current;
   try {
     const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked = join18(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
-    current = STAMP_LINE.exec(readFileSync16(tracked, "utf-8"))?.[1] ?? null;
+    const tracked2 = join18(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+    current = STAMP_LINE.exec(readFileSync16(tracked2, "utf-8"))?.[1] ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
@@ -87149,7 +87193,7 @@ function lawStatementMarkers(row2, deployed = true) {
     // 🕰️ (schema v61) is an event, like ⚠️: a case decided before a provision the same
     // proposition cites came into force. It holds back no 🧐 and names no work of its own.
     anachronismMarker(predatedProvision(row2, parseLinkedProvisions(row2.linked_provisions)) !== null),
-    noteUpMarker(row2.authority_kind, row2.treatment, row2.currency_status),
+    noteUpMarker(row2.authority_kind, row2.treatment, row2.currency_status, row2.currency_checked_on),
     doubt
   ]);
 }
@@ -87348,7 +87392,7 @@ function fetchSubmissionLaw(dbPath, submissionIds) {
             ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
             auth.id AS authority_id,
             auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM submission_law sub_law
      JOIN law_assertions la ON la.id = sub_law.law_assertion_id
      LEFT JOIN statements_of_law sl ON sl.law_assertion_id = la.id
@@ -87694,7 +87738,7 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
   const edges = rows2(
     dbPath,
     `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
-            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.killed_on AS authority_killed_on,
+            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
             auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation
      FROM order_sought_requires req
      LEFT JOIN statements_of_law sl ON sl.id = req.excerpt_id
@@ -88374,6 +88418,9 @@ function deriveProposals(inventory, holders, rejections) {
     (a3, b3) => SLUG_ORDER[a3.slug] - SLUG_ORDER[b3.slug] || a3.table.localeCompare(b3.table) || a3.id - b3.id || (a3.qualifier ?? "").localeCompare(b3.qualifier ?? "")
   );
   return { proposals, lapsed_keys };
+}
+function noteUpDue(proposals) {
+  return proposals.filter((p3) => p3.slug === "note-up" && p3.lane === "proposed").map((p3) => p3.key);
 }
 var PROVISION = /(?<![\w'’])((?:sub)?(?:rule|section)s?\s+|(?:rr?|ss?)(?:\.\s*|\s+))(\d+(?:[-.]\d+)*(?:\([0-9a-z.]+\))*)/gi;
 function provisionsIn(text4) {
@@ -89488,6 +89535,109 @@ function mockupDirForRender(dbPath, filingId) {
   return own;
 }
 
+// src/submission/forms/board-goals.ts
+var TOOL3 = "drafting_data__set_board_goal";
+var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var FILING_PREFIX = "board_goal:filing:";
+var PROCEEDING_PREFIX = "board_goal:proceeding:";
+var STATUSES = ["confirmed", "inferred", "declined"];
+function boardGoalsKey(board) {
+  return board.filing_id === null ? `${PROCEEDING_PREFIX}${board.proceeding_id}` : `${FILING_PREFIX}${board.filing_id}`;
+}
+function readStored(dbPath, key) {
+  const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  if (row2 === void 0) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(row2.value);
+  } catch {
+    throw new DataServerError(`db_meta ${key} is not JSON, so its statement of goals cannot be read`, "invalid_board_goal");
+  }
+  if (!STATUSES.includes(parsed.status)) {
+    throw new DataServerError(`db_meta ${key} has status ${JSON.stringify(parsed.status)}, not confirmed, inferred or declined`, "invalid_board_goal");
+  }
+  return parsed;
+}
+function fetchBoardGoals(dbPath, board, fallback) {
+  const stored = readStored(dbPath, boardGoalsKey(board));
+  if (stored === null) return { description: fallback, statement: null, status: null };
+  return { description: stored.description ?? fallback, statement: stored.statement, status: stored.status };
+}
+async function submissionDataSetBoardGoal(args, env = process.env) {
+  if (args.filing_id === void 0 === (args.proceeding_id === void 0)) {
+    throw new ValidationError(`${TOOL3} takes exactly one of filing_id and proceeding_id`, "invalid_board");
+  }
+  const id = args.filing_id ?? args.proceeding_id;
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL3}: the board id must be a positive integer`, "invalid_board");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const status = args.status;
+  if (!STATUSES.includes(status)) throw new ValidationError(`${TOOL3}.status must be confirmed, inferred or declined`, "invalid_status");
+  const statement = args.statement ?? null;
+  if (status === "declined" ? statement !== null : typeof statement !== "string" || statement.trim() === "") {
+    throw new ValidationError(
+      status === "declined" ? `${TOOL3}: a declined statement of goals carries no statement` : `${TOOL3}.statement must be the statement of goals, not blank`,
+      "invalid_statement"
+    );
+  }
+  if (args.description !== void 0 && (typeof args.description !== "string" || args.description.trim() === "")) {
+    throw new ValidationError(`${TOOL3}.description must not be blank; omit it to keep the stored or default description`, "invalid_description");
+  }
+  const onFiling = args.filing_id !== void 0;
+  if (onFiling) {
+    if (submissionDataQuery(args.db_path, "SELECT 1 FROM filings WHERE id = ?", [id]).rows.length === 0) {
+      throw new NotFoundError(`${TOOL3}: no Writing or Job Board ${id} in ${args.db_path}`, "not_found");
+    }
+  } else {
+    const [p3] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id]).rows;
+    if (p3 === void 0) throw new NotFoundError(`${TOOL3}: no proceeding ${id} in ${args.db_path}`, "not_found");
+    if (p3.filings > 0) {
+      throw new ValidationError(`${TOOL3}: proceeding ${id} has a Writing, so its own board is no longer drawn -- set the goal on a Writing's board by filing_id`, "proceeding_has_writing");
+    }
+  }
+  const key = onFiling ? `${FILING_PREFIX}${id}` : `${PROCEEDING_PREFIX}${id}`;
+  const description = args.description ?? readStored(args.db_path, key)?.description ?? null;
+  const stale = submissionDataQuery(
+    args.db_path,
+    `SELECT key FROM db_meta
+        WHERE (key GLOB '${FILING_PREFIX}*' AND CAST(substr(key, ${FILING_PREFIX.length + 1}) AS INTEGER) NOT IN (SELECT id FROM filings))
+           OR (key GLOB '${PROCEEDING_PREFIX}*' AND CAST(substr(key, ${PROCEEDING_PREFIX.length + 1}) AS INTEGER) NOT IN
+                 (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id)))
+        ORDER BY key`
+  ).rows.map((r3) => r3.key);
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    [
+      {
+        sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, json_object('description', ?, 'statement', ?, 'status', ?, 'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW}))`,
+        params: [key, description, statement, status, status, args.session_token],
+        expect_changes: 1
+      },
+      ...stale.length > 0 ? [{ sql: "DELETE FROM db_meta WHERE key IN (SELECT value FROM json_each(?))", params: [JSON.stringify(stale)] }] : []
+    ],
+    env
+  );
+  if (!written.ok) throw new DataServerError(`${TOOL3}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  const stored = readStored(args.db_path, key);
+  if (stored === null) throw new DataServerError(`${TOOL3}: ${key} is missing after the write`, "write_failed");
+  const label = onFiling ? `Job Board ${id}` : `proceeding ${id}'s board`;
+  const note = status === "confirmed" ? `The statement of goals on ${label} is recorded as confirmed (approved_at ${stored.approved_at}). Re-render to show it.` : status === "inferred" ? `The statement of goals on ${label} is recorded as inferred: the session's wording, not confirmed. Re-render to show it.` : `The practitioner's decline is recorded on ${label}: no statement is stored. Re-render to show it.`;
+  return {
+    key,
+    ...onFiling ? { filing_id: id } : { proceeding_id: id },
+    description: stored.description,
+    statement: stored.statement,
+    status: stored.status,
+    approved_at: stored.approved_at,
+    updated_at: stored.updated_at,
+    session_wording: stored.status === "inferred",
+    stale_keys_removed: stale,
+    note,
+    ...written.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms/lifecycle.ts
 var LIFECYCLE_LABELS = {
   drafting: "Drafting",
@@ -89576,7 +89726,7 @@ function recipientEntry(r3, label) {
 }
 var UNCONFIRMED_AUTHORITY_LINE = "Authority not confirmed: link each authority this text cites, or record that it cites none. Sending is held until then.";
 function authorityUnconfirmed(filing, layout) {
-  return filing.needs_forum_parts === 0 && filing.filed_on === null && filing.authority_confirmed_on === null && Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("primary-authority");
+  return filing.needs_forum_parts === 0 && filing.filed_on === null && filing.authority_confirmed_on === null && Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("primary-authority") && !layout.goal_criteria.includes("noting-up");
 }
 function authorityCitedLine(ctx, row2) {
   const glyphs = lawStatementMarkers(row2);
@@ -89664,8 +89814,8 @@ function renderGeneral(ctx, stored, cited2) {
 }
 
 // src/submission/forms/track-source.ts
-var TOOL3 = "drafting_data__track_source";
-var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL4 = "drafting_data__track_source";
+var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var KINDS = ["decision", "legislation", "file"];
 var OUTCOMES = ["got", "not_retrieved"];
 var LABEL_MAX = 200;
@@ -89679,20 +89829,20 @@ function ticketSourcesHeld(dbPath) {
 }
 function oneLine(value, field, max) {
   if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
-    throw new ValidationError(`${TOOL3}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
+    throw new ValidationError(`${TOOL4}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
   }
   return value.trim();
 }
 function oneOf(value, field, allowed) {
   if (typeof value !== "string" || !allowed.includes(value)) {
-    throw new ValidationError(`${TOOL3}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
+    throw new ValidationError(`${TOOL4}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
   }
   return value;
 }
 async function submissionDataTrackSource(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL3}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL4}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL4}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -89704,11 +89854,11 @@ async function submissionDataTrackSource(args, env = process.env) {
     reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
   }));
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+    throw new NotFoundError(`${TOOL4}: no job ${id} in ${args.db_path}`, "not_found");
   }
   if (!ticketSourcesHeld(args.db_path)) {
     throw new ValidationError(
-      `${TOOL3}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
+      `${TOOL4}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
       "schema_below_v76"
     );
   }
@@ -89720,18 +89870,18 @@ async function submissionDataTrackSource(args, env = process.env) {
         params: [id, a3.kind, a3.label, id, token]
       },
       {
-        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`,
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW2} FROM tickets WHERE id = ? AND locked_by = ?`,
         params: [a3.kind, a3.label, id, token]
       }
     ]),
     ...close.map((c3) => ({
-      sql: `UPDATE ticket_sources SET closed_at = ${NOW}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
+      sql: `UPDATE ticket_sources SET closed_at = ${NOW2}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
       params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, token]
     }))
   ];
   const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, statements, env);
   const [read2] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL3}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL4}: no job ${id} in ${args.db_path}`, "not_found");
   const sources = submissionDataQuery(args.db_path, "SELECT id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id = ? ORDER BY id", [id]).rows;
   const open = sources.filter((s3) => s3.closed_at === null).length;
   const on2 = new Set(sources.map((s3) => `${s3.kind}: ${s3.label}`));
@@ -89816,6 +89966,10 @@ function latestStamp(stamps) {
   for (const s3 of stamps) if (s3 !== null && (latest === null || s3.replace(" ", "T") > latest.replace(" ", "T"))) latest = s3;
   return latest;
 }
+function activeAt(ticket, stamp2) {
+  if (ticket.status !== "wip" || stamp2 === void 0 || ticket.locked_at === null) return null;
+  return stamp2.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp2 : null;
+}
 function classify(ticket, blockers, conflictPartners, today2) {
   if (ticket.rejected_at !== null) return "rejected";
   if (ticket.status === "completed") return "completed";
@@ -89873,6 +90027,9 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
   const capturesByTicket = groupBy2(captures, (s3) => s3.origin_ticket_id);
   const answersByTicket = groupBy2(answerRows, (a3) => a3.ticket_id);
   const sourcesByTicket = groupBy2(sourceRows, (s3) => s3.ticket_id);
+  const activeById = new Map(
+    rows4(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
+  );
   const retiredOn = new Map(rows4(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
   const edge = (id) => {
     const other = ticketById.get(id);
@@ -89927,7 +90084,8 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = localToday()) {
         ...(capturesByTicket.get(t3.id) ?? []).map((s3) => s3.created),
         ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at),
         ...(sourcesByTicket.get(t3.id) ?? []).flatMap((s3) => [s3.added_at, s3.closed_at])
-      ])
+      ]),
+      active_at: activeAt(t3, activeById.get(t3.id))
     };
     return { filing_id: t3.filing_id, ticket };
   });
@@ -90065,8 +90223,9 @@ var EXCERPTS = {
 };
 var NOTING_UP = {
   id: "noting-up",
-  text: "Every authority relied on is noted up",
-  // 📇's non-generating instance: a statute, regulation or rule found repealed or archived (#1628).
+  text: "Note up all cited authorities",
+  // 📇's non-generating instances: a statute, regulation or rule found repealed or archived (#1628),
+  // and a citation in the text that no authorities row tracks (citation-scan.ts).
   members: anyOf(slugs("note-up"), glyph("\u{1F4C7}"))
 };
 var EVIDENCE = {
@@ -90448,6 +90607,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, `${ctx.filing.title} Drafting`),
     goal,
     criteria
   };
@@ -90484,7 +90644,8 @@ function buildJobOnlyBoardData(ctx) {
     discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s3) => s3.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
-    lapsed_keys: []
+    lapsed_keys: [],
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: own, proceeding_id: ctx.proceeding.id }, ctx.filing.title)
   };
 }
 function buildPreFilingBoardData(dbPath, proceeding, meta2) {
@@ -90511,18 +90672,19 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
     discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
-    lapsed_keys: []
+    lapsed_keys: [],
+    goals: fetchBoardGoals(dbPath, { filing_id: null, proceeding_id: proceeding.id }, `Proceeding ${proceeding.id}`)
   };
 }
 
 // src/submission/forms/sent-write.ts
-var TOOL4 = "drafting_data__record_sent";
-var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL5 = "drafting_data__record_sent";
+var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 function refused(message, code) {
-  return new DataServerError(`${TOOL4}: ${message}`, code);
+  return new DataServerError(`${TOOL5}: ${message}`, code);
 }
 function rows5(dbPath, sql, params) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -90573,7 +90735,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     const job = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
     const statements2 = [
       {
-        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW2} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
+        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW3} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
         params: [filing.proceeding_id, filing.id, PRE_SEND_TITLE, PRE_SEND_INTENT, filing.id, anchor.billing_anchor, filing.id, PRE_SEND_TITLE],
         expect_changes: 1
       },
@@ -90596,7 +90758,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     if (step2.text.includes(WAIVER2) || label === void 0) continue;
     const c3 = byId2.get(id);
     statements.push(
-      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW2} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
+      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW3} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
     );
   }
   let next = Math.max(0, ...steps.map((s3) => s3.ordinal));
@@ -90637,25 +90799,25 @@ function isCalendarDate(text4) {
 }
 function checkArgs(args) {
   if (!isCalendarDate(args.sent_on)) {
-    throw new ValidationError(`${TOOL4}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
+    throw new ValidationError(`${TOOL5}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
   }
   if (args.sent_copy_path === void 0 === (args.sent_copy_text === void 0)) {
-    throw new ValidationError(`${TOOL4} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
+    throw new ValidationError(`${TOOL5} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
   }
   if (args.sent_copy_path !== void 0) {
     if (![".eml", ".pdf", ".msg"].includes(extname(args.sent_copy_path).toLowerCase())) {
-      throw new ValidationError(`${TOOL4}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
+      throw new ValidationError(`${TOOL5}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync22(args.sent_copy_path)) throw new ValidationError(`${TOOL4}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync22(args.sent_copy_path)) throw new ValidationError(`${TOOL5}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
-    throw new ValidationError(`${TOOL4}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
+    throw new ValidationError(`${TOOL5}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
   }
 }
 async function submissionDataRecordSent(args, env = process.env) {
   checkArgs(args);
   const [filing] = rows5(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
-  if (filing === void 0) throw new NotFoundError(`${TOOL4}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL5}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
@@ -90674,7 +90836,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       "no_stored_text"
     );
   }
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL4, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL5, env);
   const held = unmetHeldCriteria(args.db_path, filing, latestInventory(args.db_path, filing, revision));
   const currency = unmetCurrencyCriterion(args.db_path, filing);
   if (currency !== null) held.push(currency);
@@ -90723,12 +90885,12 @@ async function submissionDataRecordSent(args, env = process.env) {
     statements.push(...gate.statements);
     if (waived.length > 0) {
       statements.push({
-        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW2} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
+        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW3} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
         params: [WAIVER2, args.send_anyway, ...job.params]
       });
     }
     statements.push({
-      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
+      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW3} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
       params: [...job.params, ...job.params],
       expect_changes: 1
     });
@@ -90737,8 +90899,8 @@ async function submissionDataRecordSent(args, env = process.env) {
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
-      { sql: `UPDATE ticket_steps SET done_at = ${NOW2} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
-      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW2}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
+      { sql: `UPDATE ticket_steps SET done_at = ${NOW3} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
+      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW3}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);
@@ -90769,14 +90931,14 @@ async function submissionDataRecordSent(args, env = process.env) {
 }
 
 // src/submission/forms/filed-write.ts
-var TOOL5 = "drafting_data__record_filed";
+var TOOL6 = "drafting_data__record_filed";
 function refused2(message, code) {
-  return new DataServerError(`${TOOL5}: ${message}`, code);
+  return new DataServerError(`${TOOL6}: ${message}`, code);
 }
 async function submissionDataRecordFiled(args, env = process.env) {
-  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL5}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
+  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL6}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
-  if (filing === void 0) throw new NotFoundError(`${TOOL5}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (filing === void 0) throw new NotFoundError(`${TOOL6}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused2(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused2(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused2(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
@@ -90784,7 +90946,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
     throw refused2(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL5, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL6, env);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -90813,19 +90975,19 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/assign-job.ts
-var TOOL6 = "drafting_data__assign_job";
-var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL7 = "drafting_data__assign_job";
+var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL6}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.takeover === true && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL6}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL7}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   if (args.takeover !== true && args.expected_holder !== void 0) {
-    throw new ValidationError(`${TOOL6}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL7}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
   const takeover = args.takeover === true;
   const live = liveTicketClause(args.db_path);
@@ -90835,11 +90997,11 @@ async function submissionDataAssignJob(args, env = process.env) {
   const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
   const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ?` : `status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const params = [args.session_token, args.ticket_id, ...takeover ? [args.expected_holder.trim()] : [], ...creatorHeld ? [args.session_token, args.session_token] : []];
-  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW3} WHERE id = ? AND ${guard}`, params }], env);
+  const written = await submissionDataWriteAll(args.db_path, [{ sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW4} WHERE id = ? AND ${guard}`, params }], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
   const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read2] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL6}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
@@ -90885,25 +91047,25 @@ function createdAny(dbPath, sessionToken) {
 }
 
 // src/submission/forms/approve-plan.ts
-var TOOL7 = "drafting_data__approve_plan";
-var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL8 = "drafting_data__approve_plan";
+var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL7}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const [job] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps FROM tickets WHERE id = ?", [id]).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL7}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job === void 0) throw new NotFoundError(`${TOOL8}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL8}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW4} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
+    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW5} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL7}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (changes === 1) {
@@ -93817,7 +93979,7 @@ function attachedDrafts(draftDir, section2) {
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync12 } from "node:fs";
 import { join as join25 } from "node:path";
-var STATUSES = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
+var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
 var RANK = { FILED: 3, SIGNED: 2, AFFIRMED: 2, SWORN: 2, UNFILED: 1, UNSIGNED: 0, UNSWORN: 0 };
@@ -93825,7 +93987,7 @@ var AFFIDAVIT_NAME = /^(\d{4}-\d{2}-\d{2}) AFF#?(\d+)(?: of)? (\S+)(.*)\.(?:pdf|
 function parseAffidavitName(fileName) {
   const m3 = AFFIDAVIT_NAME.exec(fileName);
   if (m3 === null) return null;
-  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES.includes(t3));
+  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES2.includes(t3));
   return { file_name: fileName, date: m3[1], number: m3[2], deponent_code: m3[3], status: markers.length > 0 ? markers[markers.length - 1] : null };
 }
 function deponentCode(name) {
@@ -94934,6 +95096,15 @@ header .meta.proceeding{gap:4px 6px}
 header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
+/* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
+   and collapse. Its body keeps the stored statement's indentation and line breaks; an inferred one is
+   italic under its caption, and a board with none says so in a muted line. */
+.goals .head .label{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
+.goals .goals-body{margin-top:14px;padding-top:12px;border-top:1px solid currentColor;font-size:13.5px}
+.goals .statement{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.goals[data-status="inferred"] .statement{font-style:italic}
+.goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
+.goals .none{margin:0;opacity:.75}
 .goal .deadline{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-top:6px;font-size:13.5px}
 .goal .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
 .goal .dflag{font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
@@ -94980,6 +95151,21 @@ var TAIL3 = String.raw`</script>
   }
   function stamp(value) {
     return value.replace("T", " ");
+  }
+  // A local minute stamp as a count of minutes, for differences only; null when it is not one.
+  function minutesOf(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(value);
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
+  }
+  // How long before the page's Rendered minute a stamp is, then the stamp itself.
+  function ago(value) {
+    var now = minutesOf(data.meta.rendered);
+    var then = minutesOf(value);
+    if (now === null || then === null) return stamp(value);
+    var e = Math.max(0, now - then);
+    var d = Math.floor(e / 1440), h = Math.floor((e % 1440) / 60), m = e % 60;
+    var text = d > 0 ? d + " d " + h + " h" : h > 0 ? h + " h " + m + " min" : m + " min";
+    return text + " ago (" + stamp(value) + ")";
   }
 
   if (!data) return;
@@ -95185,7 +95371,13 @@ var TAIL3 = String.raw`</script>
       }
 
       var dl = el("dl");
-      if (t.category === "wip") row(dl, "Since", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
+      // Progress is recorded progress only, so it agrees with the idle flag; Session active is the
+      // holder's end-of-turn stamp (jobs-run.md §6a), which is not progress; Taken is the lock.
+      if (t.category === "wip") {
+        row(dl, "Progress", t.last_activity_at === null ? "(none recorded)" : ago(t.last_activity_at), true);
+        if (t.active_at) row(dl, "Session active", ago(t.active_at), true);
+        row(dl, "Taken", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
+      }
       if (t.category === "completed" && t.completed_at) row(dl, "Completed", stamp(t.completed_at), true);
       row(dl, "Priority", String(t.priority), true);
       // A job superseded by another job, a stale gate job included (#907), says so only here.
@@ -95478,6 +95670,31 @@ var TAIL3 = String.raw`</script>
       card.appendChild(list);
       return card;
     }
+    // The statement of goals' card, labelled Goal, on every board, at the top of the section above the
+    // Completion Criteria card. Closed, it shows the description; open, the statement as stored. The
+    // server sends both finished, so the shell derives neither. Printing opens it, as it opens every
+    // details.goal.
+    function goalsCard(g) {
+      var card = el("details", "goal goals");
+      card.id = "goals";
+      card.setAttribute("data-status", g.status || "none");
+      var head = el("summary", "head");
+      head.appendChild(el("span", "sentence", g.description));
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "label", "Goal"));
+      card.appendChild(head);
+      var body = el("div", "goals-body");
+      if (g.statement === null) {
+        body.appendChild(el("p", "none", "No statement of goals yet"));
+      } else {
+        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
+        body.appendChild(el("p", "statement", g.statement));
+      }
+      card.appendChild(body);
+      return card;
+    }
+    board.appendChild(goalsCard(data.goals));
+
     if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
 
     // The filing's Writings, in its last render's document order, between the Goal card and Ready:
@@ -96141,7 +96358,7 @@ function fetchStatements(dbPath, proceedingId) {
     `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
             ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
             auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
      FROM statements_of_law sl
      JOIN authorities auth ON auth.id = sl.authority_id
      WHERE sl.proceeding_id = ?
@@ -96847,7 +97064,7 @@ function jobCardLines(t3, derived, seeds) {
     return [head, `  superseded by: ${t3.superseded_by === null ? "\u2014" : `#${t3.superseded_by.id}`} \xB7 reason: ${t3.superseded_reason ?? "\u2014"}`];
   }
   const holder = t3.locked_by === null ? "" : ` \xB7 holder: ${t3.locked_by.slice(-8)}`;
-  const locked = t3.category === "wip" ? ` \xB7 locked: ${t3.locked_at ?? "(unknown time)"}${holder} \xB7 last activity: ${t3.last_activity_at ?? "(unknown time)"}` : "";
+  const locked = t3.category === "wip" ? ` \xB7 taken: ${t3.locked_at ?? "(unknown time)"}${holder} \xB7 last activity: ${t3.last_activity_at ?? "(unknown time)"}${t3.active_at === null ? "" : ` \xB7 session active: ${t3.active_at}`}` : "";
   const lines2 = [head, `  kind: ${t3.kind} \xB7 priority: ${t3.priority}${locked}`, `  intent: ${t3.intent}`];
   if (t3.proposal_keys.length > 0) lines2.push(`  keys: ${t3.proposal_keys.map((key) => keyText(key, t3.proposal_items[key], derived)).join("; ")}`);
   lines2.push(`  scope: ${t3.scope.length === 0 ? "\u2014" : t3.scope.join(", ")} \xB7 waits on: ${edgeText(t3.blocked_by)} \xB7 either-or: ${edgeText(t3.conflicts)}`);
@@ -96877,6 +97094,13 @@ function criterionLine(c3, criteria, withItems) {
   const items = !withItems || c3.items.length === 0 ? "" : ` \u2014 ${c3.items.join("; ")}`;
   const after = c3.follows === void 0 || c3.follows.length === 0 ? "" : ` (after ${c3.follows.map((id) => criteria.find((p3) => p3.id === id)?.text ?? id).join(", ")})`;
   return `- ${CRITERION_GLYPH[c3.state]} ${c3.id}: ${c3.text}${after}${countText(c3)}${items}`;
+}
+function goalsHead(section2) {
+  return `Goal: ${section2.goals.description} (${section2.goals.status ?? "none"})`;
+}
+function goalsLines(section2) {
+  const g3 = section2.goals;
+  return [`## Goal (${g3.status ?? "none"})`, g3.description, ...g3.statement === null ? [] : [g3.statement]];
 }
 function goalLines(section2) {
   if (section2.goal === void 0) return [];
@@ -96915,7 +97139,7 @@ function renderBoardSummary(section2, client, todos) {
   const m3 = section2.meta;
   const matter = [m3.matter, client.matterDescription].filter((part) => part).join(" ");
   const header = [matter && `Matter ${matter}`, m3.client && `Client ${m3.client}${client.clientNo ? ` (${client.clientNo})` : ""}`, `Rev ${m3.revision}`];
-  const lines2 = [`# Job Board \u2014 ${header.filter((part) => part).join(" \xB7 ")}`, `To Do: ${todoText(section2, todos)}`];
+  const lines2 = [`# Job Board \u2014 ${header.filter((part) => part).join(" \xB7 ")}`, `To Do: ${todoText(section2, todos)}`, goalsHead(section2)];
   const criteria = section2.criteria ?? [];
   if (section2.goal === void 0 || criteria.length === 0) {
     const state = m3.state_since === null ? m3.state_label : `${m3.state_label} ${m3.state_since}`;
@@ -96946,7 +97170,7 @@ function renderLiveLanes(section2) {
   if (section2.lapsed_keys.length > 0) lines2.push(`\u{1F9F9} lapsed keys: ${section2.lapsed_keys.join(", ")}`);
   return lines2;
 }
-var CARD_LANES = ["criteria", "live", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"];
+var CARD_LANES = ["goals", "criteria", "live", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"];
 var ATTACHMENT_KIND_LABELS = { client_letter: "client letter", reply: "reply" };
 function attachedLines(attached) {
   return [
@@ -96988,6 +97212,7 @@ function renderBoardCard(section2, jobs2, lanes, key, seedsFromJobs, attached = 
   for (const lane of CARD_LANES) {
     if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== void 0)) continue;
     if (section2.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
+    if (lane === "goals") lines2.push(...goalsLines(section2));
     if (lane === "criteria") lines2.push(...goalLines(section2));
     if (lane === "live") lines2.push(...renderLiveLanes(section2));
     if (lane === "proposed") lines2.push(proposedHeading(section2), ...proposedOf(section2).flatMap(proposalLines));
@@ -98324,6 +98549,87 @@ function formCurrency(formKey, today2, seams = {}) {
   };
 }
 
+// src/submission/forms/citation-scan.ts
+var UNTRACKED_CITATION_TABLE = "untracked_citations";
+var YEAR = String.raw`(?:1[6-9]|20)\d{2}`;
+var NEUTRAL = String.raw`\b${YEAR}\s+(?=[A-Za-z]*[A-Z][A-Za-z]*[A-Z])[A-Z][A-Za-z]{1,7}\s+\d+\b`;
+var REPORTER = String.raw`[[(]${YEAR}[\])],?\s+(?:\d+\s+)?[A-Z][A-Za-z.&]*(?:\s+[A-Z][A-Za-z.&]*){0,2}(?:\s+\(\d+(?:st|nd|rd|th|d)\))?\s+\d+\b`;
+var STATUTE = String.raw`\b(?:R\.?\s?)?S\.?\s?(?:[A-Z]\.?){1,3}\s+${YEAR},?\s+c\.?\s*[A-Z]?-?\d+(?:\.\d+)?\b|\b[A-Z][A-Za-z]{0,3}\.?\s?Reg\.?\s+\d+\/\d{2,4}\b|\bSOR\/\d{2,4}-\d+\b`;
+var CITATION_RE = new RegExp(`${NEUTRAL}|${REPORTER}|${STATUTE}`, "g");
+var ITALIC_NAME_RE = /(?<![*_\w])([*_])(?![*_\s])((?:[^*_\n]+?\sv\.?\s[^*_\n]+?)|(?:(?:Re|Reference re)\s[^*_\n]+?))\1(?![*_\w])/g;
+function normalCitation(s3) {
+  return s3.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim();
+}
+function normalName(s3) {
+  return s3.toLowerCase().replace(/\bv\./g, "v").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+function lineHits(line) {
+  const names = [...line.matchAll(ITALIC_NAME_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, name: m3[2].trim() }));
+  const citations = [...line.matchAll(CITATION_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, citation: m3[0].trim() }));
+  const hits = [];
+  const joined = /* @__PURE__ */ new Set();
+  for (const n3 of names) {
+    const next = citations.findIndex((c3) => c3.start >= n3.end && /^[\s,]*$/.test(line.slice(n3.end, c3.start)));
+    if (next >= 0) {
+      joined.add(next);
+      hits.push({ text: `${n3.name}, ${citations[next].citation}`, name: n3.name, citation: citations[next].citation });
+    } else {
+      hits.push({ text: n3.name, name: n3.name, citation: null });
+    }
+  }
+  citations.forEach((c3, i3) => {
+    if (!joined.has(i3)) hits.push({ text: c3.citation, name: null, citation: c3.citation });
+  });
+  return hits;
+}
+function textHits(filedFace) {
+  const hits = [];
+  let fenced = false;
+  for (const line of filedFace.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced || /^\s*>/.test(line)) continue;
+    hits.push(...lineHits(line));
+  }
+  return hits;
+}
+function tracked(hit, rows21) {
+  if (hit.citation !== null) {
+    const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
+    if (rows21.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
+  }
+  if (hit.name !== null) {
+    const wanted = normalName(hit.name);
+    if (rows21.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
+  }
+  return false;
+}
+function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
+  const rows21 = submissionDataQuery(
+    dbPath,
+    "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
+    [proceedingId]
+  ).rows;
+  const seen = /* @__PURE__ */ new Set();
+  const lines2 = [];
+  for (const doc of docs) {
+    for (const hit of textHits(toFiledFace(doc.markdown))) {
+      const keys = [...hit.citation === null ? [] : [`c:${normalCitation(hit.citation)}`], ...hit.name === null ? [] : [`n:${normalName(hit.name)}`]];
+      const repeat = keys.some((k3) => seen.has(k3));
+      keys.forEach((k3) => seen.add(k3));
+      if (repeat) continue;
+      if (tracked(hit, rows21)) continue;
+      const item = `cited but not tracked: ${hit.text}`;
+      inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
+      lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
+    }
+  }
+  return lines2;
+}
+
 // src/submission/pre-filing/index.ts
 import { existsSync as existsSync27, readdirSync as readdirSync14, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
 import { basename as basename3, dirname as dirname13, isAbsolute as isAbsolute4, join as join28, resolve as resolve4 } from "node:path";
@@ -99199,7 +99505,14 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const stamp2 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
   const hit = stamp2 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(baseDir, stamp2, driftDigest));
   const finishMockup = (documents2, section3, renderedAt) => {
-    const tail = { ...report, ...sessionToken ? { session_token: sessionToken } : {}, rendered_at: renderedAt, ...currency ? { form_currency: currency } : {} };
+    const due = noteUpDue(section3.proposals);
+    const tail = {
+      ...report,
+      ...sessionToken ? { session_token: sessionToken } : {},
+      rendered_at: renderedAt,
+      ...currency ? { form_currency: currency } : {},
+      ...due.length > 0 ? { note_up_due: due } : {}
+    };
     if (projectionDir) {
       selectDocuments([...documents2, { document_type: "Work_board" }], documentTypes);
       refuseForeignMatterPages(dirname14(projectionDir), dbPath);
@@ -99330,6 +99643,12 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     const layout = layoutFor(filing);
     return { filing_id: filingId, revision, documents: selectDocuments(documents2, documentTypes), ...changed, ...layout ? { stored_layout: layout } : {}, timings: withTotal(timings, started) };
   }
+  const untracked = timed(
+    timings,
+    "citation_scan",
+    () => scanUntrackedCitations(dbPath, ctx.proceeding.id, built.filter((doc) => !NEVER_DELIVERED_DOCS.has(doc.documentType)), ctx.inventory)
+  );
+  if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
   timed(timings, "remove retired board files", () => {
     removeRetiredBoardFiles(mockupsRoot(dbPath));
     removeStaleWorkBoardMarkdown(baseDir);
@@ -99841,8 +100160,8 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL8 = "drafting_data__complete_job";
-var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL9 = "drafting_data__complete_job";
+var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read2, client, todos, dates) {
   try {
     let filingId = read2.filing_id;
@@ -99876,9 +100195,9 @@ function rewritePages(args, read2, client, todos, dates) {
   }
 }
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -99891,7 +100210,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
         params: [id, id, id, id, token]
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW5}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW6}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
         params: [id, token]
       }
     ],
@@ -99904,7 +100223,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL8}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL9}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read2.status === "completed" && read2.locked_by === null) {
@@ -99937,14 +100256,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL9 = "drafting_data__release_job";
+var TOOL10 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL9}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL10}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -99955,7 +100274,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read2] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read2 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read2 === void 0) throw new NotFoundError(`${TOOL10}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read2.locked_by !== null && (holder === null ? read2.locked_by === args.session_token : read2.locked_by.endsWith(holder));
   let outcome;
@@ -99987,6 +100306,48 @@ async function submissionDataReleaseJob(args, env = process.env) {
     note,
     ...written.warning ? { warning: written.warning } : {}
   };
+}
+
+// src/submission/forms/delete-job.ts
+var TOOL11 = "drafting_data__delete_job";
+var STAMP = "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND locked_by = ?))";
+async function submissionDataDeleteJob(args, env = process.env) {
+  const ids = args.ticket_ids;
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => Number.isInteger(id) && id > 0) || new Set(ids).size !== ids.length) {
+    throw new ValidationError(`${TOOL11}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
+  }
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    ids.map((id) => ({ sql: STAMP, params: [id, args.session_token] })),
+    env
+  );
+  const jobs2 = ids.map((id, i3) => {
+    const changes = written.ok ? written.results[i3].changes : 0;
+    const [read2] = submissionDataQuery(args.db_path, "SELECT status, locked_by, locked_at, rejected_at, deleted_at FROM tickets WHERE id = ?", [id]).rows;
+    if (read2 === void 0) {
+      return { ticket_id: id, outcome: "not_found", changes, status: null, locked_at: null, rejected_at: null, deleted_at: null, note: `No job ${id} in this database, so nothing was written for it.` };
+    }
+    let outcome;
+    let note;
+    if (changes === 1) {
+      outcome = "deleted";
+      note = `Job ${id} is deleted: it shows only as a struck line in the Job Board's Completed list, and restore job #${id} returns it as a Ready job with no lock.`;
+    } else if (read2.deleted_at !== null) {
+      outcome = "already_deleted";
+      note = `Job ${id} was deleted earlier (deleted_at ${read2.deleted_at}), so nothing was written.`;
+    } else if (read2.status === "wip" && read2.locked_by !== args.session_token) {
+      outcome = "held_elsewhere";
+      note = `Job ${id} is in progress in another session (locked at ${read2.locked_at ?? "(unknown time)"}), so it was not deleted and nothing was written. Say so in one line; never re-run.`;
+    } else {
+      outcome = "refused_status";
+      note = `Job ${id} is ${read2.status}, and a ${read2.status} job cannot be deleted, so nothing was written.`;
+    }
+    return { ticket_id: id, outcome, changes, status: read2.status, locked_at: read2.locked_at, rejected_at: read2.rejected_at, deleted_at: read2.deleted_at, note };
+  });
+  return { jobs: jobs2, ...written.warning ? { warning: written.warning } : {} };
 }
 
 // src/submission/open-session.ts
@@ -103242,7 +103603,7 @@ function skillRulesCoverage(skill) {
 
 // src/files/rules-position.ts
 var POSITION_SCHEMA_VERSION = 73;
-var NOW6 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
+var NOW7 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
 var MAIN = "main";
 var DB_FACTS = ["job_held", "job_steps"];
 var SESSION_FACTS = ["unattended", "host"];
@@ -103356,7 +103717,7 @@ function serve(composed, skill, prior) {
 async function logServed(dbPath, token, path, sent, env) {
   if (sent.length === 0) return null;
   const statements = sent.map(({ rule }) => ({
-    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW6})`,
+    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW7})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
   try {
@@ -103378,9 +103739,9 @@ function block(dag, composed, served, options) {
   if (options.logError !== null) extra.push(`  <log_error message="${xmlAttr(options.logError)}"/>`);
   return renderRules(dag, { ...composed, rules: served.sent }, { attrs, left: options.left, head, extra });
 }
-var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW6}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
-var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
-var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW6}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
+var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW7}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
+var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW7}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
+var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW7}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
 async function rulesMove(args, env = process.env) {
   const tool = "rules__move";
   checkArgs2(tool, args.db_path, args.session_token);
@@ -103460,7 +103821,7 @@ async function rulesMove(args, env = process.env) {
   ];
   if (entersOutOfBounds) {
     statements.push({
-      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW6})`,
+      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW7})`,
       params: [token, (stored ?? [skill]).join(" ")]
     });
   }
@@ -103607,7 +103968,7 @@ async function rulesBranch(args, env = process.env) {
     statements = [
       { sql: "DELETE FROM session_position WHERE session_token = ? AND branch = ?", params: [token, label] },
       {
-        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW6} WHERE session_token = ? AND branch = ?`,
+        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW7} WHERE session_token = ? AND branch = ?`,
         params: [JSON.stringify(served.inForce), token, MAIN]
       }
     ];
@@ -104776,8 +105137,8 @@ function sectionBlocks(chunks) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL10 = "research_filing__save_answer";
-var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL12 = "research_filing__save_answer";
+var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
@@ -104785,20 +105146,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL10} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named < 3) throw new ValidationError(`${TOOL12} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL12}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL10}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL12}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL10}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL12}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -104807,7 +105168,7 @@ async function saveAnswerTool(args, env = process.env) {
   try {
     written = await submissionDataWrite(
       dbPath,
-      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW7} FROM tickets WHERE id = ? AND locked_by = ?`,
+      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW8} FROM tickets WHERE id = ? AND locked_by = ?`,
       [lawRelativePath(saved.path), id, token],
       env
     );
@@ -104952,6 +105313,12 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "drafting_data__release_job") {
     return submissionDataReleaseJob(args);
+  }
+  if (name === "drafting_data__set_board_goal") {
+    return submissionDataSetBoardGoal(args);
+  }
+  if (name === "drafting_data__delete_job") {
+    return submissionDataDeleteJob(args);
   }
   if (name === "drafting_data__complete_job") {
     const { client, todos, dates } = await pageContext(context, args, true);
