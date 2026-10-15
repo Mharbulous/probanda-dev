@@ -11,6 +11,7 @@ sources:
   "folder_code": "SUB",
   "title": "Submissions package",
   "exhibit_numbering": "proceeding",
+  "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"]
 }
 ```

@@ -5,6 +5,7 @@
   "folder_code": "REQ",
   "title": "Requisition for consent order",
   "exhibit_numbering": "writing",
+  "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "companions": ["written-arguments"],
   "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"]
 }

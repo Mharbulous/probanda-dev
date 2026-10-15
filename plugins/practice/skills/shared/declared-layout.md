@@ -83,7 +83,7 @@ Both are closed and owned by the runtime. A name outside them fails.
 | `orders-positioned` | Every order the applicant asks for has a position |
 | `primary-authority` | Every proposition of law rests on primary authority |
 | `excerpts` | Every excerpt is quoted, pinpointed and checked |
-| `noting-up` | Every authority relied on is noted up |
+| `noting-up` | Note up all cited authorities |
 | `evidence` | Every fact is proved by evidence in hand |
 | `open-items` | Nothing is left open on the form |
 | `opposing-points` | Every opposing point is answered |
@@ -97,6 +97,8 @@ Both are closed and owned by the runtime. A name outside them fails.
 `recipients` is met once the Writing has a recipient it is addressed to, a `To` recipient, which `/drafting-data` records. Without one, a Writing with only `cc` recipients included, the general renderer prints the line `🧩 no To recipient` where the `To` lines go, rendered for the human and withheld from the filed face, and this criterion counts it. It is a held criterion: the pre-send hold keeps the Writing from being recorded as sent until it is met or waived. It never refuses the filed render. A Writing created before its type declared `recipients` keeps its stored layout and is not held on it; a re-snapshot picks the criterion up.
 
 On a `general` type, `open-items` also counts each 🧩 gap line the renderer prints: a part with no text, a projection with no rows, and a signer not chosen. It does not count `🧩 no To recipient` on a type that declares `recipients`, which counts it instead. So every `general` type that declares `goal_criteria` declares `open-items`, before `counsel-review`.
+
+`noting-up` counts 📇 on each authority's line and each citation in the Writing's text that no authority row tracks: a neutral, reporter or statute citation, with or without a pinpoint, and a case name in italics. The runtime's citation scan finds them on every document that goes to the forum or the recipient, and `/drafting-data`'s `references/filing-checklists.md` §6b defines it. Every type that can carry a citation declares `noting-up`, which is every type in `/draft`'s tree. A Writing created before its type declared it keeps its stored layout and is not held on it; a re-snapshot picks the criterion up.
 
 `hearing-date` is met once the Writing's hearing date is recorded, which `/drafting-data` records. It records a fact and is not a drafting criterion, so it never holds counsel's review, the filing-ready declaration or the gate.
 

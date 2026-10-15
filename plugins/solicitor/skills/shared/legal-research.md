@@ -360,6 +360,10 @@ job's title and intent count too. Put each offer in one class:
 | Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured, not relayed, counted |
 | On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`/drafting-data` §8 with a job held, §8a without), and relayed word for word |
 
+An offer tagged `kind: note-up` is not sorted: it is always captured as a loose thread, by
+the duplicate test above, and relayed word for word. It is never dropped and never becomes a
+job by §3i, even on "add".
+
 The sort reads what an offer is about, never whether it is right. It states no law and
 rewords nothing. It creates no job: an offer becomes a job only when the practitioner names
 it to add.
@@ -377,9 +381,12 @@ Then relay, in this order:
 2. Each captured offer, word for word.
 3. One line: `<c> offers captured as loose threads. <k> already on the board. <d> offers dropped as off this application.` Any count may be 0.
 4. One line saying they may name any relayed offer to add as a research job or to drop, and
-   that the rest stay on the board as loose threads.
+   that the rest stay on the board as loose threads. When any relayed offer is tagged
+   `kind: note-up`, the line also says that a note-up is added only in their own words, such
+   as "note up <case>".
 
 On "add", write that offer's job by §3i, which also consumes the thread this sort captured.
+On "add" of a `kind: note-up` offer, write nothing and say so in one line (§3i).
 On "drop", discard that thread by `/drafting-data` §8's drop write. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
 memo's words as advice on the draft.

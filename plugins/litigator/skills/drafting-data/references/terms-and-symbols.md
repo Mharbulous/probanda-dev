@@ -128,7 +128,7 @@ authority (×N)
 ├─ treatment                 # ⚠️ ⊕ 🚨 ⊕ ⛔ ⊕ ✅ ⊕ ∅ ; ∅ ⇒ 📇 on a case — the outcome of the check (`check` is an SQLite reserved word, never a column; #327)
 ├─ treatment_note            # text ⊕ ∅ — the note-up return's coverage line and any qualification, verbatim, replaced by each return; ∅ = the return gave neither; no marker
 ├─ currency_status           # current ⊕ repealed ⊕ archived ⊕ not-found ⊕ validation_unavailable ⊕ ∅ ; statute ⊕ regulation ⊕ rule only — the statute-currency check's result as /legal-research relayed it; ∅ = never checked; anything but current (∅ included) ⇒ 📇 (noting up a statute, regulation or rule, shared/statute-currency.md)
-├─ currency_checked_on       # 📅 ⊕ ∅ — when that result was relayed
+├─ currency_checked_on       # 📅 ⊕ ∅ — when that result was relayed; on a statute or regulation, a current result relayed more than 30 days ago (or on ∅) ⇒ 📇 again, a freshness window and never a deadline
 ├─ (best_copy)
 ├─ (reserve)                 # derived: supports nothing any document deploys ⇒ 🂡
 └─ killed_on                # 📅 ⊕ ∅ ; set ⇒ killed — its statements ride the brief-only cap; never re-proposed; no marker

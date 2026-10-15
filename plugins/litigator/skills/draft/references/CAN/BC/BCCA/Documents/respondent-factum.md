@@ -5,6 +5,7 @@
   "folder_code": "FACTUM",
   "title": "Respondent's factum",
   "exhibit_numbering": "writing",
+  "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"]
 }
 ```

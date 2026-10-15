@@ -250,7 +250,18 @@ turned up. The tag says only which question an offer serves, never what the law 
 a board, the caller sorts every offer against it (`shared/legal-research.md`, "After the
 answer"). With none, it relays the `yes` offers.
 
-Under each offer line, write two more lines, indented two spaces, so the tag stays at the
+Write ` kind: note-up` just before the ` live_issue:` tag on every offer whose work is
+noting up an authority, reading the cases that cite it, or a citator or KeyCite check. This
+includes an offer to check whether a later case changes a test when that case reached you
+only through a citator's list of citing cases. You set the tag when you write the offer, so
+no caller ever reads the offer's wording to decide it. A `kind: note-up` offer carries no
+`job:` or `steps:` line: no research offer becomes a note-up job (`/drafting-data` §3i).
+
+```
+Would you like me to note up the example case and read the two cases that cite it? kind: note-up live_issue: yes
+```
+
+Under each other offer line, write two more lines, indented two spaces, so the tag stays at the
 end of the offer's own line. They are the job the offer becomes if the practitioner adds it
 (`/drafting-data` §3i), which copies them character for character:
 
