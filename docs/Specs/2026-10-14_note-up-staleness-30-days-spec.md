@@ -72,3 +72,18 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 ## 10. Verify against HEAD before building
 
 Confirm: both `authorities` schemas; `last_verified_at`'s writers and meaning; where mcp/src computes 📇; how `parties.case_party_id` is linked and read, as the model for `case_authority_id`; the current schema versions of both stores.
+
+## 11. Verification against HEAD (2026-10-14, at 99b0274, limited to the authorized scope)
+
+| Item | Finding at HEAD |
+|---|---|
+| Where mcp/src computes 📇 | One predicate, `noteUpMarker(kind, treatment, currencyStatus)` in `source/practice/mcp/src/submission/forms/markers.ts`. It is called from the statement-of-law line (`law-statement-line.ts`) and the jurisdictional ladder (`markers.ts`, `jurisdictionEdgeMarker`). The Proposal inventory (`proposal-inventory.ts`) records 📇 from the printed glyphs, so it follows the predicate with no change. |
+| Kinds the predicate covers | `LEGISLATION_KINDS` = statute, regulation, rule: 📇 unless `currency_status = 'current'`. `doctrine`: never. Any other kind (a case): 📇 while `treatment` is NULL. |
+| Rows that feed the predicate | Four selects: `fetchFilingLaw` (`query.ts`), `fetchStatements` (`raw-research-page.ts`), `fetchSubmissionLaw` and `fetchJurisdictionEdges` (`render-vaniac-submissions.ts`). Each reads `auth.currency_status` and none reads `currency_checked_on`. |
+| How `currency_checked_on` is written | Drafting schema v34 (`migrations.sql`, MIGRATE 33 -> 34): a nullable DATE beside `currency_status`. `/draft` writes both after `/legal-research` relays the statute-currency result, `currency_checked_on` being the date relayed (`drafting-data/SKILL.md`, "Statute currency is a stored, relayed result"; `filing-checklists.md`, "Recording a statute-currency result"). The v35 trigger `clear_authorities_currency_on_rename` clears both on a rename. |
+| How `currency_checked_on` is read | Nowhere in mcp/src at HEAD. Only tests and skill text name it. |
+| Column always present for a readable database | Yes. Added at v34, and `forms.ts` reads nothing below `MIN_READABLE_SCHEMA_VERSION = 42`, so no column guard is needed. |
+| Drafting schema version | v76 (`drafting-data/SKILL.md`). Unchanged by this scope. |
+| Filed-render currency gate | `projections.ts` (`terms` projection) refuses a filed render on an implied clause whose enactment is not `current`. It is a separate gate from 📇 and is outside the authorized scope, so it is unchanged. |
+| Court Rules (kind `rule`) | ADR 0003 notes up a Court Rule at each Reliance on a rule, against its Venue source record, not on elapsed time. Step 6 of the court-rules plan has not landed (`shared/statute-currency.md` still lists rule under "Noting up legislation"). The window is therefore applied to statute and regulation only, and kind `rule` keeps its present rule. |
+| Existing tests | Several fixtures set `currency_status = 'current'` with a fixed `currency_checked_on` (`skill-population.db.test.mjs` 2026-10-04, `sent-write.db.test.mjs` 2026-09-28, `render-general.db.test.mjs`, `authority-fit.db.test.mjs`). Once such a date is more than 30 days old, a statute or regulation in them prints 📇. Tests were not run or changed (§8). |
