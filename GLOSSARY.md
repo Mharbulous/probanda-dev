@@ -91,6 +91,7 @@ terms:
   - Record
   - Recovery
   - Redirect
+  - Reliance on a rule
   - Representative
   - Reserve
   - Retire
@@ -123,6 +124,7 @@ terms:
   - Up-pointer
   - Variant
   - Venue
+  - Venue source record
   - Verified
   - Work marker
   - Writing
@@ -393,7 +395,7 @@ A time entry recorded against a matter with `billable` false: kept on the file, 
 _Avoid_: firm time, admin time (both mean no matter); write-off (a billed entry later forgiven, a different act).
 
 **Note up**:
-Vet an authority's subsequent treatment before relying on it — routine, mandatory before filing, law side only. Marked 📇 until done; the outcome lands in the authority's `treatment` column (⚠️ distinguishable, 🚨 negative treatment, ⛔ not good law, or clean). Distinct from **Doubt**. All of that is for a case: a statute, regulation or rule is noted up by its currency check alone, its outcome its currency result, and doctrine is never noted up (`.claude/skills/shared/statute-currency.md` → Noting up legislation).
+Vet an authority's subsequent treatment before relying on it — routine, mandatory before filing, law side only. Marked 📇 until done; the outcome lands in the authority's `treatment` column (⚠️ distinguishable, 🚨 negative treatment, ⛔ not good law, or clean). Distinct from **Doubt**. All of that is for a case: a statute or regulation is noted up by its currency check alone, its outcome its currency result; a provision of a **Rule Set** or a practice direction is noted up on **Reliance on a rule**, by its currency check and a word-for-word comparison of the text relied on with the source its **Venue source record** names; and doctrine is never noted up (`.claude/skills/shared/statute-currency.md` → Noting up legislation).
 _Avoid_: suspicious, dubious (those are Doubt); treatment (the outcome, not the act); check (as a column name); verify (that is whether a lead has been confirmed in hand).
 
 **Obiter dictum**:
@@ -491,6 +493,10 @@ _Avoid_: restore, reopen, un-retire.
 The permanent record that sends an old principle id to the id that replaced it, so that every id ever issued still resolves. In the pool it is a row in a separate table, one hop deep, and the lookup tool follows it without showing it. Existing redirects are kept. The revised structure makes none, because it links and never merges.
 _Avoid_: tombstone
 
+**Reliance on a rule**:
+Making a result depend on a provision of a **Rule Set** or a practice direction: quoting or reproducing it in a document, resting a paragraph, argument or submission on it, or calculating a date or deadline under it. Reading, searching or asking what a provision says is not reliance. Reliance is the point at which the provision must be **Noted up**.
+_Avoid_: relying party (the party who must establish an **Element**).
+
 **Representative**:
 The principle a **Variant** points at. In the pool it is a principle whose `variant_of` field is empty, and its cluster is that principle with every variant that points at it, one level deep. The word matters only where a variant points at the principle.
 
@@ -519,7 +525,7 @@ _Avoid_: bare "rule" where the same file also means a **Court Rule** or one of t
 
 **Rule Library**:
 The practitioner's own copy of the **Rule Sets** of the **Venues** they appear before, held on their machine, kept current against each publisher, and shared by all of the firm's matters rather than held in any one.
-_Avoid_: rules database; commons (the shared pool, which holds no Rule Set).
+_Avoid_: rules database; commons (the shared pool that practitioners contribute Rule Sets to, not the practitioner's own copy).
 
 **Rule Set**:
 One instrument of **Court Rules**, whole, as its publisher issues it: every **Consolidation part**, schedule, appendix and tariff. A Venue may work under several Rule Sets, and one Rule Set may serve several Venues.
@@ -613,6 +619,10 @@ A principle recorded, under the pool's earlier design, as another judge's wordin
 **Venue**:
 A body a lawyer appears before whose procedure a **Rule Set** governs: a court, an administrative tribunal or board, or an arbitral institution. It is named by its neutral-citation code where it has one, and otherwise by its full official name.
 _Avoid_: court, tribunal (each names one kind of Venue).
+
+**Venue source record**:
+A record, for one **Venue**, of the most authoritative online source for the current text of its **Rule Sets** and practice directions, the place where changes to them are first announced, and when announced changes come into force. It never holds rule text.
+_Avoid_: **Publisher map** (how one publisher issues instruments, whichever Venues use them).
 
 **Verified**:
 Describes whether the *extraction or classification* of a row has been quality-checked — nothing more. It does NOT mean the underlying fact is true, proven, admitted, or accepted by a court. A fact can be fully verified (the extraction accurately reflects what the source document says) while still being hotly disputed on the merits.
