@@ -1245,6 +1245,8 @@ def check_bundle_schema_ceiling(repo, plugin):
 
 
 def check_inverse_reference(repo, plugin):
+    if plugin["agents"] is not None and set(COMMONS_AGENTS) <= set(plugin["agents"]):
+        return True, f"{plugin['name']} ships the commons agents: " + ", ".join(COMMONS_AGENTS)
     needles = COMMONS_AGENTS
     inv_hits = []
     for s in sorted(roster(repo, plugin)):
@@ -1353,7 +1355,8 @@ CHECKS = (
     ("bundle-no-host-path: no dist bundle contains an absolute host path", check_bundle_no_host_path),
     ("bundle-schema-ceiling: the data bundle is built against the drafting-data migration source's "
      "target schema version", check_bundle_schema_ceiling),
-    ("inverse-reference: no roster skill or non-commons agent names a commons agent", check_inverse_reference),
+    ("inverse-reference: no roster skill or non-commons agent names a commons agent outside the plugin "
+     "that ships it", check_inverse_reference),
     ("shipped-tree-purity: the built plugin's skills folder is exactly the roster + extra-tree source "
      "(roster SKILL.md + preamble), VISION.md ships from source, with no host path or matter code "
      "over baseline", check_shipped_tree_purity),

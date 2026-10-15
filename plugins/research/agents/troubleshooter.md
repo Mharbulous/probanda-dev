@@ -62,9 +62,9 @@ exactly one, and never merge them:
   database or its API. The project is up and refused the request: a bad key, a schema not
   exposed, a missing function or grant. Report the message. Never tell the practitioner to
   resume the project.
-- **not configured.** The error message contains `is not configured`. Say so and point the
-  practitioner at the legal-commons plugin's `SETUP.md` § "Troubleshooting store
-  (optional)". Do not try to configure it: you hold no key and never ask for one.
+- **not configured.** The error message contains `is not configured`. Say that the
+  troubleshooting store is not set up and that the checklist comes from web search alone.
+  Do not try to configure it: you hold no key and never ask for one.
 - **unreachable.** Any other error: no answer came back. Diagnose from the error text:
   `fetch failed` or a 521 most likely means a paused free-tier project, so tell the
   practitioner to resume it in the Supabase dashboard. Retry once at most, then continue
