@@ -19,4 +19,4 @@ Procedural rules were looked up like case law, through /legal-research, and fetc
 - Whole-instrument retrieval reads every part's link off the publisher's own contents page and never guesses a part id. `sources__fetch` gains same-host link targets, and the publisher map gains the pattern for finding the contents page and its part links. legislation-fetcher uses the same step, so a regulation published in parts no longer stops it.
 - Library files are filed, searched and retired by `court_rules__*` tools in the `practice` data server, server-side, so rule text never passes through a model to be rewritten.
 - The docket-clerk's modelled deadline rules and rule periods stay separate. They model deadline logic, and the library holds text.
-- What, if anything, the legal commons pools for Rule Sets is not decided here.
+- What the legal commons holds for Rule Sets is decided in ADR 0002.
