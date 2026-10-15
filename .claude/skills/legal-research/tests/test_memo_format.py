@@ -1,18 +1,23 @@
 """Regression lock for the research answer's shape: a Memorandum of Law, with internal notes.
 
-The practitioner decided on 2026-10-05 that the audit agent writes the memo itself, with
-a fixed five-field header and a CREAC body (IRAC or CRAC only when asked), and that its
-internal notes (coverage line, confidence table, flags and offers) go to a scratchpad
-through `research_filing__write_scratch`, never into the saved memo. Inventory and
-note-up dispatches keep their own shapes.
+The practitioner decided on 2026-10-05 that the audit agent writes the memo itself, and
+that its internal notes (coverage line, confidence table, flags and offers) go to a
+scratchpad through `research_filing__write_scratch`, never into the saved memo. On
+2026-10-15 the header and body skeletons moved to `shared/research-memo-template.md`, with
+a fuller header and a CRAC body (IRAC or CREAC only when asked), and the agent returns
+`Confidence:`, `Notes scratch:` and `Memo scratch:` lines instead of the memo's text.
+Inventory and note-up dispatches keep their own shapes.
 """
 import unittest
 from pathlib import Path
 
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
-HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "To:", "Date:", "Re:", "---"]
-CREAC = "`## Conclusion`, `## Rule`, `## Explanation`, `## Application`, `## Conclusion`"
+HEADER = ["---", "Document: MEMORANDUM OF LAW", "Privilege: PRIVILEGED AND CONFIDENTIAL", "To:",
+          "From:", "Matter:", "Date:", "Re:", "Format:", "Confidence:", "---"]
+CRAC = "```\n## Conclusion\n## Rule\n## Application\n## Conclusion\n```"
+IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
+CREAC = "```\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
 BRIEF_BLOCK = """```
 <criterion> — FOUND / GAP
   authority: <full citation>, <pinpoint>     (omit if GAP)
@@ -40,23 +45,27 @@ def step_six():
 
 
 class ProtocolStepSixTests(unittest.TestCase):
-    def test_memo_opens_with_the_five_field_header(self):
-        lines = [line.strip() for line in step_six().splitlines()]
+    def test_memo_opens_with_the_template_header(self):
+        self.assertIn("Fetch `shared/research-memo-template.md`", flat(step_six()))
+        lines = [line.strip() for line in read("research-memo-template.md").splitlines()]
         start = lines.index("Document: MEMORANDUM OF LAW") - 1
         found = lines[start:start + len(HEADER)]
         self.assertEqual(len(found), len(HEADER))
         for expected, line in zip(HEADER, found):
             self.assertTrue(line.startswith(expected), f"{line!r} should start with {expected!r}")
 
-    def test_body_is_creac_in_order(self):
-        self.assertIn(CREAC, flat(step_six()))
+    def test_body_is_crac_in_order(self):
+        template = read("research-memo-template.md")
+        self.assertIn("**CRAC**, the default:\n\n" + CRAC, template)
+        self.assertIn(IRAC, template)
+        self.assertIn(CREAC, template)
 
-    def test_irac_and_crac_only_after_memo_template(self):
-        text = step_six()
-        template = text.index("Memo template:")
-        for word in ("IRAC", "CRAC"):
-            self.assertIn(word, text)
-            self.assertGreater(text.index(word), template, f"{word} is named before `Memo template:`")
+    def test_irac_and_creac_only_when_asked(self):
+        self.assertIn("The body uses CRAC unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
+                      flat(step_six()))
+        template = read("research-memo-template.md")
+        for word in ("IRAC", "CREAC"):
+            self.assertIn(f"**{word}**, only when the spawn prompt's `Memo template:` names it:", template)
 
     def test_application_uses_only_the_spawn_facts_and_defers_to_apply_to_facts(self):
         application = between(flat(step_six()), "Application compares", "Mixed coverage")
@@ -73,8 +82,10 @@ class ProtocolStepSixTests(unittest.TestCase):
         text = flat(step_six())
         self.assertIn("also save the memo, from its `---` line to its last line and nothing else", text)
         self.assertIn("`<File stem> memo.md`", text)
-        self.assertIn("`Memo scratch: <the path the tool returned>` between the notes and the memo's `---` line", text)
-        self.assertIn("If the tool refuses, leave that line out", text)
+        self.assertIn("Memo scratch: <the path the tool returned for the memo>", text)
+        self.assertIn("If the tool refuses either save, leave that file's line out, give its refusal code, "
+                      "and return that section in full in its place: the notes before the memo, "
+                      "and the memo from its `---` line to its end.", text)
 
     def test_memo_carries_no_confidence_table(self):
         self.assertIn("No coverage line and no confidence table anywhere in the memo", flat(step_six()))
