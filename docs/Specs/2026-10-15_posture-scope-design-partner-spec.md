@@ -72,3 +72,16 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - `shared/paralegal-posture.md`'s header and §1 still read as quoted in §2.
 - Spec `2026-10-14_goal-statement-elicitation-in-paralegal-posture-spec.md` also edits this file: check its status and avoid conflicting edits.
 - No existing design or plugin-discussion posture file.
+
+## 11. Verification against HEAD (2026-10-15, at 27a921a)
+
+| Check | Result | Evidence |
+|---|---|---|
+| `shared/paralegal-posture.md` header reads as quoted in §2 | Holds | `.claude/skills/shared/paralegal-posture.md` line 3: "Shared doctrine for any skill that elicits a filing's substance from the practitioner." No statement of when it does not apply. |
+| §1 reads as quoted in §2 | Holds, with one added sentence | §1 still reads "The practitioner therefore originates every idea, position, figure and strategic call" and "What you never do: state the law, choose strategy, estimate a figure, or answer a pause with a suggestion." 14689b5 added a closing sentence pointing to section 3b. |
+| `draft` SKILL.md doctrine table binds the posture to "The whole of elicitation" | Holds | `.claude/skills/draft/SKILL.md` §3 Doctrine bindings, Paralegal posture row. |
+| Other doctrine tables citing the posture | One more, different wording | `.claude/skills/prepare/SKILL.md` §9 Doctrine bindings binds it to "The whole interview." It does not say "the whole of elicitation", so per §4.5 it relies on the scope section. No match under `source/`. |
+| Spec `2026-10-14_goal-statement-elicitation-in-paralegal-posture-spec.md` status and overlap | Landed as 14689b5; no conflict | That commit added §3b, an exception in §4 and a pointer in §1. This spec adds an unnumbered scope section above §1 and leaves §1 to §8 unchanged, so section numbers cited elsewhere ("section 3", "section 3b") still hold. |
+| Specs A (a79f681) and B (b0abe88, 7be7b85) edits to §3 | Intact, untouched | §3 fourth paragraph carries the held-job title carve-out and the pickup-review carve-out. B decided paste-to-adopt for plan upgrades (`shared/job-planning.md` §3), so no carve-out is added here. |
+| No existing design or plugin-discussion posture file | Holds | `.claude/skills/shared/` holds only `paralegal-posture.md` matching `*posture*`; no file mentions a design-partner posture. |
+| §9 Q1: where the design-partner file lives | Decided (default, 2026-10-15) | `.claude/skills/shared/design-partner-posture.md`. `shared/` is copied into all five plugins, so it is practice-wide. `scripts/check_layering.py` lists `shared/` references and never fails on them. |
