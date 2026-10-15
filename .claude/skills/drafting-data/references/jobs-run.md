@@ -103,6 +103,15 @@ UPDATE tickets SET title = 'Reply to the letter of 3 May'
 
 Every statement carries the same guard, so either all of them write or none does. Each title and step is an unbroken run of the job card's own words as a `drafting_forms__*` result printed them this session, which the practitioner-words gate passes; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced. Confirm-read the title and the steps in order: anything but the written text assigns nothing and re-renders.
 
+**The held-job title cleanup.** `/draft`'s title spelling cleanup (`draft/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. The pickup rewrite's guard matches no row there, so the write is a title-only `UPDATE` under this section's guard, through `drafting_data__execute`, and nothing else in the script:
+
+```sql
+UPDATE tickets SET title = 'Reply to the letter of 3 May'
+  WHERE id = 2 AND locked_by = 'sess-a1';
+```
+
+It touches no step and no stamp. The title is the card's title with only a misspelled word corrected, word for word, which the practitioner-words gate passes as a spelling correction of the printed card. Then run the confirm-read below and read it as below.
+
 If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above.
 
 **The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
