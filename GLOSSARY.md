@@ -334,7 +334,7 @@ The per-Writing page (`Job Board <id>.html` at the top of the draft folder) rend
 _Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
 
 **Lawyer account**:
-One verified, currently practising lawyer's identity with Probanda, matched to that lawyer's law-society directory record. It owns the lawyer's keys, one for each device, and every shared service (the legal commons, the Suggestion Box, the troubleshooting store) answers only a key that belongs to a live account. A firm's lawyers each have their own account, and all of them work in their practice's one tenant.
+One verified, currently practising lawyer's identity with Probanda, matched to that lawyer's law-society directory record. It owns the lawyer's keys, one for each device, and every shared service (the legal commons, the Suggestion Box, the troubleshooting store) accepts only a key that belongs to a live account. A firm's lawyers each have their own account, and all of them work in their practice's one tenant.
 _Avoid_: user (also means anyone using the plugin, including staff); install key (one device's key, owned by the account); tenant (the practice, not the person).
 
 **Leading document**:
