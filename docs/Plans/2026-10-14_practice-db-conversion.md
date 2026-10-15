@@ -1,6 +1,6 @@
 # Plan: convert practice.db to comply with Commandments 4 and 5
 
-> **Do not rebuild the data bundle until step 7.** Step 5's source is on `main`. A data bundle built from it refuses every practice.db not yet migrated and sends practice writes to Probanda's Cloud. The next build of `source/practice/mcp/dist/` must be the step 7 release, with Brahm present for the migration. Steps 1 to 5 are done (2026-10-14).
+> **Do not rebuild the data bundle until step 7.** Step 5's source is on `main`. A data bundle built from it refuses every practice.db not yet migrated and sends practice writes to Probanda's Cloud. The next build of `source/practice/mcp/dist/` must be the step 7 release, with Brahm present for the migration. Steps 1 to 6 and 8 are done (2026-10-14). Steps 7, 9 and 10 wait for Brahm.
 
 Written 2026-10-14. On completion, practice-data is the first legacy store to leave the list in Exception 4 of `COMMANDMENTS.md`.
 
