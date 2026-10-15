@@ -13,7 +13,8 @@ this script.
     refused   {"problems": [str, ...]}            nothing is to be written
     accepted  {"params": {"doc": <json text>},
                "statements": [{"sql", "refuse"?, "count"?, "value_as"?, "rows_as"?}],
-               "treats_prior": <the result's treats_prior, or null>}
+               "treats_prior": <the result's treats_prior, or null>,
+               "held_back": [<link the local store cannot hold>, ...]}
 
 A statement marked `refuse` is a guard: any row it returns is a reason to write
 nothing. `count` names the table the statement inserts into and how many rows
@@ -40,6 +41,8 @@ What the statements do, in Path D's order, in one transaction:
               holds is skipped.
 
 Treatments are not written here: `treats_prior` is returned for the caller.
+A link whose relationship the local CHECK cannot hold is not written either:
+it is returned under `held_back`, with its relationship, for the practitioner.
 The provision extractor's result is the same shape with fewer keys, and an
 absent key is stored as NULL. Standard library only.
 
@@ -59,7 +62,17 @@ AUTHORITY_TYPES = ('case_law', 'statute', 'regulation', 'treatise', 'other')
 CONCEPT_TYPES = {'cause of action': 'cause_of_action', 'doctrine': 'doctrine',
                  'legal test': 'test', 'defence': 'defence', 'remedy': 'remedy'}
 REQUIREMENT_TYPES = {'mandatory element': 'element', 'weighed factor': 'factor'}
-RELATIONSHIPS = ('establishes', 'refines', 'applies', 'distinguishes', 'affirms')
+# Relationship code values. Their definitions are in
+# .claude/skills/shared/treatment-vocabulary.md and nowhere else (design:
+# docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md, ADR 0006).
+# The extractor may give any principle-link value; the relationship CHECK holds
+# only STORABLE_RELATIONSHIPS, so a link with any other value is held back and
+# reported, never remapped.
+RELATIONSHIPS = ('establishes', 'extends', 'reformulates', 'follows', 'applies', 'approves',
+                 'explains', 'harmonizes', 'refers_to', 'considers', 'distinguishes', 'limits',
+                 'declines_to_extend', 'declines_to_follow', 'declines_to_apply', 'questions',
+                 'disapproves', 'overrules', 'departs_from', 'abrogates', 'superseded_by_statute')
+STORABLE_RELATIONSHIPS = ('establishes', 'applies', 'distinguishes')
 
 _AUTHORITY = """(SELECT min(a.authority_id) FROM law.authorities a
         WHERE a.file_hash = json_extract(:doc, '$.authority.file_hash')
@@ -255,7 +268,7 @@ def plan(request):
         'loss_description': read.text(doc, 'loss_description', 'result'),
     }
 
-    concepts, links, by_concept, offered = [], [], {}, 0
+    concepts, links, held_back, by_concept, offered = [], [], [], {}, 0
     for i, entry in enumerate(doc['concepts']):
         where = f'concepts[{i}]'
         if not isinstance(entry, dict):
@@ -272,14 +285,18 @@ def plan(request):
                 'in_force_date': read.text(entry, 'in_force_date', where),
                 'repeal_date': read.text(entry, 'repeal_date', where),
             })
-            links.append({
+            link = {
                 'name': key[0], 'jurisdiction': key[1], 'relationship': relationship,
                 'proposition': read.text(entry, 'authority_proposition', where),
                 'finding': read.text(entry, 'authority_finding', where),
                 'factual_context': read.text(entry, 'factual_context', where),
                 'obiter': read.text(entry, 'obiter', where),
                 'order_terms': read.text(entry, 'order_terms', where),
-            })
+            }
+            if relationship is None or relationship in STORABLE_RELATIONSHIPS:
+                links.append(link)
+            else:
+                held_back.append(link)
         rows = entry.get('criteria') or []
         if not isinstance(rows, list):
             problems.append(f'{where}.criteria must be a list')
@@ -353,10 +370,12 @@ def plan(request):
             {'sql': INSERT_CONCEPTS, 'count': {'table': 'legal_concepts', 'of': len(concepts)}},
             {'sql': SELECT_STUBS, 'rows_as': 'stubs'},
             {'sql': INSERT_STUBS, 'count': {'table': 'legal_concepts', 'of': len(determined_by)}},
-            {'sql': INSERT_LINKS, 'count': {'table': 'concept_authorities', 'of': len(doc['concepts'])}},
+            {'sql': INSERT_LINKS, 'count': {'table': 'concept_authorities',
+                                            'of': len(doc['concepts']) - len(held_back)}},
             {'sql': INSERT_CRITERIA, 'count': {'table': 'legal_criteria', 'of': offered}},
         ],
         'treats_prior': doc.get('treats_prior'),
+        'held_back': held_back,
     }
 
 

@@ -47,6 +47,10 @@ estoppel"), never with the named parties of this precedent.
   other part of the output contract is unchanged.
 - `{{RESULT_PATH}}`: optional; the absolute path of a scratch file outside the
   matter tree. Absent means you write no file and reply with the JSON object.
+- `{{TREATMENT_VOCABULARY}}` — the whole text of `shared/treatment-vocabulary.md`,
+  supplied by the caller. It defines every relationship and treatment value.
+  Use only its definitions. It is required: without it, write nothing and reply
+  with one line, `failed no TREATMENT_VOCABULARY`.
 
 ## Behavior
 
@@ -85,12 +89,16 @@ estoppel"), never with the named parties of this precedent.
 5. Identify treatment of **prior authority**: where this court affirms, reverses,
    varies, distinguishes, or overrules an earlier decision, record it in
    `treats_prior` with the prior decision's citation and title and the treatment
-   and scope.
+   and scope. Each treatment means what `{{TREATMENT_VOCABULARY}}` defines.
 6. Use **plain-language descriptors** (the main agent maps them to the schema):
    - concept kind: `cause of action | doctrine | legal test | defence | remedy`
    - requirement kind: `mandatory element | weighed factor`
-   - authority role: how this authority relates to the concept (establishes /
-     refines / applies / distinguishes / affirms)
+   - authority role: what this authority does for the concept. Choose the one
+     principle-link value whose definition in `{{TREATMENT_VOCABULARY}}` fits
+     ("Where each value is valid"). Never `affirms`, `varies` or `reverses`,
+     which are appellate history, never `answered`, and never "overturns". Give
+     the value that fits even when the local store cannot hold it: the caller
+     holds such a link back and reports it.
    - burden of proof: plain phrases (e.g. `balance of probabilities`).
 7. **Case-level capture — unconditional.** Regardless of `{{LEGAL_CONTEXT}}` and
    `{{ISSUE_SCOPE}}`, capture for every decision:
@@ -193,7 +201,7 @@ Facets:
       "jurisdiction": "string or null",
       "in_force_date": "YYYY-MM-DD or null",
       "repeal_date": "YYYY-MM-DD or null",
-      "authority_role": "establishes | refines | applies | distinguishes | affirms",
+      "authority_role": "one principle-link value from TREATMENT_VOCABULARY",
       "authority_proposition": "string — transportable rule, no parties, no outcome",
       "authority_finding": "string — the court's answer on these facts, legal-category level, no named parties, or null",
       "factual_context": "string — this precedent's facts at legal-category level, or null",

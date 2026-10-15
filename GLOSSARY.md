@@ -118,6 +118,7 @@ terms:
   - Test
   - Theorized Fact
   - To-do
+  - Treatment
   - Tribunal member
   - Unattended run
   - Unless-admitted guard
@@ -603,6 +604,10 @@ A fact **theorized for the purpose of investigation** — a fact the case theory
 **To-do**:
 One row of the practitioner's task registry (`/task-prioritization`), client, admin or professional work, larger than a job. A to-do is one outcome the practitioner would cross off. The work toward it is jobs on its Writing's Job Board, never further to-dos. "To-do" is its visible name everywhere. It may carry a BF (bring-forward) date, the date its work should start and never time remaining, and a deadline, which drafting sessions never see. It may point to one Writing or pre-filing proceeding of its own matter, and it holds no jobs. A Writing has at most one open to-do within its matter. A to-do entered in error or merged into another is `withdrawn`: kept, never open and never completed. Internal names are unchanged: the `practice_tasks` table, the `/task-prioritization` skill and the task tools.
 _Avoid_: task (internal names only); job (one unit of session work on a Job Board).
+
+**Treatment**:
+What one authority does to a **Principle** or to another authority: follows, applies, distinguishes, overrules and the rest. Probanda records treatment per principle, on the link between an authority and a principle, so one case can follow one principle of a precedent and distinguish another. Citators record it per case. Every value and its definition are in `.claude/skills/shared/treatment-vocabulary.md` and nowhere else. Why Probanda departs from the citator norm: `docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md`.
+_Avoid_: overturns (say overrules, reverses or superseded by statute); affirms for endorsing a principle (it means appellate history only: say approves or follows); considers and not_considered as opposites (considers is fact comparison, not_considered the oral-reasons note).
 
 **Tribunal member**:
 A decision-maker or registry officer the matter deals with: a judge, associate judge, arbitrator, tribunal member or registrar. A participant, never a party, with no role in a proceeding's style of cause.

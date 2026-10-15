@@ -53,7 +53,7 @@ interface PlannedStatement extends CaseStatement {
 
 type AuthorityPlan =
   | { problems: string[] }
-  | { params: Record<string, unknown>; statements: PlannedStatement[]; treats_prior: unknown };
+  | { params: Record<string, unknown>; statements: PlannedStatement[]; treats_prior: unknown; held_back: unknown[] };
 
 export type AuthorityIngest =
   | {
@@ -65,6 +65,9 @@ export type AuthorityIngest =
       stubs: Array<{ name: string; jurisdiction: string | null }>;
       /** The result's own treats_prior, unwritten: treatments stay with case_data__execute. */
       treats_prior: unknown;
+      /** Links unwritten because the relationship CHECK cannot hold their value
+       *  (shared/treatment-vocabulary.md). Reported to the practitioner, never remapped. */
+      held_back: unknown[];
       evidence_sql: string;
       warning?: string | null;
     }
@@ -106,6 +109,7 @@ export async function ingestAuthority(request: AuthorityIngestRequest, env: Node
     ...(named as { authority_id: number; stubs: Array<{ name: string; jurisdiction: string | null }> }),
     counts,
     treats_prior: plan.treats_prior ?? null,
+    held_back: plan.held_back ?? [],
     evidence_sql: done.evidence_sql,
     warning: done.warning,
   };

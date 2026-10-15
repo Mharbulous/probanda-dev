@@ -1,5 +1,5 @@
 import { type FieldDefinition } from "./registry.js";
-import { EDGE_TREATMENT_VALUES, TREATMENT_VALUES } from "./legal-commons/tools.js";
+import { EDGE_TREATMENT_VALUES, RELATIONSHIP_VALUES, TREATMENT_VALUES } from "./legal-commons/tools.js";
 
 export interface ToolDefinition {
   name: string;
@@ -105,7 +105,8 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
     {
       name: legalCommonsPrefixed("push"),
       description:
-        "Publish one generalized, matter-free principle to the shared pool in a single transaction: mint the principle, attach authorities (upsert by citation), replace criteria by order, and optionally link it as a variant. Returns the minted cloud principle id. Matter-free by signature — there is no matter_id.",
+        "Publish one generalized, matter-free principle to the shared pool in a single transaction: mint the principle, attach authorities (upsert by citation), replace criteria by order, and optionally link it as a variant. Returns the minted cloud principle id. Matter-free by signature — there is no matter_id. " +
+        `Each authority's \`relationship\` is one of: ${RELATIONSHIP_VALUES.join(", ")}; its \`treatment\` stamp is one of: ${EDGE_TREATMENT_VALUES.join(", ")}.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -178,7 +179,8 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
     {
       name: legalCommonsPrefixed("amend_authority_edge"),
       description:
-        "Correct what an existing principle-authority edge asserts about its authority — the proposition it is cited for, the finding, the relationship, or whether it is obiter. Pass only the fields to change. Use when an edge misstates what the case actually held.",
+        "Correct what an existing principle-authority edge asserts about its authority — the proposition it is cited for, the finding, the relationship, or whether it is obiter. Pass only the fields to change. Use when an edge misstates what the case actually held. " +
+        `\`relationship\` is one of: ${RELATIONSHIP_VALUES.join(", ")}.`,
       inputSchema: objectSchema([
         { name: "principle_id", type: "str" },
         { name: "authority_id", type: "str" },
@@ -191,7 +193,8 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
     {
       name: legalCommonsPrefixed("link_authority"),
       description:
-        "Attach an already-pooled authority to an already-pooled principle. Fails if the edge already exists — amend the existing edge rather than re-linking.",
+        "Attach an already-pooled authority to an already-pooled principle. Fails if the edge already exists — amend the existing edge rather than re-linking. " +
+        `\`relationship\` is one of: ${RELATIONSHIP_VALUES.join(", ")}.`,
       inputSchema: objectSchema([
         { name: "principle_id", type: "str" },
         { name: "authority_id", type: "str" },

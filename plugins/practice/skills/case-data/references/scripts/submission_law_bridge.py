@@ -57,8 +57,10 @@ ORAL_TREATMENTS = ('follows', 'distinguishes', 'declines_to_follow', 'not_consid
 STYLE_OF_CAUSE_RE = re.compile(r'\sv\.?\s', re.IGNORECASE)
 
 # `answered` is absent on purpose: only an opposing authority's tie writes it (#48).
-VALID_RELATIONSHIPS = ('establishes', 'refines', 'applies', 'distinguishes',
-                       'affirms')
+# The relationship values the local CHECK can hold. Their definitions are in
+# .claude/skills/shared/treatment-vocabulary.md (design:
+# docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md, ADR 0006).
+VALID_RELATIONSHIPS = ('establishes', 'applies', 'distinguishes')
 
 
 class Refused(ValueError):

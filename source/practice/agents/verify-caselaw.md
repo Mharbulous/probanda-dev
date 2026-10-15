@@ -73,6 +73,10 @@ carry no imported facts or parties.
   factual_context, obiter, order_terms, verified); linked criteria (`criterion_id`
   and current fields); and authority treatments in **both directions** with both
   authority ids. Reference rows only by the supplied ids.
+- `{{TREATMENT_VOCABULARY}}` — the whole text of `shared/treatment-vocabulary.md`,
+  supplied by the caller. It defines every relationship and treatment value.
+  Use only its definitions. It is required: without it, write nothing and reply
+  with one line, `failed no TREATMENT_VOCABULARY`.
 
 ## Behavior
 
@@ -185,7 +189,7 @@ carry no imported facts or parties.
       "concept_kind": "cause of action | doctrine | legal test | defence | remedy",
       "description": "string",
       "jurisdiction": "string or null",
-      "authority_role": "establishes | refines | applies | distinguishes | affirms",
+      "authority_role": "one principle-link value from TREATMENT_VOCABULARY",
       "authority_proposition": "string — transportable rule, no parties",
       "authority_finding": "string — court's answer, legal-category level, no named parties, or null",
       "factual_context": "string — this precedent's facts at legal-category level, or null",

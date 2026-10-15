@@ -294,7 +294,8 @@ from the extractor. Step 2's dispatch-path and unavailability rules apply here
 unchanged — never substitute another agent, and an unavailable, failed or malformed
 verifier leaves this authority's rows, stamp and marker untouched.
 Provide the resolved document, `LEGAL_CONTEXT` containing questions of law only,
-optional `ISSUE_SCOPE`, and the D2 payload as `EXISTING_DATA`. Never pass party names
+optional `ISSUE_SCOPE`, the D2 payload as `EXISTING_DATA`, and `TREATMENT_VOCABULARY`
+(the whole text of `../../shared/treatment-vocabulary.md`). Never pass party names
 or the style of cause.
 
 **Validate the returned JSON completely before any write.** Reject the whole

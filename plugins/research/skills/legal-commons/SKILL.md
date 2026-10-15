@@ -145,19 +145,25 @@ authority row; vary the formatting and the pool gains a duplicate that only
 `legal_commons__merge_authority` can undo. An authority may not treat itself, and
 the treated authority must already be pooled.
 
-**Two vocabularies, two tenses, not interchangeable:**
+**The vocabulary.** Every `relationship`, `treatment` and `edge_treatment` value,
+its definition, and which column takes it are in
+[`../shared/treatment-vocabulary.md`](../shared/treatment-vocabulary.md) and
+nowhere else. Read it before writing any of them. Probanda records treatment per
+principle, not per case, which departs from every citator
+(`docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md`).
 
-- `treatment` — **present tense**, what the treating decision *does*: `affirms`,
-  `reverses`, `varies`, `distinguishes`, `overrules`, `follows`,
-  `declines_to_follow`, `not_considered`. This is the treatment edge's own value
-  and is always required.
+**Two tenses, not interchangeable:**
+
+- `treatment` — **present tense**, what the treating decision *does*. This is
+  the treatment edge's own value and is always required. Treatment of one
+  principle goes on the treating authority's principle edge (`relationship`); the
+  treatment edge records events about a whole decision.
 - `edge_treatment` — **past tense**, what has *been done* to the treated
-  authority: `affirmed`, `reversed`, `varied`, `distinguished`, `overruled`. It
-  stamps every pooled principle edge standing on the treated authority, so pass
-  it only where the treatment really does change what those principles now stand
-  on. **Oral treatment notes pass no `edge_treatment`** — an account of what a
-  judge said orally records the treatment edge and nothing more (design decision
-  D4/D7).
+  authority. It stamps every pooled principle edge standing on the treated
+  authority, so pass it only where the treatment really does change what those
+  principles now stand on. **Oral treatment notes pass no `edge_treatment`** — an
+  account of what a judge said orally records the treatment edge and nothing more
+  (design decision D4/D7).
 
 `scope` narrows a treatment to part of a decision — a case distinguished on its
 facts is not a case overruled, and saying so in `scope` is what keeps the pooled

@@ -127,7 +127,8 @@ No hash and no citation match → extract as fresh.
 5. **Verify concept completeness before linking.** Cross-check every concept name the JSON references — including any `determined_by_concept_name` — against the concepts actually created, and create any straggler first, so no link or criterion points at a missing concept.
 6. **Link each concept to the authority** with its relationship, proposition, finding,
    factual context, obiter flag, and `order_terms`. A link that already exists is a
-   no-op, not an error.
+   no-op, not an error. A link whose relationship the local store cannot hold is not
+   written: report it to the practitioner (`../../shared/treatment-vocabulary.md`).
 7. **Insert criteria** for each concept:
    - resolve `determined_by_concept_name` to its concept; if absent, create a stub `test` concept first and link it (nesting is **one hop** only);
    - keep the subagent's order for a new concept; for a **reused** concept, continue after its highest existing criterion order;
@@ -142,7 +143,7 @@ Subagents speak plain descriptors; the main agent maps each to a stored value (t
 |---|---|
 | `cause of action` \| `doctrine` \| `legal test` \| `defence` \| `remedy` | concept type `cause_of_action` \| `doctrine` \| `test` \| `defence` \| `remedy` |
 | `mandatory element` \| `weighed factor` | requirement type `element` \| `factor` |
-| `authority_role` | relationship `establishes` \| `refines` \| `applies` \| `distinguishes` \| `affirms` |
+| `authority_role` | relationship, passed through as given: a principle-link value of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md), which defines each one. A value the local store cannot hold yet is held back and reported, never remapped (that file, "Local case-data store") |
 | burden descriptors | burden of proof, plain phrase passed through verbatim as free text (e.g. `balance of probabilities`, `on the party asserting duress`) — never snake_cased into the retired 3-value enum |
 
 ### Bulk classification cascade — `6. LAW\` scans

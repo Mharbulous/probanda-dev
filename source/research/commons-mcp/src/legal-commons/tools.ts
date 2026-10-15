@@ -198,6 +198,17 @@ async function treatmentChain(client: LegalCommonsClient, args: Record<string, u
 // signature — no matter_id. The doctrine_tag feeds the retrieval bucket; the
 // search vector is a generated column, so nothing to embed.
 async function push(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
+  // The RPC writes each authority's relationship and treatment stamp as given,
+  // so they are checked here (vocabulary constants below).
+  for (const [i, a] of (Array.isArray(args.authorities) ? args.authorities : []).entries()) {
+    const auth = (a ?? {}) as Record<string, unknown>;
+    if (auth.relationship !== undefined && auth.relationship !== null) {
+      requireOneOf(`push.authorities[${i}].relationship`, auth.relationship, RELATIONSHIP_VALUES);
+    }
+    if (auth.treatment !== undefined && auth.treatment !== null) {
+      requireOneOf(`push.authorities[${i}].treatment`, auth.treatment, EDGE_TREATMENT_VALUES);
+    }
+  }
   return client.rpc("push_principle", {
     p_text: String(args.text),
     p_jurisdiction: args.jurisdiction ?? null,
@@ -219,24 +230,65 @@ async function push(client: LegalCommonsClient, args: Record<string, unknown>): 
 // edge (design decision D6).
 // ---------------------------------------------------------------------------
 
-// The two vocabularies, tense-separated on purpose (D7), and the single place
+// The three vocabularies, tense-separated on purpose (D7), and the single place
 // they are enforced — every one of these pool columns is bare `text`, so nothing
-// in Postgres refuses a typo. The caller-facing doctrine is
-// `.claude/skills/legal-commons/SKILL.md` § "Currency — treatments, not rewrites".
+// in Postgres refuses a typo. Each value's definition, and which column takes it,
+// is in `.claude/skills/shared/treatment-vocabulary.md` and nowhere else; these
+// lists hold only the code values. Design:
+// `docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md`.
 //
 // TREATMENT_VALUES — present tense, what the treating decision DOES to the
-// treated one; the `treatment` edge's own vocabulary. The first five mirror the
-// local law layer's appellate set; the last three carry oral-decision notes that
-// no citator surfaces.
+// treated one; the `treatment` edge's own vocabulary. `not_considered` is the
+// oral-reasons note.
 export const TREATMENT_VALUES = [
-  "affirms",
-  "reverses",
-  "varies",
-  "distinguishes",
-  "overrules",
   "follows",
+  "applies",
+  "approves",
+  "explains",
+  "harmonizes",
+  "refers_to",
+  "distinguishes",
+  "limits",
+  "declines_to_extend",
   "declines_to_follow",
+  "declines_to_apply",
+  "questions",
+  "disapproves",
+  "overrules",
+  "departs_from",
+  "abrogates",
+  "affirms",
+  "varies",
+  "reverses",
+  "superseded_by_statute",
   "not_considered",
+] as const;
+
+// RELATIONSHIP_VALUES — present tense, what an authority does for a principle;
+// `principle_authority.relationship`. Never appellate history, never `answered`
+// (case-data decision 48: it never crosses).
+export const RELATIONSHIP_VALUES = [
+  "establishes",
+  "extends",
+  "reformulates",
+  "follows",
+  "applies",
+  "approves",
+  "explains",
+  "harmonizes",
+  "refers_to",
+  "considers",
+  "distinguishes",
+  "limits",
+  "declines_to_extend",
+  "declines_to_follow",
+  "declines_to_apply",
+  "questions",
+  "disapproves",
+  "overrules",
+  "departs_from",
+  "abrogates",
+  "superseded_by_statute",
 ] as const;
 
 // EDGE_TREATMENT_VALUES — past tense, what has BEEN DONE to the treated
@@ -247,6 +299,8 @@ export const EDGE_TREATMENT_VALUES = [
   "varied",
   "distinguished",
   "overruled",
+  "superseded_by_statute",
+  "abrogated",
 ] as const;
 
 function requireOneOf(label: string, value: unknown, allowed: readonly string[]): string {
@@ -387,6 +441,9 @@ async function amendAuthorityEdge(client: LegalCommonsClient, args: Record<strin
   for (const field of ["proposition", "finding", "relationship"]) {
     if (typeof args[field] === "string") body[field] = args[field];
   }
+  if (body.relationship !== undefined) {
+    requireOneOf("amend_authority_edge.relationship", body.relationship, RELATIONSHIP_VALUES);
+  }
   if (typeof args.obiter === "boolean") body.obiter = args.obiter;
   if (Object.keys(body).length === 0) {
     throw new ValidationError("amend_authority_edge needs at least one of proposition, finding, relationship, obiter");
@@ -406,12 +463,16 @@ async function amendAuthorityEdge(client: LegalCommonsClient, args: Record<strin
 // composite primary key makes a re-link fail loudly rather than silently
 // overwrite the existing edge's proposition.
 async function linkAuthority(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
+  const relationship =
+    args.relationship === undefined || args.relationship === null
+      ? null
+      : requireOneOf("link_authority.relationship", args.relationship, RELATIONSHIP_VALUES);
   const rows = await client.insert("principle_authority", {
     principle_id: String(args.principle_id),
     authority_id: String(args.authority_id),
     proposition: args.proposition ?? null,
     finding: args.finding ?? null,
-    relationship: args.relationship ?? null,
+    relationship,
     obiter: typeof args.obiter === "boolean" ? args.obiter : null,
   });
   return { linked: true, edge: rows[0] ?? null };

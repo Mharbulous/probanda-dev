@@ -81,10 +81,14 @@ turn on. A holding mislabeled as obiter (or the reverse) is a clear error.
 <!-- recital-rule: end -->
 
 3. **The relationship test.** `relationship` claims what this authority does for
-   the concept (`establishes` / `refines` / `applies` / `distinguishes` /
-   `affirms`). A case that merely applies a settled test does not `establish` it.
-   You cannot change `relationship` — if it is wrong, say so in `ambiguous` with
-   the reason.
+   the concept, and means exactly what `{{TREATMENT_VOCABULARY}}` defines. Test
+   the edge against that definition. A case that merely applies a settled test
+   does not `establish` it, and a case that only quotes a principle before
+   deciding on other grounds neither `affirms` nor `follows` it. An edge holding
+   `refines` or `affirms` was written before the definitions existed and fails
+   this test. You cannot change `relationship` — if the definition does not fit,
+   say so in `ambiguous` as `wrong_relationship`, naming the value whose
+   definition does fit and why.
 
 4. **The finding-vs-disposition test.** The `finding` must be consistent with the
    decision's actual disposition. A `finding` that has the appellant succeeding in
@@ -112,6 +116,10 @@ anything on a document you could not read.
   `relationship`, `proposition`, `finding`, `obiter`, `order_terms`, and the current
   `verified` value. Reference each edge by its `concept_id` + `authority_id` pair —
   that pair is the edge's identity.
+- `{{TREATMENT_VOCABULARY}}` — the whole text of `shared/treatment-vocabulary.md`,
+  supplied by the caller. It defines every relationship and treatment value.
+  Use only its definitions. It is required: without it, write nothing and reply
+  with one line, `failed no TREATMENT_VOCABULARY`.
 
 The `verified` values are supplied so you can see what is already settled. Judge
 every edge on the document regardless; the caller decides what may change.
