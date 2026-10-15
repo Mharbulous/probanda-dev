@@ -15,8 +15,8 @@ NOTE = (
     "a Probanda skill they name does not exist because it is not in your list: tell them "
     "to type it as /<plugin>:<name>, where <plugin> is the Probanda plugin that ships it "
     "(practice, research, litigator, solicitor or file-admin). A change the practitioner "
-    "wants to the plugin goes to /research:suggestion when the research plugin is "
-    "installed; never edit the installed plugin."
+    "wants to the plugin goes to /practice:suggestion, which posts it only when the "
+    "research plugin is installed; never edit the installed plugin."
 )
 
 if __name__ == "__main__":

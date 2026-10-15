@@ -28,6 +28,7 @@
         "rule-update",
         "safe-file-deletion",
         "show-me",
+        "suggestion",
         "task-prioritization",
         "time-entry-drafting",
         "time-pipeline-data",
@@ -76,7 +77,6 @@
         "legal-research",
         "probanda-troubleshooting",
         "review-proposition",
-        "suggestion",
         "verify-law"
       ],
       "agents": [

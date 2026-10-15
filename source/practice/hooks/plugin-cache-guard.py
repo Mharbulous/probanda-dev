@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refuse edits to the installed plugin and point to /research:suggestion.
+"""Refuse edits to the installed plugin and point to /practice:suggestion.
 
 The installed plugin (~/.claude/plugins/synced or cache, Cowork's
 /root/.claude/plugins/synced, or ${CLAUDE_PLUGIN_ROOT}) is a synced copy:
@@ -19,7 +19,7 @@ PLUGIN_DIR = re.compile(r"/\.claude/plugins/", re.IGNORECASE)
 REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "
-    "For a change the practitioner wants, offer /research:suggestion, which files it in "
+    "For a change the practitioner wants, offer /practice:suggestion, which files it in "
     "Probanda's Suggestion Box (it needs the research plugin), then carry on with the work at hand."
 )
 
