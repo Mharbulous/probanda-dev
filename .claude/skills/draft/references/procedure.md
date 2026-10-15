@@ -91,7 +91,7 @@ On a remote-device-only host the card is a copy frozen at staging, so restaging 
 **Form currency.** When session entry returns `form_currency.warning`, say it verbatim as one line after the fast open's lines. Then say in one line that whether it affects this Writing is for `/legal-research`, and that the form is updated by the repo-session checklist at `form_currency.update_doc`. No date in either line is a deadline, and no deadline skill is invoked. The mockup carries the same line at the head of the venue document, rendered for the human and withheld from the forum.
 
 <!-- atom id=draft.open.then-opening ops=open -->
-Then the Opening (section 14). An empty board with no job of any status and no captured ideas goes straight to the outlining branch of that reference.
+Then the Opening (section 14). An empty board with no job of any status and no captured ideas goes straight to the outlining branch of that reference, after the statement of goals where one is due (section 14, "Statement of goals").
 <!-- atom id=draft.job-only ops=route_reply,new_work -->
 Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off run only inside an assigned job's approved plan; section 8 also runs when the practitioner asks to start a proceeding or Writing, or asks for a new Job Board for work that is not a Writing (a Job Board with no Writing); retirement and recovery follow `references/retire-filing.md`. An on-the-fly revision or reorder is not job-only (`references/revise-on-the-fly.md`), and neither is the practitioner's override (section 13, `references/assemble-then-gate.md`).
 
