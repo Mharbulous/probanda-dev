@@ -67,3 +67,17 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - The skill's location and tool names still read as in §2.
 - Every reference to `research:suggestion` in the repo.
 - No other spec already moves this skill.
+
+## 11. Verification against HEAD (2026-10-15, at d41fb32)
+
+| Check | Result at HEAD |
+|---|---|
+| Skill location | Source is `.claude/skills/suggestion/SKILL.md`. Its plugin is set in `source/assignment.json` (research `skills`) and `source/research/roster.json`. The built copy under `plugins/research/skills/suggestion/` is generated. The §2 paths are the installed copy's, not the repo's. |
+| Tool names | As in §2: `suggestion_box__configure_credential`, `__configure_status` and `__submit`, served by the research plugin's `commons` server (`source/research/commons-mcp/src/suggestion-box/`). |
+| Credential (§9 Q1) | A DPAPI file, `credential.json.dpapi`, in the commons server's `suggestion-box` state directory, written by `suggestion_box__configure_credential`. No practice server reads it. |
+| §4.2 choice | Option (b), chosen by Brahm on 2026-10-15: move the skill only. The `suggestion_box__*` tools stay on the research `commons` server, unchanged. `practice:suggestion` calls them only when the research plugin is installed. Without it, the skill stops and says so in one line, with no fallback. The upward reference is ruled `conditional` in `source/layering.json`. |
+| Live `/research:suggestion` references (outside `plugins/` and `docs/`) | `.claude/skills/suggestion/SKILL.md`, `source/practice/hooks/plugin-cache-guard.py` (docstring and refusal text), `source/practice/hooks/hidden-skills-note.py`, `.claude/skills/drafting-data/hooks/html-pages-gate.py`, `.claude/skills/shared/html-pages.md`, and `source/research/commons-mcp/src/schema-gen.ts` with its dist bundle. `.claude/skills/draft/references/suggestion-box.md` calls the tools but does not name the skill. `litigator:suggestion-evaluator` names neither. |
+| Hook matchers | No hook matcher names the skill. |
+| Tests asserting the old text | None under `source/` or `.claude/skills/`. |
+| `troubleshoot__*` tools (§9 Q2) | Found on the same `commons` server, granted to the `research:troubleshooter` agent. Not moved. |
+| Other specs moving this skill | None. The other 2026-10-15 specs name this one only in their "Related specs" line. |
