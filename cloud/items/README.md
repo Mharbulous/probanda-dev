@@ -51,13 +51,17 @@ each with `verify_jwt = false` in that folder's `config.toml`:
 | `items-sync` | `{tenant, store, since}` | `rules.sync` |
 | `items-seed` | `{tenant, store, items}` | `rules.seed` |
 
-Each checks the caller's `apikey` against the project's secret keys
-(`_shared/caller.ts`), then runs one `rules` function in one transaction over a
-direct Postgres connection (`_shared/items.ts`, `SUPABASE_DB_URL`) and replies
-with its jsonb unchanged. They import `caller.ts`, never `pool.ts`, so they do
-not load the embedding model.
+Each checks the caller's `apikey` (`_shared/caller.ts`): one of the project's
+secret keys, or an install key with the `items:write` scope
+(`../access/README.md`). It then runs one `rules` function in one transaction
+over a direct Postgres connection (`_shared/items.ts`, `_shared/db.ts`,
+`SUPABASE_DB_URL`) and replies with its jsonb unchanged. They import
+`caller.ts`, never `pool.ts`, so they do not load the embedding model.
 
-- A wrong or missing key gets 401.
+- A wrong or missing key gets 401, and so does an install key without the
+  `items:write` scope.
+- An install key's body must name that key's own tenant. Any other tenant gets
+  `{saved: false, question}` with status 200.
 - A body that is not a JSON object gets `{saved: false, question}` with status
   200, like every other refusal. A tenant that is missing or not a UUID is
   passed to `rules` as null, which answers it; `items-sync` answers it itself,

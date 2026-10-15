@@ -9,59 +9,18 @@
 //                            "authorities": [ { "citation", "title", "url", "pinpoint" } ] } ] }
 //           best match first.
 //
-// One file, unlike the other three functions, because it was deployed through
-// the dashboard's editor (2026-10-13). The caller check and the model settings
-// are the same as in ../_shared/pool.ts. Nothing here logs.
+// It reads the pool over a direct connection (db.ts), never through PostgREST,
+// and an install key needs the commons:read scope (caller.ts). Deployed with the
+// CLI like the others (docs/Plans/2026-10-14_install-keys.md, stage 2), so it
+// shares the model settings in ../_shared/pool.ts. Nothing here logs.
 
-const SCHEMA = "legal_commons";
-const URL_BASE = Deno.env.get("SUPABASE_URL");
-
-// deno-lint-ignore no-explicit-any
-const session = new (globalThis as any).Supabase.ai.Session("gte-small");
-
-function reply(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
-}
-
-function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
-  // Compares every byte whatever the result, so the time taken says nothing about where two keys differ.
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < a.length; i++) diff |= a[i] ^ (b[i % (b.length || 1)] ?? 0);
-  return diff === 0;
-}
-
-/** The project's secret key the caller sent, or null when the caller sent none of them. */
-function callerSecretKey(req: Request): string | null {
-  const sent = req.headers.get("apikey");
-  if (!sent) return null;
-  const keys = Object.values(JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")) as string[];
-  const encoder = new TextEncoder();
-  const sentBytes = encoder.encode(sent);
-  return keys.find((key) => sameBytes(encoder.encode(key), sentBytes)) ?? null;
-}
-
-async function pool(key: string, path: string, init: RequestInit = {}): Promise<unknown> {
-  const profile = init.method === "POST" ? "Content-Profile" : "Accept-Profile";
-  const res = await fetch(`${URL_BASE}/rest/v1/${path}`, {
-    ...init,
-    headers: { apikey: key, "Content-Type": "application/json", [profile]: SCHEMA },
-  });
-  if (!res.ok) throw new Error(`the pool answered ${res.status}`);
-  return await res.json();
-}
+import { reply, serve } from "../_shared/caller.ts";
+import { sql } from "../_shared/db.ts";
+import { embed } from "../_shared/pool.ts";
 
 type Hit = { tests?: { stated_in?: { principle_id: string }[] }[]; equivalent?: Hit[] };
 
-Deno.serve(async (req) => {
-  if (req.method !== "POST") return reply(405, { error: "POST only" });
-  const key = callerSecretKey(req);
-  if (!key) return reply(401, { error: "not authorized" });
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return reply(400, { error: "the request body is not JSON" });
-  }
+serve(async (_key, body) => {
   if (typeof body.text !== "string" || body.text.trim() === "") return reply(400, { error: "text is required" });
   const limit = body.limit ?? 5;
   if (!(Number.isInteger(limit) && (limit as number) >= 1 && (limit as number) <= 10)) {
@@ -69,15 +28,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const embedding = await session.run(body.text, { mean_pool: true, normalize: true });
-    const found = (await pool(key, "rpc/clause_search", {
-      method: "POST",
-      body: JSON.stringify({ p_text: body.text, p_embedding: JSON.stringify(embedding), p_role: "any", p_limit: 10 }),
-    })) as { exact: Hit | null; nearest: Hit[] };
+    const embedding = await embed(body.text);
+    const [{ found }] = await sql`select legal_commons.clause_search(${body.text},
+      ${JSON.stringify(embedding)}::extensions.vector, 'any', 10) as found`;
+    const { exact, nearest } = found as { exact: Hit | null; nearest: Hit[] };
 
     // The stating principles, in the order their hits came.
     const ids: string[] = [];
-    for (const hit of [...(found.exact ? [found.exact] : []), ...(found.nearest ?? [])]) {
+    for (const hit of [...(exact ? [exact] : []), ...(nearest ?? [])]) {
       for (const clause of [hit, ...(hit.equivalent ?? [])]) {
         for (const test of clause.tests ?? []) {
           for (const stated of test.stated_in ?? []) {
@@ -89,18 +47,15 @@ Deno.serve(async (req) => {
     const chosen = ids.slice(0, limit as number);
     if (chosen.length === 0) return reply(200, { results: [] });
 
-    const inList = `in.(${chosen.join(",")})`;
-    const principles = (await pool(key, `principle?select=principle_id,text&principle_id=${inList}`)) as
-      { principle_id: string; text: string }[];
-    // Two plain reads, not one embedded read: principle_authority has two
-    // foreign keys to authority, so PostgREST refuses `authority(...)` as ambiguous.
-    const links = (await pool(key,
-      `principle_authority?select=principle_id,authority_id,pinpoint&principle_id=${inList}`)) as
-      { principle_id: string; authority_id: string; pinpoint: string | null }[];
+    const principles = await sql<{ principle_id: string; text: string }[]>`
+      select principle_id, text from legal_commons.principle where principle_id = any(${chosen}::uuid[])`;
+    const links = await sql<{ principle_id: string; authority_id: string; pinpoint: string | null }[]>`
+      select principle_id, authority_id, pinpoint from legal_commons.principle_authority
+      where principle_id = any(${chosen}::uuid[])`;
     const authorityIds = [...new Set(links.map((l) => l.authority_id))];
-    const authorities = authorityIds.length === 0 ? [] : (await pool(key,
-      `authority?select=authority_id,citation,title,url&authority_id=in.(${authorityIds.join(",")})`)) as
-      { authority_id: string; citation: string; title: string | null; url: string | null }[];
+    const authorities = authorityIds.length === 0 ? [] : await sql<
+      { authority_id: string; citation: string; title: string | null; url: string | null }[]
+    >`select authority_id, citation, title, url from legal_commons.authority where authority_id = any(${authorityIds}::uuid[])`;
 
     return reply(200, {
       results: chosen.map((id) => ({
@@ -116,4 +71,4 @@ Deno.serve(async (req) => {
     // Nothing from inside the pool goes back in an error.
     return reply(502, { error: "the search failed" });
   }
-});
+}, { scope: "commons:read" });

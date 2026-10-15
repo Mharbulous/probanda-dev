@@ -1,7 +1,8 @@
-# The project's Edge Functions: the pool's four (commons-*) and the practice
-# items' three (items-*). JWT verification is off for each because the project's
-# secret keys are not JWTs: each function checks the caller's `apikey` header
-# itself (functions/_shared/caller.ts) before it reads the request body.
+# The project's Edge Functions: the pool's five (commons-*) and the practice
+# items' three (items-*). JWT verification is off for each because neither the
+# project's secret keys nor install keys are JWTs: each function checks the
+# caller's `apikey` header itself (functions/_shared/caller.ts) before it reads
+# the request body.
 
 project_id = "nbzkuhgiqscjkypedqff"
 
@@ -15,6 +16,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.commons-find]
+verify_jwt = false
+
+[functions.commons-read]
 verify_jwt = false
 
 [functions.items-write]
