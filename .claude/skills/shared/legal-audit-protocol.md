@@ -283,7 +283,8 @@ Would you like me to read the four other example files and check each for the ex
 ### Step 6 — Return shape (opinion mode only)
 
 When Step 4 lets you state law (every issue well supported, mixed coverage, or a
-preliminary impression the practitioner asked for), the return is, in this order:
+preliminary impression the practitioner asked for), write the notes and the memo to
+the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
    the per-tier notes, every `/ingest` and `/consolidation-push` flag, every case-data
@@ -308,31 +309,18 @@ preliminary impression the practitioner asked for), the return is, in this order
    the spawn prompt's `File stem:` and `Matter root:`. Pass `kind: "research-notes"`,
    which checks the coverage line against its Step 3 shape. On a
    `coverage_line_malformed` refusal, fix each segment it names and save again. If the tool refuses otherwise, say so in
-   the notes with its refusal code, and write nowhere else. The notes still open the
-   return, so the confidence summary is disclosed before any statement of law, as
-   Step 3 requires.
-2. **The memo.** It begins at a line reading `---` that is immediately followed by
-   `Document: MEMORANDUM OF LAW`, and runs to the end of the return:
+   the notes with its refusal code, and write nowhere else. The notes file is the
+   memo's appendix: the offers and flags go there, never into the memo's body.
+2. **The memo.** Fetch `shared/research-memo-template.md` with the same tool you
+   fetched this file with, and write the memo to it: its YAML header, beginning at a
+   line reading `---` that is immediately followed by `Document: MEMORANDUM OF LAW`,
+   then its body. The body uses CRAC unless the spawn prompt's `Memo template:` names
+   IRAC or CREAC.
 
-   ```
-   ---
-   Document: MEMORANDUM OF LAW
-   From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
-   To: <the spawn prompt's Asked by>
-   Date: <the spawn prompt's Date>
-   Re: "<the question, one line>"
-   ---
-   ```
-
-   Body: CREAC per issue, under the headings `## Conclusion`, `## Rule`,
-   `## Explanation`, `## Application`, `## Conclusion`. When the question splits into
-   issues, write one sequence under each issue's own heading. Use another template
-   only when the spawn prompt's `Memo template:` names it: IRAC (Issue, Rule,
-   Application, Conclusion) or CRAC (Conclusion, Rule, Application, Conclusion).
-
-   - Rule and Explanation carry every proposition with its pinpoint, its note-up
+   - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
      result and its reasons-voice check, exactly as Step 2 requires. Nothing uncited.
-     No coverage line and no confidence table anywhere in the memo.
+     No coverage line and no confidence table anywhere in the memo. The header's
+     one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - Application compares each authority's facts with the spawn prompt's `Facts:` and
      nothing else, flags where a court could distinguish them, and reaches no
      conclusion about the matter. Say in one sentence that applying the law to the
@@ -343,10 +331,24 @@ preliminary impression the practitioner asked for), the return is, in this order
 
    Before returning, also save the memo, from its `---` line to its last line and
    nothing else, to the scratchpad with `research_filing__write_scratch`, as
-   `<File stem> memo.md`. Put a line reading `Memo scratch: <the path the tool
-   returned>` between the notes and the memo's `---` line, so the caller files that
-   file and never retypes the memo. If the tool refuses, leave that line out and say
-   so in the notes with its refusal code.
+   `<File stem> memo.md`.
+3. **The return.** Return these three lines:
+
+   ```
+   Confidence: <the memo header's Confidence value>
+   Notes scratch: <the path the tool returned for the notes>
+   Memo scratch: <the path the tool returned for the memo>
+   ```
+
+   Then the notes' `Flags` and `Origin` sections and the Step 5 offers, each offer with
+   its `job:` and `steps:` lines, verbatim, because the caller acts on them. Nothing
+   else: the coverage line, the confidence table, the per-tier notes and the memo's
+   text stay in the two files, and the caller files the memo file and never retypes
+   it. The `Confidence:` line opens the return and the memo's header holds it above
+   the body, so the confidence summary is disclosed before any statement of law, as
+   Step 3 requires. If the tool refuses either save, leave that file's line out, give
+   its refusal code, and return that section in full in its place: the notes before
+   the memo, and the memo from its `---` line to its end.
 
 A `needs_download` return, a hand-off packet, and a closed gate (Step 4's "More
 research is needed before I can give a solid opinion") carry no memo and write no

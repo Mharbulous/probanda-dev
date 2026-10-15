@@ -86,8 +86,8 @@ permitted to make statements of law.
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders.
 4. Spawn `research-agent`. Fill the doctrine's spawn-prompt template: the question, the
-   factual context, the matter root, who asked, today's date, the file stem, any memo
-   template the practitioner named, any pooled-layer results your own pre-spawn
+   factual context, the matter root, the matter's file number, who asked, today's date,
+   the file stem, CRAC unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
    lookup returned, the Westlaw memo and decision files retrieved, and any
    `6. LAW\` listing and text you extracted for it, and `Re-invocation: no`. Never name CanLII as a place
    to read or check decisions: it serves no decision text. A stored statement of law handed in goes with
@@ -97,9 +97,11 @@ permitted to make statements of law.
    whatever its other gaps, is a pipeline step, not a closed gate: download or run it (unless declined) through
    `research-paralegal` (`westlaw-first`) and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
-   status line and every citation it did not retrieve. Then relay the agent's answer (its finding verbatim or as its file card, never in your own words), save it to the matter's `6. LAW\<issue>\` folder
-   (`6. LAW\` itself when the question spans issues), and ingest what it cites. The doctrine's "After the answer" rule carries the
-   mechanics. If its disclosure gate is closed after any loop — it declines, reports
+   status line and every citation it did not retrieve. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
+   (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card,
+   never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
+   in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
+   status line each. The doctrine's "After the answer" rule carries the mechanics. If its disclosure gate is closed after any loop — it declines, reports
    layers unavailable, or offers only a preliminary impression — relay its
    confidence summary and research offers verbatim and stop. Nothing is saved
    until the practitioner chooses. A closed gate is
