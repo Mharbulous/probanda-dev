@@ -71,3 +71,21 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - The gate text and spawn template still read as quoted in §2.
 - `save_answer`'s current header format.
 - No other spec already changes the memo format (check `2026-10-06_research-results-to-board-spec.md`).
+
+## 11. Verification against HEAD (2026-10-15, at 77ae481)
+
+Installed-copy paths map to source as follows: `research/skills/legal-research/SKILL.md` is `.claude/skills/legal-research/SKILL.md`, `research/skills/shared/*` is `.claude/skills/shared/*`, and the agents are `source/research/agents/*.md`.
+
+| # | Claim | Finding at HEAD | Consequence |
+|---|---|---|---|
+| 1 | The gate is "Main session only" and says "a subagent cannot spawn agents" | Confirmed, `.claude/skills/legal-research/SKILL.md` "The gate", first paragraph | Option 1 stands: the dispatches stay in the main session |
+| 2 | The spawn template reads "Memo template: CREAC / IRAC / CRAC (IRAC or CRAC only when the practitioner expressly asked)" and "File stem: YYYY-MM-DD ML re <two to six keywords from the question>" | Confirmed, `.claude/skills/shared/legal-research.md`, "Spawn the agent from this template" | Change the default there |
+| 3 | `research_filing__save_answer`'s header format is unverified | `saveAnswer` in `source/practice/mcp/src/files/research-filing.ts` writes no header. It saves `text`, or a `from_scratch` file the agent wrote, byte for byte | The header is written by the audit agent in the memo text. No server change is needed |
+| 4 | The memo format | The memo is already the agent's own: `shared/legal-audit-protocol.md` Step 6 sets a `---` header of five fields (`Document: MEMORANDUM OF LAW`, `From`, `To`, `Date`, `Re`) and a CREAC body, IRAC or CRAC only on `Memo template:`. The agent saves it to the matter's scratchpad as `<File stem> memo.md`, and the caller files it under `6. LAW` with `save_answer`'s `from_scratch` | The template file and the new header keys go into Step 6. The filing path is unchanged |
+| 5 | What reaches the main session | The agent's return carries the whole notes section (coverage line, confidence table, per-tier notes, flags, offers), the `Memo scratch:` line and the whole memo text. The gate's relay (doctrine "After the answer") gives the confidence summary word for word, each offer, the counts line, and an account of every cited decision | The return and the relay are what §4.1 and §4.3 change |
+| 6 | `research-paralegal` and `legislation-fetcher` returns | `legislation-fetcher` returns one JSON object. The paralegal's deep-research contract (`shared/research-paralegal/westlaw-deep-research.md`) is a status line and paths, with no analysis. Its citation-mode final message (`shared/research-paralegal/citation-download.md`) is a status line followed by the whole manifest, which is already on disk | The citation-mode message is the only paralegal return to shorten |
+| 7 | No other spec changes the memo format | `2026-10-06_research-results-to-board-spec.md` (in CoClerk, `Engineering/1. Spec/`) adds the `Origin:` field and the board capture of offers, not the memo format. `2026-10-15_job-plan-minimum-standards-spec.md` adds the gate's step 2a and `mode: plan` (`shared/legal-audit-scoped.md`), whose return shape stays its own | No conflict. Step 2a and `mode: plan` stay as they are |
+| 8 | Westlaw stops reach the practitioner at once | Confirmed: gate step 3 and the doctrine's "Westlaw unreachable is a hard stop" | Kept unchanged |
+| 9 | §9 Q1, the default format | Brahm, 2026-10-15: CRAC. IRAC or CREAC only when the practitioner asks | Applied |
+| 10 | §9 Q2, a background orchestrator (option 2) | **UNVERIFIED**, and not built, by Brahm's decision of 2026-10-15. Option 1 is built | None |
+| 11 | Tests asserting the text this spec changes | `.claude/skills/legal-research/tests/test_memo_format.py` pins the five-field header and the CREAC default. `test_research_origin_capture.py` already asserts relay wording HEAD does not hold ("2. Each uncertain offer, word for word."), observed by reading, not run | The first needs updating after this change; tests are out of scope here |
