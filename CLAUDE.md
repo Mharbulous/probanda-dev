@@ -6,7 +6,13 @@ Five plugins are developed here: `practice`, `research`, `litigator`, `solicitor
 
 ## Releasing
 
-A push to `main` is the release. claude.ai installs the five plugins from this repository as the marketplace `probanda` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. To release, bump `version` in `source/<plugin>/plugin.json` for every plugin whose built folder changes, run `python scripts/build_plugin.py`, commit and push. `python scripts/build_plugin.py --check`, run before the build, lists the folders that changed. A change under `.claude/skills/shared/` changes all five. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+A push to `main` is the release. claude.ai installs the five plugins from this repository as the marketplace `probanda` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all five. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+
+The version rule:
+
+- **Patch** (0.2.1 to 0.2.2): after the update, everything the user had working keeps working with no action, and an old copy and a new copy of the plugin can safely use the same data. New features are patches.
+- **Minor** (0.2.1 to 0.3.0): anything else. For example: a data migration or schema change, a tool removed or its inputs changed, a new required setup step such as a credential or a settings allowlist, a raised `requires`, or a server that refuses data an old copy wrote or writes data an old copy would damage.
+- **1.0.0**: only when Probanda enters the Claude Directory.
 
 ## Two repositories
 
