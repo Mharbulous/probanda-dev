@@ -41,7 +41,7 @@ Once per Job Board, at the point the calling skill sets, draw out what the pract
 4. Check the pulled specifics for internal consistency (sums, dates, party names against the style of cause). Report any discrepancy as a fact and propose no fix.
 5. Where the source holds relief, dates or parties the practitioner did not mention, ask whether they belong in the goal. Never insert them.
 6. Draft the statement in the syntax below. Each goal is one self-contained sentence naming who is to do what for whom, with every specific written in. A statement that sends the reader elsewhere for a specific has failed. No surplus word, and no word that limits the client's success (such as "only"). Sometimes the best word is no word.
-7. Read it back and ask exactly one question: "Does that capture your goal accurately and completely?" Then stop. Do not take up tensions, strategy or research in that turn.
+7. Read it back as the reply's only code block, exactly as it will be saved, and ask exactly one question: "Does that capture your goal accurately and completely?" Then stop. Do not take up tensions, strategy or research in that turn. Only the practitioner's typed bare yes approves it, as with section 3a's revised paragraph. Any other reply records nothing: revise on a correction, then read back again.
 8. On each correction, revise and read back again, until approved. Only then is it recorded, in the approved words, and only then are tensions or strategy taken up, each as a separate question.
 
 The syntax:
