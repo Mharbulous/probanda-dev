@@ -72,3 +72,16 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - The pickup review and its skip list still read as quoted in §2.
 - `take-over.md` still has no title step.
 - No other spec or plan already addresses title cleanup on taken-over jobs.
+
+## 11. Verification against HEAD (2026-10-15, at d41fb32)
+
+| Check | Result | Where |
+|---|---|---|
+| The pickup review reads as quoted in §2 | Holds | `.claude/skills/draft/references/job-session.md`, atom `draft.pickup-review` |
+| Its skip list reads as quoted in §2 | Holds | same atom, "The review skips a job with any step done or its plan already approved ..." |
+| `take-over.md` has no title step | Holds | `.claude/skills/draft/references/take-over.md`, atoms `draft.take-over.readback` and `draft.take-over.restored` |
+| `/drafting-data` §3's cleanup and `shared/paralegal-posture.md` §3 read as quoted in §2 | Holds | `.claude/skills/shared/paralegal-posture.md` §3: "A new job's title cleaned of spelling, typos, grammar and capitalisation by `/drafting-data` §3's rule is not a proposal and needs no adoption." |
+| No other spec or plan addresses title cleanup on taken-over jobs | Holds | grep of `docs/` finds only this spec |
+| A `/draft` rules-map node holds the pickup or take-over rule | No | `.claude/skills/draft/rules/nodes/` holds neither; the rules are atoms in `job-session.md` and `take-over.md` |
+| §9 Q1: the §5 pickup rewrite admits a title-only write on a held wip job | No | `.claude/skills/drafting-data/references/jobs-run.md` §5, "The pickup rewrite": every statement is guarded `status = 'queued' AND locked_by IS NULL AND plan_approved_at IS NULL` and no step done, so it matches no row on a held job. §5's own guard (`locked_by = '<own token>'`) through `drafting_data__execute` would carry a title-only `UPDATE tickets SET title`, so no new server operation is needed for the write itself. |
+| The practitioner-words gate passes a spelling-corrected title on an existing job | No | `.claude/skills/drafting-data/hooks/practitioner-words-gate.py`: `in_turn` allows a corrected spelling only when `new` (an `INSERT INTO tickets`), and the card-cut exemption needs the title to be a run of the card's printed words, which a corrected word is not. The gate would refuse the write unless the hook is extended. |
