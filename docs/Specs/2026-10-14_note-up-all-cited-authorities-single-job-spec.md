@@ -68,3 +68,19 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 ## 10. Verify against HEAD before building
 
 Confirm: the marker table rows and §6a row quoted in §2; §3e's grouped table and guard; where mcp/src builds `note-up` Proposals (bundle strings seen: `"note-up"`, `proposal_key`); the sweep text and how the pre-review passes use it.
+
+## 11. Verification against HEAD (2026-10-14, at 99b0274)
+
+| Claim in this spec | At HEAD | Where |
+|---|---|---|
+| §2: the two 📇 marker-table rows | Confirmed, word for word | `.claude/skills/drafting-data/references/filing-checklists.md`, marker table (lines 163-164) |
+| §2: the §6a `note-up` row | Confirmed; it also names `jobs-create.md` §3e for the per-provision steps and `provision_currency` as the table the clearing action also writes | `filing-checklists.md` §6a (line 220) |
+| §2: §3e's Grouped Proposals table holds one row, `exhibit-pinpoint` | Confirmed | `.claude/skills/drafting-data/references/jobs-create.md` §3e |
+| §2: §3e never runs at an Opening of its own accord | Confirmed. `/draft`'s Opening atom says the same ("It writes no job from Proposed: intake is lazy") | `jobs-create.md` §3e; `.claude/skills/draft/references/dispatch.md`, atom `draft.opening.proposals` |
+| §2: the example title `Note up: Smith v. Jones, 2023 BCCA 182` | Confirmed in §3's fast-path guarded create and in §3e's Call 1 and Call 2. §3e's "One title, one job" also writes the note-ups of one Act as one job titled `Note up: <Act>` | `jobs-create.md` §3, §3e |
+| §10: where mcp/src builds `note-up` Proposals | `deriveProposals` keys each Proposal `<slug>:<table>:<id>` (`proposalKey`) and titles it `Note up: <item>`, the item kept whole; `withNoteUpSteps` adds one `step` per provision on legislation; `proposalsFor` derives them for each render; the Proposed lane prints them with `key:` lines. A 📇 Proposal derives only once some statement of the authority has cleared 📜 📍 🔬 (`isCurrentRung`) | `source/practice/mcp/src/submission/forms/proposal-inventory.ts`, `forms/render-work-board.ts` (`proposalsFor`), `forms/symbol-table.ts` (title `Note up`), `submission/matter-pages.ts` (`proposalLines`) |
+| §10: the noting-up criterion | `NOTING_UP`, text `Every authority relied on is noted up`; spec C changes the text | `forms/render-work-board.ts` |
+| §10: the sweep text and the pre-review passes | Confirmed. The Doctrine calls the sweep when every criterion above counsel's review holds, and the pre-review passes run "section 13's noting-up sweep, overstatement review and evidence-concerns pass". A test pins that phrase | `.claude/skills/draft/references/authorities.md` (Doctrine, "Noting-up sweep"); `draft/references/opening-announcements.md`; `draft/tests/test_overstatement_contract.py` |
+| Not in the spec: the practitioner-words gate | Its fixed text for a new job holds only the `exhibit-pinpoint` group title, so a fixed `Note up all cited authorities` title must be added there | `.claude/skills/drafting-data/hooks/practitioner-words-gate.py` (`NEW_JOB_TEXT`) |
+| Not in the spec: a render's response | It carries no Proposals unless it names `Work_board`, and then only the criteria, so nothing in a render tells a session that a 📇 Proposal is waiting | `source/practice/mcp/src/submission/forms.ts` (`finishMockup`) |
+| Not in the spec: `/draft`'s job session | Its `draft.note-up` atom describes intake writing one `Note up: <Act>` job per Act | `.claude/skills/draft/references/job-session.md` |
