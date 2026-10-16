@@ -23,8 +23,8 @@ function ask(reason) {
   process.exit(0);
 }
 
-// The old name still reaches the public repository: GitHub redirects it after the rename.
-const PUBLIC_REPO = /probanda-app[\\/](?:plugins|litigation)\b/i;
+// The old names still reach the public repository: GitHub redirects them after a rename.
+const PUBLIC_REPO = /probanda-app[\\/](?:probanda-legal|plugins|litigation)\b/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
 const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show)|cat|head|tail|wc|grep)(?: |$)/;
 const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;
@@ -36,7 +36,7 @@ const REPO_WRITE = /\bpush\b|\bremote\s+(?:add|set-url)\b|\bgh\s+(?:repo\s+(?:ed
 if (typeof input.command === "string") {
   const command = input.command;
   if (PUBLIC_REPO.test(command) && REPO_WRITE.test(command)) {
-    ask("This command changes the public repository Probanda-app/plugins. Approve it only if you want this change made.");
+    ask("This command changes the public repository Probanda-app/Probanda-Legal. Approve it only if you want this change made.");
   }
   if (/\bgh\b/.test(command) && /publish-public/i.test(command) && /workflow\s+run|dispatches/i.test(command)) {
     ask("This command starts the publish-public workflow, which publishes public/ to the public repository. Publication cannot be reliably undone.");
@@ -46,7 +46,7 @@ if (typeof input.command === "string") {
     const dir = (at && (at[1] || at[2] || at[3])) || data.cwd || ".";
     const remotes = spawnSync("git", ["-C", dir, "remote", "-v"], { encoding: "utf8" });
     if (PUBLIC_REPO.test(String(remotes.stdout || ""))) {
-      ask("This checkout's remote is Probanda-app/plugins, so this push publishes to the public repository.");
+      ask("This checkout's remote is Probanda-app/Probanda-Legal, so this push publishes to the public repository.");
     }
   }
   const harmless = (ALLOWED.test(command) && !/--output/.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
