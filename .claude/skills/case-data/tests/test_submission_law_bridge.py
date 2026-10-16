@@ -99,7 +99,7 @@ PAYLOAD = {
         },
         {
             "key": "sol#90", "assertion_key": "la#42", "authority_key": "auth#11",
-            "relationship": "refines",
+            "relationship": "establishes",
             "proposition": "Proportionality narrows the listing obligation.",
             "verification": "verified",
             "doubt": "The drafter was unsure this survives the 2020 amendment.",
@@ -543,6 +543,13 @@ class RefusalTests(unittest.TestCase):
             with self.subTest(value=bad):
                 with self.assertRaises(bridge.Refused):
                     bridge.build_plan(PAYLOAD, bad)
+
+    def test_a_retired_relationship_is_refused(self):
+        payload = copy.deepcopy(PAYLOAD)
+        payload["statements"][2]["relationship"] = "refines"
+        with self.assertRaises(bridge.Refused) as ctx:
+            bridge.build_plan(payload, INGESTED_ON)
+        self.assertIn("relationship 'refines' is not one of", str(ctx.exception))
 
     def test_two_rows_targeting_one_edge_are_refused(self):
         payload = copy.deepcopy(PAYLOAD)

@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -91,7 +92,10 @@ class IngestCoverageScriptTests(unittest.TestCase):
              "source_id": None, "possible_version_of": None}])
         self.assertEqual(
             set(out),
-            {"status", "to_ingest", "records", "damaged", "unreadable", "missing", "newest_correspondence"})
+            {"status", "to_ingest", "records", "damaged", "unreadable", "folders", "missing",
+             "newest_correspondence", "checked_at"})
+        self.assertEqual(list(out["folders"]), list(ingest_coverage.FOLDER_GLOBS))
+        self.assertEqual(datetime.fromisoformat(out["checked_at"]).utcoffset(), timedelta(0))
 
     def test_each_file_to_ingest_has_its_record_in_the_same_order(self):
         self.build()
