@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""Refuse edits to the installed plugin and point to /practice:suggestion.
+"""Refuse Write/Edit to Probanda's own installed plugin copies and nothing else.
 
-The installed plugin (~/.claude/plugins/synced or cache, Cowork's
-/root/.claude/plugins/synced, or ${CLAUDE_PLUGIN_ROOT}) is a synced copy:
-an edit there does not persist and is overwritten at the next sync. A change
-the practitioner wants goes to the Suggestion Box instead.
-
-Never fires with COCLERK_HTML_DEV=1, or in the plugin's own source repo (a
-cwd with source/practice/plugin.json at or above it). Fails open, loudly.
+A path is refused only when it resolves inside the installed root of a Probanda
+plugin, found from CLAUDE_PLUGIN_ROOT. No path-text matching: the config folder,
+other vendors' plugins and every other location are untouched.
+Never fires with COCLERK_HTML_DEV=1 or in the plugin's source repo. Fails open, loudly.
 """
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
-PLUGIN_DIR = re.compile(r"/\.claude/plugins/(synced|cache)/", re.IGNORECASE)
+PROBANDA = ("practice", "research", "litigator", "solicitor", "file-manager")
 REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "
@@ -31,16 +27,25 @@ def in_source_repo(cwd):
     return any((p / "source" / "practice" / "plugin.json").is_file() for p in (here, *here.parents))
 
 
-def is_plugin_file(path, cwd):
-    full = Path(cwd or ".", path).resolve()
-    text = full.as_posix()
-    if PLUGIN_DIR.search(text):
-        return True
+def protected_roots():
+    """This plugin's root plus its installed Probanda siblings, both layouts."""
     root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if root:
-        base = Path(root).resolve()
-        return full == base or base in full.parents
-    return False
+    if not root:
+        return []                                  # unknown -> protect nothing
+    base = Path(root).resolve()
+    roots = {base}
+    if base.name in PROBANDA:                      # synced: <dir>/<plugin>
+        parent = base.parent
+        roots |= {parent / n for n in PROBANDA if (parent / n).is_dir()}
+    elif base.parent.name in PROBANDA:             # cache: <mkt>/<plugin>/<version>
+        mkt = base.parent.parent
+        roots |= {v for n in PROBANDA if (mkt / n).is_dir() for v in (mkt / n).iterdir() if v.is_dir()}
+    return [r.resolve() for r in roots]
+
+
+def is_protected(path, cwd):
+    full = Path(cwd or ".", path).resolve()        # follows symlinks; new files OK
+    return any(full == r or r in full.parents for r in protected_roots())
 
 
 def main():
@@ -52,7 +57,7 @@ def main():
         return 0
     tool_input = payload.get("tool_input") or {}
     path = tool_input.get("file_path") or tool_input.get("notebook_path")
-    if isinstance(path, str) and path and is_plugin_file(path, cwd):
+    if isinstance(path, str) and path and is_protected(path, cwd):
         sys.stdout.write(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
@@ -67,5 +72,6 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("plugin-cache-guard hook error (allowing call): " + type(exc).__name__ + ": " + str(exc) + "\n")
+        sys.stderr.write("plugin-cache-guard hook error (allowing call): "
+                         + type(exc).__name__ + ": " + str(exc) + "\n")
         sys.exit(0)
