@@ -69,6 +69,7 @@ async function occurrences(
     const objects = await client.fetchCalendarObjects({
       calendar: cal,
       timeRange: { start: new Date(fromMs).toISOString(), end: new Date(toMs).toISOString() },
+      urlFilter: () => true, // tsdav's default drops any object whose href lacks ".ics"
     });
     for (const obj of objects) {
       if (!obj.data?.includes("BEGIN:VEVENT")) continue;
@@ -106,10 +107,13 @@ function listEvents(context: DavContext, args: Args): Promise<unknown> {
   const fromMs = parseToUtc(args.start, tz);
   const toMs = rangeEnd(args.end, tz);
   if (!(toMs > fromMs)) throw new ValidationError("The end of the range must be after the start.");
-  const names = args.calendars as string[] | undefined;
+  const names = args.calendars ?? undefined;
+  if (names !== undefined && (!Array.isArray(names) || names.some((n) => typeof n !== "string"))) {
+    throw new ValidationError("calendar__list_events.calendars must be a list of calendar names");
+  }
   const includeNotes = args.includeNotes === true;
   return runDav(context, credential, "caldav", "listing events", async (client) => {
-    const found = await occurrences(client, fromMs, toMs, names, tz);
+    const found = await occurrences(client, fromMs, toMs, names as string[] | undefined, tz);
     const events = found.events.map(({ _startMs, _endMs, ...rest }) => {
       const e: Partial<Listed> = rest;
       if (includeNotes) e.notes = clip(e.notes, 500);

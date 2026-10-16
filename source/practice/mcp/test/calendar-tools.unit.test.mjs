@@ -70,20 +70,28 @@ const ALL_DAY = ics(
   "END:VEVENT"
 );
 
-function fakeDav({ objects = {}, refuse = [], fail } = {}) {
+// `reach` lists the requests the fake sends through the guarded fetch while signing in, as
+// tsdav's discovery would; `objectsVia` makes listing events send one REPORT through it.
+const SIGNED = { Authorization: "Basic ZmFrZTpmYWtl" };
+
+function fakeDav({ objects = {}, refuse = [], fail, reach = [], objectsVia } = {}) {
   const logins = [];
+  const objectQueries = [];
   const factory = async (login) => {
     logins.push({ kind: login.kind, serverUrl: login.serverUrl, username: login.username, secret: login.secret });
     if (refuse.includes(login.username)) {
       throw new Error(`Invalid credentials: PROPFIND returned 401 Unauthorized (sent ${login.secret})`);
     }
+    for (const [url, init] of reach) await login.fetch(url, init);
     return {
       async fetchCalendars() {
         return [WORK, HOME, TASKS];
       },
-      async fetchCalendarObjects({ calendar }) {
+      async fetchCalendarObjects(params) {
+        objectQueries.push(params);
         if (fail) throw fail;
-        return objects[calendar.displayName] ?? [];
+        if (objectsVia) await login.fetch(objectsVia, { method: "REPORT", headers: SIGNED });
+        return objects[params.calendar.displayName] ?? [];
       },
       async fetchAddressBooks() {
         return [];
@@ -93,7 +101,7 @@ function fakeDav({ objects = {}, refuse = [], fail } = {}) {
       },
     };
   };
-  return { factory, logins };
+  return { factory, logins, objectQueries };
 }
 
 function context(dav, credential = FAKE, extra = {}) {
@@ -169,10 +177,11 @@ test("list_events skips an unreadable item with a warning and refuses an unknown
 test("get_event reads the series by url, sending the sign-in only to the configured provider", async () => {
   const requests = [];
   const davFetch = async (url, init) => {
+    if (init.method === "PROPFIND") return new Response("", { status: 207 });
     requests.push({ url, init });
     return new Response(SERIES, { status: 200, headers: { etag: '"e9"' } });
   };
-  const dav = fakeDav();
+  const dav = fakeDav({ reach: [[CAL_BASE, { method: "PROPFIND", headers: SIGNED }]] });
   const ctx = context(dav, FAKE, { davFetch });
   const url = `${CAL_BASE}work/series-1.ics`;
   const result = await callTool(ctx, "calendar__get_event", { url });
@@ -305,4 +314,181 @@ test("no file under src/dav/, src/calendar/ or src/contacts/ writes to a calenda
     }
   }
   assert.ok(scanned >= 6, `only ${scanned} files scanned`);
+});
+
+// --- review fixes of 2026-10-15 -------------------------------------------------------
+
+const calendarAt = (caldavUrl) => ({ ...FAKE, caldavUrl });
+
+test("the url guard refuses a sibling host under the configured host's parent domain", async () => {
+  const davFetch = () => assert.fail("no request may be sent");
+  for (const [configured, sibling] of [
+    ["https://me.synology.me", "https://attacker.synology.me/x.ics"],
+    ["https://cal.me.duckdns.org", "https://other.duckdns.org/x.ics"],
+    ["https://example.co.uk", "https://evil.co.uk/x.ics"],
+  ]) {
+    const error = await errorOf(context(fakeDav(), calendarAt(configured), { davFetch }), "calendar__get_event", { url: sibling });
+    assert.match(error.message, /Refusing to use/, sibling);
+  }
+});
+
+test("the url guard trusts a host only once a signed-in request to it succeeded during sign-in", async () => {
+  const gets = [];
+  const davFetch = async (url, init) => {
+    const host = new URL(url).host;
+    if (init.method === "PROPFIND" && host === "caldav.example.test") {
+      // Discovery asks for the redirect back ("manual") and gets it, rather than an error.
+      assert.equal(init.redirect, "manual");
+      return new Response(null, { status: 301, headers: { Location: "https://p02-caldav.example.test/" } });
+    }
+    if (init.method === "PROPFIND") return new Response("", { status: host === "refused.example.test" ? 401 : 207 });
+    gets.push(url);
+    return new Response(SERIES, { status: 200 });
+  };
+  const dav = fakeDav({
+    reach: [
+      ["https://caldav.example.test/.well-known/caldav", { method: "PROPFIND", headers: SIGNED, redirect: "manual" }],
+      ["https://p02-caldav.example.test/123/", { method: "PROPFIND", headers: SIGNED }],
+      ["https://refused.example.test/123/", { method: "PROPFIND", headers: SIGNED }],
+      ["https://unsigned.example.test/123/", { method: "PROPFIND" }],
+    ],
+  });
+  const ctx = context(dav, FAKE, { davFetch });
+  const ok = await callTool(ctx, "calendar__get_event", { url: "https://p02-caldav.example.test/123/work/series-1.ics" });
+  assert.equal(ok.title, "Weekly call");
+  for (const url of [
+    "https://refused.example.test/123/x.ics",
+    "https://unsigned.example.test/123/x.ics",
+    "https://never.example.test/123/x.ics",
+    "http://p02-caldav.example.test/123/x.ics",
+  ]) {
+    const error = await errorOf(ctx, "calendar__get_event", { url });
+    assert.match(error.message, /Refusing to use/, url);
+  }
+  assert.deepEqual(gets, ["https://p02-caldav.example.test/123/work/series-1.ics"]);
+});
+
+test("a 3xx on a request after sign-in is not followed to another host", async (t) => {
+  const { createServer } = await import("node:http");
+  const hits = [];
+  const listen = (handler) =>
+    new Promise((resolve) => {
+      const server = createServer(handler).listen(0, "127.0.0.1", () => resolve(server));
+      t.after(() => server.close());
+    });
+  const other = await listen((req, res) => {
+    hits.push(req.method + " " + req.url);
+    res.end("");
+  });
+  const otherUrl = `http://127.0.0.1:${other.address().port}/stolen/`;
+  const configured = await listen((req, res) => {
+    res.writeHead(302, { Location: otherUrl });
+    res.end();
+  });
+  const base = `http://127.0.0.1:${configured.address().port}`;
+  const dav = fakeDav({ objectsVia: `${base}/123/calendars/work/` });
+  const error = await errorOf(context(dav, calendarAt(base)), "calendar__list_events", { start: "2026-10-01", end: "2026-10-02" });
+  assert.equal(error.code, "dav_error");
+  assert.deepEqual(hits, [], "the redirect target received nothing");
+});
+
+test("the guarded fetch sends only read methods", async () => {
+  const sent = [];
+  const davFetch = async (url, init) => {
+    sent.push(init.method);
+    return new Response("", { status: 207 });
+  };
+  const refused = [];
+  const factory = async (login) => {
+    for (const method of ["PUT", "DELETE", "PROPPATCH", "MKCALENDAR", "MKCOL", "POST", "MOVE", "COPY"]) {
+      await assert.rejects(login.fetch(login.serverUrl, { method }), (e) => {
+        refused.push(method);
+        return /Refusing a [A-Z]+ request: the calendar tools only read/.test(e.message);
+      });
+    }
+    for (const method of ["GET", "PROPFIND", "REPORT", "OPTIONS"]) await login.fetch(login.serverUrl, { method });
+    return fakeDav().factory(login);
+  };
+  await callTool(context({ factory }, FAKE, { davFetch }), "calendar__list_calendars", {});
+  assert.equal(refused.length, 8);
+  assert.deepEqual(sent, ["GET", "PROPFIND", "REPORT", "OPTIONS"]);
+});
+
+test("list_events leaves out a cancelled occurrence of a series", async () => {
+  const cancelled = SERIES.replace(
+    "END:VCALENDAR",
+    [
+      "BEGIN:VEVENT",
+      "UID:series-1",
+      "RECURRENCE-ID;TZID=America/Vancouver:20261026T100000",
+      "SUMMARY:Weekly call",
+      "STATUS:CANCELLED",
+      "DTSTART;TZID=America/Vancouver:20261026T100000",
+      "DTEND;TZID=America/Vancouver:20261026T110000",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n")
+  );
+  const dav = fakeDav({ objects: { Work: [{ url: `${CAL_BASE}work/series-1.ics`, data: cancelled }] } });
+  const result = await callTool(context(dav), "calendar__list_events", { start: "2026-10-01", end: "2026-11-02", calendars: ["Work"] });
+  assert.deepEqual(result.events.map((e) => e.start), ["2026-10-05T10:00:00-07:00", "2026-10-19T14:00:00-07:00", "2026-11-02T10:00:00-08:00"]);
+});
+
+test("list_events asks tsdav for every object, not only hrefs ending in .ics", async () => {
+  const dav = fakeDav();
+  await callTool(context(dav), "calendar__list_events", { start: "2026-10-01", end: "2026-10-02", calendars: ["Work"] });
+  assert.equal(dav.objectQueries.length, 1);
+  assert.equal(dav.objectQueries[0].urlFilter("https://p01-caldav.example.test/123/calendars/work/event-without-extension"), true);
+});
+
+test("list_events refuses calendars that is not a list of names as a validation error", async () => {
+  const dav = fakeDav();
+  for (const calendars of ["Work", ["Work", 3], { Work: true }]) {
+    const error = await errorOf(context(dav), "calendar__list_events", { start: "2026-10-01", end: "2026-10-02", calendars });
+    assert.notEqual(error.code, "dav_error", JSON.stringify(calendars));
+    assert.match(error.message, /calendars must be a list of calendar names/);
+  }
+  assert.equal(dav.logins.length, 0, "no sign-in for a refused call");
+});
+
+const imapOk = {
+  async connect() {},
+  async logout() {},
+  close() {},
+  async status() {
+    return { messages: 4, unseen: 1 };
+  },
+};
+
+test("the sign-in page lists each host the password will be sent to", async () => {
+  const ctx = { practiceDb: {}, mail: { credential: null }, imapFactory: () => imapOk, davClientFactory: fakeDav().factory };
+  const mailOnly = await callTool(ctx, "mail__configure_credential", { host: "imap.example.test", username: "someone" });
+  assert.match(await (await fetch(mailOnly.url)).text(), /<p>Your password will be sent to: imap\.example\.test<\/p>/);
+  const all = await callTool(ctx, "mail__configure_credential", {
+    host: "imap.example.test",
+    username: "someone",
+    caldav_url: "https://caldav.example.test",
+    carddav_url: "https://contacts.example.test:8443/dav",
+    timezone: "America/Vancouver",
+  });
+  const page = await (await fetch(all.url)).text();
+  assert.match(page, /Your password will be sent to: imap\.example\.test, caldav\.example\.test, contacts\.example\.test:8443, and any server/);
+  assert.match(page, /<title>Probanda mail connector<\/title>/);
+});
+
+test("configure_credential run again without the calendar fields keeps the saved ones, and an empty string clears one", async () => {
+  const ctx = { practiceDb: {}, mail: { credential: { ...FAKE } }, imapFactory: () => imapOk, davClientFactory: fakeDav().factory };
+  const again = await callTool(ctx, "mail__configure_credential", { host: "imap.example.test", username: "someone" });
+  const page = await (
+    await fetch(again.url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ secret: FAKE_PASSWORD }) })
+  ).text();
+  assert.match(page, /Calendar: signed in\./);
+  assert.match(page, /Contacts: signed in\./);
+  for (const key of ["davUsername", "caldavUrl", "carddavUrl", "timezone"]) assert.equal(ctx.mail.credential[key], FAKE[key], key);
+
+  const cleared = await callTool(ctx, "mail__configure_credential", { host: "imap.example.test", username: "someone", carddav_url: "", dav_username: "" });
+  const form = await (await fetch(cleared.url)).text();
+  assert.match(form, /https:\/\/caldav\.example\.test/);
+  assert.equal(form.includes("contacts.example.test"), false);
+  assert.equal(form.includes("someone@example.test"), false);
 });

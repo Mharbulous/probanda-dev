@@ -4,11 +4,13 @@
 // a single object. Ported from the practitioner's own mail, calendar and
 // contacts desktop extension (MIT), without its write paths.
 //
-// The password goes only to the configured CalDAV or CardDAV host, or to another
-// host of that same provider over HTTPS (iCloud moves an account to a
-// pNN-caldav.icloud.com host during discovery). Every request, tsdav's included,
-// passes the same check, so a URL the model supplies from elsewhere is refused
-// before anything is sent.
+// The password goes only to the configured CalDAV or CardDAV host, or over HTTPS
+// to a host this process reached with a successful signed-in request while
+// signing in to that service (iCloud moves an account to a pNN-caldav.icloud.com
+// host during discovery). Sign-in follows only the configured server's own
+// answers, never a URL the model supplies. Every request, tsdav's included,
+// passes the same check, never follows a redirect unless discovery asks for it
+// to be handed back, and may only read (GET, PROPFIND, REPORT, OPTIONS).
 
 import { createDAVClient } from "tsdav";
 
@@ -34,7 +36,11 @@ export interface DavObject {
 // The part of tsdav's client the read tools use. Nothing here can write.
 export interface DavClientLike {
   fetchCalendars(): Promise<DavCollection[]>;
-  fetchCalendarObjects(params: { calendar: DavCollection; timeRange: { start: string; end: string } }): Promise<DavObject[]>;
+  fetchCalendarObjects(params: {
+    calendar: DavCollection;
+    timeRange: { start: string; end: string };
+    urlFilter?: (url: string) => boolean;
+  }): Promise<DavObject[]>;
   fetchAddressBooks(): Promise<DavCollection[]>;
   fetchVCards(params: { addressBook: DavCollection }): Promise<DavObject[]>;
 }
@@ -100,16 +106,21 @@ export function davUsernames(credential: MailCredential): string[] {
   return [...new Set([credential.davUsername, credential.username].filter((u): u is string => Boolean(u)))];
 }
 
-// The registrable part of a host, roughly: caldav.icloud.com -> icloud.com. A two-label
-// host or an IP address stands for itself only.
-function providerDomain(hostname: string): string {
-  const labels = hostname.split(".");
-  if (labels.length <= 2 || /^[\d.]+$/.test(hostname) || hostname.includes(":")) return hostname;
-  return labels.slice(1).join(".");
+/**
+ * What a session's requests may reach. While signing in, tsdav follows the configured
+ * server's own answers to any HTTPS host, and each host that answers a signed-in request
+ * with success is recorded in `reached`. After sign-in, only the configured host and the
+ * reached hosts are allowed.
+ */
+interface Trust {
+  reached: Set<string>;
+  signingIn: boolean;
 }
 
-/** Refuses a URL that is not on this kind's configured host or another HTTPS host of its provider. */
-export function assertTrustedUrl(credential: MailCredential, kind: DavKind, url: string): URL {
+const READ_METHODS = new Set(["GET", "PROPFIND", "REPORT", "OPTIONS"]);
+
+/** Refuses a URL that is not on this kind's configured host or a host reached during its sign-in. */
+function assertTrustedUrl(credential: MailCredential, kind: DavKind, url: string, trust: Trust): URL {
   let u: URL;
   try {
     u = new URL(url);
@@ -118,11 +129,11 @@ export function assertTrustedUrl(credential: MailCredential, kind: DavKind, url:
   }
   const configured = new URL(serverUrlOf(credential, kind) as string);
   const sameAsConfigured = u.protocol === configured.protocol && u.host === configured.host;
-  const domain = providerDomain(configured.hostname);
-  const sameProvider = u.protocol === "https:" && (u.hostname === domain || u.hostname.endsWith("." + domain));
-  if (!sameAsConfigured && !sameProvider) {
+  const https = u.protocol === "https:";
+  if (!sameAsConfigured && !(https && (trust.signingIn || trust.reached.has(u.host)))) {
     throw new ValidationError(
-      `Refusing to use "${url}": it is not on the configured ${LABEL[kind]} server (${configured.host}). ` +
+      `Refusing to use "${url}": it is not on the configured ${LABEL[kind]} server (${configured.host}) or a server ` +
+        `it moved this account to while signing in. ` +
         `Use a url returned by the ${kind === "caldav" ? "calendar__list_events" : "contacts__search"} tool.`
     );
   }
@@ -141,20 +152,33 @@ const isTimeout = (error: unknown): boolean => {
 
 const isAuthFailure = (error: unknown): boolean => /\b401\b|unauthori[sz]ed|invalid credentials/i.test(errorText(error));
 
-/** The fetch every DAV request goes through: the URL check and a per-request timeout. */
-function guardedFetch(context: DavContext, credential: MailCredential, kind: DavKind): typeof fetch {
+/**
+ * The fetch every DAV request goes through: read methods only, the URL check, no redirect
+ * followed unless the caller asks for it ("manual", as discovery does, hands the 3xx back),
+ * and a per-request timeout. While signing in, it records each host that answers a signed-in
+ * request with success.
+ */
+function guardedFetch(context: DavContext, credential: MailCredential, kind: DavKind, trust: Trust): typeof fetch {
   const base = context.davFetch ?? fetch;
   const timeoutMs = context.davTimeoutMs ?? DEFAULT_DAV_TIMEOUT_MS;
-  return ((input: string | URL | Request, init?: RequestInit) => {
+  return (async (input: string | URL | Request, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    assertTrustedUrl(credential, kind, url);
-    return base(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(timeoutMs) });
+    const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+    if (!READ_METHODS.has(method)) {
+      throw new ValidationError(`Refusing a ${method} request: the ${LABEL[kind]} tools only read.`);
+    }
+    const target = assertTrustedUrl(credential, kind, url, trust);
+    const signingIn = trust.signingIn;
+    const res = await base(input, { ...init, redirect: init?.redirect ?? "error", signal: init?.signal ?? AbortSignal.timeout(timeoutMs) });
+    if (signingIn && res.ok && new Headers(init?.headers).has("authorization")) trust.reached.add(target.host);
+    return res;
   }) as typeof fetch;
 }
 
 interface Session {
   client: DavClientLike;
   username: string;
+  trust: Trust;
 }
 
 // One signed-in client per credential and kind. A new credential is a new object, so a
@@ -165,15 +189,24 @@ async function signIn(context: DavContext, credential: MailCredential, kind: Dav
   const factory = context.davClientFactory ?? defaultDavClientFactory;
   const serverUrl = serverUrlOf(credential, kind) as string;
   const failures: Array<{ username: string; error: unknown }> = [];
-  for (const username of davUsernames(credential)) {
-    try {
-      const client = await factory({ kind, serverUrl, username, secret: credential.password, fetch: guardedFetch(context, credential, kind) });
-      return { client, username };
-    } catch (error) {
-      if (error instanceof ValidationError) throw error;
-      if (isTimeout(error)) throw timeoutError(context, kind, "signing in");
-      failures.push({ username, error });
+  const trust: Trust = { reached: new Set(), signingIn: true };
+  const guarded = guardedFetch(context, credential, kind, trust);
+  try {
+    for (const username of davUsernames(credential)) {
+      try {
+        const client = await factory({ kind, serverUrl, username, secret: credential.password, fetch: guarded });
+        // Load the collections once while signing in, so the host they live on (iCloud's
+        // pNN host, named by discovery) is reached now and trusted afterwards.
+        await (kind === "caldav" ? client.fetchCalendars() : client.fetchAddressBooks());
+        return { client, username, trust };
+      } catch (error) {
+        if (error instanceof ValidationError) throw error;
+        if (isTimeout(error)) throw timeoutError(context, kind, "signing in");
+        failures.push({ username, error });
+      }
     }
+  } finally {
+    trust.signingIn = false;
   }
   const detail = failures.map((f) => `${f.username}: ${scrub(errorText(f.error), credential)}`).join("; ");
   const auth = failures.every((f) => isAuthFailure(f.error));
@@ -246,11 +279,11 @@ export function getObject(
   kind: DavKind,
   url: string
 ): Promise<{ text: string; etag: string | null }> {
-  assertTrustedUrl(credential, kind, url);
   return runDav(context, credential, kind, "reading " + url, async () => {
-    const { username } = await session(context, credential, kind);
+    const { username, trust } = await session(context, credential, kind);
+    assertTrustedUrl(credential, kind, url, trust);
     const authorization = "Basic " + Buffer.from(username + ":" + credential.password).toString("base64");
-    const res = await guardedFetch(context, credential, kind)(url, {
+    const res = await guardedFetch(context, credential, kind, trust)(url, {
       method: "GET",
       headers: { Authorization: authorization },
       redirect: "error", // never let the credential follow a redirect

@@ -166,13 +166,17 @@ async function configureCredential(context: MailContext, args: Args): Promise<un
     if (!PRINTABLE.test(value)) throw new ValidationError(`mail__configure_credential.${label} must hold printable characters only`);
   }
   const fields: CredentialFields = { host, port, secure: args.secure !== false, username, ...(fromAddress ? { fromAddress } : {}) };
-  const davUsername = String(args.dav_username ?? "").trim();
+  // A calendar or contacts field the call leaves out keeps its saved value; an empty string clears it.
+  const saved = context.mail.credential;
+  const davArg = (label: string, key: "davUsername" | "caldavUrl" | "carddavUrl" | "timezone"): string =>
+    args[label] === undefined || args[label] === null ? (saved?.[key] ?? "") : String(args[label]).trim();
+  const davUsername = davArg("dav_username", "davUsername");
   if (davUsername) {
     if (!PRINTABLE.test(davUsername)) throw new ValidationError("mail__configure_credential.dav_username must hold printable characters only");
     fields.davUsername = davUsername;
   }
   for (const [label, key] of [["caldav_url", "caldavUrl"], ["carddav_url", "carddavUrl"]] as const) {
-    const value = String(args[label] ?? "").trim();
+    const value = davArg(label, key);
     if (!value) continue;
     let parsed: URL | undefined;
     try {
@@ -185,7 +189,7 @@ async function configureCredential(context: MailContext, args: Args): Promise<un
     }
     fields[key] = value;
   }
-  const timezone = String(args.timezone ?? "").trim();
+  const timezone = davArg("timezone", "timezone");
   if (timezone) {
     if (!isValidTimeZone(timezone)) {
       throw new ValidationError(`mail__configure_credential.timezone "${timezone}" is not an IANA time zone, such as America/Vancouver`);

@@ -131,7 +131,9 @@ function endOf(vevent: Component, start: IcalTime): IcalTime {
   return start;
 }
 
+// A cancelled occurrence (STATUS:CANCELLED, usually one occurrence of a series) is left out.
 function overlaps(occ: Occurrence, from: number, to: number): boolean {
+  if (occ.status?.toUpperCase() === "CANCELLED") return false;
   return (occ._endMs > from && occ._startMs < to) || (occ._startMs === occ._endMs && occ._startMs >= from && occ._startMs < to);
 }
 

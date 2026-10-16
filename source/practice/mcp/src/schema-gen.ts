@@ -2859,7 +2859,8 @@ export function mailToolDefinitions(): ToolDefinition[] {
         "calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as " +
         "America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from " +
         "the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, " +
-        "https://contacts.icloud.com, and the Apple ID as `dav_username`. " +
+        "https://contacts.icloud.com, and the Apple ID as `dav_username`. Run again without `dav_username`, " +
+        "`caldav_url`, `carddav_url` or `timezone` and the saved value of each is kept; give an empty string to clear one. " +
         "Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, " +
         "host, username, next}: send the practitioner the `url`, a page on this computer where they type the password " +
         "(for iCloud and most hosted mail an app-specific password, never the account password). The page signs in to " +
@@ -3133,8 +3134,9 @@ export function calendarToolDefinitions(): ToolDefinition[] {
       description:
         "Get the full details of one event (the whole series, for a repeating event) by the url from " +
         "calendar__list_events: {url, etag, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, " +
-        "alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. A url that is not on the configured calendar " +
-        "server is refused, so the password is never sent elsewhere. Read-only." +
+        "alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. Only an https url on the configured calendar " +
+        "server, or on a server it moved the account to during this session's sign-in, is accepted; any other url is " +
+        "refused, so the password is never sent elsewhere. Read-only." +
         errors,
       inputSchema: {
         type: "object",
@@ -3179,8 +3181,9 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "Get full details of one contact by the url from contacts__search: {url, etag, uid, name, prefix?, firstName?, " +
         "middleName?, lastName?, suffix?, organization?, department?, jobTitle?, emails: [{label?, value, " +
         "preferred?}], phones: [same], addresses: [{label?, preferred?, poBox?, extended?, street, city, region, " +
-        "postalCode, country}], birthday?, notes?}. A url that is not on the configured contacts server is refused, " +
-        "so the password is never sent elsewhere. Read-only." +
+        "postalCode, country}], birthday?, notes?}. Only an https url on the configured contacts server, or on a " +
+        "server it moved the account to during this session's sign-in, is accepted; any other url is refused, so the " +
+        "password is never sent elsewhere. Read-only." +
         errors,
       inputSchema: {
         type: "object",

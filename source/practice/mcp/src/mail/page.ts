@@ -46,6 +46,15 @@ const TITLE = "Probanda mail connector";
 const SECRET_INPUT = '<input type="password" name="secret" autocomplete="current-password" required autofocus>';
 const SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an app-specific password, never the account password.";
 
+const SENT_TO = "Your password will be sent to: ";
+
+/** Each host the typed secret goes to: the mail server, then the calendar and contacts servers. */
+function recipients(fields: CredentialFields): string {
+  const dav = [fields.caldavUrl, fields.carddavUrl].filter((u): u is string => Boolean(u)).map((u) => new URL(u).host);
+  const hosts = [...new Set([fields.host, ...dav])].join(", ");
+  return dav.length ? hosts + ", and any server the calendar or contacts server moves the account to while signing in" : hosts;
+}
+
 let pending: Pending | undefined;
 let listening: Promise<number> | undefined;
 
@@ -116,6 +125,7 @@ function form(fields: CredentialFields): string {
     row("Time zone", fields.timezone) +
     row("Contacts server", fields.carddavUrl) +
     "</dl>" +
+    "<p>" + SENT_TO + escape(recipients(fields)) + "</p>" +
     '<form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + "</label>" +
     "<button type=\"submit\">Sign in and save</button></form>" +
     "<p class=\"note\">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>"

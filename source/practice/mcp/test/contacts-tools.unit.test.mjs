@@ -31,10 +31,13 @@ const ALICE = vcard(
 const BOB = vcard("UID:bob-1", "N:Sample;Bob;;;", "FN:Bob Sample", "TEL;type=WORK:604-555-0199");
 const GROUP = vcard("UID:group-1", "FN:Clients", "X-ADDRESSBOOKSERVER-KIND:group");
 
-function fakeDav() {
+// With `reach`, sign-in sends one signed-in PROPFIND to the address book's host, as
+// tsdav's discovery would, so that host is trusted afterwards.
+function fakeDav({ reach = false } = {}) {
   const logins = [];
   const factory = async (login) => {
     logins.push(login.username);
+    if (reach) await login.fetch(BOOK.url, { method: "PROPFIND", headers: { Authorization: "Basic ZmFrZTpmYWtl" } });
     return {
       async fetchCalendars() {
         return [];
@@ -95,11 +98,12 @@ test("search lists contacts alphabetically, leaves out groups, and matches name,
 test("get reads one contact in full by url", async () => {
   const requests = [];
   const davFetch = async (url, init) => {
+    if (init.method === "PROPFIND") return new Response("", { status: 207 });
     requests.push({ url, init });
     return new Response(ALICE, { status: 200, headers: { etag: '"a2"' } });
   };
   const url = `${BOOK.url}alice-1.vcf`;
-  const result = await callTool(context(fakeDav(), FAKE, { davFetch }), "contacts__get", { url });
+  const result = await callTool(context(fakeDav({ reach: true }), FAKE, { davFetch }), "contacts__get", { url });
   assert.deepEqual(result, {
     url,
     etag: '"a2"',
@@ -137,10 +141,10 @@ test("get reads one contact in full by url", async () => {
   assert.equal(requests[0].init.redirect, "error");
 });
 
-test("get refuses a url off the configured contacts provider before anything is sent", async () => {
+test("get refuses a url off the configured contacts server and the hosts reached while signing in", async () => {
   const davFetch = () => assert.fail("no request may be sent");
   const ctx = context(fakeDav(), FAKE, { davFetch });
-  for (const url of ["https://contacts.evil.test/x.vcf", "https://example.test.evil.com/x.vcf"]) {
+  for (const url of ["https://contacts.evil.test/x.vcf", "https://example.test.evil.com/x.vcf", "https://other.example.test/x.vcf", `${BOOK.url}x.vcf`]) {
     const error = await errorOf(ctx, "contacts__get", { url });
     assert.match(error.message, /Refusing to use/, url);
   }
@@ -156,10 +160,11 @@ test("with a credential saved before the contacts fields, both contacts tools re
 });
 
 test("a server error on get is dav_error and never shows the password", async () => {
-  const davFetch = async () => {
+  const davFetch = async (url, init) => {
+    if (init.method === "PROPFIND") return new Response("", { status: 207 });
     throw new Error(`socket hang up after ${FAKE_PASSWORD}`);
   };
-  const error = await errorOf(context(fakeDav(), FAKE, { davFetch }), "contacts__get", { url: `${BOOK.url}alice-1.vcf` });
+  const error = await errorOf(context(fakeDav({ reach: true }), FAKE, { davFetch }), "contacts__get", { url: `${BOOK.url}alice-1.vcf` });
   assert.equal(error.code, "dav_error");
   assert.equal(error.message.includes(FAKE_PASSWORD), false);
 });

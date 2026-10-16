@@ -1,4 +1,4 @@
-// build-stamp: 94590f64a229
+// build-stamp: 0f8d9888d446
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -110777,7 +110777,7 @@ function mailToolDefinitions() {
   return [
     {
       name: "mail__configure_credential",
-      description: "One-time setup of this machine's Probanda mail connector: `host` (the IMAP server), `port` (default 993), `secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. To read the calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, https://contacts.icloud.com, and the Apple ID as `dav_username`. Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, host, username, next}: send the practitioner the `url`, a page on this computer where they type the password (for iCloud and most hosted mail an app-specific password, never the account password). The page signs in to mail and reads INBOX's counts, and signs in to the calendar and contacts servers when their URLs are given, before saving; it shows each result and lets them retry. A mail sign-in that fails saves nothing and the previous credential stays. A calendar or contacts sign-in that fails is shown as failed on the page and in mail__configure_status, and that service is saved as not configured while mail is saved. The password is saved on this computer, encrypted at rest, and never logged or returned. When they say it is done, call mail__configure_status. Only the newest link works. Writes only the credential file; nothing in the mailbox, calendar or contacts changes." + errors,
+      description: "One-time setup of this machine's Probanda mail connector: `host` (the IMAP server), `port` (default 993), `secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. To read the calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, https://contacts.icloud.com, and the Apple ID as `dav_username`. Run again without `dav_username`, `caldav_url`, `carddav_url` or `timezone` and the saved value of each is kept; give an empty string to clear one. Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, host, username, next}: send the practitioner the `url`, a page on this computer where they type the password (for iCloud and most hosted mail an app-specific password, never the account password). The page signs in to mail and reads INBOX's counts, and signs in to the calendar and contacts servers when their URLs are given, before saving; it shows each result and lets them retry. A mail sign-in that fails saves nothing and the previous credential stays. A calendar or contacts sign-in that fails is shown as failed on the page and in mail__configure_status, and that service is saved as not configured while mail is saved. The password is saved on this computer, encrypted at rest, and never logged or returned. When they say it is done, call mail__configure_status. Only the newest link works. Writes only the credential file; nothing in the mailbox, calendar or contacts changes." + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -110961,7 +110961,7 @@ function calendarToolDefinitions() {
     },
     {
       name: "calendar__get_event",
-      description: "Get the full details of one event (the whole series, for a repeating event) by the url from calendar__list_events: {url, etag, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. A url that is not on the configured calendar server is refused, so the password is never sent elsewhere. Read-only." + errors,
+      description: "Get the full details of one event (the whole series, for a repeating event) by the url from calendar__list_events: {url, etag, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. Only an https url on the configured calendar server, or on a server it moved the account to during this session's sign-in, is accepted; any other url is refused, so the password is never sent elsewhere. Read-only." + errors,
       inputSchema: {
         type: "object",
         properties: { url: { type: "string", description: "Event url from calendar__list_events" } },
@@ -110990,7 +110990,7 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__get",
-      description: "Get full details of one contact by the url from contacts__search: {url, etag, uid, name, prefix?, firstName?, middleName?, lastName?, suffix?, organization?, department?, jobTitle?, emails: [{label?, value, preferred?}], phones: [same], addresses: [{label?, preferred?, poBox?, extended?, street, city, region, postalCode, country}], birthday?, notes?}. A url that is not on the configured contacts server is refused, so the password is never sent elsewhere. Read-only." + errors,
+      description: "Get full details of one contact by the url from contacts__search: {url, etag, uid, name, prefix?, firstName?, middleName?, lastName?, suffix?, organization?, department?, jobTitle?, emails: [{label?, value, preferred?}], phones: [same], addresses: [{label?, preferred?, poBox?, extended?, street, city, region, postalCode, country}], birthday?, notes?}. Only an https url on the configured contacts server, or on a server it moved the account to during this session's sign-in, is accepted; any other url is refused, so the password is never sent elsewhere. Read-only." + errors,
       inputSchema: {
         type: "object",
         properties: { url: { type: "string", description: "Contact url from contacts__search" } },
@@ -117785,7 +117785,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join18 } from "node:path";
-var BUILD_STAMP = false ? null : "94590f64a229";
+var BUILD_STAMP = false ? null : "0f8d9888d446";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -122813,8 +122813,8 @@ function renderGeneral(ctx, stored, cited2) {
       body.push(...partLines);
     }
   });
-  const recipients = fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties);
-  const sent = recipients.filter((r3) => r3.role !== "bcc");
+  const recipients2 = fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties);
+  const sent = recipients2.filter((r3) => r3.role !== "bcc");
   const declaresRecipients = Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("recipients");
   const noTo = declaresRecipients && !sent.some((r3) => r3.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];
   if (noTo.length + sent.length > 0) lines2.push("", ...noTo, ...sent.map((r3) => recipientEntry(r3, r3.role === "to" ? "To" : "cc")));
@@ -122828,7 +122828,7 @@ function renderGeneral(ctx, stored, cited2) {
     ...unverifiedFiles.map((file) => notice(venueLabel === "" ? "No venue" : venueLabel, title, cited2.find((s3) => s3.file === file).header.accessed ?? null)),
     ...unplaced.map((s3) => `${s3.block === "venue" ? "venue " : ""}${s3.field} ${tagOf(s3)}`)
   ];
-  const blind = recipients.filter((r3) => r3.role === "bcc").map((r3) => recipientEntry(r3, "bcc"));
+  const blind = recipients2.filter((r3) => r3.role === "bcc").map((r3) => recipientEntry(r3, "bcc"));
   const header = frontmatterHeader({
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -148205,6 +148205,12 @@ var MAX_BODY = 4 * 1024;
 var TITLE2 = "Probanda mail connector";
 var SECRET_INPUT = '<input type="password" name="secret" autocomplete="current-password" required autofocus>';
 var SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an app-specific password, never the account password.";
+var SENT_TO = "Your password will be sent to: ";
+function recipients(fields) {
+  const dav = [fields.caldavUrl, fields.carddavUrl].filter((u3) => Boolean(u3)).map((u3) => new URL(u3).host);
+  const hosts = [.../* @__PURE__ */ new Set([fields.host, ...dav])].join(", ");
+  return dav.length ? hosts + ", and any server the calendar or contacts server moves the account to while signing in" : hosts;
+}
 var pending;
 var listening;
 async function servePasswordPage(fields, save2) {
@@ -148258,7 +148264,7 @@ function davLines(outcome) {
 }
 function form(fields) {
   const row2 = (label, value) => value ? `<dt>${label}</dt><dd>${escape2(value)}</dd>` : "";
-  return `<dl><dt>Server</dt><dd>${escape2(fields.host)}:${fields.port}</dd><dt>Username</dt><dd>${escape2(fields.username)}</dd>` + row2("Calendar and contacts username", fields.davUsername) + row2("Calendar server", fields.caldavUrl) + row2("Time zone", fields.timezone) + row2("Contacts server", fields.carddavUrl) + '</dl><form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + '</label><button type="submit">Sign in and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';
+  return `<dl><dt>Server</dt><dd>${escape2(fields.host)}:${fields.port}</dd><dt>Username</dt><dd>${escape2(fields.username)}</dd>` + row2("Calendar and contacts username", fields.davUsername) + row2("Calendar server", fields.caldavUrl) + row2("Time zone", fields.timezone) + row2("Contacts server", fields.carddavUrl) + "</dl><p>" + SENT_TO + escape2(recipients(fields)) + '</p><form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + '</label><button type="submit">Sign in and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';
 }
 function page(res, status2, title, body) {
   res.writeHead(status2, {
@@ -150281,12 +150287,8 @@ function requireDav(state, kind) {
 function davUsernames(credential) {
   return [...new Set([credential.davUsername, credential.username].filter((u3) => Boolean(u3)))];
 }
-function providerDomain(hostname) {
-  const labels = hostname.split(".");
-  if (labels.length <= 2 || /^[\d.]+$/.test(hostname) || hostname.includes(":")) return hostname;
-  return labels.slice(1).join(".");
-}
-function assertTrustedUrl(credential, kind, url) {
+var READ_METHODS = /* @__PURE__ */ new Set(["GET", "PROPFIND", "REPORT", "OPTIONS"]);
+function assertTrustedUrl(credential, kind, url, trust) {
   let u3;
   try {
     u3 = new URL(url);
@@ -150295,11 +150297,10 @@ function assertTrustedUrl(credential, kind, url) {
   }
   const configured = new URL(serverUrlOf(credential, kind));
   const sameAsConfigured = u3.protocol === configured.protocol && u3.host === configured.host;
-  const domain = providerDomain(configured.hostname);
-  const sameProvider = u3.protocol === "https:" && (u3.hostname === domain || u3.hostname.endsWith("." + domain));
-  if (!sameAsConfigured && !sameProvider) {
+  const https2 = u3.protocol === "https:";
+  if (!sameAsConfigured && !(https2 && (trust.signingIn || trust.reached.has(u3.host)))) {
     throw new ValidationError(
-      `Refusing to use "${url}": it is not on the configured ${LABEL[kind]} server (${configured.host}). Use a url returned by the ${kind === "caldav" ? "calendar__list_events" : "contacts__search"} tool.`
+      `Refusing to use "${url}": it is not on the configured ${LABEL[kind]} server (${configured.host}) or a server it moved this account to while signing in. Use a url returned by the ${kind === "caldav" ? "calendar__list_events" : "contacts__search"} tool.`
     );
   }
   return u3;
@@ -150311,13 +150312,20 @@ var isTimeout = (error2) => {
   return name2 === "TimeoutError" || name2 === "AbortError";
 };
 var isAuthFailure2 = (error2) => /\b401\b|unauthori[sz]ed|invalid credentials/i.test(errorText2(error2));
-function guardedFetch(context, credential, kind) {
+function guardedFetch(context, credential, kind, trust) {
   const base = context.davFetch ?? fetch;
   const timeoutMs = context.davTimeoutMs ?? DEFAULT_DAV_TIMEOUT_MS;
-  return ((input, init) => {
+  return (async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    assertTrustedUrl(credential, kind, url);
-    return base(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(timeoutMs) });
+    const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+    if (!READ_METHODS.has(method)) {
+      throw new ValidationError(`Refusing a ${method} request: the ${LABEL[kind]} tools only read.`);
+    }
+    const target = assertTrustedUrl(credential, kind, url, trust);
+    const signingIn = trust.signingIn;
+    const res = await base(input, { ...init, redirect: init?.redirect ?? "error", signal: init?.signal ?? AbortSignal.timeout(timeoutMs) });
+    if (signingIn && res.ok && new Headers(init?.headers).has("authorization")) trust.reached.add(target.host);
+    return res;
   });
 }
 var sessions = /* @__PURE__ */ new WeakMap();
@@ -150325,15 +150333,22 @@ async function signIn(context, credential, kind) {
   const factory = context.davClientFactory ?? defaultDavClientFactory;
   const serverUrl = serverUrlOf(credential, kind);
   const failures = [];
-  for (const username of davUsernames(credential)) {
-    try {
-      const client = await factory({ kind, serverUrl, username, secret: credential.password, fetch: guardedFetch(context, credential, kind) });
-      return { client, username };
-    } catch (error2) {
-      if (error2 instanceof ValidationError) throw error2;
-      if (isTimeout(error2)) throw timeoutError(context, kind, "signing in");
-      failures.push({ username, error: error2 });
+  const trust = { reached: /* @__PURE__ */ new Set(), signingIn: true };
+  const guarded = guardedFetch(context, credential, kind, trust);
+  try {
+    for (const username of davUsernames(credential)) {
+      try {
+        const client = await factory({ kind, serverUrl, username, secret: credential.password, fetch: guarded });
+        await (kind === "caldav" ? client.fetchCalendars() : client.fetchAddressBooks());
+        return { client, username, trust };
+      } catch (error2) {
+        if (error2 instanceof ValidationError) throw error2;
+        if (isTimeout(error2)) throw timeoutError(context, kind, "signing in");
+        failures.push({ username, error: error2 });
+      }
     }
+  } finally {
+    trust.signingIn = false;
   }
   const detail = failures.map((f3) => `${f3.username}: ${scrub(errorText2(f3.error), credential)}`).join("; ");
   const auth = failures.every((f3) => isAuthFailure2(f3.error));
@@ -150384,11 +150399,11 @@ async function runDav(context, credential, kind, what, fn2) {
   }
 }
 function getObject(context, credential, kind, url) {
-  assertTrustedUrl(credential, kind, url);
   return runDav(context, credential, kind, "reading " + url, async () => {
-    const { username } = await session(context, credential, kind);
+    const { username, trust } = await session(context, credential, kind);
+    assertTrustedUrl(credential, kind, url, trust);
     const authorization = "Basic " + Buffer.from(username + ":" + credential.password).toString("base64");
-    const res = await guardedFetch(context, credential, kind)(url, {
+    const res = await guardedFetch(context, credential, kind, trust)(url, {
       method: "GET",
       headers: { Authorization: authorization },
       redirect: "error"
@@ -150492,13 +150507,15 @@ async function configureCredential(context, args) {
     if (!PRINTABLE.test(value)) throw new ValidationError(`mail__configure_credential.${label} must hold printable characters only`);
   }
   const fields = { host, port, secure: args.secure !== false, username, ...fromAddress ? { fromAddress } : {} };
-  const davUsername = String(args.dav_username ?? "").trim();
+  const saved = context.mail.credential;
+  const davArg = (label, key) => args[label] === void 0 || args[label] === null ? saved?.[key] ?? "" : String(args[label]).trim();
+  const davUsername = davArg("dav_username", "davUsername");
   if (davUsername) {
     if (!PRINTABLE.test(davUsername)) throw new ValidationError("mail__configure_credential.dav_username must hold printable characters only");
     fields.davUsername = davUsername;
   }
   for (const [label, key] of [["caldav_url", "caldavUrl"], ["carddav_url", "carddavUrl"]]) {
-    const value = String(args[label] ?? "").trim();
+    const value = davArg(label, key);
     if (!value) continue;
     let parsed;
     try {
@@ -150511,7 +150528,7 @@ async function configureCredential(context, args) {
     }
     fields[key] = value;
   }
-  const timezone = String(args.timezone ?? "").trim();
+  const timezone = davArg("timezone", "timezone");
   if (timezone) {
     if (!isValidTimeZone(timezone)) {
       throw new ValidationError(`mail__configure_credential.timezone "${timezone}" is not an IANA time zone, such as America/Vancouver`);
@@ -158275,6 +158292,7 @@ function endOf(vevent, start2) {
   return start2;
 }
 function overlaps(occ, from, to2) {
+  if (occ.status?.toUpperCase() === "CANCELLED") return false;
   return occ._endMs > from && occ._startMs < to2 || occ._startMs === occ._endMs && occ._startMs >= from && occ._startMs < to2;
 }
 function expandObject(icsText, fromMs, untilMs, tz) {
@@ -158384,7 +158402,9 @@ async function occurrences2(client, fromMs, toMs2, calendarNames, tz) {
   for (const cal of cals) {
     const objects = await client.fetchCalendarObjects({
       calendar: cal,
-      timeRange: { start: new Date(fromMs).toISOString(), end: new Date(toMs2).toISOString() }
+      timeRange: { start: new Date(fromMs).toISOString(), end: new Date(toMs2).toISOString() },
+      urlFilter: () => true
+      // tsdav's default drops any object whose href lacks ".ics"
     });
     for (const obj of objects) {
       if (!obj.data?.includes("BEGIN:VEVENT")) continue;
@@ -158419,7 +158439,10 @@ function listEvents(context, args) {
   const fromMs = parseToUtc(args.start, tz);
   const toMs2 = rangeEnd(args.end, tz);
   if (!(toMs2 > fromMs)) throw new ValidationError("The end of the range must be after the start.");
-  const names2 = args.calendars;
+  const names2 = args.calendars ?? void 0;
+  if (names2 !== void 0 && (!Array.isArray(names2) || names2.some((n3) => typeof n3 !== "string"))) {
+    throw new ValidationError("calendar__list_events.calendars must be a list of calendar names");
+  }
   const includeNotes = args.includeNotes === true;
   return runDav(context, credential, "caldav", "listing events", async (client) => {
     const found = await occurrences2(client, fromMs, toMs2, names2, tz);
