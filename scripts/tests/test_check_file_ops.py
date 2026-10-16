@@ -19,8 +19,8 @@ check_file_ops = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(check_file_ops)
 
 PLUGINS = {
-    "practice": {"requires": [], "skills": ["show-me"], "agents": [], "hooks": {}, "servers": []},
-    "file-manager": {"requires": ["practice"], "skills": ["file-apply"], "agents": [], "hooks": {}, "servers": []},
+    "legal": {"requires": [], "skills": ["show-me"], "agents": [], "hooks": {}, "servers": []},
+    "file-manager": {"requires": ["legal"], "skills": ["file-apply"], "agents": [], "hooks": {}, "servers": []},
 }
 
 
@@ -58,13 +58,13 @@ class ScanTest(unittest.TestCase):
 
     def test_server_source_is_read_by_its_imports_and_fs_names_by_their_import(self):
         plugins = json.loads(json.dumps(PLUGINS))
-        plugins["practice"]["servers"] = ["data"]
+        plugins["legal"]["servers"] = ["data"]
         files = {
-            "source/practice/mcp/src/index.ts": 'import { go } from "./a.js";\nrename(x);\n',
-            "source/practice/mcp/src/a.ts": 'import { renameSync as mv } from "node:fs";\nexport const go = () => mv(a, b);\n',
-            "source/practice/mcp/src/file-manager-only.ts": 'import { unlinkSync } from "node:fs";\nunlinkSync(a);\n',
+            "source/legal/mcp/src/index.ts": 'import { go } from "./a.js";\nrename(x);\n',
+            "source/legal/mcp/src/a.ts": 'import { renameSync as mv } from "node:fs";\nexport const go = () => mv(a, b);\n',
+            "source/legal/mcp/src/file-manager-only.ts": 'import { unlinkSync } from "node:fs";\nunlinkSync(a);\n',
         }
-        self.assertEqual(self.pairs(files, plugins), [("source/practice/mcp/src/a.ts", "fs.rename")])
+        self.assertEqual(self.pairs(files, plugins), [("source/legal/mcp/src/a.ts", "fs.rename")])
 
 
 class RulingTest(unittest.TestCase):

@@ -11,10 +11,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("practice", "research", "litigator", "solicitor", "file-manager")
-BUNDLES = {"practice": ("mcp/dist/litigation-mcp.js",),
+PLUGINS = ("legal", "research", "litigator", "solicitor", "file-manager", "timekeeper")
+BUNDLES = {"legal": ("mcp/dist/litigation-mcp.js",),
            "research": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
-           "file-manager": ("files-mcp/dist/file-manager-mcp.js",)}
+           "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
+           "timekeeper": ("timecamp-mcp/dist/timecamp-mcp.js",)}
 
 
 def build(*args):
@@ -26,7 +27,7 @@ def copy_repo(repo):
     skip = shutil.ignore_patterns("tests", "test", "src", "build", "__pycache__", "node_modules")
     shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
     shutil.copytree(SOURCE, repo / "source", ignore=skip)
-    # A hook of the practice plugin runs a script in a public skill.
+    # A hook of the legal plugin runs a script in a public skill.
     shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)
 
 
@@ -51,7 +52,7 @@ class BuildPluginTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in self.out.iterdir()), sorted(PLUGINS))
 
     def test_roster_skill_is_stamped_with_its_own_plugin(self):
-        for plugin, skill in (("practice", "case-data"), ("research", "legal-research"), ("litigator", "draft")):
+        for plugin, skill in (("legal", "case-data"), ("research", "legal-research"), ("litigator", "draft")):
             with self.subTest(plugin=plugin):
                 text = (self.out / plugin / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
                 self.assertIn(f"\n<!-- {plugin} v{self.versions[plugin]} -->\n> **Installed copy.**", text)
@@ -76,25 +77,25 @@ class BuildPluginTest(unittest.TestCase):
     def test_rebuild_swaps_the_folder_and_leaves_no_temp_folder(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "out"
-            (out / "practice" / "skills").mkdir(parents=True)
-            (out / "practice" / "skills" / "stale.md").write_text("stale", encoding="utf-8")
+            (out / "legal" / "skills").mkdir(parents=True)
+            (out / "legal" / "skills" / "stale.md").write_text("stale", encoding="utf-8")
             result = build("--out", str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertFalse((out / "practice" / "skills" / "stale.md").exists())
-            self.assertTrue((out / "practice" / ".claude-plugin" / "plugin.json").is_file())
+            self.assertFalse((out / "legal" / "skills" / "stale.md").exists())
+            self.assertTrue((out / "legal" / ".claude-plugin" / "plugin.json").is_file())
             self.assertEqual(sorted(p.name for p in out.iterdir()), sorted(PLUGINS))
 
     def test_a_build_in_progress_stops_a_second_build(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "out"
-            (out / "practice").mkdir(parents=True)
-            (out / "practice" / "kept.md").write_text("kept", encoding="utf-8")
-            building = out / ".practice.building"
+            (out / "legal").mkdir(parents=True)
+            (out / "legal" / "kept.md").write_text("kept", encoding="utf-8")
+            building = out / ".legal.building"
             building.mkdir()
             result = build("--out", str(out))
             self.assertEqual(result.returncode, 2)
             self.assertIn("another build is running", result.stderr)
-            self.assertTrue((out / "practice" / "kept.md").is_file())
+            self.assertTrue((out / "legal" / "kept.md").is_file())
             self.assertTrue(building.is_dir())
 
     def test_overlong_description_stops_the_build(self):
@@ -121,12 +122,12 @@ class BuildPluginTest(unittest.TestCase):
             (public / "SKILL.md").write_bytes(text.encode("utf-8"))
             (public / "references" / "notes.txt").write_bytes(b"shipped whole\n")
             assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
-            assignment["plugins"]["practice"]["skills"].append("zz-public")
+            assignment["plugins"]["legal"]["skills"].append("zz-public")
             (repo / "source" / "assignment.json").write_text(json.dumps(assignment), encoding="utf-8")
             out = repo / "out"
             result = build("--repo", str(repo), "--out", str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
-            shipped = out / "practice" / "skills" / "zz-public"
+            shipped = out / "legal" / "skills" / "zz-public"
             self.assertEqual((shipped / "SKILL.md").read_bytes(), text.encode("utf-8"))
             self.assertTrue((shipped / "references" / "notes.txt").is_file())
             self.assertFalse((out / "research" / "skills" / "zz-public").exists())
