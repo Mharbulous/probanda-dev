@@ -74,7 +74,7 @@ Each is a `practice_data__*` tool, defined in `practiceToolDefinitions()` (`sour
 | `contact_lookup` | `id?` or `query?` (a case-insensitive substring of name, email or phone), `limit?` | Local and offline. Returns each contact with its affiliations and its matter roles (matter number, role, from, to), plus `near`: contacts with the same normalized name (lower case, punctuation and corporate suffixes such as Ltd., Inc. and LLP removed) or a shared email or phone. |
 | `contact_checks` | `matter?`, `matter_root?` | Runs the two checks in 4.4. Read only. |
 
-No merge tool is built. Ingest and the backfill ask before creating a contact, so duplicates should be rare. A duplicate found later is fixed by re-pointing its roles and affiliations with the upsert tools and deleting the spare through the existing item delete. See open question 9.2.
+No merge tool is built. Ingest and the backfill ask before creating a contact, so duplicates should be rare. A duplicate found later is fixed by re-pointing its roles and affiliations with the upsert tools and deleting the spare through the existing item delete.
 
 ### 4.3 `upsert_client_matter`
 
@@ -98,7 +98,7 @@ Callers: the executive-assistant morning briefing shows the two counts; the back
 
 ### 4.5 One-time backfill
 
-A new skill file, `.claude/skills/practice-data/operations/contacts-backfill.md`, linked from the practice-data `SKILL.md` for "set up contacts from existing matters". Its worklist is always the live output of `contact_checks`, so a stopped run resumes where it stopped and a second run finds nothing to do.
+A new skill file, `.claude/skills/practice-data/operations/contacts-backfill.md`, linked from the practice-data `SKILL.md` for "set up contacts from existing matters". Its worklist is always the live output of `contact_checks`, so a stopped run resumes where it stopped and a second run finds only the parties the practitioner skipped.
 
 1. Run `contact_checks` across every open matter. Matters with no client role come first.
 2. For each uncovered party, build candidates:
@@ -153,10 +153,10 @@ The ADR records the design options. Within this spec, a natural-key upsert on a 
 - No case-data operation file writes `contact_info`.
 - The diff holds no case-data DDL.
 
-## 9. Open questions
+## 9. Settled questions
 
-1. A co-party on the firm's side who is not its client, such as a co-defendant with other counsel, has no role in the vocabulary. Either add `co_party`, or give the party no role and let check 2 skip a party the practitioner has marked. Until this is decided, check 2 reports such a party and the practitioner skips it.
-2. Whether a merge tool is needed once the backfill has run.
+1. A co-party on the firm's side who is not its client, such as a co-defendant with other counsel, gets no role: the vocabulary gains no `co_party`. Check 2 keeps listing such a party, and the practitioner skips it.
+2. No merge tool is built, even after the backfill (4.2).
 
 ## 10. Release: patch
 
