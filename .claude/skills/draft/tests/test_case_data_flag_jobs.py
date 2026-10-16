@@ -1,7 +1,8 @@
-"""Case-data flags in a research return become proposed blocker jobs on a held job.
+"""Case-data flags in a research return: a contradicted record is corrected first, every
+other flag is captured first, and a flag becomes a blocker job only when the practitioner asks.
 
-Spec `2026-10-05_audit-flags-to-draft-jobs-spec.md`, with the practitioner's 2026-10-05
-decision that `pinpoint` flags are captured together as one idea and never block.
+Spec `2026-10-05_audit-flags-to-draft-jobs-spec.md`, as changed by e7eab6b (no blocker
+unasked) and 3502a12 (correct a record a primary source contradicts).
 """
 import re
 import unittest
@@ -34,20 +35,27 @@ def rule():
     return flat(text[start:text.index("\n", start)])
 
 
-def handle(notes):
-    """The rule's mechanics: captured ideas, then one proposed blocker per non-pinpoint flag."""
+def handle(notes, covered=(), asked=()):
+    """The rule's mechanics: corrections first, captured ideas, then blockers only where asked.
+
+    `covered` names the descriptions of `correction` or `discrepancy` flags that SKILL.md
+    rule 9 covers; `asked` names the descriptions the practitioner says this job must wait on.
+    """
     flags = FLAG_LINE.findall(notes)
-    pinpoints = [f for f in flags if f[0] == "pinpoint"]
-    others = [f for f in flags if f[0] != "pinpoint"]
+    corrected = [f for f in flags if f[0] != "pinpoint" and f[1] in covered]
+    rest = [f for f in flags if f not in corrected]
+    pinpoints = [f for f in rest if f[0] == "pinpoint"]
+    others = [f for f in rest if f[0] != "pinpoint"]
     ideas = ([pinpoints] if pinpoints else []) + [[f] for f in others]
     blockers = [
         (
             f"Resolve the case-data {kind}: {description} : {evidence}",
             f"What should case data record? {description} : {evidence}",
         )
-        for kind, description, evidence in others
+        for kind, description, evidence in rest
+        if description in asked
     ]
-    return ideas, blockers
+    return corrected, ideas, blockers
 
 
 class CaseDataFlagJobTests(unittest.TestCase):
@@ -55,21 +63,41 @@ class CaseDataFlagJobTests(unittest.TestCase):
     def setUpClass(cls):
         cls.rule = rule()
 
-    def test_capture_comes_first_with_pinpoints_together(self):
-        self.assertIn('Capture comes first (SKILL.md section 14, "Captured ideas")', self.rule)
+    def test_a_contradicted_record_is_corrected_first(self):
         self.assertIn(
-            "every `pinpoint` flag together as one idea, and each other flag as its own. "
-            "A `pinpoint` flag ends there, and the job carries on.",
+            "For each `correction` or `discrepancy` flag, first read the source its evidence "
+            "ids name: where SKILL.md rule 9 covers the flag, correct the record",
             self.rule,
         )
+        self.assertIn("and capture nothing.", self.rule)
+        corrected, ideas, blockers = handle(
+            NOTES, covered=("FIXTURE copies A and B differ on term 3",)
+        )
+        self.assertEqual(len(corrected), 1)
+        self.assertEqual(len(ideas), 1)
+        self.assertEqual(blockers, [])
 
-    def test_discrepancy_and_correction_take_the_spin_off_path(self):
+    def test_capture_comes_first_with_pinpoints_together(self):
         self.assertIn(
-            "Each `discrepancy` or `correction` flag is separate work this job must wait on",
+            'For every other flag, capture comes first (SKILL.md section 14, "Captured ideas")',
             self.rule,
         )
-        self.assertIn("take the Spin off path above without being asked", self.rule)
+        self.assertIn(
+            "every `pinpoint` flag together as one idea, and each other flag as its own.",
+            self.rule,
+        )
+        self.assertIn("and the job carries on.", self.rule)
+
+    def test_no_blocker_is_proposed_unless_the_practitioner_asks(self):
+        self.assertIn(
+            "No blocker is proposed unasked: a flag becomes a blocker only when the "
+            "practitioner says this job must wait on it",
+            self.rule,
+        )
+        self.assertIn("Then take the Spin off path above for that flag.", self.rule)
         self.assertIn("The rest is the Spin off path unchanged.", self.rule)
+        corrected, ideas, blockers = handle(NOTES)
+        self.assertEqual((len(corrected), len(ideas), blockers), (0, 2, []))
 
     def test_frames_are_fixed(self):
         self.assertIn("title `Resolve the case-data <kind>: <flag>`", self.rule)
@@ -80,8 +108,11 @@ class CaseDataFlagJobTests(unittest.TestCase):
         self.assertIn("records the answer through `/case-data`", self.rule)
         self.assertIn("the session states no law", self.rule)
 
-    def test_one_discrepancy_proposes_one_blocker_in_the_flags_words(self):
-        ideas, blockers = handle(NOTES)
+    def test_an_asked_discrepancy_proposes_one_blocker_in_the_flags_words(self):
+        corrected, ideas, blockers = handle(
+            NOTES, asked=("FIXTURE copies A and B differ on term 3",)
+        )
+        self.assertEqual(corrected, [])
         self.assertEqual(len(ideas), 2)
         self.assertEqual(
             blockers,
@@ -97,7 +128,7 @@ class CaseDataFlagJobTests(unittest.TestCase):
 
     def test_no_flags_changes_nothing(self):
         self.assertIn("A return with no `case-data:` line changes nothing.", self.rule)
-        self.assertEqual(handle(NOTES_NO_FLAGS), ([], []))
+        self.assertEqual(handle(NOTES_NO_FLAGS), ([], [], []))
 
 
 if __name__ == "__main__":
