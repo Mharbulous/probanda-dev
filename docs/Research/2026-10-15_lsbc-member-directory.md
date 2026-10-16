@@ -56,3 +56,50 @@ No page reached uses the word "suspended" as a named status category; the pages 
 - **Whether any LSBC page states an explicit numeric limit on lookups (e.g., "one lookup per applicant") or an explicit "no bulk extraction" clause.** None was found. The only purpose restriction located is the commercial/marketing/fundraising clause quoted in Section 3.
 - **Whether "suspended" is used anywhere as a named status label distinct from "current practice restrictions" / "current regulatory proceedings."** Not found on the pages reached.
 - A page titled "Lawyer Directory Important Notice," which appeared in search-result listings, returned HTTP 404 when fetched directly (https://www.lawsociety.bc.ca/working-with-lawyers/lawyer-directory-important-notice/); its content, if any, is not reflected in this file.
+
+## 4. The rendered search results and detail page (issue #60, 2026-10-16)
+
+Observed in a browser session on 2026-10-16: one search, on Brahm Dorst's own name, and his own detail page. Labels only; no values recorded. This section settles the first, second and fourth items under "Unestablished" above.
+
+### The search form submits by GET, not POST
+
+The "Unestablished" note above says the form submits by POST. It does not. The form uses GET, with action `mbr-search.cfm#act_searchresults` and these parameters: `txt_search_type` (1 = starts with, 2 = contains, 3 = exact match), `txt_last_nm`, `txt_given_nm`, `txt_city`, `member_search`, and hidden `is_submitted=1` and `results_no=10`. A results page is therefore an ordinary URL, for example `/lsbc/apps/lkup/directory/mbr-search.cfm?txt_search_type=3&txt_last_nm=<last>&txt_given_nm=<first>&txt_city=&member_search=Search&is_submitted=1&results_no=10`. A plain `curl` of that URL, with no browser and no cookies, returned HTTP 200 with the results table and the detail link.
+
+### Search result row
+
+- The results table has one column, "Name". Status, city and firm are not shown in the results list.
+- The table has client-side controls: "Show 10/25/50/100 entries", "Filter:", "Showing 1 to 1 of 1 entries", and Previous/Next paging.
+- Each name links to `mbr-details.cfm?encrypted=<opaque token>#_toph1`. The token is an encoded string, not a numeric member id, so a detail page cannot be addressed by member number. Reaching one means running a search first.
+
+### Member detail page ("Lawyer's Profile")
+
+URL path `/lsbc/apps/lkup/directory/mbr-details.cfm`, whose only query parameter is `encrypted`. The fields, in order, as labelled on the page:
+
+1. Name, shown as the page heading, with no label.
+2. "Current status". The value seen was "Practising".
+3. "Call date". This is a full call date, not just a year of call.
+4. "Primary location". The firm name.
+5. "Contact address", followed by the links "[ Show Map ] [ Add to Outlook Contacts ] [ Show QRCode ]".
+6. "Phone number", tagged "[Firm]".
+7. "Fax number", tagged "[Firm]".
+8. "Email". Not shown on the page. The page reads "To obtain this lawyer's email address, click here." That link runs `javascript:showcap();`, which reveals a CAPTCHA in an iframe (`iframeCaptchaForEmail`). The page has no `mailto:` link.
+9. "Current practice restrictions". Empty state: "None".
+10. "Discipline history since 1983". Empty state: "None".
+11. "Current regulatory proceedings". Empty state: "None".
+
+The page has no member number, website, areas of practice or languages. It carries no legend explaining statuses. Its other text is a pointer to the Unauthorized Practitioners database and a "Lawyers: Does your contact information need updating?" link.
+
+### Anti-automation
+
+- No CAPTCHA, interstitial, Cloudflare check or rate-limit message appeared on loading the form or on submitting the search. The form page's HTML contains none of "recaptcha", "hcaptcha", "turnstile", "captcha" or "cf-chl". The plain `curl` above also contained no "captcha".
+- The detail page contains "captcha" (6 matches), all belonging to the email-reveal CAPTCHA. It loads no third-party bot-check script. Its only third-party scripts are Siteimprove analytics and Google Tag Manager.
+- So the one CAPTCHA in the flow guards the email address, not the search and not the status. One search was run, so a rate limit triggered by volume was not tested.
+
+### How a suspension would show
+
+Status is a single labelled field, "Current status". Only the value "Practising" was observed. Whether a suspended lawyer's "Current status" reads "Suspended" or something else, or whether the suspension appears only under "Current practice restrictions" or "Current regulatory proceedings", could not be established from one practising member's page, and the page has no legend listing the possible values.
+
+### Still unestablished
+
+- The full set of values "Current status" can take, including the value for a suspended member.
+- Whether high-volume searching is rate-limited.
