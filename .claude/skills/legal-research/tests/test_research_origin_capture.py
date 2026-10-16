@@ -3,9 +3,10 @@
 Spec `2026-10-06_research-results-to-board-spec.md`: a research question taken from a draft
 carries an `Origin:`; the audit tags each offer `live_issue` and quotes each correction to the
 draft's words. Wherever a board resolves, the relaying session captures the corrections and
-flags as loose threads and sorts every offer against the board, whatever its tag: on the
-application (a research job, no question asked), off it (dropped and counted) or uncertain
-(captured as a loose thread and relayed word for word). With no board every offer is relayed.
+flags as loose threads and sorts every offer against the board, whatever its tag: off the
+application (dropped and counted) or on or near it (captured as a loose thread and relayed word
+for word, unless the board already holds it). An offer becomes a job only when the practitioner
+names it to add. With no board every offer is relayed.
 """
 import re
 import unittest
@@ -43,9 +44,10 @@ def between(text, start, end):
     return text[begin:text.index(end, begin)]
 
 
-# The sort's class for each fixture offer, in order. The sort reads the board, never the tag:
-# point C is tagged `live_issue: no` and is still relayed, because it is uncertain.
-FIXTURE_SORT = ["on", "off", "uncertain"]
+# The sort's class for each fixture offer, in order: "on" (on or near the application), "off",
+# or "board" (on or near, but the duplicate test finds it already on the board). The sort reads
+# the board, never the tag: point C is tagged `live_issue: no` and is still captured and relayed.
+FIXTURE_SORT = ["board", "off", "on"]
 
 
 def offers_by_class(notes, sort, wanted):
@@ -54,22 +56,22 @@ def offers_by_class(notes, sort, wanted):
 
 
 def relay(notes, sort):
-    """The relay with a board: each uncertain offer word for word, then the count line."""
-    added = len(offers_by_class(notes, sort, "on"))
+    """The relay with a board: each captured offer word for word, then the count line."""
+    captured = offers_by_class(notes, sort, "on")
+    on_board = len(offers_by_class(notes, sort, "board"))
     dropped = len(offers_by_class(notes, sort, "off"))
-    jobs = ", ".join(f"Job #{n} (matches: FIXTURE to-do)" for n in range(1, added + 1))
-    return offers_by_class(notes, sort, "uncertain") + [
-        f"{added} offers added as research jobs: {jobs}. "
+    return captured + [
+        f"{len(captured)} offers captured as loose threads. {on_board} already on the board. "
         f"{dropped} offers dropped as off this application."
     ]
 
 
 def captures(notes, sort):
-    """One thread per correction and per uncertain offer, all pinpoint flags as one thread."""
+    """One thread per correction and per captured offer, all pinpoint flags as one thread."""
     corrections = [m.group(0) for m in ORIGIN_CORRECTION.finditer(notes)]
     pinpoints = [l for l in notes.splitlines() if l.startswith("case-data: pinpoint")]
-    uncertain = offers_by_class(notes, sort, "uncertain")
-    return corrections + uncertain + (["\n".join(pinpoints)] if pinpoints else [])
+    captured = offers_by_class(notes, sort, "on")
+    return corrections + captured +(["\n".join(pinpoints)] if pinpoints else [])
 
 
 class SpawnTemplateTests(unittest.TestCase):
@@ -152,33 +154,38 @@ class AfterTheAnswerTests(unittest.TestCase):
         self.assertIn(
             "Then sort every Step 5 offer, whatever its `live_issue` tag, against the board.", self.step
         )
+        self.assertIn("Not captured, not relayed, counted", self.step)
         self.assertIn(
-            "A research job by `/drafting-data` §3i, in the same turn, with no read-back and no question",
+            "Everything else: an offer serving the board's words, a new angle on the board's own "
+            "subject, and any doubt",
             self.step,
         )
-        self.assertIn("Not captured, not relayed, counted", self.step)
-        self.assertIn("Any doubt lands here", self.step)
         self.assertIn("Captured as a loose thread at once", self.step)
         self.assertIn("and relayed word for word", self.step)
         self.assertIn("It states no law and rewords nothing.", self.step)
+        self.assertIn(
+            "It creates no job: an offer becomes a job only when the practitioner names it to add.",
+            self.step,
+        )
 
     def test_relay_ends_with_the_count_and_the_add_or_drop_line(self):
-        self.assertIn("2. Each uncertain offer, word for word.", self.step)
+        self.assertIn("2. Each captured offer, word for word.", self.step)
         self.assertIn(
-            "`<a> offers added as research jobs: Job #N (matches: <the board words matched>), "
-            "Job #M (...). <d> offers dropped as off this application.`",
+            "`<c> offers captured as loose threads. <k> already on the board. "
+            "<d> offers dropped as off this application.`",
             self.step,
         )
         self.assertIn(
-            "One line saying they may name any relayed offer to add or drop, and that the rest "
-            "stay on the board as loose threads.",
+            "One line saying they may name any relayed offer to add as a research job or to drop, "
+            "and that the rest stay on the board as loose threads.",
             self.step,
         )
 
     def test_no_board_relays_every_offer(self):
         self.assertIn(
             "When no board resolves, capture nothing, add no job, relay the `Confidence:` line "
-            "and every offer, each word for word, with the saved memo as its file card, and say "
+            "and every offer, each word for word, with the saved memo as its file card "
+            "(`shared/present-files.md`), and say "
             "in one line that the matter has no board to capture to.",
             self.step,
         )
@@ -194,7 +201,7 @@ class AfterTheAnswerTests(unittest.TestCase):
         self.assertEqual(
             relay(NOTES_WITH_ORIGIN, FIXTURE_SORT),
             ["Would you like me to research FIXTURE point C? live_issue: no",
-             "1 offers added as research jobs: Job #1 (matches: FIXTURE to-do). "
+             "1 offers captured as loose threads. 1 already on the board. "
              "1 offers dropped as off this application."],
         )
         self.assertEqual(len(captures(NOTES_WITH_ORIGIN, FIXTURE_SORT)), 3)
