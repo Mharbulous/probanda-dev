@@ -1,7 +1,7 @@
 {
   "name": "file-manager",
   "displayName": "Probanda File Manager",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the legal plugin: install legal first.",
   "author": {
     "name": "Probanda",
