@@ -422,7 +422,7 @@ Result, 2026-10-13. Step 1 printed `64 clauses, 36 records, 37 conditions`. Step
 
 ### After each later batch: records that may have left out an exception
 
-`queries/exception_gaps.sql` lists each pair of live records that have the same consequence clause and the same element and factor clauses, but different exceptions. Such a pair states one test, and one of the two may have left out an exception. `contribute_decomposition` reuses a record only when every condition matches, so the pair is stored as two records and nothing says so. The query matches by id only and follows no `equivalent` pair. It only reads. Brahm runs it in the SQL editor after each later batch of decompositions and pastes the result back. On the current pool it is expected to return no rows. A person reviews each pair it lists. The scratch tests run the file as it is (added 2026-10-16).
+`queries/exception_gaps.sql` lists each pair of live records that have the same consequence clause and the same element and factor clauses, but different exceptions. Such a pair states one test, and one of the two may have left out an exception. `contribute_decomposition` reuses a record only when every condition matches, so the pair is stored as two records and nothing says so. The query matches by id only and follows no `equivalent` pair. It only reads. Brahm runs it in the SQL editor after each later batch of decompositions and pastes the result back. It has not yet been run on the pool. The 36 records share 31 consequences, so it may list a pair. A person reviews each pair it lists. The scratch tests run the file as it is (added 2026-10-16).
 
 ### Phase 7. Give the plugin the search (step 8 of the schema plan, unchanged)
 
