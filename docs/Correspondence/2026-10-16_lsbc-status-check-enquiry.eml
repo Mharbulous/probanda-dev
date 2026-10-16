@@ -1,0 +1,31 @@
+From: Brahm Dorst <brahm@logicalaw.ca>
+To: Registration and Licensee Services <registration@lsbc.org>
+Subject: Request: permission for automated re-checks of lawyers' directory status
+X-Unsent: 1
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Dear Registration and Licensee Services,
+
+I am a practising BC lawyer, and I am building Probanda, a set of software tools for lawyers. Some of its shared online services are open only to practising lawyers and to staff they supervise. To keep them that way, Probanda checks each applicant against the Lawyer Directory.
+
+At present, Probanda makes one directory lookup per application. It runs a search by name and reads the "Current status" on the matching profile page, so as to verify that the applicant is a practising member. It identifies itself in its requests. It reads no other field for this purpose, and it uses nothing from the directory for any commercial, marketing or fundraising purpose. As I read the search page, verifying a lawyer's status is a permitted use.
+
+A lawyer's status can change after they sign up. I would like Probanda to notice when a member stops practising, so that their access ends. Your robots.txt disallows automated access to the member profile page, where "Current status" appears. So I will not run any scheduled re-check without the Law Society's agreement. I have three questions:
+
+1. May Probanda's server re-check, on a schedule (for example, once a month), the "Current status" of the members who have signed up to Probanda? It would make one search and read one profile page per member, at a low rate, identifying itself in each request. If the Law Society would permit this only on conditions (a frequency, a rate, a time of day, or a User-Agent), I would follow them.
+
+2. Alternatively, does the Law Society offer a verification arrangement or a data feed that would let a service confirm the current status of a named member, without reading the public directory?
+
+3. Separately, would the Law Society confirm, when I ask in an individual case, that a given email address belongs to a given member? Probanda sends each applicant a one-time sign-in link, and it must send that link to an address that belongs to the member, not just to an address the applicant supplies. Any such request would come from me personally, by hand, for one applicant at a time. Probanda will never send the Law Society an automated email.
+
+Until I hear from you, Probanda will re-check a member's status only when there is a specific reason to: when the member adds a new device, or when I review an application by hand. Neither involves any scheduled or bulk access.
+
+Thank you for considering this. I am happy to provide more detail, or to discuss it by phone.
+
+Yours truly,
+
+Brahm Dorst
+Brahm Dorst Law Corporation
+brahm@logicalaw.ca
