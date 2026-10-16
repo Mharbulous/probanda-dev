@@ -19,7 +19,8 @@ from pathlib import Path
 SINGLE_PLUGIN = "probanda"
 # Server key in .mcp.json -> the server's folder, in its plugin's source and in the
 # built plugin. The bundle is at <folder>/dist/.
-SERVER_DIRS = {"data": "mcp", "canlii": "canlii-mcp", "commons": "commons-mcp", "files": "files-mcp"}
+SERVER_DIRS = {"data": "mcp", "canlii": "canlii-mcp", "commons": "commons-mcp", "files": "files-mcp",
+               "timecamp": "timecamp-mcp"}
 
 
 def stop(message):

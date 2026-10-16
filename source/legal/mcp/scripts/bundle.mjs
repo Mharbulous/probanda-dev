@@ -10,6 +10,9 @@ const outfile = resolve(root, "dist", "litigation-mcp.js");
 // same source, serving only the file_ops__* and housekeeping__* tools
 // (src/file-manager-index.ts, docs/Plans/2026-10-14_file-admin-plugin.md).
 const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
+// The timekeeper plugin's `timecamp` server: a third entry point, serving only the
+// TimeCamp API tools (src/timecamp-index.ts, docs/Specs/2026-10-15_timecamp-api-connector-spec.md).
+const timecampOutfile = resolve(root, "..", "..", "timekeeper", "timecamp-mcp", "dist", "timecamp-mcp.js");
 
 // The repo root is resolved at RUNTIME now (src/repo-root.ts), not baked in
 // here at build time. A baked root is a per-build-machine literal in a
@@ -94,3 +97,4 @@ async function bundle(entry, out, extraBanner = "") {
 
 await bundle("index.ts", outfile, REQUIRE_SHIM);
 await bundle("file-manager-index.ts", fileManagerOutfile);
+await bundle("timecamp-index.ts", timecampOutfile);

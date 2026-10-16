@@ -151,16 +151,16 @@ _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re
 # The data server's bundle, inside that server's folder.
 DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # Servers whose bundles are checked for Supabase and the commons tool namespace. commons
-# is exempt: it is the plugins' Supabase surface. canlii and files must carry neither
+# is exempt: it is the plugins' Supabase surface. canlii, files and timecamp must carry neither
 # 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
 # go to Probanda's Cloud, but only through the three items functions: every
 # 'functions/v1/' path in it must be items-write, items-sync or items-seed, and it must
 # carry no other functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
 # bundle is not checked for any other Supabase use, such as a Supabase client library.
-PURITY_SERVERS = ("data", "canlii", "files")
+PURITY_SERVERS = ("data", "canlii", "files", "timecamp")
 DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed")
 _FUNCTIONS_PATH = re.compile(r"functions/v1/[a-z0-9_-]*")
-HOST_PATH_SERVERS = ("data", "canlii", "commons", "files")
+HOST_PATH_SERVERS = ("data", "canlii", "commons", "files", "timecamp")
 
 FETCH_TOOL = "sources__fetch"
 # The only agent files that may grant sources__fetch.

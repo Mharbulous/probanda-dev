@@ -31,7 +31,7 @@ These are permanent once published. Do not rename them.
 
 - The plugin names `legal`, `research`, `litigator`, `solicitor`, `file-manager` and `timekeeper`.
 - The marketplace name `probanda`.
-- Every MCP server key in a plugin's `.mcp.json`: `data` in `legal`, `canlii` and `commons` in `research`, `files` in `file-manager`, and `timecamp` in `timekeeper` once the TimeCamp connector adds it.
+- Every MCP server key in a plugin's `.mcp.json`: `data` in `legal`, `canlii` and `commons` in `research`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
 
 Together they make up the tool names (`mcp__plugin_<plugin>_<server>__*`, for example `mcp__plugin_legal_data__*`), the agent names (`<plugin>:<agent>`), the install keys (`<plugin>@probanda`) and the `${CLAUDE_PLUGIN_DATA}` directory. A rename strands every user's installed copy and saved data. `displayName` and descriptions can change freely.
 

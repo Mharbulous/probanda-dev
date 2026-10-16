@@ -164,7 +164,9 @@
       ],
       "agents": [],
       "hooks": {},
-      "servers": []
+      "servers": [
+        "timecamp"
+      ]
     }
   }
 }
