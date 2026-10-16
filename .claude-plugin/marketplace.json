@@ -31,6 +31,11 @@
       "name": "file-manager",
       "source": "./plugins/file-manager",
       "description": "Optional. Every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create: matter housekeeping, routing accounting files, applying approved renames. Without it, Probanda only reads or copies those files. Requires legal. Install legal first, then file-manager."
+    },
+    {
+      "name": "timekeeper",
+      "source": "./plugins/timekeeper",
+      "description": "Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries. Billing stays in legal. Requires legal. Install legal first, then timekeeper."
     }
   ]
 }

@@ -8,7 +8,6 @@
         "TLDR",
         "ar-follow-up",
         "bill-client",
-        "build-timeline",
         "case-data",
         "dyu",
         "executive-assistant",
@@ -31,11 +30,6 @@
         "show-me",
         "suggestion",
         "task-prioritization",
-        "time-entry-drafting",
-        "time-pipeline-data",
-        "time-sorting",
-        "timecamping",
-        "timecamping-data",
         "wip-tracker"
       ],
       "agents": [
@@ -155,6 +149,22 @@
       "servers": [
         "files"
       ]
+    },
+    "timekeeper": {
+      "requires": [
+        "legal"
+      ],
+      "skills": [
+        "build-timeline",
+        "time-entry-drafting",
+        "time-pipeline-data",
+        "time-sorting",
+        "timecamping",
+        "timecamping-data"
+      ],
+      "agents": [],
+      "hooks": {},
+      "servers": []
     }
   }
 }

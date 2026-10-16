@@ -1,0 +1,12 @@
+{
+  "build-timeline": [
+    "scripts"
+  ],
+  "time-entry-drafting": [],
+  "time-pipeline-data": [],
+  "time-sorting": [],
+  "timecamping": [],
+  "timecamping-data": [
+    "scripts"
+  ]
+}

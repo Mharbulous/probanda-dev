@@ -1,6 +1,6 @@
 # Probanda
 
-Probanda is a set of five Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `probanda`.
+Probanda is a set of six Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `probanda`.
 
 | Plugin | What it does | Requires |
 |---|---|---|
@@ -9,6 +9,7 @@ Probanda is a set of five Claude Cowork plugins for legal practice in British Co
 | `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `legal`, `research` |
 | `solicitor` | Reserved. It ships no skills yet | `legal` |
 | `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `legal` |
+| `timekeeper` | Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries | `legal` |
 
 ## Install
 
@@ -20,11 +21,14 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 /plugin install research@probanda
 /plugin install litigator@probanda
 /plugin install file-manager@probanda
+/plugin install timekeeper@probanda
 ```
 
 Keep to that order. Claude Code installs a required plugin with the plugin that requires it, but claude.ai and Cowork do not: there, a plugin whose required plugin is missing loads with tools and agents absent.
 
 `file-manager` is optional: leave it out to keep Probanda's file tools away from your files. Without it, a step that would move or trash a file stops and says so. The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-manager removes Probanda's file tools, not the host's.
+
+`timekeeper` is optional too: leave it out if you do not track time with it. Billing keeps working without it, and a billing step that needs it says so and stops.
 
 ## Status
 

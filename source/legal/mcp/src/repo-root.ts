@@ -244,7 +244,7 @@ export function pluginManifest(installRoot: string): { name: string | null; vers
 
 /** The only plugins whose installs may serve skill source beside this one, in lookup order. Any other
  *  manifest name is ignored, so a stale `probanda` left beside them can never serve a file. */
-const SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager"];
+const SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager", "timekeeper"];
 
 export interface SiblingInstall {
   /** The manifest `name`, never the folder name: a host may name the folder `plugin_<id>`. */
@@ -414,7 +414,7 @@ function rosterLine(installRoot: string, segment: string): string {
     `${folder} is not among them. ` +
     (siblings.length
       ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. `
-      : "No other Probanda plugin (legal, research, litigator, solicitor or file-manager) was found installed beside this one. ") +
+      : "No other Probanda plugin (legal, research, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") +
     `The plugin that holds ${folder} is not installed on this PC's copy of the plugins ` +
     "(in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it."
   );

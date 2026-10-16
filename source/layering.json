@@ -104,7 +104,16 @@
     {"file": ".claude/skills/safe-file-deletion/SKILL.md", "target": "files server", "why": "conditional", "note": "file_ops__trash is the only delete path. Without file-manager it stops and tells the practitioner; no shell fallback."},
     {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "target": "files server", "why": "conditional", "note": "The deny message names file_ops__trash and says that without file-manager the deletion is refused."},
     {"file": ".claude/skills/show-me/SKILL.md", "target": "route-accounting", "why": "mention", "note": "Lists route-accounting's approvals among the exchanges it governs."},
-    {"file": ".claude/skills/suggestion/SKILL.md", "target": "commons server", "why": "conditional", "note": "Posts through the suggestion_box__* tools on research's commons server, chosen by Brahm on 2026-10-15 (spec 2026-10-15_suggestion-skill-to-practice-plugin, option b). Without research it says posting needs the research plugin and posts nothing."}
+    {"file": ".claude/skills/suggestion/SKILL.md", "target": "commons server", "why": "conditional", "note": "Posts through the suggestion_box__* tools on research's commons server, chosen by Brahm on 2026-10-15 (spec 2026-10-15_suggestion-skill-to-practice-plugin, option b). Without research it says posting needs the research plugin and posts nothing."},
+    {"file": ".claude/skills/executive-assistant/vision.md", "target": "build-timeline", "why": "mention", "note": "A deferred extension that could read calendar events build-timeline already fetches."},
+    {"file": ".claude/skills/executive-assistant/vision.md", "target": "time-entry-drafting", "why": "signpost", "note": "A non-goal: drafting the retainer notice is not this skill's job."},
+    {"file": ".claude/skills/invoice-reviewing/SKILL.md", "target": "time-entry-drafting", "why": "conditional", "note": "The no-entries message offers it only if timekeeper is installed, beside importing the entries."},
+    {"file": ".claude/skills/show-me/SKILL.md", "target": "time-entry-drafting", "why": "mention", "note": "A related-patterns example of propose-then-commit."},
+    {"file": ".claude/skills/show-me/SKILL.md", "target": "timecamping", "why": "caller", "note": "Says /timecamping's ceremonies open this skill."},
+    {"file": ".claude/skills/task-prioritization/SKILL.md", "target": "time-entry-drafting", "why": "conditional", "note": "Mentioned on completing a to-do only when timekeeper is installed; without it, nothing is said about time entries."},
+    {"file": ".claude/skills/task-prioritization/vision.md", "target": "time-entry-drafting", "why": "mention", "note": "Describes a downstream use of completed tasks."},
+    {"file": ".claude/skills/wip-tracker/SKILL.md", "target": "time-entry-drafting", "why": "mention", "note": "A related-skills table row: it creates the entries this skill reads through practice-data."},
+    {"file": ".claude/skills/wip-tracker/vision.md", "target": "time-entry-drafting", "why": "signpost", "note": "A non-goal, and where the entries it reads come from."}
   ],
   "todo": []
 }

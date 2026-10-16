@@ -1,9 +1,6 @@
 {
   "ar-follow-up": [],
   "bill-client": [],
-  "build-timeline": [
-    "scripts"
-  ],
   "case-data": [],
   "executive-assistant": [],
   "file-naming": [
@@ -31,12 +28,5 @@
   ],
   "suggestion": [],
   "task-prioritization": [],
-  "time-entry-drafting": [],
-  "time-pipeline-data": [],
-  "time-sorting": [],
-  "timecamping": [],
-  "timecamping-data": [
-    "scripts"
-  ],
   "wip-tracker": []
 }

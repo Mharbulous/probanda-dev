@@ -63,6 +63,8 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 ## Step 6 — Pull unbilled time from TimeCamp
 
+This step needs the timekeeper plugin. If no timekeeper skill is in your skill list, tell the practitioner that pulling time from TimeCamp needs the timekeeper plugin installed, and stop.
+
 1. Navigate to `https://app.timecamp.com/auth/login#/timesheets/timer`. **Do not attempt to log in on the user's behalf** — entering credentials is out of scope. Wait for the user to confirm they're logged in.
 2. Navigate to `https://app.timecamp.com/app#/reports/projects_and_tasks/detailed` (or click "Detailed" in the left nav).
 3. Open the **Projects** filter, click **Deselect all**, then search the matter number, confirm status is **Active**, check the one matching project, **Apply**.
