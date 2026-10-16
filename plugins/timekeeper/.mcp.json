@@ -1,0 +1,8 @@
+{
+  "timecamp": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/timecamp-mcp/dist/timecamp-mcp.js"
+    ]
+  }
+}

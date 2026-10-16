@@ -182,7 +182,7 @@ Three orthogonal axes. **Deployed** — some document of the filing points at th
 
 ### Legend — emojis
 
-The work, event and hold emojis are listed in `source/practice/mcp/src/submission/forms/symbol-table.ts`, one row per symbol; that file is the single source.
+The work, event and hold emojis are listed in `source/legal/mcp/src/submission/forms/symbol-table.ts`, one row per symbol; that file is the single source.
 
 | Type | | Reads | | Reads | | Reads |
 |---|---|---|---|---|---|---|
@@ -293,7 +293,7 @@ Admission emoji (🎾 ⏳ 🤝 🙅🏻‍♂️ 🫸 🤷 ⏰ ⚡️ 🕹️ �
 | 🏛️ | `order_sought.requires(law.assertion).basis_state='needed'`; also, derived per edge, a `filled` edge whose authority is killed or whose statement is `'failed'` — the basis reads as needed again (work-markers §4, §1 → Failed); a `'settled'` statement fills, as a verified one does (work-markers §1 → Settled) |
 | 🂡 | derived, never stored: pool item deployed by no document of the filing — for an order, submission or rhetorical paragraph, of any filing of the proceeding (#959; rhetorical paragraph v71) (authority: supports nothing any document deploys) |
 
-The other markers' predicates are each symbol's `condition` in `source/practice/mcp/src/submission/forms/symbol-table.ts`, one row per symbol; that file is the single source.
+The other markers' predicates are each symbol's `condition` in `source/legal/mcp/src/submission/forms/symbol-table.ts`, one row per symbol; that file is the single source.
 
 ## Seams — glossary
 
@@ -385,7 +385,7 @@ At v2, before the v3 hop: assertion appears as `facts.statement`, `arguments.pro
 | Surface | Files | Action |
 |---|---|---|
 | Migration | `references/migrations.sql`, `schema.sql` | one v10 hop (#380): pointer model, crossed-out axis, `served_by`, #372 structures, all settled renames (RENAME; table-rebuild for CHECK changes); stamp `schema_version=10`; regenerate schema.sql byte-for-byte |
-| Renderer | `source/practice/mcp/src/submission/forms/markers.ts`, `query.ts`, `components.ts`, `render-*.ts` | rename symbols + predicates; `npm run bundle` from the repo checkout, never a temp worktree |
+| Renderer | `source/legal/mcp/src/submission/forms/markers.ts`, `query.ts`, `components.ts`, `render-*.ts` | rename symbols + predicates; `npm run bundle` from the repo checkout, never a temp worktree |
 | Docs (gated) | `references/work-markers.md` | already applied (#346) |
 | Docs | `references/filing-checklists.md`, `SKILL.md`, `User_Journeys/*.md`, `GLOSSARY.md` glossary | substitute symbols; fix drift #5 |
 | Historical | design doc (issue 291) | unchanged — schema.sql is canonical |

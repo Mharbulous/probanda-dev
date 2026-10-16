@@ -5,11 +5,11 @@ Hook events: PreToolUse for the drafting skills the model invokes (these enter
 the drafting lane) and for the deadline-bearing practice-data tools (these enter
 the deadline lane), and UserPromptSubmit for a drafting skill the practitioner
 types as a slash command. No skill enters the deadline lane: date work runs only
-through the practice:docket-clerk agent. The first lane a session enters locks
+through the legal:docket-clerk agent. The first lane a session enters locks
 the other lane out for the rest of that session. rules__audit enters no lane
 and is refused in a drafting session.
 
-One exception: the practice:docket-clerk agent may call the deadline tools in
+One exception: the legal:docket-clerk agent may call the deadline tools in
 a drafting session. SubagentStart tells it its mode (recorded-only in the
 drafting lane, full otherwise, and a fresh session enters the deadline lane),
 and SubagentStop refuses a drafting-lane return that carries a date or a duration.
@@ -29,7 +29,7 @@ SLASH_RE = re.compile(r"^\s*/([\w.:-]+)")
 DEADLINE_TOOL_RE = re.compile(
     r"(?:^|__)(practice_data__(?:active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay|render_practice_board))$")
 AUDIT_TOOL_RE = re.compile(r"(?:^|__)rules__audit$")
-AGENT = "practice:docket-clerk"
+AGENT = "legal:docket-clerk"
 MONTH = r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
 DATE_RE = re.compile(
     r"\d{4}-\d{2}-\d{2}"

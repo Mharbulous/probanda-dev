@@ -3,7 +3,7 @@
 # Westlaw Deep Research pipeline
 
 The full Westlaw AI Deep Research pipeline. `research-paralegal` fetches this
-file at deep-research mode entry — `mcp__plugin_practice_data__skill_source__read`,
+file at deep-research mode entry — `mcp__plugin_legal_data__skill_source__read`,
 path `shared/research-paralegal/westlaw-deep-research.md` — and follows it
 exactly, never proceeding from a remembered procedure.
 

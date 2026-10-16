@@ -9,10 +9,10 @@ description: >
   Never moves the position, writes nothing, states no law.
 model: sonnet
 tools:
-  - mcp__plugin_practice_data__rules__at
-  - mcp__plugin_practice_data__rules__lifecycle
-  - mcp__remote-devices__plugin_practice_data__rules__at
-  - mcp__remote-devices__plugin_practice_data__rules__lifecycle
+  - mcp__plugin_legal_data__rules__at
+  - mcp__plugin_legal_data__rules__lifecycle
+  - mcp__remote-devices__plugin_legal_data__rules__at
+  - mcp__remote-devices__plugin_legal_data__rules__lifecycle
 ---
 
 # rules-reorienter

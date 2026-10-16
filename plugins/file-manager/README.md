@@ -8,7 +8,7 @@ The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can st
 
 ## What to install, and in what order
 
-`file-manager` requires `practice`. Install `practice` first, then `file-manager`. Its skills call the `data` server and the `/file-naming` grammar that `practice` ships, so without `practice` those calls fail.
+`file-manager` requires `legal`. Install `legal` first, then `file-manager`. Its skills call the `data` server and the `/file-naming` grammar that `legal` ships, so without `legal` those calls fail.
 
 Not every host installs a required plugin for you, and a plugin whose required plugin is missing loads with tools and agents absent.
 

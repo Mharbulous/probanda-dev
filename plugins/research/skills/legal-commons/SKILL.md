@@ -185,7 +185,7 @@ existing authority row, so nothing else can.
 
 The pool also holds **court-rule records**: one row per deadline-rule period a
 practitioner verified locally against the rule's primary source (the
-firm rule overlay that `practice:docket-clerk` keeps). They are a separate kind of row from
+firm rule overlay that `legal:docket-clerk` keeps). They are a separate kind of row from
 principles, with their own four tools. The procedures that use them (push, pull,
 ratify, retire) belong to `/rule-sharing`; this section states the rules every
 caller keeps.

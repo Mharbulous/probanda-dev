@@ -1,4 +1,4 @@
-// build-stamp: f058bd197389
+// build-stamp: f78481642208
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15918,7 +15918,7 @@ function configPath(env) {
 
 // src/repo-root.ts
 var SKILLS_MARKER = join4(".claude", "skills");
-var CHECKOUT_MARKERS = [join4("source", "practice", "mcp"), join4("plugins", "dev-tools")];
+var CHECKOUT_MARKERS = [join4("source", "legal", "mcp"), join4("plugins", "dev-tools")];
 var SELF_DIR = dirname(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -16011,7 +16011,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["practice", "research", "litigator", "solicitor", "file-manager"];
+var SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager", "timekeeper"];
 function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -16111,7 +16111,7 @@ function rosterLine(installRoot, segment) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (practice, research, litigator, solicitor or file-manager) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (legal, research, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function missingMessage(subject, env, tried) {
   const cfg = configPath(env);
@@ -16993,7 +16993,7 @@ function resolveCaseDataRoot(env = process.env, fallback) {
     const derived = fallback?.() ?? null;
     if (derived !== null) return derived;
     throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /practice:probanda-setup, and never write coclerk.json by hand.`
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /legal:probanda-setup, and never write coclerk.json by hand.`
     );
   }
   let root;

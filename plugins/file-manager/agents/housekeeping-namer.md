@@ -3,8 +3,8 @@ name: housekeeping-namer
 description: Composes a proposed file name and filing destination for each file in a batch of about 15, from naming evidence the caller already extracted, and reports every component's status, its flags and 2-4 alternative names as strict JSON. Reads only the naming convention, code registry and folder notes. Never opens a matter file and never renames, moves or writes anything. Dispatched by /housekeeping, one instance per batch, in parallel.
 model: sonnet
 tools:
-  - mcp__plugin_practice_data__skill_source__read
-  - mcp__remote-devices__plugin_practice_data__skill_source__read
+  - mcp__plugin_legal_data__skill_source__read
+  - mcp__remote-devices__plugin_legal_data__skill_source__read
 ---
 
 # Housekeeping namer

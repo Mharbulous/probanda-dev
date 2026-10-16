@@ -1,4 +1,4 @@
-// build-stamp: 0f8d9888d446
+// build-stamp: 9eb022f93fb6
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107861,7 +107861,7 @@ function resolveCaseDataRoot(env = process.env, fallback) {
     const derived = fallback?.() ?? null;
     if (derived !== null) return derived;
     throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /practice:probanda-setup, and never write coclerk.json by hand.`
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /legal:probanda-setup, and never write coclerk.json by hand.`
     );
   }
   let root;
@@ -109473,7 +109473,7 @@ function caseDataToolDefinitions() {
   return [
     {
       name: caseDataPrefixed("query"),
-      description: "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: legal:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -109488,7 +109488,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("execute"),
-      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /case-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with case_data__query before any further write or retry -- see /case-data's shared/conventions.md section 2.3. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /case-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with case_data__query before any further write or retry -- see /case-data's shared/conventions.md section 2.3. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: legal:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "sql_script", type: "str" }
@@ -109497,7 +109497,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("resolve_participant"),
-      description: "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: legal:case-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "name", type: "str" }
@@ -109506,7 +109506,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_authority"),
-      description: "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: legal:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "result_path", type: "str" },
@@ -109518,7 +109518,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("migrate"),
-      description: "Upgrade a matter's case databases to the current schema. Two-phase and gated: mode 'plan' dry-runs the whole migration chain on temp copies and returns a plan_token plus the exact user_confirmation string the practitioner must approve; mode 'apply' requires that plan_token and that confirmation, takes a host-local backup, and commits all three databases together or none. mode 'restore' reverts to a backup set; mode 'backups' lists them. This is the only tool that bypasses the schema-version guard, and the only one that may run against an out-of-date database. Run plan first, always. Only the /case-data skill may call this tool -- invoke it (Skill: practice:case-data) and follow its operations/migrate.md, which runs this tool through the migration-runner subagent rather than inline.",
+      description: "Upgrade a matter's case databases to the current schema. Two-phase and gated: mode 'plan' dry-runs the whole migration chain on temp copies and returns a plan_token plus the exact user_confirmation string the practitioner must approve; mode 'apply' requires that plan_token and that confirmation, takes a host-local backup, and commits all three databases together or none. mode 'restore' reverts to a backup set; mode 'backups' lists them. This is the only tool that bypasses the schema-version guard, and the only one that may run against an out-of-date database. Run plan first, always. Only the /case-data skill may call this tool -- invoke it (Skill: legal:case-data) and follow its operations/migrate.md, which runs this tool through the migration-runner subagent rather than inline.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "mode", type: "str" },
@@ -109552,7 +109552,7 @@ function timePipelineToolDefinitions() {
   return [
     {
       name: timePipelinePrefixed("get"),
-      description: "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
         { name: "key", type: "str" }
@@ -109613,7 +109613,7 @@ function timecampingToolDefinitions() {
   return [
     {
       name: timecampingPrefixed("query"),
-      description: "Run a read-only SELECT/WITH/PRAGMA statement against the timecamping database (a single, fixed, per-practitioner file -- no matter_root/db_path parameter). Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a read-only SELECT/WITH/PRAGMA statement against the timecamping database (a single, fixed, per-practitioner file -- no matter_root/db_path parameter). Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -109627,7 +109627,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("execute"),
-      description: "Run a write SQL script against the timecamping database in a single transaction. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with timecamping_data__query before any further write or retry -- see /timecamping-data's Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a write SQL script against the timecamping database in a single transaction. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with timecamping_data__query before any further write or retry -- see /timecamping-data's Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "sql_script", type: "str" }
       ], ["sql_script"]),
@@ -109635,7 +109635,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("bulk_upsert"),
-      description: 'Upsert a whole file of rows into the timecamping database in a single transaction. `path` is an absolute path to a JSONL file on this machine, one JSON object per line: {"table":...,"key":[...],"row":{...}}. `row` maps column names to JSON scalars (null, boolean, number or string; a nested object or array is rejected), and `key` lists the row\'s columns that form the table\'s unique key. Each line inserts its row, or on a conflict over `key` updates the row\'s other columns in place, so a re-run keeps every row\'s id. The server reads the file itself, so the rows never pass through tool arguments. A missing file, a malformed line, an invalid identifier, a nested value or a SQLite error aborts the whole call before the commit and names the line number; nothing partial is written. Returns { lines, rows: { <table>: <count> } }. A non-success result (error, rejection, timeout, no response) does not prove the file did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the file targeted with timecamping_data__query before any further write or retry -- see /timecamping-data\'s Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: practice:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.',
+      description: 'Upsert a whole file of rows into the timecamping database in a single transaction. `path` is an absolute path to a JSONL file on this machine, one JSON object per line: {"table":...,"key":[...],"row":{...}}. `row` maps column names to JSON scalars (null, boolean, number or string; a nested object or array is rejected), and `key` lists the row\'s columns that form the table\'s unique key. Each line inserts its row, or on a conflict over `key` updates the row\'s other columns in place, so a re-run keeps every row\'s id. The server reads the file itself, so the rows never pass through tool arguments. A missing file, a malformed line, an invalid identifier, a nested value or a SQLite error aborts the whole call before the commit and names the line number; nothing partial is written. Returns { lines, rows: { <table>: <count> } }. A non-success result (error, rejection, timeout, no response) does not prove the file did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the file targeted with timecamping_data__query before any further write or retry -- see /timecamping-data\'s Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.',
       inputSchema: objectSchema([
         { name: "path", type: "str" }
       ], ["path"]),
@@ -109643,7 +109643,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("migrate"),
-      description: "Apply every pending schema migration hop to the timecamping database, in order, creating it fresh if it doesn't exist yet. Takes no parameters -- the database path is resolved server-side. This is the only tool that bypasses the schema-version guard, and the only one that may create or upgrade the database's schema. Only the /timecamping-data skill may call this tool -- invoke it (Skill: practice:timecamping-data) and follow the operation it routes you to.",
+      description: "Apply every pending schema migration hop to the timecamping database, in order, creating it fresh if it doesn't exist yet. Takes no parameters -- the database path is resolved server-side. This is the only tool that bypasses the schema-version guard, and the only one that may create or upgrade the database's schema. Only the /timecamping-data skill may call this tool -- invoke it (Skill: timekeeper:timecamping-data) and follow the operation it routes you to.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { destructiveHint: true, openWorldHint: false }
     }
@@ -112113,7 +112113,7 @@ import { homedir as homedir3 } from "node:os";
 import { basename, dirname as dirname3, join as join8, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
 var SKILLS_MARKER = join8(".claude", "skills");
-var CHECKOUT_MARKERS = [join8("source", "practice", "mcp"), join8("plugins", "dev-tools")];
+var CHECKOUT_MARKERS = [join8("source", "legal", "mcp"), join8("plugins", "dev-tools")];
 var SELF_DIR = dirname3(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -112209,7 +112209,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["practice", "research", "litigator", "solicitor", "file-manager"];
+var SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager", "timekeeper"];
 function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -112309,7 +112309,7 @@ function rosterLine(installRoot, segment) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (practice, research, litigator, solicitor or file-manager) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (legal, research, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("case-data", env, installRoot);
@@ -117785,13 +117785,13 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join18 } from "node:path";
-var BUILD_STAMP = false ? null : "0f8d9888d446";
+var BUILD_STAMP = false ? null : "9eb022f93fb6";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
 }
 function buildNote(running, current, installed) {
-  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the practice plugin, then restart the app fully.";
+  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the legal plugin, then restart the app fully.";
   return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
 }
 function installedStamp() {
@@ -117808,7 +117808,7 @@ function buildStampStatus(env = process.env) {
   let current;
   try {
     const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked2 = join18(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+    const tracked2 = join18(repoRoot, "source", "legal", "mcp", "dist", "litigation-mcp.js");
     current = STAMP_LINE.exec(readFileSync16(tracked2, "utf-8"))?.[1] ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
