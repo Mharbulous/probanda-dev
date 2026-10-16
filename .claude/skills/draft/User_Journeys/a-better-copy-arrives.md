@@ -21,7 +21,7 @@ source: effort owner's flow selection, 2026-08-23
 
 2. **Assistant:** records the arrival through `/drafting-data` as another copy of the same document — the label the exhibit already points at. The unsigned draft is not overwritten or deleted; the new copy joins it, and the paper trail keeps both. The assistant then compares the copies on the three ranked dimensions — lifecycle stage, then completeness, then quality, in strict order, never averaged (see `.claude/skills/drafting-data/User_Journeys/choose-the-best-copy.md`) — and the signed original wins on stage, so the best-copy selection moves to it.
 
-3. **Assistant:** re-renders immediately and presents the regenerated mockup file into the conversation as a clickable file card — no approval pause, no summary of its contents in chat beyond:
+3. **Assistant:** re-renders immediately and presents the regenerated mockup file into the conversation as a clickable file card (`shared/present-files.md`) — no approval pause, no summary of its contents in chat beyond:
 
    > Recorded the signed original as a new copy of the Consulting Agreement. The selection moved to it, and the mockup is regenerated.
 

@@ -98,7 +98,7 @@ permitted to make statements of law.
    `research-paralegal` (`westlaw-first`) and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
-   (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card,
+   (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
    status line each. The doctrine's "After the answer" rule carries the mechanics. If its disclosure gate is closed after any loop — it declines, reports

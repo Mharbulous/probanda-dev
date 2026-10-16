@@ -22,11 +22,11 @@ One proposition per turn. Exactly these parts, in this order, part 5 for a scrut
 3. Proposed re-wording, labelled `Proposed re-wording:`, the full proposed proposition in a code block. Where there is no proposed re-wording, this part is instead the one fixed line `No re-wording has been proposed.`, with no label and no code block.
 4. Citation, as a block quote, formatted by the legal-citation skill.
 5. Scrutiny review jobs only: the one fixed line `Decision needed: change (reword, re-point, new excerpt or new authority), keep as it stands over the finding, or drop.` It recommends, ranks and invites nothing else.
-6. File cards, sent as the last action of the turn: the original authority's own pages, page-extracted, the pinpointed passage highlighted yellow (omitted or discrepant text orange, no other colours), cited pinpoint first, any cited-within authority's page next, context pages next, and the research lawyer's finding last, as its own file, in full and unedited, when there is one. Send the step's highlighted page-extract PDFs, the relevant pages only. Before sending, open one of the step's preview PNGs yourself and confirm the highlight covers the right text (/show-me, Mechanics step 2). The preview PNGs are never sent. Every card's filename names the case, page and paragraph.
+6. File cards (`shared/present-files.md`), sent as the last action of the turn: the original authority's own pages, page-extracted, the pinpointed passage highlighted yellow (omitted or discrepant text orange, no other colours), cited pinpoint first, any cited-within authority's page next, context pages next, and the research lawyer's finding last, as its own file, in full and unedited, when there is one. Send the step's highlighted page-extract PDFs, the relevant pages only. Before sending, open one of the step's preview PNGs yourself and confirm the highlight covers the right text (/show-me, Mechanics step 2). The preview PNGs are never sent. Every card's filename names the case, page and paragraph.
 
 In hosts where text written between tool calls is summarized rather than shown (Cowork), send every text part (1 to 5) through the host's direct user-message tool before sending the cards.
 
-When the practitioner asks for the original or the full authority, send the file the step resolved, at its `source.path`, as it is. Never convert it, highlight it, or extract from it.
+When the practitioner asks for the original or the full authority, send the file the step resolved (`shared/present-files.md`), at its `source.path`, as it is. Never convert it, highlight it, or extract from it.
 
 ## Nothing else
 

@@ -19,7 +19,7 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
    > Jesse Marlowe can speak to that — he was on the site that week.
 
-3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card. No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *talk to witness* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `.claude/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
+3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card (`shared/present-files.md`). No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *talk to witness* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `.claude/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
 
 4. **Practitioner:** conducts the interview away from the assistant — days later, in a new session — and returns with the account.
 

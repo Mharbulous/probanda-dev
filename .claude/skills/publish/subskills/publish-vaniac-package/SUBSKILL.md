@@ -152,7 +152,7 @@ each file card names a host path it returns.
    they were not used.
 
 9. **Present the result.** Present every document in `Package\` as a
-   clickable file card, in the order listed above.
+   clickable file card (`shared/present-files.md`), in the order listed above.
 
 ## Next
 

@@ -13,7 +13,7 @@ source: effort owner's flow selection, 2026-08-23
 
 ## The journey
 
-1. **Assistant:** an earlier basis slot (🏛️ jurisdictional basis needed, or 📖 doctrinal basis needed) went out through `/legal-research`. The research-agent reports back: the search is exhausted, nothing found. The assistant records the dead end through `/drafting-data`, re-renders, and presents the mockup file card — the affected line now carries 🚧 dead end.
+1. **Assistant:** an earlier basis slot (🏛️ jurisdictional basis needed, or 📖 doctrinal basis needed) went out through `/legal-research`. The research-agent reports back: the search is exhausted, nothing found. The assistant records the dead end through `/drafting-data`, re-renders, and presents the mockup file card (`shared/present-files.md`) — the affected line now carries 🚧 dead end.
 
 2. **Assistant:** states the dead end once, plainly, in chat — never folded into a task list, never queued behind other work. Unlike every other marker, no further research or drafting clears 🚧; only the practitioner's decision does, so the assistant asks and stops:
 

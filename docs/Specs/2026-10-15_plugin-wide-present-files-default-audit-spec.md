@@ -90,3 +90,86 @@ Confirm the plugin trees and agent folders searched exist at HEAD, and note any 
 | `plugins/` | yes | no | built output, never edited by hand |
 
 No plugin directory was unreachable. Hooks are searched but out of scope (§8).
+
+### Classification of hits (§4.2)
+
+Searched: every tree in the verification table above, excluding `plugins/` (built output), `node_modules/`, `dist/` and `build/`. Terms: `present_files`, `SendUserFile`, `SendUserMessage`, `send_user_message`, `device_stage_files`, "file card", "card", "present", "send", "show the file", "open the file", `computer://`, markdown file links, "Show in Explorer", "attach". "Card" hits that mean a Job Board or Work Board card, "present" hits that mean stating something in chat, "attach" hits that mean an email attachment or an exhibit, and "send" hits that mean sending a letter or a subagent prompt are (d) and not listed. Line numbers are as at the edit commit. Each (b) and (c) hit now cites `.claude/skills/shared/present-files.md` (new, the one statement of the canonical rule), so each is now (a).
+
+| File | Lines (hit) | Category before | Action |
+|---|---|---|---|
+| `shared/html-pages.md` | 20 (card tool "`present_files` in Cowork and `SendUserFile` in the Code tab") | b | cite shared doc, fallback route named |
+| `shared/html-pages.md` | 13 (Work Board card) | c | cite |
+| `shared/html-pages.md` | 19, 24 (cards only, no link; hook backstop) | d | none |
+| `draft/references/procedure.md` | 80, 142 (`present_files` in Cowork, `SendUserFile` in the Code tab) | b | cite, fallback route named |
+| `draft/references/procedure.md` | 50, 77, 88 | c | cite or fallback route named |
+| `draft/references/procedure.md` | 84, 220 | a (cite step 1 or `references/present-files.md`) | none |
+| `draft/references/present-files.md` | 6 ("`present_files` or `SendUserFile`") | b | cite, fallback route named |
+| `draft/references/present-files.md` | 8 | a | none |
+| `draft/SKILL.md` | 108 (ToolSearch loads "`present_files` or `SendUserFile`") | b | cite |
+| `draft/SKILL.md` | 91, 94 | c | cite; 94's `/show-me` citation now names the fallback route |
+| `draft/SKILL.md` | 71 (cites `shared/html-pages.md`), 79 (approval rule) | a, d | none |
+| `reflect/SKILL.md` | 551 ("`present_files` in Cowork, `SendUserFile` in Claude Code") | b | cite |
+| `reflect/SKILL.md` | 46 | c | cite |
+| `draft/references/authorities.md` | 74 ("In Cowork, stage ... with `device_stage_files` and send ... with `present_files`") | b | cite; staging tied to the fallback |
+| `find-document/SKILL.md` | 12 | c | cite; `/show-me` citation names the fallback route |
+| `find-document/SKILL.md` | 3 (description) | c | none: frontmatter description; step 3 of the body governs |
+| `publish/subskills/publish-general/SUBSKILL.md` | 70, 72, 81 | c | cite; 81's `/show-me` citation names the fallback route |
+| `publish/subskills/publish-general/SUBSKILL.md` | 38 (a file card names a host path) | d | none |
+| `publish/subskills/publish-bcca-book/SUBSKILL.md` | 130, 133 | c | cite |
+| `publish/subskills/publish-bcca-factum/SUBSKILL.md` | 102, 105 | c | cite |
+| `publish/subskills/publish-bcca-factum/SUBSKILL.md` | 50 | d | none |
+| `publish/subskills/publish-vaniac-package/SUBSKILL.md` | 155 | c | cite |
+| `publish/subskills/publish-vaniac-package/SUBSKILL.md` | 76 | d | none |
+| `publish/subskills/publish-bcsc-form/SUBSKILL.md` | 246 | c | cite |
+| `assemble/subskills/assemble-general/SUBSKILL.md` | 62 | c | cite |
+| `assemble/subskills/assemble-vaniac-package/SUBSKILL.md` | 79, 108 | c | cite |
+| `assemble/subskills/assemble-bcca-book/SUBSKILL.md` | 167 | c | cite |
+| `assemble/subskills/assemble-affidavit/SUBSKILL.md` | 104 | c | cite |
+| `assemble/subskills/assemble-affidavit/references/assembly.md` | 163 | c | cite |
+| `case-data/operations/supersede-draft.md` | 304 | c | cite (`../../shared/present-files.md`) |
+| `case-data/operations/ingest-unattended.md` | 33 | c | cite (`../../shared/present-files.md`) |
+| `case-data/operations/ingest-verify.md`, `ingest-extract.md`, `verify-law.md`; `verify-law/SKILL.md` | `device_stage_files` for a subagent's read | d | none |
+| `shared/legal-research.md` | 383, 400 | c | cite |
+| `shared/legal-research.md` | 111 (`device_stage_files` for the agent's read) | d | none |
+| `legal-research/SKILL.md` | 101 | c | cite |
+| `shared/email.md` | 20 | c | cite |
+| `task-prioritization/SKILL.md` | 63 | c | cite |
+| `practice-data/SKILL.md` | 33 | c | cite |
+| `review-proposition/SKILL.md` | 25, 29 | c | cite |
+| `review-proposition/SKILL.md` | 10, 39 (card order; cards replaced by a line) | d | none |
+| `drafting-data/SKILL.md` | 45 | c | cite |
+| `drafting-data/SKILL.md` | 142 (render location history) | d | none |
+| `drafting-data/references/jobs-stock.md` | 250 (a finding is never a file card) | d | none |
+| `draft/references/reply.md` | 39, 73 | c | cite |
+| `draft/references/reply.md` | 22 (cites `references/present-files.md`), 54 | a, d | none |
+| `draft/references/letters.md` | 47, 112, 122, 140, 363 | c | cite |
+| `draft/references/letters.md` | 132 (cites section 11 step 4), 78, 92 (present the mockup, section 11) | a | none |
+| `draft/references/letters.md` | 94 (no file card for findings) | d | none |
+| `draft/references/requisitions.md` | 10 | c | cite |
+| `draft/references/job-session.md` | 171 | c | cite |
+| `draft/references/job-session.md` | 117 (`SendUserMessage` for text) | d | none |
+| `draft/references/dispatch.md` 46, `revise-on-the-fly.md` 17, `rule-migrate/SKILL.md` 35, `plugin-fix/SKILL.md` 39 | `SendUserMessage` for text | d | none |
+| `draft/references/court-ready-assembly.md` | 4 | c | cite |
+| `draft/references/counsel-review.md` | 25 | c | cite |
+| `draft/references/counsel-review.md` | 27 (per `/show-me`) | a | none |
+| `draft/references/assemble-then-gate.md` | 6, 12 | c | cite |
+| `draft/references/new-matter-setup.md` | 30 | c | cite |
+| `draft/references/new-matter-setup.md` | 14 (governed by `letters.md` 363) | a | none |
+| `draft/references/delivery-check.md` | 42 (cites `references/present-files.md`), 47 (per `/show-me`) | a | none |
+| `draft/references/loose-thread-triage.md` 28, `suggestion-box.md` 20 | cite section 11, View pages | a | none |
+| `draft/references/CAN/BC/BCSC/Documents/notice-of-application.md` 40, `application-response.md` 42; `CAN/BC/BCCA/Documents/stay-response-book.md` 46, `respondent-factum.md` 40; `CAN/BC/_NoVenue/Documents/release.md` 45 | present as a file card | c | cite |
+| `draft/User_Journeys/`: `work-the-worklist.md`, `witness-statement-to-signed.md`, `revise-by-asking-again.md`, `research-fills-the-open-slots.md`, `requisition-in-minutes.md`, `render-and-review-the-mockup.md`, `dead-end-decision.md`, `answer-the-other-side.md`, `a-better-copy-arrives.md`, `admissions-route.md`, `hold-it-in-reserve.md`, `offer-what-the-matter-already-knows.md`, `pick-up-where-you-left-off.md` | the assistant presents the mockup as a file card | c | cite once, at the first presenting step of each |
+| `draft/User_Journeys/gate-before-filing.md` | 41 (illustrative `(file card: ...)` in a transcript) | d | none |
+| `source/practice/mcp/src/schema-gen.ts` | 165 (`render_practice_board` description: "present work_board_path as a file card") | c | none: §9 changes a tool description only where it ranks another route above `present_files`, and this names no route |
+| `source/practice/mcp/src/submission/view-pages.ts` 12, `forms/matter-board-shell.ts` 14 | code comments | d | none |
+| `source/practice/plugin.json` | 44 (hook matcher `SendUserFile`) | d | none: hooks out of scope |
+| `show-me/SKILL.md` | all | n/a | related spec (landed c3a4b92) |
+| hooks and tests (`show-me/hooks/staged-file-gate.py`, `drafting-data/hooks/*`, `source/practice/hooks/mail-send-gate.py`, tests) | | n/a | out of scope (§8) |
+| `public/plugins/*/skills/` | no hit | none | none |
+
+**Agents (§4.4).** No agent definition under `source/*/agents/` presents a file to the practitioner. `docket-clerk.md` says it cannot present under `/show-me` and returns open items to its caller. No allowlist change is needed.
+
+**Residual risks needing a tool-side change (§4.5), not made here.**
+- `source/practice/plugin.json` registers a hook on `SendUserFile` only, and `show-me/hooks/staged-file-gate.py` gates that route. No hook checks that `mcp__cowork__present_files` was preferred when both tools are listed.
+- The `schema-gen.ts` tool descriptions say "file card" without naming the tool. They rely on the calling skill's citation.
+- Whether `mcp__cowork__present_files` accepts a PC path on a remote-device host is not verified here. The rule sends such a session to the fallback only when the tool is absent.

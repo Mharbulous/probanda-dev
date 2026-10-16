@@ -17,7 +17,7 @@ source: effort owner's flow selection, 2026-08-23
 
    > Take the delay submission out for now — I don't want to show our hand on that yet.
 
-2. **Assistant:** records the hold and immediately re-renders — no confirmation prompt, no "are you sure". On the regenerated mockup the delay submission, with its supporting authority and evidence, now sits in the trailing *Held in reserve* section marked 🂡 held in reserve. The assistant presents the mockup file itself for review, naming in one line the supporting authority and evidence that went into reserve with the submission, so the practitioner can say if any of it should stay in rather than having that assumed. Nothing was deleted: the practitioner can still read every word of the reserved material on the mockup, and none of it will appear on the filed face — the text as delivered to the forum. Reserving took one sentence.
+2. **Assistant:** records the hold and immediately re-renders — no confirmation prompt, no "are you sure". On the regenerated mockup the delay submission, with its supporting authority and evidence, now sits in the trailing *Held in reserve* section marked 🂡 held in reserve. The assistant presents the mockup file itself (`shared/present-files.md`) for review, naming in one line the supporting authority and evidence that went into reserve with the submission, so the practitioner can say if any of it should stay in rather than having that assumed. Nothing was deleted: the practitioner can still read every word of the reserved material on the mockup, and none of it will appear on the filed face — the text as delivered to the forum. Reserving took one sentence.
 
 3. **Practitioner:** goes further with one piece of evidence:
 

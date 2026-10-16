@@ -164,7 +164,7 @@ only -- see Error handling.
    `split_setting_required` on a book over the size limit, which waits on
    ticket #649.
 
-7. **Present the result.** Present every file as a clickable file card, in
+7. **Present the result.** Present every file as a clickable file card (`shared/present-files.md`), in
    the order listed above. Beside each combined PDF, list each bookmark
    with the file used for it, so the practitioner can check the matching.
 

@@ -160,7 +160,7 @@ The script writes the draft straight to its `output_path`:
 <draft folder>/{YYYY-MM-DD} AFF#{n} {LastNameFirstInitial} - DRAFT for Review.pdf
 ```
 or the same name in the package folder, as SUBSKILL.md STATE 2 resolves it.
-Present the file it reports as written, naming any `versioned_from` copy, with
+Present the file it reports as written (`shared/present-files.md`), naming any `versioned_from` copy, with
 the validation summary (page count, per-exhibit
 `stamp_placement`, any `warnings`). Remind them to review and prune pages
 (cover sheets, blank scan backs, duplicates) before requesting pagination

@@ -67,9 +67,9 @@ Tools are named without their prefix. Call each under whichever of `mcp__plugin_
 
 6. **Report what the render did,** once per session: `overridden_by_letterhead` (every property the format file sets, which the registered letterhead replaced), `defaulted` (the properties left to the generic template's defaults) and `not_rendered` (any other document the filed render returned, such as a declared companion, which this subskill does not render).
 
-7. **Never overwrite.** A taken name gets the next ` vN`; `versioned_from` (`review_copy_versioned_from`) names the copy passed over. Tell the practitioner, in case it is another Writing's, then present it as current per the workspace output rule.
+7. **Never overwrite.** A taken name gets the next ` vN`; `versioned_from` (`review_copy_versioned_from`) names the copy passed over. Tell the practitioner, in case it is another Writing's, then present it (`shared/present-files.md`) as current per the workspace output rule.
 
-8. **Unverified format.** On `deliverable_refused` the fill wrote only the review copy. Present it, then ask once, listing each item in the refusal's `unconfirmed` as its `rule_ref`, its verbatim passage (from the `content` in `format.json`) and its `value`, described as the value applied. An item marked `overridden_by_letterhead` still blocks, but describe its `value` as the value the file records (not applied on the letterhead).
+8. **Unverified format.** On `deliverable_refused` the fill wrote only the review copy. Present it (`shared/present-files.md`), then ask once, listing each item in the refusal's `unconfirmed` as its `rule_ref`, its verbatim passage (from the `content` in `format.json`) and its `value`, described as the value applied. An item marked `overridden_by_letterhead` still blocks, but describe its `value` as the value the file records (not applied on the letterhead).
    - **A roster lawyer accepts.** Invoke `/localize` with `operation: confirm` for each accepted item, naming the format file's knowledge path, the item's `rule_ref` and the live matter. Then repeat from step 3: the fill writes the deliverable once every item reads confirmed. It is written beside the earlier `<name> (format unverified).docx`: tell the practitioner that review copy is now superseded, and offer to send it to TRASH by `shared/workspace-output-rule.md`.
    - **A staff run stops.** When this machine's `person` is a `staff` roster entry in `practice_data__firm_profile`, stop after the review copy and name the lawyer who must confirm: the Writing's signing lawyer, or else an active roster lawyer.
    - Never confirm on anyone's behalf, and never edit the format file to get past the refusal.
@@ -78,7 +78,7 @@ Tools are named without their prefix. Call each under whichever of `mcp__plugin_
 
 9. **Any other refusal** (`invalid_format`, `letterhead_refused`, `no_stored_layout` and the rest, apart from a party-signed Writing's `missing_token` in step 4) is a defect: report the code and its detail to the practitioner, and never work around it.
 
-10. **Present the result.** Present the deliverable, and any review copy written, as clickable file cards. On a remote-device-only host, stage each saved file first and send the staged path (`/show-me`, "Presenting a file saved on the PC").
+10. **Present the result.** Present the deliverable, and any review copy written, as clickable file cards (`shared/present-files.md`). On the fallback route, on a remote-device-only host, stage each saved file first and send the staged path (`/show-me`, "Presenting a file saved on the PC (fallback route)").
 
 ## Boundaries
 
