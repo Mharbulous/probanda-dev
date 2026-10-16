@@ -81,7 +81,9 @@ jobs:
 
       # The pre-filing check treats a missing pypdf as a hard error; the factum validator imports lxml;
       # the general binder (assemble_general) imports pymupdf before it refuses anything.
-      - run: pip install pypdf lxml pymupdf
+      # scrutiny-review-host.db.test.mjs builds its authority PDF with reportlab, and the
+      # highlight_pages.py it runs imports pdfplumber and reportlab.
+      - run: pip install pypdf lxml pymupdf reportlab pdfplumber
 
       - run: npm ci --ignore-scripts
 
