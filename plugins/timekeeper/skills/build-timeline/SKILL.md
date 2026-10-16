@@ -4,8 +4,8 @@ description: "Sole ingester of raw time evidence into the timeline store, one da
 dependencies:
   - time-pipeline-data  # continuous timeline store under the `timeline` namespace
   - google-calendar-mcp # calendar events (optional — degrades gracefully if unavailable)
-  - calendar tools of the legal plugin's data server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
-  - mail tools of the legal plugin's data server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
+  - calendar tools of the legal plugin's contacts-calendars-email server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
+  - mail tools of the legal plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
 ---
 
 <!-- timekeeper v0.1.0 -->
@@ -27,7 +27,7 @@ dependencies:
 
 This skill deliberately carries no `disable-model-invocation` line: `/timecamping`'s source ingestion opens it
 through the Skill tool, which refuses a skill carrying that line. It is a stated
-exception, listed in `docs/agents/context-optimization.md`. Do not add the line back.
+exception. Do not add the line back.
 
 # Build-Timeline
 

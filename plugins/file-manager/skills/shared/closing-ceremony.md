@@ -310,4 +310,5 @@ context block stating:
 For a `ready-for-human` ticket the context block also says why it needs the human,
 and to resolve the open decisions before implementing by `/wayfinder`'s "Resolving
 a grilling ticket" protocol (its map-only steps do not apply), so the human is
-asked only what their grilling profile keeps for them, in one list at the end.
+asked only what their grilling profile keeps for them, as `/grilling`'s Asking the
+user sets out.
