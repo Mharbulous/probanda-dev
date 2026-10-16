@@ -53,6 +53,7 @@ Look for, in either direction:
 - a change of scope: whose costs, which party, which proceeding, which document;
 - a legal term of art swapped for an everyday word ("is payable by" against "owes"; "serve" against "send"; "file" against "submit");
 - an ambiguous pronoun or reference that the other clause left unambiguous;
+- a contraction or abbreviation that admits a reading the other clause does not ("the claim's to recover" against "the claim is to recover", where "'s" can be read as is, has or a possessive);
 - a change in what a negation covers.
 
 ## Verdicts
