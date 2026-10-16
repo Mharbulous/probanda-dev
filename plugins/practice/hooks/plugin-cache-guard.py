@@ -15,7 +15,7 @@ import re
 import sys
 from pathlib import Path
 
-PLUGIN_DIR = re.compile(r"/\.claude/plugins/", re.IGNORECASE)
+PLUGIN_DIR = re.compile(r"/\.claude/plugins/(synced|cache)/", re.IGNORECASE)
 REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "
