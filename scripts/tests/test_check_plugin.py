@@ -71,6 +71,9 @@ DATA_BUNDLE = """\
 // src/index.ts
 var serverName = "data";
 
+// src/submission/schema-ceiling.ts
+var BAKED_SCHEMA_VERSION = false ? null : 3;
+
 // src/sources/hosts.ts
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 
@@ -356,6 +359,11 @@ class TestPlantedViolations(FixtureTest):
         self.fixture.write("source/probanda/mcp/dist/litigation-mcp.js",
                            DATA_BUNDLE.replace('var serverName = "data";', 'var root = "/home/someone/repo";'))
         self.assertOnlyFails("bundle-no-host-path", "mcp/dist/litigation-mcp.js: '/home/someone/'")
+
+    def test_bundle_schema_ceiling(self):
+        self.fixture.write("source/probanda/mcp/dist/litigation-mcp.js",
+                           DATA_BUNDLE.replace("false ? null : 3;", "false ? null : 2;"))
+        self.assertOnlyFails("bundle-schema-ceiling", "targets schema 3 but the data bundle was built against 2")
 
     def test_inverse_reference(self):
         self.fixture.write(".claude/skills/alpha/references/rules.md", "Ask the troubleshooter agent.\n")
@@ -719,6 +727,7 @@ class TestSecondPlugin(FixtureTest):
         "sources-host-guard": "solicitor does not ship the data server",
         "fetch-grant-allowlist": "solicitor ships no agent",
         "bundle-no-host-path": "solicitor ships no server",
+        "bundle-schema-ceiling": "solicitor does not ship the data server",
         "agent-bridged-grants": "solicitor ships no agent",
         "commons-encapsulation": "solicitor does not ship the legal-commons skill",
         "hook-matchers": "solicitor declares no hook matcher",
