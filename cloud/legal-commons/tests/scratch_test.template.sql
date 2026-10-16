@@ -90,9 +90,29 @@ returns jsonb language sql stable as $f$
       jsonb_build_object('ref', '2.5', 'consequence', pg_temp.lc_clause('Scratch kappa outcome', 26))));
 $f$;
 
+-- Principle three: six tests with one consequence each, for the chains of
+-- person verdicts in the search tests.
+create function pg_temp.lc_payload_three()
+returns jsonb language sql stable as $f$
+  select jsonb_build_object(
+    'principle_id', '00000000-0000-0000-0000-0000000000a3',
+    'fingerprint', pg_temp.lc_vec(1),
+    'tests', jsonb_build_array(
+      jsonb_build_object('ref', '3.1', 'consequence', pg_temp.lc_clause('Scratch rho outcome', 51)),
+      jsonb_build_object('ref', '3.2', 'consequence', pg_temp.lc_clause('Scratch sigma outcome', 52)),
+      jsonb_build_object('ref', '3.3',
+        'consequence', pg_temp.lc_clause('Scratch tau outcome', 53),
+        'clauses', jsonb_build_array(
+          pg_temp.lc_clause('Scratch tau condition', 54) || '{"order":1,"type":"element"}'::jsonb)),
+      jsonb_build_object('ref', '3.4', 'consequence', pg_temp.lc_clause('Scratch phi outcome', 55)),
+      jsonb_build_object('ref', '3.5', 'consequence', pg_temp.lc_clause('Scratch chi outcome', 56)),
+      jsonb_build_object('ref', '3.6', 'consequence', pg_temp.lc_clause('Scratch psi outcome', 57))));
+$f$;
+
 insert into legal_commons.principle (principle_id, text) values
   ('00000000-0000-0000-0000-0000000000a1', 'Scratch principle one.'),
-  ('00000000-0000-0000-0000-0000000000a2', 'Scratch principle two.');
+  ('00000000-0000-0000-0000-0000000000a2', 'Scratch principle two.'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Scratch principle three.');
 insert into legal_commons.criterion (criterion_id, principle_id, description, criterion_order) values
   ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'Scratch criterion', 1);
 insert into legal_commons.principle_redirects (old_id, canonical_id) values
@@ -280,16 +300,28 @@ end $t$;
 
 -- 7. The search and meaning verdicts. xi = ypsilon = zeta by two model verdicts
 -- in a row. xi and omega are in conflict, and omega = kappa, so kappa can be
--- reached only by following the conflict.
+-- reached only by following the conflict. rho = sigma = tau by two person
+-- verdicts in a row. phi = chi by a person's verdict, then chi = psi by a
+-- model's.
 do $t$
 declare
   r jsonb;
   v_model jsonb := '{"judge_kind":"model","judge_model":"scratch-judge","judge_prompt_version":"1"}'::jsonb;
+  v_person jsonb := '{"judge_kind":"person"}'::jsonb;
   v_q extensions.vector := pg_temp.lc_vec(23)::text::extensions.vector;
 begin
   r := legal_commons.contribute_decomposition(pg_temp.lc_payload_two(), 'scratch');
   perform pg_temp.lc_check('a test with no condition besides its consequence is saved',
     r->>'saved' = 'true' and r->>'tests_made' = '5', r::text);
+
+  r := legal_commons.contribute_decomposition(pg_temp.lc_payload_three(), 'scratch');
+  r := legal_commons.contribute_verdicts(jsonb_build_array(
+    v_person || jsonb_build_object('clause_a', pg_temp.lc_id('Scratch rho outcome'), 'clause_b', pg_temp.lc_id('Scratch sigma outcome'), 'a_implies_b', true, 'b_implies_a', true),
+    v_person || jsonb_build_object('clause_a', pg_temp.lc_id('Scratch sigma outcome'), 'clause_b', pg_temp.lc_id('Scratch tau outcome'), 'a_implies_b', true, 'b_implies_a', true),
+    v_person || jsonb_build_object('clause_a', pg_temp.lc_id('Scratch phi outcome'), 'clause_b', pg_temp.lc_id('Scratch chi outcome'), 'a_implies_b', true, 'b_implies_a', true),
+    v_model || jsonb_build_object('clause_a', pg_temp.lc_id('Scratch chi outcome'), 'clause_b', pg_temp.lc_id('Scratch psi outcome'), 'a_implies_b', true, 'b_implies_a', true)
+  ), 'scratch');
+  perform pg_temp.lc_check('person verdicts are saved', r->>'saved' = 'true' and r->>'verdicts' = '4', r::text);
 
   r := legal_commons.contribute_verdicts(jsonb_build_array(
     v_model || jsonb_build_object('clause_a', pg_temp.lc_id('Scratch xi outcome'), 'clause_b', pg_temp.lc_id('Scratch ypsilon outcome'), 'a_implies_b', true, 'b_implies_a', true),
@@ -303,8 +335,9 @@ begin
   r := legal_commons.clause_search(' Scratch  xi outcome. ', v_q, 'consequence', 3);
   perform pg_temp.lc_check('the search finds the clause whose tidied text equals the tidied query',
     r->'exact'->>'text' = 'Scratch xi outcome' and jsonb_array_length(r->'nearest') = 3, r::text);
-  perform pg_temp.lc_check('the search reaches a test through two equivalent pairs in a row',
-    jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch zeta outcome").tests[*].conditions[*] ? (@.text == "Scratch zeta condition")'),
+  perform pg_temp.lc_check('the search follows two model-decided equivalent pairs in a row only as far as the first',
+    jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch ypsilon outcome")')
+      and not jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch zeta outcome")'),
     (r->'exact'->'equivalent')::text);
   perform pg_temp.lc_check('the search does not follow a pair in conflict, and lists it apart',
     not jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch omega outcome" || @.text == "Scratch kappa outcome")')
@@ -313,6 +346,18 @@ begin
     (r->'exact')::text);
   perform pg_temp.lc_check('the search returns no similarity score',
     not jsonb_path_exists(r, '$.** ? (exists(@.score) || exists(@.similarity) || exists(@.distance))'), r::text);
+
+  r := legal_commons.clause_search('Scratch rho outcome', v_q, 'any', 1);
+  perform pg_temp.lc_check('the search reaches a test through two person-decided equivalent pairs in a row',
+    jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch sigma outcome")')
+      and jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch tau outcome").tests[*].conditions[*] ? (@.text == "Scratch tau condition")'),
+    (r->'exact'->'equivalent')::text);
+
+  r := legal_commons.clause_search('Scratch phi outcome', v_q, 'any', 1);
+  perform pg_temp.lc_check('the search follows a person-decided pair and stops before a model-decided pair after it',
+    jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch chi outcome")')
+      and not jsonb_path_exists(r, '$.exact.equivalent[*] ? (@.text == "Scratch psi outcome")'),
+    (r->'exact'->'equivalent')::text);
 
   r := legal_commons.clause_search('Scratch reason', v_q, 'rationale', 10);
   perform pg_temp.lc_check('a role limits the nearest clauses to that role',
@@ -414,6 +459,7 @@ begin
     jsonb_array_length(r->'exact'->'tests') = 0, (r->'exact')::text);
 end $t$;
 
+drop function pg_temp.lc_payload_three();
 drop function pg_temp.lc_payload_two();
 drop function pg_temp.lc_payload_one();
 drop function pg_temp.lc_counts();

@@ -34,8 +34,9 @@ set search_path = legal_commons, extensions, public;
 -- asked for. For each hit: its text and parts, every live test it belongs to
 -- (with that test's conditions, rationales, stating principles and stale mark),
 -- every clause reachable from it through `equivalent` pairs with those clauses'
--- tests, and separately each clause it is in `conflict` with. A pair in
--- `conflict` is never followed. No similarity score is returned.
+-- tests, and separately each clause it is in `conflict` with. One link is
+-- followed from a hit; a longer chain only where a person decided every link.
+-- A pair in `conflict` is never followed. No similarity score is returned.
 -- No vector index: every clause in the role is compared, which is exact.
 -- -----------------------------------------------------------------------------
 create or replace function legal_commons.clause_search(
@@ -98,13 +99,22 @@ begin
       select n.clause_id, n.rank, false from nearest n
     ),
     -- Each hit with every clause reachable from it through `equivalent` pairs.
-    reach(hit_id, clause_id) as (
-      select h.clause_id, h.clause_id from hits h
+    -- The first link may be any `equivalent` pair. A second or later link is
+    -- taken only when every link on the path, the new one included, was decided
+    -- by a person's verdict, because small losses add up along a chain of model
+    -- judgments. `by_person` says whether every link so far was.
+    walk(hit_id, clause_id, is_hit, by_person) as (
+      select h.clause_id, h.clause_id, true, true from hits h
       union
-      select r.hit_id, case when s.clause_a = r.clause_id then s.clause_b else s.clause_a end
-      from reach r
+      select r.hit_id, case when s.clause_a = r.clause_id then s.clause_b else s.clause_a end,
+             false, r.by_person and s.decided_by_person
+      from walk r
       join legal_commons.clause_pair_state s
         on s.state = 'equivalent' and r.clause_id in (s.clause_a, s.clause_b)
+      where r.is_hit or (r.by_person and s.decided_by_person)
+    ),
+    reach as (
+      select distinct w.hit_id, w.clause_id from walk w
     ),
     -- Every use of a clause by a live test: as consequence, condition or rationale.
     clause_tests as (

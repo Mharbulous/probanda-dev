@@ -21,7 +21,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalize } from "../../../source/practice/mcp/src/phrases/rank.ts";
+import { normalize } from "../../../source/legal/mcp/src/phrases/rank.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const POOL = path.resolve(HERE, "..");

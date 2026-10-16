@@ -551,7 +551,7 @@ A job that is `queued`, unlocked, every blocker completed, and (if it has one) n
 _Avoid_: available (generic English — "ready" here means specifically classified so by the renderer, per the CHECK-and-conflict logic above).
 
 **Rule**:
-A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Proposition** that points at any of them. A consequence with no such link is a rule on its own.
+A norm that attaches a legal consequence to conditions, by every route the law allows. In the pool it has no record of its own. It is one **Consequence**, every consequence linked to it as meaning the same, directly or through another such consequence, and every **Proposition** that points at any of them. A chain of two or more such links counts only where a person has judged every link in it, because small losses of meaning add up along a chain of model judgments. A consequence with no such link is a rule on its own.
 _Avoid_: bare "rule" where the same file also means a **Court Rule** or one of the plugin's own working rules. Say which.
 
 **Rule Library**:
