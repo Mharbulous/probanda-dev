@@ -79,3 +79,20 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - The manifest, server key and dependents read as quoted in §2.
 - `2026-10-15_suggestion-skill-to-practice-plugin-spec.md` moves a skill into this plugin today: check its status. If it has not landed, it lands first and this spec renames the result; if it is in progress, coordinate so it targets `legal`.
 - Search open specs in `Engineering/1. Spec` and `2. Plan` for `practice` plugin work in flight and list them in the verification table.
+
+## 11. Verification against HEAD (2026-10-15, at 7e2a9eb)
+
+| Check | Result at HEAD |
+|---|---|
+| Repo layout | The §2 paths are the installed copy's. In this repo the core plugin's own files are `source/practice/` (`plugin.json`, `roster.json`, `.mcp.json`, `agents/`, `hooks/`, `mcp/`), its skills are `.claude/skills/<skill>/` placed by `source/assignment.json`, and `plugins/practice/` is built output of `scripts/build_plugin.py`. There is no `Engineering/` folder and no `/repackage`: "historical docs" here means the dated files under `docs/` (Plans, Specs, ADRs). The Public Folder copy is `public/plugins/practice/`. |
+| Manifest | `source/practice/plugin.json`: `"name": "practice"`, `"displayName": "Probanda Practice"`, version `0.4.3` (not 0.4.0), description as quoted in §2. |
+| Server key | `source/practice/.mcp.json` declares one server, `data`, running `${CLAUDE_PLUGIN_ROOT}/mcp/dist/litigation-mcp.js`. |
+| Dependents | `research`, `litigator`, `solicitor` and `file-manager` each list `practice` in `dependencies` and say "Requires the practice plugin" in their description. `source/assignment.json` and `source/layering.json` key the plugin as `practice`; `source/file-ops.json` holds rulings by plugin. |
+| Hook matchers on the old prefix | `source/practice/plugin.json` (session-lane guard) and `source/litigator/plugin.json` (practitioner-words gate), as quoted in §2. Hook scripts that test tool names in code: `session-lane-guard.py` and `html-pages-gate.py`, checked during the change. |
+| Plugin data | No source file uses `${CLAUDE_PLUGIN_DATA}`, so the rename strands no plugin data. |
+| Name pins | `scripts/check_publishable.py` (`ALLOWED_NAMES`), `scripts/check_file_ops.py`, `scripts/export_public.py`, `.claude-plugin/marketplace.json`, `public/.claude-plugin/marketplace.json`, `CLAUDE.md`, and the data server's sibling list and checkout marker (`source/practice/mcp/src/repo-root.ts` and related). |
+| Committed bundles | `source/practice/mcp/dist/litigation-mcp.js` carries `Skill: practice:<name>` text from `src/schema-gen.ts`; `source/file-manager/files-mcp/dist/file-manager-mcp.js` carries the sibling list and checkout marker. Rebuilding them is out of scope (§8), so they keep the old text until the next bundle build. |
+| `suggestion` spec (§10) | Landed: commit `cbc80ca` moved the skill into `practice` (`source/assignment.json`). This spec renames the result. |
+| Plugin work in flight | Specs with a verification table and `practice` plugin work: the four 2026-10-14 note-up specs, `job-plan-minimum-standards`, `job-title-cleanup-on-takeover`, `plugin-wide-present-files-default-audit`, `posture-scope-design-partner`, `research-memo-deliverable`, `show-me-present-files-default`, `suggestion-skill-to-practice-plugin`. Same-day siblings landing after this one: `timekeeper-plugin` and `timecamp-api-connector`, which target `legal`. Plans: `2026-10-15_imap-mail` (mail tools are on `main`), `2026-10-14_court-rules` (approved, nothing built), `2026-10-14_install-keys` (stage 1 and 2 written). None of these is mid-edit in the files this spec touches at HEAD. |
+| Open question 1 | Settled by Brahm on 2026-10-15: the name is `legal`, chosen knowing that Anthropic's knowledge-work `legal` plugin (commands such as `/legal:review-contract`) shares the `/legal:` prefix. |
+| Open question 2 | Stays out of scope. |
