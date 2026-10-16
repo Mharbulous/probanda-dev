@@ -73,3 +73,20 @@ Scope: edit source only (skill text, agent definitions, MCP tool description str
 ## 10. Verify against HEAD before building
 
 Confirm the plugin trees and agent folders searched exist at HEAD, and note any plugin directory the search could not reach.
+
+### Verification against HEAD (b1ff6f6, 2026-10-15)
+
+| Tree | Exists at HEAD | Searched | Note |
+|---|---|---|---|
+| `.claude/skills/` (skills, subskills, references, `User_Journeys/`, `shared/`, skill hooks) | yes | yes | 50 skill folders plus `shared/` |
+| `source/practice/` (`plugin.json`, `agents/`, `hooks/`, `mcp/src/`) | yes | yes | |
+| `source/research/` (`agents/`, `hooks/`, `canlii-mcp/src/`, `commons-mcp/src/`) | yes | yes | |
+| `source/litigator/agents/` | yes | yes | |
+| `source/file-manager/agents/` | yes | yes | `files-mcp/` holds only `dist/`; its source is `source/practice/mcp/src` |
+| `source/solicitor/` | yes | yes | ships no skills or agents |
+| `source/mcp-shared/` | yes | yes | key-store helpers only |
+| `public/plugins/*/skills/` | yes | yes | public skills; no hit for any searched tool name |
+| `commands/` in any plugin source | no | n/a | no plugin source has a commands folder |
+| `plugins/` | yes | no | built output, never edited by hand |
+
+No plugin directory was unreachable. Hooks are searched but out of scope (§8).
