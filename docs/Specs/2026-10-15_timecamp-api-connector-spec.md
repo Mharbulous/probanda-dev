@@ -82,3 +82,19 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 - How `timecamping` performs write-back today.
 - The timekeeper skeleton exists (sibling spec); if not, wait for it.
 - `bill-client` step 6 still reads as quoted.
+
+## 11. Verification against HEAD (7e2a9eb, 2026-10-15)
+
+The spec's paths are the installed copy's. In the repo, skills are under `.claude/skills/<skill>/`, plugin files under `source/<plugin>/`, and `plugins/` is built output.
+
+| Check | Result |
+|---|---|
+| §2 curl recipe and token key | Confirmed in `.claude/skills/build-timeline/reference/TimeCamp.md` (token `get` at lines 23 and 37, `set` at 29, activity curl at 43-46, trailing slash noted at 48-54). |
+| Every other place that calls timecamp.com | `timecamping/reference/TimeCampEntries.md` (entries read at 28-31, write-back `PUT` at 116-122); `time-sorting/SKILL.md` Step 1 (tasks curl at 206-209); `bill-client/SKILL.md` (web app at 66-67 in Step 6, and at 168 in "Close approved gaps directly in TimeCamp", whose steps 1-10 reclassify entries and create new ones in the web timesheet). The token is also read in `time-sorting/SKILL.md` (106-108, 202) and stored in `time-sorting/protocols/FirstSetup.md` 2a (43-47), which validates it with a test call. No source code calls timecamp.com. |
+| How `timecamping` writes back today | Curl, same token: a form-encoded `PUT https://www.timecamp.com/third_party/api/entries/` with `id`, `task_id` and `note` (`TimeCampEntries.md` 107-143). `timecamping/SKILL.md` Step 7 (648-693) sends one entry per explicit approval, skips locked entries and level-1 tasks, and confirms each write by re-reading the date's entries. No entry is ever created through the API. §2's "presumably the same token and curl" is confirmed. |
+| Step 2 of `timecamping` keeps rows out of context | The entries read is redirected to a file and converted by `timecamping-data/scripts/build_ingest.py timecamp-entries`, which filters to the practitioner's `user_id`. The `entries` tool therefore needs a way to write the raw response to a file and return only a count. |
+| `bill-client` Step 6 reads as quoted | Yes (66-87). Steps 7-8 depend on the downloaded export: copy from Downloads, rename, open, tie the Total row to the page total. |
+| Timekeeper skeleton | Not present at HEAD. Wait for it. |
+| Earlier TimeCamp API client (open question 1) | None found in CoClerk (no `third_party/api` in any code file) or in `C:\Users\Brahm\Git\AutoTimer`. Write it new. |
+| Server layout to follow | file-manager's `files` server has no source of its own: `source/practice/mcp/src/file-manager-index.ts` and `file-manager-dispatch.ts` are a second entry point in the data server's package, bundled by `source/practice/mcp/scripts/bundle.mjs` to `source/file-manager/files-mcp/dist/`. `scripts/plugin_layout.py` `SERVER_DIRS` maps each server key to its folder, `source/<plugin>/.mcp.json` declares it, and `build_plugin.py` stops when a declared server has no `dist/` folder. |
+| How a second server reads the token through the same backend (§5) | `source/practice/mcp/src/time-pipeline/backend.ts` `timePipelineGet()` is importable by another entry point, and resolves the store path the same way (`case_data_root` in `coclerk.json`). But it runs `kv/backend.ts`, whose embedded Python helper carries the `kv_store` `CREATE TABLE` text. The `files` bundle holds no DDL line today. A `timecamp` bundle that imports the pipeline backend would add those lines to a second bundle, which `check_publishable.py --new-since` reports as new problems. |
