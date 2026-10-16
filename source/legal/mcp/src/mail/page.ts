@@ -48,6 +48,26 @@ const SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an
 
 const SENT_TO = "Your password will be sent to: ";
 
+// What the save does (saveCredential in tools.ts). Each line must stay true to that code.
+const FLOW =
+  "<h2>What happens when you click Sign in and save</h2><ol>" +
+  "<li>Probanda signs in to your mail server with the password to check that it works, then to any calendar and contacts " +
+  "servers listed above, and to any server they move the account to while signing in. The password is not sent to Claude or Anthropic.</li>" +
+  "<li>If the mail sign-in fails, nothing is saved and any earlier password stays in place. You can correct it and try again here. " +
+  "If only the calendar or contacts sign-in fails, mail is still saved, and calendar or contacts are marked as not set up.</li>" +
+  "<li>If the sign-in works, the password is saved encrypted on this computer only. It is never logged and never shown again. " +
+  "If it cannot be saved, this page tells you.</li>" +
+  "<li>Probanda uses it to read your mail, calendar and contacts, and to save drafts to your Drafts folder. Probanda does not send " +
+  "or delete mail. That is how Probanda is built, not a limit set by the password, which gives full access to the mailbox.</li>" +
+  "<li>Setting up changes nothing in your mailbox. To end Probanda's access, revoke the password with your mail provider " +
+  "(for iCloud, in your Apple Account at account.apple.com). Probanda can no longer sign in after that.</li>" +
+  "</ol>";
+
+const DISCLAIMER =
+  "<p class=\"disclaimer\">We have made our best efforts to make this email connection secure, but no system is completely secure. " +
+  "Probanda and its authors accept no liability for any loss, damage or unauthorized access arising from its use. " +
+  "Use of this connection is at your own risk.</p>";
+
 /** Each host the typed secret goes to: the mail server, then the calendar and contacts servers. */
 function recipients(fields: CredentialFields): string {
   const dav = [fields.caldavUrl, fields.carddavUrl].filter((u): u is string => Boolean(u)).map((u) => new URL(u).host);
@@ -128,7 +148,9 @@ function form(fields: CredentialFields): string {
     "<p>" + SENT_TO + escape(recipients(fields)) + "</p>" +
     '<form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + "</label>" +
     "<button type=\"submit\">Sign in and save</button></form>" +
-    "<p class=\"note\">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>"
+    "<p class=\"note\">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>" +
+    FLOW +
+    DISCLAIMER
   );
 }
 
@@ -151,7 +173,9 @@ const STYLE =
   "main{max-width:32rem;margin:2rem auto}dt{font-weight:600}dd{margin:0 0 .5rem}" +
   "input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}" +
   "button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}" +
-  "@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
+  "h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}" +
+  ".disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}" +
+  "@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
 
 function escape(text: string): string {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
