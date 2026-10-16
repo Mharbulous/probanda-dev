@@ -1,10 +1,11 @@
 ---
 name: build-timeline
-description: "Sole ingester of raw time evidence into the timeline store, one date at a time, from the registered sources: TimeCamp, Telus Business Connect, Google Calendar, the iCloud calendar (Work and Home calendars, read through the iCloud desktop extension), sent mail (the iCloud copy of the Microsoft 365 Sent Items, read through the same extension), and SyncoPaid screen-activity blocks, plus a one-time historical bulk import of Chrometa screen-activity logs. Use to build/refresh/re-import raw time-tracking data for a date, or to run the Chrometa historical import. Raw data only -- does not classify time or assign it to matters (that is time-sorting), and does not bill."
+description: "Sole ingester of raw time evidence into the timeline store, one date at a time, from the registered sources: TimeCamp, Telus Business Connect, Google Calendar, the iCloud calendar (Work and Home calendars, read through the iCloud desktop extension), sent mail (the iCloud copy of the Microsoft 365 Sent Items, read through the practice plugin's mail tools), and SyncoPaid screen-activity blocks, plus a one-time historical bulk import of Chrometa screen-activity logs. Use to build/refresh/re-import raw time-tracking data for a date, or to run the Chrometa historical import. Raw data only -- does not classify time or assign it to matters (that is time-sorting), and does not bill."
 dependencies:
   - time-pipeline-data  # continuous timeline store under the `timeline` namespace
   - google-calendar-mcp # calendar events (optional — degrades gracefully if unavailable)
-  - icloud-desktop-extension # iCloud calendar events (Work and Home calendars only) and sent mail (Sent Items, Sent Messages and their LEAP subfolders only), read-only (a session without it records those sources `failed`)
+  - icloud-desktop-extension # iCloud calendar events (Work and Home calendars only), read-only (a session without it records that source `failed`)
+  - mail tools of the practice data server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
 ---
 
 ## Contents

@@ -15,10 +15,13 @@ tools:
   - Read
   - Glob
   - Grep
-  - mcp__iCloud__mail__calendar__contacts___mail_list_folders
-  - mcp__iCloud__mail__calendar__contacts___mail_search_emails
-  - mcp__iCloud__mail__calendar__contacts___mail_get_email
+  - mcp__plugin_practice_data__mail__list_folders
+  - mcp__plugin_practice_data__mail__search_emails
+  - mcp__plugin_practice_data__mail__get_email
   - mcp__plugin_practice_data__practice_data__firm_profile
+  - mcp__remote-devices__plugin_practice_data__mail__list_folders
+  - mcp__remote-devices__plugin_practice_data__mail__search_emails
+  - mcp__remote-devices__plugin_practice_data__mail__get_email
   - mcp__remote-devices__plugin_practice_data__practice_data__firm_profile
 ---
 
@@ -84,7 +87,7 @@ For every method, "this letter" means the same date, addressee and subject, and 
 | Process server | An affidavit of service or of delivery naming the document, the person, the date and the place. An invoice or an instruction letter alone confirms neither | The same affidavit. An affidavit of attempted service confirms neither and is noted | Court-file and service folders. The server's confirming email, in correspondence, is supporting evidence only |
 | Adobe Sign | The "sent for signature" notice or the audit trail naming the recipient | The audit trail showing the recipient viewed and signed or completed | The folders the notes name for incoming mail, the correspondence folder |
 
-**Email, in order.** Call `mail_list_folders` once. Search only folders the notes name: never every folder, because a whole-mailbox search times out. A mirror account's copy of a message is the same sending, not a second one: count the message once, by its Message-ID, and point to the sending account's copy when both exist. Match the attachment by name and size from the message's own attachment list. A name match with a different size, or a size match with a different name, is `could_not_check` with the message's pointer, so the session can compare the bytes. Read no more of a message than its headers and attachment list.
+**Email, in order.** Call `mail__list_folders` once. Search only folders the notes name: never every folder, because a whole-mailbox search times out. A mirror account's copy of a message is the same sending, not a second one: count the message once, by its Message-ID, and point to the sending account's copy when both exist. Match the attachment by name and size from the message's own attachment list. A name match with a different size, or a size match with a different name, is `could_not_check` with the message's pointer, so the session can compare the bytes. Read no more of a message than its headers and attachment list.
 
 **Not tested on real letters.** The registered mail, process server and by hand rows, and the combinations of registered mail with hand delivery and of a covering letter with a process server, were refined against how real examples are filed. For email only the filed side was seen, never a sent folder. For ordinary mail, fax, courier and Adobe Sign no example was found: those checklists come from practice, not from the files.
 

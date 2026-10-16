@@ -20,12 +20,12 @@ Configuration and data details for the practitioner's sent mail. Load this file 
 
 Search each in-scope folder separately: a search does not include the folder's subfolders (checked live on #1261). `/timecamping-data`'s ingest script refuses a row from any folder other than the four in scope, so a folder added to this table after review must be added to the folders that script accepts as well.
 
-**The route is the iCloud desktop extension, in the practitioner's own session.** It is a local desktop extension, so only a session that has it can read this mail. The plugin's own MCP server does not call iCloud. The read uses exactly two of the extension's tools, `mail_list_folders` and `mail_search_emails`. Never call any other:
+**The route is the practice plugin's `data` server.** It reads the mailbox over IMAP with the credential set once through `mail__configure_credential`. The read uses exactly two of its mail tools, `mail__list_folders` and `mail__search_emails`. Never call any other:
 
-- Its mail write tools: `mail_send_email`, `mail_reply_to_email`, `mail_forward_email`, `mail_move_email`, `mail_flag_email`, `mail_unflag_email`, `mail_mark_as_read`, `mail_mark_as_unread`, `mail_create_folder`, `mail_save_draft`. build-timeline never writes to a source, and marking a message read is a write.
-- Its body reads: `mail_get_email`, `mail_download_attachment`, and `mail_search_emails` with `includeBody: true`. This source is metadata only, never a body or an attachment.
-- Its other mail reads: `mail_get_latest_emails`, `mail_find_email_by_message_id`, `mail_find_thread_messages`, `mail_folder_status`.
-- Its calendar and contacts tools (`calendar_*`, `contacts_*`). The iCloud calendar is a source of its own (`ICloudCalendar.md`).
+- Its mail write, `mail__save_draft`. build-timeline never writes to a source, and marking a message read is a write.
+- Its body reads: `mail__get_email`, `mail__download_attachment`, and `mail__search_emails` with `include_body: true`. This source is metadata only, never a body or an attachment.
+- Its other mail reads: `mail__get_latest_emails`, `mail__find_email_by_message_id`, `mail__find_thread_messages`, `mail__folder_status`.
+- Any tool of the iCloud desktop extension. Mail is never read through it. The iCloud calendar is a source of its own (`ICloudCalendar.md`).
 
 ## Registry entry and coverage
 
@@ -38,25 +38,27 @@ The registry entry is `sent_mail` (`time-sorting/protocols/FirstSetup.md`). It m
 
 Check the folders before any search. A read of the wrong folder, or of one folder short, returns a successful result with no error.
 
-1. Call `mail_list_folders`.
-2. **`Sent Messages` missing**: stop without reading. The source is `failed`, with an `error_detail` naming `Sent Messages` and the fix: reconnect the extension to the iCloud account that holds the Microsoft 365 copy.
+1. Call `mail__list_folders`.
+2. **`Sent Messages` missing**: stop without reading. The source is `failed`, with an `error_detail` naming `Sent Messages` and the fix: check the configured account with `mail__configure_status`, and reconfigure with `mail__configure_credential` for the iCloud account that holds the Microsoft 365 copy.
 3. **A folder under `Sent Items/` or `Sent Messages/` that the table does not list**: stop without reading. The source is `failed`, with an `error_detail` naming the folder and the fix: review it, then add it to the in-scope table.
 4. **`Sent Items` or an `Outbound LEAP Matter Based Emails` subfolder missing**: read the other folders. This is not a failure. Name the missing folder in the run summary.
 
 ## Fetching messages
 
-For local day D, call `mail_search_emails` once for each qualified folder, in the table's order, with:
+For local day D, call `mail__search_emails` once for each qualified folder, in the table's order, with:
 
 - `folder`: the folder's exact name from the list.
 - `since`: D minus one day, and `before`: D plus two days, both `YYYY-MM-DD`. The window is wider than the day on purpose: the server's date boundary is not UTC (checked live on #1261), so a window of D alone can miss the evening of D.
 - `limit: 500`, the maximum.
-- Nothing else. Never `includeBody`, never `searchAllFolders`, and no other filter.
+- Nothing else. Never `include_body`, and no other filter.
+
+**A timeout is retried once.** On a `mail_timeout` error, wait a few seconds and search that folder once more. If it fails again, the day is `failed`, with the error text as its `error_detail`. Never fall back to a browser or any other route.
 
 **Keep only the messages sent on local day D.** Each message's `date` is ISO 8601 with its offset. Convert it to the practitioner's timezone (`coclerk.json → time_tracking.timezone`, default `America/Vancouver`) and keep the message only when its date there is D.
 
 **A truncated search is `failed`.** The response reports `totalFound` and `returned`. When `returned` is less than `totalFound`, or `returned` equals the limit of 500, the search may be missing messages: the day is `failed`, with an `error_detail` naming the folder and both counts. Never store a partial day.
 
-Each message the search returns carries `uid`, `folder`, `date`, `from`, `to`, `subject`, `messageId`, `seen` and `size`, and `cc` when the message has a cc recipient (the extension leaves `cc` out otherwise, seen live on #942). No body is returned. `/timecamping-data`'s ingest script requires `from` to be a string and `to` and any `cc` to be lists, reads a missing `cc` as no cc recipients, and fails the run on any other shape.
+Each message the search returns carries `uid`, `folder`, `date`, `from`, `to`, `subject`, `messageId`, `seen` and `size`, and `cc` when the message has a cc recipient (the search leaves `cc` out otherwise, as the extension did on #942). No body is returned. `/timecamping-data`'s ingest script requires `from` to be a string and `to` and any `cc` to be lists, reads a missing `cc` as no cc recipients, and fails the run on any other shape.
 
 **One row per Message-ID, and the copy in the earliest folder of the table wins.** A message whose Message-ID is already among the messages kept from an earlier folder is not stored again. The same Message-ID twice in one folder fails the day.
 
@@ -77,7 +79,7 @@ A sent meeting response (`Accepted: …`, `Declined: …`, `Tentative: …`, `Ca
 
 ## Empty is not failed
 
-A qualified, covered read in which no kept message falls on day D is **`empty`**, a terminal status. A day that was never read is `failed`, never `empty`: no `copy_confirmed`, no extension, a folder check that stopped the read, or a truncated search. An `empty` for an unread day releases `/timecamping`'s assembly gate on missing evidence.
+A qualified, covered read in which no kept message falls on day D is **`empty`**, a terminal status. A day that was never read is `failed`, never `empty`: no `copy_confirmed`, no mail credential, a folder check that stopped the read, or a truncated search. An `empty` for an unread day releases `/timecamping`'s assembly gate on missing evidence.
 
 ## Exit paths
 
@@ -91,11 +93,11 @@ Every exit records a status for `/timecamping`, because a registered source bloc
 | Registry present but has no `sent_mail` entry | `failed` | No `time_tracking.sources` entry for `sent_mail`; add one with `enabled: true` or `enabled: false` |
 | The entry has no `copy_confirmed` | `failed` | The iCloud Sent Items copy is not yet confirmed complete (#1262); set the entry's `copy_confirmed` to the date its close check passes |
 | The day is before the entry's `copy_from` | `failed` | The confirmed iCloud copy starts at `copy_from`; this day is not covered |
-| The iCloud extension is not available in this session | `failed` | Re-run the date in a session that has the iCloud desktop extension, or set the `sent_mail` entry's `enabled` to `false` to record `skipped` |
+| The mail credential is not configured (`mail__configure_status`, or a `mail_not_configured` error) | `failed` | Configure it with `mail__configure_credential` and re-run the date, or set the `sent_mail` entry's `enabled` to `false` to record `skipped` |
 | The folder list has no `Sent Messages` | `failed` | Names `Sent Messages` and the fix (qualification step 2) |
 | The folder list has a folder under `Sent Items/` or `Sent Messages/` that the table does not list | `failed` | Names the folder and the fix (qualification step 3) |
 | The folder list lacks `Sent Items` or an `Outbound LEAP Matter Based Emails` subfolder | `fetched` or `empty`, on the other folders | none. The run summary names the missing folder |
 | A search is truncated | `failed` | Names the folder and both counts |
 | Any other error | `failed` | The error, and the fix |
 
-Only `enabled: false` records `skipped`. A missing extension is `failed`, as for the iCloud calendar: the day waits for a session that can read the mail.
+Only `enabled: false` records `skipped`. An unconfigured mail credential is `failed`, as a missing extension is for the iCloud calendar: the day waits until the credential is configured.

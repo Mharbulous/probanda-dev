@@ -14,7 +14,7 @@ Configuration and data details for the practitioner's iCloud calendar. Load this
 
 This is the live calendar list of 2026-09-27. `Work` and `Home` are stored in full. `Home` is a personal calendar: a `Home` event may explain an unbilled gap but never supports billable time on its own (`/timecamping` Step 5). `/timecamping-data`'s ingest script refuses a row from any calendar other than `Work` or `Home`.
 
-**The route is the iCloud desktop extension, in the practitioner's own session.** It is a local desktop extension, so only a session that has it can read this calendar. The plugin's own MCP server does not call iCloud. The read uses two of the extension's tools, `calendar_list_calendars` and `calendar_list_events`. Never call its calendar write tools (`calendar_create_event`, `calendar_update_event`, `calendar_delete_event`) or its mail and contacts tools: build-timeline never writes to a source.
+**The route is the iCloud desktop extension, in the practitioner's own session.** It is a local desktop extension, so only a session that has it can read this calendar. The plugin's own MCP server reads mail, not the calendar. The read uses two of the extension's tools, `calendar_list_calendars` and `calendar_list_events`. Never call its calendar write tools (`calendar_create_event`, `calendar_update_event`, `calendar_delete_event`), its contacts tools, or any mail tool: mail is read through the practice data server's `mail__*` tools, never through the extension. build-timeline never writes to a source.
 
 ## Qualifying the route
 

@@ -59,6 +59,13 @@ For each supported source the user selected, run its setup sub-procedure. These 
 1. No stored credential. The calendar is read through the iCloud desktop extension in the practitioner's own session (`build-timeline/reference/ICloudCalendar.md`).
 2. Inform: *"Your iCloud calendar is read through the iCloud desktop extension, so a session without that extension can't read it. Only your Work and Home calendars are read, never Family."*
 
+### 2b-3: Mail Setup
+
+1. Call `mail__configure_status`. If it reports `configured: true`: *"Your mail is already connected."*
+2. If `configured: false`, tell the practitioner what is needed and ask for all of it in one message: *"To read your sent mail I need your mail server's IMAP host and port, your username, and an app-specific password. For iCloud the host is `imap.mail.me.com` and the port is 993, and the app-specific password is created at account.apple.com."*
+3. Call `mail__configure_credential` with the answers. Never echo the password back.
+4. On a `mail_auth` error, say the mail server refused the sign-in and offer to retry with corrected details.
+
 ### 2c: Telus Business Connect Setup
 
 1. No persistent configuration needed. Inform: *"Telus Business Connect works from CSV exports — you'll provide the file path each time you sort. No setup needed on my end."*
@@ -131,7 +138,7 @@ Save the time-tracking configuration under a new `time_tracking` top-level key o
         "id": "sent_mail",
         "type": "email",
         "enabled": true,
-        "auth": "desktop_extension",
+        "auth": "mcp",
         "reference": "build-timeline/reference/SentMail.md"
       },
       {
@@ -171,7 +178,7 @@ Summarize what was configured:
 > - **TimeCamp**: Connected (API token stored)
 > - **Google Calendar**: Connected (MCP authenticated)
 > - **iCloud Calendar**: Registered (read through the iCloud desktop extension; Work and Home only)
-> - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the iCloud desktop extension; read once that copy is confirmed complete)
+> - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the practice plugin's mail tools; read once that copy is confirmed complete)
 > - **Telus Business Connect**: Ready (CSV-based, no setup needed)
 > - **SyncoPaid**: Registered (evidence capture status checked live on each build)
 > - **[unselected source]**: Not used (registered as disabled)

@@ -156,6 +156,8 @@ file. The full listings stay one question away.
 Runs after Workflow 2 has composed the briefing (or its two-line quiet summary, or its data-gap
 notice). On-demand runs skip this workflow. The email goes out through the iCloud desktop
 extension's `mail_send_email` tool, written by the practitioner's executive assistant, **Claudia**.
+The extension is kept for this send alone: all mail reading goes through the practice data server's
+`mail__*` tools.
 Never call a Hostinger tool or endpoint (`email_call_api_read`, `email_call_api_write`).
 
 0. **Read the delivery identity.** Read the `briefing` block of the per-install `coclerk.json`

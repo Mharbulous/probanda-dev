@@ -107,8 +107,8 @@ by Step 0.
 | SyncoPaid captures | **New fetch, capture-level** — not build-timeline's coarser block-level call, which discards the per-capture/OCR detail every SyncoPaid-heavy fixture needs. Redirect the `evidence query ... --include-ocr-text` output to a file, then convert it with `build_ingest.py syncopaid-captures`. Same live-opt-in gate as build-timeline's fetch. | `reference/SyncoPaidCaptures.md` |
 | TimeCamp time entries | **New fetch** — the practitioner's own amber/green timesheet rows, a different endpoint from build-timeline's computer-activity fetch. Redirect the entries read to a file, then convert it with `build_ingest.py timecamp-entries`, which filters to the practitioner's own `user_id`. Same token. | `reference/TimeCampEntries.md` |
 | Google Calendar | **Delegate** the same way: export prefix `activity:gcal:`, convert with `--source gcal`. build-timeline owns the registry entry and the fetch; this skill qualifies the route first and never reads a calendar independently. Registered as the fifth source in #454; the doctrine behind it is #421's. | `build-timeline/reference/GoogleCalendar.md` |
-| iCloud calendar | **Delegate** the same way: export prefix `activity:icloud:`, convert with `--source icloud`. build-timeline owns the registry entry and the fetch, which runs through the iCloud desktop extension in the practitioner's session; the plugin's own MCP does not call iCloud. Only the `Work` and `Home` calendars are read; `Family` never is. Registered as the sixth source in #1199. | `build-timeline/reference/ICloudCalendar.md` |
-| Sent mail | **Delegate** the same way, but sent mail is stored as events, not activities: export prefix `event:sent_mail:`, convert with `--source sent_mail`. build-timeline owns the registry entry and the fetch, which reads the iCloud copy of the Microsoft 365 Sent Items through the iCloud desktop extension in the practitioner's session; the plugin's own MCP is not used. Only `Sent Items`, `Sent Messages` and their `Outbound LEAP Matter Based Emails` subfolders are read. Subject, recipients and sent time only, never a body. Registered as the seventh source in #1261. | `build-timeline/reference/SentMail.md` |
+| iCloud calendar | **Delegate** the same way: export prefix `activity:icloud:`, convert with `--source icloud`. build-timeline owns the registry entry and the fetch, which runs through the iCloud desktop extension in the practitioner's session; the plugin's own MCP reads mail, not the calendar. Only the `Work` and `Home` calendars are read; `Family` never is. Registered as the sixth source in #1199. | `build-timeline/reference/ICloudCalendar.md` |
+| Sent mail | **Delegate** the same way, but sent mail is stored as events, not activities: export prefix `event:sent_mail:`, convert with `--source sent_mail`. build-timeline owns the registry entry and the fetch, which reads the iCloud copy of the Microsoft 365 Sent Items through the practice data server's mail tools. Only `Sent Items`, `Sent Messages` and their `Outbound LEAP Matter Based Emails` subfolders are read. Subject, recipients and sent time only, never a body. Registered as the seventh source in #1261. | `build-timeline/reference/SentMail.md` |
 
 ## Workflow
 
@@ -179,9 +179,10 @@ A registry-disabled source (`enabled: false`), a live-gate-off source
 terminal state — never `failed`. A registry with no entry for a source is
 `failed`, not `skipped`: only an explicit `enabled: false` may skip a source
 (the `timecamp` entry covers both TimeCamp sources). A genuine fetch error
-(bad token, malformed response, network failure) is `failed`, and so is a session without the iCloud desktop
-extension: that day waits for a session that can read the calendar and the
-mail. Sent mail is also `failed` on every day until its registry entry
+(bad token, malformed response, network failure) is `failed`, and so is the
+iCloud calendar in a session without the iCloud desktop extension, and sent
+mail on a machine with no mail credential: that day waits until the source can
+be read. Sent mail is also `failed` on every day until its registry entry
 carries `copy_confirmed`. One source's failure never blocks another's fetch.
 
 **A registered source has teeth: every exit path records an outcome.** From
@@ -244,7 +245,7 @@ For sent mail the paths are:
 | Registry present but has no `sent_mail` entry | `failed`, `error_detail` saying there is no `time_tracking.sources` entry for `sent_mail` and to add one with `enabled: true` or `enabled: false` |
 | The `sent_mail` entry has no `copy_confirmed` | `failed`, `error_detail` saying the iCloud Sent Items copy is not yet confirmed complete (#1262) and to set `copy_confirmed` when its close check passes |
 | The day is before the entry's `copy_from` | `failed`, `error_detail` saying the confirmed copy does not reach that date |
-| iCloud desktop extension not available in this session | `failed`, `error_detail` saying to re-run the date in a session that has the extension, or to set the `sent_mail` entry's `enabled: false` to record `skipped` |
+| The mail credential is not configured (`mail__configure_status`, or a `mail_not_configured` error) | `failed`, `error_detail` saying to configure it with `mail__configure_credential` and re-run the date, or to set the `sent_mail` entry's `enabled: false` to record `skipped` |
 | Folder list is missing `Sent Messages` | `failed`, `error_detail` naming `Sent Messages` and the fix |
 | Folder list has a folder under `Sent Items/` or `Sent Messages/` that the reference does not list | `failed`, `error_detail` naming the folder and the fix: add it to the in-scope table after review |
 | Folder list is missing only `Sent Items` or an `Outbound LEAP Matter Based Emails` subfolder | `fetched` or `empty` on the other folders, with the missing folder named in the run summary |

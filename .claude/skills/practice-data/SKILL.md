@@ -138,7 +138,7 @@ Resolve relative to the user's home directory (packaged installs may redirect; u
   "signature": "<absolute path to that person's scanned signature image>",
   "practice_quirks": "<this practitioner's environment notes, at most 1,000 characters>",
   "briefing": {
-    "mailbox": "<the iCloud mail extension's From address, which the morning briefing is sent from>",
+    "mailbox": "<the address the morning briefing is sent from>",
     "to": "<the address the morning briefing is sent to>",
     "greeting_name": "<the name the briefing's opening line greets>"
   },
@@ -177,6 +177,12 @@ The firm roster lives in `<case_data_root>\_practice\firm\firm.json`, with the f
 The `briefing` block serves `executive-assistant`'s morning-briefing delivery, which reads it itself. It runs unattended, so it never asks: a missing block or value stops the send and is reported as a data gap.
 
 The `csv_mapping` key is populated on first CSV import. If missing, the importing skill examines the CSV headers and asks the user to confirm column mappings, then saves the confirmed mapping here for future imports. (invoice-tracking stores its own `accounting.invoice_mapping` alongside `csv_mapping`.)
+
+### Mail
+
+The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is supplied once through `mail__configure_credential`, which signs in to the server before saving and stores the credential encrypted on the host, where it survives restarts. It is never written to `coclerk.json` and never echoed back into the transcript. It cannot arrive as an environment variable in Cowork.
+
+On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, the practitioner must supply the details: ask for them rather than guessing.
 
 ### Practice quirks
 
