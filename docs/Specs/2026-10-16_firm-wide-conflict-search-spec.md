@@ -2,7 +2,7 @@
 
 Status: proposed, 2026-10-16. Decisions taken with Brahm on 2026-10-16 (§10).
 Plugin: `legal`.
-Depends on: ADR 0009 (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`), which defines the `contact`, `affiliation` and `matter_role` items this spec searches. Nothing here can be built before those items exist.
+Depends on: ADR 0009 (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`) and `docs/Specs/2026-10-16_firm-wide-contacts-spec.md`, which defines the `contact`, `affiliation` and `matter_role` items this spec searches (its §4.1). That spec is the source for the items. Nothing here can be built before they exist.
 
 ---
 
@@ -13,7 +13,7 @@ ADR 0009 makes each person or organization the firm deals with one `contact`, so
 ## 2. What is searched
 
 1. **The input** is one or more *subjects*. Each is a person or organization on a new or changed matter, with the role it would hold there. A subject is either an existing contact or the details proposed for a new one (name, other names, email, phone). A subject need not be saved first.
-2. **The pool** is every `contact` item, with its name, `other_names`, email and phone, plus every `matter_role` and `affiliation` item.
+2. **The pool** is every `contact` item, with its `name`, `other_names`, `emails[]` and `phones[]`, plus every `matter_role` and `affiliation` item.
 3. **Every matter counts**, whatever its status (open, closed or declined) and however old. Each hit shows the matter's status and, where it has one, its closing date.
 4. **Roles on the subject's own matter are excluded.** A subject is never a conflict with itself.
 5. **Affiliations are followed one step, past and current.** A subject that is a person is also checked through every organization it is or was affiliated with. A subject that is an organization is also checked through every person who is or was affiliated with it. A hit found this way is marked "via affiliation" and shows the affiliation's `from`, `to` and `title`. The search does not take a second step, from that person to their other organizations.
@@ -21,7 +21,7 @@ ADR 0009 makes each person or organization the firm deals with one `contact`, so
 
 ## 3. The `other_names` field
 
-`contact` gains one data field, `other_names`: a list of former names, trade names and other spellings of the same person or organization. Each entry is written only with the practitioner's approval, under the same rule as case-data aliases (`.claude/skills/case-data/references/design-decisions.md` #65): a near match the search turns up is proposed, never recorded. Like every data field, it is held locally in clear and sent to the cloud only as a keyed hash (`source/legal/mcp/src/practice/ops.ts`). ADR 0009 gets a one-line note naming this field when it is built. The search does not read case-data's `participant_aliases`.
+`contact` gains one data field beside those in the contacts spec §4.1, `other_names[]`: a list of former names, trade names and other spellings of the same person or organization. Each entry is written only with the practitioner's approval, under the same rule as case-data aliases (`.claude/skills/case-data/references/design-decisions.md` #65): a near match the search turns up is proposed, never recorded. Like every data field, it is held locally in clear and sent to the cloud only as a keyed hash (`source/legal/mcp/src/practice/ops.ts`). The contacts spec §4.1 gets a one-line note naming this field when it is built. The search does not read case-data's `participant_aliases`. When two contacts turn out to be one, they are joined by the contacts spec's route (re-point the roles and affiliations, delete the spare), never by the search.
 
 ## 4. Matching rules
 
@@ -31,11 +31,11 @@ A pool contact matches a subject when any of the following holds. Each hit says 
    - exact first, ignoring case and accents, on the whole name, an other name or the surname;
    - then a surname within edit distance 2, only under #66's limits (both surnames at least four letters, and the distance under half the shorter one's length), labelled `near` with its distance;
    - given names exact or by initial, never fuzzed, and a given name on both sides must agree;
-   - an organization by its whole name, an other name, or one of its words of four letters or more, exactly.
-2. **Email:** the same address, after trimming and lower-casing.
-3. **Phone:** the same number, after reducing both to digits and dropping a leading North American `1`.
+   - an organization by its whole name, an other name, or one of its words of four letters or more, exactly, after the normalization `contact_lookup` uses for `near` (contacts spec, tool table: lower case, punctuation and corporate suffixes such as Ltd., Inc. and LLP removed).
+2. **Email:** any address in the subject's list equals any in the contact's `emails[]`, after trimming and lower-casing.
+3. **Phone:** any number in the subject's list equals any in the contact's `phones[]`, after reducing both to digits and dropping a leading North American `1`.
 
-Name rules apply only between contacts of the same type tag (`person` against `person`, `organization` against `organization`). Email and phone match across types. The implementation reuses #66's matcher logic rather than writing a second one. Where that logic is Python in case-data's tree and the search is TypeScript in the data server, the port must pass the same cases as #66's tests (§9).
+Name rules apply only between contacts with the same `entity` tag (`person` against `person`, `organization` against `organization`). Email and phone match across types. The implementation reuses #66's matcher logic rather than writing a second one. Where that logic is Python in case-data's tree and the search is TypeScript in the data server, the port must pass the same cases as #66's tests (§9).
 
 ## 5. What counts as a possible conflict
 
@@ -66,6 +66,7 @@ Unattended runs report their hits and stop. They never set the signal.
 ## 8. Where it runs, and constraints that must still hold
 
 - **The search and its classification run locally, as Cross Data under Exception 1.** The cloud holds names, emails and phones only as keyed hashes, which edit distance and normalization cannot work on, and reads must work offline. This follows L2 and L4 of `docs/Plans/2026-10-14_practice-db-conversion.md`. The `matter_role` and `affiliation` links it reads are links a local read needs, so they are local Cross Data under decision 5 of that plan.
+- The search sees only what this machine's `practice.db` holds, because item data never leaves the machine that wrote it (contacts spec §2).
 - No subject's details leave the machine, and nothing is written to the cloud by the search itself. The only cloud write is the practitioner-approved signal.
 - A near match is a search result, never an identity. Two contacts are merged, or an other name recorded, only on the practitioner's approval (§3).
 - Case-data is not read or written by the search (ADR 0009).
@@ -74,7 +75,7 @@ Unattended runs report their hits and stop. They never set the signal.
 ## 9. Implementation plan
 
 1. Verify against HEAD (§11) and append a verification table to this spec.
-2. Add `other_names` to the `contact` item, and its approval rule, wherever ADR 0009's contact is defined. Add the one-line note to ADR 0009.
+2. Add `other_names[]` to the `contact` item and its approval rule, and add the one-line note to the contacts spec §4.1.
 3. Write the matcher (§4) in the data server, ported from #66's resolver, with unit tests that replay #66's cases plus the email and phone rules.
 4. Write the search and classification (§2, §5) and the `practice_data__conflict_search` tool (§7.1), with unit tests for: each role pair in §5 in both directions, the own-matter exclusion, closed and declined matters, one-step affiliations both ways with no second step, and other names.
 5. Add the operation to the `practice-data` skill: the ask, the signal write and the `CONF` report (§7.2 to §7.3).
@@ -97,7 +98,8 @@ Options rejected: flagging only the pairs in 1 and hiding other matches (hides a
 
 ## 11. Verify against HEAD before building
 
-- ADR 0009's `contact`, `affiliation` and `matter_role` kinds exist in `cloud/items/rules.sql` and the data server. On 2026-10-16 none did.
+- The contacts spec's `contact`, `affiliation` and `matter_role` kinds exist in `cloud/items/rules.sql` and the data server. On 2026-10-16 none did.
+- `contact_lookup`'s normalization, to reuse it for organization names.
 - `conflict_check_completed` is still the signal key, and `prospective` and `declined` still depend on it.
 - #66's matcher rules and tests, to port them unchanged.
 - `upsert_client_matter` is still where a matter's client roles are created.
