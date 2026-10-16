@@ -54,7 +54,7 @@ import uuid
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-KV_SOURCE = REPO / "source" / "practice" / "mcp" / "src" / "kv" / "backend.ts"
+KV_SOURCE = REPO / "source" / "legal" / "mcp" / "src" / "kv" / "backend.ts"
 COMMONS_KEY = REPO / "source" / "mcp-shared" / "commons-key.js"
 
 FORMAT = "items-1"

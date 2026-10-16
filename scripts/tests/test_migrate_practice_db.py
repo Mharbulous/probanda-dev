@@ -7,7 +7,7 @@ refuses or stops, leaving the original byte-identical, wherever it should.
 The fixture's schema is read from git history at test time (the legacy SCHEMA_SQL in
 3049ddc^), so no file here holds any DDL. Seed and sync go to a fake on 127.0.0.1.
 The hash parity tests need the data server's tsc build:
-    source/practice/mcp/node_modules/.bin/tsc -p source/practice/mcp
+    source/legal/mcp/node_modules/.bin/tsc -p source/legal/mcp
 
 Run: python -m pytest -q scripts/tests/test_migrate_practice_db.py
 """
@@ -33,7 +33,7 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent.parent
 REPO = SCRIPTS.parent
 SCRIPT = SCRIPTS / "migrate_practice_db.py"
-OPS_JS = REPO / "source" / "practice" / "mcp" / "build" / "practice" / "ops.js"
+OPS_JS = REPO / "source" / "legal" / "mcp" / "build" / "practice" / "ops.js"
 LEGACY_REV = "3049ddc^"
 LEGACY_BACKEND = "source/practice/mcp/src/practice/backend.ts"
 
@@ -369,7 +369,7 @@ PARITY_VECTOR = [
 ]
 
 
-@unittest.skipUnless(OPS_JS.is_file(), "build the data server first: tsc -p source/practice/mcp")
+@unittest.skipUnless(OPS_JS.is_file(), "build the data server first: tsc -p source/legal/mcp")
 class HashParityTest(unittest.TestCase):
     def test_canonical_json_and_hash_equal_ops_js(self):
         key = os.urandom(32)
@@ -482,7 +482,7 @@ class MigrationRunTest(unittest.TestCase):
         self.assertIsNone(by_id[self.ids["a1"]]["hashes"]["party_label"])
         self.assertIsNone(by_id[self.ids["d1"]]["hashes"]["proceeding_label"])
 
-    @unittest.skipUnless(OPS_JS.is_file(), "build the data server first: tsc -p source/practice/mcp")
+    @unittest.skipUnless(OPS_JS.is_file(), "build the data server first: tsc -p source/legal/mcp")
     def test_seeded_hashes_equal_ops_js(self):
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
