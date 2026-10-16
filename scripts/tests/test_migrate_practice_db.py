@@ -5,7 +5,8 @@ round-trips with no difference, seeds a fake Probanda's Cloud and swaps in; and 
 refuses or stops, leaving the original byte-identical, wherever it should.
 
 The fixture's schema is read from git history at test time (the legacy SCHEMA_SQL in
-3049ddc^), so no file here holds any DDL. Seed and sync go to a fake on 127.0.0.1.
+3049ddc^), so no file here holds any DDL. A clone without that history, such as CI's,
+skips every test that builds the fixture. Seed and sync go to a fake on 127.0.0.1.
 The hash parity tests need the data server's tsc build:
     source/legal/mcp/node_modules/.bin/tsc -p source/legal/mcp
 
@@ -51,6 +52,16 @@ def legacy_schema():
     match = re.search(r"const SCHEMA_SQL = `(.*?)`\.trim\(\);", text, re.S)
     assert match, "no SCHEMA_SQL in %s:%s" % (LEGACY_REV, LEGACY_BACKEND)
     return match.group(1)
+
+
+def legacy_rev_present():
+    """False only in a clone without that history, such as CI's fetch-depth 1 checkout (#62)."""
+    return subprocess.run(["git", "-C", str(REPO), "cat-file", "-e", "%s:%s" % (LEGACY_REV, LEGACY_BACKEND)],
+                          capture_output=True).returncode == 0
+
+
+needs_legacy_rev = unittest.skipUnless(legacy_rev_present(), "%s is not in this clone (CI checks out with "
+                                       "fetch-depth 1); run on a full clone" % LEGACY_REV)
 
 
 def ids(*names):
@@ -381,6 +392,7 @@ class HashParityTest(unittest.TestCase):
         self.assertEqual(len(expected), len(PARITY_VECTOR))
 
 
+@needs_legacy_rev
 class MigrationRunTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="migrate-practice-"))
@@ -547,6 +559,7 @@ class MigrationRunTest(unittest.TestCase):
         self.assertEqual(self.cloud.requests, [])
 
 
+@needs_legacy_rev
 class RoundTripTest(unittest.TestCase):
     def test_the_round_trip_finds_a_changed_item(self):
         with tempfile.TemporaryDirectory() as tmp:
