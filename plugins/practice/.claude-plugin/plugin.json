@@ -1,14 +1,14 @@
 {
   "name": "practice",
   "displayName": "Probanda Practice",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "The base Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines. Install it first. The research, litigator, solicitor and file-manager plugins all require it.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"
   },
-  "homepage": "https://github.com/Probanda-app/plugins",
-  "repository": "https://github.com/Probanda-app/plugins",
+  "homepage": "https://github.com/Probanda-app/Probanda-Legal",
+  "repository": "https://github.com/Probanda-app/Probanda-Legal",
   "mcpServers": "./.mcp.json",
   "hooks": {
     "PreToolUse": [

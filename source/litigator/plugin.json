@@ -1,7 +1,7 @@
 {
   "name": "litigator",
   "displayName": "Probanda Litigator",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Court work on a matter, for British Columbia lawyers: applying the law to the facts, drafting, court forms, filing packages and calculations. Requires the practice and research plugins: install practice, then research, then litigator.",
   "author": {
     "name": "Probanda",
