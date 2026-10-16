@@ -103,9 +103,7 @@ Source-specific reconciliation and assignment context:
 | `corrections:{YYYY-MM-DD}` | JSON array of correction objects | User edits that survive re-sorts |
 | `sort:latest` | Sort metadata JSON | Last sort summary |
 
-Note: `config:timecamp_token` lives in the `timeline` namespace (build-timeline owns it). To sync the project tree, read the token with:
-
-``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
+Note: the project tree is synced through the timekeeper plugin's `timecamp` connector, which holds the TimeCamp API token itself (Step 1).
 
 ### Day Object Schema
 
@@ -197,20 +195,11 @@ Before assigning activities, ensure the project tree is loaded. Check:
 
 ``time-pipeline-data`` `get` — `namespace: "timesort"`, `key: "projects:synced_at"`
 
-If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree. Read the token from the `timeline` namespace:
+If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree through the `timecamp` connector (`mcp__plugin_timekeeper_timecamp__*`). Call its `status` first: if it reports the API unusable, stop and tell the practitioner its reason. Never open the TimeCamp web app as a substitute. Then call its `tasks` with no `query` to fetch every active Project and Task.
 
-``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
+The connector keeps the mandatory trailing slash on `/tasks/`. Confirmed live 2026-09-24 (#940): HTTP 200, 487 entries (Projects and Tasks together).
 
-Then fetch every Project and Task:
-
-```bash
-curl -s -H "Authorization: Bearer {token}" -H "Accept: application/json" \
-  "https://www.timecamp.com/third_party/api/tasks/"
-```
-
-Trailing slash on `/tasks/` is mandatory, as on build-timeline's `/activity/`. Confirmed live 2026-09-24 (#940): HTTP 200, 487 entries (Projects and Tasks together).
-
-The response is a **flat JSON object keyed by task id** (the key equals the entry's `task_id`), not a nested tree. Fields observed on every entry include `task_id` (int), `parent_id` (int, `0` for a top-level Project), `name`, `level` (int, `1` = top-level Project), `billable` (int `0`/`1`) and `archived` (int `0`/`1`). `hasChildren` (bool) appears only on some entries, so do not rely on it. Drop entries with `archived: 1`, matching the active-only filter the sync always applied. Build the tree yourself: `projects:tree` is a JSON array of the top-level entries (`parent_id` 0), each entry stored as returned plus a `children` array holding its child entries in the same form, recursively. Walk it to get all Tasks.
+`tasks` returns a **flat list** of entries, not a nested tree, each as TimeCamp gives it plus a `path`. Fields observed on every entry include `task_id` (int), `parent_id` (int, `0` for a top-level Project), `name`, `level` (int, `1` = top-level Project), `billable` (int `0`/`1`) and `archived` (int `0`/`1`). `hasChildren` (bool) appears only on some entries, so do not rely on it. The connector already drops entries with `archived: 1`, matching the active-only filter the sync always applied. Leave out the connector's `path` and build the tree yourself: `projects:tree` is a JSON array of the top-level entries (`parent_id` 0), each entry stored as returned plus a `children` array holding its child entries in the same form, recursively. Walk it to get all Tasks.
 
 Store the tree in the `timesort` namespace:
 

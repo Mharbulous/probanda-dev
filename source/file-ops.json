@@ -13,7 +13,6 @@
     {"file": ".claude/skills/assemble/subskills/assemble-general/scripts/bind_general.py", "op": "os.replace", "count": 1, "why": "own-output", "note": "The bind's own '~' temp file becomes the output, refused if the output already exists."},
     {"file": ".claude/skills/assemble/subskills/assemble-general/scripts/bind_general.py", "op": "path.unlink", "count": 1, "why": "temp", "note": "The bind's own '~' temp file."},
     {"file": ".claude/skills/assemble/subskills/assemble-vaniac-package/scripts/bind_package.py", "op": "shutil.rmtree", "count": 1, "why": "temp", "note": "A folder from tempfile.mkdtemp, removed when the run ends."},
-    {"file": ".claude/skills/bill-client/SKILL.md", "op": "prose rename", "count": 1, "why": "own-output", "note": "Renames the copy Probanda pasted into BILLING. The download in Downloads is never cut, renamed or deleted."},
     {"file": ".claude/skills/build-timeline/reference/SyncoPaid.md", "op": "prose delete", "count": 1, "why": "mention", "note": "Quotes SyncoPaid's advice to delete its output and explains why this integration does not."},
     {"file": ".claude/skills/calculate/subskills/itemize-boc/agents/tariff-checker.md", "op": "prose delete", "count": 1, "why": "mention", "note": "Tells the agent to recommend deleting stray files in the skill's own references folder and not to delete them."},
     {"file": ".claude/skills/case-data/operations/ingest-extract.md", "op": "os.rename", "count": 1, "why": "mention", "note": "Never fall back to os.rename when file-manager is absent."},

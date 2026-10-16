@@ -1,6 +1,6 @@
 # TimeCamp Reference
 
-API and configuration details for TimeCamp integration. Load this file when fetching TimeCamp computer activities for the timeline.
+How TimeCamp computer activities are fetched for the timeline. Load this file when fetching them.
 
 ## Terminology
 
@@ -14,50 +14,34 @@ This skill aligns with TimeCamp's own concepts:
 - **Assign / Move** — TimeCamp's term for attributing computer activities to a Task
 - **Unassigned computer activities** — time tracked by the desktop app that hasn't been assigned to any Task; does not count toward the daily timesheet total
 
-## Configuration
+## The TimeCamp connector
 
-### API Token
+TimeCamp is read only through the timekeeper plugin's `timecamp` connector, a
+local server whose tools are `mcp__plugin_timekeeper_timecamp__*`. It holds the
+API token itself: no skill reads, stores or passes the token.
 
-The TimeCamp API token is stored in the time-pipeline store under the `timeline` namespace:
+**Hard rule.** Before fetching, call the connector's `status`. If it reports
+`usable: false`, skip TimeCamp, record `"timecamp"` in `sources_failed` with
+its `reason` (no token, token unreadable, auth refused, network), and tell the
+practitioner that reason. Never open the TimeCamp web app as a substitute.
 
-``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
-
-If the returned value is `null` (not found), skip TimeCamp and record `"timecamp"` in `sources_failed`. Tell the practitioner: "TimeCamp token not configured. I'll store it once you provide one."
-
-To set the token:
-
-``time-pipeline-data`` `set` — `namespace: "timeline"`, `key: "config:timecamp_token"`, `value: "YOUR_TOKEN_HERE"`
-
-The practitioner can find their API token at TimeCamp → Avatar → Profile Settings → scroll to the bottom for "Your programming API token".
+When the reason is that no token is set, call the connector's
+`configure_credential`, send the practitioner the link it returns, and ask
+them to paste the token on that page, never in chat. They find it at
+TimeCamp → Avatar → Profile Settings → scroll to the bottom for "Your
+programming API token". Call `status` again once they say it is done.
 
 ## Fetching Computer Activities
 
-Retrieve the TimeCamp token:
-
-``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
-
-If the returned value is `null` (not found), skip TimeCamp and record `"timecamp"` in `sources_failed`.
-
-If found, fetch activities with resolved application names and window titles:
-
-```bash
-curl -s -H "Authorization: Bearer {token}" -H "Accept: application/json" \
-  "https://www.timecamp.com/third_party/api/activity/?dates[]={YYYY-MM-DD}&include=application,window_title&format=json"
-```
-
-Trailing slash on `/activity/` is mandatory — confirmed live (2026-09-10,
-issue #456 triage). The bare URL 301-redirects to
-`/third_party/api/activity/` with the query string stripped, so a
-redirect-following client re-sends the request with no `dates[]`,
-`include` or `format` and the API answers
-`"you must provide \"date\" like 2013-03-20"`. That error is the symptom
-of a missing slash, not a missing `dates[]` parameter.
-
-The `include=application,window_title` parameter tells the API to resolve the numeric IDs into human-readable names inline. The `dates[]` parameter (not `date`) is required — it accepts an array of up to 20 dates.
+Call the connector's `activities` with `dates: ["{YYYY-MM-DD}"]` (up to 20
+dates per call). It returns the rows with application names and window titles
+already resolved, and keeps the mandatory trailing slash on `/activity/` (the
+bare URL redirects and drops the query string, confirmed live 2026-09-10,
+issue #456 triage).
 
 ### Response Format
 
-Each entry in the JSON array contains:
+Each row in the `rows` that `activities` returns contains:
 - `activity_id` — unique identifier for this activity record (use as `native_id`)
 - `end_time` — "YYYY-MM-DD HH:MM:SS"
 - `time_span` — seconds (compute start_time as end_time minus time_span)
@@ -68,7 +52,7 @@ Each entry in the JSON array contains:
 - `task_id` — TimeCamp Task ID if already assigned, "0" if unassigned
 - `entry_id` — the time entry this record's seconds count toward, "0" if none. An entry's `duration` is the sum of the `time_span` of the records carrying its id, so this key, not an entry's clock span, says which entry tracked a second (#1102)
 
-If the API returns an error status code, empty response, or unparseable JSON, record `"timecamp"` in `sources_failed` with the error reason. Tell the practitioner what went wrong (e.g., "TimeCamp API returned 401 — token may be invalid"). Proceed with other sources.
+If `activities` returns an error, record `"timecamp"` in `sources_failed` with its message and tell the practitioner what went wrong (e.g., "TimeCamp refused the request (HTTP 401)"). Proceed with other sources.
 
 ## Computing native_id
 

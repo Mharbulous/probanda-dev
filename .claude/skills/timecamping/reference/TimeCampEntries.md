@@ -1,6 +1,6 @@
 # TimeCamp Time Entries Reference
 
-API and configuration details for fetching TimeCamp's own pre-categorized
+How to fetch and write back TimeCamp's own pre-categorized
 time entries — the amber/green timesheet blocks `/timecamping` exists to
 correct. Load this file at Step 2 when populating `timecamp_time_entries`.
 
@@ -11,40 +11,40 @@ covers the practitioner's actual **timesheet entries** — the rows with a
 project/task assignment and a colour, shown in TimeCamp's own timesheet view.
 `/timecamping` fetches both (see `SKILL.md`'s source-integration table).
 
-## Configuration
+## The TimeCamp connector
 
-Same token as build-timeline's activity fetch — one TimeCamp account, one
-token, two endpoints. Retrieve it the same way:
+Same connector as build-timeline's activity fetch: the timekeeper plugin's
+`timecamp` server (`mcp__plugin_timekeeper_timecamp__*`), which holds the one
+API token for the account. No skill reads, stores or passes the token.
 
-``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
-
-If `null`, skip this source for the day and record it as `failed` in
-`source_fetch_log` with the reason (never proceed to the assembly gate for
-that day until either the token is set or the source is deliberately
-disabled in the registry, in which case it is `skipped`, not `failed`).
+**Hard rule.** Call the connector's `status` first. If it reports
+`usable: false`, record this source as `failed` in `source_fetch_log` with its
+`reason` and tell the practitioner that reason (never proceed to the assembly
+gate for that day until either the API is usable or the source is
+deliberately disabled in the registry, in which case it is `skipped`, not
+`failed`). Never open the TimeCamp web app as a substitute. When no token is
+set, `build-timeline/reference/TimeCamp.md` says how the practitioner sets it
+through `configure_credential`.
 
 ## Fetching
 
-```bash
-curl -s -H "Authorization: Bearer {token}" -H "Accept: application/json" \
-  "https://www.timecamp.com/third_party/api/entries/?from={YYYY-MM-DD}&to={YYYY-MM-DD}&format=json"
-```
-
-Trailing slash on `/entries/` is mandatory — confirmed live (2026-08-28,
-issue #430 build), mirroring the same Cloudflare trap already documented for
-the legacy tasks endpoint. `from`/`to` accept the same date for a single-day
-fetch (this source is fetched one local day at a time, same discipline as
-every other source in this skill's Step 2 — see `SKILL.md`).
+Call the connector's `entries` with `from` and `to` both the day's date and
+`out_file` a new scratch file's absolute path. It writes the rows to that file
+as a JSON array, exactly as TimeCamp returns them, and returns only the count
+and totals, so no row passes through the session. The connector keeps the
+mandatory trailing slash on `/entries/` (confirmed live 2026-08-28, issue
+#430 build). This source is fetched one local day at a time, same discipline
+as every other source in this skill's Step 2 (see `SKILL.md`).
 
 **The response is not scoped to one user.** A workspace with more than one
 TimeCamp user (e.g. an assistant) returns every user's entries for the
 range, distinguished by `user_id`/`user_name`. A `user_ids[]` query
-parameter was tried live and returned zero rows rather than a filtered set —
-do not rely on it. **Filter client-side** to the practitioner's own
-`user_id` after fetching (the practitioner's `user_id` is a config value the
-skill resolves once, not re-discovered per fetch — if not already known,
-ask the practitioner to confirm it from one fetched row's `user_name`, then
-store it: `time-pipeline-data set` — `namespace: "timeline"`,
+parameter was tried live and returned zero rows rather than a filtered set,
+so the connector never sends one. **Filter client-side** to the practitioner's
+own `user_id`: `build_ingest.py timecamp-entries` does it from the file (the
+practitioner's `user_id` is a config value the skill resolves once, not
+re-discovered per fetch — if not already known, take it from `status`'s
+`user`, ask the practitioner to confirm that name is theirs, then store it: `time-pipeline-data set` — `namespace: "timeline"`,
 `key: "config:timecamp_user_id"`).
 
 ### Response Format
@@ -93,8 +93,7 @@ Each entry in the JSON array contains, **confirmed against a real response**
   `Switching File` are only the *default* queue; a practitioner-directed
   recheck can target any colour.
 
-If the API returns an error status code, empty response, or unparseable
-JSON, record this source as `failed` in `source_fetch_log` with the reason,
+If `entries` returns an error, record this source as `failed` in `source_fetch_log` with the reason,
 and tell the practitioner what went wrong. Proceed with other sources — a
 failed source never blocks the rest of Step 2 (though it does block the
 Step 3 gate for the day, same as any other unresolved source).
@@ -113,17 +112,12 @@ restored it exactly. The shape comes from a public client
 (`gisforgirard/php-timecamp-api`, `TimeEntries::update`), because TimeCamp's
 own docs page renders only in a browser.
 
-```bash
-curl -s -X PUT -H "Authorization: Bearer {token}" -H "Accept: application/json" \
-  --data-urlencode "id={entry id}" \
-  --data-urlencode "task_id={matter's TimeCamp task_id}" \
-  --data-urlencode "note={note}" \
-  "https://www.timecamp.com/third_party/api/entries/"
-```
+The write is the connector's `update_entry` with `entry_id`, `task_id` (the
+matter's TimeCamp task) and `note`, sent only after the practitioner's
+explicit yes for that one entry. The connector sends TimeCamp's form-encoded
+`PUT` on the same trailing-slash `/entries/` URL as the read.
 
-- Form-encoded body, same token and same trailing-slash URL as the read.
-- **The note is sent as `note` but read back as `description`.** Sending
-  `note=` (empty) clears it.
+- **The note is sent as `note` but read back as `description`.**
 - The probe changed only `task_id`, `description`, the derived
   `name`/`color`, and `last_modify`. `duration`, `start_time`/`end_time` and
   `locked` are left alone, confirmed again by four real write-backs in #942.
@@ -135,9 +129,9 @@ curl -s -X PUT -H "Authorization: Bearer {token}" -H "Accept: application/json" 
   matter, and from `Switching File` at 0 to an ADMIN task). The reverse
   direction also follows the task: non-billable entries moved to billable
   matters re-read as `billable` 1 (#942, from 2026-05-29 on).
-- A success is HTTP 200 with a JSON echo (`entry_id`, `task_id`, `note`, …).
-  The echo is not the check. **Re-fetch the entry's date with the read
-  request above and compare `task_id` and `description`** — only that re-read
+- A success returns TimeCamp's JSON echo (`entry_id`, `task_id`, `note`, …).
+  The echo is not the check. **Re-fetch the entry's date with `entries` (no
+  `out_file`) and compare `task_id` and `description`** — only that re-read
   confirms the write.
 - The echo's `last_modify` and the re-read's disagree by hours, and neither
   matches local time. Do not use `last_modify` for anything.

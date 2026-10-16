@@ -128,7 +128,6 @@ changed on every re-fetch, every downstream annotation would be orphaned.
 
 | Key pattern | Value | Purpose |
 |-------------|-------|---------|
-| `config:timecamp_token` | Plain text API token | TimeCamp authentication |
 | `source:{source}:fetched_at` | ISO 8601 UTC timestamp (trailing `Z`) | Last successful fetch for this source |
 | `source:{source}:ranges` | JSON array of `[start, end]` UTC timestamps | Ranges of time this source has been fetched for |
 | `activity:{id}` | JSON activity row | A single activity observation |
@@ -406,6 +405,10 @@ The practitioner can ask to inspect the raw timeline, but:
   access state: build-timeline reads SyncoPaid's `evidence status` but never
   calls `evidence enable` — that is the practitioner's act alone. This skill
   is strictly downstream of those systems.
+- **TimeCamp only through its connector.** TimeCamp is read only through the
+  `timecamp` connector's tools (`reference/TimeCamp.md`). If its `status`
+  reports the API unusable, TimeCamp fails for the run with that reason, told
+  to the practitioner. Never open the TimeCamp web app as a substitute.
 - **No silent data loss.** Every source ends in exactly one of three loud
   outcomes: it succeeds (rows stored, indexes updated, metadata recorded), it
   fails (reported in the summary), or it is skipped because its own live

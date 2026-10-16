@@ -13,9 +13,9 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 | Step 3 — Find the most recently sent bill | Housekeeping is current and the last invoice must be located |
 | Step 4 — Read the bill to find the exact last-billed date | Setting the start of the unbilled period |
 | Step 5 — Cross-check against case-data / practice-data | Verifying the last invoice or recording invoices |
-| Step 6 — Pull unbilled time from TimeCamp | Running or filtering the TimeCamp Detailed report export |
-| Step 7 — File the export | Moving the downloaded export into the BILLING folder |
-| Step 8 — Open and clean up the workbook | Opening the filed workbook, tying its Total row, tidying the table |
+| Step 6 — Pull unbilled time from TimeCamp | Pulling the matter's unbilled entries through the TimeCamp connector and writing the workbook |
+| Step 7 — Where the workbook goes | Naming the workbook and placing it in the BILLING folder |
+| Step 8 — Open and clean up the workbook | Opening the workbook, tying its total to the connector's, tidying the table |
 | Step 9 — Remove each person's near-zero days | Writing off a person's days under 0.1 hours |
 | Step 9a — Cross-reference phone calls against the cleaned time data (optional deep-dive) | The practitioner wants phone time checked against TimeCamp |
 | Step 10 — Build the pivot chart | Building or formatting the pivot chart |
@@ -65,40 +65,40 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 This step needs the timekeeper plugin. If no timekeeper skill is in your skill list, tell the practitioner that pulling time from TimeCamp needs the timekeeper plugin installed, and stop.
 
-1. Navigate to `https://app.timecamp.com/auth/login#/timesheets/timer`. **Do not attempt to log in on the user's behalf** — entering credentials is out of scope. Wait for the user to confirm they're logged in.
-2. Navigate to `https://app.timecamp.com/app#/reports/projects_and_tasks/detailed` (or click "Detailed" in the left nav).
-3. Open the **Projects** filter, click **Deselect all**, then search the matter number, confirm status is **Active**, check the one matching project, **Apply**.
-4. Confirm/set: **People** = All users, **Active/archived** = Active tasks, **Invoiced status** = All, **Billable status** = Billable.
-5. Set the **date range** to the day after the last-billed date (Step 4) through today.
-   - **Do not type dates into the segmented From/To text fields** — typing digits and hyphens into those masked inputs reliably garbles the value (e.g. `2026-04-01` becomes `2604-01-01`). Use the calendar picker instead: click the back/forward month arrows to reach the target month, then click the day directly.
-   - The end date is today unless the practitioner names another; note the one used.
-6. **Read back every filter immediately before exporting — do not assume.** The Detailed report opens on whatever filters were last used, not the values above (it has opened on Billable status "All" and a stale range such as "Sep 11 - Jun 30, 2026"), and the URL never carries filter state, so the page's own labels are the only evidence. Open each dropdown and read its selected option (item 4's short names map to the full labels below):
+TimeCamp is read only through the timekeeper plugin's `timecamp` connector, whose tools are `mcp__plugin_timekeeper_timecamp__*`. It holds the API token itself.
 
-   | Control | Expected |
-   |---|---|
-   | Projects | only the one matter project from item 3 |
-   | People | All users |
-   | Active/archived | Active tasks |
-   | Invoiced status | All invoiced statuses |
-   | Billable status | Billable time entries |
-   | Date range label | day after the last-billed date through the end date, e.g. "May 23 - Sep 22, 2026" (year shown on the end date only); open the picker and read From/To if the label is ambiguous |
+1. **Check the connector.** Call `mcp__plugin_timekeeper_timecamp__status`. If it reports `usable: false`, stop and tell the practitioner its `reason` (no token, auth refused, network). When no token is set, call `mcp__plugin_timekeeper_timecamp__configure_credential`, send the practitioner the link it returns, ask them to paste the token on that page and never in chat, then call `status` again. **Never open the TimeCamp web app as a substitute**, and never tally time from it: a figure that did not come from the connector is not used.
+2. **Find the matter's task.** Call `mcp__plugin_timekeeper_timecamp__tasks` with `query` set to the matter number. Exactly one active match must be the matter itself (its `path` names the matter number). If none matches, or more than one could be the matter, stop and show the practitioner the matches with their `path` and `task_id`.
+3. **Pull the entries.** Call `mcp__plugin_timekeeper_timecamp__entries` with:
+   - `from`: the day after the last-billed date (Step 4)
+   - `to`: today, unless the practitioner names another end date (note the one used)
+   - `task_ids`: the matter's `task_id` (the connector adds its active subtasks)
+   - `billable`: `true`
+   - no `user_ids`, so every person's time is included
+   - `out_file`: a new scratch file's absolute path
 
-   The collapsed filter bar's wording for a correctly set Billable filter is unconfirmed, so read the expanded dropdown, not the collapsed label. Then note in your reply to the practitioner the read-back values and the page's total time for the view, in decimal hours (convert h:mm if shown that way: 53:45 = 53.75).
-7. **Export → Download Excel (XLSX)**. If the practitioner runs the export in their own browser, they read the six values and the page total to you (or send screenshots of each expanded dropdown and the total) before you accept the file.
-8. **Tie the file to the view.** When the workbook is first opened (Step 8), before any row is deleted, the trailing Total row on the "Time Tracking Report - decimal" sheet must equal the noted page total within ±0.01 h (±0.02 h if the page total was converted from h:mm, since a minute is 0.0167 h). Compare against that Total row, not the sum of the rows: each row is rounded to two decimals, so the row sum runs slightly low (L8145: rows 53.67 h, Total 53.75 h). The read-back proves the filters were right. The tie proves the file came from that view. Both are needed.
-9. **On a mismatch, stop.** If a read-back value is wrong, set that control again and read back all six once more. If any is still wrong, do not export or go on to Step 7. If the Total row does not tie, stop before any cleanup in Step 8 and leave the filed workbook untouched in `BILLING`. Either way, report to the practitioner which value was wrong and what the page or file showed.
+   This matches the old Detailed report's filters: the one matter project, all users, active tasks, all invoiced statuses, billable entries only. The connector writes the rows to `out_file` and returns `count` and `totals`, with `totals.hours` and each user's `hours` in TimeCamp's own seconds divided by 3,600, never rounded. Note in your reply to the practitioner the range used, the entry count, and the total and per-person hours.
+4. **Write the workbook** from that file with the session's spreadsheet tooling (for example Python with openpyxl), at the path Step 7 gives. Put one sheet, **"Time Tracking Report - decimal"**, with a header row and then one row per entry, sorted by date and start time:
 
-## Step 7 — File the export
+   | Column | Header | Value |
+   |---|---|---|
+   | A | Day | the entry's `date`, as a date |
+   | B | Task | the entry's `name` |
+   | C | Notes | the entry's `description` |
+   | D | Time | `duration` / 3600, unrounded |
+   | E | Start | `start_time` |
+   | F | End | `end_time` |
+   | G | User | `user_name` |
+   | H | Entry id | `id` |
 
-*(No computer use? `request_cowork_directory` + `references/uno-gotchas.md` cover Steps 7–10.)*
+   No Total row. Never write a figure into the workbook that is not from the connector's file.
+5. **On an error, stop.** If any connector call returns an error, report it to the practitioner and do not write or go on to Step 7.
 
-The download lands in the user's Downloads folder, which is outside the reach of the Read/Write/Edit file tools — use computer-use (File Explorer) instead:
+## Step 7 — Where the workbook goes
 
-1. `request_access` to File Explorer.
-2. Locate the newest `TimeCamp Time report.xlsx` in Downloads. Copy it (right-click → Copy, not Ctrl+C — more reliable to trigger via context menu). Never cut, rename or delete the download: it stays in Downloads as it is, and only Probanda's copy is renamed and edited.
-3. **Navigate to the destination folder using the sidebar folder tree (click through), never by typing a path into the address bar after copying.** The `type` action writes through the clipboard internally, which silently overwrites the copied file reference — the paste then does nothing and the mistake is easy to miss. If a path must be entered, do it *before* copying, or use Back/sidebar navigation instead.
-4. Paste (Ctrl+V) into the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `.claude/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent.
-5. Rename the pasted copy in `BILLING` (F2) to `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date).
+*(No computer use? `request_cowork_directory` + `references/uno-gotchas.md` cover Steps 8–10.)*
+
+Step 6 writes the workbook straight into the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `.claude/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent. Name the workbook `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date). If a file of that name is already there, stop and ask the practitioner; never overwrite it.
 
 ## Step 8 — Open and clean up the workbook
 
@@ -106,11 +106,10 @@ The download lands in the user's Downloads folder, which is outside the reach of
    - **If the workbook is already open**, do NOT use `open_application`/`request_access` to "bring Excel forward" — on this environment that reliably launches a brand-new blank workbook (Book1, Book2, ...) instead of switching windows, and repeating it compounds the mess. Instead use the ribbon's **View → Switch Windows** (lists windows within the same Excel instance) or, if that only shows unrelated blank books, open the target file directly from File Explorer / the Recent list. Close stray blank books with Ctrl+W once identified — but see the caution below before pressing it.
    - **Ctrl+W closes the active window, not "the extra one."** If focus is ambiguous (this environment's screenshot-vs-actual-frontmost state can desync, showing "desktop shell is frontmost" errors), verify which workbook is actually focused before pressing Ctrl+W — it has closed the real billing workbook by mistake in testing. AutoSave (see below) is the safety net if this happens.
    - **Rely on AutoSave, not memory, to recover from a wrong-window mistake.** If the correct workbook gets closed accidentally, it is not lost — reopen it from its saved path (check the file's "Date modified" to confirm your edits persisted) rather than trying to reconstruct anything from scratch.
-2. Go to the **"Time Tracking Report - decimal"** worksheet (the raw entry list, not the pre-formatted summary sheet). Run Step 6 item 8's Total-row tie now, before deleting anything.
-3. Delete row 2 if it's a stray blank/Total row right under the header, and delete the trailing Total row at the very bottom of the data (Ctrl+End to find it) — these are junk rows from the export, not billing data. Delete the entire row (right-click row header → Delete), don't just clear contents.
-4. Select the whole table: click any cell inside it, then **Ctrl+A** (selects the current region — more reliable here than Ctrl+Shift+End, which can leave the selection in an ambiguous state).
-5. Turn on the filter (Data tab → Filter, or Ctrl+Shift+L).
-6. Sort by the Day column, ascending.
+2. Go to the **"Time Tracking Report - decimal"** worksheet. **Tie the workbook to the connector before changing anything:** the sum of the Time column (`=SUM(D:D)`) must equal Step 6's `totals.hours` within ±0.01 h, and its row count must equal Step 6's `count`. If either does not tie, stop, leave the workbook untouched in `BILLING`, and report both figures to the practitioner.
+3. Select the whole table: click any cell inside it, then **Ctrl+A** (selects the current region — more reliable here than Ctrl+Shift+End, which can leave the selection in an ambiguous state).
+4. Turn on the filter (Data tab → Filter, or Ctrl+Shift+L).
+5. Sort by the Day column, ascending.
 
 ## Step 9 — Remove each person's near-zero days
 
@@ -167,17 +166,17 @@ Work from the "Time Tracking Report - decimal" sheet built in Steps 6–9.
 
 ### Close approved gaps directly in TimeCamp
 
-Once the practitioner approves treating a gap as billable, fix it at the source — the live TimeCamp timesheet (`https://app.timecamp.com/auth/login#/timesheets/timer`), not just the Excel export — so the correction survives future exports:
+Once the practitioner approves treating a gap as billable, fix it at the source — TimeCamp itself, through the timekeeper plugin's `timecamp` connector, not just the workbook — so the correction survives future pulls. Call the connector's `status` first: if it reports `usable: false`, stop and tell the practitioner its reason. **Never open the TimeCamp web app to make the change.**
 
-1. Confirm the correct person is selected via the person-icon dropdown (top right of the Timesheet view) before editing anyone's day.
-2. Navigate to the call's date (the calendar-icon dropdown next to the date heading supports jumping by month) and scroll to its time window.
-3. Look for a nearby entry whose time span brackets the call. It is frequently logged generically as **"Write-off / Non-billable"**, or filed under an unrelated or uncategorized task (e.g. an entry named after a to-do like "Brahm to review") — TimeCamp's own automatic categorization is not reliable evidence of what the time actually was.
-4. **Verify before touching anything.** Hover the row to reveal the **$** and **⋮** buttons; click **⋮ → Show computer activities**, and confirm an activity literally named `telus business connect` (a "TELUS Business Connect phone call/Phone") appears within that window. Only reclassify entries confirmed this way.
-5. Click the entry's **Notes** field and type the same `Phone call from/to [Name]` note (append, don't overwrite, if the cell already has content).
-6. Click the entry's **project name** (e.g. "Write-off") to open the project picker, and select the correct client matter — it typically appears as the top **suggested** result once the picker opens or once you start typing the matter number. This flips the entry from write-off/uncategorized to billable under the right matter.
+1. Read the call's date with the connector's `entries` (`from` and `to` that date, no `out_file`), and keep the rows of the person whose day it is (their `user_id`).
+2. Look for a nearby entry whose time span brackets the call. It is frequently logged generically as **"Write-off / Non-billable"**, or filed under an unrelated or uncategorized task (e.g. an entry named after a to-do like "Brahm to review") — TimeCamp's own automatic categorization is not reliable evidence of what the time actually was.
+3. **Verify before touching anything.** Call the connector's `activities` for that date and confirm a record whose application or window title is `telus business connect` (a "TELUS Business Connect phone call/Phone") falls within that entry's window and carries that entry's id as its `entry_id`. Only reclassify entries confirmed this way.
+4. Find the matter's TimeCamp task with the connector's `tasks` (`query`: the matter number). Never choose a task at `level` 1: TimeCamp's API refuses time on a top-level project.
+5. Skip an entry whose `locked` is `"1"` (invoiced) and say so. Otherwise show the practitioner the exact change: entry id, date and time, current task → new task (name and `task_id`), and the new note, which is the entry's existing `description` with `Phone call from/to [Name]` appended (never overwrite an existing note). Send it with the connector's `update_entry` only on an explicit yes for this entry. Approval of one entry never covers the next. This moves the entry from write-off or uncategorized to the matter, and its billable flag follows the new task.
+6. Re-read the date with `entries` and compare the entry's `task_id` and `description` with what was sent. An error, or a re-read that does not match, stops all further changes: report it to the practitioner.
 7. **TELUS's own logs are the authoritative record of when a call happened and who was on it — reclassify accordingly even when TimeCamp had already filed that stretch of time under a different, seemingly legitimate task or a different client matter.** Don't assume TimeCamp's existing categorization is correct just because it names a real project.
-8. If a single call spans multiple TimeCamp entries (the practitioner was multitasking, or the call ran longer than any one entry), repeat the note-and-reclassify on every overlapping entry, not just one.
-9. If a call has genuinely **no** TimeCamp entry anywhere covering it, create a brand-new manual time entry for that window instead of reusing an unrelated one — ask the practitioner to walk through the exact "add time entry" UI steps if unfamiliar with it, and confirm the new entry's time window and matter before saving.
+8. If a single call spans multiple TimeCamp entries (the practitioner was multitasking, or the call ran longer than any one entry), repeat the verify-and-reclassify on every overlapping entry, each with its own approval, not just one.
+9. If a call has genuinely **no** TimeCamp entry anywhere covering it, the session does not create one. Give the practitioner the call's date, start and end time, matter and note, and ask them to create the entry by hand in TimeCamp, outside this session. Pull the time again (Step 6) once they say it is done.
 10. **Pause and ask the practitioner for direction whenever the right call is genuinely ambiguous** — e.g. two or more overlapping entries claiming the same window across different, genuinely distinct client matters — rather than guessing which one is "really" the phone call.
 
 ## Step 10 — Build the pivot chart
@@ -248,5 +247,5 @@ Any time the underlying "Time Tracking Report - decimal" sheet is edited (rows d
 - **TELUS Business Connect: account view vs. personal view.** The account-wide "Call Queue Management" view and an individual practitioner's "My Extension" view show different call logs. Switch to **My Extension** (avatar dropdown, top right) before searching a specific practitioner's own calls.
 - **TELUS call-direction filter defaults can hide outbound calls.** Always open the funnel/filter icon and explicitly set Call Direction to **All** (or both Inbound and Outbound) — don't trust the unfiltered default view to show both directions.
 - **TELUS web portal call log is capped at 60 days.** For anything older, use the periodically-delivered zipped CSV archives in the practitioner's synced local folder instead — extract only the zip(s) covering the needed date range, not the whole history.
-- **TimeCamp's own project/task categorization is not authoritative for phone calls.** A call can be filed under "Write-off," an unrelated uncategorized task, or even a different real client matter, because TimeCamp's automatic activity matching doesn't recognize phone-system activity reliably. Confirm via "Show computer activities" on the entry (looking for a `telus business connect` activity) before reclassifying, but once confirmed, TELUS's own log is the authoritative source for what the time actually was — reclassify even over an existing, seemingly legitimate categorization.
+- **TimeCamp's own project/task categorization is not authoritative for phone calls.** A call can be filed under "Write-off," an unrelated uncategorized task, or even a different real client matter, because TimeCamp's automatic activity matching doesn't recognize phone-system activity reliably. Confirm with the `timecamp` connector's `activities` (a `telus business connect` record carrying the entry's id) before reclassifying, but once confirmed, TELUS's own log is the authoritative source for what the time actually was — reclassify even over an existing, seemingly legitimate categorization.
 

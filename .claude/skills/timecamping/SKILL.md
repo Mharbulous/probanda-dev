@@ -105,7 +105,7 @@ by Step 0.
 | TimeCamp computer activity | **Delegate**: invoke `/build-timeline` for the target date, then have `/time-pipeline-data` export its stored rows (prefix `activity:timecamp:`) to a file and convert them with the gatekeeper's `build_ingest.py timeline --source timecamp`. No independent HTTP call. | `build-timeline/reference/TimeCamp.md` |
 | Telus calls | **Delegate** the same way: export prefix `activity:telus:`, convert with `--source telus`. Reuses the already-verified CSV parsing rules; don't refork them. No CSV supplied for the day → recorded as `skipped`, a terminal (gate-satisfying) status, not `failed`. | `build-timeline/reference/TelusConnect.md` |
 | SyncoPaid captures | **New fetch, capture-level** — not build-timeline's coarser block-level call, which discards the per-capture/OCR detail every SyncoPaid-heavy fixture needs. Redirect the `evidence query ... --include-ocr-text` output to a file, then convert it with `build_ingest.py syncopaid-captures`. Same live-opt-in gate as build-timeline's fetch. | `reference/SyncoPaidCaptures.md` |
-| TimeCamp time entries | **New fetch** — the practitioner's own amber/green timesheet rows, a different endpoint from build-timeline's computer-activity fetch. Redirect the entries read to a file, then convert it with `build_ingest.py timecamp-entries`, which filters to the practitioner's own `user_id`. Same token. | `reference/TimeCampEntries.md` |
+| TimeCamp time entries | **New fetch** — the practitioner's own amber/green timesheet rows, a different endpoint from build-timeline's computer-activity fetch. The `timecamp` connector's `entries` writes the day's rows to a file (`out_file`), then `build_ingest.py timecamp-entries` converts it, filtering to the practitioner's own `user_id`. Same connector. | `reference/TimeCampEntries.md` |
 | Google Calendar | **Delegate** the same way: export prefix `activity:gcal:`, convert with `--source gcal`. build-timeline owns the registry entry and the fetch; this skill qualifies the route first and never reads a calendar independently. Registered as the fifth source in #454; the doctrine behind it is #421's. | `build-timeline/reference/GoogleCalendar.md` |
 | iCloud calendar | **Delegate** the same way: export prefix `activity:icloud:`, convert with `--source icloud`. build-timeline owns the registry entry and the fetch, which runs through the legal plugin's `calendar__*` tools with the Probanda mail connector's credential. Only the `Work` and `Home` calendars are read; `Family` never is. Registered as the sixth source in #1199. | `build-timeline/reference/ICloudCalendar.md` |
 | Sent mail | **Delegate** the same way, but sent mail is stored as events, not activities: export prefix `event:sent_mail:`, convert with `--source sent_mail`. build-timeline owns the registry entry and the fetch, which reads the iCloud copy of the Microsoft 365 Sent Items through the legal plugin's data server's mail tools. Only `Sent Items`, `Sent Messages` and their `Outbound LEAP Matter Based Emails` subfolders are read. Subject, recipients and sent time only, never a body. Registered as the seventh source in #1261. | `build-timeline/reference/SentMail.md` |
@@ -149,7 +149,8 @@ For each of the seven sources above, in any order:
 1. **Produce the source's material as a file.** A delegated source: run
    `/build-timeline` for the date, then have `/time-pipeline-data` export the
    source's stored rows (prefix per the table above) to a scratch file. A new
-   fetch: redirect the reference's read command to a file.
+   fetch: write the reference's read to a file (for TimeCamp entries, the
+   connector's `entries` with `out_file`).
 2. **Confirm a delegated source was fetched for the date** before converting
    it. For Google Calendar, the day must fall inside a range in
    `source:gcal:ranges`, read through `/time-pipeline-data`. For the iCloud
@@ -657,8 +658,11 @@ different acts and are both satisfied at once.
 
 When the practitioner says to commit, write **one entry at a time**, each
 with its own approval. The request is `reference/TimeCampEntries.md`'s
-confirmed write (entry id, the matter's TimeCamp `task_id`, the Step 5
-note). For each entry:
+confirmed write, the `timecamp` connector's `update_entry` (entry id, the
+matter's TimeCamp `task_id`, the Step 5 note). Call the connector's `status`
+first: if it reports the API unusable, stop, send nothing, and tell the
+practitioner its reason. Never open the TimeCamp web app to make the change
+instead. For each entry:
 
 1. Skip it and say so if it is `locked` = `"1"` (invoiced), or if its matter
    does not resolve to exactly one TimeCamp `task_id` in the synced task
@@ -672,8 +676,8 @@ note). For each entry:
    time, current task → new task (name and `task_id`), and the note. Send it
    only on an explicit yes for this entry. Approval of one entry never covers
    the next.
-3. Re-fetch that date and compare the entry's `task_id` and `description`
-   with what was sent. A non-200, or a re-read that does not match, stops
+3. Re-fetch that date with the connector's `entries` and compare the entry's
+   `task_id` and `description` with what was sent. A non-200, or a re-read that does not match, stops
    the whole write-back: report it and send nothing further.
 
 Any entry not approved stays in the dry-run report, which the practitioner
@@ -810,6 +814,10 @@ needs:
 - **No write-back without explicit, per-entry practitioner approval, ever**
   — Step 7 is dry-run by default regardless of how confident a proposal is;
   a silent *commit* (Step 6) is never a silent *write* (Step 7).
+- **TimeCamp only through the `timecamp` connector.** Every TimeCamp read and
+  write goes through its tools. If its `status` reports the API unusable,
+  stop and tell the practitioner why (no token, auth refused, network).
+  Never open the TimeCamp web app as a substitute.
 - **The TimeCamp write-back is confirmed for matter + note only** (live,
   2026-09-22, `reference/TimeCampEntries.md`). A write is confirmed by
   re-reading the entry, never by the PUT's own response. Any other field

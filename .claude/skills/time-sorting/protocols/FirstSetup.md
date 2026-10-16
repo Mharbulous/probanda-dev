@@ -40,12 +40,12 @@ For each supported source the user selected, run its setup sub-procedure. These 
 
 ### 2a: TimeCamp Setup
 
-1. Check for an existing token: ``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "config:timecamp_token"`
-2. If already present, confirm: *"I found a TimeCamp API token already stored. Want to keep using it, or replace it?"*
-3. If not present, ask: *"I need your TimeCamp API token to fetch your computer activities. You can find it at: TimeCamp > click your avatar > Profile Settings > scroll to the bottom for 'Your programming API token'."*
-4. Once provided, store it: ``time-pipeline-data`` `set` — `namespace: "timeline"`, `key: "config:timecamp_token"`, `value: "{token}"`
-5. Validate by making a test API call (fetch projects with the token per `build-timeline/reference/TimeCamp.md`). If the call fails (401, network error), tell the practitioner and offer to retry with a different token.
-6. On success: *"TimeCamp is connected. I can see your project tree."*
+1. Check the connector: call the timekeeper plugin's `timecamp` connector's `status` (`mcp__plugin_timekeeper_timecamp__status`). It holds the TimeCamp API token itself, and no skill reads, stores or passes it.
+2. If it reports `usable: true`, confirm: *"TimeCamp is already connected as {user}. Want to keep using that token, or replace it?"*
+3. If no token is set, or the practitioner wants to replace it, call the connector's `configure_credential` and send the practitioner the link it returns: *"I need your TimeCamp API token to fetch your computer activities. Paste it on this page, not in chat: {link}. You can find it at: TimeCamp > click your avatar > Profile Settings > scroll to the bottom for 'Your programming API token'."*
+4. When they say it is done, call `status` again. The page has already checked the token with TimeCamp before saving it.
+5. If `status` still reports `usable: false`, tell the practitioner its reason (no token, auth refused, network) and offer a new link. Never open the TimeCamp web app as a substitute.
+6. On success: *"TimeCamp is connected."*
 
 ### 2b: Google Calendar Setup
 
@@ -174,7 +174,7 @@ The `sent_mail` entry may also carry `copy_confirmed: "YYYY-MM-DD"`, the date th
 Summarize what was configured:
 
 > "All set. Here's your time-tracking setup:
-> - **TimeCamp**: Connected (API token stored)
+> - **TimeCamp**: Connected (token saved by the TimeCamp connector)
 > - **Google Calendar**: Connected (MCP authenticated)
 > - **iCloud Calendar**: Registered (read through the Probanda mail connector; Work and Home only)
 > - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the legal plugin's mail tools; read once that copy is confirmed complete)

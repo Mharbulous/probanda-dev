@@ -75,6 +75,7 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 
 1. Is Coclerk's original TimeCamp connector source still in the repo (or `C:\Users\Brahm\Git\AutoTimer` / a Coclerk branch)? If so, port it rather than rewrite. **UNVERIFIED.**
 2. Token location: keep the time-pipeline key (recommended, zero migration) or move to the settings file.
+   **Ruled 2026-10-16 (Brahm):** neither. The token is a DPAPI-protected credential file through `source/mcp-shared/dpapi-store.js`, set with the connector's `configure_credential`, which returns a link to a local page where the practitioner pastes it, as the mail connector does, so it never passes through the chat. The server does not read `config:timecamp_token` and imports nothing from the time-pipeline or kv backend, so its bundle carries no schema DDL (§11). `status` reports a missing credential as its reason. A token stored under the old key is not migrated: the practitioner enters it once on the page.
 
 ## 10. Verify against HEAD before building
 
