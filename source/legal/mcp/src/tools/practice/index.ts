@@ -31,6 +31,14 @@ import { firm_profile, upsert_firm_profile } from "./firm-profile.js";
 import { config_set_root, config_status } from "./config.js";
 import { rule_overlay, upsert_rule_overlay } from "./rule-overlay.js";
 import { render_practice_board } from "./practice-board.js";
+import {
+  contact_checks,
+  contact_lookup,
+  merge_contact,
+  upsert_affiliation,
+  upsert_contact,
+  upsert_matter_role,
+} from "./contacts.js";
 import type { PracticeStore } from "../../practice/store.js";
 
 // The tools that touch files, not practice.db.
@@ -56,6 +64,8 @@ const READ_TOOLS = new Set([
   "practice_data__invoices_query",
   "practice_data__rule_overlay",
   "practice_data__render_practice_board",
+  "practice_data__contact_lookup",
+  "practice_data__contact_checks",
 ]);
 
 // Routes a `practice_data__*` tool to its implementation. Args are already validated by
@@ -151,6 +161,18 @@ function route(store: PracticeStore, name: string, args: Record<string, unknown>
       return rule_overlay(store, args);
     case "practice_data__render_practice_board":
       return render_practice_board(store);
+    case "practice_data__upsert_contact":
+      return upsert_contact(store, args);
+    case "practice_data__upsert_affiliation":
+      return upsert_affiliation(store, args);
+    case "practice_data__upsert_matter_role":
+      return upsert_matter_role(store, args);
+    case "practice_data__contact_lookup":
+      return contact_lookup(store, args);
+    case "practice_data__contact_checks":
+      return contact_checks(store, args);
+    case "practice_data__merge_contact":
+      return merge_contact(store, args);
     default:
       throw new ValidationError(`Unknown practice tool "${name}"`);
   }
