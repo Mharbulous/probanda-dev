@@ -579,7 +579,9 @@ class PractitionerWordsGateTest(unittest.TestCase):
                               *tool_lines("mcp__plugin_practice_data__drafting_forms__board_card", CARD))
         self.assertEqual(self.run_hook(update(PROPOSAL, intent=PROPOSAL)).returncode, 0)
         self.assertEqual(self.run_hook(update(SHELVED, intent=SHELVED)).returncode, 0)
-        self.assertRefused(self.run_hook(update("Serve the August notice to admit")), "field: title")
+        # A title cut from any printed job card passes, a Shelved one's included (the gate's card_texts).
+        self.assertEqual(self.run_hook(update("Serve the August notice to admit", intent=PROPOSAL)).returncode, 0)
+        self.assertRefused(self.run_hook(update("Chase the guarantor")), "field: title")
         self.assertRefused(self.run_hook(update("#13 Serve the August notice to admit · Shelved")), "field: title")
 
     def test_a_fast_path_job_takes_a_proposal_title_from_a_persisted_result(self):
@@ -917,7 +919,8 @@ class PractitionerWordsGateTest(unittest.TestCase):
         # §3j: the title and intent are the instruction itself, read against the transcript; Calls 2
         # and 3 write no job and read none.
         text = (STOCK_MD.parent / "jobs-create.md").read_text(encoding="utf-8").replace("\r\n", "\n")
-        blocks = re.findall(r"^```sql\n(.*?)\n```$", text.split("## 3j. The loose-threads job", 1)[1], re.S | re.M)
+        blocks = re.findall(r"^```sql\n(.*?)\n```$", text.split("## 3j. The loose-threads job", 1)[1].split("\n## ", 1)[0],
+                            re.S | re.M)
         self.assertEqual(len(blocks), 3, "§3j's Call 1, Call 2 and Call 3")
         self.write_transcript(turn_line("work on loose threads"))
         self.assertRefused(self.run_hook(blocks[0], transcript=""), "names no transcript_path")

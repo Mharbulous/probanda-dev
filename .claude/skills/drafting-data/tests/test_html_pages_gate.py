@@ -11,7 +11,7 @@ DRAFT = r"<matter>\0. DRAFT"
 
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.
 STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOARD 1.HTML",
-                   "Litigation Strategy.html", "To Do List.html"]
+                   "Litigation Strategy.html", "To Do List.html", "Work Board.html"]
 UNSTAGEABLE_NAMES = ["Job Board.html", "Job Board - SUB Opening.html", "Job Board 1-1.html",
                      "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html"]
 
@@ -157,7 +157,7 @@ class GateTest(unittest.TestCase):
                 self.assertDenied(call("mcp__remote-devices__device_read_file", {"path": "/mnt/<matter>/0. DRAFT/" + name}))
 
     def test_staging_any_other_page_name_is_refused(self):
-        for name in UNSTAGEABLE_NAMES + ["Litigation Strategy-2.html", "To Do List-2.html", "Work Board.html", "Matter Board.html",
+        for name in UNSTAGEABLE_NAMES + ["Litigation Strategy-2.html", "To Do List-2.html", "Matter Board.html",
                                          "Work_board @rev3 2026-01-01-00-00.html", "workboard-status.js"]:
             with self.subTest(name=name):
                 self.assertDenied(call("mcp__remote-devices__device_stage_files",

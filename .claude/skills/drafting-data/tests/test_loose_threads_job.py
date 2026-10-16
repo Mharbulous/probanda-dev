@@ -52,7 +52,7 @@ def section(text, opening, closing):
 
 
 def section_3j():
-    return JOBS_CREATE.read_text(encoding="utf-8").split("## 3j. The loose-threads job", 1)[1]
+    return JOBS_CREATE.read_text(encoding="utf-8").split("## 3j. The loose-threads job", 1)[1].split("\n## ", 1)[0]
 
 
 def scripts_3j():

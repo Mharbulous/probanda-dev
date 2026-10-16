@@ -130,21 +130,25 @@ class KeyTypeTableTests(unittest.TestCase):
 
 
 class OneTitleOneJobTests(unittest.TestCase):
-    """§3e's "One title, one job": the note-ups of one Act are one job, one step per provision."""
+    """§3e's "One title, one job", and §3k's note-up job: the note-ups of one Act share one step per
+    provision, never the Act's own `Note up: <item>` title."""
 
     def setUp(self):
         text = read(JOBS_CREATE)
         self.section = text[text.index("**One title, one job.**"):text.index("**Grouped Proposals.**")]
+        self.note_up = text.split("## 3k. The note-up job", 1)[1].split("\n## ", 1)[0]
 
     def test_note_ups_are_not_excluded(self):
         self.assertNotIn("other than note-ups", self.section)
 
     def test_the_example_job_steps_are_its_provisions_never_its_title(self):
-        sql = re.search(r"```sql\n(.*?)```", self.section, re.S).group(1)
-        items = set(re.findall(r"'note-up:authorities:\d+', '([^']*)'", sql))
-        self.assertEqual(len(items), 1, "the example's keys name one Act")
-        title = f"Note up: {items.pop()}"
-        steps = re.findall(r"INSERT INTO ticket_steps \(ticket_id, ordinal, text\) VALUES \(2, \d+, '([^']*)'\)", sql)
+        sql = next(b for b in re.findall(r"```sql\n(.*?)```", self.note_up, re.S) if "INSERT INTO ticket_steps" in b)
+        keyed = re.findall(r"'note-up:authorities:\d+', '([^']*)'", sql)
+        acts = {item for item in keyed if keyed.count(item) > 1}
+        self.assertEqual(len(acts), 1, "the example's shared keys name one Act")
+        title = f"Note up: {acts.pop()}"
+        steps = [s for s in re.findall(r"INSERT INTO ticket_steps \(ticket_id, ordinal, text\) VALUES \(31, \d+, '([^']*)'\)", sql)
+                 if s.startswith(title)]
         self.assertGreaterEqual(len(steps), 2)
         self.assertEqual(len(steps), len(set(steps)))
         for step in steps:
