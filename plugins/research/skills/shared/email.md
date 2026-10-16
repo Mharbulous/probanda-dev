@@ -17,4 +17,4 @@ Read when: the practitioner asks to email, send or forward anything to anyone, f
 
 **Refusals**, each quoted in one line: `from_unresolved` (this machine's roster entry has no person or email: `/practice-data`), `attachment_unresolved` (names each file not found) and `signoff_duplicates_signature` (remove the closing and name from `body` and call again).
 
-**Present.** Present the draft as a file card, give its PC path from the result, and tell the practitioner to open it, check it and send it from their mail program. Nothing is overwritten: a taken name gets the next " vN", reported as `versioned_from`. The draft is never the copy as sent. The sent message is filed with the matter's correspondence.
+**Present.** Present the draft as a file card (`shared/present-files.md`), give its PC path from the result, and tell the practitioner to open it, check it and send it from their mail program. Nothing is overwritten: a taken name gets the next " vN", reported as `versioned_from`. The draft is never the copy as sent. The sent message is filed with the matter's correspondence.

@@ -30,7 +30,7 @@ Never run two calls on one matter at the same time.
 | `failure` | with `failed`: `{failure_class, reason}` |
 | `notes` | what the file's read reported and nothing wrote: email attachments already registered or of a kind ingest cannot read, each with the first 12 hex characters of its SHA-256 so a caller can aggregate repeats across files without re-rendering (design-decisions #53); Path E segments reported but not ingested; an authority reused by citation, or a suspected duplicate authority reported for [`merge-authorities.md`](merge-authorities.md); proceeding linkage findings; the name check's result (Substitution 1a) |
 | `naming_evidence` | the `naming_evidence` block the file's extractor returned, passed through unchanged. Null for a file no single extractor dispatch read: a Path B document read inline, a Path E book, a bundled book of authorities. The caller builds those files' blocks from its own read |
-| `naming_evidence_defect` | `reader returned an unusable report` when the file's extractor returned no block, or a block that does not follow its agent file's "Naming evidence" section; otherwise null. The caller sends the file to the practitioner with that reason. It is a defect to report, never a failure: the document's write goes ahead |
+| `naming_evidence_defect` | `reader returned an unusable report` when the file's extractor returned no block, or a block that does not follow its agent file's "Naming evidence" section; otherwise null. The caller sends the file to the practitioner (`../../shared/present-files.md`) with that reason. It is a defect to report, never a failure: the document's write goes ahead |
 
 | `outcome` | Means |
 |---|---|

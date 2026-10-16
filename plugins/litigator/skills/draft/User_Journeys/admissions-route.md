@@ -15,7 +15,7 @@ source: effort owner's flow selection, 2026-08-23; steps 2, 6 and 10 amended 202
 
 1. **Practitioner:** picks the facts and documents opposing counsel should be made to admit and asks for a Notice to Admit.
 
-2. **Assistant:** records the facts and documents the practitioner named, in their words, as the Notice to Admit's requests through `/drafting-data` — asking for the wording wherever the practitioner's naming leaves a request open, never drafting around it — renders the mockup, and presents the mockup file itself for the practitioner to open — no approval pause before writing or rendering. Every requested item carries 🎾 serve it: the notice is paper until it is served, and service is the practitioner's act, never the assistant's.
+2. **Assistant:** records the facts and documents the practitioner named, in their words, as the Notice to Admit's requests through `/drafting-data` — asking for the wording wherever the practitioner's naming leaves a request open, never drafting around it — renders the mockup, and presents the mockup file itself (`shared/present-files.md`) for the practitioner to open — no approval pause before writing or rendering. Every requested item carries 🎾 serve it: the notice is paper until it is served, and service is the practitioner's act, never the assistant's.
 
 3. **Practitioner:** (days later) has the notice served and reports it.
 

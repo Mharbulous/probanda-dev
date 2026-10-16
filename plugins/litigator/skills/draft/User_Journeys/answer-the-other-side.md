@@ -17,7 +17,7 @@ source: effort owner's flow selection, 2026-08-23; steps 2, 4, 7 and 8 amended 2
 
    > They're now saying the arbitration clause was never incorporated into the contract. Paragraphs 12–15.
 
-2. **Assistant:** asks which submission or order sought the point attacks, offering the Writing's own submissions and orders as the choices — a fixed list from the record, never an inference of its own — then records the point against the one the practitioner names, re-renders, and presents the mockup as a file card. On the attacked submission's line, ↩️ rebuttal needed now shows the answer still owed. No summary in chat — the marker on the mockup is the record.
+2. **Assistant:** asks which submission or order sought the point attacks, offering the Writing's own submissions and orders as the choices — a fixed list from the record, never an inference of its own — then records the point against the one the practitioner names, re-renders, and presents the mockup as a file card (`shared/present-files.md`). On the attacked submission's line, ↩️ rebuttal needed now shows the answer still owed. No summary in chat — the marker on the mockup is the record.
 
 3. **Practitioner:** over the following weeks, more points land — a passage from the other side's written submissions, an assertion in counsel's letter. Each gets forwarded or mentioned the same way, some in sessions about other work entirely.
 

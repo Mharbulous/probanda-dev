@@ -47,7 +47,7 @@ The practitioner's proposal is a hypothesis, not an instruction to execute.
 - Restate the problem and the proposed fix. If `/dyu` is invoked, follow it exactly: restate and stop until confirmed.
 - Before planning, check whether the current behavior is a **deliberate design decision** (issue numbers, ADRs, design notes in the skill prose). Name the tension: reversing a documented decision is different work than fixing an oversight.
 - Ask whether a cheaper solution exists that preserves the original design decision — e.g., use data a tool already returns rather than moving where the tool writes. Present both options with honest costs.
-- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `coclerk.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/case-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card. Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
+- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `coclerk.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/case-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card (`shared/present-files.md`). Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
 
 ## Phase 2 — Drift analysis (actual session vs. the skills' current source)
 
@@ -552,8 +552,9 @@ on whether the repo is directly writable from this session:
   canonical copy for the run. State in the report's header paragraph that it is saved
   locally because the session runs outside the Coclerk delivery environment.
 
-Present the file with `mcp__cowork__present_files` in Cowork, `SendUserFile` in Claude Code,
-or the environment's own file-send mechanism elsewhere; ToolSearch it if deferred.
+Present the file as `shared/present-files.md` says: `mcp__cowork__present_files` by default,
+`SendUserFile` only when that is not in the tool list, or the environment's own file-send
+mechanism where neither exists; ToolSearch it if deferred.
 
 If Phase 4 ran (or runs after this step) in the same arc, add one pointer line into the
 **saved report file itself** — its header area, alongside **Purpose:** — naming the evidence

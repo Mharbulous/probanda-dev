@@ -101,7 +101,7 @@ the caller names. Pass the full path as `output_path`; the script creates no
 folder and refuses `no_output_dir` when it is not there. A taken name gets the
 next ` vN` (one above the highest copy present): the result's `output_path`
 names the file written and `versioned_from` the copy passed over. Tell the
-practitioner, then present the file written as current per the workspace output
+practitioner, then present the file written (`shared/present-files.md`) as current per the workspace output
 rule.
 
 ## STATE 3 — Paginate (Stage 2 final — user-triggered only)

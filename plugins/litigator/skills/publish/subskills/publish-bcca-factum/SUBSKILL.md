@@ -99,10 +99,10 @@ host path it returns.
    report the code and detail as a defect and stop; never edit
    `bcca-factum.md` and retry. A taken name gets the next ` vN`;
    `versioned_from` names the copy passed over. Tell the practitioner, in
-   case it is another Writing's, then present it as current per the
+   case it is another Writing's, then present it (`shared/present-files.md`) as current per the
    workspace output rule.
 
-8. **Present the result.** Present the `.docx` as a clickable file card.
+8. **Present the result.** Present the `.docx` as a clickable file card (`shared/present-files.md`).
    Tell the practitioner to let Word update the fields when it asks, check
    the page count of Parts 1–4 against the 30-page limit, and save the PDF
    from Word.

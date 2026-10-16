@@ -127,10 +127,10 @@ at binding.
    at that same folder, never at the top of the draft folder.
 
 7. **Present the result.** Present every path the fill printed as a
-   clickable file card, in the order listed above. The fill never
+   clickable file card (`shared/present-files.md`), in the order listed above. The fill never
    overwrites: a taken name gets the next ` vN` (e.g. `1. Cover Page
    Response Book v2.docx`), and `versioned_from` names the copy passed
-   over. Tell the practitioner, then present it as current per the
+   over. Tell the practitioner, then present it (`shared/present-files.md`) as current per the
    workspace output rule. Never overwrite, rename or delete an existing
    book yourself.
 

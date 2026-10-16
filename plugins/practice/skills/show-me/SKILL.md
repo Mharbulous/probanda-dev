@@ -15,7 +15,7 @@ description: "Standardize how a decision or a question about a document is prese
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
 | Mechanics | Building the page extract and sending the files, text and question in order |
-| Presenting a file saved on the PC | Sending a card for a file saved on the PC from a cloud session linked to it (remote-device-only host) |
+| Presenting a file saved on the PC (fallback route) | Only when `mcp__cowork__present_files` is not in the session's tool list: sending a card for a file saved on the PC from a cloud session linked to it (remote-device-only host) |
 | Example | A bad and a good presentation are needed side by side |
 | Related patterns | Finding the neighbouring skills and protocols that follow the same discipline |
 
@@ -45,7 +45,7 @@ If an answer would change a later item, re-present that later item after the ans
 
 ### 2. Present the source, not a quotation of it
 
-For any decision that turns on a document (an authority, a pleading, an affidavit, a record), send the document itself as a file the human can open. Extract it to the relevant pages, highlight the relevant passage, and caption it with the document, the page, the paragraph or passage, and the colour legend (Marking conventions, below). The script in Mechanics step 2 builds the file.
+For any decision that turns on a document (an authority, a pleading, an affidavit, a record), send the document itself as a file the human can open, with the tool Mechanics step 3(b) names. Extract it to the relevant pages, highlight the relevant passage, and caption it with the document, the page, the paragraph or passage, and the colour legend (Marking conventions, below). The script in Mechanics step 2 builds the file.
 
 Every time a question about a document is asked, that document's file card goes out in the same turn as the question, before the question text. A repeated question re-sends the card, even if the same file was sent earlier in the session or earlier in the turn: the practitioner answers from what is in front of them now, not from a card higher up the chat. A question that names several documents sends one card per document. A document that is not a file, such as a Writing held only in the drafting database or a mockup not yet rendered, has no card: render it first, or ask the question about the stored text in full (rule 8). A document the practitioner uploaded or named themselves this turn still gets its card, so the question and its subject sit together.
 
@@ -146,7 +146,7 @@ The file's text goes to the gatekeeper write as read from the file, never retype
    The source is a PDF, or a .doc, .docx or .rtf that the script converts with LibreOffice first, so a by-hand run of a Word source needs LibreOffice installed. `/draft`'s `scrutiny_review` host step converts with Word instead and hands the script a PDF. `--pages` is optional: without it every page is loaded and the pages written run from the first to the last page a spec lands on. `--para N` finds the line-leading paragraph numbers (`[N]`, `N.` or a bare number) that form the longest consecutive run in one column, so indented sub-lists and years are skipped. `--excerpt <file>` paints a stored excerpt, split on `[...]`, yellow where it matches the source and orange where the source differs or was omitted. `--para` and `--span` repeat as often as needed. A span can cross pages. The script prints one line per spec, found or not, with the tokens painted in its colour, and for `--para` and `--excerpt` adds `crossed page break` and `margin band: <words>` for painted words in a page's top or bottom 8 %. It exits 1 and writes nothing when any spec is not found or matches more than once: lengthen the words or correct the pages and run it again, and never send an unmarked file in its place. `--preview` writes one PNG per page. Open one and look at it. When a highlight crosses a page break, check the preview for painted running headers or footers. The optional `--excerpt-out` writes the single span's text to the file for the verbatim check and the gatekeeper write, and refuses a span that crosses a page. A bilingual report (an official S.C.R. PDF, English and French in parallel columns) is detected by itself: the script prints `layout: bilingual, English column`, and every spec finds and paints only that column, never the running header. Add `--lang fr` for the French column; `--columns off` reads each page whole, as before.
 3. **Send in this order:**
    - (a) a message with the current drafter-worded text in full in code blocks, and for an excerpt its one-line script result
-   - (b) the file or files, cited first and context second, as file cards (`mcp__cowork__present_files` or `SendUserFile`). A file saved on the PC, on a remote-device-only host, is staged first (Presenting a file saved on the PC, below). A card is re-sent with every question about the same document; "already presented" is never a reason to omit it here, whatever a calling skill's presentation rules say about mockup copies.
+   - (b) the file or files, cited first and context second, as file cards. To show a file to the practitioner, call `mcp__cowork__present_files` with the file's path. It is the default. Use `SendUserFile` (staging a PC file first with `device_stage_files`) only when `mcp__cowork__present_files` is not in the session's tool list. Check the tool list before choosing; never pick `SendUserFile` out of habit. On that fallback route, a file saved on the PC is staged first (Presenting a file saved on the PC, below). A card is re-sent with every question about the same document; "already presented" is never a reason to omit it here, whatever a calling skill's presentation rules say about mockup copies.
    - (c) the recommendation with the full proposed drafter-worded text, and for a proposed excerpt its one-line script result
    - (d) the question, as the final text of the turn.
 
@@ -156,9 +156,9 @@ The file's text goes to the gatekeeper write as read from the file, never retype
    Print it fresh at this point every time. Having read the rules earlier in the session does not satisfy this step. It has to appear again, right here, right before the ask.
 5. Wait for the answer before acting on anything that depends on it. Then present the next item.
 
-## Presenting a file saved on the PC
+## Presenting a file saved on the PC (fallback route)
 
-This applies to every skill that presents a file saved on the PC as a card: a deliverable, a found document, a draft. On a cloud session linked to the PC through `mcp__remote-devices__*`, `mcp__cowork__present_files` is absent and `SendUserFile` takes only container paths. The practitioner needs a card that opens the saved file itself.
+This is the fallback route. It applies only when `mcp__cowork__present_files` is not in the session's tool list (the remote-device-only host). Where that tool is present, call it with the file's path instead. On that host, this applies to every skill that presents a file saved on the PC as a card: a deliverable, a found document, a draft. On a cloud session linked to the PC through `mcp__remote-devices__*`, `mcp__cowork__present_files` is absent and `SendUserFile` takes only container paths. The practitioner needs a card that opens the saved file itself.
 
 **The route.** Stage the file with one `device_stage_files(paths: [<PC path>])` call, then call `SendUserFile` on the `stagedPath` it returns (`/mnt/user-data/uploads/...`). That card's ⌄ menu offers "Open in Word" and "Show in Explorer", and its folder button reveals the file. Staging alone presents nothing.
 
@@ -170,7 +170,7 @@ This applies to every skill that presents a file saved on the PC as a card: a de
 4. A markdown link `computer:///C:/.../<file>`: an in-app preview with "Download as DOCX".
 5. `SendUserFile` given the Windows path: an error that the attachment does not exist.
 
-A highlight extract (Mechanics step 2) is different. It is review evidence that lives in the container and never belongs on the PC, so it is sent as it is.
+A highlight extract (Mechanics step 2) is different. In Cowork, write the extract to the session's outputs folder or a connected folder, then call `mcp__cowork__present_files` on it. On the fallback route it is review evidence that lives in the container and never belongs on the PC, so `SendUserFile` sends it as it is, on its container path.
 
 The hook `hooks/staged-file-gate.py` is the backstop. When `/mnt/user-data` exists, it refuses a `SendUserFile` file that is neither under `/mnt/user-data/uploads/` nor a `.pdf` or `.png`. It cannot catch techniques 2 to 4, so this section is the rule.
 

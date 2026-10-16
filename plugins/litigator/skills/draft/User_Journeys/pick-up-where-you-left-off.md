@@ -16,7 +16,7 @@ note: superseded in part by schema v15 / ADR 0009 (2026-09-02) — a session is 
 
 1. **Practitioner:** invokes `/draft` with no arguments. The project's workspace is a specific litigation matter folder, so the matter is already known — nothing to ask.
 
-2. **Assistant:** identifies the submission most recently worked on for this client matter, immediately calls the engine to generate the mockup projection of every document whose drafting has started for that submission, and presents the mockup markdown files as soon as they are generated. Mockups first, questions second — the practitioner should be looking at their work product before they are asked anything. (SKILL.md step 2 asks first now; this order stays aspirational.)
+2. **Assistant:** identifies the submission most recently worked on for this client matter, immediately calls the engine to generate the mockup projection of every document whose drafting has started for that submission, and presents the mockup markdown files (`shared/present-files.md`) as soon as they are generated. Mockups first, questions second — the practitioner should be looking at their work product before they are asked anything. (SKILL.md step 2 asks first now; this order stays aspirational.)
 
    The assistant **generates and presents without reading**. `drafting_forms__bootstrap` returns paths, never content ([#337](https://github.com/Mharbulous/CoClerk/issues/337)), so this step costs nothing beyond the file list — the practitioner may be about to say "no, the other one", and reading a document that is about to be set aside is wasted. Then:
 

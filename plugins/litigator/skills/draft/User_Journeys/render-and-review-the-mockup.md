@@ -19,7 +19,7 @@ Every other journey funnels into this one. Whatever was just written — a new s
 
 2. **Assistant:** calls the engine to render the mockup. Rendering is deterministic, cheap, and read-only — a fresh projection of whatever is stored right now, never an authored file, so there is nothing to lose by regenerating and no reason to ask first. The new mockup overwrites the old one in the matter's mockups folder, which sits beside the matter's database rather than in the working document tree; the mockup carries a revision stamp showing its currency, and when the revision has moved since the last render, the superseded copy is archived. The practitioner always has exactly one current mockup per document, never a pile of stale copies.
 
-3. **Assistant:** presents the mockup by sending the file itself into the conversation as a clickable file card — the way a chat client surfaces an attached document. It never pastes or summarizes the mockup's content into chat: the mockup is the review surface, chat is not.
+3. **Assistant:** presents the mockup by sending the file itself into the conversation as a clickable file card (`shared/present-files.md`) — the way a chat client surfaces an attached document. It never pastes or summarizes the mockup's content into chat: the mockup is the review surface, chat is not.
 
    > Here is the current mockup of the Written Argument (revision 14).
    >

@@ -301,7 +301,7 @@ Relief items and sought orders need no plan. A `relief_items` row on S with the 
 
 **Attended.** Follow `/show-me`:
 
-1. Present both files as file cards.
+1. Present both files as file cards (`../../shared/present-files.md`).
 2. Name each difference §2 found, and give the rank basis from §3.
 3. Show a table: each current fact of S, with its locator and description, and what happens to it: *move to #K at the same locator*, or *fold into #<kept fact>* with that fact's locator and description. Then the children matched and re-parented, and the duplicate relief items and sought orders that will be retired.
 4. Ask one plain-text question with three answers: **keep the proposed copy**, **keep the other copy**, **they are different documents**. On `ask` from §3 the question carries no proposal: keep A, keep B, or they are different documents.

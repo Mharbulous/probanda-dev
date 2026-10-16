@@ -38,7 +38,7 @@ This is the marker-driven orchestration flow as a standalone journey. Steps 5–
 
 5. **Assistant:** dispatches the subagents. Legal slots go through `/legal-research`: drafting writes only unverified leads, and only the research-agent's verification upgrades an authority's standing. Each completed task comes back as a TLDR summary; a question surfaces only when a task is genuinely stuck. The practitioner watches progress without supervising it, and works the human-only list on their own schedule.
 
-6. **Assistant:** when the dispatched work is done, regenerates the mockup once — revision bumped, superseded copy archived — and presents it as a file card the practitioner opens in one click. Markers whose work finished are gone; the human-only markers remain until the practitioner clears them.
+6. **Assistant:** when the dispatched work is done, regenerates the mockup once — revision bumped, superseded copy archived — and presents it as a file card (`shared/present-files.md`) the practitioner opens in one click. Markers whose work finished are gone; the human-only markers remain until the practitioner clears them.
 
 ## Principles this journey encodes
 

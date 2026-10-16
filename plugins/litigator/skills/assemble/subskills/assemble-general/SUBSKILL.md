@@ -59,7 +59,7 @@ python bind_general.py --manifest "<working folder>/enclosures.json"
 
 It prints one JSON line, and it checks every enclosure before it binds anything. `enclosure_unresolved` lists every enclosure it cannot bind and why: show the practitioner that whole list at once and stop. An enclosure is never bound around or skipped. `docx_conversion_failed` names why Word and LibreOffice each failed; no PDF is written. `output_exists` means the name is taken: rerun with the next free ` vN UNSIGNED.pdf` name.
 
-On success it reports the output path, the page count and the bookmark count. Pages are appended untouched, with no separator pages; the PDF's bookmarks name the Writing and each enclosure. Present the PDF as a file card.
+On success it reports the output path, the page count and the bookmark count. Pages are appended untouched, with no separator pages; the PDF's bookmarks name the Writing and each enclosure. Present the PDF as a file card (`shared/present-files.md`).
 
 ## Boundaries
 

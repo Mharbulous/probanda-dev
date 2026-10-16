@@ -168,7 +168,7 @@ The markers on the mockup are the worklist. There is no second task list to buil
 - **One at a time:** the practitioner says what is done about each marker, one at a time, in their own words. The list that runs is theirs, read back.
 - **Fan-out:** how the list fans out is a mechanical choice stated in one line and made by the skill. Independent items run in parallel, items touching the same passage run in turn, an item waiting on another runs once that answer lands.
 - **Reporting:** short summaries, interrupt only when stuck.
-- **Regeneration:** one regeneration at the end of a dispatched batch, revision bumped, presented as a file card. Markers whose work finished are gone; human-only markers remain until the practitioner clears them.
+- **Regeneration:** one regeneration at the end of a dispatched batch, revision bumped, presented as a file card (`shared/present-files.md`). Markers whose work finished are gone; human-only markers remain until the practitioner clears them.
 
 <!-- atom id=draft.opposing ops=opposing_points -->
 ### Opposing points

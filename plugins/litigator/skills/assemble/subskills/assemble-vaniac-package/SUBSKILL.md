@@ -76,7 +76,7 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
    exhibits: re-render and run again. A rerun leaves every exhibit already in
    `Package\` alone.
 
-3. **Review.** List the files now in `Package\` as file cards and ask the
+3. **Review.** List the files now in `Package\` as file cards (`shared/present-files.md`) and ask the
    practitioner to check each exhibit against its index description, and to
    place any missing signed witness statement or expert report. Stop here
    until they ask to bind.
@@ -105,7 +105,7 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
    detail and stop. `split_setting_required` means the package is over the
    size limit; splitting a VanIAC package is not built.
 
-6. **Present the result.** Present the bound PDF as a clickable file card,
+6. **Present the result.** Present the bound PDF as a clickable file card (`shared/present-files.md`),
    and beside it list each bookmark with the file bound under it, so the
    practitioner can check the order.
 

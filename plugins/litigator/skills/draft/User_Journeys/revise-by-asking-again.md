@@ -19,7 +19,7 @@ source: effort owner's flow selection, 2026-08-23
 
 2. **Assistant:** re-enters elicitation — there is no separate revision mode. It asks only what it still needs (anything only the practitioner knows), draws on what the matter already holds, and where the change touches a statement of law it invokes `/legal-research` rather than supplying legal content itself. A slot whose research hasn't come back stays open and renders its own work marker (📖 doctrinal basis needed) on the mockup.
 
-3. **Assistant:** writes the change through `/drafting-data`, re-renders, and presents the new mockup as a clickable file card — no summary of its contents in chat, no pause for approval before writing or rendering. The mockup carries the review.
+3. **Assistant:** writes the change through `/drafting-data`, re-renders, and presents the new mockup as a clickable file card (`shared/present-files.md`) — no summary of its contents in chat, no pause for approval before writing or rendering. The mockup carries the review.
 
 4. **Practitioner:** reviewing the new copy, keeps going in the numbers on the page:
 

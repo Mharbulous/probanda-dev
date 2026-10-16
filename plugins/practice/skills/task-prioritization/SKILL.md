@@ -64,7 +64,7 @@ When the user asks "what should I work on?", "what's next?", or wants the ranked
 3. Within Work tier, apply tie-breaking (deadline proximity → net trust)
 4. Display using the [Output format](#output-format) — always show the reasoning
 
-When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`). It shows deadlines, so it is never called from a drafting session.
+When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`). It shows deadlines, so it is never called from a drafting session.
 
 ### 2. Add a to-do
 

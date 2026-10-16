@@ -380,7 +380,7 @@ outlining session takes it up, or the practitioner's "add" below.
 
 Then relay, in this order:
 
-1. The return's `Confidence:` line, word for word, and the saved memo as its file card.
+1. The return's `Confidence:` line, word for word, and the saved memo as its file card (`shared/present-files.md`).
    Restate nothing of the memo: the card is the answer.
 2. Each captured offer, word for word.
 3. One line: `<c> offers captured as loose threads. <k> already on the board. <d> offers dropped as off this application.` Any count may be 0.
@@ -397,7 +397,7 @@ memo's words as advice on the draft.
 
 A closed gate captures nothing, adds no job and relays nothing new. When no board resolves,
 capture nothing, add no job, relay the `Confidence:` line and every offer, each word for
-word, with the saved memo as its file card, and say in one line that the matter has no
+word, with the saved memo as its file card (`shared/present-files.md`), and say in one line that the matter has no
 board to capture to. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.

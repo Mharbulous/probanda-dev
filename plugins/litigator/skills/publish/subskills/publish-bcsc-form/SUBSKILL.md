@@ -243,7 +243,7 @@ The table is chat-only — never write it into the document or a file.
 
 If the practitioner names a folder for the form, pass that name as `{writing folder}` at init. Otherwise an individual form is saved at the top of the draft folder as `{stem}.docx`; only Form 32, Form 33 and an affidavit sworn for a package go into a `{writing folder}`.
 
-**Never overwrite.** A taken name gets the next ` vN`: when the `done` payload carries `versioned_from` (after Amend, also `clean_versioned_from` for the clean copy), it names the copy passed over. Tell the practitioner, in case it is another document's, then present the new copy as current per the workspace output rule. A ` vN` is taken when either its `.docx` or its `.pdf` exists, so a new Word copy never sits beside a PDF of the same ` vN` made from other content; the harness renders each PDF afresh from its own `.docx`.
+**Never overwrite.** A taken name gets the next ` vN`: when the `done` payload carries `versioned_from` (after Amend, also `clean_versioned_from` for the clean copy), it names the copy passed over. Tell the practitioner, in case it is another document's, then present the new copy (`shared/present-files.md`) as current per the workspace output rule. A ` vN` is taken when either its `.docx` or its `.pdf` exists, so a new Word copy never sits beside a PDF of the same ` vN` made from other content; the harness renders each PDF afresh from its own `.docx`.
 
 ## Manual edits to the last copy
 

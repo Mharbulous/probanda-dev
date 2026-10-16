@@ -36,7 +36,7 @@ Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_fo
    - Add no `DRAFT` marker: the folder already marks a draft.
 3. **Save every version with `reply_draft` step `save`, always under the same name.** The server writes `<name>.md`, or the next free ` vN` when that name is taken, and never overwrites (SKILL.md section 2, item 6).
    - A revision is always a new save. A saved version is never edited, and the file is never written any other way.
-4. **Present the saved `.md` as a file card**, then confirm the save in one line.
+4. **Present the saved `.md` as a file card** (`shared/present-files.md`), then confirm the save in one line.
 5. **Attach it to a Job Board at its first save** (ADR 0042), through `/drafting-data`, which owns every particular of the write:
    - Call `drafting_forms__open_session` with `matter_root`, for the database and the draft folder. A refusal is quoted in one line: the reply stays saved, on no board yet.
    - Ask which board the reply goes on, naming each board `/drafting-data` reads for the matter. The default offered is the board of the Writing the session holds, if it holds one. A matter with no proceeding gets a forum-less proceeding first.
@@ -70,7 +70,7 @@ Run it on the latest saved version when the practitioner asks for a final check 
 
 When the practitioner asks for the Word copy, or says the reply is final:
 1. **Run `reply_draft` step `export_docx`** on the latest saved `.md`.
-2. **Present the `.docx` and the `.md` as file cards.** Say in one line that the `.docx` is for pasting into Outlook.
+2. **Present the `.docx` and the `.md` as file cards (`shared/present-files.md`).** Say in one line that the `.docx` is for pasting into Outlook.
 3. **Taken names.** A taken name gets the next ` vN`, reported as `versioned_from`.
 
 Nothing is sent: the practitioner sends from their own mail program (ADR 0032). With no Writing, there is no Sent record either. The sent message is filed with the matter's other correspondence. The reply stays attached to its board until the practitioner moves or detaches it.
