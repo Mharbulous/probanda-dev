@@ -23,7 +23,7 @@ dependencies:
 
 This skill deliberately carries no `disable-model-invocation` line: `/timecamping`'s source ingestion opens it
 through the Skill tool, which refuses a skill carrying that line. It is a stated
-exception, listed in `docs/agents/context-optimization.md`. Do not add the line back.
+exception. Do not add the line back.
 
 # Build-Timeline
 

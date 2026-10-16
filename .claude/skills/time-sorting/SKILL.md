@@ -22,7 +22,7 @@ dependencies:
 
 This skill deliberately carries no `disable-model-invocation` line: `/timecamping` opens it for the TimeCamp task-tree sync
 through the Skill tool, which refuses a skill carrying that line. It is a stated
-exception, listed in `docs/agents/context-optimization.md`. Do not add the line back.
+exception. Do not add the line back.
 
 ## Quick Navigation
 

@@ -18,7 +18,7 @@ description: "Standardize how a decision or a question about a document is prese
 
 This skill deliberately carries no `disable-model-invocation` line: `/timecamping`'s ceremonies open it
 through the Skill tool, and its description must trigger it before every approval ask. It is a
-stated exception, listed in `docs/agents/context-optimization.md`. Do not add the line back.
+stated exception. Do not add the line back.
 
 # Show, Don't Tell
 
