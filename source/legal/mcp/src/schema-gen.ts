@@ -3211,6 +3211,13 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
+  ];
+}
+
+// The legal plugin's `contacts-calendars-email` server: the mail, calendar and
+// contacts tools, apart from the data server so the app lists them as their own connector.
+export function buildContactsCalendarsEmailToolDefinitions(): ToolDefinition[] {
+  return [
     ...mailToolDefinitions(),
     ...calendarToolDefinitions(),
     ...contactsToolDefinitions(),

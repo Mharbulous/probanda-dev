@@ -19,8 +19,8 @@ after(() => {
   rmSync(STATE_DIR, { recursive: true, force: true });
 });
 
-const { callTool, dispatchTool } = await import("../build/dispatch.js");
-const { buildToolDefinitions, buildFileManagerToolDefinitions } = await import("../build/schema-gen.js");
+const { callContactsCalendarsEmailTool: callTool, dispatchContactsCalendarsEmailTool: dispatchTool } = await import("../build/contacts-calendars-email-dispatch.js");
+const { buildToolDefinitions, buildFileManagerToolDefinitions, buildContactsCalendarsEmailToolDefinitions } = await import("../build/schema-gen.js");
 const { credentialPath } = await import("../build/mail/config.js");
 
 const MAIL_SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "mail");
@@ -399,8 +399,8 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ calls an
   assert.ok(literals >= 30, `only ${literals} template literals found`);
 });
 
-test("the data server lists the eleven mail tools and the five calendar and contacts tools, and the files server none", () => {
-  const mail = buildToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
+test("the contacts-calendars-email server lists the eleven mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
+  const mail = buildContactsCalendarsEmailToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
   assert.deepEqual(mail, [
     "mail__configure_credential",
     "mail__configure_status",
@@ -414,7 +414,7 @@ test("the data server lists the eleven mail tools and the five calendar and cont
     "mail__save_draft",
     "mail__search_emails",
   ]);
-  const dav = buildToolDefinitions().filter((t) => /^(calendar|contacts)__/.test(t.name));
+  const dav = buildContactsCalendarsEmailToolDefinitions().filter((t) => /^(calendar|contacts)__/.test(t.name));
   assert.deepEqual(dav.map((t) => t.name).sort(), [
     "calendar__get_event",
     "calendar__list_calendars",
@@ -423,5 +423,7 @@ test("the data server lists the eleven mail tools and the five calendar and cont
     "contacts__search",
   ]);
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 16);
+  assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

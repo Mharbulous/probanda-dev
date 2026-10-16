@@ -13,6 +13,11 @@ const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp"
 // The timekeeper plugin's `timecamp` server: a third entry point, serving only the
 // TimeCamp API tools (src/timecamp-index.ts, docs/Specs/2026-10-15_timecamp-api-connector-spec.md).
 const timecampOutfile = resolve(root, "..", "..", "timekeeper", "timecamp-mcp", "dist", "timecamp-mcp.js");
+// The legal plugin's `contacts-calendars-email` server: a fourth entry point, serving only the
+// mail, calendar and contacts tools (src/contacts-calendars-email-index.ts).
+const contactsCalendarsEmailOutfile = resolve(
+  root, "..", "contacts-calendars-email-mcp", "dist", "contacts-calendars-email-mcp.js"
+);
 
 // The repo root is resolved at RUNTIME now (src/repo-root.ts), not baked in
 // here at build time. A baked root is a per-build-machine literal in a
@@ -46,7 +51,7 @@ if (!schemaMatch) {
 const submissionSchemaVersion = Number(schemaMatch[1]);
 
 // imapflow's CommonJS dependencies (libmime and others) require Node built-ins when imported,
-// which esbuild's ESM output refuses without a real `require` in scope. The data bundle gets one;
+// which esbuild's ESM output refuses without a real `require` in scope. The bundles that hold it get one;
 // it resolves built-ins only, so the bundle stays self-contained.
 const REQUIRE_SHIM =
   'import { createRequire as __bundleCreateRequire } from "node:module";\n' +
@@ -98,3 +103,4 @@ async function bundle(entry, out, extraBanner = "") {
 await bundle("index.ts", outfile, REQUIRE_SHIM);
 await bundle("file-manager-index.ts", fileManagerOutfile);
 await bundle("timecamp-index.ts", timecampOutfile);
+await bundle("contacts-calendars-email-index.ts", contactsCalendarsEmailOutfile, REQUIRE_SHIM);

@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const { callTool, dispatchTool } = await import("../build/dispatch.js");
+const { callContactsCalendarsEmailTool: callTool, dispatchContactsCalendarsEmailTool: dispatchTool } = await import("../build/contacts-calendars-email-dispatch.js");
 
 const FAKE_PASSWORD = "fake-password-2222-not-real";
 const MAIL_ONLY = { host: "imap.example.test", port: 993, secure: true, username: "someone", password: FAKE_PASSWORD };

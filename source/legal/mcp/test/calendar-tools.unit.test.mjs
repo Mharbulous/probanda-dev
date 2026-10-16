@@ -19,7 +19,7 @@ after(() => {
   rmSync(STATE_DIR, { recursive: true, force: true });
 });
 
-const { callTool, dispatchTool } = await import("../build/dispatch.js");
+const { callContactsCalendarsEmailTool: callTool, dispatchContactsCalendarsEmailTool: dispatchTool } = await import("../build/contacts-calendars-email-dispatch.js");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const FAKE_PASSWORD = "fake-password-1111-not-real";

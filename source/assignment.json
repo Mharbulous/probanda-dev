@@ -57,7 +57,8 @@
         "trailing-dyu": "public/plugins/legal/skills/dyu/hooks/trailing-dyu.py"
       },
       "servers": [
-        "data"
+        "data",
+        "contacts-calendars-email"
       ]
     },
     "research": {

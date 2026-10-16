@@ -64,6 +64,7 @@ SERVER_ENTRIES = {
     "canlii": "source/research/canlii-mcp/src/index.ts",
     "commons": "source/research/commons-mcp/src/index.ts",
     "timecamp": "source/legal/mcp/src/timecamp-index.ts",
+    "contacts-calendars-email": "source/legal/mcp/src/contacts-calendars-email-index.ts",
 }
 
 PY_OPS = [(f"os.{op}", re.compile(rf"\bos\.{op}\s*\(")) for op in ("rename", "replace", "remove", "unlink", "rmdir")]

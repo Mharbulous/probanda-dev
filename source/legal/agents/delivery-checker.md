@@ -15,13 +15,13 @@ tools:
   - Read
   - Glob
   - Grep
-  - mcp__plugin_legal_data__mail__list_folders
-  - mcp__plugin_legal_data__mail__search_emails
-  - mcp__plugin_legal_data__mail__get_email
+  - mcp__plugin_legal_contacts-calendars-email__mail__list_folders
+  - mcp__plugin_legal_contacts-calendars-email__mail__search_emails
+  - mcp__plugin_legal_contacts-calendars-email__mail__get_email
   - mcp__plugin_legal_data__practice_data__firm_profile
-  - mcp__remote-devices__plugin_legal_data__mail__list_folders
-  - mcp__remote-devices__plugin_legal_data__mail__search_emails
-  - mcp__remote-devices__plugin_legal_data__mail__get_email
+  - mcp__remote-devices__plugin_legal_contacts-calendars-email__mail__list_folders
+  - mcp__remote-devices__plugin_legal_contacts-calendars-email__mail__search_emails
+  - mcp__remote-devices__plugin_legal_contacts-calendars-email__mail__get_email
   - mcp__remote-devices__plugin_legal_data__practice_data__firm_profile
 ---
 

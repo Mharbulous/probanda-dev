@@ -4,8 +4,8 @@ description: "Sole ingester of raw time evidence into the timeline store, one da
 dependencies:
   - time-pipeline-data  # continuous timeline store under the `timeline` namespace
   - google-calendar-mcp # calendar events (optional — degrades gracefully if unavailable)
-  - calendar tools of the legal plugin's data server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
-  - mail tools of the legal plugin's data server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
+  - calendar tools of the legal plugin's contacts-calendars-email server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
+  - mail tools of the legal plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
 ---
 
 ## Contents
