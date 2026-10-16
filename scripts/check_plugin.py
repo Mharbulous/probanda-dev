@@ -1336,12 +1336,10 @@ def check_layering_rule(repo):
 def check_file_ops_rule(repo):
     """check_file_ops.py's verdict."""
     try:
-        _findings, ruling, found, unruled, stale, bad_why = check_file_ops.judge(Path(repo))
+        findings, ruling, found, unruled, over, stale, bad = check_file_ops.judge(Path(repo))
     except SystemExit as exc:
         return False, str(exc)
-    hits = [f"no ruling: {f} {op}" for f, op in unruled]
-    hits += [f"stale ruling (nothing matches it): {f} {op}" for f, op in stale]
-    hits += [f"unknown why '{ruling[pair]}': {pair[0]} {pair[1]}" for pair in bad_why]
+    hits = check_file_ops.problems(findings, ruling, unruled, over, stale, bad)
     if hits:
         return False, "; ".join(hits)
     return True, f"{len(found)} (file, operation) pairs"

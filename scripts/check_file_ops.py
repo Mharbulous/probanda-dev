@@ -32,13 +32,15 @@ Not detected: overwriting a file with a plain write. A write changes a file just
 as a rename does, but telling a write to a user's file from a write to
 Probanda's own output needs the path at run time, so it is out of reach here.
 
-Rulings live in source/file-ops.json, one per (file, operation): every line of
-that file with that operation shares it. Each has a "why" from WHYS and a "note"
-saying which Probanda-created file it touches. A ruling is only for a file
-Probanda created, or for a step that routes through file-manager.
+Rulings live in source/file-ops.json, one per (file, operation). Each has a
+"count": the number of lines of that file with that operation it covers, each
+one read and found to be the case its "note" describes. A "why" from WHYS and
+the "note" say which Probanda-created file it touches. A ruling is only for a
+file Probanda created, or for a step that routes through file-manager. More
+occurrences than the count fail (a new one, unread); fewer fail as stale.
 
-Exit codes: 0 clean, 1 an operation with no ruling, a stale ruling, or a ruling
-with an unknown "why". Standard library only.
+Exit codes: 0 clean, 1 an operation with no ruling, a count above or below its
+ruling, or a ruling with an unknown "why" or no count. Standard library only.
 """
 import argparse
 import json
@@ -71,8 +73,8 @@ FS_NAMES = ("rename", "unlink", "rm", "rmdir")
 FS_OBJECT_CALL = re.compile(r"(?<![\w$])(?:fs|fsp|fsPromises|promises)\.(rename|unlink|rm|rmdir)(?:Sync)?\s*\(")
 FS_IMPORT = re.compile(r"import\s*\{([^}]*)\}\s*from\s*[\"'](?:node:)?fs(?:/promises)?[\"']")
 
-SHELL_OPS = [("shell mv", re.compile(r"(?:^|[;&|(]|\$\()\s*mv\s")),
-             ("shell rm", re.compile(r"(?:^|[;&|(]|\$\()\s*rm\s"))]
+SHELL_OPS = [("shell mv", re.compile(r"(?:^|[;&|(]|\$\()\s*mv\s+[^\s=]")),
+             ("shell rm", re.compile(r"(?:^|[;&|(]|\$\()\s*rm\s+[^\s=]"))]
 SHELL_OPS += [(op, re.compile(rf"\b{op}\b", re.I)) for op in ("Move-Item", "Rename-Item", "Remove-Item")]
 
 PROSE_OPS = [(f"os.{op}", re.compile(rf"\bos\.{op}\b")) for op in ("rename", "replace", "remove", "unlink", "rmdir")]
@@ -84,7 +86,7 @@ PROSE_OPS += [
     ("prose rename", re.compile(r"\brename (?:it|them|the file|the files|each file|the document|the pdf)\b"
                                 r"|\(F2\)", re.I)),
     ("prose move", re.compile(r"\bmove (?:the file|the files|each file|the document|the pdf)\b"
-                              r"|\bmove (?:it|them) (?:to|into)\b", re.I)),
+                              r"|\bmove (?:it|them) (?:to|into|with)\b", re.I)),
     ("prose cut", re.compile(r"\bcut (?:it|them|the file|the files)\b", re.I)),
     ("prose delete", re.compile(r"\bdelete (?:it|them|the file|the files|the original|each file)\b", re.I)),
 ]
@@ -170,6 +172,7 @@ def line_ops(path, text):
         found = []
         if suffix == ".py":
             found += [label for label, rx in PY_OPS if rx.search(line)]
+            found += [label for label, rx in SHELL_OPS if rx.search(line)]
             for m in PY_PATH_OP.finditer(line):
                 if not re.search(r"\b(?:os|shutil)$", line[:m.start()]):
                     found.append(f"path.{m.group(1)}")
@@ -197,15 +200,23 @@ def scan(repo):
 
 
 def judge(repo):
-    """Returns (findings, {pair: why}, pairs found, pairs with no ruling,
-    stale rulings, rulings with an unknown why)."""
+    """Returns (findings, {pair: why}, {pair: occurrences found}, pairs with no ruling,
+    [(pair, ruled, actual)] found more often than ruled, [(pair, ruled, actual)] found
+    less often than ruled (stale), rulings with an unknown why or no count)."""
     path = repo / RULINGS
     rulings = json.loads(path.read_text(encoding="utf-8"))["allowed"] if path.is_file() else []
     findings = scan(repo)
     ruling = {(r["file"], r["op"]): r.get("why") for r in rulings}
-    bad_why = sorted(pair for pair, why in ruling.items() if why not in WHYS)
-    found = {(f["file"], f["op"]) for f in findings}
-    return findings, ruling, found, sorted(found - set(ruling)), sorted(set(ruling) - found), bad_why
+    ruled = {(r["file"], r["op"]): r.get("count") for r in rulings}
+    bad = sorted(pair for pair in ruling
+                 if ruling[pair] not in WHYS or not isinstance(ruled[pair], int) or ruled[pair] < 1)
+    found = {}
+    for f in findings:
+        found[(f["file"], f["op"])] = found.get((f["file"], f["op"]), 0) + 1
+    counted = [p for p in ruling if p not in bad]
+    over = sorted((p, ruled[p], found[p]) for p in counted if found.get(p, 0) > ruled[p])
+    stale = sorted((p, ruled[p], found.get(p, 0)) for p in counted if found.get(p, 0) < ruled[p])
+    return findings, ruling, found, sorted(set(found) - set(ruling)), over, stale, bad
 
 
 def main():
@@ -214,27 +225,37 @@ def main():
     parser.add_argument("--repo", type=Path, default=REPO, help="repo to read (for tests)")
     args = parser.parse_args()
     sys.stdout.reconfigure(errors="backslashreplace")
-    findings, ruling, found, unruled, stale, bad_why = judge(args.repo.resolve())
+    findings, ruling, found, unruled, over, stale, bad = judge(args.repo.resolve())
     if args.report:
         for f in sorted(findings, key=lambda f: (f["file"], f["op"], f["line"])):
             print(f"{ruling.get((f['file'], f['op']), 'NO RULING')}\t{f['plugin']}\t{f['file']}:{f['line']}\t"
                   f"{f['op']}\t{f['text']}")
-    lines = {}
-    for f in findings:
-        lines.setdefault((f["file"], f["op"]), []).append(str(f["line"]))
-    for pair in unruled:
-        print(f"no ruling: {pair[0]}:{','.join(lines[pair])} {pair[1]}", file=sys.stderr)
-    for pair in stale:
-        print(f"stale ruling (nothing matches it): {pair[0]} {pair[1]}", file=sys.stderr)
-    for pair in bad_why:
-        print(f"unknown why '{ruling[pair]}': {pair[0]} {pair[1]}", file=sys.stderr)
+    for line in problems(findings, ruling, unruled, over, stale, bad):
+        print(line, file=sys.stderr)
     by_why = {}
-    for pair in found & set(ruling):
+    for pair in set(found) & set(ruling):
         by_why[ruling[pair]] = by_why.get(ruling[pair], 0) + 1
     print(f"{len(found)} (file, operation) pairs outside file-manager: "
           + ", ".join(f"{n} {w}" for w, n in sorted(by_why.items()))
-          + ("; " if by_why else "") + f"{len(unruled)} with no ruling, {len(stale)} stale rulings.")
-    return 1 if unruled or stale or bad_why else 0
+          + ("; " if by_why else "") + f"{len(unruled)} with no ruling, {len(over)} over their ruled count, "
+          f"{len(stale)} stale rulings.")
+    return 1 if unruled or over or stale or bad else 0
+
+
+def problems(findings, ruling, unruled, over, stale, bad):
+    """One line per failure, naming the file, the operation and, for a count, the ruled and actual numbers."""
+    lines = {}
+    for f in findings:
+        lines.setdefault((f["file"], f["op"]), []).append(str(f["line"]))
+    out = [f"no ruling: {f}:{','.join(lines[(f, op)])} {op}" for f, op in unruled]
+    out += [f"more than ruled: {f}:{','.join(lines[(f, op)])} {op}, ruled count {n}, actual count {actual}: "
+            f"a new occurrence needs its own reading, never a raised count by default"
+            for (f, op), n, actual in over]
+    out += [f"stale ruling: {f} {op}, ruled count {n}, actual count {actual}: lower the count"
+            + (" or remove the ruling" if actual == 0 else "") for (f, op), n, actual in stale]
+    out += [f"bad ruling (why '{ruling[pair]}' must be one of {', '.join(WHYS)}, count a whole number from 1): "
+            f"{pair[0]} {pair[1]}" for pair in bad]
+    return out
 
 
 if __name__ == "__main__":
