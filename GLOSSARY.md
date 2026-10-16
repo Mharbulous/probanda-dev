@@ -2,6 +2,7 @@
 terms:
   - Admission
   - Advice (answer grade)
+  - Affiliation
   - Alias
   - Apparatus
   - Argument
@@ -15,13 +16,16 @@ terms:
   - Bundle (ingest)
   - Cause of Action Concept
   - Clause
+  - Client account
   - Close as superseded
   - Completion criteria
   - Component
   - Consequence
   - Consolidation part
+  - Contact
   - Contention
   - Copy (within a bundle)
+  - Counsel of record
   - Court Rule
   - Criterion
   - Current package
@@ -65,6 +69,7 @@ terms:
   - Matter
   - Matter number
   - Matter reference
+  - Matter role
   - Matter row key
   - Mockup
   - Non-billable entry
@@ -145,6 +150,10 @@ _Avoid_: admitted fact (admission binds the admitting party only); source_kind (
 A recommendation that has been checked against everything within reach and is backed by targeted research from a separately-spawned agent working independently. Not the same word as legal advice to a client (apply-to-facts, case-data), which keeps its ordinary meaning.
 _Avoid_: advice for an answer a second agent merely agreed with — agreement without new evidence leaves it a recommendation.
 
+**Affiliation**:
+A dated tie between a person **Contact** and an organization contact, such as employment or a directorship. A lawyer who changes firms stays one contact with two affiliations. Stored as a practice-data `affiliation` item (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`).
+_Avoid_: firm or employer as a field on the person (it goes stale when the person moves).
+
 **Alias**:
 Another recorded spelling of a participant's name, or a **file code**: the author/recipient token the firm's file names use for that participant (`SmithJ`). An alias is recorded only with the practitioner's approval. A name that merely resembles a participant's is a **near match**: a lead to search, never presented as the participant until the practitioner confirms it.
 
@@ -192,6 +201,10 @@ The general body of law describing a cause of action (a kind of Legal Concept), 
 One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are four clause types. **Element**, **Exception** and **Factor** are a proposition's conditions, and a **Rationale** explains a proposition. A clause takes its type from the proposition that uses it. The clause a proposition entails is that proposition's **Consequence**. One clause may be an element of one proposition and the consequence of another.
 _Avoid_: clause for a numbered provision of a contract or statute (say provision, or contract clause); statement (taken by **Statement of fact** and **Statement of law**). The drafting database's `clauses` table is a frozen code name for a clause of a Writing, not this sense.
 
+**Client account**:
+The billing record for a client: the practice-data `client` item, with its client number, lawyers and account label. Not who the client is: that is each **Contact** holding a **Matter role** tagged `client` on the matter, so joint clients are one account with two client roles.
+_Avoid_: client for the account where the person or company is meant, or the reverse.
+
 **Close as superseded**:
 The practitioner's bookkeeping instruction that supersedes a queued job all of whose keys are dead, or a fast-path job whose item changed. Never the session's initiative. No restore path: if the marker fires again, the Proposal returns.
 _Avoid_: shelve (an angle not pursued); complete (no work was done); auto-close.
@@ -211,6 +224,10 @@ The legal outcome a proposition produces: what may, must or does follow. In the 
 One of the separate pages on which an official publisher issues a single instrument, such as a **Rule Set** whose parts and appendices each have their own page. An instrument is held whole only when every part is held.
 _Avoid_: section, chapter (both name divisions within the text).
 
+**Contact**:
+One person or organization the firm deals with, or acts for or against, held once, firm-wide, in practice data as a `contact` item tagged `person` or `organization`. It is the source of truth for email, phone and address. The practitioner's address book only pre-fills it. Tied to organizations by **Affiliation** and to matters by **Matter role** (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`).
+_Avoid_: party (a role in a proceeding, recorded in case-data); participant (a role in a matter's documents); contact details copied onto a matter's records.
+
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
 _Avoid_: theory, thesis; proposition (law alone); point (an opposing point is theirs).
@@ -218,6 +235,10 @@ _Avoid_: theory, thesis; proposition (law alone); point (an opposing point is th
 **Copy (within a bundle)**:
 A later segment of a bundle whose text matches an earlier segment: the scanned paper cover letter behind the digital one, the printed enclosures behind the originals. Noted on the original's row, never extracted twice, never given a row of its own.
 _Avoid_: duplicate (reserved for the cross-file hash match at the ingest gate).
+
+**Counsel of record**:
+A party's lawyer and address for service as the court record shows them, changed only by a filed notice or an order. Held in case-data as filed (`.claude/skills/case-data/references/design-decisions.md` #55). It can differ from the lawyer **Contact**'s working details. When it does, the practitioner is asked whether a notice of change was filed, and neither record is overwritten.
+_Avoid_: the lawyer's contact details (those are the contact's).
 
 **Court Rule**:
 A provision of the procedural rules of a court or tribunal. Rules of court are delegated legislation; an arbitral institution's rules bind by the parties' agreement. The term marks source, not content: one Court Rule may state one rule, several rules, or a test made only of factors. The enacted or adopted text governs.
@@ -387,6 +408,10 @@ Note: the two **coincide on matter-only folders and are still not the same field
 **Matter reference**:
 The token that names a matter's folder and identifies the matter wherever our own systems point at one: either `{client}.{matter}`, a client number and a matter number joined by a dot, or the matter number alone. It is read off the folder name, never assigned — whatever the folder says, that is the matter reference. It names the case-data folder, binds an application, and is what a practitioner is shown when a matter must be identified.
 _Avoid_: matter ID (ambiguous three ways — see **Matter row key**); client ID (Westlaw's and UNITY's label for this same value, not ours); file number (that is the court's number for a proceeding).
+
+**Matter role**:
+A dated tie between a **Contact** and a matter, with one role from a fixed vocabulary (client, prospective client, opposing party, opposing counsel, co-counsel, expert, adjuster, referral source). It may point to the contact's case-data party and proceeding. Stored as a practice-data `matter_role` item. Witnesses and tribunal members have no matter role: they stay in case-data.
+_Avoid_: party (case-data's record of a role in a proceeding); participant.
 
 **Matter row key**:
 Not a practitioner-facing identifier at all: the practice database's internal generated primary key on a matter row, carried as a `matter_id` foreign-key column on its dependent tables. It is never displayed. The storage name `matter_id` is also used, unrelatedly, as the key under which case data and application state store the *matter reference* — those names are load-bearing in schema, JSON, and Python and are deliberately not being changed. Read `matter_id` as the name of a column, never as "the ID we show".
