@@ -19,7 +19,7 @@
 
 import { sql } from "./db.ts";
 
-export type Scope = "commons:read" | "items:write";
+export type Scope = "commons:read" | "items:write" | "suggestions:write";
 
 /** The caller a request's key names. */
 export type Caller =

@@ -6,7 +6,8 @@
 -- a caller's key to its tenant and scopes with access.resolve_key, server-side
 -- as postgres (functions/_shared/caller.ts).
 --
--- Scopes: commons:read (commons-read, commons-find) and items:write (items-*).
+-- Scopes: commons:read (commons-read, commons-find), items:write (items-*) and
+-- suggestions:write (suggestion-submit; cloud/suggestions/suggestions.sql).
 -- tenant is null for a key that holds no items:write scope.
 --
 -- Idempotent: safe to re-run.
@@ -25,7 +26,7 @@ create table if not exists access.install_key (
   key_hash    text primary key check (key_hash ~ '^[0-9a-f]{64}$'),
   label       text not null,
   tenant      uuid,
-  scopes      text[] not null check (scopes <@ array['commons:read', 'items:write']::text[] and cardinality(scopes) > 0),
+  scopes      text[] not null check (scopes <@ array['commons:read', 'items:write', 'suggestions:write']::text[] and cardinality(scopes) > 0),
   created_at  timestamptz not null default now(),
   revoked_at  timestamptz,
   check (tenant is not null or not ('items:write' = any (scopes)))

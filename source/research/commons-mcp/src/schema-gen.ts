@@ -331,12 +331,11 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
     {
       name: legalCommonsPrefixed("configure_credential"),
       description:
-        "One-time setup: store the Supabase service_role / sb_secret_ static pool credential. Cowork " +
-        "does not deliver a plugin's userConfig secret into this process's environment, so the key " +
-        "cannot arrive any other way in a Cowork session — call this once with the key and every other " +
-        "legal_commons__* call will work for the rest of this session and future sessions on this " +
-        "machine. The key is persisted host-side, encrypted at rest; it is never logged or echoed back.",
-      inputSchema: objectSchema([{ name: "static_key", type: "str" }], ["static_key"]),
+        "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them " +
+        "(the same key serves legal_commons__* and suggestion_box__submit). The key is typed on that page, never in chat and never as a tool argument. " +
+        "Send the link, and when the practitioner says it is done, call legal_commons__configure_status. " +
+        "The page checks the key against the pool before saving it; it is persisted host-side, encrypted at rest, and never logged or echoed back.",
+      inputSchema: objectSchema([], []),
       annotations: { destructiveHint: true },
     },
     {
@@ -440,42 +439,23 @@ function suggestionBoxPrefixed(name: string): string {
 }
 
 // Suggestion Box namespace: a suggestion about the plugin that the practitioner
-// expressly submits, posted as a GitHub issue on a private repo held in stored
-// configuration. Hand-written like the other namespaces. Routed in dispatch.ts.
+// expressly submits, saved in Probanda's Cloud with the legal-commons key.
+// Hand-written like the other namespaces. Routed in dispatch.ts.
 export function suggestionBoxToolDefinitions(): ToolDefinition[] {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
       description:
-        "Post one suggestion about the plugin, which the practitioner has expressly said to submit, as a GitHub issue on the configured private repo. " +
+        "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. " +
         "title and body are the whole post: they must name no person, entity, matter, document or path. " +
-        "source is user for the practitioner's own idea (through /research:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box); it sets the issue label User or LLM. " +
+        "source is user for the practitioner's own idea (through /legal:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). " +
         "Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; " +
-        "the refusal names the kind of hit, never the text. Refused when the repo is not private or nothing is configured. Returns {issue_number, url}.",
+        "the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
       inputSchema: objectSchema([
         { name: "title", type: "str" },
         { name: "body", type: "str" },
         { name: "source", type: "str", enum: ["user", "llm"] },
       ], ["title", "body", "source"]),
-    },
-    {
-      name: suggestionBoxPrefixed("configure_credential"),
-      description:
-        "One-time setup: store the private GitHub repo (owner/name) that suggestions are posted to and a token limited to that repo with Issues: Read and write. " +
-        "The pair is checked against GitHub before it is saved and refused unless the repo is private. Persisted host-side encrypted at rest, and never logged or echoed back.",
-      inputSchema: objectSchema([
-        { name: "repo", type: "str" },
-        { name: "token", type: "str" },
-      ], ["repo", "token"]),
-      annotations: { destructiveHint: true },
-    },
-    {
-      name: suggestionBoxPrefixed("configure_status"),
-      description:
-        "Report whether this machine has a Suggestion Box credential, the repo it names, and a redacted hint " +
-        "identifying the token. Never returns the token itself.",
-      inputSchema: objectSchema([], []),
-      annotations: { readOnlyHint: true },
     },
   ];
 }

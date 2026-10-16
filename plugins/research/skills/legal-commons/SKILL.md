@@ -209,13 +209,15 @@ caller keeps.
 
 ## Configuration
 
-The runtime holds a single static Supabase credential (a `service_role` /
-`sb_secret_` key) — there is no login, unlock, or session step, and no
+The runtime holds a single static credential: the key Probanda gave this machine
+(the project secret on a maintainer's machine). The same key serves
+`suggestion_box__submit`. There is no login, unlock, or session step, and no
 embedding/model API key (retrieval runs entirely in Postgres).
 
 The credential is supplied once per machine through `legal_commons__configure_credential`,
-which validates it against the pool and stores it encrypted on the host, where it
-survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
+which returns a link to a page on this computer. The practitioner pastes the key on
+that page, never in chat; the page validates it against the pool and stores it
+encrypted on the host, where it survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
 (see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
 still wins where one is genuinely set, which is the Claude Code CLI / developer path.
@@ -224,6 +226,6 @@ On a "not configured" error, check `legal_commons__configure_status` first — i
 reports whether this machine already holds a credential, and identifies which one
 by a redacted hint, without exposing the key. If it reports one is configured but
 calls still fail, the error names the cause (an unreadable stored file reads
-differently from an absent one); do not work around it. If none is configured, the
-practitioner must supply the key — ask for it rather than guessing, and never echo
-it back into the transcript.
+differently from an absent one); do not work around it. If none is configured, call
+`legal_commons__configure_credential` and send the practitioner the link it returns.
+Never ask for the key in chat, and never echo it back into the transcript.

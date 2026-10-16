@@ -4,7 +4,6 @@ import { validateToolInput } from "./validate.js";
 import { callLegalCommonsTool, isLegalCommonsToolName } from "./legal-commons/tools.js";
 import type { LegalCommonsClient } from "./legal-commons/client.js";
 import { callTroubleshootTool, isTroubleshootToolName } from "./troubleshoot/tools.js";
-import type { SuggestionBoxState } from "./suggestion-box/config.js";
 import { callSuggestionBoxTool, isSuggestionBoxToolName } from "./suggestion-box/tools.js";
 
 export interface DispatchContext {
@@ -16,9 +15,6 @@ export interface DispatchContext {
   // Troubleshooting store client: the same client class against a separate
   // Supabase project, with its own credential file. Same permission-prompt rule.
   troubleshoot: LegalCommonsClient;
-  // The Suggestion Box's stored repo and token, or none. Its tools call GitHub
-  // directly and use no Supabase client.
-  suggestionBox: SuggestionBoxState;
 }
 
 let definitions: Map<string, ToolDefinition> | undefined;
@@ -55,7 +51,8 @@ export async function callTool(
     return callTroubleshootTool(context, name, args);
   }
   if (isSuggestionBoxToolName(name)) {
-    return callSuggestionBoxTool(context.suggestionBox, name, args);
+    // The Suggestion Box posts with the pool's client and key.
+    return callSuggestionBoxTool(context.legalCommons, name, args);
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);

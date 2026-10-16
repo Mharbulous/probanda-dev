@@ -1,4 +1,5 @@
 import { ValidationError } from "../errors.js";
+import { serveKeyPage } from "../key-page.js";
 import type { LegalCommonsClient } from "./client.js";
 import { persistLegalCommonsCredential } from "./config.js";
 import { findRulePeriods, pushRulePeriods, recordRulePeriodVerification, retireRulePeriod } from "./rule-periods.js";
@@ -67,7 +68,7 @@ export function callLegalCommonsTool(
     case "legal_commons__rule_period_retire":
       return retireRulePeriod(client, args);
     case "legal_commons__configure_credential":
-      return configureCredential(client, args);
+      return configureCredential(client);
     case "legal_commons__configure_status":
       return configureStatus(client);
     default:
@@ -79,23 +80,35 @@ export function callLegalCommonsTool(
 // 7 (see dpapi-store.ts / config.ts). Cowork never injects a plugin's
 // userConfig secret into its spawned MCP server's environment, so the static
 // pool credential cannot arrive as an env var in a Cowork session. This tool
-// accepts it as an ordinary argument instead (not subject to that gap),
-// persists it to a host-backed, DPAPI-encrypted file, and updates the live
-// client so the rest of this session works immediately without a restart.
+// serves a local page (key-page.ts) where the practitioner pastes the key, so
+// it never passes through the chat; the page's save persists it to a
+// host-backed, DPAPI-encrypted file and updates the live client so the rest of
+// this session works immediately without a restart.
 // Same PP-1 permission-prompt discipline as every other legal_commons__* call
 // — never allowlisted, so a stray/malicious call still surfaces to the user.
-async function configureCredential(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
+async function configureCredential(client: LegalCommonsClient): Promise<unknown> {
+  const url = await serveKeyPage((typed) => saveCredential(client, typed));
+  return {
+    status: "awaiting_key",
+    url,
+    next:
+      "Send the practitioner this link and ask them to paste the key on that page, never in chat. " +
+      "When they say it is done, call legal_commons__configure_status. The link works only on this computer, until a new link is made or the server restarts.",
+  };
+}
+
+async function saveCredential(client: LegalCommonsClient, typed: string): Promise<{ persisted: boolean; warning?: string }> {
   // Trim: a key pasted from a password manager routinely carries a trailing
   // newline, which would otherwise persist and surface later as an opaque 401.
-  const staticKey = String(args.static_key || "").trim();
-  if (!staticKey) throw new ValidationError("configure_credential requires static_key");
+  const staticKey = typed.trim();
+  if (!staticKey) throw new ValidationError("paste the key");
   // The publishable/anon key is the other key on the same Supabase project and
   // the easy one to grab by mistake. It has no grants on legal_commons, so it
   // would fail every later call — reject it here with the reason, not there.
   if (staticKey.startsWith("sb_publishable_")) {
     throw new ValidationError(
-      "that is the publishable (anon) key, which has no grants on the legal_commons schema — " +
-      "supply the service_role / sb_secret_ key instead"
+      "that is the project's publishable key, which cannot reach the legal commons — " +
+      "paste the key Probanda gave you for this computer instead"
     );
   }
 
@@ -112,7 +125,7 @@ async function configureCredential(client: LegalCommonsClient, args: Record<stri
   } catch (error) {
     client.setStaticKey(previousKey);
     throw new ValidationError(
-      `that key did not work against the legal-commons pool, so it was not saved: ${
+      `that key did not work against the legal-commons pool: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
@@ -124,14 +137,13 @@ async function configureCredential(client: LegalCommonsClient, args: Record<stri
     await persistLegalCommonsCredential(staticKey);
   } catch (error) {
     return {
-      configured: true,
       persisted: false,
       warning:
         "the key works and is active for this session, but could not be saved to disk, so it must " +
-        `be supplied again after a restart: ${error instanceof Error ? error.message : String(error)}`,
+        `be entered again after a restart: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
-  return { configured: true, persisted: true };
+  return { persisted: true };
 }
 
 // configure_status — lets a caller confirm whether this machine already has a

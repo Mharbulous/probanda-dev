@@ -18,6 +18,8 @@ The outcome: each installed copy holds its own install key, which the cloud reso
 4. The data server needs no code change and its bundle is not rebuilt for this plan. It sends whatever key the shared credential file (`source/mcp-shared/commons-key.js`) holds, in `apikey` (`source/practice/mcp/src/practice/cloud.ts:55`).
 5. The project secret stays accepted until stage 5. A refusal asks a question and never states a rule (Commandment 6). No function logs a request body.
 6. Brahm, 2026-10-14: the research client change waits for stage 3, after `commons-read` is deployed. A `/repackage` in between must not ship a client whose reads call a function that does not exist yet.
+7. Brahm, 2026-10-16: the Suggestion Box uses the same key. A third scope, `suggestions:write`, lets a key call `suggestion-submit`, which only inserts into `suggestions.suggestion` (`cloud/suggestions/suggestions.sql`). GitHub posting is gone, and `legal_commons__configure_credential` takes the key on a local page instead of as a tool argument.
+8. Brahm, 2026-10-16: the legal commons is to be fully crowd-sourced, with no opt-out. Research, note-ups and verifications a lawyer runs are contributed in the background, so the next lawyer's research costs less. When contributor writes are built (a separate piece of work, after stage 3), an install key may use `push`, `link_authority`, `record_treatment`, `stamp_verified`, `rule_period_push` and `rule_period_record_verification`. `amend_*`, `merge_authority`, `unlink_authority` and `rule_period_retire` stay with the project secret (maintainers).
 
 ## What the files show (2026-10-14)
 
@@ -36,7 +38,7 @@ The outcome: each installed copy holds its own install key, which the cloud reso
 
 A key is `pb_install_` followed by 32 random bytes in base64url. The cloud stores only its SHA-256, as lowercase hex, in `access.install_key` (`cloud/access/access.sql`): `key_hash`, `label` (the machine, never a person), `tenant`, `scopes`, `created_at`, `revoked_at`. `access.resolve_key(hash)` returns `{tenant, scopes}` for a live key, or null. The schema is not exposed and grants nothing to `public`, `anon` or `authenticated`.
 
-The scopes are `commons:read` (`commons-read`, `commons-find`) and `items:write` (`items-write`, `items-sync`, `items-seed`). A key with `items:write` must have a tenant.
+The scopes are `commons:read` (`commons-read`, `commons-find`), `items:write` (`items-write`, `items-sync`, `items-seed`) and `suggestions:write` (`suggestion-submit`, decision 7). A key with `items:write` must have a tenant.
 
 ### Who may call (`_shared/caller.ts`)
 
@@ -99,7 +101,7 @@ An installed copy older than stage 3 reads the pool through PostgREST, which ref
 
 Each has a default the executing session takes if he says nothing before the stage that uses it.
 
-1. **Key scope (stage 4).** Default: one key per machine, each with both scopes and the shared tenant, so one machine's key can be revoked alone. The alternative is one key per practice, which is simpler to mint but cannot be withdrawn from a single machine.
+1. **Key scope (stage 4).** Default: one key per machine, each with all three scopes and the shared tenant, so one machine's key can be revoked alone. The alternative is one key per practice, which is simpler to mint but cannot be withdrawn from a single machine.
 2. **The maintainer key (stages 4 and 5).** Default: the project secret lives only in `LEGAL_COMMONS_SUPABASE_KEY` on development machines, for the scripts that need it (`check_items.mjs`, `migrate_practice_db.py`, `contribute.mjs`), never in a credential file. Because the environment wins over the file (`commons-key.js`), the plugin on a development machine with the variable set runs as the maintainer, not on its install key. Stage 4's check runs with the variable unset.
 
 ## Risks
