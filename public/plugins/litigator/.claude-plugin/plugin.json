@@ -2,7 +2,7 @@
   "name": "litigator",
   "displayName": "Probanda Litigator",
   "version": "0.0.1",
-  "description": "Court work on a matter, for British Columbia lawyers. Requires the legal and research plugins: install legal, then research, then litigator.",
+  "description": "Court work on a matter. Requires the legal and research plugins: install legal, then research, then litigator.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"

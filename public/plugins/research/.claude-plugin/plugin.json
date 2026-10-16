@@ -2,7 +2,7 @@
   "name": "research",
   "displayName": "Probanda Research",
   "version": "0.0.1",
-  "description": "What the law is, for British Columbia lawyers: legal citation. Requires the legal plugin: install legal first, then research.",
+  "description": "What the law is: legal citation. Requires the legal plugin: install legal first, then research.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"

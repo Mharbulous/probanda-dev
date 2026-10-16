@@ -2,7 +2,7 @@
   "name": "legal",
   "displayName": "Probanda Legal",
   "version": "0.0.1",
-  "description": "The core Probanda plugin for British Columbia lawyers. Requires nothing. Install it first: every other Probanda plugin requires it.",
+  "description": "The core Probanda plugin. Requires nothing. Install it first: every other Probanda plugin requires it.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"
