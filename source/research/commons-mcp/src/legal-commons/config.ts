@@ -2,7 +2,7 @@ import { writeProtectedJson } from "../dpapi-store.js";
 import { credentialPath, loadCommonsKey } from "../../../../mcp-shared/commons-key.js";
 
 // The credential's path, env override and loading live in
-// source/mcp-shared/commons-key.js, so the practice data server reads the same
+// source/mcp-shared/commons-key.js, so the legal plugin's data server reads the same
 // credential. This module adds the pool's schema and keeps the commons names.
 export { credentialPath };
 

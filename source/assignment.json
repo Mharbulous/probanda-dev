@@ -2,7 +2,7 @@
   "status": "cutover",
   "note": "The plugin each unit ships in since the plugin split (docs/Plans/2026-10-13_four-plugin-split.md). A skill is named by its folder under .claude/skills/ or public/plugins/*/skills/, an agent by its file under source/<plugin>/agents/, a hook by its script's path from the repo root.",
   "plugins": {
-    "practice": {
+    "legal": {
       "requires": [],
       "skills": [
         "TLDR",
@@ -53,14 +53,14 @@
         "verify-source"
       ],
       "hooks": {
-        "hidden-skills-note": "source/practice/hooks/hidden-skills-note.py",
+        "hidden-skills-note": "source/legal/hooks/hidden-skills-note.py",
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
-        "mail-send-gate": "source/practice/hooks/mail-send-gate.py",
-        "plugin-cache-guard": "source/practice/hooks/plugin-cache-guard.py",
+        "mail-send-gate": "source/legal/hooks/mail-send-gate.py",
+        "plugin-cache-guard": "source/legal/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
         "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
-        "trailing-dyu": "public/plugins/practice/skills/dyu/hooks/trailing-dyu.py"
+        "trailing-dyu": "public/plugins/legal/skills/dyu/hooks/trailing-dyu.py"
       },
       "servers": [
         "data"
@@ -68,7 +68,7 @@
     },
     "research": {
       "requires": [
-        "practice"
+        "legal"
       ],
       "skills": [
         "case-brief",
@@ -100,7 +100,7 @@
     },
     "litigator": {
       "requires": [
-        "practice",
+        "legal",
         "research"
       ],
       "skills": [
@@ -130,7 +130,7 @@
     },
     "solicitor": {
       "requires": [
-        "practice"
+        "legal"
       ],
       "skills": [],
       "agents": [],
@@ -139,7 +139,7 @@
     },
     "file-manager": {
       "requires": [
-        "practice"
+        "legal"
       ],
       "skills": [
         "file-apply",

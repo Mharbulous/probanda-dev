@@ -17,7 +17,7 @@ through the Skill tool, which refuses a skill carrying that line.
 # File apply (rename and move engine)
 
 Executes renames and moves that a caller has already had approved. The grammar and
-the code registry belong to `/file-naming`, in the `practice` plugin. This skill
+the code registry belong to `/file-naming`, in the `legal` plugin. This skill
 ships in `file-manager`, so disabling that plugin removes it with every other
 Probanda tool that renames, moves or deletes a user's file.
 

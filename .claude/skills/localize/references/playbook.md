@@ -2,7 +2,7 @@
 
 Read by the `localize-helper` agent over `skill_source__read`, path `localize/references/playbook.md`. The record contract, grammar, index shapes, resolve and sidecar are `shared/knowledge-tree.md`. This file is the tool sequence per operation and how to handle each result.
 
-Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_practice_data__<name>` and `mcp__remote-devices__plugin_practice_data__<name>` this host grants.
+Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_legal_data__<name>` and `mcp__remote-devices__plugin_legal_data__<name>` this host grants.
 
 ## 1. Rules for every run
 

@@ -5,7 +5,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## 1. The rule
 
-Never ask the practitioner whether a letter was sent, delivered or received, in any wording, until the `practice:delivery-checker` agent has checked that letter. The letter's own face says how it was sent, so the evidence is looked up first. After the check, ask only about what its result lists under `could_not_determine`, and name in the question what was checked and what could not be (section 5).
+Never ask the practitioner whether a letter was sent, delivered or received, in any wording, until the `legal:delivery-checker` agent has checked that letter. The letter's own face says how it was sent, so the evidence is looked up first. After the check, ask only about what its result lists under `could_not_determine`, and name in the question what was checked and what could not be (section 5).
 
 The agent only reads. This session acts on its result, updates the draft, records the letter as sent and shows the files. The result is used in this session and kept nowhere: no table, no file and no note holds it. The only lasting memory that a letter went is the Sent write on its Writing, which closes its `Deliver` job and so ends the opening check below. A letter with no Writing is simply checked again whenever one of the triggers fires.
 
@@ -20,7 +20,7 @@ An ingested letter is checked by `/case-data` at its ingest, not here. An unatte
 
 ## 3. Dispatch
 
-Spawn `practice:delivery-checker` once for the letter, each time a trigger fires, with:
+Spawn `legal:delivery-checker` once for the letter, each time a trigger fires, with:
 
    - `matter_root`, `letter_path`, `file_name`, and `file_size`, the file's size in bytes;
    - `environment_notes`: the practitioner's environment notes, as this session was given them (`/practice-data`, "Practice quirks");

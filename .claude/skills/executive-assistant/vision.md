@@ -18,7 +18,7 @@ Both modes read the same underlying data; they differ in framing (current-state 
 - **task-prioritization** — *what* needs doing and *how important* it is (three-tier ranking: Remind → Work → Paused)
 - **executive-assistant** — *what to surface and when to surface it* (synthesizes the ranked task list with deadline urgency and WIP signals; presents the recommendation at the right moment)
 
-executive-assistant reads from: `practice:docket-clerk`, `task-prioritization`, and `practice-data` (trust balances, time entries, matter signals). It writes nothing to those skills — it is a consumer of their data, not a manager of it.
+executive-assistant reads from: `legal:docket-clerk`, `task-prioritization`, and `practice-data` (trust balances, time entries, matter signals). It writes nothing to those skills — it is a consumer of their data, not a manager of it.
 
 **Calendar-aware scheduling** ("you don't have time for that today") is a deliberately deferred extension. The current skill surfaces work from the task registry and deadline data alone, without reasoning about available time slots. When calendar integration becomes necessary, Google Calendar events are already fetched by the `build-timeline` skill and could be consumed directly; that source would be added to the consumes-from list at that point.
 

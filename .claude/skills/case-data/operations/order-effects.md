@@ -86,7 +86,7 @@ Constraints that bound what may be proposed:
 - **A Notice of Withdrawal is symmetric with an appointment.** `NOWOL` also changes the address for service: the party becomes self-represented at its Rule 4-2(7) last-known address. `service_address_filed_date` = the NOWOL filing date; `replaced_representative` = the withdrawing lawyer. Do not treat withdrawal as "no change" because no new lawyer appears.
 - **These two fields are structured; do not restate them as prose.** Provenance like "supersedes X's contact" belongs in these columns, never in `contact_info` or `address`.
 
-**Deadline-bearing effects delegate; they are not computed here.** An order changing a trial date or its length is proposed only as the `proceedings.trial_date` field update. The pass then **recommends spawning `practice:docket-clerk`**, which owns anchor extraction and cascade recalculation, and performs no deadline arithmetic itself. The same holds for any order that reads like a deadline anchor (a TMC order, an order extending time): propose the surface field if one applies, then hand off.
+**Deadline-bearing effects delegate; they are not computed here.** An order changing a trial date or its length is proposed only as the `proceedings.trial_date` field update. The pass then **recommends spawning `legal:docket-clerk`**, which owns anchor extraction and cascade recalculation, and performs no deadline arithmetic itself. The same holds for any order that reads like a deadline anchor (a TMC order, an order extending time): propose the surface field if one applies, then hand off.
 
 **Drop already-satisfied proposals before presenting.** A change whose current value already equals the proposed value never reaches the table. This is what makes the pass idempotent by diff, and what makes the verify-path re-run silent.
 
@@ -149,7 +149,7 @@ Report, in this order:
 - whether the pass fired and on what detection signal (and whether it was reasons-derived);
 - proposals: proposed / approved / applied counts, plus how many were dropped as already satisfied;
 - out-of-surface effects noted for information;
-- any handoff recommended (`practice:docket-clerk`) and why;
+- any handoff recommended (`legal:docket-clerk`) and why;
 - declined proposals, verbatim, so they are visible in the transcript.
 
 Example: `Order effects: 2 proposed, 2 approved, 2 applied; 1 already satisfied.`

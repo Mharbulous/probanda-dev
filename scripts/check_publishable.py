@@ -24,7 +24,7 @@ from collections import Counter
 from pathlib import Path, PurePosixPath
 
 # Names that are permanent once published. Adding a name here is a deliberate act.
-ALLOWED_NAMES = {"probanda", "practice", "research", "litigator", "solicitor", "file-manager"}
+ALLOWED_NAMES = {"probanda", "practice", "legal", "research", "litigator", "solicitor", "file-manager"}
 
 FORBIDDEN_SUFFIXES = (".sql", ".db", ".sqlite", ".sqlite3", ".plugin", ".env", ".pem", ".key")
 

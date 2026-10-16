@@ -4,7 +4,7 @@ title: Application Response
 form_key: form-33
 version: not recorded
 template: subskills/publish-bcsc-form/templates/form-33.dotx
-emitter: source/practice/mcp/src/submission/forms/render-form33-filed-face.ts
+emitter: source/legal/mcp/src/submission/forms/render-form33-filed-face.ts
 type_file: draft/CAN/BC/BCSC/Documents/application-response.md
 conformed_to:
 ---

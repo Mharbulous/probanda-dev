@@ -4,7 +4,7 @@ The Probanda plugin for what the law is: legal research, citation, verification 
 
 ## What to install, and in what order
 
-`research` requires `practice`. Install `practice` first, then `research`. Its skills call the `data` server and the agents that `practice` ships, so without `practice` those calls fail.
+`research` requires `legal`. Install `legal` first, then `research`. Its skills call the `data` server and the agents that `legal` ships, so without `legal` those calls fail.
 
 For court work on a matter, install `litigator` after these two.
 

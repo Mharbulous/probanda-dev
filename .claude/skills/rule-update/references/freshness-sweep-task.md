@@ -8,7 +8,7 @@ A desktop-app scheduled task, `rule-freshness-sweep`, fires once a week, Monday 
 
 ## What it does
 
-1. Spawns `practice:docket-clerk` for workflow 12, "Freshness sweep (no matter)".
+1. Spawns `legal:docket-clerk` for workflow 12, "Freshness sweep (no matter)".
 2. Relays the clerk's reply as the run's final message.
 
 That is all. It never runs `/rule-update`, never fetches a regulation's text, never asks for an approval, and never writes an overlay record, a deadline or an anchor. Its one write, made by the clerk, is a to-do whose description begins `Rule change:`. The next morning briefing shows that to-do as "Rule change detected — run /rule-update" (`executive-assistant`, Workflow 2), and the practitioner runs `/rule-update` in a session that is not drafting.
@@ -18,7 +18,7 @@ That is all. It never runs `/rule-update`, never fetches a regulation's text, ne
 The prompt names its only write, because the desktop app's scheduled-run preamble otherwise tells the run to skip writes the prompt does not name:
 
 ```text
-Weekly rule-freshness sweep. Spawn practice:docket-clerk with this prompt: "Freshness sweep (workflow 12). No matter." Its only write is a practice-data to-do whose description begins "Rule change:", which you may let it make. Do not run /rule-update, fetch any regulation, or write any overlay record, deadline or anchor. Final message: the clerk's reply, verbatim.
+Weekly rule-freshness sweep. Spawn legal:docket-clerk with this prompt: "Freshness sweep (workflow 12). No matter." Its only write is a practice-data to-do whose description begins "Rule change:", which you may let it make. Do not run /rule-update, fetch any regulation, or write any overlay record, deadline or anchor. Final message: the clerk's reply, verbatim.
 ```
 
 ## Installing it

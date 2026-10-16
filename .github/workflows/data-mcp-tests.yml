@@ -1,4 +1,4 @@
-# Runs the Probanda data server suite (source/practice/mcp, the Node tiered runner) on a clean
+# Runs the Probanda data server suite (source/legal/mcp, the Node tiered runner) on a clean
 # Windows checkout. Ported from CoClerk's litigation-mcp-tests.yml (shape settled there on #696 and #701). Windows only: the runtime resolves paths with
 # path.win32. Since 2026-09-24 this is the only place the suite runs before packaging: the packager
 # builds the bundle but no longer runs the tests. The daily run files each failing test file as a
@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           bash .github/scripts/changed-since-tested.sh data-mcp-tests.yml
-          '^(\.claude/skills/|source/practice/|source/research/|source/mcp-shared/|\.github/workflows/data-mcp-tests\.yml$)'
+          '^(\.claude/skills/|source/legal/|source/research/|source/mcp-shared/|\.github/workflows/data-mcp-tests\.yml$)'
 
   test:
     needs: changed
@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: source/practice/mcp
+        working-directory: source/legal/mcp
     steps:
       - name: Allow long paths
         run: git config --global core.longpaths true
@@ -66,7 +66,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .claude/skills
-            source/practice
+            source/legal
             source/research
             source/mcp-shared
 

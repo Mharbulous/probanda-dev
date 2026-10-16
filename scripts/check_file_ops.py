@@ -6,7 +6,7 @@ Usage:
   python scripts/check_file_ops.py --report   also list every operation found with its ruling
 
 Commandment 7: file-manager is the only plugin that renames, moves, changes or
-deletes a file Probanda did not create. Every other plugin (practice, research,
+deletes a file Probanda did not create. Every other plugin (legal, research,
 litigator, solicitor) may do that only to a file Probanda created: its own
 rendered outputs, temp files, databases, knowledge overlay, run folders. Any
 other file goes through file-manager, conditionally: without it the step stops
@@ -60,7 +60,7 @@ SKIP_DIRS = {"__pycache__", "tests", "test", "determinizing-tests", "evals", ".p
 SKILL_EXTS = {".md", ".py", ".sh", ".ps1", ".bat", ".cmd", ".js", ".mjs", ".ts"}
 # The entry point of each MCP server, by its key in a plugin's .mcp.json.
 SERVER_ENTRIES = {
-    "data": "source/practice/mcp/src/index.ts",
+    "data": "source/legal/mcp/src/index.ts",
     "canlii": "source/research/canlii-mcp/src/index.ts",
     "commons": "source/research/commons-mcp/src/index.ts",
 }

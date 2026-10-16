@@ -8,29 +8,29 @@
   "forceRemoveDeletedPlugins": true,
   "plugins": [
     {
-      "name": "practice",
-      "source": "./plugins/practice",
-      "description": "The base plugin: firm records, time, billing, case data and deadlines. Requires nothing. Install it first: every other Probanda plugin requires it."
+      "name": "legal",
+      "source": "./plugins/legal",
+      "description": "The core plugin: firm records, time, billing, case data and deadlines. Requires nothing. Install it first: every other Probanda plugin requires it."
     },
     {
       "name": "research",
       "source": "./plugins/research",
-      "description": "What the law is: legal research, citation and verification. Requires practice. Install practice first, then research."
+      "description": "What the law is: legal research, citation and verification. Requires legal. Install legal first, then research."
     },
     {
       "name": "litigator",
       "source": "./plugins/litigator",
-      "description": "Court work on a matter: applying the law to the facts, drafting, court forms and filing packages. Requires practice and research. Install practice, then research, then litigator."
+      "description": "Court work on a matter: applying the law to the facts, drafting, court forms and filing packages. Requires legal and research. Install legal, then research, then litigator."
     },
     {
       "name": "solicitor",
       "source": "./plugins/solicitor",
-      "description": "Reserved for solicitor's work. Ships no skills yet. Requires practice. Install practice first."
+      "description": "Reserved for solicitor's work. Ships no skills yet. Requires legal. Install legal first."
     },
     {
       "name": "file-manager",
       "source": "./plugins/file-manager",
-      "description": "Optional. Every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create: matter housekeeping, routing accounting files, applying approved renames. Without it, Probanda only reads or copies those files. Requires practice. Install practice first, then file-manager."
+      "description": "Optional. Every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create: matter housekeeping, routing accounting files, applying approved renames. Without it, Probanda only reads or copies those files. Requires legal. Install legal first, then file-manager."
     }
   ]
 }

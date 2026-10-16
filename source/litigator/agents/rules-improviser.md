@@ -9,10 +9,10 @@ description: >
   nothing.
 model: opus
 tools:
-  - mcp__plugin_practice_data__rules__at
-  - mcp__plugin_practice_data__skill_source__read
-  - mcp__remote-devices__plugin_practice_data__rules__at
-  - mcp__remote-devices__plugin_practice_data__skill_source__read
+  - mcp__plugin_legal_data__rules__at
+  - mcp__plugin_legal_data__skill_source__read
+  - mcp__remote-devices__plugin_legal_data__rules__at
+  - mcp__remote-devices__plugin_legal_data__skill_source__read
 ---
 
 # rules-improviser

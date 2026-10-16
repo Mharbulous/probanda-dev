@@ -93,7 +93,7 @@ ORDER BY instruction_id;
 
 ## Step 2 — Dispatch the verifier (session-isolated)
 
-Dispatch the read-only `practice:verify-source` agent, whose body mirrors
+Dispatch the read-only `legal:verify-source` agent, whose body mirrors
 [`../agents/verify-source.md`](../agents/verify-source.md), in a session
 **isolated from the extractor and from every prior verifier of this pass** —
 same-context verification is not verification
@@ -288,7 +288,7 @@ WHERE treating_authority_id = ? OR treated_authority_id = ?;
 
 ### D3 — Dispatch and validate
 
-Dispatch the read-only `practice:verify-caselaw` agent, whose body mirrors
+Dispatch the read-only `legal:verify-caselaw` agent, whose body mirrors
 [`../agents/verify-caselaw.md`](../agents/verify-caselaw.md), in a session isolated
 from the extractor. Step 2's dispatch-path and unavailability rules apply here
 unchanged — never substitute another agent, and an unavailable, failed or malformed

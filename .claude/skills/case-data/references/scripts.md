@@ -128,7 +128,7 @@ reasons stated at their own entry below):
 - `resolve_paths.resolve_pointer(..., migrate_only=True)` is the schema-version
   guard's escape hatch. Its callers are `migrate_engine.py` (the operative one),
   `rebuild.py --migrate`, and `resolve_pointer.py --migrate-only`. The `case_data__query`/`case_data__execute` backend
-  (`source/practice/mcp/src/case/backend.ts`) carries its own hand-ported
+  (`source/legal/mcp/src/case/backend.ts`) carries its own hand-ported
   resolver with **no such parameter**, which is what keeps the bypass off the
   read path — never "simplify" that backend into importing this module.
 - After a bare `rebuild.py`, run `dump.py` so

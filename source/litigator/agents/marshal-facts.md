@@ -13,10 +13,10 @@ tools:
   - Glob
   - Grep
   - Skill
-  - mcp__plugin_practice_data__skill_source__read
-  - mcp__plugin_practice_data__case_data__query
-  - mcp__remote-devices__plugin_practice_data__skill_source__read
-  - mcp__remote-devices__plugin_practice_data__case_data__query
+  - mcp__plugin_legal_data__skill_source__read
+  - mcp__plugin_legal_data__case_data__query
+  - mcp__remote-devices__plugin_legal_data__skill_source__read
+  - mcp__remote-devices__plugin_legal_data__case_data__query
 ---
 
 # marshal-facts
@@ -40,8 +40,8 @@ the only mode). Each criterion carries a `ref`, its `text`, its `requirement_typ
 
 ## 2. Tool availability
 
-1. Call the tool `mcp__plugin_practice_data__skill_source__read` (in a Cowork Project
-   session, `mcp__remote-devices__plugin_practice_data__skill_source__read`) to fetch every
+1. Call the tool `mcp__plugin_legal_data__skill_source__read` (in a Cowork Project
+   session, `mcp__remote-devices__plugin_legal_data__skill_source__read`) to fetch every
    skill file you need. Each file arrives as text with no location on your filesystem: fetch
    any further reference inside it with that same tool (its description says how to form the
    path), never with a native file read, and never by requesting folder access to the repo.

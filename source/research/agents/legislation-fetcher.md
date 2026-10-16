@@ -9,20 +9,20 @@ description: >
   hides the text or shows no "current to" date.
 model: sonnet
 tools:
-  - mcp__plugin_practice_data__skill_source__read
-  - mcp__plugin_practice_data__sources__fetch
-  - mcp__plugin_practice_data__knowledge__read
-  - mcp__plugin_practice_data__knowledge__list
-  - mcp__plugin_practice_data__knowledge__write
-  - mcp__plugin_practice_data__research_filing__list_law_folder
-  - mcp__plugin_practice_data__research_filing__file_fetched
-  - mcp__remote-devices__plugin_practice_data__skill_source__read
-  - mcp__remote-devices__plugin_practice_data__sources__fetch
-  - mcp__remote-devices__plugin_practice_data__knowledge__read
-  - mcp__remote-devices__plugin_practice_data__knowledge__list
-  - mcp__remote-devices__plugin_practice_data__knowledge__write
-  - mcp__remote-devices__plugin_practice_data__research_filing__list_law_folder
-  - mcp__remote-devices__plugin_practice_data__research_filing__file_fetched
+  - mcp__plugin_legal_data__skill_source__read
+  - mcp__plugin_legal_data__sources__fetch
+  - mcp__plugin_legal_data__knowledge__read
+  - mcp__plugin_legal_data__knowledge__list
+  - mcp__plugin_legal_data__knowledge__write
+  - mcp__plugin_legal_data__research_filing__list_law_folder
+  - mcp__plugin_legal_data__research_filing__file_fetched
+  - mcp__remote-devices__plugin_legal_data__skill_source__read
+  - mcp__remote-devices__plugin_legal_data__sources__fetch
+  - mcp__remote-devices__plugin_legal_data__knowledge__read
+  - mcp__remote-devices__plugin_legal_data__knowledge__list
+  - mcp__remote-devices__plugin_legal_data__knowledge__write
+  - mcp__remote-devices__plugin_legal_data__research_filing__list_law_folder
+  - mcp__remote-devices__plugin_legal_data__research_filing__file_fetched
 skills: []
 maxTurns: 40
 ---

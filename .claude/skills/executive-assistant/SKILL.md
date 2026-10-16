@@ -33,7 +33,7 @@ matter status into a single actionable recommendation. Two invocation modes shar
 mode also sends one email ([Workflow 3](#workflow-3-briefing-delivery-morning-briefing-mode-only));
 on-demand runs are strictly read-only and never email.
 
-Reads from: `task-prioritization` (ranked to-do registry and due nudges), `practice:docket-clerk`
+Reads from: `task-prioritization` (ranked to-do registry and due nudges), `legal:docket-clerk`
 (upcoming deadlines), and `practice-data` (matter context and trust balances via `ar-data`, the WIP
 silence signal via `trust-summary` and `time-entries`, matter status via `read-signals`).
 
@@ -57,7 +57,7 @@ Run **`ar-data`** first. On error, report it and stop. Otherwise build the matte
 its non-closed matters (`matt_num`, `client_name`, matter row id, `regular_trust`, WIP hours, and
 payment-in-flight), keyed by matter row id to enrich deadlines and signals below.
 
-1. **Upcoming deadlines.** Spawn `practice:docket-clerk` for its **workflow 5** ("Query deadlines for a matter (or
+1. **Upcoming deadlines.** Spawn `legal:docket-clerk` for its **workflow 5** ("Query deadlines for a matter (or
    all matters)") as an all-matters sweep — never raw `active-deadlines`. Going through workflow 5
    inherits its Step-0 rule-freshness gate, its prominent conflicted-anchor reporting, and its
    `rule_stale` / `shift_pending` / `limited_day` / `practitioner_choice` flag surfacing; offline it degrades to "freshness
@@ -83,7 +83,7 @@ Report data gaps explicitly — never silently omit matters:
 
 | Condition | Report |
 |-----------|--------|
-| the deadline sweep returns no deadlines | "No active deadlines on file — spawn `practice:docket-clerk` to record court dates first." |
+| the deadline sweep returns no deadlines | "No active deadlines on file — spawn `legal:docket-clerk` to record court dates first." |
 | `read-signals` returns no signals across matters | "No matter status signals on file — run `matter-status-tracking` to set them up." |
 | `open-tasks` (via `task-prioritization`) returns nothing | "No open to-dos on file — add to-dos via `task-prioritization`." |
 | `ar-data` returns no matters | "No matters found — check that `retainer-tracking` has been imported." |
@@ -127,14 +127,14 @@ file. The full listings stay one question away.
      daily**, until it is superseded or resolved. A deadline that crossed nothing today does not
      appear. `not_applicable` deadlines (the other side's obligation) invert this: never ladder-crossed,
      never reported before their due date — surface one only once it is overdue and its
-     `expiry_notified_at` is unset, then immediately spawn `practice:docket-clerk` to stamp
+     `expiry_notified_at` is unset, then immediately spawn `legal:docket-clerk` to stamp
      `expiry_notified_at` on it (via `upsert-deadline`) so it does not repeat tomorrow; label it
      distinctly from an overdue own-side deadline (e.g. "other side's deadline expired"), since it is
      informational, not a to-do of ours. `dismissed` deadlines never appear — `active-deadlines`
      excludes them from the sweep already. A deadline's `practitioner_choice` alternatives (same
      matter, deadline type and party, each with its own `scenario_label`) are **one item**: run the
      ladder and overdue tests on the earliest alternative's date and show that date flagged
-     `practitioner_choice`, with "N alternatives, unresolved — choose via `practice:docket-clerk`".
+     `practitioner_choice`, with "N alternatives, unresolved — choose via `legal:docket-clerk`".
      Never present any alternative as the deadline.
    - **Flags** — WIP silence on funded files; unconfirmed matter lifecycle signals; and each open
      to-do whose description begins `Rule change:` (written by the docket-clerk's rule-freshness
@@ -152,7 +152,7 @@ file. The full listings stay one question away.
 Runs after Workflow 2 has composed the briefing (or its two-line quiet summary, or its data-gap
 notice). On-demand runs skip this workflow. The email goes out through the iCloud desktop
 extension's `mail_send_email` tool, written by the practitioner's executive assistant, **Claudia**.
-The extension is kept for this send alone: all mail reading goes through the practice data server's
+The extension is kept for this send alone: all mail reading goes through the legal plugin's data server's
 `mail__*` tools.
 Never call a Hostinger tool or endpoint (`email_call_api_read`, `email_call_api_write`).
 
@@ -301,7 +301,7 @@ Rules:
 - **Re-calculating deadline dates** — read the stored deadline items; never recalculate
 - **Advancing nudges on an on-demand run** — only the cron-fired briefing advances; an afternoon "what's next?" must not silently consume tomorrow morning's reminder
 - **Reporting the full deadline listing daily** — the briefing is an exception report; the full list is on request
-- **Fetching deadline data via raw `active-deadlines`** — go through `practice:docket-clerk` workflow 5, or the briefing skips the rule-freshness and anchor-conflict gates
+- **Fetching deadline data via raw `active-deadlines`** — go through `legal:docket-clerk` workflow 5, or the briefing skips the rule-freshness and anchor-conflict gates
 - **Surfacing an overdue `not_applicable` deadline without stamping `expiry_notified_at`** — this is exactly the bug the status exists to fix: without the stamp, the same other-side deadline resurfaces as "overdue" every single run
 - **Reaching practice data other than by a `practice-data` operation** — invoke the operation; never resolve a database path
 - **Wrapping deadline reads but not signal reads (or vice versa)** — both are

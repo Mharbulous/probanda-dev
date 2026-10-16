@@ -20,7 +20,7 @@ Configuration and data details for the practitioner's sent mail. Load this file 
 
 Search each in-scope folder separately: a search does not include the folder's subfolders (checked live on #1261). `/timecamping-data`'s ingest script refuses a row from any folder other than the four in scope, so a folder added to this table after review must be added to the folders that script accepts as well.
 
-**The route is the practice plugin's `data` server.** It reads the mailbox over IMAP with the credential set once through `mail__configure_credential`. The read uses exactly two of its mail tools, `mail__list_folders` and `mail__search_emails`. Never call any other:
+**The route is the legal plugin's `data` server.** It reads the mailbox over IMAP with the credential set once through `mail__configure_credential`. The read uses exactly two of its mail tools, `mail__list_folders` and `mail__search_emails`. Never call any other:
 
 - Its mail write, `mail__save_draft`. build-timeline never writes to a source, and marking a message read is a write.
 - Its body reads: `mail__get_email`, `mail__download_attachment`, and `mail__search_emails` with `include_body: true`. This source is metadata only, never a body or an attachment.

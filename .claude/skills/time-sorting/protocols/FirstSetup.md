@@ -177,7 +177,7 @@ Summarize what was configured:
 > - **TimeCamp**: Connected (API token stored)
 > - **Google Calendar**: Connected (MCP authenticated)
 > - **iCloud Calendar**: Registered (read through the Probanda mail connector; Work and Home only)
-> - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the practice plugin's mail tools; read once that copy is confirmed complete)
+> - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the legal plugin's mail tools; read once that copy is confirmed complete)
 > - **Telus Business Connect**: Ready (CSV-based, no setup needed)
 > - **SyncoPaid**: Registered (evidence capture status checked live on each build)
 > - **[unselected source]**: Not used (registered as disabled)

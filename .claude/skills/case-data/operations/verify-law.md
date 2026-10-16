@@ -65,7 +65,7 @@ If rendering fails, the document is **unresolvable for this pass**: report the r
 
 ## 3. Dispatch the verifier (session-isolated)
 
-Dispatch the read-only `practice:verify-edges` agent, whose body mirrors [`../agents/verify-edges.md`](../agents/verify-edges.md) — one dispatch **per authority document**, in a session isolated from the agent that extracted the edges (`../shared/verification-protocol.md`) — a fresh subagent, never `isolation:"worktree"` (matter dirs aren't git repos). Same-context verification is not verification.
+Dispatch the read-only `legal:verify-edges` agent, whose body mirrors [`../agents/verify-edges.md`](../agents/verify-edges.md) — one dispatch **per authority document**, in a session isolated from the agent that extracted the edges (`../shared/verification-protocol.md`) — a fresh subagent, never `isolation:"worktree"` (matter dirs aren't git repos). Same-context verification is not verification.
 
 Provide exactly:
 

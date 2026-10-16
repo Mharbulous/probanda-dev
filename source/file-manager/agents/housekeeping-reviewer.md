@@ -9,8 +9,8 @@ tools:
   - Bash
   - mcp__workspace__bash
   - Skill
-  - mcp__plugin_practice_data__skill_source__read
-  - mcp__remote-devices__plugin_practice_data__skill_source__read
+  - mcp__plugin_legal_data__skill_source__read
+  - mcp__remote-devices__plugin_legal_data__skill_source__read
 ---
 
 # Housekeeping reviewer
