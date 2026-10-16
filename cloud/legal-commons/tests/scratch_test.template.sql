@@ -3,7 +3,7 @@
 -- =============================================================================
 -- Not run as it stands. build_scratch_test.mjs puts this between the migration
 -- and the down script, renames the schema to a scratch schema throughout, and
--- fills in the tidying cases in test 1.
+-- fills in the tidying cases in test 1 and the exception-gaps query in test 11.
 --
 -- Each test records one row through pg_temp.lc_check. A test that raises an
 -- error it does not expect stops the whole run, and the transaction around the
@@ -112,7 +112,10 @@ $f$;
 insert into legal_commons.principle (principle_id, text) values
   ('00000000-0000-0000-0000-0000000000a1', 'Scratch principle one.'),
   ('00000000-0000-0000-0000-0000000000a2', 'Scratch principle two.'),
-  ('00000000-0000-0000-0000-0000000000a3', 'Scratch principle three.');
+  ('00000000-0000-0000-0000-0000000000a3', 'Scratch principle three.'),
+  ('00000000-0000-0000-0000-0000000000a4', 'Scratch principle four.'),
+  ('00000000-0000-0000-0000-0000000000a5', 'Scratch principle five.'),
+  ('00000000-0000-0000-0000-0000000000a6', 'Scratch principle six.');
 insert into legal_commons.criterion (criterion_id, principle_id, description, criterion_order) values
   ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'Scratch criterion', 1);
 insert into legal_commons.principle_redirects (old_id, canonical_id) values
@@ -457,6 +460,76 @@ begin
   r := legal_commons.clause_search('Scratch omega outcome', v_q, 'any', 1);
   perform pg_temp.lc_check('a retired test is not shown by the search',
     jsonb_array_length(r->'exact'->'tests') = 0, (r->'exact')::text);
+end $t$;
+
+-- 11. The exception-gaps query, read from queries/exception_gaps.sql. One
+-- consequence C. A: elements a and b, exception e. B: elements a and b. D:
+-- element a, exception e. A and B state one test and differ in e; D states
+-- another. D2 is a copy of D written by hand, as a hand edit could: it has the
+-- same exceptions as D, so the pair is no gap.
+do $t$
+declare
+  r jsonb;
+  v_rows jsonb;
+  v_row jsonb;
+  v_a uuid;
+  v_b uuid;
+  v_d uuid;
+  v_d2 uuid;
+  v_e uuid;
+  v_made integer := 0;
+  v_c jsonb := pg_temp.lc_clause('Scratch gap outcome', 61);
+  v_el_a jsonb := pg_temp.lc_clause('Scratch gap element a', 62) || '{"order":1,"type":"element"}'::jsonb;
+  v_el_b jsonb := pg_temp.lc_clause('Scratch gap element b', 63) || '{"order":2,"type":"element"}'::jsonb;
+  v_ex_e jsonb := pg_temp.lc_clause('Scratch gap exception e', 64) || '{"order":3,"type":"exception"}'::jsonb;
+begin
+  r := legal_commons.contribute_decomposition(jsonb_build_object(
+    'principle_id', '00000000-0000-0000-0000-0000000000a4', 'fingerprint', pg_temp.lc_vec(1),
+    'tests', jsonb_build_array(jsonb_build_object('ref', 'A', 'consequence', v_c,
+      'clauses', jsonb_build_array(v_el_a, v_el_b, v_ex_e)))), 'scratch');
+  v_a := (r->'tests'->>'A')::uuid;
+  v_made := v_made + coalesce((r->>'tests_made')::integer, 0);
+
+  r := legal_commons.contribute_decomposition(jsonb_build_object(
+    'principle_id', '00000000-0000-0000-0000-0000000000a5', 'fingerprint', pg_temp.lc_vec(1),
+    'tests', jsonb_build_array(jsonb_build_object('ref', 'B', 'consequence', v_c,
+      'clauses', jsonb_build_array(v_el_a, v_el_b)))), 'scratch');
+  v_b := (r->'tests'->>'B')::uuid;
+  v_made := v_made + coalesce((r->>'tests_made')::integer, 0);
+
+  r := legal_commons.contribute_decomposition(jsonb_build_object(
+    'principle_id', '00000000-0000-0000-0000-0000000000a6', 'fingerprint', pg_temp.lc_vec(1),
+    'tests', jsonb_build_array(jsonb_build_object('ref', 'D', 'consequence', v_c,
+      'clauses', jsonb_build_array(v_el_a, v_ex_e || '{"order":2}'::jsonb)))), 'scratch');
+  v_d := (r->'tests'->>'D')::uuid;
+  v_made := v_made + coalesce((r->>'tests_made')::integer, 0);
+
+  perform pg_temp.lc_check('three decompositions of one consequence with different conditions are stored as three records',
+    v_made = 3 and v_a is not null and v_b is not null and v_d is not null, r::text);
+
+  insert into legal_commons.test (consequence_clause_id, contributor)
+  values (pg_temp.lc_id('Scratch gap outcome'), 'scratch')
+  returning test_id into v_d2;
+  insert into legal_commons.test_clause (test_id, clause_order, clause_type, clause_id, points_to_test_id)
+  select v_d2, tc.clause_order, tc.clause_type, tc.clause_id, tc.points_to_test_id
+  from legal_commons.test_clause tc where tc.test_id = v_d;
+
+  v_e := pg_temp.lc_id('Scratch gap exception e');
+  execute 'select coalesce(jsonb_agg(to_jsonb(q)), ''[]''::jsonb) from (' || /*EXCEPTION_GAPS*/ || ') q'
+  into v_rows;
+  v_row := v_rows->0;
+  perform pg_temp.lc_check('the exception-gaps query lists the one pair that states one test with different exceptions, with the exception one lacks',
+    jsonb_array_length(v_rows) = 1
+      and (v_row->>'first_test_id')::uuid = least(v_a, v_b)
+      and (v_row->>'second_test_id')::uuid = greatest(v_a, v_b)
+      and v_row->(case when v_a < v_b then 'exceptions_only_in_first' else 'exceptions_only_in_second' end)
+          = jsonb_build_array(jsonb_build_object('clause_id', v_e))
+      and v_row->(case when v_a < v_b then 'exceptions_only_in_second' else 'exceptions_only_in_first' end) = '[]'::jsonb
+      and v_row->(case when v_a < v_b then 'first_stated_in' else 'second_stated_in' end)
+          = '["00000000-0000-0000-0000-0000000000a4"]'::jsonb
+      and v_row->(case when v_a < v_b then 'second_stated_in' else 'first_stated_in' end)
+          = '["00000000-0000-0000-0000-0000000000a5"]'::jsonb,
+    v_rows::text);
 end $t$;
 
 drop function pg_temp.lc_payload_three();

@@ -13,7 +13,7 @@
 // The tested SQL is the shipped SQL: the files are used as they are, with the
 // schema name replaced throughout and three kinds of line removed (the files'
 // own begin and commit, and the notice to PostgREST, which a scratch run must
-// not send).
+// not send). The query in queries/exception_gaps.sql is tested as it is too.
 //
 // The expected results of the tidying rule are computed here by the plugin's own
 // rank.ts, so the SQL version is tested against the real one.
@@ -45,6 +45,12 @@ const ascii = (value) =>
   JSON.stringify(value).replace(/[\u007f-￿]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 const cases = JSON.parse(read("tests", "tidy_cases.json")).map((text) => ({ in: text, out: normalize(text) }));
 const casesLiteral = `'${ascii(cases).replace(/'/g, "''")}'::jsonb`;
+
+// The exception-gaps query, as it is in its file, less its final semicolon, as a
+// dollar-quoted literal the template runs.
+const gaps = read("queries", "exception_gaps.sql").trimEnd().replace(/;$/, "");
+if (gaps.includes(";") || gaps.includes("$q$")) throw new Error("queries/exception_gaps.sql must be one statement");
+const gapsLiteral = `$q$${gaps}\n$q$`;
 
 const SNAPSHOT = `(
   select jsonb_build_object(
@@ -85,7 +91,9 @@ const script = [
   "create temp table lc_snapshot on commit drop as select " + SNAPSHOT + " as before;",
   shipped("migrations", "0001_consequence_structure.sql"),
   shipped("consequence_functions.sql"),
-  read("tests", "scratch_test.template.sql").replace("/*TIDY_CASES*/", () => casesLiteral),
+  read("tests", "scratch_test.template.sql")
+    .replace("/*TIDY_CASES*/", () => casesLiteral)
+    .replace("/*EXCEPTION_GAPS*/", () => gapsLiteral),
   shipped("migrations", "0001_down.sql"),
   `insert into lc_test_result (name, pass, detail)
 select 'the down script leaves the schema as it was before the migration',
@@ -104,7 +112,7 @@ if (new RegExp(LIVE, "i").test(script)) throw new Error("the live schema's name 
 if (/[^\x00-\x7f]/.test(read("tests", "scratch_test.template.sql"))) throw new Error("the template is not plain ASCII");
 // A character outside ASCII can be garbled between the file and the SQL editor,
 // which changes what the statement means. Write it as a \u escape instead.
-for (const file of [["migrations", "0001_consequence_structure.sql"], ["consequence_functions.sql"], ["migrations", "0001_down.sql"]]) {
+for (const file of [["migrations", "0001_consequence_structure.sql"], ["consequence_functions.sql"], ["migrations", "0001_down.sql"], ["queries", "exception_gaps.sql"]]) {
   if (/[^\x00-\x7f]/.test(read(...file))) throw new Error(`${file.join("/")} is not plain ASCII`);
 }
 
