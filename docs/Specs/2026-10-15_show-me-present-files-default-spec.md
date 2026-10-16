@@ -77,3 +77,18 @@ Scope: edit source only (skill text). In this repo that means: no `python script
 ## 10. Verify against HEAD before building
 
 Confirm `show-me/SKILL.md` still contains the quoted lines above and the version. Confirm the staged-file hook's name and behaviour. List any other file under `show-me/` that names either tool.
+
+### Verification against HEAD (b1ff6f6, 2026-10-15)
+
+| Claim in §2 / §10 | Found at HEAD | Result |
+|---|---|---|
+| Skill path | `.claude/skills/show-me/SKILL.md` | Confirmed |
+| Version 0.3.0 | `source/practice/plugin.json` `"version": "0.3.0"` | Confirmed |
+| Mechanics step 3(b) names both tools as equals | SKILL.md line 145, "(`mcp__cowork__present_files` or `SendUserFile`)" | Confirmed |
+| Contents row for the PC-file section | SKILL.md line 14, text as quoted | Confirmed |
+| Section "Presenting a file saved on the PC", opening and "The route." | SKILL.md lines 155-159, text as quoted | Confirmed |
+| Rule 2 names no tool | SKILL.md line 44, "send the document itself as a file the human can open" | Confirmed |
+| Highlight extract sentence has no Cowork case | SKILL.md line 169 | Confirmed |
+| Staged-file hook | `.claude/skills/show-me/hooks/staged-file-gate.py`: PreToolUse, matcher `SendUserFile`; only when `/mnt/user-data` exists, refuses a file neither under `/mnt/user-data/uploads/` nor `.pdf`/`.png`; local Cowork and the Code tab are never refused; exempt with `COCLERK_SENDFILE_ANY=1`; fails open | Confirmed (path is under `show-me/hooks/`, not top-level `hooks/`) |
+| Other files under `show-me/` naming either tool | Only `hooks/staged-file-gate.py` (out of scope). `scripts/` and `tests/` name neither | Confirmed |
+| Section title cited elsewhere | `draft/SKILL.md`, `find-document/SKILL.md`, `publish/subskills/publish-general/SUBSKILL.md` and the hook's refusal message cite "Presenting a file saved on the PC" | Retitle keeps that phrase as the title's start, so the citations still resolve |
