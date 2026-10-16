@@ -66,3 +66,46 @@ test("a stored file that is not valid DPAPI degrades to unconfigured without thr
   assert.equal(typeof state.credentialError, "string");
   assert.ok(state.credentialError.length > 0);
 });
+
+const { persistMailCredential } = await import("../build/mail/config.js");
+
+const OLD_FORMAT = { host: "imap.example.test", port: 993, secure: true, username: "someone", password: "fake-password-not-real" };
+
+test("a credential saved before the calendar fields existed loads unchanged", async (t) => {
+  const env = { LOCALAPPDATA: emptyStateDir(t) };
+  await persistMailCredential({ ...OLD_FORMAT }, env);
+  assert.deepEqual(await loadMailConfig(env), { credential: OLD_FORMAT });
+});
+
+test("the calendar and contacts fields round-trip through the saved file", async (t) => {
+  const env = { LOCALAPPDATA: emptyStateDir(t) };
+  const full = {
+    ...OLD_FORMAT,
+    davUsername: "someone@example.test",
+    caldavUrl: "https://caldav.example.test",
+    carddavUrl: "https://contacts.example.test",
+    timezone: "America/Vancouver",
+  };
+  await persistMailCredential(full, env);
+  assert.deepEqual(await loadMailConfig(env), { credential: full });
+});
+
+test("the env override carries the calendar fields and refuses a time zone that is not IANA", async (t) => {
+  const base = {
+    LOCALAPPDATA: emptyStateDir(t),
+    PROBANDA_MAIL_HOST: "imap.example.test",
+    PROBANDA_MAIL_USERNAME: "someone",
+    PROBANDA_MAIL_PASSWORD: "fake-password-not-real",
+    PROBANDA_DAV_USERNAME: "someone@example.test",
+    PROBANDA_CALDAV_URL: "https://caldav.example.test",
+    PROBANDA_CARDDAV_URL: "https://contacts.example.test",
+  };
+  const good = await loadMailConfig({ ...base, PROBANDA_TIMEZONE: "America/Vancouver" });
+  assert.equal(good.credential.davUsername, "someone@example.test");
+  assert.equal(good.credential.caldavUrl, "https://caldav.example.test");
+  assert.equal(good.credential.carddavUrl, "https://contacts.example.test");
+  assert.equal(good.credential.timezone, "America/Vancouver");
+  const bad = await loadMailConfig({ ...base, PROBANDA_TIMEZONE: "Pacific Standard Time" });
+  assert.equal(bad.credential, null);
+  assert.match(bad.credentialError, /not an IANA time zone/);
+});

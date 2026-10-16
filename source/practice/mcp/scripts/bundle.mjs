@@ -49,6 +49,22 @@ const REQUIRE_SHIM =
   'import { createRequire as __bundleCreateRequire } from "node:module";\n' +
   "const require = __bundleCreateRequire(import.meta.url);";
 
+// tsdav's ISO 8601 regexes hold `\d:\d`, which the bundle-no-host-path checks read as a drive
+// path ("d:\"). `\d[:]\d` matches exactly the same text, so the bundle keeps the checks clean
+// without loosening them. The build fails if tsdav stops holding the pattern, so this never
+// silently goes stale.
+const tsdavRegexes = {
+  name: "tsdav-iso-regex",
+  setup(b) {
+    b.onLoad({ filter: /[\\/]node_modules[\\/]tsdav[\\/]dist[\\/]tsdav\.mjs$/ }, async (args) => {
+      const source = await readFile(args.path, "utf-8");
+      const contents = source.replaceAll("\\d:\\d", "\\d[:]\\d");
+      if (contents === source) throw new Error(`tsdav-iso-regex: no \\d:\\d left in ${args.path}; drop this plugin`);
+      return { contents, loader: "js" };
+    });
+  },
+};
+
 async function bundle(entry, out, extraBanner = "") {
   await mkdir(dirname(out), { recursive: true });
   const result = await build({
@@ -62,6 +78,7 @@ async function bundle(entry, out, extraBanner = "") {
     // imapflow's logger calls pino() at import, and pino writes to stdout, the MCP channel:
     // a silent shim replaces it (src/mail/pino-shim.ts). Inert for an entry point without imapflow.
     alias: { pino: resolve(root, "src", "mail", "pino-shim.ts") },
+    plugins: [tsdavRegexes],
     banner: { js: `// build-stamp: ${STAMP_PLACEHOLDER}${extraBanner ? `\n${extraBanner}` : ""}` },
     define: {
       __LITIGATION_BUILD_STAMP__: JSON.stringify(STAMP_PLACEHOLDER),

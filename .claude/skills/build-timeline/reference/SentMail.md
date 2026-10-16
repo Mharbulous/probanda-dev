@@ -25,7 +25,7 @@ Search each in-scope folder separately: a search does not include the folder's s
 - Its mail write, `mail__save_draft`. build-timeline never writes to a source, and marking a message read is a write.
 - Its body reads: `mail__get_email`, `mail__download_attachment`, and `mail__search_emails` with `include_body: true`. This source is metadata only, never a body or an attachment.
 - Its other mail reads: `mail__get_latest_emails`, `mail__find_email_by_message_id`, `mail__find_thread_messages`, `mail__folder_status`.
-- Any tool of the iCloud desktop extension. Mail is never read through it. The iCloud calendar is a source of its own (`ICloudCalendar.md`).
+- Any `calendar__*` or `contacts__*` tool. The iCloud calendar is a source of its own (`ICloudCalendar.md`).
 
 ## Registry entry and coverage
 

@@ -641,19 +641,19 @@ test("the gate releases on each terminal iCloud exit and blocks on failed or abs
     { path: "route qualified, zero events", status: "empty", rows: 0, detail: null, releases: true },
     { path: "registry entry absent or disabled", status: "skipped", rows: 0, detail: null, releases: true },
     {
-      path: "extension unavailable",
+      path: "calendar not configured",
       status: "failed",
       rows: 0,
       detail:
-        "iCloud extension not available in this session; re-run 2026-09-01 in a session with the iCloud desktop " +
-        "extension, or set the icloud source's enabled to false to record skipped",
+        "iCloud calendar not configured: run mail__configure_credential with the calendar fields, or set the " +
+        "icloud source's enabled to false to record skipped",
       releases: false,
     },
     {
       path: "Work calendar missing",
       status: "failed",
       rows: 0,
-      detail: `iCloud calendar list has no Work calendar (${ICLOUD_WORK_URL}); reconnect the iCloud extension to that account, or update the identity table in ICloudCalendar.md`,
+      detail: `iCloud calendar list has no Work calendar (${ICLOUD_WORK_URL}); run mail__configure_credential again for that account, or update the identity table in ICloudCalendar.md`,
       releases: false,
     },
   ];

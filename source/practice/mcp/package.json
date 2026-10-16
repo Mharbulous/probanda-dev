@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "ical.js": "2.2.1",
     "imapflow": "2.0.5",
-    "pdfjs-dist": "5.1.91"
+    "pdfjs-dist": "5.1.91",
+    "tsdav": "2.3.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

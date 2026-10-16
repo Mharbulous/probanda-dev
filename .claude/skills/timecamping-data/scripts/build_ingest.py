@@ -248,7 +248,7 @@ def map_gcal(row, payload, where):
 
 
 def map_icloud(row, payload, where):
-    # The payload is the extension's event verbatim plus calendar_url, which the
+    # The payload is calendar__list_events' event verbatim plus calendar_url, which the
     # fetch records from the qualified calendar list (ICloudCalendar.md).
     calendar = need(payload, "calendar", where + " raw_payload")
     if calendar not in ICLOUD_CALENDARS:
@@ -263,7 +263,7 @@ def map_icloud(row, payload, where):
         "all_day": bool_flag(need(payload, "allDay", where + " raw_payload"), "allDay", where),
         "busy": bool_flag(need(payload, "busy", where + " raw_payload"), "busy", where),
         "title": need(payload, "title", where + " raw_payload"),
-        # The extension omits location when an event has none, and returns
+        # calendar__list_events omits location when an event has none, and returns
         # notes only when asked for them.
         "location": payload.get("location"),
         "notes": payload.get("notes"),

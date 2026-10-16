@@ -107,7 +107,7 @@ by Step 0.
 | SyncoPaid captures | **New fetch, capture-level** — not build-timeline's coarser block-level call, which discards the per-capture/OCR detail every SyncoPaid-heavy fixture needs. Redirect the `evidence query ... --include-ocr-text` output to a file, then convert it with `build_ingest.py syncopaid-captures`. Same live-opt-in gate as build-timeline's fetch. | `reference/SyncoPaidCaptures.md` |
 | TimeCamp time entries | **New fetch** — the practitioner's own amber/green timesheet rows, a different endpoint from build-timeline's computer-activity fetch. Redirect the entries read to a file, then convert it with `build_ingest.py timecamp-entries`, which filters to the practitioner's own `user_id`. Same token. | `reference/TimeCampEntries.md` |
 | Google Calendar | **Delegate** the same way: export prefix `activity:gcal:`, convert with `--source gcal`. build-timeline owns the registry entry and the fetch; this skill qualifies the route first and never reads a calendar independently. Registered as the fifth source in #454; the doctrine behind it is #421's. | `build-timeline/reference/GoogleCalendar.md` |
-| iCloud calendar | **Delegate** the same way: export prefix `activity:icloud:`, convert with `--source icloud`. build-timeline owns the registry entry and the fetch, which runs through the iCloud desktop extension in the practitioner's session; the plugin's own MCP reads mail, not the calendar. Only the `Work` and `Home` calendars are read; `Family` never is. Registered as the sixth source in #1199. | `build-timeline/reference/ICloudCalendar.md` |
+| iCloud calendar | **Delegate** the same way: export prefix `activity:icloud:`, convert with `--source icloud`. build-timeline owns the registry entry and the fetch, which runs through the practice plugin's `calendar__*` tools with the Probanda mail connector's credential. Only the `Work` and `Home` calendars are read; `Family` never is. Registered as the sixth source in #1199. | `build-timeline/reference/ICloudCalendar.md` |
 | Sent mail | **Delegate** the same way, but sent mail is stored as events, not activities: export prefix `event:sent_mail:`, convert with `--source sent_mail`. build-timeline owns the registry entry and the fetch, which reads the iCloud copy of the Microsoft 365 Sent Items through the practice data server's mail tools. Only `Sent Items`, `Sent Messages` and their `Outbound LEAP Matter Based Emails` subfolders are read. Subject, recipients and sent time only, never a body. Registered as the seventh source in #1261. | `build-timeline/reference/SentMail.md` |
 
 ## Workflow
@@ -180,8 +180,8 @@ terminal state — never `failed`. A registry with no entry for a source is
 `failed`, not `skipped`: only an explicit `enabled: false` may skip a source
 (the `timecamp` entry covers both TimeCamp sources). A genuine fetch error
 (bad token, malformed response, network failure) is `failed`, and so is the
-iCloud calendar in a session without the iCloud desktop extension, and sent
-mail on a machine with no mail credential: that day waits until the source can
+iCloud calendar on a machine whose mail credential has no calendar fields, and
+sent mail on a machine with no mail credential: that day waits until the source can
 be read. Sent mail is also `failed` on every day until its registry entry
 carries `copy_confirmed`. One source's failure never blocks another's fetch.
 
@@ -221,7 +221,7 @@ For the iCloud calendar the paths are:
 | Route qualified, zero events | `empty` — the calendar is sparse, and this is never `failed` |
 | Registry entry `enabled: false` | `skipped` |
 | Registry present but has no `icloud` entry | `failed`, `error_detail` saying there is no `time_tracking.sources` entry for `icloud` and to add one with `enabled: true` or `enabled: false` |
-| iCloud desktop extension not available in this session | `failed`, `error_detail` saying to re-run the date in a session that has the extension, or to set the `icloud` entry's `enabled: false` to record `skipped` |
+| Calendar not configured (`dav_not_configured`) | `failed`, `error_detail` saying calendar not configured: run `mail__configure_credential` with the calendar fields, or set the `icloud` entry's `enabled: false` to record `skipped` |
 | Calendar list is missing the `Work` calendar | `failed`, `error_detail` naming `Work`, its URL and the fix |
 | Calendar list is missing only the `Home` calendar | `fetched` or `empty` on `Work` alone, with `Home` named as missing in the run summary |
 | Any other fetch error | `failed`, `error_detail` carrying it and naming the fix |

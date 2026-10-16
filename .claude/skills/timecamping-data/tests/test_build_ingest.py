@@ -150,7 +150,7 @@ def gcal_event(event_id="abc123", all_day=False, start_ts="2026-09-01T18:00:00Z"
 
 def icloud_event(uid="E1F2-0001", calendar="Work", start_ts="2026-09-01T17:00:00Z",
                  end_ts="2026-09-01T17:30:00Z", drop=None, **payload_extra):
-    # The event as the iCloud extension's calendar_list_events returns it with
+    # The event as the practice data server's calendar__list_events returns it with
     # includeNotes, plus calendar_url, which the fetch records from the
     # qualified calendar list (build-timeline/reference/ICloudCalendar.md).
     payload = {
@@ -814,13 +814,14 @@ class BuildIngestTest(unittest.TestCase):
 
     def test_fetch_log_records_every_icloud_exit_that_produces_no_rows(self):
         # build-timeline/reference/ICloudCalendar.md, Exit paths: registry off,
-        # extension unavailable, Work calendar missing from the list.
+        # calendar not configured, Work calendar missing from the list.
         exits = [
             ("skipped", None),
-            ("failed", "iCloud extension not available in this session; re-run 2026-09-01 in a session with the"
-                       " iCloud desktop extension, or set the icloud source's enabled to false to record skipped"),
-            ("failed", "iCloud calendar list has no Work calendar (" + ICLOUD_WORK_URL + "); reconnect the iCloud"
-                       " extension to that account, or update the identity table in ICloudCalendar.md"),
+            ("failed", "iCloud calendar not configured: run mail__configure_credential with the calendar fields,"
+                       " or set the icloud source's enabled to false to record skipped"),
+            ("failed", "iCloud calendar list has no Work calendar (" + ICLOUD_WORK_URL + "); run"
+                       " mail__configure_credential again for that account, or update the identity table in"
+                       " ICloudCalendar.md"),
         ]
         for status, detail in exits:
             self.out.unlink(missing_ok=True)

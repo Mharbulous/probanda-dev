@@ -14,27 +14,27 @@ Configuration and data details for the practitioner's iCloud calendar. Load this
 
 This is the live calendar list of 2026-09-27. `Work` and `Home` are stored in full. `Home` is a personal calendar: a `Home` event may explain an unbilled gap but never supports billable time on its own (`/timecamping` Step 5). `/timecamping-data`'s ingest script refuses a row from any calendar other than `Work` or `Home`.
 
-**The route is the iCloud desktop extension, in the practitioner's own session.** It is a local desktop extension, so only a session that has it can read this calendar. The plugin's own MCP server reads mail, not the calendar. The read uses two of the extension's tools, `calendar_list_calendars` and `calendar_list_events`. Never call its calendar write tools (`calendar_create_event`, `calendar_update_event`, `calendar_delete_event`), its contacts tools, or any mail tool: mail is read through the practice data server's `mail__*` tools, never through the extension. build-timeline never writes to a source.
+**The route is the practice plugin's `data` server.** It reads the calendar over CalDAV with the Probanda mail connector's credential, set once through `mail__configure_credential` with the calendar fields (`time-sorting/protocols/FirstSetup.md`). The read uses exactly two of its calendar tools, `calendar__list_calendars` and `calendar__list_events`. Never call `calendar__get_event` or any `contacts__*` tool. The plugin has no calendar write tool, and build-timeline never writes to a source.
 
 ## Qualifying the route
 
 A read of the wrong calendar returns a successful result with no error, as the Google Calendar route showed (`GoogleCalendar.md`, ticket #421). So qualify the route before trusting any result:
 
-1. Call `calendar_list_calendars`.
-2. Look up each in-scope calendar by its **URL** from the table above. It is present only when the list holds that URL under the calendar's name in the table. A URL that is absent, or present under another name, counts as missing, because `calendar_list_events` selects calendars by name and a renamed calendar would read the wrong one.
-3. **`Work` missing**: stop without reading. The source is `failed`, with an `error_detail` naming the `Work` calendar, its URL and the fix: reconnect the extension to the account that holds it, or, if the calendar moved, update this table.
+1. Call `calendar__list_calendars`.
+2. Look up each in-scope calendar by its **URL** from the table above. It is present only when the list holds that URL under the calendar's name in the table. A URL that is absent, or present under another name, counts as missing, because `calendar__list_events` selects calendars by name and a renamed calendar would read the wrong one.
+3. **`Work` missing**: stop without reading. The source is `failed`, with an `error_detail` naming the `Work` calendar, its URL and the fix: run `mail__configure_credential` again for the account that holds it, or, if the calendar moved, update this table.
 4. **`Home` missing**: read `Work` alone. This is not a failure. Name `Home` as missing in the run summary.
 5. `Family` is never read, whatever the list shows.
 
 ## Fetching events
 
-Call `calendar_list_events` with:
+Call `calendar__list_events` with:
 
 - `calendars`: the qualified names, `["Work", "Home"]`, or `["Work"]` when `Home` is missing. **Never omit it.** The default is every calendar, `Family` included.
 - `includeNotes: true`.
 - `start` and `end`: both the target local date, `YYYY-MM-DD`. A date means the whole day, so the read covers exactly that day.
 
-The response carries `"timezone": "America/Vancouver"`. The extension expands a repeating event into one entry per occurrence. Each event includes:
+The response carries the configured time zone, `"timezone": "America/Vancouver"`. The tool expands a repeating event into one entry per occurrence. Each event includes:
 
 - `calendar`: the calendar's name
 - `title`
@@ -42,9 +42,9 @@ The response carries `"timezone": "America/Vancouver"`. The extension expands a 
 - `allDay`
 - `location`: absent when the event has none
 - `busy`
-- `uid`: the iCalendar UID. Every occurrence of a repeating event shares it, and the extension exposes no recurrence id
-- `url`, `etag`: the event's own resource address and version tag, used by the extension's write tools. Kept in `raw_payload` only
-- `notes`: only with `includeNotes`, trimmed by the extension to 500 characters, so a longer note arrives cut off
+- `uid`: the iCalendar UID. Every occurrence of a repeating event shares it
+- `url`, `etag`: the event's own resource address and version tag. Kept in `raw_payload` only
+- `notes`: only with `includeNotes`, trimmed by the tool to 500 characters, so a longer note arrives cut off
 
 **iCloud returns no `created` or `updated` time.** The Google Calendar staleness fingerprint (`updated == created` on a booking whose real time changed) and the created-to-start lead time are unavailable for this source.
 
@@ -79,9 +79,9 @@ Every exit records a status for `/timecamping`, because a registered source bloc
 | Route qualified, zero events | `empty` | none |
 | Registry entry `enabled: false` | `skipped` | none |
 | Registry present but has no `icloud` entry | `failed` | No `time_tracking.sources` entry for `icloud`; add one with `enabled: true` or `enabled: false` |
-| The iCloud extension is not available in this session | `failed` | Re-run the date in a session that has the iCloud desktop extension, or set the `icloud` entry's `enabled` to `false` to record `skipped` |
+| The calendar is not configured (`calendar__list_calendars` fails `dav_not_configured`) | `failed` | Calendar not configured: run `mail__configure_credential` with the calendar fields, or set the `icloud` entry's `enabled` to `false` to record `skipped` |
 | The calendar list has no `Work` calendar | `failed` | Names `Work`, its URL and the fix (qualification step 3) |
 | The calendar list has no `Home` calendar | `fetched` or `empty`, on `Work` alone | none. The run summary names `Home` as missing |
 | Any other error | `failed` | The error, and the fix |
 
-A missing extension is `failed`, not `skipped` (decided on #1199): the day waits for a session that can read the calendar. `enabled: false` is the deliberate way to record `skipped`.
+An unconfigured calendar is `failed`, not `skipped` (decided on #1199): the day waits until the calendar is configured. `enabled: false` is the deliberate way to record `skipped`.

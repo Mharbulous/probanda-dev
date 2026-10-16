@@ -1,4 +1,4 @@
-// build-stamp: ac6ec2048a5c
+// build-stamp: f058bd197389
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16993,7 +16993,7 @@ function resolveCaseDataRoot(env = process.env, fallback) {
     const derived = fallback?.() ?? null;
     if (derived !== null) return derived;
     throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Set "case_data_root" in coclerk.json (the path to your "0. CASE DATA" folder) or the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /practice:probanda-setup, and never write coclerk.json by hand.`
     );
   }
   let root;

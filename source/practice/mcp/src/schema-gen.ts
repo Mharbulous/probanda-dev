@@ -2854,15 +2854,22 @@ export function mailToolDefinitions(): ToolDefinition[] {
     {
       name: "mail__configure_credential",
       description:
-        "One-time setup of this machine's IMAP mail credential: `host` (for iCloud, imap.mail.me.com), `port` " +
-        "(default 993), `secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. " +
+        "One-time setup of this machine's Probanda mail connector: `host` (the IMAP server), `port` (default 993), " +
+        "`secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. To read the " +
+        "calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as " +
+        "America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from " +
+        "the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, " +
+        "https://contacts.icloud.com, and the Apple ID as `dav_username`. " +
         "Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, " +
         "host, username, next}: send the practitioner the `url`, a page on this computer where they type the password " +
-        "(for iCloud and most hosted mail an app-specific password, never the account password). The page signs in and " +
-        "reads INBOX's counts before saving, shows the result, and lets them retry; a credential that fails is not saved " +
-        "and the previous one stays. The password is saved on this computer, encrypted at rest, and never logged or " +
-        "returned. When they say it is done, call mail__configure_status. Only the newest link works. Writes only the " +
-        "credential file; nothing in the mailbox changes." +
+        "(for iCloud and most hosted mail an app-specific password, never the account password). The page signs in to " +
+        "mail and reads INBOX's counts, and signs in to the calendar and contacts servers when their URLs are given, " +
+        "before saving; it shows each result and lets them retry. A mail sign-in that fails saves nothing and the " +
+        "previous credential stays. A calendar or contacts sign-in that fails is shown as failed on the page and in " +
+        "mail__configure_status, and that service is saved as not configured while mail is saved. The password is saved " +
+        "on this computer, encrypted at rest, and never logged or returned. When they say it is done, call " +
+        "mail__configure_status. Only the newest link works. Writes only the credential file; nothing in the mailbox, " +
+        "calendar or contacts changes." +
         errors,
       inputSchema: {
         type: "object",
@@ -2872,6 +2879,10 @@ export function mailToolDefinitions(): ToolDefinition[] {
           secure: { type: "boolean" },
           username: { type: "string" },
           from_address: { type: "string" },
+          dav_username: { type: "string" },
+          caldav_url: { type: "string", description: "https URL of the CalDAV server. Needs timezone." },
+          carddav_url: { type: "string", description: "https URL of the CardDAV server." },
+          timezone: { type: "string", description: "IANA time zone the calendar tools read and show times in." },
         },
         required: ["host", "username"],
         additionalProperties: false,
@@ -2881,9 +2892,11 @@ export function mailToolDefinitions(): ToolDefinition[] {
     {
       name: "mail__configure_status",
       description:
-        "Report whether this machine has a mail credential: {configured, host, port, username, from_address, " +
-        "password_set, credential_error?}. Never returns the password or any hint of it. Call it before asking the " +
-        "practitioner for the credential, so a configured machine is not asked again. Read-only.",
+        "Report whether this machine has a Probanda mail connector credential: {configured, host, port, username, " +
+        "from_address, password_set, dav_username, caldav_url, carddav_url, timezone, calendar_configured, " +
+        "contacts_configured, dav_sign_in?, credential_error?}. `dav_sign_in` gives, for the last save in this " +
+        "session, why a calendar or contacts sign-in failed. Never returns the password or any hint of it. Call it " +
+        "before asking the practitioner for the credential, so a configured machine is not asked again. Read-only.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true },
     },
@@ -3074,6 +3087,112 @@ export function mailToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+// The calendar__* tools: the practitioner's calendar over CalDAV, signed in with
+// the Probanda mail connector's credential. Read-only; no tool writes an event.
+// Served by the `data` server only, never by file-manager's `files` server.
+export function calendarToolDefinitions(): ToolDefinition[] {
+  const errors =
+    " Errors: `dav_not_configured` (run mail__configure_credential with the calendar fields), `dav_auth` (the " +
+    "server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
+  return [
+    {
+      name: "calendar__list_calendars",
+      description:
+        "List the calendars of the Probanda mail connector's account that hold events: {calendars: [{name, url, " +
+        "color}]}. Use the names with calendar__list_events. Read-only." +
+        errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "calendar__list_events",
+      description:
+        "List calendar events in a date range, with repeating events expanded into individual occurrences (an " +
+        "occurrence moved on the phone shows at its new time; cancelled ones are left out). Times are shown in the " +
+        "configured timezone. Returns {timezone, count, warnings?, events: [{calendar, title, start, end, allDay, " +
+        "location?, notes?, status?, busy, recurrence?, alerts?, attendees?, uid, recurring?, occurrenceId?, " +
+        "modifiedOccurrence?, url, etag}]}. A timed event's start and end are ISO 8601 with the offset; an all-day " +
+        "event's are bare dates with an exclusive end. `notes` comes only with `includeNotes`, trimmed to 500 " +
+        "characters. An item that cannot be read is skipped and named in `warnings`. Read-only." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          start: { type: "string", description: "Range start: a date \"2026-09-28\" or local time \"2026-09-28T09:00\"." },
+          end: { type: "string", description: "Range end: a date (inclusive, whole day) or local time (exclusive)." },
+          calendars: { type: "array", items: { type: "string" }, description: "Calendar names to include. Default: all." },
+          includeNotes: { type: "boolean", description: "Include each event's notes (trimmed to 500 characters). Default false." },
+        },
+        required: ["start", "end"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "calendar__get_event",
+      description:
+        "Get the full details of one event (the whole series, for a repeating event) by the url from " +
+        "calendar__list_events: {url, etag, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, " +
+        "alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. A url that is not on the configured calendar " +
+        "server is refused, so the password is never sent elsewhere. Read-only." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { url: { type: "string", description: "Event url from calendar__list_events" } },
+        required: ["url"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+  ];
+}
+
+// The contacts__* tools: the practitioner's address book over CardDAV, signed in
+// with the Probanda mail connector's credential. Read-only; no tool writes a
+// contact. Served by the `data` server only.
+export function contactsToolDefinitions(): ToolDefinition[] {
+  const errors =
+    " Errors: `dav_not_configured` (run mail__configure_credential with the contacts fields), `dav_auth` (the " +
+    "server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
+  return [
+    {
+      name: "contacts__search",
+      description:
+        "Search the Probanda mail connector's contacts by name, organization, email or phone number (case-insensitive, " +
+        "partial match; phone digits are compared ignoring spaces and punctuation, from 3 digits). With no query, " +
+        "lists contacts alphabetically. Returns {total, returned, contacts: [{url, name, organization?, emails, " +
+        "phones}]}. Read-only." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Text to look for. Omit to list all." },
+          limit: { type: "integer", minimum: 1, description: "Default 50." },
+        },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "contacts__get",
+      description:
+        "Get full details of one contact by the url from contacts__search: {url, etag, uid, name, prefix?, firstName?, " +
+        "middleName?, lastName?, suffix?, organization?, department?, jobTitle?, emails: [{label?, value, " +
+        "preferred?}], phones: [same], addresses: [{label?, preferred?, poBox?, extended?, street, city, region, " +
+        "postalCode, country}], birthday?, notes?}. A url that is not on the configured contacts server is refused, " +
+        "so the password is never sent elsewhere. Read-only." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { url: { type: "string", description: "Contact url from contacts__search" } },
+        required: ["url"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+  ];
+}
+
 // The one tool list every host and every session sees: local-backed practice
 // tools, local-backed case-data tools, and the host-side file surface. This
 // litigation runtime has no Supabase surface and no layer-3 legal-commons
@@ -3090,6 +3209,8 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
     ...mailToolDefinitions(),
+    ...calendarToolDefinitions(),
+    ...contactsToolDefinitions(),
   ];
 }
 

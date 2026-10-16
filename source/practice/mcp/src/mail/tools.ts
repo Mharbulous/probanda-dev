@@ -35,10 +35,12 @@ import {
   type ImapClientFactory,
   type ImapClientLike,
 } from "./imap.js";
-import { servePasswordPage, type CredentialFields, type SaveOutcome } from "./page.js";
+import { servePasswordPage, type CredentialFields, type DavResult, type SaveOutcome } from "./page.js";
+import { probeDav, type DavContext } from "../dav/session.js";
+import { isValidTimeZone } from "../dav/tz.js";
 
 /** The part of the dispatch context the mail tools read. */
-export interface MailContext {
+export interface MailContext extends DavContext {
   mail: MailState;
   // Tests inject a fake client and a short timeout; the server uses neither.
   imapFactory?: ImapClientFactory;
@@ -164,6 +166,35 @@ async function configureCredential(context: MailContext, args: Args): Promise<un
     if (!PRINTABLE.test(value)) throw new ValidationError(`mail__configure_credential.${label} must hold printable characters only`);
   }
   const fields: CredentialFields = { host, port, secure: args.secure !== false, username, ...(fromAddress ? { fromAddress } : {}) };
+  const davUsername = String(args.dav_username ?? "").trim();
+  if (davUsername) {
+    if (!PRINTABLE.test(davUsername)) throw new ValidationError("mail__configure_credential.dav_username must hold printable characters only");
+    fields.davUsername = davUsername;
+  }
+  for (const [label, key] of [["caldav_url", "caldavUrl"], ["carddav_url", "carddavUrl"]] as const) {
+    const value = String(args[label] ?? "").trim();
+    if (!value) continue;
+    let parsed: URL | undefined;
+    try {
+      parsed = new URL(value);
+    } catch {
+      parsed = undefined;
+    }
+    if (!parsed || parsed.protocol !== "https:") {
+      throw new ValidationError(`mail__configure_credential.${label} must be an https URL, such as https://caldav.icloud.com`);
+    }
+    fields[key] = value;
+  }
+  const timezone = String(args.timezone ?? "").trim();
+  if (timezone) {
+    if (!isValidTimeZone(timezone)) {
+      throw new ValidationError(`mail__configure_credential.timezone "${timezone}" is not an IANA time zone, such as America/Vancouver`);
+    }
+    fields.timezone = timezone;
+  }
+  if (fields.caldavUrl && !fields.timezone) {
+    throw new ValidationError("mail__configure_credential.caldav_url needs timezone, an IANA time zone such as America/Vancouver");
+  }
   const url = await servePasswordPage(fields, (secret) => saveCredential(context, { ...fields, password: secret }));
   return {
     status: "awaiting_password",
@@ -176,22 +207,40 @@ async function configureCredential(context: MailContext, args: Args): Promise<un
   };
 }
 
-// Probe, then set live, then persist. A credential that fails the probe is not
-// saved and leaves the previous one in place. Nothing returned or thrown here
-// holds the password.
-async function saveCredential(context: MailContext, credential: MailCredential): Promise<SaveOutcome> {
-  if (!credential.password) throw new ValidationError("enter the password");
-  if (!PRINTABLE.test(credential.password)) throw new ValidationError("the password must hold printable characters only");
+// Probe, then set live, then persist. A credential whose mail sign-in fails is not
+// saved and leaves the previous one in place. A calendar or contacts sign-in that
+// fails is reported per service, and that service's URL is left out of what is
+// saved, so it reads as not configured rather than as working. Nothing returned
+// or thrown here holds the password.
+async function saveCredential(context: MailContext, typed: MailCredential): Promise<SaveOutcome> {
+  if (!typed.password) throw new ValidationError("enter the password");
+  if (!PRINTABLE.test(typed.password)) throw new ValidationError("the password must hold printable characters only");
 
   const inbox: Record<string, unknown> = await runImap(
-    credential,
+    typed,
     context.imapFactory ?? defaultImapFactory,
     "signing in",
     (client) => client.status("INBOX", { messages: true, unseen: true }),
     context.mailTimeoutMs ?? DEFAULT_TIMEOUT_MS
   );
+
+  const credential: MailCredential = { ...typed };
+  const dav: SaveOutcome["dav"] = {};
+  const failures: NonNullable<MailState["davSignIn"]> = {};
+  for (const [service, kind, key] of [["calendar", "caldav", "caldavUrl"], ["contacts", "carddav", "carddavUrl"]] as const) {
+    if (!typed[key]) continue;
+    const failure = await probeDav(context, typed, kind);
+    const result: DavResult = failure ? { ok: false, detail: failure } : { ok: true };
+    dav[service] = result;
+    if (failure) {
+      failures[service] = failure;
+      delete credential[key];
+    }
+  }
   context.mail.credential = credential;
   delete context.mail.credentialError;
+  if (Object.keys(failures).length) context.mail.davSignIn = failures;
+  else delete context.mail.davSignIn;
 
   const counts = { messages: inbox.messages, unseen: inbox.unseen };
   try {
@@ -201,12 +250,13 @@ async function saveCredential(context: MailContext, credential: MailCredential):
     return {
       persisted: false,
       inbox: counts,
+      dav,
       warning:
         "the credential works and is active for this session, but could not be saved to disk, so it " +
         `must be entered again after a restart: ${detail}`,
     };
   }
-  return { persisted: true, inbox: counts };
+  return { persisted: true, inbox: counts, dav };
 }
 
 async function configureStatus(state: MailState): Promise<unknown> {
@@ -218,6 +268,13 @@ async function configureStatus(state: MailState): Promise<unknown> {
     username: c?.username ?? null,
     from_address: c?.fromAddress ?? null,
     password_set: Boolean(c?.password),
+    dav_username: c?.davUsername ?? null,
+    caldav_url: c?.caldavUrl ?? null,
+    carddav_url: c?.carddavUrl ?? null,
+    timezone: c?.timezone ?? null,
+    calendar_configured: Boolean(c?.caldavUrl && c?.timezone),
+    contacts_configured: Boolean(c?.carddavUrl),
+    ...(state.davSignIn ? { dav_sign_in: state.davSignIn } : {}),
     ...(state.credentialError ? { credential_error: state.credentialError } : {}),
   };
 }

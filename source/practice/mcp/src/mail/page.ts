@@ -18,9 +18,16 @@ import type { MailCredential } from "./config.js";
 
 export type CredentialFields = Omit<MailCredential, "password">;
 
+export interface DavResult {
+  ok: boolean;
+  detail?: string;
+}
+
 export interface SaveOutcome {
   inbox: { messages: unknown; unseen: unknown };
   persisted: boolean;
+  // One entry per calendar or contacts server the fields named; a failed one was not saved.
+  dav?: { calendar?: DavResult; contacts?: DavResult };
   warning?: string;
 }
 
@@ -34,6 +41,7 @@ interface Pending {
 }
 
 const MAX_BODY = 4 * 1024;
+const TITLE = "Probanda mail connector";
 // Plain strings, not template literals: the src/mail/ scan refuses a template literal naming it.
 const SECRET_INPUT = '<input type="password" name="secret" autocomplete="current-password" required autofocus>';
 const SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an app-specific password, never the account password.";
@@ -75,7 +83,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (!m || !current || m[1] !== current.token) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new sign-in link.</p>");
   }
-  if (req.method === "GET") return page(res, 200, "Mail sign-in", form(current.fields));
+  if (req.method === "GET") return page(res, 200, TITLE, form(current.fields));
   if (req.method !== "POST") return page(res, 405, "Not allowed", "");
 
   const secret = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
@@ -84,18 +92,30 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     outcome = await current.save(secret);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return page(res, 200, "Mail sign-in", `<p class="error">Not saved: ${escape(message)}</p>${form(current.fields)}`);
+    return page(res, 200, TITLE, `<p class="error">Not saved: ${escape(message)}</p>${form(current.fields)}`);
   }
   if (pending === current) pending = undefined;
   const saved = outcome.persisted
     ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>"
     : `<p class="error">It works for this session only and could not be saved: ${escape(outcome.warning ?? "")}</p>`;
-  page(res, 200, "Signed in", `<p>Signed in. ${escape(String(outcome.inbox.messages))} messages in the inbox.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
+  page(res, 200, "Signed in", `<p>Signed in. ${escape(String(outcome.inbox.messages))} messages in the inbox.</p>${davLines(outcome)}${saved}<p>You can close this tab and return to Claude.</p>`);
+}
+
+function davLines(outcome: SaveOutcome): string {
+  const line = (label: string, r: DavResult | undefined): string =>
+    !r ? "" : r.ok ? `<p>${label}: signed in.</p>` : `<p class="error">${label}: sign-in failed, so it was not saved: ${escape(r.detail ?? "")}</p>`;
+  return line("Calendar", outcome.dav?.calendar) + line("Contacts", outcome.dav?.contacts);
 }
 
 function form(fields: CredentialFields): string {
+  const row = (label: string, value: string | undefined): string => (value ? `<dt>${label}</dt><dd>${escape(value)}</dd>` : "");
   return (
-    `<dl><dt>Server</dt><dd>${escape(fields.host)}:${fields.port}</dd><dt>Username</dt><dd>${escape(fields.username)}</dd></dl>` +
+    `<dl><dt>Server</dt><dd>${escape(fields.host)}:${fields.port}</dd><dt>Username</dt><dd>${escape(fields.username)}</dd>` +
+    row("Calendar and contacts username", fields.davUsername) +
+    row("Calendar server", fields.caldavUrl) +
+    row("Time zone", fields.timezone) +
+    row("Contacts server", fields.carddavUrl) +
+    "</dl>" +
     '<form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + "</label>" +
     "<button type=\"submit\">Sign in and save</button></form>" +
     "<p class=\"note\">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>"

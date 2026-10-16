@@ -56,8 +56,8 @@ For each supported source the user selected, run its setup sub-procedure. These 
 
 ### 2b-2: iCloud Calendar Setup
 
-1. No stored credential. The calendar is read through the iCloud desktop extension in the practitioner's own session (`build-timeline/reference/ICloudCalendar.md`).
-2. Inform: *"Your iCloud calendar is read through the iCloud desktop extension, so a session without that extension can't read it. Only your Work and Home calendars are read, never Family."*
+1. The calendar is read through the Probanda mail connector (`build-timeline/reference/ICloudCalendar.md`). Call `mail__configure_status`. When `calendar_configured` is false, set it up with the same `mail__configure_credential` call that sets up mail, adding the calendar fields `caldav_url` and `timezone`, and `dav_username` when the calendar sign-in name differs from the mail username. For iCloud: `imap.mail.me.com`, `https://caldav.icloud.com`, `America/Vancouver` or the practitioner's own zone, and the Apple ID as `dav_username`. The practitioner types the app-specific password on the page it links to, never in chat.
+2. Inform: *"Your calendar is read through the Probanda mail connector, with the same app-specific password as your mail. Only your Work and Home calendars are read, never Family."*
 
 ### 2b-3: Mail Setup
 
@@ -131,7 +131,7 @@ Save the time-tracking configuration under a new `time_tracking` top-level key o
         "id": "icloud",
         "type": "calendar",
         "enabled": true,
-        "auth": "desktop_extension",
+        "auth": "mcp",
         "reference": "build-timeline/reference/ICloudCalendar.md"
       },
       {
@@ -164,7 +164,6 @@ Save the time-tracking configuration under a new `time_tracking` top-level key o
 Write an entry for every supported source: `enabled: true` for the sources the user selected, `enabled: false` for the rest. A registry written here therefore never lacks an entry, so every `skipped` status traces to an explicit choice. The `auth` field indicates how credentials are managed:
 - `"store"` — API token stored in the time-pipeline store
 - `"mcp"` — MCP server handles authentication
-- `"desktop_extension"` — no credential is stored or held by CoClerk; the source is read through a local desktop extension in the practitioner's own session, so a session without that extension cannot read it
 - `"csv_per_use"` — no persistent auth, user provides data each time
 - `"cli_opt_in"` — no credential is stored or held; access is a live on/off toggle inside the tool's own settings, re-checked before every fetch
 
@@ -177,7 +176,7 @@ Summarize what was configured:
 > "All set. Here's your time-tracking setup:
 > - **TimeCamp**: Connected (API token stored)
 > - **Google Calendar**: Connected (MCP authenticated)
-> - **iCloud Calendar**: Registered (read through the iCloud desktop extension; Work and Home only)
+> - **iCloud Calendar**: Registered (read through the Probanda mail connector; Work and Home only)
 > - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the practice plugin's mail tools; read once that copy is confirmed complete)
 > - **Telus Business Connect**: Ready (CSV-based, no setup needed)
 > - **SyncoPaid**: Registered (evidence capture status checked live on each build)

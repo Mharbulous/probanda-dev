@@ -96,6 +96,9 @@ import type { KnowledgeSeams } from "./knowledge/tree.js";
 import type { MailState } from "./mail/config.js";
 import type { ImapClientFactory } from "./mail/imap.js";
 import { callMailTool } from "./mail/tools.js";
+import type { DavClientFactory } from "./dav/session.js";
+import { callCalendarTool } from "./calendar/tools.js";
+import { callContactsTool } from "./contacts/tools.js";
 
 export interface DispatchContext {
   // The practice store: practice.db's items (SQLite via host Python — spec §5/§10), read
@@ -106,6 +109,11 @@ export interface DispatchContext {
   // Tests only: a fake IMAP client and a short timeout for the mail__* tools.
   imapFactory?: ImapClientFactory;
   mailTimeoutMs?: number;
+  // Tests only: a fake CalDAV/CardDAV client, a fake fetch and a short timeout for the
+  // calendar__* and contacts__* tools, which sign in with the mail credential.
+  davClientFactory?: DavClientFactory;
+  davFetch?: typeof fetch;
+  davTimeoutMs?: number;
 }
 
 let definitions: Map<string, ToolDefinition> | undefined;
@@ -601,6 +609,14 @@ export async function callTool(
 
   if (name.startsWith("mail__")) {
     return callMailTool(context, name, args);
+  }
+
+  if (name.startsWith("calendar__")) {
+    return callCalendarTool(context, name, args);
+  }
+
+  if (name.startsWith("contacts__")) {
+    return callContactsTool(context, name, args);
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);

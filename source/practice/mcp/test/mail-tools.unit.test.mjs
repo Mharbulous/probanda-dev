@@ -241,7 +241,20 @@ test("with no credential every mail tool but the two configure tools refuses mai
     assert.match(error.message, /mail__configure_credential/, name);
   }
   const status = await callTool(ctx, "mail__configure_status", {});
-  assert.deepEqual(status, { configured: false, host: null, port: null, username: null, from_address: null, password_set: false });
+  assert.deepEqual(status, {
+    configured: false,
+    host: null,
+    port: null,
+    username: null,
+    from_address: null,
+    password_set: false,
+    dav_username: null,
+    caldav_url: null,
+    carddav_url: null,
+    timezone: null,
+    calendar_configured: false,
+    contacts_configured: false,
+  });
 });
 
 test("configure_credential refuses a password argument, so a password never passes through a tool call", async () => {
@@ -353,17 +366,23 @@ test("download_attachment writes the part under save_dir, never overwrites, and 
   assert.match(missing.message, /save_dir must be the absolute path of an existing folder/);
 });
 
-test("no file under src/mail/ calls an IMAP write, opens a folder writable, or puts the password in a message", () => {
+test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ calls an IMAP write, opens a folder writable, or puts the password in a message", () => {
   const forbidden = [
     "messageDelete", "messageMove", "messageCopy", "messageFlagsAdd", "messageFlagsRemove", "messageFlagsSet",
     "mailboxCreate", "mailboxDelete", "mailboxRename",
   ];
-  const files = readdirSync(MAIL_SRC).filter((f) => f.endsWith(".ts"));
-  assert.ok(files.includes("tools.ts") && files.includes("imap.ts"), `src/mail/ holds ${files.join(", ")}`);
+  const mailFiles = readdirSync(MAIL_SRC).filter((f) => f.endsWith(".ts"));
+  assert.ok(mailFiles.includes("tools.ts") && mailFiles.includes("imap.ts"), `src/mail/ holds ${mailFiles.join(", ")}`);
+  const files = [
+    ...mailFiles.map((f) => join(MAIL_SRC, f)),
+    ...["dav", "calendar", "contacts"].flatMap((d) =>
+      readdirSync(join(MAIL_SRC, "..", d)).filter((f) => f.endsWith(".ts")).map((f) => join(MAIL_SRC, "..", d, f))
+    ),
+  ];
   let opens = 0;
   let literals = 0;
   for (const file of files) {
-    const text = readFileSync(join(MAIL_SRC, file), "utf-8");
+    const text = readFileSync(file, "utf-8");
     for (const name of forbidden) assert.equal(text.includes(name), false, `${file} names ${name}`);
     for (const m of text.matchAll(/mailboxOpen\(([^)]*)\)/g)) {
       opens += 1;
@@ -377,10 +396,10 @@ test("no file under src/mail/ calls an IMAP write, opens a folder writable, or p
   }
   // Not vacuous: the scan saw the folder opens and the message templates.
   assert.ok(opens >= 5, `only ${opens} mailboxOpen calls found`);
-  assert.ok(literals >= 10, `only ${literals} template literals found`);
+  assert.ok(literals >= 30, `only ${literals} template literals found`);
 });
 
-test("the data server lists the eleven mail tools and the files server none", () => {
+test("the data server lists the eleven mail tools and the five calendar and contacts tools, and the files server none", () => {
   const mail = buildToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
   assert.deepEqual(mail, [
     "mail__configure_credential",
@@ -395,5 +414,14 @@ test("the data server lists the eleven mail tools and the files server none", ()
     "mail__save_draft",
     "mail__search_emails",
   ]);
-  assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => t.name.startsWith("mail__")), []);
+  const dav = buildToolDefinitions().filter((t) => /^(calendar|contacts)__/.test(t.name));
+  assert.deepEqual(dav.map((t) => t.name).sort(), [
+    "calendar__get_event",
+    "calendar__list_calendars",
+    "calendar__list_events",
+    "contacts__get",
+    "contacts__search",
+  ]);
+  for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
+  assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });
