@@ -180,9 +180,9 @@ The `csv_mapping` key is populated on first CSV import. If missing, the importin
 
 ### Mail
 
-The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is supplied once through `mail__configure_credential`, which signs in to the server before saving and stores the credential encrypted on the host, where it survives restarts. It is never written to `coclerk.json` and never echoed back into the transcript. It cannot arrive as an environment variable in Cowork.
+The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is set once through `mail__configure_credential`. The tool takes the host, port and username, never the password, and returns a link to a page on this computer. The practitioner types the password on that page. The page signs in before saving and stores the credential encrypted on the host, where it survives restarts. The password never passes through the chat: never ask for it there, and never use one typed there. It is never written to `coclerk.json`. It cannot arrive as an environment variable in Cowork.
 
-On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, the practitioner must supply the details: ask for them rather than guessing.
+On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, ask the practitioner for the host, port and username rather than guessing. Then send the link and, once they say it's done, call `mail__configure_status` again.
 
 ### Practice quirks
 

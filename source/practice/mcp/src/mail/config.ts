@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
 
 // The IMAP mail credential (docs/Plans/2026-10-15_imap-mail.md, step 1). One
-// credential per machine, set once through mail__configure_credential and kept
+// credential per machine, set once on mail__configure_credential's local page
+// (page.ts, so the password never passes through the chat) and kept
 // in a DPAPI file beside the other Coclerk credentials. The pattern is the
 // commons server's Suggestion Box config: load at start without throwing,
 // probe before saving, never return the password.
@@ -79,13 +80,13 @@ export async function loadMailConfig(env: NodeJS.ProcessEnv = process.env): Prom
     const detail = error instanceof Error ? error.message : String(error);
     process.stderr.write(
       `mail: stored credential at ${credentialPath(env)} could not be read — ` +
-      `${detail}\nStarting unconfigured; call mail__configure_credential to replace it.\n`
+      `${detail}\nStarting unconfigured; set it again through mail__configure_credential's sign-in page.\n`
     );
     return { credential: null, credentialError: detail.split("\n")[0].trim() };
   }
 }
 
-// Called by mail__configure_credential. `protect` is forced true: a real
+// Called once the sign-in page's password signs in. `protect` is forced true: a real
 // password is never written as plaintext.
 export async function persistMailCredential(
   credential: MailCredential,

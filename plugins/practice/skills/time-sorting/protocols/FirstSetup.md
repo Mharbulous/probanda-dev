@@ -62,9 +62,9 @@ For each supported source the user selected, run its setup sub-procedure. These 
 ### 2b-3: Mail Setup
 
 1. Call `mail__configure_status`. If it reports `configured: true`: *"Your mail is already connected."*
-2. If `configured: false`, tell the practitioner what is needed and ask for all of it in one message: *"To read your sent mail I need your mail server's IMAP host and port, your username, and an app-specific password. For iCloud the host is `imap.mail.me.com` and the port is 993, and the app-specific password is created at account.apple.com."*
-3. Call `mail__configure_credential` with the answers. Never echo the password back.
-4. On a `mail_auth` error, say the mail server refused the sign-in and offer to retry with corrected details.
+2. If `configured: false`, ask for the server details in one message, and never for the password: *"To read your sent mail I need your mail server's IMAP host and port, and your username. For iCloud the host is `imap.mail.me.com` and the port is 993. Don't send me your password: you'll type it on a page on this computer in the next step."*
+3. Call `mail__configure_credential` with the answers. Send the practitioner its `url`: *"Open this link and enter your app-specific password there. For iCloud, create one at account.apple.com. The page signs in and tells you whether it worked. Tell me when it's done."* When they say it's done, call `mail__configure_status` and report the result.
+4. If the practitioner types a password into the chat anyway, don't use it, and don't repeat it. Tell them it has been exposed and that they should revoke it and create a new app-specific password, then enter the new one on the page.
 
 ### 2c: Telus Business Connect Setup
 

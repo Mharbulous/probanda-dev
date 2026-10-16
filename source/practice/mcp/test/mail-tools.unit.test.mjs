@@ -244,7 +244,18 @@ test("with no credential every mail tool but the two configure tools refuses mai
   assert.deepEqual(status, { configured: false, host: null, port: null, username: null, from_address: null, password_set: false });
 });
 
-test("configure_credential saves nothing on a refused sign-in, and never returns the password", async () => {
+test("configure_credential refuses a password argument, so a password never passes through a tool call", async () => {
+  const ctx = context(fakeClient(), null);
+  const error = await errorOf(ctx, "mail__configure_credential", { host: "imap.example.test", username: "someone", password: FAKE_PASSWORD });
+  assert.match(error.message, /unknown field "password"/);
+  assert.equal(error.message.includes(FAKE_PASSWORD), false);
+  assert.equal(ctx.mail.credential, null);
+});
+
+const postSecret = (url, secret) =>
+  fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ secret }) });
+
+test("the sign-in page saves nothing on a refused sign-in, saves on a good one, and never shows the password", async () => {
   const refused = fakeClient({
     methods: {
       async connect() {
@@ -254,23 +265,34 @@ test("configure_credential saves nothing on a refused sign-in, and never returns
   });
   const previous = { ...FAKE, username: "earlier" };
   const ctx = context(refused, previous);
-  const args = { host: "imap.example.test", username: "someone", password: FAKE_PASSWORD };
-  const error = await errorOf(ctx, "mail__configure_credential", args);
-  assert.equal(error.code, "mail_auth");
-  assert.equal(error.message.includes(FAKE_PASSWORD), false);
+  const args = { host: "imap.example.test", username: "someone" };
+  const started = await callTool(ctx, "mail__configure_credential", args);
+  assert.equal(started.status, "awaiting_password");
+  assert.match(started.url, /^http:\/\/127\.0\.0\.1:\d+\/mail\/[0-9a-f]{48}$/);
+  assert.deepEqual(ctx.mail.credential, previous, "nothing changes until the page is used");
+
+  const form = await fetch(started.url);
+  assert.equal(form.status, 200);
+  const formHtml = await form.text();
+  assert.match(formHtml, /imap\.example\.test:993/);
+  assert.match(formHtml, /type="password" name="secret"/);
+
+  const refusedPage = await (await postSecret(started.url, FAKE_PASSWORD)).text();
+  assert.match(refusedPage, /Not saved: .*refused the sign-in/);
+  assert.equal(refusedPage.includes(FAKE_PASSWORD), false);
   assert.deepEqual(ctx.mail.credential, previous);
   assert.equal(existsSync(credentialPath(process.env)), false);
 
   const ok = fakeClient({ status: { messages: 12, unseen: 3 } });
   const fresh = context(ok, null);
-  const result = await callTool(fresh, "mail__configure_credential", { ...args, from_address: "someone@example.test" });
-  assert.equal(result.configured, true);
-  assert.equal(typeof result.persisted, "boolean");
-  assert.deepEqual(result.inbox, { messages: 12, unseen: 3 });
-  assert.equal("password" in result, false);
-  assert.equal(JSON.stringify(result).includes(FAKE_PASSWORD), false);
+  const second = await callTool(fresh, "mail__configure_credential", { ...args, from_address: "someone@example.test" });
+  assert.equal((await fetch(started.url)).status, 404, "a newer link retires the older one");
+  const savedPage = await (await postSecret(second.url, FAKE_PASSWORD)).text();
+  assert.match(savedPage, /Signed in\. 12 messages in the inbox\./);
+  assert.equal(savedPage.includes(FAKE_PASSWORD), false);
   assert.deepEqual(fresh.mail.credential, { ...FAKE, fromAddress: "someone@example.test" });
   assert.deepEqual(ok.calls.find((c) => c.name === "status").args, ["INBOX", { messages: true, unseen: true }]);
+  assert.equal((await fetch(second.url)).status, 404, "a successful save spends the link");
 
   const status = await callTool(fresh, "mail__configure_status", {});
   assert.equal(status.password_set, true);

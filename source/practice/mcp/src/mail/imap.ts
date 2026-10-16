@@ -60,7 +60,8 @@ export const defaultImapFactory: ImapClientFactory = (credential) => {
 };
 
 export const NOT_CONFIGURED_HINT =
-  "mail is not configured: call mail__configure_credential once with the IMAP host, port, username and password";
+  "mail is not configured: call mail__configure_credential once with the IMAP host, port and username, " +
+  "and have the practitioner type the password on the page it links to, never in chat";
 
 export function requireCredential(state: MailState): MailCredential {
   if (state.credential) return state.credential;
@@ -126,7 +127,8 @@ export async function runImap<T>(
     if (isAuthFailure(error)) {
       throw new DataServerError(
         `mail: ${credential.host} refused the sign-in for "${credential.username}" (${serverText(error, credential)}). ` +
-          "Check the username and the app-specific password, then call mail__configure_credential again.",
+          "Check the username and the app-specific password, then enter it again on the sign-in page " +
+          "(mail__configure_credential makes a new link).",
         "mail_auth"
       );
     }

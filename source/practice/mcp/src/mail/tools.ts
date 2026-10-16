@@ -35,6 +35,7 @@ import {
   type ImapClientFactory,
   type ImapClientLike,
 } from "./imap.js";
+import { servePasswordPage, type CredentialFields, type SaveOutcome } from "./page.js";
 
 /** The part of the dispatch context the mail tools read. */
 export interface MailContext {
@@ -149,41 +150,46 @@ async function fetchSummaries(client: ImapClientLike, folder: string, uids: numb
 
 // --- configuration ------------------------------------------------------------------
 
-// Probe, then set live, then persist. A credential that fails the probe is not
-// saved and leaves the previous one in place. Nothing returned or thrown here
-// holds the password.
+// The password is never a tool argument, so it never passes through the chat:
+// this validates every other field and returns the link to a local page where
+// the practitioner types it (page.ts). The page saves through saveCredential.
+// The schema has no password field, so dispatch refuses one as an unknown field.
 async function configureCredential(context: MailContext, args: Args): Promise<unknown> {
   const host = String(args.host ?? "").trim();
   const username = String(args.username ?? "").trim();
-  const secret = String(args.password ?? "").trim();
   const port = intArg("mail__configure_credential.port", args.port, 993, 1, 65535);
   const fromAddress = String(args.from_address ?? "").trim();
-  for (const [label, value] of [["host", host], ["username", username], ["password", secret]]) {
+  for (const [label, value] of [["host", host], ["username", username]]) {
     if (!value) throw new ValidationError(`mail__configure_credential requires ${label}`);
     if (!PRINTABLE.test(value)) throw new ValidationError(`mail__configure_credential.${label} must hold printable characters only`);
   }
-  const credential: MailCredential = {
+  const fields: CredentialFields = { host, port, secure: args.secure !== false, username, ...(fromAddress ? { fromAddress } : {}) };
+  const url = await servePasswordPage(fields, (secret) => saveCredential(context, { ...fields, password: secret }));
+  return {
+    status: "awaiting_password",
+    url,
     host,
-    port,
-    secure: args.secure !== false,
     username,
-    password: secret,
-    ...(fromAddress ? { fromAddress } : {}),
+    next:
+      "Send the practitioner this link and ask them to type the password on that page, never in chat. " +
+      "When they say it is done, call mail__configure_status. The link works only on this computer, until a new link is made or the server restarts.",
   };
+}
 
-  let inbox: Record<string, unknown>;
-  try {
-    inbox = await runImap(
-      credential,
-      context.imapFactory ?? defaultImapFactory,
-      "signing in",
-      (client) => client.status("INBOX", { messages: true, unseen: true }),
-      context.mailTimeoutMs ?? DEFAULT_TIMEOUT_MS
-    );
-  } catch (error) {
-    if (error instanceof DataServerError) throw new DataServerError(`not saved: ${error.message}`, error.code);
-    throw error;
-  }
+// Probe, then set live, then persist. A credential that fails the probe is not
+// saved and leaves the previous one in place. Nothing returned or thrown here
+// holds the password.
+async function saveCredential(context: MailContext, credential: MailCredential): Promise<SaveOutcome> {
+  if (!credential.password) throw new ValidationError("enter the password");
+  if (!PRINTABLE.test(credential.password)) throw new ValidationError("the password must hold printable characters only");
+
+  const inbox: Record<string, unknown> = await runImap(
+    credential,
+    context.imapFactory ?? defaultImapFactory,
+    "signing in",
+    (client) => client.status("INBOX", { messages: true, unseen: true }),
+    context.mailTimeoutMs ?? DEFAULT_TIMEOUT_MS
+  );
   context.mail.credential = credential;
   delete context.mail.credentialError;
 
@@ -193,17 +199,14 @@ async function configureCredential(context: MailContext, args: Args): Promise<un
   } catch (error) {
     const detail = (error instanceof Error ? error.message : String(error)).split("\n")[0].trim();
     return {
-      configured: true,
       persisted: false,
-      host,
-      username,
       inbox: counts,
       warning:
         "the credential works and is active for this session, but could not be saved to disk, so it " +
-        `must be supplied again after a restart: ${detail}`,
+        `must be entered again after a restart: ${detail}`,
     };
   }
-  return { configured: true, persisted: true, host, username, inbox: counts };
+  return { persisted: true, inbox: counts };
 }
 
 async function configureStatus(state: MailState): Promise<unknown> {

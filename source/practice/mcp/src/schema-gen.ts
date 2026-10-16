@@ -2854,14 +2854,15 @@ export function mailToolDefinitions(): ToolDefinition[] {
     {
       name: "mail__configure_credential",
       description:
-        "One-time setup: store this machine's IMAP mail credential: `host` (for iCloud, imap.mail.me.com), `port` " +
-        "(default 993), `secure` (TLS, default true), `username`, `password` (for iCloud and most hosted mail an " +
-        "app-specific password, never the account password), and optionally `from_address`, kept for reference only. " +
-        "Signs in and reads INBOX's counts before saving; a credential that fails is not saved and the previous one stays. " +
-        "Cowork does not deliver a plugin's userConfig secret into this process's environment, so the credential cannot " +
-        "arrive any other way. The password is persisted host-side, encrypted at rest; it is never logged or echoed back. " +
-        "Returns {configured, persisted, host, username, inbox: {messages, unseen}}; `persisted: false` with a `warning` " +
-        "means it works for this session only. Writes only the credential file; nothing in the mailbox changes." +
+        "One-time setup of this machine's IMAP mail credential: `host` (for iCloud, imap.mail.me.com), `port` " +
+        "(default 993), `secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. " +
+        "Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, " +
+        "host, username, next}: send the practitioner the `url`, a page on this computer where they type the password " +
+        "(for iCloud and most hosted mail an app-specific password, never the account password). The page signs in and " +
+        "reads INBOX's counts before saving, shows the result, and lets them retry; a credential that fails is not saved " +
+        "and the previous one stays. The password is saved on this computer, encrypted at rest, and never logged or " +
+        "returned. When they say it is done, call mail__configure_status. Only the newest link works. Writes only the " +
+        "credential file; nothing in the mailbox changes." +
         errors,
       inputSchema: {
         type: "object",
@@ -2870,10 +2871,9 @@ export function mailToolDefinitions(): ToolDefinition[] {
           port: { type: "integer", minimum: 1, maximum: 65535 },
           secure: { type: "boolean" },
           username: { type: "string" },
-          password: { type: "string" },
           from_address: { type: "string" },
         },
-        required: ["host", "username", "password"],
+        required: ["host", "username"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true },
