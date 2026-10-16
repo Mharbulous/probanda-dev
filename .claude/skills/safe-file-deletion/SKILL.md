@@ -1,5 +1,6 @@
 ---
 name: safe-file-deletion
+user-invocable: false
 description: Use whenever a file inside a Coclerk client-matter project needs to be removed from the filesystem in a Cowork/shell session -- the user requires all client-file deletions to be recoverable, never permanent. Does NOT apply inside a Git worktree (tracked, untracked, ignored, or `.git` metadata files) -- ordinary repository deletion rules apply there instead.
 ---
 

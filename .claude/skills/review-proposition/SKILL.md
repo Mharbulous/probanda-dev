@@ -1,5 +1,6 @@
 ---
 name: review-proposition
+user-invocable: false
 description: Use when presenting a proposition of law and its authority to the practitioner for review or rewording, such as a scrutiny finding review job. Fixed template, no commentary.
 ---
 
