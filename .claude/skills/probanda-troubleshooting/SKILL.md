@@ -7,6 +7,8 @@ description: "Diagnose a Probanda plugin tool, connector or MCP call that fails 
 
 The front end to the `research:troubleshooter` agent. The agent searches the troubleshooting store and the web, ranks the causes and screens what it records. This skill only briefs it and relays its answer: never search, rank or record yourself.
 
+A practice_data error that `coclerk.json` was not found is not a fault: Probanda has not been set up on that device. Send the practitioner to `/practice:probanda-setup` instead of diagnosing it.
+
 1. **Gather.** The symptom, the tools involved, the exact error text and what was already tried. Copy the error text as it appeared. If you do not have it, ask for it; never invent it. Leave out every client, matter, person and document.
 2. **Diagnose.** Dispatch `research:troubleshooter` with `mode: diagnose` and those four facts.
 3. **Relay.** Give the practitioner the agent's first line (the store state), its ranked checklist and its hard stops. A hard stop (a Westlaw stop, a permission denial, a sandbox refusal, an OS security block) goes to the practitioner as it is, with no workaround.

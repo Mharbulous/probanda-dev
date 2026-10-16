@@ -1,10 +1,11 @@
 // The per-user settings file (config-path.ts): report what it holds, and repair a missing or
 // broken `case_data_root` (spec 2026-10-06_practice-db-config-repair). Files, not practice.db
-// rows: neither tool ever creates `_practice` or `practice.db`. config_status also reports
+// rows: only config_set_root's `initialize`, which /probanda-setup passes once the practitioner
+// approves a new device's root, creates `_practice` and `practice.db`. config_status also reports
 // whether Probanda's Cloud credential is present and how many writes practice.db holds pending.
 //
-// config_set_root is repair-only: a root that already resolves to an existing practice.db is
-// never repointed, because repointing redirects every running session (planning/CLAUDE.md).
+// config_set_root never repoints a root that already resolves to an existing practice.db,
+// because repointing redirects every running session (planning/CLAUDE.md).
 // COCLERK_CONFIG_PATH keeps its rule: set but missing is an error, never a fall back.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
@@ -89,13 +90,47 @@ export interface ConfigStatus {
   practice_db_exists: boolean;
   /** This practitioner's environment notes, verbatim; null when the file is absent or sets none. */
   practice_quirks: string | null;
-  candidates: { root: string; source: "matter_root"; practice_db_exists: boolean }[];
+  candidates: { root: string; source: "matter_root" | "scan"; practice_db_exists: boolean }[];
   candidate_error?: string;
+  /** The profile scan stopped at SCAN_LIMIT folders, so a root may exist that it did not reach. */
+  scan_truncated?: boolean;
   redirected_copies: string[];
   /** Whether Probanda's Cloud credential, which every practice write needs, is configured. */
   cloud_credential: "present" | "missing";
   /** Writes the cloud saved that practice.db has not applied yet; null when practice.db cannot be read. */
   pending_writes: number | null;
+}
+
+const SCAN_DEPTH = 4;
+const SCAN_LIMIT = 5000;
+const SCAN_SKIP = new Set(["appdata", "node_modules"]);
+
+/** Folders under the user's profile, to SCAN_DEPTH deep, that are named "0. CASE DATA" or hold
+ * `_practice\practice.db`. statSync follows symlinks and junctions, so a synced library reached
+ * through a link is found at the path the link gives it. Dot folders, AppData and node_modules are
+ * skipped; past SCAN_LIMIT folders the scan stops and says so. */
+function scanCandidates(env: NodeJS.ProcessEnv): { roots: string[]; truncated: boolean } {
+  const roots: string[] = [];
+  const queue: [string, number][] = [[env.USERPROFILE || homedir(), 0]];
+  let visited = 0;
+  for (let i = 0; i < queue.length; i++) {
+    const [dir, depth] = queue[i];
+    let names: string[];
+    try {
+      names = readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      if (name.startsWith(".") || SCAN_SKIP.has(name.toLowerCase())) continue;
+      const child = join(dir, name);
+      if (!isDir(child)) continue;
+      if (++visited > SCAN_LIMIT) return { roots, truncated: true };
+      if (name.toLowerCase() === "0. case data" || rootWorks(child)) roots.push(child);
+      else if (depth + 1 < SCAN_DEPTH) queue.push([child, depth + 1]);
+    }
+  }
+  return { roots, truncated: false };
 }
 
 /** The pending writes of the practice.db this machine resolves; 0 when it has none or is empty. */
@@ -160,6 +195,11 @@ export async function config_status(
     } catch (err) {
       status.candidate_error = (err as Error).message;
     }
+  } else if (!status.exists && !status.error) {
+    // A new device (/probanda-setup): no settings file, so look for the root under the profile.
+    const scan = scanCandidates(env);
+    for (const root of scan.roots) status.candidates.push({ root, source: "scan", practice_db_exists: rootWorks(root) });
+    if (scan.truncated) status.scan_truncated = true;
   }
   return status;
 }
@@ -170,6 +210,7 @@ export interface ConfigSetRootResult {
   previous_case_data_root: string | null;
   case_data_root: string;
   keys_missing: string[];
+  initialized?: true;
 }
 
 export async function config_set_root(
@@ -181,10 +222,16 @@ export async function config_set_root(
   if (typeof root !== "string" || root === "" || !isAbsolute(root)) {
     throw new ValidationError("case_data_root must be an absolute path to the \"0. CASE DATA\" folder");
   }
-  if (!rootWorks(root)) {
+  // initialize (a new device, on the practitioner's approval) may name a root with no practice.db
+  // yet, or a root folder still to be made in an existing parent.
+  const initialize = args.initialize === true && !rootWorks(root);
+  if (initialize && !isDir(root) && !isDir(dirname(root))) {
+    throw new ValidationError(`Refused: neither ${root} nor its parent folder exists. Nothing was written.`);
+  }
+  if (!initialize && !rootWorks(root)) {
     throw new ValidationError(
       `Refused: ${practiceDb(root)} does not exist. case_data_root must name a folder that already holds ` +
-        "_practice\\practice.db; this tool never creates a database. Nothing was written."
+        "_practice\\practice.db, unless initialize is true for a new device's approved root. Nothing was written."
     );
   }
 
@@ -210,9 +257,16 @@ export async function config_set_root(
 
   const previous = typeof config.case_data_root === "string" ? config.case_data_root : null;
   config.case_data_root = root;
+  if (initialize) mkdirSync(join(root, "_practice"), { recursive: true });
   mkdirSync(dirname(path), { recursive: true });
   const temp = `${path}.${process.pid}.tmp`;
   writeFileSync(temp, JSON.stringify(config, null, 2) + "\n", "utf-8");
   renameSync(temp, path);
-  return { path, created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config) };
+  const result: ConfigSetRootResult = { path, created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config) };
+  if (initialize) {
+    // Opening the store creates practice.db and its schema at the root just written.
+    new PracticeStore(env).pendingCount();
+    result.initialized = true;
+  }
+  return result;
 }

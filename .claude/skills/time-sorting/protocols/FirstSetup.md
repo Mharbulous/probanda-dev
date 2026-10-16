@@ -81,7 +81,7 @@ For each supported source the user selected, run its setup sub-procedure. These 
 
 ## Step 3 — API-Specific Privacy Note
 
-The general privacy briefing (local storage, training opt-out, client name exclusion) is handled during database initialization (`practice-data/protocol/initialize.md` Step 3). This step covers only the API-specific concern for time-sorting.
+The general privacy briefing (local storage, training opt-out) is handled during device setup (`probanda-setup` Step 5), and client name exclusion by retainer-tracking's First Import. This step covers only the API-specific concern for time-sorting.
 
 Briefly inform the practitioner:
 
