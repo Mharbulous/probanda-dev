@@ -4,6 +4,8 @@
 Usage:
   python scripts/export_public.py <target>   check, then write the export into <target>
   python scripts/export_public.py --plan     check and report what would be exported; write nothing
+  python scripts/export_public.py --message  print the public commit message, the top entry of
+                                             public/CHANGELOG.md; write nothing
 
 The export is one-way: this repo is developed in, and the public repo is only
 ever written from here. What ships is public/, file for file, and nothing
@@ -34,8 +36,9 @@ SCRIPTS = Path(__file__).resolve().parent
 
 # The plugins of the public repository, each under public/plugins/<name>/.
 PUBLIC_PLUGINS = ("legal", "research", "litigator", "solicitor")
-# What a marketplace install needs. The export refuses without them.
-REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md",
+# What a marketplace install needs, and the changelog the commit message comes from.
+# The export refuses without them.
+REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md", "CHANGELOG.md",
                   *(f"plugins/{name}/.claude-plugin/plugin.json" for name in PUBLIC_PLUGINS))
 
 
@@ -119,15 +122,30 @@ def export(repo, target, plan):
     return 0
 
 
+def message(repo):
+    """Print the public commit message: the top entry of public/CHANGELOG.md. Returns the exit code."""
+    text = public_tree.text_of(public_tree.public_files(repo).get(public_tree.CHANGELOG, b"")) or ""
+    problems = public_tree.release_problems(text)
+    if problems:
+        for problem in problems:
+            print(f"STOP: {public_tree.PUBLIC}/{public_tree.CHANGELOG} {problem}", file=sys.stderr)
+        return 1
+    print(public_tree.commit_message(text), end="")
+    return 0
+
+
 def main():
     sys.stdout.reconfigure(errors="backslashreplace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("target", nargs="?", type=Path, help="directory to write the export into")
     parser.add_argument("--plan", action="store_true", help="check and report; write nothing")
+    parser.add_argument("--message", action="store_true", help="print the public commit message; write nothing")
     parser.add_argument("--repo", type=Path, default=REPO, help="repo to export from (for tests)")
     args = parser.parse_args()
-    if (args.target is None) == (not args.plan):
-        parser.error("give a target directory, or --plan, not both and not neither")
+    if [args.target is not None, args.plan, args.message].count(True) != 1:
+        parser.error("give one of a target directory, --plan or --message")
+    if args.message:
+        return message(args.repo.resolve())
     return export(args.repo.resolve(), args.target, args.plan)
 
 

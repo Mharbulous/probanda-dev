@@ -40,6 +40,11 @@ PUBLIC = "public"
 # The human-approved list of public files: {path under public/: sha256}. Written
 # only by approve_public.py.
 APPROVED = "public-approved.json"
+# Each publication adds a top `## <subject>` entry with `- ` bullets. The entry is the
+# public commit message, so a subject made only of these words says nothing.
+CHANGELOG = "CHANGELOG.md"
+GENERIC_WORDS = frozenset(("publish", "published", "update", "updates", "updated", "sync", "change", "changes",
+                           "misc", "release", "from", "the", "probanda", "development", "repository", "repo"))
 # Where the fingerprints are read from, beside the source folder of every plugin the
 # repo builds (private_roots).
 PRIVATE_ROOTS = (".claude/skills", "cloud")
@@ -179,9 +184,42 @@ def tree_problems(files, prints, file_problems, matter_codes):
     return found
 
 
+def release_entry(text):
+    """(subject, body) of the top `## ` entry of CHANGELOG.md, or None when it has none."""
+    entries = re.split(r"^## ", text, flags=re.M)[1:]
+    if not entries:
+        return None
+    subject, _, body = entries[0].partition("\n")
+    return subject.strip(), body.strip()
+
+
+def release_problems(text):
+    """Why the top CHANGELOG.md entry cannot be the public commit message, as messages."""
+    entry = release_entry(text)
+    if entry is None:
+        return ["has no ## entry to use as the public commit message"]
+    subject, body = entry
+    found = []
+    if not 10 <= len(subject) <= 72:
+        found.append(f"the top entry's heading is {len(subject)} characters; it must be 10 to 72")
+    if set(re.findall(r"[a-z]+", subject.lower())) <= GENERIC_WORDS:
+        found.append("the top entry's heading is generic: say what this publication improves or adds")
+    if not re.search(r"^- \S", body, flags=re.M):
+        found.append("the top entry has no `- ` bullet naming an improvement or new feature")
+    return found
+
+
+def commit_message(text):
+    subject, body = release_entry(text)
+    return f"{subject}\n\n{body}\n"
+
+
 def problems_in(repo, files):
-    return tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
-                         load_script("check_plugin").matter_codes)
+    found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
+                          load_script("check_plugin").matter_codes)
+    if CHANGELOG in files:
+        found += [(CHANGELOG, 1, message) for message in release_problems(text_of(files[CHANGELOG]) or "")]
+    return found
 
 
 def digests(files):

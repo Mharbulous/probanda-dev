@@ -28,6 +28,8 @@ MARKETPLACE = json.dumps({"name": "probanda", "plugins": [
 PUBLIC = {
     ".claude-plugin/marketplace.json": MARKETPLACE,
     "README.md": "# Probanda\n",
+    "CHANGELOG.md": "# Changelog\n\n## Legal: a first skill\n\n- legal 0.1.0: skill x.\n  Wrapped line.\n\n"
+                    "## An older entry here\n\n- old.\n",
     **{f"plugins/{name}/.claude-plugin/plugin.json": json.dumps({"name": name, "version": "1"})
        for name in export_public.PUBLIC_PLUGINS},
     "plugins/practice/skills/x/SKILL.md": "A skill.\n",
@@ -129,6 +131,38 @@ class ExportTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("missing: public/README.md", out)
 
+    def test_missing_changelog_refuses(self):
+        public = {k: v for k, v in PUBLIC.items() if k != "CHANGELOG.md"}
+        self.repo_with(public)
+        code, out, _ = self.run_export(self.target)
+        self.assertEqual(code, 1)
+        self.assertIn("missing: public/CHANGELOG.md", out)
+
+    def test_approved_generic_changelog_entry_still_refuses(self):
+        public = {**PUBLIC, "CHANGELOG.md": "# Changelog\n\n## Sync changes\n\n- x.\n"}
+        self.repo_with(public)
+        code, out, _ = self.run_export(self.target)
+        self.assertEqual(code, 1)
+        self.assertIn("generic", out)
+        self.assertFalse(self.target.exists())
+
+    def test_message_is_the_top_changelog_entry(self):
+        self.repo_with(PUBLIC)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = export_public.message(self.repo)
+        self.assertEqual(code, 0)
+        self.assertEqual(out.getvalue(), "Legal: a first skill\n\n- legal 0.1.0: skill x.\n  Wrapped line.\n")
+
+    def test_message_refuses_without_an_entry(self):
+        self.repo_with({**PUBLIC, "CHANGELOG.md": "# Changelog\n"})
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = export_public.message(self.repo)
+        self.assertEqual(code, 1)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("no ## entry", err.getvalue())
+
     def test_no_public_folder_refuses(self):
         for rel, text in PRIVATE.items():
             self.put(rel, text)
@@ -137,11 +171,11 @@ class ExportTest(unittest.TestCase):
         self.assertIn("missing: public/.claude-plugin/marketplace.json", out)
 
     def test_every_public_plugin_needs_its_manifest_and_gets_its_own_summary_rows(self):
-        self.assertEqual(export_public.REQUIRED_FILES[2:],
+        self.assertEqual(export_public.REQUIRED_FILES[3:],
                          tuple(f"plugins/{name}/.claude-plugin/plugin.json" for name in export_public.PUBLIC_PLUGINS))
-        files = {"plugins/practice/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
+        files = {"plugins/legal/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
         self.assertEqual(export_public.tree_summary(files),
-                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/practice/skills/")])
+                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/legal/skills/")])
 
     def test_plan_writes_nothing_and_reports_the_gate(self):
         self.repo_with(PUBLIC)

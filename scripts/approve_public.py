@@ -7,9 +7,11 @@ Usage:
 
 Checks public/ with check_public_tree, then prints what was added, changed or
 removed since the last approval: a changed file as a diff against its approved
-text, found in git history by its SHA-256, and an added file in full. Once
-approved, writes public-approved.json: each path under public/ with its
-SHA-256. export_public.py publishes only files that match that list.
+text, found in git history by its SHA-256, and an added file in full. It
+refuses unless public/CHANGELOG.md has a new top entry, and shows that entry
+as the public commit message. Once approved, writes public-approved.json: each
+path under public/ with its SHA-256. export_public.py publishes only files
+that match that list.
 
 A person approves by typing APPROVE at a terminal. An LLM passes --approve,
 and only when a human expressly instructs that approval in the current
@@ -86,6 +88,13 @@ def approve(repo, confirm):
         return 0
     print(f"Changes to {public_tree.PUBLIC}/ since the last approval:")
     show_changes(repo, files, approved)
+    changelog = public_tree.CHANGELOG
+    if changelog not in files or current.get(changelog) == approved.get(changelog):
+        print(f"\n{public_tree.PUBLIC}/ changed but {public_tree.PUBLIC}/{changelog} did not. Add a top entry "
+              "describing these changes: it becomes the public commit message. Nothing written.")
+        return 1
+    message = public_tree.commit_message(files[changelog].decode("utf-8"))
+    print("\nPublic commit message:\n" + "".join(f"  {line}".rstrip() + "\n" for line in message.splitlines()))
     if not confirm():
         print("Not approved. Nothing written.")
         return 2

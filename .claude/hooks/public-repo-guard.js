@@ -24,7 +24,7 @@ function ask(reason) {
 }
 
 // The old names still reach the public repository: GitHub redirects them after a rename.
-const PUBLIC_REPO = /probanda-app[\\/](?:probanda-legal|plugins|litigation)\b/i;
+const PUBLIC_REPO = /probanda-app[\\/](?:probanda(?:-legal)?|legal|plugins|litigation)\b/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
 const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show)|cat|head|tail|wc|grep)(?: |$)/;
 const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;

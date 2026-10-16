@@ -21,7 +21,10 @@ _spec = importlib.util.spec_from_file_location("approve_public", os.path.join(SC
 approve_public = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(approve_public)
 
+CHANGELOG = "# Changelog\n\n"
+FIRST_ENTRY = "## First release of the practice plugin\n\n- practice 0.1.0: one skill.\n"
 PUBLIC = {
+    "CHANGELOG.md": CHANGELOG + FIRST_ENTRY,
     "README.md": "# Probanda\n\nAn early release.\n",
     "plugins/practice/skills/x/SKILL.md": "A skill.\n",
 }
@@ -56,6 +59,9 @@ class ApproveTest(unittest.TestCase):
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "c")
 
+    def new_entry(self, subject="Practice: a second skill", bullets="- practice 0.1.1: skill y.\n"):
+        self.put("public/CHANGELOG.md", f"{CHANGELOG}## {subject}\n\n{bullets}\n{FIRST_ENTRY}")
+
     def approved(self):
         return json.loads((self.repo / "public-approved.json").read_text(encoding="utf-8"))
 
@@ -69,6 +75,7 @@ class ApproveTest(unittest.TestCase):
         self.put("public/README.md", "# Probanda\n\nIt holds a first few skills.\n")
         self.commit()
         self.put("public/README.md", "# Probanda\n\nIt holds many skills.\n")
+        self.new_entry()
         code, out = self.run_approve(False)
         self.assertEqual(code, 2)
         self.assertIn("changed: README.md", out)
@@ -91,6 +98,7 @@ class ApproveTest(unittest.TestCase):
 
     def test_without_confirmation_nothing_is_written(self):
         self.put("public/README.md", "changed\n")
+        self.new_entry()
         before = self.approved()
         code, out = self.run_approve(False)
         self.assertEqual(code, 2)
@@ -99,6 +107,7 @@ class ApproveTest(unittest.TestCase):
 
     def test_confirmation_writes_the_new_list(self):
         self.put("public/README.md", "changed\n")
+        self.new_entry()
         code, _ = self.run_approve(True)
         self.assertEqual(code, 0)
         self.assertEqual(self.approved()["README.md"], hashlib.sha256(b"changed\n").hexdigest())
@@ -109,6 +118,36 @@ class ApproveTest(unittest.TestCase):
         code, _ = self.run_approve(True)
         self.assertEqual(code, 1)
         self.assertEqual(self.approved(), before)
+
+    def test_a_change_without_a_new_changelog_entry_refuses_even_when_confirmed(self):
+        self.put("public/README.md", "changed\n")
+        before = self.approved()
+        code, out = self.run_approve(True)
+        self.assertEqual(code, 1)
+        self.assertIn("changed: README.md", out)
+        self.assertIn("CHANGELOG.md did not", out)
+        self.assertEqual(self.approved(), before)
+
+    def test_a_generic_changelog_entry_refuses(self):
+        self.put("public/README.md", "changed\n")
+        self.new_entry(subject="Publish updates from the repository")
+        code, out = self.run_approve(True)
+        self.assertEqual(code, 1)
+        self.assertIn("generic", out)
+
+    def test_a_changelog_entry_without_bullets_refuses(self):
+        self.put("public/README.md", "changed\n")
+        self.new_entry(bullets="Some prose.\n")
+        code, out = self.run_approve(True)
+        self.assertEqual(code, 1)
+        self.assertIn("bullet", out)
+
+    def test_the_commit_message_is_shown_before_asking(self):
+        self.put("public/README.md", "changed\n")
+        self.new_entry()
+        _, out = self.run_approve(False)
+        self.assertIn("Public commit message:", out)
+        self.assertIn("  Practice: a second skill\n\n  - practice 0.1.1: skill y.", out)
 
     def test_nothing_to_approve(self):
         code, out = self.run_approve(True)

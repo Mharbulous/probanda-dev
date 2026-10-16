@@ -4,6 +4,8 @@ name: publish-public
 # from the Actions tab, by a person: publication is immediate and cannot be reliably undone.
 # export_public.py refuses unless every file under public/ is free of Trade Secrets and User
 # Data and matches public-approved.json, the list a person approved with approve_public.py.
+# The commit message is the top entry of public/CHANGELOG.md, approved with the files; the
+# run fails if that entry is already the public repository's last commit message.
 #
 # Needs the repository secret PUBLIC_REPO_DEPLOY_KEY: the private half of a deploy key that
 # has write access to Probanda-app/Probanda and to nothing else.
@@ -45,7 +47,12 @@ jobs:
             echo "Nothing to publish: the public repository already matches public/."
             exit 0
           fi
+          python3 scripts/export_public.py --message > "$RUNNER_TEMP/message"
+          if [ "$(git -C "$TARGET" log -1 --format=%B)" = "$(cat "$RUNNER_TEMP/message")" ]; then
+            echo "The top entry of public/CHANGELOG.md is already the public repository's last commit message. Add a new entry and approve it." >&2
+            exit 1
+          fi
           git -C "$TARGET" -c user.name="github-actions[bot]" \
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -m "Publish from the Probanda development repository"
+            commit -F "$RUNNER_TEMP/message"
           git -C "$TARGET" push origin main
