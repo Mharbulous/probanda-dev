@@ -32,6 +32,6 @@ Keep to that order. Claude Code installs a required plugin with the plugin that 
 
 ## Status
 
-This repository is private during development. The install commands above work only for accounts that have been given access to it. The public repository, `Probanda-app/Probanda-Legal`, still offers the single plugin `probanda` until the public plugins are split the same way.
+This repository is private during development. The install commands above work only for accounts that have been given access to it. The public repository, `Probanda-app/Probanda`, still offers the single plugin `probanda` until the public plugins are split the same way.
 
 The five plugins replace the single plugin `probanda`, which itself combined two CoClerk plugins: `litigation`, and the read side of `legal-commons`. If you have any of those three installed, uninstall it before installing these, or every skill will appear twice.

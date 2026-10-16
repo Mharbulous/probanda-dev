@@ -1,12 +1,12 @@
 name: publish-public
 
-# Publishes public/ to the public repository, Probanda-app/Probanda-Legal. Started by hand only,
+# Publishes public/ to the public repository, Probanda-app/Probanda. Started by hand only,
 # from the Actions tab, by a person: publication is immediate and cannot be reliably undone.
 # export_public.py refuses unless every file under public/ is free of Trade Secrets and User
 # Data and matches public-approved.json, the list a person approved with approve_public.py.
 #
 # Needs the repository secret PUBLIC_REPO_DEPLOY_KEY: the private half of a deploy key that
-# has write access to Probanda-app/Probanda-Legal and to nothing else.
+# has write access to Probanda-app/Probanda and to nothing else.
 on:
   workflow_dispatch:
 
@@ -33,7 +33,7 @@ jobs:
           # GitHub's published host key, pinned so the push cannot go to another host.
           echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> ~/.ssh/known_hosts
           git clone -c core.sshCommand="ssh -i $HOME/.ssh/public_repo -o IdentitiesOnly=yes" \
-            git@github.com:Probanda-app/Probanda-Legal.git "$RUNNER_TEMP/litigation"
+            git@github.com:Probanda-app/Probanda.git "$RUNNER_TEMP/litigation"
           git -C "$RUNNER_TEMP/litigation" checkout -B main
       - name: Export public/
         run: python3 scripts/export_public.py "$RUNNER_TEMP/litigation"

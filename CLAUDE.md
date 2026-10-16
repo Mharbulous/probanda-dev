@@ -17,7 +17,7 @@ The version rule:
 ## Two repositories
 
 - `Mharbulous/probanda-plugins` is this repository. It is private, and all development happens here. It stays private: its history holds schema files.
-- `Probanda-app/Probanda-Legal` is the public repository that users install from. claude.ai labels each plugin "from <repo name>", so the repo name is what users see.
+- `Probanda-app/Probanda` is the public repository that users install from. claude.ai labels each plugin "from <repo name>", so the repo name is what users see.
 
 `public/` is the Public Folder: the only source of the public repository, so it never holds a Trade Secret or User Data. A skill lives under `public/plugins/<plugin>/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
 
