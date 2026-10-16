@@ -62,16 +62,8 @@ export function renderBody(parts: MimeParts, opts: BodyOptions): RenderedBody {
   }
   const out: Omit<RenderedBody, "body" | "bodyFormat"> = {};
 
-  if (opts.stripInlineImages) {
-    let count = 0;
-    body = body.replace(opts.format === "html" ? INLINE_IMG_TAG : INLINE_IMG_URI, () => {
-      count += 1;
-      return "";
-    });
-    if (count > 0) out.strippedInlineImages = count;
-  }
-
   // Quote stripping reads lines of text, so it applies to the text format only.
+  // It runs first, so the image count is of images in the body returned.
   if (opts.stripQuoted && opts.format === "text") {
     const lines = body.split(/\r?\n/);
     const at = quoteStart(lines);
@@ -79,6 +71,15 @@ export function renderBody(parts: MimeParts, opts: BodyOptions): RenderedBody {
       body = lines.slice(0, at).join("\n").trimEnd();
       out.strippedQuoted = true;
     }
+  }
+
+  if (opts.stripInlineImages) {
+    let count = 0;
+    body = body.replace(opts.format === "html" ? INLINE_IMG_TAG : INLINE_IMG_URI, () => {
+      count += 1;
+      return "";
+    });
+    if (count > 0) out.strippedInlineImages = count;
   }
 
   if (body.length > opts.maxLength) {
@@ -102,9 +103,11 @@ export interface FetchedSummary {
     date?: Date | string;
     subject?: string;
     messageId?: string;
+    inReplyTo?: string;
     from?: Address[];
     to?: Address[];
     cc?: Address[];
+    replyTo?: Address[];
   };
   flags?: Set<string>;
   size?: number;

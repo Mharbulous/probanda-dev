@@ -42,7 +42,14 @@ if (!schemaMatch) {
 }
 const submissionSchemaVersion = Number(schemaMatch[1]);
 
-async function bundle(entry, out) {
+// imapflow's CommonJS dependencies (libmime and others) require Node built-ins when imported,
+// which esbuild's ESM output refuses without a real `require` in scope. The data bundle gets one;
+// it resolves built-ins only, so the bundle stays self-contained.
+const REQUIRE_SHIM =
+  'import { createRequire as __bundleCreateRequire } from "node:module";\n' +
+  "const require = __bundleCreateRequire(import.meta.url);";
+
+async function bundle(entry, out, extraBanner = "") {
   await mkdir(dirname(out), { recursive: true });
   const result = await build({
     entryPoints: [resolve(root, "src", entry)],
@@ -52,7 +59,10 @@ async function bundle(entry, out) {
     format: "esm",
     absWorkingDir: root,
     tsconfig: resolve(root, "tsconfig.json"),
-    banner: { js: `// build-stamp: ${STAMP_PLACEHOLDER}` },
+    // imapflow's logger calls pino() at import, and pino writes to stdout, the MCP channel:
+    // a silent shim replaces it (src/mail/pino-shim.ts). Inert for an entry point without imapflow.
+    alias: { pino: resolve(root, "src", "mail", "pino-shim.ts") },
+    banner: { js: `// build-stamp: ${STAMP_PLACEHOLDER}${extraBanner ? `\n${extraBanner}` : ""}` },
     define: {
       __LITIGATION_BUILD_STAMP__: JSON.stringify(STAMP_PLACEHOLDER),
       __LITIGATION_SUBMISSION_SCHEMA_VERSION__: JSON.stringify(submissionSchemaVersion),
@@ -65,5 +75,5 @@ async function bundle(entry, out) {
   await writeFile(out, text.replaceAll(STAMP_PLACEHOLDER, stamp));
 }
 
-await bundle("index.ts", outfile);
+await bundle("index.ts", outfile, REQUIRE_SHIM);
 await bundle("file-manager-index.ts", fileManagerOutfile);

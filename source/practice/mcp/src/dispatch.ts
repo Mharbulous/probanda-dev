@@ -93,11 +93,19 @@ import { legislationSearch } from "./files/legislation-search.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
 import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matter-root.js";
 import type { KnowledgeSeams } from "./knowledge/tree.js";
+import type { MailState } from "./mail/config.js";
+import type { ImapClientFactory } from "./mail/imap.js";
+import { callMailTool } from "./mail/tools.js";
 
 export interface DispatchContext {
   // The practice store: practice.db's items (SQLite via host Python — spec §5/§10), read
   // locally with no cloud call; a write is saved only when Probanda's Cloud accepts it.
   practiceDb: PracticeStore;
+  // The mail credential, loaded at start and replaced in place by mail__configure_credential.
+  mail: MailState;
+  // Tests only: a fake IMAP client and a short timeout for the mail__* tools.
+  imapFactory?: ImapClientFactory;
+  mailTimeoutMs?: number;
 }
 
 let definitions: Map<string, ToolDefinition> | undefined;
@@ -589,6 +597,10 @@ export async function callTool(
 
   if (name === "research__preflight") {
     return researchPreflight();
+  }
+
+  if (name.startsWith("mail__")) {
+    return callMailTool(context, name, args);
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);

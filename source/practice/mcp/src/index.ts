@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import { PracticeStore } from "./practice/store.js";
 import { dispatchTool, type DispatchContext } from "./dispatch.js";
+import { loadMailConfig } from "./mail/config.js";
 import { startPageApi } from "./page-api/server.js";
 import { buildToolDefinitions } from "./schema-gen.js";
 
@@ -17,11 +18,13 @@ export { callTool, dispatchTool } from "./dispatch.js";
 // Every namespace this runtime serves is local-backed: SQLite through the host
 // Python `sqlite3` module, or the host file system. The full tool list is
 // buildToolDefinitions(). The one cloud call is a practice write, which Probanda's
-// Cloud must accept (practice/store.ts); there is no per-session login/unlock gate,
-// so the context holds only the practice store.
+// Cloud must accept (practice/store.ts); there is no per-session login/unlock gate.
+// The context holds the practice store and the mail credential (src/mail/config.ts),
+// whose loader never throws, so start() always registers mail__configure_credential.
 export async function createDispatchContext(env: NodeJS.ProcessEnv = process.env): Promise<DispatchContext> {
   const practiceDb = new PracticeStore(env);
-  return { practiceDb };
+  const mail = await loadMailConfig(env);
+  return { practiceDb, mail };
 }
 
 export async function start(): Promise<void> {

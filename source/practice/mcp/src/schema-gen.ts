@@ -2830,6 +2830,250 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+// The mail__* tools (docs/Plans/2026-10-15_imap-mail.md): the practitioner's
+// mailbox over IMAP, read-only apart from save_draft, which only appends a draft.
+// Served by the `data` server only, never by file-manager's `files` server.
+export function mailToolDefinitions(): ToolDefinition[] {
+  const errors =
+    " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), " +
+    "`mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
+  const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
+  const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
+  const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
+  const bodyOptions = {
+    include_body: { type: "boolean", description: "Also return each body. At most the newest 25 messages are returned when true." },
+    body_format: { type: "string", enum: ["text", "html"], description: "Default text." },
+    body_max_length: { type: "integer", minimum: 1, description: "Per-message body character cap. Default 10000." },
+    strip_quoted: { type: "boolean", description: "Cut the quoted earlier messages of a reply (text format only)." },
+    strip_inline_images: { type: "boolean", description: "Remove inline data-URI images." },
+  };
+  const messageShape =
+    "Each message is {uid, folder, date (ISO 8601 UTC), from, to, cc?, subject, messageId, seen, flagged?, answered?, size}; " +
+    "with `include_body` it also carries `body`, `bodyFormat` and `bodyTruncated?`.";
+  return [
+    {
+      name: "mail__configure_credential",
+      description:
+        "One-time setup: store this machine's IMAP mail credential: `host` (for iCloud, imap.mail.me.com), `port` " +
+        "(default 993), `secure` (TLS, default true), `username`, `password` (for iCloud and most hosted mail an " +
+        "app-specific password, never the account password), and optionally `from_address`, kept for reference only. " +
+        "Signs in and reads INBOX's counts before saving; a credential that fails is not saved and the previous one stays. " +
+        "Cowork does not deliver a plugin's userConfig secret into this process's environment, so the credential cannot " +
+        "arrive any other way. The password is persisted host-side, encrypted at rest; it is never logged or echoed back. " +
+        "Returns {configured, persisted, host, username, inbox: {messages, unseen}}; `persisted: false` with a `warning` " +
+        "means it works for this session only. Writes only the credential file; nothing in the mailbox changes." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          host: { type: "string" },
+          port: { type: "integer", minimum: 1, maximum: 65535 },
+          secure: { type: "boolean" },
+          username: { type: "string" },
+          password: { type: "string" },
+          from_address: { type: "string" },
+        },
+        required: ["host", "username", "password"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true },
+    },
+    {
+      name: "mail__configure_status",
+      description:
+        "Report whether this machine has a mail credential: {configured, host, port, username, from_address, " +
+        "password_set, credential_error?}. Never returns the password or any hint of it. Call it before asking the " +
+        "practitioner for the credential, so a configured machine is not asked again. Read-only.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__list_folders",
+      description:
+        "List the mailbox's folders: {folders: [{name, specialUse, selectable}], total, returned}. `name` is the exact " +
+        "folder name the other mail tools take; `specialUse` marks the Sent, Drafts, Trash, Junk and Archive roles. On a " +
+        "large mailbox pass `prefix`, the case-insensitive start of a folder path, to return only that tree; `total` " +
+        "still counts every folder." +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { prefix: { type: "string" } },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__folder_status",
+      description:
+        "Count one folder's messages: {folder, total, unread, recent, uidNext, uidValidity}. `folder` defaults to INBOX." +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__get_latest_emails",
+      description:
+        "The newest `count` messages of a folder (1-200, default 10), newest first: {folder, messages}. " +
+        messageShape +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder, count: { type: "integer", minimum: 1, maximum: 200 }, ...bodyOptions },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__search_emails",
+      description:
+        "Search one folder by `from`, `to`, `subject` or `body` (each matches when it is contained), `since` (on or " +
+        "after, YYYY-MM-DD), `before` (before, YYYY-MM-DD), `seen` and `flagged`; newest first, at most `limit` " +
+        "(1-500, default 50). A search does not include the folder's subfolders: search each folder separately. " +
+        "Returns {totalFound, returned, messages}; when `returned` is less than `totalFound`, more messages matched than " +
+        "were returned. " +
+        messageShape +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          from: { type: "string" },
+          to: { type: "string" },
+          subject: { type: "string" },
+          body: { type: "string" },
+          since: { type: "string", description: "YYYY-MM-DD" },
+          before: { type: "string", description: "YYYY-MM-DD" },
+          seen: { type: "boolean" },
+          flagged: { type: "boolean" },
+          limit: { type: "integer", minimum: 1, maximum: 500 },
+          ...bodyOptions,
+        },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__get_email",
+      description:
+        "Read one message in full: {uid, folder, messageId, inReplyTo, date, from, to, cc, replyTo, subject, flags, " +
+        "body, bodyFormat, bodyTruncated?, strippedQuoted?, strippedInlineImages?, attachments: [{index, part, " +
+        "filename, contentType, size, contentId, inline?}], headers?}. `body_format` text (default) or html; " +
+        "`max_length` caps the body (default 20000); `strip_quoted` returns only the newest message of a reply chain " +
+        "and works on the text format only, so use text when both are wanted; `strip_inline_images` removes data-URI " +
+        "images; `include_headers` adds the raw headers. Fails `mail_not_found` when the UID is not in the folder " +
+        "(UIDs change when mail is moved)." +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          body_format: { type: "string", enum: ["text", "html"] },
+          max_length: { type: "integer", minimum: 1 },
+          include_headers: { type: "boolean" },
+          strip_quoted: { type: "boolean" },
+          strip_inline_images: { type: "boolean" },
+        },
+        required: ["uid"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__download_attachment",
+      description:
+        "Save one attachment of a message to a folder the caller names, choosing it by `index` or `filename` as " +
+        "mail__get_email lists them. `save_dir` must be the absolute path of an existing folder; the file is saved there " +
+        "under the attachment's name and never overwrites (a taken name gets \" (1)\", \" (2)\" and so on). For a PDF, " +
+        "`extract_text` (default true) adds `text`, pages separated by a form feed, and `pages`; there is no OCR. " +
+        "Returns {saved, path, filename, contentType, size, text?, pages?, textError?}. Writes only that one new file; " +
+        "the mailbox is opened read-only, so nothing is marked read." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          filename: { type: "string" },
+          index: { type: "integer", minimum: 0 },
+          save_dir: { type: "string" },
+          extract_text: { type: "boolean" },
+        },
+        required: ["uid", "save_dir"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false },
+    },
+    {
+      name: "mail__find_email_by_message_id",
+      description:
+        "Find where a message is now from its Message-ID (angle brackets optional), across every selectable folder: " +
+        "{found: [messages]}, each in mail__search_emails' message shape. A mailbox with many folders can exceed the " +
+        "30 s limit." +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { message_id: { type: "string" } },
+        required: ["message_id"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__find_thread_messages",
+      description:
+        "The messages of the conversation one message belongs to, matched by Message-ID, In-Reply-To and References, " +
+        "oldest first: {threadIds, count, messages}. Searches `search_folders` when given, else INBOX, the Sent folder, " +
+        "Archive and `folder`. " +
+        messageShape +
+        readOnly +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          search_folders: { type: "array", items: { type: "string" } },
+          ...bodyOptions,
+        },
+        required: ["uid"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "mail__save_draft",
+      description:
+        "Save an unsent message as a draft: appends the .eml at `eml_path` (an absolute path, such as the file " +
+        "drafting_forms__draft_harness's write_email step writes) to `folder`, by default the mailbox's Drafts folder, " +
+        "flagged \\Draft and \\Seen. Nothing is sent and nothing else in the mailbox changes; the file is only read. " +
+        "Refuses a file that is not a readable message (`not_a_message`) or is larger than 25 MB (`too_large`). " +
+        "Returns {saved, folder, uid, messageId}." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          eml_path: { type: "string" },
+          folder: { type: "string", description: "Default: the Drafts folder." },
+        },
+        required: ["eml_path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true },
+    },
+  ];
+}
+
 // The one tool list every host and every session sees: local-backed practice
 // tools, local-backed case-data tools, and the host-side file surface. This
 // litigation runtime has no Supabase surface and no layer-3 legal-commons
@@ -2845,6 +3089,7 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
+    ...mailToolDefinitions(),
   ];
 }
 
