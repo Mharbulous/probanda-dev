@@ -19,7 +19,7 @@ Letters and emails to any audience, written with the tone, style, and profession
 
 A letter to anyone but the client is a Writing. A standalone request for one opens this skill like any other: it is saved first on its proceeding, whether or not the proceeding has a forum (SKILL.md section 8), drafted through the gatekeeper, and reviewed on its mockup (SKILL.md section 11), never in chat. A letter to the client is never a Writing (section 10). Nor is a reply to a message from the tribunal or counsel, asked for as a reply and not as a letter: it follows `references/reply.md`.
 
-Before drafting anything, identify who the letter is going to. Each audience calls for a different tone, structure, and set of rules. If unclear, ask: "Who is this addressed to?"
+Before drafting anything, identify who the letter is going to. Each audience calls for a different tone, structure, and set of rules. If unclear, ask: "Who is this addressed to?" When the request states no purpose either, ask for it in the same question, before reading the file (SKILL.md, "Purpose comes from the practitioner").
 
 | Audience | Kind | `recipient` |
 |---|---|---|
