@@ -87,6 +87,8 @@ export interface ConfigStatus {
   case_data_root: string | null;
   root_exists: boolean;
   practice_db_exists: boolean;
+  /** This practitioner's environment notes, verbatim; null when the file is absent or sets none. */
+  practice_quirks: string | null;
   candidates: { root: string; source: "matter_root"; practice_db_exists: boolean }[];
   candidate_error?: string;
   redirected_copies: string[];
@@ -120,6 +122,7 @@ export async function config_status(
     case_data_root: null,
     root_exists: false,
     practice_db_exists: false,
+    practice_quirks: null,
     candidates: [],
     redirected_copies: redirectedCopies(env),
     cloud_credential: (await loadCloudKey(env)).configured ? "present" : "missing",
@@ -137,6 +140,9 @@ export async function config_status(
       const config = JSON.parse(readFileSync(status.path, "utf-8")) as Record<string, unknown>;
       status.keys_present = Object.keys(config);
       status.keys_missing = keysMissing(config);
+      if (typeof config.practice_quirks === "string" && config.practice_quirks !== "") {
+        status.practice_quirks = config.practice_quirks;
+      }
       if (typeof config.case_data_root === "string" && config.case_data_root !== "") {
         status.case_data_root = config.case_data_root;
         status.root_exists = isDir(config.case_data_root);

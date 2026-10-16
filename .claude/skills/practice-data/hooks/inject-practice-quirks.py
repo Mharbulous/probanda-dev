@@ -27,8 +27,12 @@ FRAMING = (
 )
 POINTER = (
     "This practitioner may have environment notes stored on their PC, out of this session's "
-    "reach. Before the first mail, calendar or file lookup, call practice_data__firm_profile "
-    "and read its practice_quirks field."
+    "reach. Before the first mail, calendar or file lookup, call practice_data__config_status "
+    "and read its practice_quirks field. When exists is false or practice_quirks is null, no "
+    "notes are recorded: carry on without them, and offer once in this session to record some "
+    "(practice-data skill, \"Practice quirks\"), writing only on the practitioner's yes. When the "
+    "call fails, say once that the notes could not be read and carry on. Never ask again in "
+    "this session."
 )
 
 

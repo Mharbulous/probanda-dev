@@ -42,6 +42,13 @@ function readJson(path: string): Record<string, unknown> {
   }
 }
 
+// This machine's coclerk.json, or `{version: 1}` (config_set_root's seed) when it is absent.
+// A COCLERK_CONFIG_PATH that names a missing file still fails in configPath.
+function readConfig(env: NodeJS.ProcessEnv): Record<string, unknown> {
+  const path = configPath(env);
+  return existsSync(path) ? readJson(path) : { version: 1 };
+}
+
 function writeJson(path: string, value: unknown): void {
   writeFileSync(path, JSON.stringify(value, null, 2) + "\n", "utf-8");
 }
@@ -262,10 +269,19 @@ export async function upsert_firm_profile(
   if (inputs.every((input) => args[input] === undefined)) {
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
-  const paths = firmPaths(env);
+  // A call that sets only this machine's practice_quirks or signature needs no firm folder, so it
+  // still writes when coclerk.json or its case_data_root is not set up yet.
+  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "idle_flag_hours"].some((input) => args[input] !== undefined);
+  let resolved: { firm: string; letterhead: string } | undefined;
+  try {
+    resolved = firmPaths(env);
+  } catch (err) {
+    if (firmNeeded) throw err;
+  }
+  const paths = resolved as { firm: string; letterhead: string };
   const result: UpsertFirmProfileResult = { changed: [], written: [] };
 
-  const current = existsSync(paths.firm) ? readJson(paths.firm) : undefined;
+  const current = resolved && existsSync(paths.firm) ? readJson(paths.firm) : undefined;
   let firm: Record<string, unknown> | undefined;
   if (args.firm_name !== undefined || args.roster_entry !== undefined || args.idle_flag_hours !== undefined) {
     firm = { firm_name: undefined, roster: [], ...current };
@@ -286,7 +302,7 @@ export async function upsert_firm_profile(
   }
 
   const config = args.person !== undefined || args.signature !== undefined || args.practice_quirks !== undefined
-    ? readJson(configPath(env))
+    ? readConfig(env)
     : undefined;
   if (config && args.person !== undefined) {
     const person = asString(args.person, "person");
@@ -339,7 +355,7 @@ export async function upsert_firm_profile(
     return entry.role === "lawyer" && entry.active !== false && fields.length > 0 ? [{ key: entry.key as string, fields }] : [];
   });
   if (signers.length > 0) result.signer_fields_missing = signers;
-  const person = (config ?? readJson(configPath(env))).person;
+  const person = (config ?? readConfig(env)).person;
   const preparer = roster.find((entry) => typeof person === "string" && entry.key === person);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person as string;
 
@@ -353,6 +369,7 @@ export async function upsert_firm_profile(
     result.written.push(paths.letterhead);
   }
   if (config) {
+    mkdirSync(dirname(configPath(env)), { recursive: true });
     writeJson(configPath(env), config);
     result.written.push(configPath(env));
   }
