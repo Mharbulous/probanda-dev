@@ -43,7 +43,7 @@ All three kinds are in store `practice` with `has_state` false, so they have no 
 **`contact`**
 - `rules.tag`: (`contact`, `entity`, `vocab`, required). `rules.vocabulary`: `entity` is `person` or `organization`.
 - No links.
-- Data, local in clear and hashed in the cloud: `name` (required), `emails[]`, `phones[]`, `addresses[]` (the address shape `contacts__get` returns), `carddav_url?`, `note?`.
+- Data, local in clear and hashed in the cloud: `name` (required), `emails[]`, `phones[]`, `addresses[]` (the address shape `contacts__get` returns), `other_names[]` (added 2026-10-16 for `merge_contact`, 4.2), `carddav_url?`, `note?`.
 - `rules.kind_contact`: on create, refuse when `hashes.name` is null, asking "What is the name of {{item:%s}}?"
 - No natural key. Two people can share a name and two contacts can share an office email, so whether two records are one contact is the practitioner's decision (4.5, 4.6), never an automatic upsert match.
 
@@ -73,8 +73,16 @@ Each is a `practice_data__*` tool, defined in `practiceToolDefinitions()` (`sour
 | `upsert_matter_role` | `id?`, `matter` (resolved as `matter_lookup` resolves it), `contact_id`, `role`, `from?`, `to?`, `note?`, `case_party_id?`, `case_proceeding_id?` | Writes one role. |
 | `contact_lookup` | `id?` or `query?` (a case-insensitive substring of name, email or phone), `limit?` | Local and offline. Returns each contact with its affiliations and its matter roles (matter number, role, from, to), plus `near`: contacts with the same normalized name (lower case, punctuation and corporate suffixes such as Ltd., Inc. and LLP removed) or a shared email or phone. |
 | `contact_checks` | `matter?`, `matter_root?` | Runs the two checks in 4.4. Read only. |
+| `merge_contact` | `keep_id`, `spare_id` | Merges a duplicate into the contact kept, deleting no information. Returns `{merged: true, contact_id, moved, combined}`, or `{merged: false, conflicts}` with nothing written. |
 
-No merge tool is built. Ingest and the backfill ask before creating a contact, so duplicates should be rare. A duplicate found later is fixed by re-pointing its roles and affiliations with the upsert tools and deleting the spare through the existing item delete.
+**Amended 2026-10-16: `merge_contact` replaces deleting the spare.** Practice data has no item delete that a tool exposes, and deleting a spare would lose its own emails, phones and addresses unless every caller copied them first. `merge_contact` makes that guarantee in code. In one write it:
+
+- combines `emails`, `phones`, `addresses` and `other_names`, dropping exact duplicates, and adds the spare's `name` to `other_names` when it differs;
+- keeps any field set on one side only;
+- moves each matter role and affiliation of the spare to the kept contact, and combines a pair that would share an upsert key into the kept item;
+- deletes the spare and the combined items.
+
+When the two hold different values for anything else (`entity`, `carddav_url`, `note`, or a combined pair's `from`, `to`, `title`, `note` or `case_party_id`), it writes nothing and returns each difference, for the practitioner to settle with the upsert tools before merging again. The cloud refuses to delete a contact that any affiliation or matter role still points to (`rules.kind_contact_delete`), so a merge write that missed one is refused whole.
 
 ### 4.3 `upsert_client_matter`
 
@@ -92,7 +100,9 @@ No merge tool is built. Ingest and the backfill ask before creating a contact, s
 
 Check 2 reads parties through a new read-only script, `.claude/skills/case-data/references/scripts/list_parties.py`, spawned on the #56 pattern. It prints every `parties` row as JSON: `party_id`, `name`, `party_type`, `lawyer_name`, `lawyer_firm`, `lawyer_email`, `lawyer_phone`, `address`, `contact_info`, and the `proceeding_id`s and roles from `proceeding_parties`. It opens the database read-only and adds no table or column. Tests go in `.claude/skills/case-data/tests/test_list_parties.py`.
 
-Output: `{matters_without_client: [{matter_id, matt_num, client_name}], parties_without_role: [{matter_id, party_id, name, party_type, proceeding_ids, lawyer_name, lawyer_firm}]}`. Without `matter`, check 1 covers every open matter and check 2 every open matter whose case-data folder resolves.
+Output: `{matters_without_client: [{matter_id, matt_num, client_name}], parties_without_role: [{matter_id, party_id, name, party_type, proceeding_ids, lawyer_name, lawyer_firm}], unresolved: [{matter_id, matt_num, reason}]}`. Without `matter`, check 1 covers every open matter and check 2 every open matter whose case-data folder resolves.
+
+As built (2026-10-16): with no `matter`, no `matter_root` is known, so a matter's case-data folder is the one child of the case data root whose name starts with its matter number and holds `main.sqlite`, as `locate_case_data_dir`'s own fallback matches it. A matter with two such folders, or no matter number, or a database check 2 cannot read, is listed in `unresolved` with the reason rather than guessed.
 
 Callers: the executive-assistant morning briefing shows the two counts; the backfill (4.5) uses the output as its worklist; `/ingest` runs check 2 for its matter at the end of a run.
 
@@ -135,7 +145,7 @@ Case-data design decisions gain **#69**, "Contacts and their matter roles are pr
 
 ## 6. Options considered
 
-The ADR records the design options. Within this spec, a natural-key upsert on a contact's name or email was rejected (4.1), and a merge tool was deferred (4.2).
+The ADR records the design options. Within this spec, a natural-key upsert on a contact's name or email was rejected (4.1). A merge tool was first deferred in favour of deleting the spare, then built instead of it (4.2, amended 2026-10-16), because a delete loses the spare's own data.
 
 ## 7. Implementation plan
 
@@ -156,7 +166,7 @@ The ADR records the design options. Within this spec, a natural-key upsert on a 
 ## 9. Settled questions
 
 1. A co-party on the firm's side who is not its client, such as a co-defendant with other counsel, gets no role: the vocabulary gains no `co_party`. Check 2 keeps listing such a party, and the practitioner skips it.
-2. No merge tool is built, even after the backfill (4.2).
+2. ~~No merge tool is built, even after the backfill (4.2).~~ Reversed 2026-10-16: `merge_contact` is built, and no contact delete is exposed (4.2).
 
 ## 10. Release: patch
 

@@ -7,7 +7,8 @@ import { NotFoundError, ValidationError } from "../../errors.js";
 import { flatten, rowsOf, type Item, type Row } from "../../practice/items.js";
 import type { OpSpec } from "../../practice/ops.js";
 import type { PracticeStore } from "../../practice/store.js";
-import { asString, newId, normalizeMattNum, nowIso, requireMatter } from "./shared.js";
+import { contactOp, today } from "./contacts.js";
+import { asString, newId, normalizeMattNum, nowIso, requireMatter, resolveMatter } from "./shared.js";
 
 /** The empty labels that are sent as null, never as the hash of "". */
 const LABELS = ["party_label", "proceeding_label", "scenario_label"];
@@ -21,7 +22,10 @@ function rowOf(items: Map<string, Item>, id: string): Row {
 export async function upsert_client_matter(
   store: PracticeStore,
   args: Record<string, unknown>
-): Promise<{ client_id: string; matter_id: string; client_created: boolean; matter_created: boolean }> {
+): Promise<{
+  client_id: string; matter_id: string; client_created: boolean; matter_created: boolean;
+  client_role_ids: string[]; question?: string;
+}> {
   const clientNum = asString(args.client_num, "client_num");
   if (!args.file_number && !args.matt_num) {
     throw new ValidationError("upsert_client_matter requires a matter key (file_number or matt_num)");
@@ -32,6 +36,7 @@ export async function upsert_client_matter(
 
   const clientOp = newId();
   const matterOp = newId();
+  const roleSpecs = clientRoleOps(store, args, matterOp, mattNum);
   const { ops } = await store.write("upsert_client_matter", {}, [
     {
       op: "upsert", id: clientOp, kind: "client",
@@ -61,13 +66,50 @@ export async function upsert_client_matter(
         last_trust_date: args.last_trust_date,
       },
     },
+    ...roleSpecs,
   ]);
+  const matterCreated = ops[1].as === matterOp;
+  const roleIds = new Set(roleSpecs.filter((spec) => spec.kind === "matter_role").map((spec) => spec.id));
   return {
     client_id: ops[0].as,
     matter_id: ops[1].as,
     client_created: ops[0].as === clientOp,
-    matter_created: ops[1].as === matterOp,
+    matter_created: matterCreated,
+    client_role_ids: ops.filter((op) => roleIds.has(op.id)).map((op) => op.as),
+    ...(matterCreated && args.client_contacts == null ? { question: "Who is the client on this matter?" } : {}),
   };
+}
+
+// client_contacts (firm-wide contacts spec 4.3): each new contact, then one client role per
+// element, in the same write as the matter. A role this matter already holds keeps its from.
+function clientRoleOps(store: PracticeStore, args: Record<string, unknown>, matterOp: string, mattNum: unknown): OpSpec[] {
+  if (args.client_contacts == null) return [];
+  if (!Array.isArray(args.client_contacts)) throw new ValidationError("client_contacts must be a list");
+  const items = store.items();
+  const existing = resolveMatter(items, { matt_num: mattNum, file_number: args.file_number });
+  const contactOps: OpSpec[] = [];
+  const roleOps: OpSpec[] = [];
+  args.client_contacts.forEach((element: unknown, index: number) => {
+    const label = `client_contacts[${index}]`;
+    if (element === null || typeof element !== "object" || Array.isArray(element)) throw new ValidationError(`${label} must be an object`);
+    const fields = element as Record<string, unknown>;
+    let contactId: string;
+    if (fields.contact_id) {
+      contactId = String(fields.contact_id);
+    } else {
+      contactId = newId();
+      contactOps.push(contactOp(fields, contactId, true, label));
+    }
+    const held = existing !== null && rowsOf(items, "matter_role").some((role) =>
+      role.matter_id === existing.id && role.contact_id === contactId && role.role === "client" && role.case_proceeding_id == null);
+    roleOps.push({
+      op: "upsert", id: newId(), kind: "matter_role",
+      tags: { role: "client" },
+      links: { matter: matterOp, contact: contactId },
+      data: { from: held ? undefined : today(), case_proceeding_id: null },
+    });
+  });
+  return [...contactOps, ...roleOps];
 }
 
 export async function insert_time_entry(

@@ -101,6 +101,18 @@ function ruleOverlayRecordSchema(): Record<string, unknown> {
   return { ...object(properties), required: Object.keys(properties).filter((key) => key !== "record_id" && key !== "pool_id") };
 }
 
+// A contact's fields (upsert_contact, and a new contact in upsert_client_matter's client_contacts).
+const CONTACT_PROPERTIES: Record<string, Record<string, unknown>> = {
+  entity: { type: "string", description: "person or organization" },
+  name: { type: "string" },
+  emails: { type: "array", items: { type: "string" } },
+  phones: { type: "array", items: { type: "string" } },
+  addresses: { type: "array", items: { type: "object" } },
+  other_names: { type: "array", items: { type: "string" } },
+  carddav_url: { type: "string" },
+  note: { type: "string" },
+};
+
 // Practice-data tools (cross-matter; local SQLite backend, spec §5). Hand-written
 // definitions — practice tools are not registry-generated. All route to
 // callPracticeTool. `import_invoices` takes an array input that validate.ts passes
@@ -188,23 +200,38 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     // ---- Writes, plus the firm-profile and court-calendar reads ----
     {
       name: practicePrefixed("upsert_client_matter"),
-      description: "Create or update a client and matter (the CSV-import write path). Upserts the client by client_num and the matter by file_number (fallback matt_num). billable defaults to true when omitted; pass false for a non-billable matter (e.g. the practitioner's own internal file) -- it is then excluded from ar_data, the all-matters wip_hours sweep, and import_invoices.",
-      inputSchema: objectSchema([
-        { name: "name", type: "str" },
-        { name: "client_num", type: "str" },
-        { name: "orig_lawyer", type: "str" },
-        { name: "resp_lawyer", type: "str" },
-        { name: "type_of_law", type: "str" },
-        { name: "major_client", type: "str" },
-        { name: "file_number", type: "str" },
-        { name: "matt_num", type: "str" },
-        { name: "description", type: "str" },
-        { name: "status", type: "str" },
-        { name: "billable", type: "bool" },
-        { name: "regular_trust", type: "num" },
-        { name: "term_trust", type: "num" },
-        { name: "last_trust_date", type: "str" },
-      ], ["client_num"]),
+      description: "Create or update a client and matter (the CSV-import write path, and opening a matter). Upserts the client by client_num and the matter by file_number (fallback matt_num). billable defaults to true when omitted; pass false for a non-billable matter (e.g. the practitioner's own internal file) -- it is then excluded from ar_data, the all-matters wip_hours sweep, and import_invoices. client_contacts names who the client is: each element is {contact_id} for an existing contact, or the upsert_contact fields of a new one; the same write records each new contact and a matter role tagged client from today for each element, so the matter and its client roles are saved together or not at all. Returns client_id, matter_id, client_created, matter_created and client_role_ids; a matter created without client_contacts also returns question.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          ...objectSchema([
+            { name: "name", type: "str" },
+            { name: "client_num", type: "str" },
+            { name: "orig_lawyer", type: "str" },
+            { name: "resp_lawyer", type: "str" },
+            { name: "type_of_law", type: "str" },
+            { name: "major_client", type: "str" },
+            { name: "file_number", type: "str" },
+            { name: "matt_num", type: "str" },
+            { name: "description", type: "str" },
+            { name: "status", type: "str" },
+            { name: "billable", type: "bool" },
+            { name: "regular_trust", type: "num" },
+            { name: "term_trust", type: "num" },
+            { name: "last_trust_date", type: "str" },
+          ]).properties,
+          client_contacts: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { contact_id: { type: "string" }, ...CONTACT_PROPERTIES },
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["client_num"],
+        additionalProperties: false,
+      },
     },
     {
       name: practicePrefixed("insert_time_entry"),
@@ -462,6 +489,70 @@ export function practiceToolDefinitions(): ToolDefinition[] {
         { name: "amending_reg", type: "str" },
         { name: "status", type: "str", enum: RULE_OVERLAY_STATUSES },
       ]),
+    },
+
+    // ---- Contacts, affiliations and matter roles (ADR 0009) ----
+    {
+      name: practicePrefixed("upsert_contact"),
+      description: "Create (omit id) or update (provide id) one contact: a person or organization the firm deals with, firm-wide. entity is person or organization; name is required on create. emails and phones are lists of strings; addresses is a list in the shape contacts__get returns; other_names lists other names the same contact goes by. An update changes only the fields it supplies, and a list it supplies replaces the stored list. There is no natural key: two contacts may share a name or an office email, so first check contact_lookup (its near list) and ask the practitioner before creating one. Returns {contact_id, created}.",
+      inputSchema: {
+        type: "object",
+        properties: { id: { type: "string" }, ...CONTACT_PROPERTIES },
+        additionalProperties: false,
+      },
+    },
+    {
+      name: practicePrefixed("upsert_affiliation"),
+      description: "Create (omit id) or update (provide id) one affiliation: a person contact tied to an organization contact, with optional from, to (ISO dates) and title. Without id it upserts on (person, organization, from): re-entering the same tie returns the one already recorded, and a person who returns to an earlier organization gets a second affiliation with a new from. Returns the affiliation row.",
+      inputSchema: objectSchema([
+        { name: "id", type: "str" },
+        { name: "person_id", type: "str" },
+        { name: "organization_id", type: "str" },
+        { name: "from", type: "str" },
+        { name: "to", type: "str" },
+        { name: "title", type: "str" },
+      ]),
+    },
+    {
+      name: practicePrefixed("upsert_matter_role"),
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the case-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
+      inputSchema: objectSchema([
+        { name: "id", type: "str" },
+        ...matterRef,
+        { name: "contact_id", type: "str" },
+        { name: "role", type: "str" },
+        { name: "from", type: "str" },
+        { name: "to", type: "str" },
+        { name: "note", type: "str" },
+        { name: "case_party_id", type: "num" },
+        { name: "case_proceeding_id", type: "num" },
+      ]),
+    },
+    {
+      name: practicePrefixed("contact_lookup"),
+      description: "Find contacts, locally and offline, by id or by query (a case-insensitive substring of a name, another name, an email or a phone). Returns {contacts, near}: each contact with its affiliations and its matter roles (with matt_num), and near, the other contacts that may be the same person or organization (the same name once case, punctuation and a corporate suffix such as Ltd., Inc. or LLP are ignored, or a shared email or phone), each with its reason. limit caps contacts (default 25). Whether a near contact is the same one is the practitioner's decision.",
+      inputSchema: objectSchema([
+        { name: "id", type: "str" },
+        { name: "query", type: "str" },
+        { name: "limit", type: "num" },
+      ]),
+    },
+    {
+      name: practicePrefixed("contact_checks"),
+      description: "Read only. Two gap checks. matters_without_client: each open matter (status not closed) with no matter role tagged client whose to is empty or later than today. parties_without_role: each party in a matter's case data whose party_id is no matter role's case_party_id on that matter. With a matter ref (matt_num or matter_id) both checks cover that matter, and check 2 reads the case data that matter_root's coclerk.json names (omit matter_root and check 2 is skipped for it). Without a matter ref check 1 covers every open matter, and check 2 every open matter with one case-data folder under the case data root whose name starts with its matter number and holds main.sqlite. unresolved lists each matter check 2 could not read, with the reason (no matter number, two candidate folders, a database behind the current schema). Returns {matters_without_client, parties_without_role, unresolved}.",
+      inputSchema: objectSchema([
+        ...matterRef,
+        { name: "matter_root", type: "str" },
+      ]),
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
+      name: practicePrefixed("merge_contact"),
+      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role and case_proceeding_id) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, or a combined role's or affiliation's from, to, title, note or case_party_id), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
+      inputSchema: objectSchema([
+        { name: "keep_id", type: "str" },
+        { name: "spare_id", type: "str" },
+      ], ["keep_id", "spare_id"]),
     },
 
     // ---- Invoices ----

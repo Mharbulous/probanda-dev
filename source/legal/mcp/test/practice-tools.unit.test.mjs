@@ -68,6 +68,12 @@ const PRACTICE_TOOL_NAMES = [
   "practice_data__invoices_query",
   "practice_data__upsert_rule_overlay",
   "practice_data__rule_overlay",
+  "practice_data__upsert_contact",
+  "practice_data__upsert_affiliation",
+  "practice_data__upsert_matter_role",
+  "practice_data__contact_lookup",
+  "practice_data__contact_checks",
+  "practice_data__merge_contact",
 ];
 
 test("upsert_anchor schema exposes amend (#194)", () => {

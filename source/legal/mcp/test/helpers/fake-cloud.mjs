@@ -15,18 +15,21 @@ export const FAKE_KEY = "sb_secret_fake_cloud_key";
 
 const DEFAULT_STATE = { task: "open", deadline: "active", payment: "false", signal: null };
 
-// The upsert keys the fake matches on: [kind, parts...] where a part is tag:x, link:x or hash:x.
+// The upsert keys the fake matches on: [kind, parts...] where a part is tag:x, link:x or hash:x,
+// and a part ending in ? is compared even when it has no value (no value matches no value).
 const UPSERT_KEYS = {
   client: [["hash:client_num"]],
   matter: [["hash:file_number"], ["hash:matt_num"]],
   invoice: [["link:matter", "hash:invoice_number"]],
   signal: [["link:matter", "tag:signal_key"]],
   calendar_year: [["hash:year"]],
+  affiliation: [["link:person", "link:organization", "hash:from?"]],
+  matter_role: [["link:matter", "link:contact", "tag:role", "hash:case_proceeding_id?"]],
 };
 
 const stripNulls = (object) => Object.fromEntries(Object.entries(object ?? {}).filter(([, v]) => v !== null && v !== undefined));
 const part = (item, p) => {
-  const [where, name] = p.split(":");
+  const [where, name] = p.replace(/\?$/, "").split(":");
   return (where === "tag" ? item.tags : where === "link" ? item.links : item.hashes)?.[name] ?? null;
 };
 
@@ -102,6 +105,15 @@ export async function startFakeCloud(t) {
       let out;
       if (op.op === "delete") {
         const item = t.items.get(op.id);
+        // R12: a contact an affiliation or a matter role still points to stays. The ops before
+        // this one in the same write have already been applied, as the cloud applies them.
+        const holder = op.kind === "contact" && [...live("affiliation"), ...live("matter_role")]
+          .find((i) => Object.values(i.links).includes(op.id));
+        if (holder) {
+          const refused = { saved: false, question: `Which contact replaces {{item:${op.id}}} on {{item:${holder.id}}}?` };
+          t.results.set(body.write_id, refused);
+          return refused;
+        }
         item.deleted = true;
         touch(item);
         if (op.kind === "anchor") {
@@ -148,7 +160,7 @@ export async function startFakeCloud(t) {
         if (op.op === "update") target = t.items.get(op.id);
         if (op.op === "upsert") {
           const keys = UPSERT_KEYS[op.kind];
-          const usable = keys?.find((k) => k.every((p) => part(op, p) !== null));
+          const usable = keys?.find((k) => k.every((p) => p.endsWith("?") || part(op, p) !== null));
           target = keys
             ? usable ? live(op.kind).find((i) => usable.every((p) => part(i, p) === part(op, p))) : undefined
             : live(op.kind).find((i) => i.id === op.id);
