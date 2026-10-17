@@ -93,11 +93,7 @@ A confirmed change that the [overlay](#overlay-coverage) does not cover means th
 3. **The current calc still runs** — compute and store the requested deadline from the current (best-available) rule file, but flag it `rule_stale` alongside the rest. Lead the report with the staleness: the practitioner must re-verify the rule file before any affected date is trusted.
 4. The flag targets the **current matter's** affected active rows. Other matters are caught on their own next calc's step-0 gate — this skill does not sweep every matter (that would be a heavier design, out of scope here).
 
-**Clearing a `rule_stale` block** is a two-step the practitioner drives: (a) update the affected rule file to the amended law **and** bump `rule-freshness.json` in the same commit (`currency_date`, `last_amending_reg`, `pit_watermark`), or, in a matter session, record the change in the firm rule overlay (docket-clerk workflow 10); then (b) cascade-recalculate (workflow 3), which supersedes each blocked row with a freshly-computed, un-flagged one. Clearing *is* a cascade — no separate mechanism.
-
-## Commons offer
-
-A detected change with at least one uncovered deadline type, whether from [step 0a](#step-0a-elapsed-pending-changes-no-fetch) or the [backward gate](#the-backward-gate-coarse--precise), is a "rule change detected" event under `rule-update.md` §5. Block and report first, exactly as above. §5 then governs whether and when to initiate, and what to do when nothing resolves.
+**Clearing a `rule_stale` block** is a two-step the practitioner drives: (a) a plugin release ships the remodelled rule file with its `rule-freshness.json`, or the practitioner records the change in the firm rule overlay (docket-clerk workflow 10); then (b) cascade-recalculate (workflow 3), which supersedes each blocked row with a freshly-computed, un-flagged one. Clearing *is* a cascade — no separate mechanism.
 
 ## Offline / sandbox degrade
 

@@ -287,7 +287,7 @@ preliminary impression the practitioner asked for), write the notes and the memo
 the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
-   the per-tier notes, every `/ingest` and `/consolidation-push` flag, every case-data
+   the per-tier notes, every `/ingest` flag, every case-data
    flag, and the Step 5 offers. A case-data flag is a place where the matter's own
    record disagrees with itself or with what you read: two copies of a document that
    differ, a prior answer describing what case data does not show, a missing
@@ -419,6 +419,5 @@ When a source comes back unavailable, name the actual cause; never guess at one:
   `resolve_by_id`, `treatment_chain`); never call a write tool
   (`push`, `merge_authority`, `amend_*`, `link_*`, `unlink_*`, `configure_*`) — you
   find and assess the collection, you never change it.
-- No pushes/amends to the commons pool — flag push-worthy findings for
-  `/consolidation-push` in your answer instead.
+- No pushes/amends to the commons pool.
 - Never cite from training knowledge. Never state uncited law as fact.

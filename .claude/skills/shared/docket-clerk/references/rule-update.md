@@ -51,41 +51,11 @@ The docket-clerk agent runs these steps over three spawns (its workflow 10): its
 5. **Approval.** Present each record under `/show-me`, one decision at a time: the current shipped row in full, the proposed record in full, and the source passage itself.
 6. **Write.** On the practitioner's approval, write each record through ``practice-data`` `upsert-rule-overlay` with `status: verified`, `verified_by: practitioner` and `verified_at` set to today. Nothing is written before approval. Workflow 10 never writes an `unverified` record.
 7. **Recalculate.** Run workflow 3 (cascade) for every active deadline flagged `rule_stale` against the changed sections. Each recalculated row carries `overlay:<record_id>` in `review_note`.
-8. **Commons offer.** Section 5, event "rule update".
 
 ## 4. Effective dates on shipped rows
 
 A shipped row may state when it is in force by ending its Description with `In force from YYYY-MM-DD.`, `In force to YYYY-MM-DD.`, or both. A row that states neither is in force from the beginning of time until a record supersedes it (section 1). Section 2's same-row test reads `effective_from` from this sentence.
 
-## 5. Commons offer
+## 5. Rule records stay with the firm
 
-Rule records can be shared between firms through `/rule-sharing`, which ships in an optional expansion and owns every step of the sharing, including the practitioner's confirmation. This skill only initiates it, at two events:
-
-- **Rule update.** Workflow 10 has written verified records and finished its cascade (§3 step 8). Opening line: `Initiated by: rule update — <amending reg>`.
-- **Rule change detected.** The rule-freshness gate found a change, from a PIT row or an elapsed `pending_changes[]` entry, with at least one section the overlay does not cover (`rule-freshness.md`, "Commons offer"). Opening line: `Initiated by: rule change detected — <amending reg>`.
-
-Rules for both:
-
-- **A new turn.** Finish the current workflow first, including its report. Then, in the next turn, invoke `/rule-sharing` with the opening line. Never initiate mid-workflow or inside a `/show-me` approval.
-- **Once per amending reg per session.** A later calculation that meets the same change does not initiate again.
-- **Practitioner sessions only.** The docket-clerk agent never initiates. It ends its reply with the opening line, and its caller, a session that is not drafting, invokes `/rule-sharing` with it in its next turn without relaying it. In recorded-only mode the agent returns nothing for the offer.
-- **Initiation is not approval.** `/rule-sharing` takes its own confirmation, and its cloud permission prompts still fire. Never pre-confirm on the practitioner's behalf.
-- **Not installed.** If `/rule-sharing` does not resolve, do nothing and say nothing. Do not mention the commons, report a missing skill or suggest installing anything.
-- **Nothing here changes.** Records `/rule-sharing` hands back to record arrive as `unverified` and drive nothing (§1 step 6) until it ratifies them (§6). The block, the to-do and every calculation in this skill run the same whether or not it is installed.
-
-## 6. Hand-offs from `/rule-sharing`
-
-Two writes run only when `/rule-sharing` asks for them. Neither starts any other way, and neither touches anything outside the firm rule overlay.
-
-**Record pulled records.** `/rule-sharing` hands over records the practitioner confirmed pulling, each with its pool id.
-
-1. Check each record against spec §6 and drop nothing silently: a record missing a §6 field, or carrying a field §6 lacks, is reported back by field and not written.
-2. Write each through ``practice-data`` `upsert-rule-overlay` with `status: unverified`, `verified_by: null`, `verified_at: null`, `pool_id` set to its pool id, and `record_id` omitted so a local id is assigned. Never write a pulled record as `verified`, and never reuse a pool id as a `record_id`.
-3. Before writing, read ``practice-data`` `rule-overlay` filtered by the record's amending reg. A record already holding that `pool_id` is not written again; report it as already recorded.
-4. Report each record's `record_id` back to `/rule-sharing`. The records drive nothing (§1 step 6).
-
-**Mark a record verified.** `/rule-sharing` names one record by `record_id` after presenting it under `/show-me` (the current local row, the proposed row and the source passage).
-
-1. Act only on the practitioner's approval of that presentation, given in the session that runs `/rule-sharing` and carried in the spawn prompt. No approval, or an approval of a different record, writes nothing.
-2. Read the record through ``practice-data`` `rule-overlay`. Write it back unchanged through `upsert-rule-overlay` except `status: verified`, `verified_by: practitioner` and `verified_at` set to today.
-3. Then run §2 reconciliation and §3 step 7 (cascade) for the deadline types it covers, as after a workflow 10 write.
+Probanda does not share rule records between firms. Workflow 10 ends with its cascade and report, and a detected rule change ends with its block, report and to-do. Neither offers anything further.

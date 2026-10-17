@@ -23,7 +23,7 @@ The version rule:
 
 ## The move from CoClerk
 
-The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
+The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. No shipped file hands off to either skill.
 
 ## Permanent names
 

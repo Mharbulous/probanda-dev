@@ -821,7 +821,7 @@ across unchanged, and table counts do not move: `privileged` stays at 3.
 The bridge (#46) used to write a practitioner-tied `answered` edge at
 `verified = 0`. The push-queue gate holds a concept back whole on any `0` edge,
 so every retirement that tied an opposing authority produced a first push with
-nothing pushable. `/consolidation-push` stopped before its currency stage, the
+nothing pushable. The commons push stopped before its currency stage, the
 stage the filing-retired trigger exists for (#500, T500 E2E finding 4.2).
 
 **The `0` was not a pending check. It was a claim no check could make.**

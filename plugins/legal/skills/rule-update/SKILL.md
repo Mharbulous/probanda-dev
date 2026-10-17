@@ -82,12 +82,7 @@ what a rule means. Writes go through the clerk. A question of law met on the way
    rejected ones. The clerk writes the approved records as `verified`, cascades every
    `rule_stale` deadline the change reached, and reports.
 6. **Report.** Relay the clerk's summary: the records written, each recalculated deadline with
-   old and new dates, and anything left flagged. If the reply ends with a commons-offer opening
-   line (`rule-update.md` §5), act on it in your next turn as §5 says and do not relay it.
-
-**Another firm's records.** Only when the practitioner asks, invoke `/rule-sharing` to pull
-pooled records for this amending regulation. Pulled records arrive `unverified` and go through
-step 4 like any other. If `/rule-sharing` does not resolve, say nothing about it.
+   old and new dates, and anything left flagged.
 
 ## If a step cannot finish
 

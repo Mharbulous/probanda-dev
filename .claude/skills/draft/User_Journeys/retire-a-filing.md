@@ -42,7 +42,6 @@ source: design `Engineering/1. Design/2026-09-08_retire-filing-consolidation-cur
 
 10. **Assistant:** re-renders the board alone. Its summary reads **Retired**, and the superseded jobs say so; the Writing's Job Board page is moved to TRASH on the next page write; only live Writings have one. The Writing's other mockups are untouched — frozen as they stood at retirement, which is the point of retiring it.
 
-11. **Assistant:** in the next turn, not this one, offers consolidation of the matter's legal thinking — opening with the event that prompted it, so the practitioner never had to remember. Declining is a complete answer.
 
 ## The refusal branch
 

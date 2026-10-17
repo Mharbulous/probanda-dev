@@ -16,7 +16,6 @@ Procedures: `references/authorities.md`.
 
 Before handing work to another skill other than `/drafting-data`, read `references/skills-invoked.md`, which lists each skill this one hands to and the condition for each.
 
-- `/consolidation-push`, reached only indirectly through the consolidation trigger doctrine, in the turn after a retirement, do not restate its conditions.
 
 <!-- atom id=draft.enter.tools ops=enter -->
 ## 6. Enter the session

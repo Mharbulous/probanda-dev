@@ -110,12 +110,11 @@ Worked example, shape only, from the 2026-10-05 run:
 
     FIXES: rule-freshness commencement gate; deadline rule overlay; legal-commons court rule sharing
 
-    You are the orchestrator in a Claude Code session. Launch 3 subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. After the last spec lands, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, and commit `plugins/` by pathspec. Version control is yours to decide: never ask Brahm about it.
+    You are the orchestrator in a Claude Code session. Launch 2 subagents with the Agent tool, one per spec below, in parallel, with no isolation, all on `main` in this checkout. Each commits its own files by explicit pathspec and pushes `main` when its implementation criteria pass. Verify each result and push anything left unpushed. After the last spec lands, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, and commit `plugins/` by pathspec. Version control is yours to decide: never ask Brahm about it.
 
     SPECS
     - A: <design folder>/2026-10-05_rule-freshness-commencement-gate-spec.md
     - B: <design folder>/2026-10-05_deadline-rule-overlay-spec.md
-    - C: <design folder>/2026-10-05_legal-commons-court-rule-sharing-spec.md
 
     KICKOFF PROMPT
     (the template above, once)

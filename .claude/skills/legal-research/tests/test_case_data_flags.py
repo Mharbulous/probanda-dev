@@ -57,7 +57,7 @@ class FlagShapeTests(unittest.TestCase):
 
     def test_notes_carry_every_case_data_flag(self):
         self.assertIn(
-            "every `/ingest` and `/consolidation-push` flag, every case-data flag, "
+            "every `/ingest` flag, every case-data flag, "
             "and the Step 5 offers",
             self.step_six,
         )

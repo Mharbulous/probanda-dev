@@ -263,11 +263,11 @@ You have no fetch tool for primary text (`WebFetch` is refused by bclaws) and ca
 
 - **First spawn.** Return an open item naming the URL of the primary source to fetch (§3 step 2: the bclaws consolidation if it already shows the change, otherwise the deposited regulation or OIC), handled by `/rule-update`. It fetches the text with `sources__fetch` and re-spawns you with each affected passage verbatim and its fetch date. **Skip this spawn** when the spawn prompt already carries the affected passages verbatim with their source URL and fetch date: go straight to the second spawn's steps.
 - **Second spawn** (the prompt carries the passages and the fetch date, on a first or a later spawn). Run §3 steps 1, 3 and 4 from that text alone: identify the instruments, map subrules to deadline types, and draft the records. Return each drafted record as an open item for approval under `/show-me` (§3 step 5): the current shipped row in full, the proposed record in full, and the source passage. Write nothing.
-- **Third spawn** (the prompt carries the practitioner's approval of each record). Run §3 step 6 (write each approved record), step 7 (cascade) and step 8 (the commons offer, which `rule-update.md` §5 hands to your caller).
+- **Third spawn** (the prompt carries the practitioner's approval of each record). Run §3 step 6 (write each approved record) and step 7 (cascade).
 
-### 11. Record or verify a shared rule record
+### 11. Shared rule records (none)
 
-Only when the spawn prompt carries a `/rule-sharing` hand-off: record pulled records as `unverified`, each with its pool id, or mark one verified once the practitioner has approved it under `/show-me`. That approval is collected by your caller before it spawns you, and the prompt carries it. The steps are `shared/docket-clerk/references/rule-update.md` §6. Report each `record_id` in your reply for the caller to hand back to `/rule-sharing`.
+Probanda does not share rule records between firms. If a spawn prompt asks you to record pulled rule records or to verify a shared one, write nothing and return an open item saying rule records are not shared.
 
 ### 12. Freshness sweep (no matter)
 
@@ -305,7 +305,7 @@ A row with a `scenario_label` is an unresolved alternative whatever its flag. Th
 
 - See [Rule Files](#rule-files) for the per-proceeding rule files (`bcsc-rules.md`, `bcca-rules.md`, `bc-arbitration-rules.md`, `limitation-rules.md`, all under `shared/docket-clerk/references/`) and `reckoning.md` for the shared Interpretation Act reckoning; the court-calendar closure/shift machinery lives in `bcsc-rules.md` § Registry Machinery. Read the file(s) the routing table names before calculating any derived deadlines.
 - `shared/docket-clerk/references/rule-freshness.md` — the calc-time rule-freshness gate (step 0 of workflows 2/3/5), verifying the rule files against current bclaws primary law; its snapshot is `shared/docket-clerk/references/rule-freshness.json`, bumped atomically with any rule-file change.
-- `shared/docket-clerk/references/rule-update.md` — the firm rule overlay: resolution at calculation time, reconciliation after a plugin update, workflow 10, effective dates on shipped rows, the commons offer after a rule update or a detected rule change, and the hand-offs from `/rule-sharing` (workflow 11).
+- `shared/docket-clerk/references/rule-update.md` — the firm rule overlay: resolution at calculation time, reconciliation after a plugin update, workflow 10, effective dates on shipped rows, and that rule records stay with the firm (workflow 11).
 
 ## Anti-Patterns
 

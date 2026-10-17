@@ -186,9 +186,8 @@ existing authority row, so nothing else can.
 The pool also holds **court-rule records**: one row per deadline-rule period a
 practitioner verified locally against the rule's primary source (the
 firm rule overlay that `legal:docket-clerk` keeps). They are a separate kind of row from
-principles, with their own four tools. The procedures that use them (push, pull,
-ratify, retire) belong to `/rule-sharing`; this section states the rules every
-caller keeps.
+principles, with their own four tools. Probanda ships no procedure that pushes, pulls,
+ratifies or retires them; this section states the rules every caller keeps.
 
 - **Push carries only verified records in the overlay shape.** The runtime refuses
   a record with a field outside that shape, a missing required field, a local

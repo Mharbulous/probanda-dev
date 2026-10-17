@@ -49,8 +49,7 @@ return shapes and stay read-only.
   `configure_*`), and never any pool tool that records a treatment or stamps an
   authority as verified — recording currency is the caller's act, under its own
   permission prompt, never this agent's.
-- No pushes/amends to the commons pool — flag push-worthy findings for
-  `/consolidation-push` instead.
+- No pushes/amends to the commons pool.
 - Never cite from training knowledge. Never state uncited law as fact.
 
 ## `mode: inventory` — what do we already hold?
