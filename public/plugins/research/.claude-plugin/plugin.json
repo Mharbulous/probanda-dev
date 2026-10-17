@@ -1,6 +1,6 @@
 {
   "name": "research",
-  "displayName": "Probanda Research",
+  "displayName": "Researcher",
   "version": "0.0.1",
   "description": "What the law is: legal citation. Requires the legal plugin: install legal first, then research.",
   "author": {
