@@ -322,7 +322,7 @@ In Cowork, skip this check: the sandbox cannot see the draft folder. The harness
 | Affidavit (Form 109) | Rule 22-2 | `subskills/publish-bcsc-form/templates/affidavit.dotx` | `fill_plain.py --form affidavit` | A supporting affidavit of a Form 32 or 33 `/draft` holds: `asmaff` fills its text from `/draft`'s emitted file. An affidavit with no host filing `/draft` holds: Generate only, its substance hand-authored into document.xml using the template's LEAPBCParaNum styles (#1371's interim route) |
 | Application Response (Form 33) | Rule 8-1(6) | `subskills/publish-bcsc-form/templates/form-33.dotx` | `fill_plain.py --form form-33` | Generate + `asm33` Assemble |
 
-Each form's version, and the amending regulations its template, emitter and type file conform to (`conformed_to:`), are recorded on its identity file in `/publish`'s knowledge tree, as `/publish`'s "Form identity" section describes. A repo session conforms a form to an amendment by following `references/form-update.md`.
+Each form's version, and the amending regulations its template, emitter and type file conform to (`conformed_to:`), are recorded on its identity file in `/publish`'s knowledge tree, as `/publish`'s "Form identity" section describes. A form is conformed to an amendment only in a plugin release. A session that meets a `form_currency` warning says it, and the practitioner can ask for the release with `/legal:suggestion` naming the form and the amending regulation.
 
 **Not listed:** Bill of Costs (Form 62) and Default Judgment Bill of Costs (Form 63) -- both are the sibling subskill `publish-boc`.
 

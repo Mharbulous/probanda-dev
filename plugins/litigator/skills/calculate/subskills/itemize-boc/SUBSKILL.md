@@ -19,7 +19,7 @@ call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the case-data folder this chain works in
 (#1273, as for `publish-boc` under ADR 0026). Tell the practitioner so, and how
-to run it there: open a Code-tab session in their Coclerk checkout and ask for
+to run it there: open a Code-tab session in the matter's folder and ask for
 the same bill-of-costs step. Do not retry or probe in Cowork.
 
 Read `references/bill-of-costs-workspace.md` before doing anything: it defines the
@@ -108,7 +108,8 @@ Wait for the subagent if it has not returned.
   bootstrap mode. **Bootstrap mode writes into the skill tree, which an installed
   plugin cannot do.** In a session that cannot write the skill tree (an installed
   plugin), offer only "Proceed with warning" or "Stop", and say plainly that the
-  update has to be run from a repo session.
+  installed plugin cannot update its references: `/legal:suggestion` naming the
+  out-of-date source asks for a plugin release that does.
 - **"UNABLE TO VERIFY":** say in chat which sources failed and the last
   verification date from `subskills/itemize-boc/references/source-versions.md`,
   then elicit with pills — "Proceed anyway" (`data-accent="warning"`) / "Stop

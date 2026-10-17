@@ -12,7 +12,7 @@ conformed_to:
 
 # Form 32, Notice of Application
 
-The identity of this BC Supreme Court form, which `publish-bcsc-form` checks after fixing the form and before filling it, as `/publish`'s "Form identity" section directs. The form a Notice of Application Writing fills. `conformed_to` lists each amending regulation the template, emitter and type file have been conformed to, recorded by the repo-session checklist at `subskills/publish-bcsc-form/references/form-update.md`.
+The identity of this BC Supreme Court form, which `publish-bcsc-form` checks after fixing the form and before filling it, as `/publish`'s "Form identity" section directs. The form a Notice of Application Writing fills. `conformed_to` lists each amending regulation the template, emitter and type file have been conformed to, recorded when a plugin release conforms the form.
 
 `template` is the shipped template the fill uses. No official copy of this form is kept in the repository, so its version is not recorded. The source below is recorded in this text only, not as `page_url`, so `sources__check` does not check it.
 

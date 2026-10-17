@@ -105,7 +105,7 @@ requisition's purpose, and every other form is its registry key (for example
 - **An unconformed amendment stops the fill.** After the source check, call
   `drafting_forms__form_currency` with the form's `form_key`. A non-null
   `warning` stops the fill: say it verbatim, then offer two choices: proceed
-  with the fill, or stop for the repo-session update in
-  `subskills/publish-bcsc-form/references/form-update.md`. Whether the
+  with the fill, or stop until a plugin release conforms the form (ask for
+  it with `/legal:suggestion` naming the form and the amending regulation). Whether the
   change affects this filing is for `/legal-research`. This runs whether or
   not the file records a source, and on a blank-form fill too.

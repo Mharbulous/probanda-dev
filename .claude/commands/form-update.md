@@ -1,6 +1,10 @@
+---
+description: Maintainer-only. Conform a BC Supreme Court form (template, emitter, renderer, type file) to an amending regulation after a form_currency warning, in a Claude Code session in the probanda-dev repo.
+---
+
 # Conforming a BC Supreme Court form to an amendment
 
-Repo session only. A template, emitter, renderer or type file changes only in the repository, and reaches an install only through a repackage. A session in Cowork or on an installed plugin that meets a `form_currency` warning says it and stops here.
+Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships it. A template, emitter, renderer or type file changes only in this repo, and reaches an install only through a plugin release.
 
 The warning comes from `drafting_forms__form_currency` (ADR 0038). It names the form and the amending regulation, and says nothing about what changed. This checklist finds the change by a diff and states none of it.
 
@@ -10,7 +14,7 @@ The warning comes from `drafting_forms__form_currency` (ADR 0038). It names the 
    - the emitter, `source/legal/mcp/src/submission/forms/render-form32-filed-face.ts` or `render-form33-filed-face.ts`, and its golden, `source/legal/mcp/test/fixtures/form-32-emitted.md` or `form-33-emitted.md`;
    - the mockup renderer, `render-notice-of-application.ts` or `render-application-response.ts`;
    - the type file, `.claude/skills/draft/references/CAN/BC/BCSC/Documents/notice-of-application.md` or `application-response.md`.
-3. **Update** the template, emitter, renderer, type file, `assembly-input-contract.md` (beside this file) and their tests. Where the identity file carries a "Form instructions" table (Form 32), list each bracketed instruction of the new form in it, verbatim, with the check that proves it. Regenerate each golden only after reading its diff.
+3. **Update** the template, emitter, renderer, type file, `.claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md` and their tests. Where the identity file carries a "Form instructions" table (Form 32), list each bracketed instruction of the new form in it, verbatim, with the check that proves it. Regenerate each golden only after reading its diff.
 4. **Record conformance** on the form's identity file, `.claude/skills/publish/references/CAN/BC/BCSC/Documents/<stem>.md`: append the regulation under `conformed_to:` as a block-list item (`  - B.C. Reg. 105/2026`), and set `version` and `version_source` when the official PDF is saved. Add `page_url` only when a source is truly recorded.
-5. **Touch `rule-freshness.json` only to delete the entry**, once its `sections` is empty and every form in its `forms` is conformed (`shared/docket-clerk/references/rule-freshness.md`, Snapshot maintenance).
-6. **Ship:** build and run the form's tests, `npm run bundle` in an isolated copy, commit, then `/repackage`.
+5. **Touch `rule-freshness.json` only to delete the entry**, once its `sections` is empty and every form in its `forms` is conformed (`.claude/skills/shared/docket-clerk/references/rule-freshness.md`, Snapshot maintenance).
+6. **Ship:** build and run the form's tests, `npm run bundle` in an isolated copy, commit by pathspec and push, then `/release`.

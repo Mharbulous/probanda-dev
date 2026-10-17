@@ -19,7 +19,7 @@ call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the case-data folder this chain works in
 (#1273, as for `publish-boc` under ADR 0026). Tell the practitioner so, and how
-to run it there: open a Code-tab session in their Coclerk checkout and ask for
+to run it there: open a Code-tab session in the matter's folder and ask for
 the same bill-of-costs step. Do not retry or probe in Cowork.
 
 Read `references/bill-of-costs-workspace.md` before doing anything: it defines the

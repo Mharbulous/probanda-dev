@@ -23,7 +23,7 @@ call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the matter or case-data folders (ADR
 0026). Tell the practitioner so, and how to run it there: open a Code-tab
-session in their Coclerk checkout and ask for the same publish step. Do not
+session in the matter's folder and ask for the same publish step. Do not
 retry or probe in Cowork.
 
 Run the scripts from the repo root. The draft folder is the matter's one

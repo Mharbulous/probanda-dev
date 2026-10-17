@@ -141,13 +141,13 @@ Every learned file follows this contract.
 
 ## 9. Write targets and promotion
 
-- A Claude Code session whose working folder is the Coclerk checkout, on the practitioner's explicit instruction, writes the **shipped tree**. The helper writes nothing, because `knowledge__write` refuses the repo-run marker: it returns each candidate's intended path and full text. The session writes them to its scratchpad and moves them into the skills tree after the practitioner's review, in the same step as the commit. The helper never commits. The reason is review before packaging.
+- A Claude Code session whose working folder is the Probanda development repo, on the maintainer's explicit instruction, writes the **shipped tree**. The helper writes nothing, because `knowledge__write` refuses the repo-run marker: it returns each candidate's intended path and full text. The session writes them to its scratchpad and moves them into the skills tree after the practitioner's review, in the same step as the commit. The helper never commits. The reason is review before packaging.
 - Any other session with a live matter writes only the **overlay**.
 - A session with neither refuses.
 - **Promotion** of an overlay file into the shipped tree is an ordinary commit. A promoted file ships learned and unconfirmed, unless the practitioner checks every item at promotion review and explicitly chooses vetted, which records `reviewed_by` and drops `learned_by`.
 - A file carrying a correction is not promoted until the correction is reconciled.
 - The promoting firm's overlay original is not retired at promotion.
-- A promotion reaches install users only at the next packaged version, so it is a repackage trigger.
+- A promotion reaches install users only at the next plugin release.
 
 ## 10. Confirmation sidecar
 

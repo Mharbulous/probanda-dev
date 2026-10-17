@@ -38,11 +38,11 @@ class CodeTabRefusalTest(unittest.TestCase):
                 self.assertLess(refusal, text.index("Read `references/bill-of-costs-workspace.md`"))
                 paragraph = " ".join(text[refusal:].split("\n\n", 1)[0].split())
                 for phrase in (
-                    "mcp__remote-devices__plugin_practice_data__",
+                    "mcp__remote-devices__plugin_legal_data__",
                     "stop before any tool call or file write",
                     "Claude Code session in the desktop app's Code tab",
                     "where the Probanda plugin is installed",
-                    "open a Code-tab session in their Coclerk checkout",
+                    "open a Code-tab session in the matter's folder",
                 ):
                     self.assertIn(phrase, paragraph)
 

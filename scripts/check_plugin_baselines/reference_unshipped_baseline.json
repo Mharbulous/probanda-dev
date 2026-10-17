@@ -10,7 +10,6 @@
     "drafting-data/SKILL.md -> docs/adr/0008-mockup-presentation-copy-relocated-to-draft-folder.md",
     "drafting-data/SKILL.md -> docs/infra/fuse-mount-staleness-investigation.md",
     "drafting-data/references/filing-checklists.md -> Engineering/bcca-appeal-books-inputs/research-findings-647.md",
-    "legal-commons/SKILL.md -> plugins/legal-commons/docs/ADR-002-key-delivery.md",
-    "publish/subskills/publish-bcsc-form/references/form-update.md -> Engineering/bcsc-rules-inputs/oic-264-2026.txt"
+    "legal-commons/SKILL.md -> plugins/legal-commons/docs/ADR-002-key-delivery.md"
   ]
 }
