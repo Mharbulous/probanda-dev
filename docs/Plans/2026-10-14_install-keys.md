@@ -1,6 +1,8 @@
 # Plan: per-install keys, and commons reads through edge functions only
 
-> **Stage 1 and 2 code is written, not applied or deployed (2026-10-14).** `cloud/access/access.sql`, `_shared/caller.ts`, `_shared/db.ts`, `_shared/items.ts`, `commons-read` and the reworked `commons-find` are on `main`. Stage 0 is next. The research client change is stage 3's work, held by Brahm's decision until `commons-read` is deployed and checked.
+> **Stage 1 is applied and deployed (2026-10-16).** `access.sql` is applied and `items-write`, `items-sync` and `items-seed` run the new `caller.ts`, `db.ts` and `items.ts`. Every stage 1 check passed: `check_items.mjs`, the four test-key checks, and `anon` and `authenticated` both without `USAGE` on `access`. The test key and its rows are deleted, so no install key exists yet. Stage 0 was skipped, because only stage 2 needs its snapshot, and it runs before stage 2. Stage 2 (`commons-read`, the reworked `commons-find`) is written, not deployed. The research client change is stage 3's work, held by Brahm's decision until `commons-read` is deployed and checked.
+>
+> **The Suggestion Box is live (2026-10-16).** `cloud/suggestions/suggestions.sql` is applied and `suggestion-submit` is deployed. A POST with the project secret returns a `suggestion_id`, a POST with no key gets 401, and the constraint accepts `suggestions:write`.
 
 Written 2026-10-14. It settles open decision 4 of `docs/Plans/2026-10-14_practice-db-conversion.md` ("give each user their own credential before a second practice uses this").
 
