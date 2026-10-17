@@ -33,7 +33,7 @@ directly beneath. If it is absent, run `matter-skeleton.md` first. Steps 4–5's
 Before doing anything, confirm this matter has never been initialized:
 
 - **No pointer** at the matter root — neither `probanda.json` nor the legacy name
-  `probanda.json` — and none at the legacy `9. AI\probanda.json`.
+  `coclerk.json` — and none at the legacy `9. AI\coclerk.json`.
 - **No existing `.sqlite` files** in the resolved case-data folder (`main.sqlite`,
   `law.sqlite`, or `privileged.sqlite`).
 
@@ -62,7 +62,7 @@ The same `matter_root` derivation rule as full initialize applies: host-namespac
 path only, proven before writing.
 
 1. Read the existing pointer (native Read): `probanda.json` when it exists, else
-   `probanda.json` (a sub-v5 pointer predates the rename, so it is normally `probanda.json`).
+   `coclerk.json` (a sub-v5 pointer predates the rename, so it is normally `coclerk.json`).
 2. Derive `matter_root` = the absolute host path of the folder containing that
    pointer (this session's own path to that folder). Sanity-check that
    `4. LAWYER BRIEF\` exists directly under it — if it doesn't, halt and report
@@ -76,12 +76,18 @@ path only, proven before writing.
    a `case_data__*` call) in the `schema_version` 5 form (§2.2 of
    `../shared/conventions.md`): `schema_version: 5`, the derived `matter_root`,
    the re-derived `case_data_dir`, and the unchanged `evidence_sql_path`.
-   Write it twice, same content: as `probanda.json` and as `probanda.json`
+   Write it twice, same content: as `probanda.json` and as `coclerk.json`
    (migrate-on-write, §2.1/§2.3 of `../shared/conventions.md`).
-5. Verify with one `case_data__query` call (e.g. a trivial `SELECT 1`) against
+5. Record the matter's folder: call `practice_data__upsert_client_matter` with the
+   matter's `client_num` and `matt_num` (or `file_number`) and `folder` set to the
+   matter folder's path relative to the litigation library (the parent of
+   `case_data_root`) — never an absolute path. The delete hook reads this record
+   as its second way of recognising a matter folder, so an upgraded or moved
+   matter folder's record is repaired here.
+6. Verify with one `case_data__query` call (e.g. a trivial `SELECT 1`) against
    the new pointer — this is the actual proof the upgrade succeeded, not the
    write in step 4 alone.
-6. Report the matter upgraded and the resolved `matter_root`. No metadata
+7. Report the matter upgraded and the resolved `matter_root`. No metadata
    confirmation needed — this branch never touches `matter_metadata`, which
    the existing database already carries from its original initialization.
 
@@ -156,6 +162,11 @@ path only, proven before writing.
    the pointer is a plaintext artifact that lives safely in the synced matter tree
    (§2.1). Every subsequent `case_data__*` call in this operation (Steps 4–5) reads
    `matter_root` back out of the pointer you just wrote.
+5. Record the matter's folder: call `practice_data__upsert_client_matter` with the
+   matter's `client_num` and `matt_num` (or `file_number`) and `folder` set to the
+   matter folder's path relative to the litigation library (the parent of
+   `case_data_root`) — never an absolute path. The delete hook reads this record
+   as its second way of recognising a matter folder.
 
 ---
 
