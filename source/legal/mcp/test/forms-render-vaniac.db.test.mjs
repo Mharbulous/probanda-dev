@@ -744,7 +744,7 @@ test("bootstrap refuses a database ahead of the installed bundle", async () => {
     assert.equal(result.migration_required, false);
     assert.equal(result.bundle_outdated, true);
     assert.deepEqual(result.filings, [], "an ahead-of-bundle database must render nothing and list nothing");
-    assert.match(result.note, /rebuild|reinstall/i, "expected the note to name the actual remedy");
+    assert.match(result.note, /\/legal:suggestion|fully restart the app/, "expected the note to name the actual remedy");
     assert.doesNotMatch(result.note, /drafting_data__migrate/, "migrating cannot help when the database is ahead of the bundle");
   } finally {
     f.cleanup();
