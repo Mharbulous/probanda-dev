@@ -40,10 +40,10 @@ For each gated enactment, read its `pending_changes[]`. For each entry whose `co
 2. **Overlay.** If this file has an "Overlay coverage" section, apply it to the matched deadline types first. Covered deadline types do not block. Without that section, every matched deadline type is uncovered.
 3. **For each uncovered deadline type:**
    - Flag the matter's matching active rows as in [On detected staleness → block](#on-detected-staleness--block) step 1, with a `review_note` naming the enactment, the sections, the amending reg and the commencement date. Its exemptions (step 2) apply unchanged.
-   - **Refuse** any new calculation of that type, hypotheticals included. This departs from that section's step 3, which still runs the calculation: here the rule file is known to model a repealed or amended rule. Say: "`<amending reg>` in force `<commencement_date>`; rule set not updated for `<rule_ref>`. Run `/rule-update` (docket-clerk workflow 10) or wait for the repackage that ships it." Deadline types the entry does not reach calculate normally.
+   - **Refuse** any new calculation of that type, hypotheticals included. This departs from that section's step 3, which still runs the calculation: here the rule file is known to model a repealed or amended rule. Say: "`<amending reg>` in force `<commencement_date>`; rule set not updated for `<rule_ref>`. Run `/rule-update` (docket-clerk workflow 10) or wait for a plugin release that ships it." Deadline types the entry does not reach calculate normally.
 4. **To-do.** Read ``practice-data`` `open-tasks`. If no open to-do names the amending reg, create one with `upsert-task` whose description begins `Rule change:` and names the enactment, the amending reg, the commencement date and the uncovered deadline types. The prefix is how `executive-assistant` finds it.
 
-The block ends when a release ships the remodelled rule file and sets the entry's `sections` to `[]` in the same commit (see [Snapshot maintenance](#snapshot-maintenance)).
+The block ends when a plugin release ships the remodelled rule file with the entry's `sections` set to `[]` (see [Snapshot maintenance](#snapshot-maintenance)).
 
 ## The fetch (bclaws CiviX, per enactment)
 
@@ -62,7 +62,7 @@ Reuse the Court Calendar **fetch-and-24h-cache** shape. For each enactment to be
 3. **Section-level** (only on a coarse mismatch — see below) — `GET .../statreg/<pit_id>` returns the Point-in-Time table as `(SECTION, EFFECTIVE DATE)` rows plus the amending instrument. The rows are **ordered by section, not by date** (checked live 2026-10-06), so the section-change watermark is the latest effective date anywhere in the table, not the top row. The Arbitration Act has **no** PIT table — use the Table of Legislative Changes doc `e4tlc20002` instead, at enactment-level granularity. Don't detect "no PIT" by HTTP status: `20002_pit` returns a 200 HTML shell (not a 404), so confirm an actual `(SECTION, EFFECTIVE DATE)` table is present before trusting a PIT response for any enactment.
 4. **Pending amendments** (forward look-ahead) — the enactment's `Amendments Not in Force` subfolder (navigate via `GET .../content/complete/statreg/<ancestor-path>/<id>`) and BC Gazette Part II (`.../content/bcgaz2/bcgaz2/<year>/`) list enacted-but-not-yet-in-force changes with commencement dates.
 
-On any successful coarse fetch, set that enactment's `last_checked` to the fetch date (see [Snapshot maintenance](#snapshot-maintenance)).
+A session never writes `last_checked` (see [Snapshot maintenance](#snapshot-maintenance)). The 24-hour memo in `sources__check` stands in for it.
 
 ## The backward gate (coarse → precise)
 
@@ -109,13 +109,15 @@ Edge case: a coarse fetch **succeeds** but the PIT/TLC escalation fetch fails (f
 
 Runs on the same 24h cadence as the coarse gate. For each pending amendment to a gated enactment (from ANIF / Gazette Part II) whose commencement date is in the future:
 
-1. If it is **not already** in that enactment's `pending_changes[]`, create a ``practice-data`` **to-do** via `upsert-task`: `next_nudge_date` = commencement date, with no `nudge_interval_days`; description begins `Rule change:` and names the enactment, section, amending reg, and the affected modelled deadline types (map its section via the rule files, as in the backward gate). `executive-assistant` surfaces the to-do on the day. Pure-data boundary intact — this skill writes the to-do; `executive-assistant` surfaces it.
-2. Append the same amendment to that enactment's `pending_changes[]` in `rule-freshness.json` — a calc-time backstop and the dedup ledger (so the to-do is created once). Each entry records section, amending reg, and commencement date.
+1. If it is **not already** in that enactment's `pending_changes[]`, and no open ``practice-data`` to-do names its amending reg, create a ``practice-data`` **to-do** via `upsert-task`: `next_nudge_date` = commencement date, with no `nudge_interval_days`; description begins `Rule change:` and names the enactment, section, amending reg, and the affected modelled deadline types (map its section via the rule files, as in the backward gate). `executive-assistant` surfaces the to-do on the day. Pure-data boundary intact — this skill writes the to-do; `executive-assistant` surfaces it.
+2. Never append it to `pending_changes[]` yourself: `rule-freshness.json` is read-only in an installed plugin (see [Snapshot maintenance](#snapshot-maintenance)). The open to-do is the dedup ledger, so the to-do is created once. Ask the practitioner to send `/legal:suggestion` naming the enactment, section, amending reg and commencement date, so a plugin release adds the entry as a calc-time backstop.
 3. Once a `pending_changes[]` entry's commencement date has passed, [Step 0a](#step-0a-elapsed-pending-changes-no-fetch) blocks the uncovered deadline types reached by the sections it names. When the change is folded into a re-verification, clear the entry as [Snapshot maintenance](#snapshot-maintenance) says.
 
 ## Snapshot maintenance
 
-- **On a successful live check with no relevant change:** update only `last_checked` for that enactment; leave `currency_date`/`last_amending_reg`/`pit_watermark` as-is (consolidation churn is not a re-verification).
+`rule-freshness.json` ships with the plugin and is read-only in an installed copy. Only the plugin maintainer's rule remodel writes it, and a plugin release ships the result. A session working for a practitioner never writes it. The bullets below govern the maintainer's remodel.
+
+- **On a successful live check with no relevant change:** nothing is written. `currency_date`/`last_amending_reg`/`pit_watermark` stay as-is (consolidation churn is not a re-verification).
 - **On a re-verification** (the practitioner reconciled the rule file with the amended law): bump `currency_date`, `last_amending_reg`, and `pit_watermark` to the freshly-verified values, **in the same commit as the rule-file change**. The JSON and the rule files it certifies never move apart.
 - **Atomicity is the invariant:** `rule-freshness.json` MUST be bumped in the same commit as any rule-file update. A rule file ahead of its snapshot (or vice-versa) silently breaks the gate.
 - **Source-record markers are part of the snapshot.** Where a rule file carries a source record, its `currency_marker` is the enactment's `currency_date` in long form, and the matching `references/pit/<pit_id>.md` marker is its `pit_watermark`. A bump of either field moves the marker in the same commit.

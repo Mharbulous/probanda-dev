@@ -1,6 +1,6 @@
 # The firm rule overlay: resolution, reconciliation and rule updates
 
-A court rule can change between plugin releases. The shipped rule files (`bcsc-rules.md`, `bcca-rules.md`, `bc-arbitration-rules.md`, `limitation-rules.md`) change only in a repo session followed by a repackage. The **firm rule overlay** lets a practitioner record a verified change locally, so every later calculation uses the rule in force on the relevant date.
+A court rule can change between plugin releases. The shipped rule files (`bcsc-rules.md`, `bcca-rules.md`, `bc-arbitration-rules.md`, `limitation-rules.md`) change only when the plugin's maintainer remodels them and a plugin release ships them. The **firm rule overlay** lets a practitioner record a verified change locally, so every later calculation uses the rule in force on the relevant date.
 
 Overlay records are kept by ``practice-data``: `upsert-rule-overlay` writes one record, and `rule-overlay` reads them, filtered by deadline type, amending reg or status. The record contract is spec `Engineering/1. Design/2026-10-05_deadline-rule-overlay-spec.md` §6. A record is firm-wide and never carries matter content: no matter code, party name, file name or fact, in any field.
 
@@ -31,7 +31,7 @@ At each resolution, compare each `verified` record with the routed shipped rule 
 - **The shipped file now carries the same row.** It is the same row when it has the same `deadline_type`, cites the same `rule_ref`, states the same `effective_from` (section 4), and has the same offset (value, unit, direction and clear). Write the record back through `upsert-rule-overlay` with `status: superseded_by_shipped`. The shipped row governs from then on. Tell the practitioner once.
 - **The shipped file carries a different row** for the same `deadline_type`, `rule_ref` and `effective_from`. Write the record back with `status: conflict`. Do not calculate that deadline type. Show the shipped row and the record side by side under `/show-me` and ask the practitioner to choose.
   - If they choose the shipped row, set the record to `superseded_by_shipped`.
-  - If they choose the record, set it back to `verified` and append "practitioner kept this record over the shipped row on `<date>`" to its `open_questions`. The comparison then reports the difference on each calculation without blocking. Create a ``practice-data`` to-do to have the shipped row corrected in a repo session.
+  - If they choose the record, set it back to `verified` and append "practitioner kept this record over the shipped row on `<date>`" to its `open_questions`. The comparison then reports the difference on each calculation without blocking. Create a ``practice-data`` to-do naming the difference, and ask the practitioner to send `/legal:suggestion` asking for the shipped row to be corrected in a plugin release.
 
 ## 3. Workflow 10: update a rule from its primary source
 
