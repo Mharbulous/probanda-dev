@@ -21,7 +21,7 @@ BODY_TOKENS = (
     "inside a Git worktree",
     "this skill is **out of scope**",
     "coclerk.json",
-    "even if a client-matter folder happens to live inside a Git worktree: the Git exclusion always wins",
+    "A client-matter folder that happens to live inside a Git worktree stays protected: the matter check wins",
 )
 
 
