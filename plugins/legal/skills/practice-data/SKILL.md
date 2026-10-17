@@ -13,6 +13,8 @@ description: The firm's practice records for each client and matter. Look up or 
 | Section | Read when |
 |---|---|
 | Operation Routing | A consumer asks for a practice-data operation and a tool must be chosen |
+| Opening a Matter | A new matter is opened, other than by the CSV import |
+| Contacts | A party, counsel or other person or organization on a matter is recorded, looked up or merged |
 | Conventions | Before any practice_data tool call, or when a tool returns a path-resolution or timeout error |
 | Consumer Contract | A field's meaning or a guarantee is in question, or before changing a field or its semantics |
 | Configuration | A skill needs coclerk.json, the firm roster, the letterhead, or the database path |
@@ -38,7 +40,14 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | ar-data | `practice_data__ar_data` | no inputs; excludes non-billable matters, and its WIP hours count only billable entries (see Consumer Contract); WIP hours start at each matter's billing cutoff, the same one `wip-hours` derives, reported per row as `cutoff_date` and `cutoff_source` (`date_to`, `issue_date`, or null when the matter has no invoices and all its billable time counts) |
 | read-signals | `practice_data__read_signals` | returns the matter's signal states; returns no policies |
 | time-entries | `practice_data__time_entries_query` | matter ref, optional from_date/to_date; per-entry rows with matter/client context |
-| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path |
+| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path, and opening a matter (see Opening a Matter); optional `client_contacts` writes the client roles in the same write; returns `client_role_ids`, and `question` when a matter is created without `client_contacts` |
+| upsert-contact | `practice_data__upsert_contact` | one person or organization, firm-wide (see Contacts); create (omit `id`) or update; returns `contact_id`, `created` |
+| upsert-affiliation | `practice_data__upsert_affiliation` | a person contact tied to an organization contact, with optional `from`, `to`, `title`; re-entering the same tie returns it |
+| upsert-matter-role | `practice_data__upsert_matter_role` | a contact's role on a matter, with optional `case_party_id` and `case_proceeding_id`; proposing the same role twice returns it |
+| contact-lookup | `practice_data__contact_lookup` | `id` or `query`; local and offline; each contact with its affiliations and roles, plus `near`, the likely duplicates |
+| contact-checks | `practice_data__contact_checks` | read only; open matters with no client role, and case-data parties with no matter role; optional matter ref and `matter_root`; `unresolved` names what check 2 could not read |
+| merge-contact | `practice_data__merge_contact` | `keep_id`, `spare_id`; deletes no information; returns `conflicts` and writes nothing when the two differ |
+| contacts-backfill ("set up contacts from existing matters") | [`operations/contacts-backfill.md`](operations/contacts-backfill.md) | one-time, with approval |
 | insert-time-entry | `practice_data__insert_time_entry` | returns the new entry id; optional `billable` (defaults to the matter's own flag) and `batch_tag` (see Consumer Contract) |
 | set-time-entries-billable | `practice_data__set_time_entries_billable` | flips `billable` on existing entries named by `entry_ids` or by their shared `batch_tag` (exactly one of the two); optional matter ref narrows a tag sweep; a tag matching nothing is an error |
 | upsert-task | `practice_data__upsert_task` | also accepts the nudge fields and `filing_ref` on create and update, and `status: 'withdrawn'` withdraws a to-do (see Consumer Contract) |
@@ -61,6 +70,23 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | upsert-firm-profile | `practice_data__upsert_firm_profile` | any of `firm_name`, `roster_entry` (upsert by `key`; a new entry needs every field; never removed, `active: false` retires one), `person` and `signature` (this machine's coclerk.json), `practice_quirks` (the whole note in this machine's coclerk.json, at most 1,000 characters, `""` clears it; see Practice quirks; a call that sets only it and/or `signature` needs no firm folder, and creates coclerk.json when it is absent), and `letterhead` (a .docx whose header and footer tokens must each sit in one run; a split token refuses the registration and nothing is written); reports `theme_faces_differ` when the theme's two faces differ, `signer_fields_missing` (a list of `key`, `fields`) naming every active lawyer the resulting roster leaves without a field a letter's letterhead needs, and `preparer_initials_missing` (a key) when this machine's `person` points to an entry with blank initials; both are checked on every call and the call still writes, so tell the practitioner that any letter the lawyer signs, or any letter prepared on this machine, is refused until a `roster_entry` with that key supplies the fields |
 | config-status | `practice_data__config_status` | read-only, writes nothing; optional `matter_root`; reports the settings file's path, `exists`, `parse_error`, `keys_present`/`keys_missing`, its `case_data_root` with `root_exists`/`practice_db_exists`, `candidates` (the root a matter's pointer sits in, when given `matter_root`; with no `matter_root` and no settings file, the folders a scan of the user's profile finds, with `scan_truncated`) and `redirected_copies` (copies under a packaged app's redirected AppData, which the runtime does not read), `cloud_credential` (`present` or `missing`: the credential writes need) and `pending_writes` (writes Probanda's Cloud saved that practice.db has not yet applied), and `practice_quirks` (verbatim, or null when the file is absent or sets none; see Practice quirks); see Conventions |
 | config-set-root | `practice_data__config_set_root` | `case_data_root`, only after the practitioner approves it; refused, writing nothing, unless `<root>\_practice\practice.db` already exists or `initialize: true` is passed (only `/legal:probanda-setup` passes it, for a new device's approved root, and the tool then creates `_practice\` and `practice.db`), when the file is not valid JSON, and when the file's current root already works (`root_already_working`); creates the file with only `version` and `case_data_root`, or changes only that key; returns `keys_missing`; see Conventions |
+
+## Opening a Matter
+
+Opening a new matter always records who the client is (ADR 0009). The CSV import is the one exception: its matters come back from `contact-checks` until the backfill or the practitioner records their clients.
+
+1. Ask the practitioner who the client is. For each name, call `contact-lookup` with it and offer what it returns, its `near` list included, as existing contacts. When none is the client, pre-fill a new contact from `contacts__search` on the name (its emails, phones and addresses), with `entity` set to `person` or `organization` as the practitioner says. Joint clients are one contact each.
+2. Show the matter and the client contacts to be written under `/show-me`, and ask once.
+3. On a yes, call `upsert-client-matter` with `client_contacts`: `{contact_id}` for an existing contact, the `upsert-contact` fields for a new one. The matter, any new contact and the client roles are saved together or not at all.
+
+## Contacts
+
+A **contact** is one person or organization the firm deals with, held once for the whole firm (ADR 0009). An **affiliation** ties a person to an organization, such as a lawyer to a law firm, with dates. A **matter role** ties a contact to a matter as `client`, `prospective_client`, `opposing_party`, `opposing_counsel`, `co_counsel`, `expert`, `adjuster` or `referral_source`; Probanda's Cloud holds that list and asks about any other value. Who a matter's client is comes from its roles tagged `client`, never from the `client` item, which stays the billing account. Counsel of record stays in case data as filed (`case-data`, design decision #55).
+
+- **Never create a contact without asking.** Two contacts may share a name or an office email, so whether two records are one contact is the practitioner's decision. Before proposing a new contact, run `contact-lookup` on its name and show the `near` list.
+- **A role ends; it is not deleted.** Set `to` on a role that has ended. Nothing is deleted when a matter closes.
+- **A duplicate is merged, never deleted.** When the practitioner says two contacts are one, call `merge-contact`. When it returns `conflicts`, put each to the practitioner under `/show-me`, settle it with `upsert-contact`, `upsert-matter-role` or `upsert-affiliation`, and merge again.
+- **Where a contact's details differ from counsel of record**, ask whether a notice of change was filed. Overwrite neither record.
 
 ## Conventions
 

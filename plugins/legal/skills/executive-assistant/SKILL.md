@@ -83,6 +83,9 @@ payment-in-flight), keyed by matter row id to enrich deadlines and signals below
    stating this invocation's mode — **briefing** for the cron-fired morning briefing, **on-demand**
    otherwise. That mode is what decides whether the nudges advance; this skill never writes them.
 
+5. **Contact gaps.** Call **`contact-checks`** with no matter ref, and keep the two counts:
+   `matters_without_client` and `parties_without_role` (ADR 0009).
+
 Report data gaps explicitly — never silently omit matters:
 
 | Condition | Report |
@@ -143,7 +146,9 @@ file. The full listings stay one question away.
    - **Flags** — WIP silence on funded files; unconfirmed matter lifecycle signals; and each open
      to-do whose description begins `Rule change:` (written by the docket-clerk's rule-freshness
      gate or its freshness sweep), shown as "Rule change detected: <amending reg> — run
-     /rule-update" in a session that is not drafting. Show it every day the to-do stays open.
+     /rule-update" in a session that is not drafting. Show it every day the to-do stays open. And,
+     when either count from Data Fetch step 5 is above zero, one contact-gaps line naming both counts
+     and "set up contacts from existing matters".
 5. Add the standing footer count: "N other tracked deadlines, none newly urgent — ask for the full list."
 6. Conclude with the top 3 to-dos from the full ranked list, for practitioners who want to work straight through the queue.
 7. **Quiet-day short-circuit:** if no section has content, the whole briefing is two lines —
@@ -272,6 +277,7 @@ Rules:
 ### Flags
 - ⚠ WIP silence — Harrison v Chan [L1887]: funded ($6,200), no time entries in 23 days
 - ⚠ Matter signal unconfirmed — Boyd v Metro [L2044]: retainer_agreement_signed unconfirmed
+- ⚠ Contact gaps — 2 open matters with no client recorded, 9 case-data parties with no matter role: set up contacts from existing matters
 
 ---
 Top 3 to-dos for today (full ranked list via `task-prioritization`):
