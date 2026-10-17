@@ -101,3 +101,17 @@ Note: step 2's regression test conflicts with this scope rule. The orchestrator 
 - `rm_targets`' `$` refusal, around line 600.
 - No folder field on `matter` items: `writes.ts` `upsert_client_matter`.
 - Where the hook is registered: `source/legal/plugin.json`, around line 22, and `.claude/settings.json`.
+
+### Verification against HEAD (9f3c123, 2026-10-16)
+
+| Spec claim | Found at HEAD | Verdict |
+|---|---|---|
+| `expand_vars`/`home_value`, hook lines 350-365; unset `HOME` keeps the `$HOME` text | `expand_vars` at lines 350-365, `home_value` at 359-361, `return os.environ.get(name, m.group(0))` at 361 | Confirmed |
+| `rm_targets` returns None for a target containing `$`, around line 600 | Lines 600-601: `if path.startswith("~") or set("${\`") & set(path): return None` | Confirmed |
+| No folder field on `matter` items | `writes.ts` `upsert_client_matter` matter data holds only description, file_number, matt_num, orig_lawyer, resp_lawyer, type_of_law and the three trust fields | Confirmed |
+| Hook registered in `source/legal/plugin.json` around line 22 | The hook arg is at line 22 (entry lines 14-28, matcher `Bash\|PowerShell\|mcp__(.+__)?device_bash`) | Confirmed |
+| Hook registered in `.claude/settings.json` | Not there: the repo's `.claude/settings.json` holds only the COMMANDMENTS and public-repo guards. The dev-machine registration is in `~/.claude/settings.json`, pointing at the Coclerk checkout's copy of the hook | Corrected |
+| `practice.db` is `<case_data_root>\_practice\practice.db` | `backend.ts` `resolvePracticeDbPath` lines 33-37 (`COCLERK_DB_PATH`/`COCLERK_DB_NAME` override first) | Confirmed |
+| Roaming device settings file names `case_data_root` | `config-path.ts` line 26: `%APPDATA%\Coclerk\coclerk.json`, with the `COCLERK_CONFIG_PATH` override winning | Confirmed |
+| Each initialized matter folder holds a pointer `coclerk.json` | `files/matter-root.ts` `validateMatterRoot` line 35 | Confirmed |
+| §4.2 storage: a data field on the `matter` item, no new table or column | `practice.db` is one `kv_store` table; items live as JSON under the `item` namespace, and data fields reach the cloud only as HMACs (`practice/store.ts` `buildOp` with `hash_key`) | Confirmed |
