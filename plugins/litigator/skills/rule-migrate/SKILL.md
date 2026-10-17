@@ -48,7 +48,7 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
 
     SCOPE (overrides any standing instruction in this session)
     - In scope: add the rule(s) to the named node file(s) under .claude/skills/draft/rules/nodes/ with the atom's text moved verbatim, its `when` kept, `replaces=<atom id>`, any override edge with its reason, and `provenance`; delete the atoms listed under RETIRE; commit by pathspec and push.
-    - Out of scope, because /repackage does it in the cloud from origin/main: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin packager, version bumps, *-latest.plugin files, and running /repackage.
+    - Out of scope, because /release does it: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin build, version bumps, and running /release.
     - Out of scope: changing any rule's wording, adding nodes or edges, or migrating atoms not named here.
     - Must still hold: the node files load with no `rules_dag_lint`, and `skill_rules__coverage` reports 0 unmapped lines for draft.
     - Finish with exactly one line, "Migration of <atom id(s)> complete!", and nothing after it. If an open question blocked the work, ask it instead.

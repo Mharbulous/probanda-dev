@@ -123,7 +123,7 @@ npm test
 ```
 
 and update the boundary pins in `source/legal/mcp/test/case-tools.db.test.mjs`
-(the `fixture(NN)` calls and the asserted dump-header line). Finally repackage the plugin — the
+(the `fixture(NN)` calls and the asserted dump-header line). Finally release with `/release` — the
 bundle is tracked and shipped, so an un-rebuilt bundle ships the old guard.
 
 > **The two dump-header literals are not byte-identical and must not be

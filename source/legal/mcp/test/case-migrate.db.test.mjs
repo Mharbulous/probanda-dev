@@ -247,7 +247,7 @@ test("a missing repo root fails loudly instead of silently skipping migrate", as
       () => caseDataMigrate(f.matterRoot, "plan", {}, env),
       (err) => {
         assert.equal(err.code, "repo_root_missing");
-        assert.match(err.message, /cannot locate the coclerk repo/i);
+        assert.match(err.message, /cannot locate the case-data maintenance scripts: no installed Probanda plugin holds it/);
         return true;
       },
     );

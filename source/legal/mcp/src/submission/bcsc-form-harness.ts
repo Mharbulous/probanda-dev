@@ -261,8 +261,8 @@ function isNewTemplate(action: unknown): boolean {
 function newTemplateRefusal(sessionId: string | undefined): DataServerError {
   return new DataServerError(
     "The new-template operation is not run by this tool: it converts a LEAP template and registers the form " +
-      "inside the plugin's own folder, which this tool never writes. Tell the practitioner that adding a form " +
-      "template is done in a Claude Code (PC) session from a Coclerk checkout." +
+      "inside the plugin's own folder, which this tool never writes. Tell the practitioner that a new form " +
+      "template ships only in a plugin update, and to run /legal:suggestion naming the form they need." +
       (sessionId ? ` Then call this tool with command abandon and harness_session ${sessionId}.` : ""),
     "new_template_refused"
   );

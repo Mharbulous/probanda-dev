@@ -4,7 +4,7 @@ Owned by `/drafting-data` (schema/SQL live here, never in a consuming skill's ow
 
 Every checklist item below exists because a renderer (`source/legal/mcp/src/submission/forms/*.ts`) reads that exact field, or because the work-marker SSOT (`.claude/skills/drafting-data/references/work-markers.md`) keys a work marker off it. A field not listed here is not read by any v1 renderer — leave it NULL rather than guessing a value.
 
-**Renderer builds need an MCP server restart to take effect.** `source/legal/mcp/dist/litigation-mcp.js` is loaded once at spawn (the installed plugin's copy of it, never this repo's file: Claude Code and Cowork serve plugin tools from the installed copy) — a session that rebuilds `source/legal/mcp/src/submission/forms/*.ts` and re-renders through `drafting_forms__render`/`bootstrap` in the same session still exercises the pre-rebuild code until the plugin is repackaged and reinstalled and the app is fully restarted. Don't diagnose that as a renderer bug.
+**Renderer builds need an MCP server restart to take effect.** `source/legal/mcp/dist/litigation-mcp.js` is loaded once at spawn (the installed plugin's copy of it, never this repo's file: Claude Code and Cowork serve plugin tools from the installed copy) — a session that rebuilds `source/legal/mcp/src/submission/forms/*.ts` and re-renders through `drafting_forms__render`/`bootstrap` in the same session still exercises the pre-rebuild code until the change is released with `/release`, the machine has synced it and the app is fully restarted. Don't diagnose that as a renderer bug.
 
 ## 0. Shared substance (once per proceeding)
 

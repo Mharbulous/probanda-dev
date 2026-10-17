@@ -1,4 +1,4 @@
-// build-stamp: f32fa7c48205
+// build-stamp: 5fba02db670a
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16028,7 +16028,7 @@ function isDirectory(dir) {
 function rosterLine(installRoot, segment) {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length === 0) {
-    return `This plugin bundles no skill source (${join4(installRoot, "skills", "shared")} not found), so every skill needs a Coclerk checkout.`;
+    return `This plugin bundles no skill source (${join4(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
@@ -16037,16 +16037,17 @@ function rosterLine(installRoot, segment) {
 function missingMessage(subject, env, tried) {
   const cfg = configPath(env);
   return [
-    `cannot locate the Coclerk repo, which ${subject} lives in.`,
+    `cannot locate ${subject}: no installed Probanda plugin holds it, and no development checkout was found.`,
     "",
     "Tried, in order:",
     `  1. COCLERK_REPO_ROOT environment variable -- ${env.COCLERK_REPO_ROOT === "" ? "set but empty" : "not set"}`,
     ...tried.map((t, i) => `  ${i + 2}. ${t}`),
     "",
-    "Fix either one, then fully restart the app (a restart alone is enough; no reinstall needed):",
-    "  - set COCLERK_REPO_ROOT to your Coclerk checkout, or",
-    `  - add a "repo_root" key to ${cfg}, set to the path of your Coclerk checkout`,
-    '    (create the file if it does not exist; it may already hold "case_data_root").'
+    "Practitioner: install the plugin named below if it is missing, then fully restart the app. If this error",
+    "comes back, run /legal:suggestion naming it.",
+    'Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a "repo_root" key to',
+    `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
+    "  then fully restart the app."
   ].join("\n");
 }
 

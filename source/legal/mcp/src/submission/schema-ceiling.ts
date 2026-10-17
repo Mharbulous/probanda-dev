@@ -100,7 +100,7 @@ export function bundleNextStep(ahead: "source" | "database"): string {
     ahead === "source"
       ? "Its migration source is ahead of its own bundle, so this build was released without a rebuilt bundle."
       : "The database was migrated by a newer build than this one.";
-  return `${runs} ${why} Next step: run /repackage, reinstall the plugin, and fully restart the app.`;
+  return `${runs} ${why} Next step: run /legal:suggestion naming this note, then fully restart the app once a plugin update arrives.`;
 }
 
 export interface SchemaSourceStatus {

@@ -40,13 +40,13 @@ The caller never names the helper, the `knowledge__write` or `knowledge__retire`
 
 Decide the target before spawning:
 
-- **Repo session.** The working folder is the Probanda development repo and the maintainer explicitly instructed this run. Pass `repo-run`. Before spawning a repo-run `create`, this session checks the checkout's skills tree for an existing file or kinds row for that venue and kind, and returns `exists` itself if one is there. The helper writes nothing: it returns each candidate's skills-tree-relative path and full text. This session writes each candidate to its own scratchpad, has the practitioner review it, and moves it into the checkout's skills tree, at the returned path, in the same step as the commit. The helper never commits and never writes the scratchpad. A `create` is validated inside the helper by matched fetches, because `sources__check` sees the installed plugin until the next repackage. Run `sources__check` on a promoted file only after that repackage.
+- **Repo session.** The working folder is the Probanda development repo and the maintainer explicitly instructed this run. Pass `repo-run`. Before spawning a repo-run `create`, this session checks the checkout's skills tree for an existing file or kinds row for that venue and kind, and returns `exists` itself if one is there. The helper writes nothing: it returns each candidate's skills-tree-relative path and full text. This session writes each candidate to its own scratchpad, has the practitioner review it, and moves it into the checkout's skills tree, at the returned path, in the same step as the commit. The helper never commits and never writes the scratchpad. A `create` is validated inside the helper by matched fetches, because `sources__check` sees the installed plugin until the next release reaches this machine. Run `sources__check` on a promoted file only after that.
 - **Matter session.** Pass the live matter. The helper writes the firm overlay (`_practice\knowledge\`) and returns relative paths and status only.
 - **Neither.** Refuse. Spawn nothing.
 
 `confirm`, `correct` and `retire` run only in a matter session, and so does a `create` with `practitioner_layout`. Refuse them in a repo session without spawning.
 
-Promotion of an overlay file into the shipped tree is an ordinary commit under `shared/knowledge-tree.md` §9. A promotion reaches install users only at the next packaged version, so it is a repackage trigger.
+Promotion of an overlay file into the shipped tree is an ordinary commit under `shared/knowledge-tree.md` §9. A promotion reaches install users only at the next release, so it calls for `/release`.
 
 ## 3. What a run writes
 
@@ -83,7 +83,7 @@ Each is a tool sequence the playbook spells out.
 - `create`: resolve, fetch, then write (matter run) or return the candidate (repo run). With `practitioner_layout`: resolve, check each `literal` part against the saved form, then write, with no fetch.
 - `confirm`: check the file's sources, then add a sidecar row. Called by the skill whose tree holds the file: `/draft` at mockup review, the docket-clerk agent's caller for periods.
 - `correct`: read, fetch, then add a `corrected` sidecar row.
-- `refresh`: check, fetch the changed source, then rewrite the source record and each changed item's passage. Never writes status. Runs only on the practitioner's yes, which the caller offers on a changed report, or, from `/draft`, when a research return reports an amendment in force to a rule or form an overlay file names. A shipped file seen from a matter session is fixed by a repo-session refresh, then repackage and reinstall.
+- `refresh`: check, fetch the changed source, then rewrite the source record and each changed item's passage. Never writes status. Runs only on the practitioner's yes, which the caller offers on a changed report, or, from `/draft`, when a research return reports an amendment in force to a rule or form an overlay file names. A shipped file seen from a matter session is fixed only by a plugin update: offer `/legal:suggestion` naming the file and what changed.
 - `retire`: from a matter session, one overlay file, or the `shadowed_only: true` sweep over overlay files the shipped tree now holds identically. Sidecars move with their files.
 
 ## 7. Notice
