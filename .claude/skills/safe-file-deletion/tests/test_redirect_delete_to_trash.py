@@ -155,6 +155,66 @@ class ExemptTests(HookTestCase):
         self.assertAllowedSilently(self.run_hook(json.dumps(payload)))
 
 
+class LoneDeleteNarrowingTests(HookTestCase):
+    """A lone delete of absolute temp or worktree targets needs no exempt cwd,
+    in any spelling of the path, and an rm word that is only printed or
+    searched is not a delete. Each allowed form is paired with a deny."""
+
+    def msys(self, path):
+        p = path.as_posix()
+        return "/" + p[0].lower() + p[2:] if re.match(r"[A-Za-z]:/", p) else p
+
+    def test_msys_temp_path_needs_no_temp_cwd(self):
+        self.assertAllowedSilently(self.call("Bash", "rm " + self.msys(self.ostemp) + "/scratchpad/out.txt"))
+        self.assertDenied(self.call("Bash", "rm -rf " + self.msys(self.home) + "/Downloads/old"))
+
+    def test_home_form_temp_path_with_and_without_home(self):
+        env = {**self.env, "HOME": str(self.ostemp), "USERPROFILE": str(self.ostemp)}
+        envs = [env] + ([{k: v for k, v in env.items() if k != "HOME"}] if os.name == "nt" else [])
+        for self.env in envs:
+            with self.subTest(home="HOME" in self.env):
+                for form in ("$HOME", "${HOME}", "$USERPROFILE"):
+                    self.assertAllowedSilently(self.call("Bash", 'rm "' + form + '/scratchpad/out.txt"'))
+                self.assertDenied(self.call("Bash", "rm '$HOME/scratchpad/out.txt'"))   # literal, in the cwd
+        del self.env
+
+    def test_dot_led_worktree_folder_is_exempt(self):
+        target = self.repo.as_posix() + "/.claude/todos/old.json"
+        self.assertAllowedSilently(self.call("Bash", "rm " + target))
+        self.assertDenied(self.call("Bash", "rm " + self.repo.as_posix() + "/../x"))
+
+    def test_powershell_lone_remove_item_of_temp_target(self):
+        t, h = self.ostemp.as_posix(), self.home.as_posix()
+        for command in ("Remove-Item " + t + "/scratchpad/out.txt", "ri -Force -Recurse " + t + "/d"):
+            with self.subTest(command=command):
+                self.assertAllowedSilently(self.call("PowerShell", command))
+        for command in ("rmdir " + h + "/Downloads/emptydir", "Remove-Item " + t + "/a," + h + "/b",
+                        "Remove-Item -Path:" + h + "/b " + t + "/a", "Remove-Item $env:TEMP/a",
+                        "Remove-Item " + t + "/a; Remove-Item " + h + "/b"):
+            with self.subTest(command=command):
+                self.assertDenied(self.call("PowerShell", command))
+
+    def test_lone_delete_in_a_matter_folder_is_still_refused(self):
+        # A matter folder inside a worktree stays protected in every new spelling.
+        matter = self.repo / "L7 Lone Matter"
+        matter.mkdir(exist_ok=True)
+        (matter / "coclerk.json").write_text("{}", encoding="utf-8")
+        self.assertDenied(self.call("Bash", "rm " + self.msys(matter) + "/x.md"))
+        self.assertDenied(self.call("PowerShell", "Remove-Item " + matter.as_posix() + "/x.md"))
+
+    def test_rm_word_only_printed_or_searched(self):
+        h = self.home.as_posix()
+        hook_run = ("printf '%s' '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"rm x\"}}'"
+                    ' | "C:/Python/python.exe" hook.py')
+        for command in ('grep -n "rm -rf" ' + h + "/notes.txt", hook_run):
+            with self.subTest(command=command):
+                self.assertAllowedSilently(self.call("Bash", command))
+        for command in ('bash -c "rm -rf ' + h + '/Downloads/old"', 'echo "rm -rf x" | bash',
+                        'grep "$(rm -rf x)" f', 'python s.py "rm -rf x"', 'echo "rm x" > x.sh; bash x.sh'):
+            with self.subTest(command=command):
+                self.assertDenied(self.call("Bash", command))
+
+
 class DenyTests(HookTestCase):
     def test_unparseable_or_protected_deletes_are_denied(self):
         cases = {

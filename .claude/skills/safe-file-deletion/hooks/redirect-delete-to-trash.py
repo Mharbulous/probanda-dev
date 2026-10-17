@@ -19,6 +19,8 @@ Decision rule
      dir> &&`, whose every target resolves there. Every rm/unlink target,
      chained or not, counts as a location, and a glob in a component rm follows
      counts by each match; an rm whose targets cannot be told gets no exemption.
+     PowerShell: a lone delete command whose every argument is a bare
+     switch or an absolute path landing there -> allow.
      device_bash runs on another machine, so nothing is exempted
      by probing this one.
   3. device_bash only: a lone non-recursive `rm`
@@ -31,6 +33,20 @@ Decision rule
      Any error in this step falls through to 4.
   4. Otherwise -> deny (JSON permissionDecision on stdout, exit 0), naming the
      file_ops__trash tool.
+
+Do not restrict (the policy covers none of these; each was once a false deny):
+  - A lone delete of absolute temp or worktree targets from any cwd, in any
+    spelling: msys /c/..., a leading $HOME/$USERPROFILE (expanded even when
+    the hook runs without HOME, as Claude Code on Windows does), or a
+    lone PowerShell delete. The cwd is not touched by such a delete. A target
+    in a client matter folder is still refused.
+  - A dot-led folder such as ~/.claude: it is a worktree like any other.
+    Only a `.` or `..` component, or a dot-led glob (`.?` matches `..`),
+    defeats the lone-delete exemption.
+  - An rm word that is only printed or searched (`grep "rm -rf" f`, a
+    printf of a hook payload piped to `python hook.py`): nothing is deleted.
+    It still counts when a shell could run it (`bash -c "rm x"`, a pipe or
+    redirect into a shell, `$(...)`).
 
 Registered in source/legal/plugin.json (shipped with the legal plugin) and, on
 a dev machine, in ~/.claude/settings.json. Fails OPEN on any unexpected error:
@@ -231,6 +247,37 @@ def strip_stored_heredocs(command):
     return "\n".join(kept)
 
 
+# Commands that print or search their arguments and never run them, and a
+# Python interpreter running a named script (stdin is its data, not shell text).
+NON_RUNNING = {"grep", "egrep", "fgrep", "rg", "echo", "printf"}
+PY_NAME_RE = re.compile(r"python[\d.]*|py")
+
+
+def rm_only_printed(command):
+    """True when every simple command is a NON_RUNNING one, or a Python script
+    run with no rm/unlink word, so an rm word in the text is only an argument
+    printed or searched (`grep "rm -rf" f`), never run. `bash -c "rm x"`,
+    `echo "rm x" | bash` and an rm inside a `$(...)` still count."""
+    word_rx = WIN_SHELL_PATTERNS[0][1]
+    for text, _ in shell_segments(command):
+        if not text.strip():
+            continue
+        if "$(" in text or "`" in text:
+            return False
+        words = split_simple_command(text.strip())
+        if not words:
+            return False
+        name = re.split(r"[\\/]", words[0][0])[-1].lower()
+        name = name[:-4] if name.endswith(".exe") else name
+        if name in NON_RUNNING:
+            continue
+        if (PY_NAME_RE.fullmatch(name) and len(words) > 1 and words[1][0].endswith(".py")
+                and not words[1][0].startswith("-") and not word_rx.search(text)):
+            continue
+        return False
+    return True
+
+
 def find_destructive(command, tool_name):
     if tool_name == "PowerShell":
         patterns = list(POWERSHELL_PATTERNS)
@@ -241,6 +288,8 @@ def find_destructive(command, tool_name):
     for label, rx in patterns:
         if not rx.search(command):
             continue
+        if label == "POSIX rm/unlink" and tool_name == "Bash" and rm_only_printed(command):
+            continue          # the rm word is only printed or searched, never run
         if label == EMPTY_DIR_ONLY:
             if tool_name == "PowerShell" or PWSH_WORD_RE.search(command):
                 return POWERSHELL_RD
@@ -570,6 +619,7 @@ def landing(path, follow):
 
 # The component holding a glob character, from that character to the next separator.
 GLOB_PART_RE = re.compile(r"[*?[][^\\/]*")
+GLOB_CHARS = set("*?[")
 
 
 def landings(path, follow):
@@ -635,16 +685,57 @@ def lone_rm_targets(command, cwd):
     words = split_simple_command(command) or [("", "")]
     if words[0][0] not in REWRITE_COMMANDS:
         return []
-    return [(t, (Path(cwd) / t).as_posix()) for t, _ in words[1:] if t not in REWRITE_FLAGS]
+    return [(t, (Path(cwd) / host_word(t if q == "single" else bash_home(t))).as_posix())
+            for t, q in words[1:] if t not in REWRITE_FLAGS]
+
+
+BASH_HOME_RE = re.compile(r"\$(?:(HOME|USERPROFILE)|\{(HOME|USERPROFILE)\})(?=/|$)")
+
+
+def bash_home(word):
+    """`word` with a leading $HOME/$USERPROFILE (braced or not) expanded. Claude
+    Code on Windows runs hooks without HOME, so an unset one falls back to the
+    user's home folder, as the `~/` form does."""
+    m = BASH_HOME_RE.match(word)
+    if m is None:
+        return word
+    home = os.environ.get(m.group(1) or m.group(2)) or os.path.expanduser("~")
+    return home.replace("\\", "/") + word[m.end():]
+
+
+def plain_parts(path):
+    """No `.` or `..` component, and no dot-led component holding a glob (`.?`
+    can match `..`). A dot-led name such as `.claude` is fine."""
+    return all(not p.startswith(".") or (p not in (".", "..") and not GLOB_CHARS & set(p))
+               for p in re.split(r"[\\/]", path))
 
 
 def cwd_free(targets):
     """Every target of a lone rm/unlink resolves into a Git worktree or the OS
-    temp dir with no variable, brace, tilde or dot-led part."""
+    temp dir, outside any client matter folder, with no variable (but a leading
+    home form), brace, tilde, `.` or `..` part."""
     return targets != [] and all(
-        "/." not in path and not set("${") & set(path) and not word.startswith("~")
+        plain_parts(path) and not set("${") & set(path) and not word.startswith("~")
         and exempt(path, follows(word))
         for word, path in targets)
+
+
+PS_DELETE_COMMANDS = {"remove-item", "ri", "rm", "del", "erase", "rd", "rmdir"}
+PS_SWITCH_RE = re.compile(r"-[A-Za-z]+")
+
+
+def ps_lone_free(command):
+    """A lone PowerShell delete (a PS_DELETE_COMMANDS name) whose every argument is a bare
+    switch or an absolute path landing in a Git worktree or the OS temp dir,
+    outside any client matter folder. A `-Name:value` switch, a comma list, a
+    variable or a relative word fails."""
+    words = split_simple_command(command.strip())
+    if not words or words[0][0].lower() not in PS_DELETE_COMMANDS:
+        return False
+    targets = [t for t, _ in words[1:] if not PS_SWITCH_RE.fullmatch(t)]
+    return targets != [] and all(
+        WIN_ABS_RE.match(t) and not set("$@,{}~") & set(t) and plain_parts(t) and exempt(t)
+        for t in targets)
 
 
 RM_RE = BASH_PATTERNS[0][1]
@@ -855,6 +946,8 @@ def main():
         return 0
 
     if cwd_free(lone_rm_targets(command, cwd) if tool_name == "Bash" else []):
+        return 0
+    if tool_name == "PowerShell" and ps_lone_free(command):
         return 0
 
     offending = None

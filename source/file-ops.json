@@ -82,7 +82,7 @@
     {"file": ".claude/skills/safe-file-deletion/SKILL.md", "op": "shutil.rmtree", "count": 1, "why": "mention", "note": "Never use shutil.rmtree."},
     {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "op": "path.rmdir", "count": 1, "why": "mention", "note": "A pattern the hook uses to deny a delete."},
     {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "op": "path.unlink", "count": 1, "why": "mention", "note": "A pattern the hook uses to deny a delete."},
-    {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "op": "Remove-Item", "count": 5, "why": "mention", "note": "Comments, labels and patterns the hook uses to deny a PowerShell delete."},
+    {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "op": "Remove-Item", "count": 6, "why": "mention", "note": "Comments, labels and patterns the hook uses to deny a PowerShell delete, and the PS_DELETE_COMMANDS name set that recognises one."},
     {"file": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py", "op": "shutil.rmtree", "count": 1, "why": "mention", "note": "A comment giving a command the hook denies."},
     {"file": "source/mcp-shared/dpapi-store.js", "op": "fs.rename", "count": 1, "why": "own-database", "note": "Writes Probanda's own protected credential file through its own temp file."},
     {"file": "source/legal/mcp/src/case/procedural-history.ts", "op": "fs.rename", "count": 1, "why": "own-output", "note": "The one writer of the matter's ProceduralHistory.md, written through its own temp file."},

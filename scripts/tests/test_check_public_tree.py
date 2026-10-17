@@ -173,11 +173,16 @@ class TreeProblemsTest(unittest.TestCase):
         files = {rel: data if isinstance(data, bytes) else data.encode("utf-8") for rel, data in files.items()}
         return [msg for _, _, msg in public_tree.problems_in(self.repo, files, hook=True)]
 
-    def test_at_write_time_generic_names_licence_and_formats_pass(self):
+    def test_generic_names_and_licence_pass_everywhere(self):
         cases = {"a.md": "Each record carries a created_at timestamp.\n",
                  "b.md": "Aggregate with group_concat. Read the style_of_cause field.\n",
-                 "LICENSE": f"MIT License\n\n{MIT_LINE}\n",
-                 "c.md": b"one\r\ntwo\r\n",
+                 "LICENSE": f"MIT License\n\n{MIT_LINE}\n"}
+        for rel, data in cases.items():
+            self.assertEqual(self.hook_messages({rel: data}), [], rel)
+            self.assertEqual(self.messages({rel: data}), [], rel)
+
+    def test_formats_pass_at_write_time_only(self):
+        cases = {"c.md": b"one\r\ntwo\r\n",
                  "plugins/a/hooks/run.sh": "#!/bin/sh\necho ok",
                  "plugins/a/icon.svg": "<svg/>",
                  "CHANGELOG.md": "## Short"}

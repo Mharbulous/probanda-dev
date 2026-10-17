@@ -17,12 +17,11 @@ Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
     a file that is a copy of a private source file, a long line repeated from
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
---hook checks only for what could be a Trade Secret or User Data. Do not restrict it
-further: it lets through the write-time generic names (SQL built-ins, column names any
-schema uses, legal terms of art), lines of a standard licence such as MIT, CRLF endings,
-a file type off the allowlist and an unfinished CHANGELOG.md entry. None of these reveals
-Probanda's schema or anyone's data. The full-tree check (approve_public, export_public,
-CI) still reports all of them.
+Do not restrict generic names (SQL built-ins, column names any schema uses, legal terms of
+art) or lines of a standard licence such as MIT, anywhere: neither reveals Probanda's
+schema or anyone's data. --hook also lets through CRLF endings, a file type off the
+allowlist and an unfinished CHANGELOG.md entry. These are format rules, which the full-tree
+check (approve_public, export_public, CI) still reports.
 
 The private side is .claude/skills/, cloud/ and the source folder of every plugin
 the repo builds (plugin_layout.py reads which from source/assignment.json). A
@@ -62,18 +61,18 @@ SHARED_FILES = ("plugin.json", ".mcp.json")
 # Text only: a binary cannot be scanned, so each new type is added on purpose.
 ALLOWED_SUFFIXES = (".md", ".json", ".py", ".js", ".txt")
 ALLOWED_NAMES = ("LICENSE",)
-# Schema identifiers that are also ordinary names outside the schema (a hook's
-# input has a `file_path` key). Adding one here is a deliberate act.
-GENERIC_IDENTIFIERS = frozenset(("file_path",))
-# Exempt at write time only (--hook): names Probanda's schema shares with the rest of the
-# world, so writing one reveals nothing of it. Three kinds, and nothing else:
+# Schema identifiers that are also ordinary names outside the schema, so public/ may use
+# them. Adding one here is a deliberate act. These are names Probanda's schema shares with
+# the rest of the world, so writing one reveals nothing of it. Four kinds, and nothing else:
+#   - names a tool's own input uses (a hook's input has a `file_path` key);
 #   - built-ins of the SQL engines (SQLite, PostgreSQL and its catalogs and extensions);
 #   - column names any schema uses (audit timestamps, generic keys and times);
 #   - legal terms of art a lawyer writes as they are.
 # Never add a name that only Probanda uses: a table, view, index, trigger or function of
 # its own (causes_of_action and witness_statements are its tables, so they are not here),
 # or a column named for its own design (style_of_cause_or_title, evidence_link_id).
-WRITE_TIME_GENERIC = frozenset((
+GENERIC_IDENTIFIERS = frozenset((
+    "file_path",
     "array_agg", "array_append", "bool_and", "bool_or", "clock_timestamp", "column_default", "column_name",
     "foreign_key_violation", "foreign_keys", "gen_random_uuid", "generate_series", "generation_expression",
     "gin_trgm_ops", "group_concat", "has_function_privilege", "has_schema_privilege", "has_table_privilege",
@@ -98,7 +97,7 @@ WRITE_TIME_GENERIC = frozenset((
     "work_product", "written_argument",
 ))
 # A private file by one of these names is a standard licence, not Probanda's own text, so
-# at write time public/ may repeat its lines (an MIT LICENSE).
+# public/ may repeat its lines (an MIT LICENSE).
 LICENCE_NAMES = ("LICENSE", "LICENCE", "COPYING")
 LONG_LINE = 60
 
@@ -148,9 +147,9 @@ def private_roots(repo):
     return (*PRIVATE_ROOTS, *sources), {f"{source}/{name}" for source in sources for name in SHARED_FILES}
 
 
-def fingerprints(repo, hook=False):
-    """What the private side holds that public/ may not repeat. At write time (hook) the
-    write-time generic names and the private licence files do not count."""
+def fingerprints(repo):
+    """What the private side holds that public/ may not repeat. The generic names and the
+    private licence files do not count."""
     identifiers, tables, hashes, lines, sql = set(), set(), set(), set(), []
     roots, shared = private_roots(repo)
     for top in roots:
@@ -161,7 +160,7 @@ def fingerprints(repo, hook=False):
         for rel, data in walk(root):
             if f"{top}/{rel}" in shared:
                 continue
-            if hook and rel.rsplit("/", 1)[-1].split(".")[0].upper() in LICENCE_NAMES:
+            if rel.rsplit("/", 1)[-1].split(".")[0].upper() in LICENCE_NAMES:
                 continue
             if data:
                 hashes.add(hashlib.sha256(data).hexdigest())
@@ -194,8 +193,7 @@ def fingerprints(repo, hook=False):
     # A one-word table name is an ordinary word, so it counts only behind a
     # database qualifier the private SQL itself uses (`main.facts`).
     qualified = {(q.lower(), t.lower()) for text in sql for q, t in DOTTED.findall(text) if t.lower() in tables}
-    generic = GENERIC_IDENTIFIERS | (WRITE_TIME_GENERIC if hook else frozenset())
-    return {"identifiers": identifiers - generic, "qualified": qualified,
+    return {"identifiers": identifiers - GENERIC_IDENTIFIERS, "qualified": qualified,
             "hashes": hashes, "lines": lines}
 
 
@@ -264,7 +262,7 @@ def commit_message(text):
 def problems_in(repo, files, hook=False):
     """Every problem in files. At write time (hook) only what could be a Trade Secret or
     User Data counts: the format checks wait for the full-tree check."""
-    found = tree_problems(files, fingerprints(repo, hook), load_script("check_publishable").file_problems,
+    found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
                           load_script("check_plugin").matter_codes, formats=not hook)
     if CHANGELOG in files and not hook:
         found += [(CHANGELOG, 1, message) for message in release_problems(text_of(files[CHANGELOG]) or "")]
