@@ -46,9 +46,7 @@ the only mode). Each criterion carries a `ref`, its `text`, its `requirement_typ
    any further reference inside it with that same tool (its description says how to form the
    path), never with a native file read, and never by requesting folder access to the repo.
 2. If that tool is not in your tool list or returns an error, STOP and report the exact
-   failure to the user: the Probanda plugin's data server is unavailable — re-import the
-   .plugin and fully restart the app (a restart alone does nothing; a reinstall without
-   restart does nothing). Do not proceed from memory, do not fall back to reading repo
+   failure to the user: the Probanda plugin's data server is unavailable — check for updates in the desktop app and fully restart it (a restart alone does nothing; an update without a restart does nothing), and if the problem persists run /legal:suggestion. Do not proceed from memory, do not fall back to reading repo
    paths, and do not request folder access.
 
 ## 3. How to reach case data

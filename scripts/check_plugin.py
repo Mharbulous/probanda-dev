@@ -1242,7 +1242,7 @@ def check_bundle_schema_ceiling(repo, plugin):
                        else "no TARGET_SCHEMA_VERSION in drafting-data's migrate_engine.py")
     if baked.group(1) != target.group(1):
         return False, (f"the migration source targets schema {target.group(1)} but the data bundle was built "
-                       f"against {baked.group(1)}: rebuild the bundle (/repackage) before this ships")
+                       f"against {baked.group(1)}: rebuild the bundle (/release) before this ships")
     return True, f"both at schema {target.group(1)}"
 
 

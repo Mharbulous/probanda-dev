@@ -69,8 +69,7 @@ Project session, `mcp__remote-devices__plugin_legal_data__skill_source__read`)
 | Citations + `source` policy, no query | **Citation** | `shared/research-paralegal/citation-download.md` |
 
 **Playbook fetch failure hard-fails the invocation**: return
-`status: blocked (mechanics-unavailable)` with the guidance "reinstall the
-litigation .plugin and fully restart the app, then re-invoke". Never run a
+`status: blocked (mechanics-unavailable)` with the guidance "check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion". Never run a
 mode from memory. (A playbook is the whole procedure; this severity applies to
 every mode. The one graduated-severity exception — a failed
 `shared/canlii-download-mechanics.md` sub-fetch when Westlaw remains the
@@ -163,8 +162,8 @@ Downloads — the server finds Downloads itself.
 
 If any `research_filing__*` tool is absent from your grant, your installed
 plugin predates this machinery or the host dropped the tool at spawn: return
-`status: blocked (mechanics-unavailable)` with the reinstall-and-restart
-guidance and stop — never fabricate a filing result, and never file by any
+`status: blocked (mechanics-unavailable)` with the update-and-restart
+guidance (check for updates in the desktop app, fully restart it, run /legal:suggestion if the problem persists) and stop — never fabricate a filing result, and never file by any
 other means.
 
 ## Download manifest (all modes)

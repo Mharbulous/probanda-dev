@@ -15,7 +15,7 @@ source-specific retrieval and identification.
 (`list_downloads`, `list_law_folder`, `file_download`, `append_manifest`). If
 any of them is absent from your grant, your installed plugin predates this
 machinery — return `status: blocked (mechanics-unavailable)` with the guidance
-"reinstall the litigation `.plugin` and fully restart the app, then re-invoke",
+"check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion",
 and do not download anything.
 
 ## Input contract (citation mode)
@@ -175,8 +175,7 @@ no format choice on this path.
 
 - **Hard-fails the invocation when CanLII is the primary path** — `source:
   canlii-only`. Return
-  `status: blocked (mechanics-unavailable)` with the guidance: reinstall the
-  litigation `.plugin` and fully restart the app, then re-invoke.
+  `status: blocked (mechanics-unavailable)` with the guidance: check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion.
 - **Records-and-continues per citation when Westlaw remains the operative
   primary** — a `westlaw-first` batch still signed in, where CanLII is reached
   only for per-citation out-of-plan / not-found fallbacks. Record each affected
