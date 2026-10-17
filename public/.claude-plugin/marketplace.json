@@ -2,7 +2,7 @@
   "name": "probanda",
   "description": "Probanda, Claude Cowork plugins for lawyers in any jurisdiction",
   "owner": {
-    "name": "Probanda",
+    "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
   },
   "forceRemoveDeletedPlugins": true,

@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "description": "The core Probanda plugin. Requires nothing. Install it first: every other Probanda plugin except lawyer requires it.",
   "author": {
-    "name": "Probanda",
+    "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
   },
   "homepage": "https://github.com/Probanda-app/Probanda",
