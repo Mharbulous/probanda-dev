@@ -1,5 +1,13 @@
 # Changelog
 
+## Probanda_Legal marketplace, researcher and lawyer plugins
+
+- The marketplace is now `Probanda_Legal`. Install each plugin as `<plugin>@Probanda_Legal`.
+- Plugin listings name "Probanda Legal" as owner and author, with shorter display names.
+- The research plugin is renamed researcher.
+- New lawyer plugin: dyu and TLDR move to it from legal. It requires nothing.
+- README updated for the five plugins.
+
 ## For lawyers in any jurisdiction; README lists each plugin's skills
 
 - Marketplace, legal, research and litigator descriptions no longer limit Probanda to British Columbia.
