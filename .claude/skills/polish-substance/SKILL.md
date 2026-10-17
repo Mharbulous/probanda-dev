@@ -86,7 +86,7 @@ Read from the substance folder:
 If any file is missing, halt with a redirect:
 - Part 1 missing: "Run ``solver`` first."
 - Part 2 missing: "Run ``narrator`` first."
-- Part 3 missing: "Run ``researcher`` first."
+- Part 3 missing: "Run ``bcsc-legal-basis`` first."
 - Part 4 missing: "Run ``narrator`` first -- it generates Part 4 mechanically."
 
 ### 3. Run the two checks
@@ -109,7 +109,7 @@ Do not present legal strategy options. Do not suggest which agent to choose. Pre
 
 Direct the practitioner to start a new session:
 
-> "Start a new session and run ``researcher`` to revise the legal basis."
+> "Start a new session and run ``bcsc-legal-basis`` to revise the legal basis."
 
 The agent will detect the existing file and offer it as a starting point for revision. After revision, the practitioner returns to ``polish-substance`` for another pass.
 

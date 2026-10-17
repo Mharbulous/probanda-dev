@@ -98,15 +98,18 @@
       "skills": [
         "apply-to-facts",
         "assemble",
+        "bcsc-legal-basis",
         "calculate",
         "draft",
         "drafting-data",
         "job-planning",
         "litigation-fact-extractor",
+        "narrator",
         "polish-substance",
         "prepare",
         "publish",
-        "rule-migrate"
+        "rule-migrate",
+        "solver"
       ],
       "agents": [
         "marshal-facts",

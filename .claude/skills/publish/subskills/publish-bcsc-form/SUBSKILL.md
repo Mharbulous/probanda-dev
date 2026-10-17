@@ -26,11 +26,11 @@ You are a **content-blind shuttle**. You do not draft substance, classify legal 
 | **Validate Form 32/33 markdown** (`validate32` / `validate33`) | Hard-validate a `form-32.md` / `form-33.md` against the subset rules only — no session, no output file; exit 0 on pass, non-zero printing the exact error | No live caller — each pipeline delegates the whole `asm32`/`asm33` operation, which hard-validates through the same parser. Kept as the acceptance oracle for emitter test suites (`references/assembly-input-contract.md`). |
 
 **Not handled here:**
-- Substance drafting (Orders, Facts, Law) -> Form 32/33: use `/draft` (it emits `form-32.md`/`form-33.md` and calls `asm32`/`asm33`). Petition, NOCC, RTC: `/solver`, `/researcher`, `/narrator`, or this subskill's own `draft` operation.
+- Substance drafting (Orders, Facts, Law) -> Form 32/33: use `/draft` (it emits `form-32.md`/`form-33.md` and calls `asm32`/`asm33`). Petition, NOCC, RTC: `/solver`, `/bcsc-legal-basis`, `/narrator`, or this subskill's own `draft` operation.
 - Renumbering a draft affidavit -> the sibling subskill `renumber-affidavit`
 - Bill of Costs (Form 62) -> the sibling subskill `publish-boc`, after `/calculate` has gathered, itemized and totalled the bill
 - Default Judgment Bill of Costs (Form 63, Rule 14-1 (20)) -> also `publish-boc`, which runs the deterministic Schedule 1 engine
-- If a referenced skill is not invokable in this session, read and follow its source at `skills/<name>/SKILL.md` under the Coclerk directory.
+- If a referenced skill is not invokable in this session, read its source with `skill_source__read` at `<name>/SKILL.md` and follow it.
 
 ## Form style-guide routing
 

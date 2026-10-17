@@ -8,6 +8,7 @@
     "subskills/assemble-boc/scripts",
     "subskills/assemble-general/scripts"
   ],
+  "bcsc-legal-basis": [],
   "calculate": [
     "subskills/court-interest-calculator/scripts",
     "subskills/contract-interest-rates/scripts",
@@ -20,6 +21,7 @@
     "scripts"
   ],
   "job-planning": [],
+  "narrator": [],
   "polish-substance": [],
   "prepare": [],
   "publish": [
@@ -36,5 +38,6 @@
     "subskills/publish-boc/templates",
     "subskills/publish-general/scripts"
   ],
-  "rule-migrate": []
+  "rule-migrate": [],
+  "solver": []
 }
