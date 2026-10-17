@@ -144,7 +144,7 @@ Each of the first three also writes the source's status line: `fetched` with the
 
 ## Configuration
 
-Unlike `case_data__*` (a `coclerk.json` pointer resolving a per-matter folder) or a per-matter caller-resolved `db_path` convention, the `timecamping_data__*` backend takes **no database path parameter at all** (`bulk_upsert`'s `path` names the ingest file, not the database) — the database is a single, fixed, per-practitioner file, resolved entirely server-side, matching `practice_data__*`/`time_pipeline__*`. It lives at `0. CASE DATA\_practice\timecamping.db`, beside `practice.db` and `time_pipeline.db` (`source/legal/mcp/src/timecamping/backend.ts`'s `resolveTimecampingDbPath`, built on the same `resolveCaseDataRoot()` those two already use). `COCLERK_TIMECAMPING_DB_PATH` is the full-path test override; `COCLERK_TIMECAMPING_DB_NAME` overrides just the filename.
+Unlike `case_data__*` (a `probanda.json` pointer resolving a per-matter folder) or a per-matter caller-resolved `db_path` convention, the `timecamping_data__*` backend takes **no database path parameter at all** (`bulk_upsert`'s `path` names the ingest file, not the database) — the database is a single, fixed, per-practitioner file, resolved entirely server-side, matching `practice_data__*`/`time_pipeline__*`. It lives at `0. CASE DATA\_practice\timecamping.db`, beside `practice.db` and `time_pipeline.db` (`source/legal/mcp/src/timecamping/backend.ts`'s `resolveTimecampingDbPath`, built on the same `resolveCaseDataRoot()` those two already use). `COCLERK_TIMECAMPING_DB_PATH` is the full-path test override; `COCLERK_TIMECAMPING_DB_NAME` overrides just the filename.
 
 ## Anti-Patterns
 

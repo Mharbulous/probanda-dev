@@ -1,6 +1,6 @@
 # Operation: ingest-coverage
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Read-only. For a set of matter folders named by glob, report which of their files the case database does not yet hold, and the date of the newest ingested correspondence. It is [`ingest-status.md`](ingest-status.md) over whole folders: this file finds and hashes the files, ingest-status decides each verdict, and this file reduces the verdicts to what a caller can name or offer to `/ingest`. **This operation writes nothing and extracts nothing.**
 

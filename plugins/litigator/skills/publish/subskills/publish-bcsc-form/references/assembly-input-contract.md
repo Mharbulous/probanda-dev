@@ -48,7 +48,7 @@ database. The former callers (`/prepare-application` for `asm32`,
 The caller writes the input file to the matter's substance folder,
 `{case-data folder}/bcsc-form-substance/` (the constant location
 `asm32.locate`/`asm33.locate` resolve), the case-data folder being the one
-`coclerk.json`'s `case_data_dir` names. It then drives the shuttle protocol in
+`probanda.json`'s `case_data_dir` names. It then drives the shuttle protocol in
 `SKILL.md`, passing that case-data folder and the Writing folder name at
 init; the assembled `.docx` and its PDF land in the Writing folder under the
 matter's draft folder:

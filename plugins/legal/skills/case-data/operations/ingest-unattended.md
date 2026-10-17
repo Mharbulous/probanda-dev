@@ -1,6 +1,6 @@
 # Operation: ingest-unattended
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Writes. Ingests an explicit list of files **without asking the practitioner anything**. Each point where the interactive path would ask is answered by a default below, or ends that file with a stop reason and the question, for the caller to put to the practitioner later. The machinery is the interactive path's: [`ingest.md`](ingest.md)'s routing, [`ingest-extract.md`](ingest-extract.md) and [`ingest-verify.md`](ingest-verify.md), with the extraction semantics of [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md). Everything in them applies here except the substitutions below. The interactive single-document path is unchanged.
 

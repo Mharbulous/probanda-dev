@@ -1,6 +1,6 @@
 ---
 name: probanda-setup
-description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports coclerk.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's coclerk.json, creates the practice database, records who uses this device, and maps the practitioner's matter folders to the layout the skills assume. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
+description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and maps the practitioner's matter folders to the layout the skills assume. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
 <!-- legal v0.5.0 -->
@@ -9,11 +9,11 @@ description: "Set Probanda up on a device where it has never been set up: a prac
 
 # Probanda setup
 
-A missing `coclerk.json` means Probanda has not been set up on this device. It is not a fault. This skill sets the device up and then hands back to whatever the practitioner was doing.
+A missing `probanda.json` means Probanda has not been set up on this device. It is not a fault. This skill sets the device up and then hands back to whatever the practitioner was doing.
 
 **Rules that hold throughout:**
 - Every root, folder and setting is written only after the practitioner approves it under `/show-me`. Ask one question at a time.
-- Write `coclerk.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
+- Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
 - Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, and `_practice\firm\firm.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter.
 - Setup never writes `practice_quirks` or a credential. `practice_quirks` follows practice-data's Practice quirks rules.
@@ -37,7 +37,7 @@ The root is the practitioner's `0. CASE DATA` folder: the folder that holds `_pr
 
 On the practitioner's yes, call `practice_data__config_set_root` with `case_data_root`.
 - When the root already holds `_practice\practice.db`, pass nothing else.
-- When it does not, pass `initialize: true`. The tool creates the root folder (when only its parent exists), `_practice\` and `practice.db`, and writes `coclerk.json`.
+- When it does not, pass `initialize: true`. The tool creates the root folder (when only its parent exists), `_practice\` and `practice.db`, and writes `probanda.json`.
 - A refusal (`root_already_working`, invalid JSON) is reported as it stands. Never retry it with another root.
 
 ## Step 4 — Who uses this device

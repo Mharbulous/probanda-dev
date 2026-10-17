@@ -2,12 +2,13 @@
 """Inject this practitioner's environment notes at the start of every session.
 
 Hook event: SessionStart (every source, so the notes return after a compaction).
-The notes are the optional `practice_quirks` key of the per-user coclerk.json,
+The notes are the optional `practice_quirks` key of the per-user probanda.json,
 resolved as mcp/src/config-path.ts resolves it: COCLERK_CONFIG_PATH, else
-%APPDATA%\\Coclerk\\coclerk.json. Set only through practice_data__upsert_firm_profile
+%APPDATA%\\Coclerk\\probanda.json, else the legacy %APPDATA%\\Coclerk\\coclerk.json.
+Set only through practice_data__upsert_firm_profile
 after the practitioner approves (practice-data/SKILL.md, "Practice quirks").
 
-In Cowork the hook runs in the sandbox VM, where the device's coclerk.json is out
+In Cowork the hook runs in the sandbox VM, where the device's probanda.json is out
 of reach: the hook then tells the session where to read the notes instead.
 Never blocks the session: always exits 0.
 """
@@ -41,7 +42,10 @@ def config_path() -> Path:
     if override:
         return Path(override)
     appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    return Path(appdata) / "Coclerk" / "coclerk.json"
+    folder = Path(appdata) / "Coclerk"
+    current = folder / "probanda.json"
+    legacy = folder / "coclerk.json"
+    return current if current.is_file() or not legacy.is_file() else legacy
 
 
 def context() -> str | None:

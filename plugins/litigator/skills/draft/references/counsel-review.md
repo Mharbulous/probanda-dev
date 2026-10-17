@@ -18,7 +18,7 @@ An ordinary AI job with one step, dispatched like any other. It never writes the
 
 The review job is a one-step job whose step is the practitioner's. Assigning it follows `job-session.md` Branch A, and then this section runs in place of dispatch. The session executes the review and only records: approvals, discussion points, and the wording changes the practitioner dictates. Work needing AI becomes a job only in a later outlining session.
 
-**Mode.** Four modes: scope is **full review** or **review changed**, and comments are **at the end** or **per paragraph**. Read the stored `review` block from `coclerk.json` through `/practice-data`. If it is absent, ask once, one form per choice, and write the answers back there. The practitioner may switch mode at any point. Keep to the new mode until told otherwise, and write nothing back for a switch.
+**Mode.** Four modes: scope is **full review** or **review changed**, and comments are **at the end** or **per paragraph**. Read the stored `review` block from `probanda.json` through `/practice-data`. If it is absent, ask once, one form per choice, and write the answers back there. The practitioner may switch mode at any point. Keep to the new mode until told otherwise, and write nothing back for a switch.
 
 **Order and position.** Units are taken in document order. Where to start or resume is derived, never stored: `review.md` "## Reads" states the rule. So a pause, a resume, a take-over and a context compaction all land on the same unit.
 

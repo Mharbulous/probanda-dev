@@ -1,6 +1,6 @@
 # Operation: review
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Read [`../shared/review-protocol.md`](../shared/review-protocol.md) for the exact action semantics (Confirm/Correct/Reject/Delete and their effects on `verified`/`human_reviewed`) and the per-row display contract — this file references that protocol rather than restating it.
 

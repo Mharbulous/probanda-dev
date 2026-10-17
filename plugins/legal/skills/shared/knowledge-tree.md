@@ -111,7 +111,7 @@ The overlay root is `<case_data_root>\_practice\knowledge\`. Beside the per-skil
 - `_fetched\<host>\<first 12 hex characters of the sha256>.pdf`: fetched PDFs, kept while an excerpt records their hash.
 - `_hosts.json`: the firm's approved fetch hosts, one `{host, category, page_url, added, approved_by: "practitioner"}` per entry. An entry missing `category` or `approved_by` is ignored. It is written only through `knowledge__write` at this path, one host at a time, after the practitioner's yes to a `host_not_allowed` refusal: the caller gives `host`, `category` (`venue`, `statute` or `regulator`) and `page_url`, and the runtime stamps `added` and `approved_by`. A repo run never writes it.
 
-`case_data_root` is the per-user `coclerk.json`'s key. When that file is absent, a `knowledge__read` or `knowledge__list` given `matter_root` derives the root from that matter pointer's `case_data_dir`: its parent folder, taken only when it is a `0. CASE DATA` folder (or the folder `COCLERK_CASE_DATA_ROOT` names), and otherwise the missing-file error stands. A present per-user file always wins. `knowledge__write` and `knowledge__retire` never fall back.
+`case_data_root` is the per-user `probanda.json`'s key. When that file is absent, a `knowledge__read` or `knowledge__list` given `matter_root` derives the root from that matter pointer's `case_data_dir`: its parent folder, taken only when it is a `0. CASE DATA` folder (or the folder `COCLERK_CASE_DATA_ROOT` names), and otherwise the missing-file error stands. A present per-user file always wins. `knowledge__write` and `knowledge__retire` never fall back.
 
 A confirmation sidecar sits beside the knowledge file it confirms (section 10).
 
@@ -161,7 +161,7 @@ Every learned file follows this contract.
   No row means unconfirmed. `value` appears only on `corrected`. A row carries no `source` field, because `corrected` implies the practitioner as source.
 - **`plugin_version` and `shipped_from`** are the confirming machine's, stamped by the runtime on each row, because the passage hash binds to the copy that machine was served and lawyers sharing one overlay may run different versions. A row written before the stamp carries neither. A row records no `matter` or `learned_by`: `by` and `on` say who confirmed and when.
 - **Writes** are row-level upserts under a lock file, so two confirmations of different items both land.
-- **`by`** is the confirming machine's `person` roster key, which the runtime reads from that machine's `coclerk.json` when the write runs. The caller never passes it. The key is stored, not the name, because roster entries are never deleted.
+- **`by`** is the confirming machine's `person` roster key, which the runtime reads from that machine's `probanda.json` when the write runs. The caller never passes it. The key is stored, not the name, because roster entries are never deleted.
 - **Only a roster lawyer confirms or corrects.** The runtime checks the key's role against the firm roster at write time and refuses a `staff` key. Staff may prepare and present the mockup. The reason is that a confirmation lifts the filed refusal, which is professional reliance.
 - **`person` unset.** The write refuses with a hard error naming the missing key. The calling skill asks once, writes the key through `practice_data__upsert_firm_profile`, and calls again.
 - **Matter sessions only.** Confirmation always happens in a matter session. A repo-session `confirm` or `correct` refuses.

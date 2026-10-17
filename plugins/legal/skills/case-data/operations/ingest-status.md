@@ -1,6 +1,6 @@
 # Operation: ingest-status
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Read-only and batched. For a list of files, each named by its path and the SHA-256 of its bytes, report whether the case database already holds the file and what it stores about it. **This operation writes nothing.** The housekeeping review log is a separate call ([`housekeeping-log.md`](housekeeping-log.md), mode `lookup`).
 

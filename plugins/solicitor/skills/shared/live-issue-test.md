@@ -24,7 +24,7 @@ the nudge never fires.
   migrations, packaging, data plumbing, filing mechanics, and the drafting mechanics of an
   already-authorized deliverable — that is firm infrastructure, never governed by this test.
 - **Current matter** — the client matter identified by the project the session is in (the
-  Cowork workspace folder and its `coclerk.json`). A session in the Coclerk repo has **no**
+  Cowork workspace folder and its `probanda.json`). A session in the Coclerk repo has **no**
   current matter and no billing anchor (§5).
 - **Live issue** — something contested or pending in the current matter *now*: an application,
   a pleading, a limitation clock, a negotiation, an upcoming examination — or, at

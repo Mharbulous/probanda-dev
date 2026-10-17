@@ -12,6 +12,7 @@ from resolve_paths import (
     LEGACY_ARTIFACTS_DIR,
     case_data_root,
     default_evidence_sql,
+    find_pointer,
     is_absolute,
     norm_join,
     resolve_case_data_dir,
@@ -156,7 +157,8 @@ def main(argv=None):
         return 2
 
     all_healthy = True
-    pointers = sorted(root.glob("*/coclerk.json"), key=lambda p: str(p).lower())
+    found = (find_pointer(str(d)) for d in root.iterdir() if d.is_dir())
+    pointers = sorted((Path(p) for p in found if p), key=lambda p: str(p).lower())
     if not pointers:
         print(f"UNHEALTHY ROOT | no matter pointers under {root}")
         all_healthy = False

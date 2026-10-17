@@ -1,6 +1,6 @@
 # Operation: verify-law
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Verifies **legal edges** (`law.concept_authorities`) against the authority documents they cite, and records the result in `verified` + `notes`. It is the producer for `concept_authorities.verified` — the column existed from v7.1 with **nothing to populate it**, so every edge sat at `0` and no push gate could mean anything.
 

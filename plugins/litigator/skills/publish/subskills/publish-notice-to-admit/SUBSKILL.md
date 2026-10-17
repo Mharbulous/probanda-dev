@@ -92,7 +92,7 @@ confirmed. Do not deliver a package with a listed document missing.
 Read `references/form-26.md`. Create a working Markdown record in
 `<case-data folder>\publish-notice-to-admit\` containing the matter identity, verification table,
 final facts, document list, attachment hashes, and practitioner confirmations, and rewrite it in
-place on each run. The case-data folder is the one `coclerk.json`'s `case_data_dir` names; it
+place on each run. The case-data folder is the one `probanda.json`'s `case_data_dir` names; it
 must already exist (if not, stop and name `/case-data` initialize; never create it). Keep that
 record out of the filed document.
 

@@ -97,7 +97,7 @@ This skill does NOT:
 
 ## Source integration
 
-Seven evidence sources. Reuse the existing `coclerk.json →
+Seven evidence sources. Reuse the existing `probanda.json →
 time_tracking.sources` registry (the same accounts/tokens `build-timeline`
 already uses) rather than a second config surface — extend the existing
 `timecamp` registry entry's capabilities rather than registering a
@@ -119,7 +119,7 @@ by Step 0.
 ### Step 0: First-run setup
 
 Read the time-tracking registry: `time_tracking` in the machine-level
-`coclerk.json` (location and No-registry rule:
+`probanda.json` (location and No-registry rule:
 `time-sorting/protocols/FirstSetup.md`). If `time_tracking.sources` is absent
 or empty, stop and run that protocol first; never proceed without a
 registry. If the timecamping database doesn't
@@ -130,7 +130,7 @@ anything else proceeds — every step below assumes a migrated database.
 
 Same date-resolution convention as `build-timeline` Step 1: default today,
 accept a single date, a relative date ("yesterday"), or a range — interpret
-in the practitioner's local timezone (`coclerk.json → time_tracking.timezone`,
+in the practitioner's local timezone (`probanda.json → time_tracking.timezone`,
 default `"America/Vancouver"` if unset),
 then work one **local day** at a time throughout (every source below is
 fetched and gated per-day, never as a wider range — this matches
@@ -146,7 +146,7 @@ it, and only the script's one-line summary comes back. `/timecamping-data`
 documents the script, its subcommands and the file shape (Bulk ingest file);
 run it with the host Python (`python`; if that is the WindowsApps stub, the
 interpreter `COCLERK_PYTHON` names). Pass `--timezone` with the value from
-`coclerk.json → time_tracking.timezone` to every subcommand that takes it,
+`probanda.json → time_tracking.timezone` to every subcommand that takes it,
 and `America/Vancouver` when the key is unset.
 For each of the seven sources above, in any order:
 

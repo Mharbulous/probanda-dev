@@ -123,7 +123,7 @@ refresh:
 `retainer_funded` can be auto-advanced from the matter's `regular_trust`, but only when the data is
 fresh.
 
-**Step 1: Check sign convention.** Read `accounting.csv_mapping.sign_convention` from `coclerk.json`
+**Step 1: Check sign convention.** Read `accounting.csv_mapping.sign_convention` from `probanda.json`
 before interpreting the sign of `regular_trust`. If `sign_convention` is missing or the
 `accounting.csv_mapping` key is absent, halt and tell the practitioner:
 
@@ -199,7 +199,7 @@ missing data produces false negatives. Always request practitioner confirmation 
 ---
 
 **Auto-advancing `retainer_funded` without checking `sign_convention`.** If the accounting system
-sign convention is unknown or missing from `coclerk.json`, the `regular_trust` sign is ambiguous.
+sign convention is unknown or missing from `probanda.json`, the `regular_trust` sign is ambiguous.
 Defaulting to `negative_is_funded` is a silent assumption that will produce wrong status if the
 user's system uses the opposite convention. Halt and surface.
 

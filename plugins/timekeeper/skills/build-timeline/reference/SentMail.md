@@ -54,7 +54,7 @@ For local day D, call `mail__search_emails` once for each qualified folder, in t
 
 **A timeout is retried once.** On a `mail_timeout` error, wait a few seconds and search that folder once more. If it fails again, the day is `failed`, with the error text as its `error_detail`. Never fall back to a browser or any other route.
 
-**Keep only the messages sent on local day D.** Each message's `date` is ISO 8601 with its offset. Convert it to the practitioner's timezone (`coclerk.json → time_tracking.timezone`, default `America/Vancouver`) and keep the message only when its date there is D.
+**Keep only the messages sent on local day D.** Each message's `date` is ISO 8601 with its offset. Convert it to the practitioner's timezone (`probanda.json → time_tracking.timezone`, default `America/Vancouver`) and keep the message only when its date there is D.
 
 **A truncated search is `failed`.** The response reports `totalFound` and `returned`. When `returned` is less than `totalFound`, or `returned` equals the limit of 500, the search may be missing messages: the day is `failed`, with an `error_detail` naming the folder and both counts. Never store a partial day.
 

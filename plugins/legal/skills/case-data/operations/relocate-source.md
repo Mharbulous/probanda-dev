@@ -1,6 +1,6 @@
 # Operation: relocate-source
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Writes. After a file is moved or renamed, re-points every stored record of it so its `file_path` names where the file now is, in the stored form (conventions §2.4). The file is found by its hash, which a move does not change. The old path is a check, not the key. The operation moves no file: the caller has already moved it.
 

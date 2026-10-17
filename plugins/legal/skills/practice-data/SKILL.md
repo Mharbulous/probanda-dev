@@ -17,7 +17,7 @@ description: The firm's practice records for each client and matter. Look up or 
 | Contacts | A party, counsel or other person or organization on a matter is recorded, looked up or merged |
 | Conventions | Before any practice_data tool call, or when a tool returns a path-resolution or timeout error |
 | Consumer Contract | A field's meaning or a guarantee is in question, or before changing a field or its semantics |
-| Configuration | A skill needs coclerk.json, the firm roster, the letterhead, or the database path |
+| Configuration | A skill needs probanda.json, the firm roster, the letterhead, or the database path |
 | Accounting System Resolution | A skill needs to know the user's accounting system |
 | Anti-Patterns | Before reaching the database any way other than the practice_data tools |
 
@@ -40,7 +40,7 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | ar-data | `practice_data__ar_data` | no inputs; excludes non-billable matters, and its WIP hours count only billable entries (see Consumer Contract); WIP hours start at each matter's billing cutoff, the same one `wip-hours` derives, reported per row as `cutoff_date` and `cutoff_source` (`date_to`, `issue_date`, or null when the matter has no invoices and all its billable time counts) |
 | read-signals | `practice_data__read_signals` | returns the matter's signal states; returns no policies |
 | time-entries | `practice_data__time_entries_query` | matter ref, optional from_date/to_date; per-entry rows with matter/client context |
-| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path, and opening a matter (see Opening a Matter); optional `client_contacts` writes the client roles in the same write; returns `client_role_ids`, and `question` when a matter is created without `client_contacts` |
+| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path, and opening a matter (see Opening a Matter); optional `client_contacts` writes the client roles in the same write; optional `folder` records the matter's folder relative to the litigation library (see Opening a Matter step 4); returns `client_role_ids`, and `question` when a matter is created without `client_contacts` |
 | upsert-contact | `practice_data__upsert_contact` | one person or organization, firm-wide (see Contacts); create (omit `id`) or update; returns `contact_id`, `created` |
 | upsert-affiliation | `practice_data__upsert_affiliation` | a person contact tied to an organization contact, with optional `from`, `to`, `title`; re-entering the same tie returns it |
 | upsert-matter-role | `practice_data__upsert_matter_role` | a contact's role on a matter, with optional `case_party_id` and `case_proceeding_id`; proposing the same role twice returns it |
@@ -67,7 +67,7 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | import-invoices | `practice_data__import_invoices` | takes normalized rows; CSV parsing stays in invoice-tracking; rows Probanda's Cloud does not save (a non-billable matter's) are counted in `not_saved`, with each refused matter's question in `questions` to relay (see Consumer Contract) |
 | invoice-data | `practice_data__invoices_query` | rows + latest `last_import_at` staleness |
 | firm-profile | `practice_data__firm_profile` | no inputs; returns `firm_name`, `roster`, the letterhead path (null when none is registered) and this machine's `person` key (null when unset); fails naming the missing piece (firm.json or its firm name) with its path, and fails when `person` names no roster entry (see Configuration) |
-| upsert-firm-profile | `practice_data__upsert_firm_profile` | any of `firm_name`, `roster_entry` (upsert by `key`; a new entry needs every field; never removed, `active: false` retires one), `person` and `signature` (this machine's coclerk.json), `practice_quirks` (the whole note in this machine's coclerk.json, at most 1,000 characters, `""` clears it; see Practice quirks; a call that sets only it and/or `signature` needs no firm folder, and creates coclerk.json when it is absent), and `letterhead` (a .docx whose header and footer tokens must each sit in one run; a split token refuses the registration and nothing is written); reports `theme_faces_differ` when the theme's two faces differ, `signer_fields_missing` (a list of `key`, `fields`) naming every active lawyer the resulting roster leaves without a field a letter's letterhead needs, and `preparer_initials_missing` (a key) when this machine's `person` points to an entry with blank initials; both are checked on every call and the call still writes, so tell the practitioner that any letter the lawyer signs, or any letter prepared on this machine, is refused until a `roster_entry` with that key supplies the fields |
+| upsert-firm-profile | `practice_data__upsert_firm_profile` | any of `firm_name`, `roster_entry` (upsert by `key`; a new entry needs every field; never removed, `active: false` retires one), `person` and `signature` (this machine's probanda.json), `practice_quirks` (the whole note in this machine's probanda.json, at most 1,000 characters, `""` clears it; see Practice quirks; a call that sets only it and/or `signature` needs no firm folder, and creates probanda.json when it is absent), and `letterhead` (a .docx whose header and footer tokens must each sit in one run; a split token refuses the registration and nothing is written); reports `theme_faces_differ` when the theme's two faces differ, `signer_fields_missing` (a list of `key`, `fields`) naming every active lawyer the resulting roster leaves without a field a letter's letterhead needs, and `preparer_initials_missing` (a key) when this machine's `person` points to an entry with blank initials; both are checked on every call and the call still writes, so tell the practitioner that any letter the lawyer signs, or any letter prepared on this machine, is refused until a `roster_entry` with that key supplies the fields |
 | config-status | `practice_data__config_status` | read-only, writes nothing; optional `matter_root`; reports the settings file's path, `exists`, `parse_error`, `keys_present`/`keys_missing`, its `case_data_root` with `root_exists`/`practice_db_exists`, `candidates` (the root a matter's pointer sits in, when given `matter_root`; with no `matter_root` and no settings file, the folders a scan of the user's profile finds, with `scan_truncated`) and `redirected_copies` (copies under a packaged app's redirected AppData, which the runtime does not read), `cloud_credential` (`present` or `missing`: the credential writes need) and `pending_writes` (writes Probanda's Cloud saved that practice.db has not yet applied), and `practice_quirks` (verbatim, or null when the file is absent or sets none; see Practice quirks); see Conventions |
 | config-set-root | `practice_data__config_set_root` | `case_data_root`, only after the practitioner approves it; refused, writing nothing, unless `<root>\_practice\practice.db` already exists or `initialize: true` is passed (only `/legal:probanda-setup` passes it, for a new device's approved root, and the tool then creates `_practice\` and `practice.db`), when the file is not valid JSON, and when the file's current root already works (`root_already_working`); creates the file with only `version` and `case_data_root`, or changes only that key; returns `keys_missing`; see Conventions |
 
@@ -78,6 +78,7 @@ Opening a new matter always records who the client is (ADR 0009). The CSV import
 1. Ask the practitioner who the client is. For each name, call `contact-lookup` with it and offer what it returns, its `near` list included, as existing contacts. When none is the client, pre-fill a new contact from `contacts__search` on the name (its emails, phones and addresses), with `entity` set to `person` or `organization` as the practitioner says. Joint clients are one contact each.
 2. Show the matter and the client contacts to be written under `/show-me`, and ask once.
 3. On a yes, call `upsert-client-matter` with `client_contacts`: `{contact_id}` for an existing contact, the `upsert-contact` fields for a new one. The matter, any new contact and the client roles are saved together or not at all.
+4. When the matter's folder in the litigation library exists or is created, pass `folder` on the same call (or a later `upsert-client-matter`): its path relative to the library, the parent of `case_data_root` — never an absolute path. The delete hook reads this record as its second way of recognising a matter folder, so a folder whose pointer file is lost stays protected.
 
 ## Contacts
 
@@ -149,10 +150,10 @@ Use `amend: true` only when the underlying event legitimately moved, such as an 
 Device and accounting-workflow state lives in a persistent config file:
 
 ```
-AppData\Roaming\Coclerk\coclerk.json
+AppData\Roaming\Coclerk\probanda.json
 ```
 
-Resolve relative to the user's home directory (packaged installs may redirect; use the path the directory tool returns). **Never hardcode a username.** This file locates the local practice database — the MCP runtime reads `case_data_root` (the path to the `0. CASE DATA` folder) and resolves the DB at `<case_data_root>\_practice\practice.db` (overridable in tests via `COCLERK_DB_PATH`). A session can read another file in its place: `COCLERK_CONFIG_PATH` names it, and every reader of this file (the runtime and the publish scripts) then reads that file alone, for `case_data_root`, `person`, `signature`, `firm` and `repo_root` alike. The file must exist, or the call fails naming it, and it never falls back to this one. A session gets the variable through the `env` block of a `.claude/settings.local.json` in the folder it opens in, so it reaches Code tab sessions only, never a session in a folder without that file. In such a session this file is not the authority: the prose steps below that say to read `coclerk.json` mean the file the variable names. It also holds accounting-system configuration:
+Resolve relative to the user's home directory (packaged installs may redirect; use the path the directory tool returns). **Never hardcode a username.** The file was named `coclerk.json`: a reader takes `probanda.json` when it exists, else `coclerk.json`, and a writer writes both names with the same content when `coclerk.json` is present (migrate-on-write), so an older copy of the plugin keeps reading current settings. The folder stays named `Coclerk`, and the `COCLERK_*` environment variables keep their names. This file locates the local practice database — the MCP runtime reads `case_data_root` (the path to the `0. CASE DATA` folder) and resolves the DB at `<case_data_root>\_practice\practice.db` (overridable in tests via `COCLERK_DB_PATH`). A session can read another file in its place: `COCLERK_CONFIG_PATH` names it, and every reader of this file (the runtime and the publish scripts) then reads that file alone, for `case_data_root`, `person`, `signature`, `firm` and `repo_root` alike. The file must exist, or the call fails naming it, and it never falls back to this one. A session gets the variable through the `env` block of a `.claude/settings.local.json` in the folder it opens in, so it reaches Code tab sessions only, never a session in a folder without that file. In such a session this file is not the authority: the prose steps below that say to read `probanda.json` mean the file the variable names. It also holds accounting-system configuration:
 
 ```json
 {
@@ -210,7 +211,7 @@ The `csv_mapping` key is populated on first CSV import. If missing, the importin
 
 ### Mail
 
-The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is set once through `mail__configure_credential`. The tool takes the host, port and username, never the password, and returns a link to a page on this computer. The practitioner types the password on that page. The page signs in before saving and stores the credential encrypted on the host, where it survives restarts. The password never passes through the chat: never ask for it there, and never use one typed there. It is never written to `coclerk.json`. It cannot arrive as an environment variable in Cowork.
+The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is set once through `mail__configure_credential`. The tool takes the host, port and username, never the password, and returns a link to a page on this computer. The practitioner types the password on that page. The page signs in before saving and stores the credential encrypted on the host, where it survives restarts. The password never passes through the chat: never ask for it there, and never use one typed there. It is never written to `probanda.json`. It cannot arrive as an environment variable in Cowork.
 
 On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, ask the practitioner for the host, port and username rather than guessing. Then send the link and, once they say it's done, call `mail__configure_status` again.
 
@@ -226,11 +227,11 @@ The optional `practice_quirks` key holds this practitioner's environment notes: 
 
 ## Accounting System Resolution
 
-Skills that need to know the user's accounting system (e.g. retainer-tracking) must check `coclerk.json` first:
+Skills that need to know the user's accounting system (e.g. retainer-tracking) must check `probanda.json` first:
 
-1. Read `accounting.system` from `coclerk.json`
+1. Read `accounting.system` from `probanda.json`
 2. **If present:** use the value — do not ask the user again
-3. **If missing or `accounting` key absent:** ask the user what accounting system they use, then write the answer back to `coclerk.json` before proceeding
+3. **If missing or `accounting` key absent:** ask the user what accounting system they use, then write the answer back to `probanda.json` before proceeding
 
 ## Anti-Patterns
 

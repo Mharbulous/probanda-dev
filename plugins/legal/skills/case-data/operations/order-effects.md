@@ -1,6 +1,6 @@
 # Operation: order-effects
 
-Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 A filed court order is not just another source. Its operative paragraphs can **change the truth of rows already stored** — the style of cause, the trial date, the party roster, counsel of record, the proceeding's status. The normal extraction path records what the order *says* (a source, facts, evidence links, source references) and never reconciles the proceeding-level rows against what the order *did*. This operation is that reconciliation: a **diff-and-propose** pass over a closed writable surface, with a **mandatory human-in-the-loop approval gate**. The same reconciliation is owed by a small class of non-order instruments — the Rule 22-6 counsel-of-record notices — which change identical proceeding-level truth without any judicial act.
 

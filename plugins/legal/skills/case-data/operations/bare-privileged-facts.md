@@ -1,6 +1,6 @@
 # Operation: bare-privileged-facts (the bare row: its record, emptying old rows, filling one)
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3. Every read runs through `case_data__query` and every write through `case_data__execute`, with `matter_root` on every call. `case_data__execute` takes no per-statement `params` channel: inline every value as a SQL literal, single quotes doubled.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3. Every read runs through `case_data__query` and every write through `case_data__execute`, with `matter_root` on every call. `case_data__execute` takes no per-statement `params` channel: inline every value as a SQL literal, single quotes doubled.
 
 A Fact known only through privileged sources is a **bare row** in `main.facts`: an ID and nothing else. The rule is `../references/design-decisions.md` #67, and the requirement behind it is REQ-0002 (privilege attaches to Statements of Fact, never to Facts). Any summary, paraphrase or abridgement of a privileged statement is itself privileged, so the non-privileged store never holds one. Only the privileged store knows what the ID means.
 

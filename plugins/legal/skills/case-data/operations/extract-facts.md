@@ -1,6 +1,6 @@
 # Operation: extract-facts (batch folder scan)
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 This operation scans a folder for PDFs not yet in the database and extracts them in bulk. It is the "scan for new documents" entry point — distinct from `ingest.md`, which handles one document the agent already has in hand. Read [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md) for the extraction semantics (hash-before-extraction, honest status then flip, no fuzzy-merge, per-run report contract) — this file does not restate them.
 

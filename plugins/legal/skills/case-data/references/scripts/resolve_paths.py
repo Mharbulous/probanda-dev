@@ -35,7 +35,8 @@ CASE_DATA_FOLDER = '0. CASE DATA'                       # sibling root for binar
 LEGACY_ARTIFACTS_DIR = '9. AI'                          # legacy pointer/binary location
 ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'            # replaces computed root when set
 EXPECTED_USER_VERSION = 90                              # v9.0
-EXPECTED_SCHEMA_VERSION = 5                             # coclerk.json pointer form
+EXPECTED_SCHEMA_VERSION = 5                             # pointer (probanda.json) form
+POINTER_NAMES = ('probanda.json', 'coclerk.json')       # current name first; the legacy name is kept updated
 LEGACY_USER_VERSION = 62                                # PRAGMA 0 is treated as this
 
 
@@ -62,6 +63,17 @@ def norm_join(base, *parts):
     """Path join tolerant of both separators; normalized to native form."""
     joined = os.path.join(base, *parts)
     return os.path.normpath(joined.replace('\\', os.sep).replace('/', os.sep))
+
+
+def pointer_paths(folder):
+    """Every file a write to folder's pointer goes to: probanda.json, and coclerk.json with the
+    same content so an older copy of the plugin still finds the matter."""
+    return [norm_join(folder, name) for name in POINTER_NAMES]
+
+
+def find_pointer(folder):
+    """folder's pointer file: probanda.json when present, else coclerk.json, else None."""
+    return next((p for p in pointer_paths(folder) if os.path.exists(p)), None)
 
 
 def sanitize_short_name(name):
@@ -215,7 +227,7 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
 
 def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
                     warn=None):
-    """Resolve the coclerk.json pointer to concrete database paths.
+    """Resolve the matter pointer (probanda.json, else coclerk.json) to concrete database paths.
 
     Implements the eight-step behavioral contract from
     ../../shared/conventions.md §2.3. Returns a dict of resolved paths. The
@@ -232,15 +244,12 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
     # be stored verbatim.
     matter_root = os.path.abspath(matter_root)
 
-    # --- Step 1: locate coclerk.json (root, then legacy 9. AI) --------------
-    root_ptr = norm_join(matter_root, 'coclerk.json')
-    legacy_ptr = norm_join(matter_root, LEGACY_ARTIFACTS_DIR, 'coclerk.json')
-    if os.path.exists(root_ptr):
-        pointer_path = root_ptr
-    elif os.path.exists(legacy_ptr):
-        pointer_path = legacy_ptr
-    else:
-        raise SystemExit("coclerk.json not found; initialize the matter first.")
+    # --- Step 1: locate the pointer (root, then legacy 9. AI) ---------------
+    root_ptrs = pointer_paths(matter_root)
+    pointer_path = find_pointer(matter_root) \
+        or find_pointer(norm_join(matter_root, LEGACY_ARTIFACTS_DIR))
+    if pointer_path is None:
+        raise SystemExit("probanda.json not found; initialize the matter first.")
 
     # --- Step 2: raw bytes, strip NUL, parse JSON (sync-mangle defense) -----
     with open(pointer_path, 'rb') as fh:
@@ -257,7 +266,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
 
     # --- Step 4: legacy migration (9. AI -> native folder) -----------------
     if _is_legacy_value(pointer.get('case_data_dir'), matter_root, legacy_dir) \
-            or pointer_path == legacy_ptr:
+            or pointer_path not in root_ptrs:
         os.makedirs(case_data_dir, exist_ok=True)
         if os.path.isdir(legacy_dir):
             for fn in ('main.sqlite', 'law.sqlite', 'privileged.sqlite'):
@@ -287,8 +296,9 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
         'evidence_sql_path': pointer.get(
             'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
     }
-    with open(root_ptr, 'w', encoding='utf-8') as fh:
-        json.dump(normalized, fh, indent=2)
+    for root_ptr in root_ptrs:
+        with open(root_ptr, 'w', encoding='utf-8') as fh:
+            json.dump(normalized, fh, indent=2)
 
     main_sqlite = norm_join(case_data_dir, 'main.sqlite')
 
@@ -311,7 +321,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
     if rejected_nominee:
         warnings.append(
             "Stored case_data_dir nominee did not contain main.sqlite; "
-            f"selected live-derived location {case_data_dir} and healed coclerk.json.")
+            f"selected live-derived location {case_data_dir} and healed probanda.json.")
     if not migrate_only and os.path.exists(evidence_sql):
         try:
             with open(evidence_sql, 'r', encoding='utf-8', errors='replace') as fh:
@@ -328,7 +338,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
         warn(" ".join(warnings))
 
     return {
-        'pointer_path': root_ptr,
+        'pointer_path': root_ptrs[0],
         'case_data_dir': case_data_dir,
         'main_sqlite': main_sqlite,
         'law_sqlite': norm_join(case_data_dir, 'law.sqlite'),

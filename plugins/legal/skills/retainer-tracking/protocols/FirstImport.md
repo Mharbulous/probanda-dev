@@ -2,16 +2,16 @@
 
 Run this protocol the first time a user imports trust data from their accounting system. This covers one-time setup steps that do not repeat on subsequent imports.
 
-**Trigger:** The user provides a trust listing CSV and either `accounting.system` is absent from `coclerk.json`, or `accounting.csv_mapping` is absent.
+**Trigger:** The user provides a trust listing CSV and either `accounting.system` is absent from `probanda.json`, or `accounting.csv_mapping` is absent.
 
 ## Step 1 — Identify the Accounting System
 
-If `accounting.system` is not yet set in `coclerk.json`:
+If `accounting.system` is not yet set in `probanda.json`:
 
 1. Examine the CSV filename and headers for clues (e.g. "TrustListing" is characteristic of UNITY® Accounting by Dye & Durham)
 2. Check whether a reference file already exists at `reference/[SystemName].md` — if so, read it before drawing any conclusions about the software
 3. Ask the user to confirm: *"This looks like an export from [system]. Is that right, and is that the correct spelling?"*
-4. Save the confirmed name to `accounting.system` in `coclerk.json`
+4. Save the confirmed name to `accounting.system` in `probanda.json`
 
 If `accounting.system` is already set, skip to Step 2.
 
@@ -19,7 +19,7 @@ If `accounting.system` is already set, skip to Step 2.
 
 ## Step 2 — Privacy and Data Storage Briefing
 
-If `exclude_client_names` is already set in `coclerk.json`, skip to Step 3. Otherwise, brief the user: the practice database can either store client names alongside matter numbers, or omit them entirely (storing no client name). Ask which they prefer, and write the answer to `accounting.exclude_client_names` in `coclerk.json` (`true` = omit names). The user can change this at any later import.
+If `exclude_client_names` is already set in `probanda.json`, skip to Step 3. Otherwise, brief the user: the practice database can either store client names alongside matter numbers, or omit them entirely (storing no client name). Ask which they prefer, and write the answer to `accounting.exclude_client_names` in `probanda.json` (`true` = omit names). The user can change this at any later import.
 
 ## Step 3 — Column Mapping
 
@@ -28,7 +28,7 @@ If `exclude_client_names` is already set in `coclerk.json`, skip to Step 3. Othe
 3. Match headers against the mandatory fields: `clientID`, `matterID`, `clientNames`, `responsibleLawyer`, `TrustBalance`, `lastUpdated`
 4. Present the proposed mapping to the user for confirmation — even when the reference file matches perfectly, a brief confirmation keeps the user informed
 5. Also identify any additional columns present (e.g. `Orig Law`, `Type of Law`, `Major Client`, `Term Trust`) and note them as optional fields that will be imported if available
-6. Once confirmed, save the full mapping to `accounting.csv_mapping` in `coclerk.json`, including:
+6. Once confirmed, save the full mapping to `accounting.csv_mapping` in `probanda.json`, including:
    - `csv_report_name` — the report name (from the filename pattern)
    - `date_format` — the date format used in the CSV
    - `sign_convention` — how trust balances are represented (e.g. `negative_is_funded`)
@@ -50,7 +50,7 @@ If the user approves:
 2. While the subagent runs, proceed immediately to Step 5 (do not wait)
 3. When the subagent returns, review its findings critically — research agents can sometimes confuse similar products or invent vendor details. Cross-check any vendor/product claims against what the user has confirmed
 4. Save the vetted findings to `reference/[SystemName].md` for future sessions
-5. If the research reveals the accounting system name is spelled differently than what's stored in `coclerk.json`, flag this to the user and update `coclerk.json` if they confirm
+5. If the research reveals the accounting system name is spelled differently than what's stored in `probanda.json`, flag this to the user and update `probanda.json` if they confirm
 
 ## Step 5 — Run the Import
 
@@ -60,7 +60,7 @@ After the import completes, report the standard summary: imported count, skipped
 
 ## What Does NOT Happen on Subsequent Imports
 
-On future imports, the following are already configured and will be read from `coclerk.json` without user interaction:
+On future imports, the following are already configured and will be read from `probanda.json` without user interaction:
 
 - Accounting system name
 - Column mapping

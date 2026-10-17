@@ -12,7 +12,7 @@ never a gatekeeper — spec §6/§8). Two sub-operations:
   record its local up-pointer (`cloud_principle_id`, `pushed_at`,
   `pushed_source_hash`) and cache any deduped `authorities.cloud_authority_id`.
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; read `coclerk.json`
+Read [`../shared/conventions.md`](../shared/conventions.md) first; read `probanda.json`
 for `matter_root` per §2.2; halt on any tool error per §2.3.
 
 **Reading the `con.execute(...)` pseudocode below.** Every code block in this file

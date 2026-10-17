@@ -216,7 +216,7 @@ A layer the Preflight line names is capped from the start: commons reads NOT AUD
 that is not ok with its state (`commons: missing_credential`, `canlii: no_key`,
 `extractor.pdf: missing`, `extractor.docx: missing`, `knowledge_tree: error`).
 
-`Matter root:` is the matter folder's host path, the folder holding `coclerk.json`,
+`Matter root:` is the matter folder's host path, the folder holding `probanda.json`,
 in the same host form `research_filing__save_answer` takes, because the agent passes
 it to `research_filing__write_scratch`. `Matter:` is the same file number duty 4 passes
 the fetcher, which the memo's header carries. `Asked by:` is the practitioner who asked:

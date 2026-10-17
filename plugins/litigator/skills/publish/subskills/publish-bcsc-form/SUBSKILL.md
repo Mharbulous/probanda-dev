@@ -72,7 +72,7 @@ guides to be loaded.
 ```
 # --- Resolve the harness inputs (before init) ---
 # {matter}: the matter folder.
-# {case-data folder}: the folder coclerk.json's case_data_dir names. It must already
+# {case-data folder}: the folder probanda.json's case_data_dir names. It must already
 # exist; if it does not, STOP and tell the practitioner to run /case-data initialize.
 # Never create it. In a Code-tab (PC) session whose shell cannot yet reach it, first
 # request access to the case-data folder itself (never a parent or the firm root),
@@ -112,7 +112,7 @@ HARNESS = "python .claude/skills/publish/subskills/publish-bcsc-form/scripts/har
 #   out_name       = {stem} (init only, an individual form)
 #   writing_folder = {writing folder} (init only, a package; never with out_name)
 #   edits_reviewed = true (init only, and only after a manual_edits action; see below)
-# There is no case-data folder argument: the server derives it from coclerk.json and keeps
+# There is no case-data folder argument: the server derives it from probanda.json and keeps
 # session state in its form-sessions folder. A done payload's context_path is then a host
 # path in the real case-data folder.
 # If the tool refuses (new-template, a path outside the matter) or times out, tell the
@@ -218,7 +218,7 @@ After Generate completes (blank form produced), end with:
 > "Blank form saved to `{output_path}` (at the top of the matter's draft folder, or in the `{writing folder}` folder for a package). Handoff file saved to `{context_path}`. Start a new session and run `/solver` to draft the orders sought."
 
 Before saying so, check that `{context_path}` exists in the real case-data folder,
-the one `coclerk.json`'s `case_data_dir` names, and not in a scratch or `/tmp` copy.
+the one `probanda.json`'s `case_data_dir` names, and not in a scratch or `/tmp` copy.
 A later Assemble run reads that file, and it cannot see a sandbox copy (#1240).
 If the file is anywhere else, or the case-data folder was never reachable, do not
 report success: never build stand-in copies of the matter or case-data folders to get
@@ -226,7 +226,7 @@ past it. Stop and tell the practitioner what was written and where, and that acc
 the real case-data folder is needed.
 
 In Cowork, the host tool's `done` payload is that check: the server wrote
-`{context_path}` in the real case-data folder, the one it derived from `coclerk.json`.
+`{context_path}` in the real case-data folder, the one it derived from `probanda.json`.
 The sandbox cannot see that folder, so do not look for the file there.
 
 **Service affidavits (Forms 15 and 16) are complete at Generate** — there are no

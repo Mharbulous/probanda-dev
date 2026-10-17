@@ -1,6 +1,6 @@
 # Operation: ingest-verify
 
-Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 This operation re-verifies a source or case-law authority that already has
 extracted rows. It is reached either from `../operations/ingest.md` when the gate

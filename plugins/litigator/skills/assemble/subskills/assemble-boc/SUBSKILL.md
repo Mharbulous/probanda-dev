@@ -20,7 +20,7 @@ the .docx conversion, and on PyMuPDF (`fitz`) for the merge.
 ## 1. Locate the bill
 
 The working folder is `<case-data folder>/bill-of-costs/`, the case-data folder
-being the one `coclerk.json`'s `case_data_dir` names (in Cowork, request access
+being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access
 to that folder itself, never a parent or the firm root). The filled bill is the
 `.docx` at the top of the draft folder, where `/publish` wrote it, the draft
 folder resolved by glob per the workspace output rule

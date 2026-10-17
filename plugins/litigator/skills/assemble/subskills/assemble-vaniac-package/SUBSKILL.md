@@ -45,7 +45,7 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
 
    The data folder is `<case-data folder>\vaniac-submissions\<filing folder>\`,
    the mockup folder's name without any leading `YYYY-MM-DD ` and without
-   the `SUB` code, the case-data folder being the one `coclerk.json`'s
+   the `SUB` code, the case-data folder being the one `probanda.json`'s
    `case_data_dir` names (in Cowork, request access to that folder itself,
    never a parent or the firm root). It must hold `Package index.json`. If
    it doesn't but `Package\` already holds the rendered documents, the

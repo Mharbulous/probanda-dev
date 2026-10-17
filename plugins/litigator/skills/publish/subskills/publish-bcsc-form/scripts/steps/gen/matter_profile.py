@@ -256,7 +256,7 @@ Return:
 - Return ONLY the JSON object specified above. Do not call Read, Bash, Grep, Glob, or any file-access tools."""
 
     # Forms 1 and 4 carry the address-for-service block, which is filled from
-    # the firm block in coclerk.json. Stall here rather than at fill time, so
+    # the firm block in probanda.json. Stall here rather than at fill time, so
     # the lawyer fixes the config before confirming a profile.
     firm_fields = firm_context_fields() if ctx.get("form_id") in FIRM_FORMS else {}
     if ctx.get("form_id") in FIRM_FORMS and not firm_fields.get("firm_address"):

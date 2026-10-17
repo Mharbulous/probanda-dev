@@ -39,7 +39,7 @@ owns state.
 ### Sign Convention
 
 The `trust-summary` operation reads `accounting.csv_mapping.sign_convention` from
-`coclerk.json` and returns a display-ready balance string. If the sign convention is not
+`probanda.json` and returns a display-ready balance string. If the sign convention is not
 configured, the operation returns a gap marker — render it verbatim, do not guess.
 
 ## Output Template
@@ -61,7 +61,7 @@ Signals: [list of signal_key: state (confirmed_at) per signal]
 Balance: [amount] — imported [last_trust_date], [N] days ago
          [⚠ approaching stale — over 14 days] (if applicable)
          OR: [No trust import on file]
-         OR: [Retainer balance cannot be shown — sign convention not configured in coclerk.json]
+         OR: [Retainer balance cannot be shown — sign convention not configured in probanda.json]
 
 ─── OPEN TO-DOS ──────────────────────────────────────────────────────────────
 [For each to-do:]
@@ -108,7 +108,7 @@ explicitly surface its own gap.
 ---
 
 **Showing a retainer balance without sign convention.** If `sign_convention` is missing from
-`coclerk.json`, the sign of `regular_trust` is ambiguous. The `trust-summary` operation handles
+`probanda.json`, the sign of `regular_trust` is ambiguous. The `trust-summary` operation handles
 this — render its gap marker, do not guess.
 
 ---

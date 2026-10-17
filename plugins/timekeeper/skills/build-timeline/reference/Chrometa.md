@@ -4,11 +4,11 @@ Data format and handling details for Chrometa's one-time historical import. Load
 
 ## Configuration
 
-No API or auth configuration — this is a static, practitioner-supplied export file, not a live source. Chrometa is **not** a `coclerk.json → time_tracking.sources` registry entry; it is invoked only via the Queries table's "Import Chrometa historical logs" row (`SKILL.md` → Queries), never through Step 2's per-date registry loop.
+No API or auth configuration — this is a static, practitioner-supplied export file, not a live source. Chrometa is **not** a `probanda.json → time_tracking.sources` registry entry; it is invoked only via the Queries table's "Import Chrometa historical logs" row (`SKILL.md` → Queries), never through Step 2's per-date registry loop.
 
 Invoking that query also bypasses **Step 1** (resolve target range) — the range is fixed, not derived from a user-supplied date. Execution goes straight to Step 3 (normalize each raw record) using the procedure below, then Steps 4-6 unchanged.
 
-**Fixed range.** Local `[2019-01-01T00:00:00, 2020-04-01T00:00:00)` in `coclerk.json → time_tracking.timezone` (default `"America/Vancouver"`), converted to UTC the same way Step 1 converts a requested date. `source:chrometa:ranges` is set to this full window, not just the dates that happen to have rows — so a later coverage check knows the window was checked, not merely un-fetched. The export's actual data extent (2019-01-02 to 2020-02-14) is narrower than the nominal window; the sibling March 2020 monthly export exists but is empty (headers only on every sheet) — the consolidated file is complete for the window, no second file is needed.
+**Fixed range.** Local `[2019-01-01T00:00:00, 2020-04-01T00:00:00)` in `probanda.json → time_tracking.timezone` (default `"America/Vancouver"`), converted to UTC the same way Step 1 converts a requested date. `source:chrometa:ranges` is set to this full window, not just the dates that happen to have rows — so a later coverage check knows the window was checked, not merely un-fetched. The export's actual data extent (2019-01-02 to 2020-02-14) is narrower than the nominal window; the sibling March 2020 monthly export exists but is empty (headers only on every sheet) — the consolidated file is complete for the window, no second file is needed.
 
 **Source file:** `C:\Users\Brahm\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, sheet `Sheet2`. If the file is missing, unreadable, or the sheet is absent, fail clearly — this query is explicit and on-demand, never silently degraded the way an automatic per-date fetch is allowed to skip a source.
 
@@ -16,7 +16,7 @@ Invoking that query also bypasses **Step 1** (resolve target range) — the rang
 
 13 columns in the header row: `Source.Name, Day, Start, End, Duration, Duration (Minutes), Annotation, Task, Activity, URL, Client, Project, Marked as Exported to Tabs3?`
 
-- `Start` / `End` — naive local datetimes (no timezone marker), minute precision. Interpret per `coclerk.json → time_tracking.timezone` (default `"America/Vancouver"`), then convert to UTC for `start_ts`/`end_ts`, matching every other source. **`Start` is authoritative** for the row's date — it disagrees with `Day` on 4 rows in the real export, so don't use `Day` for date logic.
+- `Start` / `End` — naive local datetimes (no timezone marker), minute precision. Interpret per `probanda.json → time_tracking.timezone` (default `"America/Vancouver"`), then convert to UTC for `start_ts`/`end_ts`, matching every other source. **`Start` is authoritative** for the row's date — it disagrees with `Day` on 4 rows in the real export, so don't use `Day` for date logic.
 - Two trailing rows in the sheet have a blank `Start` (sheet-level totals, e.g. a `Duration (Minutes)` sum with every other column empty) — these are not activity data. Skip any row where `Start` is empty, logged but not reported as an error.
 - `URL` holds the literal string `"null"` (not blank) on the large majority of rows lacking a URL — a Chrometa export quirk. Store verbatim inside `raw_payload`; do not normalize it to an actual null.
 - `Duration` is a display string (e.g. `"2m"`, `"64h 14m"`); `Duration (Minutes)` is numeric. Both stored verbatim in `raw_payload`. `end_ts` comes directly from the `End` column, never derived from either duration field.

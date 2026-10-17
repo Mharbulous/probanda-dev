@@ -1,7 +1,7 @@
 # maintain — dump / rebuild / verify-sources
 
 Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2
-and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 This operation has three modes. Dump and rebuild are the durable-text boundary;
 verify-sources is a read-only integrity check.

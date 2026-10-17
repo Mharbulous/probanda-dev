@@ -10,7 +10,7 @@ needs: its media part, its relationship, and the png content-type default when a
 Inputs:
     --profile     the firm profile as a JSON file, exactly what practice_data__firm_profile
                   returns: {firm_name, roster, letterhead}. The template is `letterhead`.
-    coclerk.json  this machine's Roaming Coclerk/coclerk.json: `person` (this machine's
+    probanda.json  this machine's Roaming Coclerk/probanda.json (legacy coclerk.json): `person` (this machine's
                   roster key, required) and `signature` (optional, a scanned PNG's path).
     payload       a JSON object: `signer` (a roster key) and `file_number` are required,
                   plus the letter fields fill_general.build_body reads (`date`, `recipient`
@@ -78,17 +78,20 @@ PNG_DEFAULT = '<Default Extension="png" ContentType="image/png"/>'
 
 
 def config_path():
-    """The coclerk.json the MCP runtime reads (mcp/src/config-path.ts): the file
-    COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming one."""
+    """The settings file the MCP runtime reads (mcp/src/config-path.ts): the file
+    COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming
+    probanda.json when it exists, else the legacy coclerk.json."""
     override = os.environ.get("COCLERK_CONFIG_PATH")
     if override:
         if not os.path.isfile(override):
             sys.exit("COCLERK_CONFIG_PATH names %s, which does not exist. Create it, "
-                     "or unset the variable to read the live coclerk.json." % override)
+                     "or unset the variable to read the live probanda.json." % override)
         return override
     app_data = os.environ.get("APPDATA") or os.path.join(
         os.path.expanduser("~"), "AppData", "Roaming")
-    return os.path.join(app_data, "Coclerk", "coclerk.json")
+    current = os.path.join(app_data, "Coclerk", "probanda.json")
+    legacy = os.path.join(app_data, "Coclerk", "coclerk.json")
+    return current if os.path.isfile(current) or not os.path.isfile(legacy) else legacy
 
 
 def load_json(path, what):
@@ -112,7 +115,7 @@ def load_profile(path):
 
 
 def load_machine():
-    """This machine's `person` and `signature`, from coclerk.json."""
+    """This machine's `person` and `signature`, from probanda.json."""
     path = config_path()
     config = load_json(path, "config") if os.path.isfile(path) else {}
     person = config.get("person")

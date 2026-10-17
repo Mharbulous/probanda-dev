@@ -144,7 +144,7 @@ file. An ingest failure is recorded by `/case-data`'s ingest itself, as
 
 A `/housekeeping` run's files live in its run directory,
 `<case-data folder>\housekeeping\<run-id>\`, where the case-data folder is the
-one the matter's `coclerk.json` names in `case_data_dir` — never a guessed
+one the matter's `probanda.json` names in `case_data_dir` — never a guessed
 literal. It must already exist; `housekeeping` beneath it is created on demand.
 The litigation data server creates the directory
 (`housekeeping__new_run`) and writes every file in it (`proposal.json`,

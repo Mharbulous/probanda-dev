@@ -1,6 +1,6 @@
 # Operation: ingest (the gate)
 
-Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 `ingest` is the **gate**, not an extractor. It resolves the matter, refuses a kind ingest cannot read, computes the document's hash, looks the hash up against `main.sources`, and routes to exactly one downstream operation. **This operation writes nothing** — no `INSERT`, no `UPDATE`, no dump. All mutation happens in `ingest-extract.md` or `ingest-verify.md`, and each of those runs its own pointer preamble again when it takes over.
 
@@ -10,7 +10,7 @@ The gate exists so that re-presenting a file that was already ingested routes to
 
 ## Step 1 — Resolve `matter_root` (with a migrate escape hatch)
 
-Prove the current matter folder's host path and use it as `matter_root` (§2.2). Read `coclerk.json` only to confirm initialization. The Step 3 `case_data__query` call is what actually exercises pointer/schema-version resolution — the backend runs it host-side on every call.
+Prove the current matter folder's host path and use it as `matter_root` (§2.2). Read `probanda.json` only to confirm initialization. The Step 3 `case_data__query` call is what actually exercises pointer/schema-version resolution — the backend runs it host-side on every call.
 
 If a call in Step 3 fails with the **schema-version guard** message (the database is below v9.0), do not proceed:
 

@@ -69,7 +69,7 @@ Present a table:
 
 ### 1. Locate the substance folder
 
-Ask the practitioner for the matter workspace path if not already known from context. The substance folder is a fixed path under the matter's case-data folder, the one `{workspace}\coclerk.json`'s `case_data_dir` names:
+Ask the practitioner for the matter workspace path if not already known from context. The substance folder is a fixed path under the matter's case-data folder, the one `{workspace}\probanda.json`'s `case_data_dir` names:
 
 `<case-data folder>\bcsc-form-substance\`
 

@@ -737,10 +737,11 @@ def validate(memo, warnings):
 def standard_output_dir(workspace, case_data_folder):
     """{case-data folder}/legal-memo-extractor.
 
-    case_data_folder is the folder coclerk.json's case_data_dir names, passed
+    case_data_folder is the folder probanda.json's case_data_dir names, passed
     by the caller. It must be an existing directory whose name is the last
-    segment of case_data_dir in {matter}/coclerk.json (parsed as a Windows
-    path, since this may run in a Linux sandbox). Never created here."""
+    segment of case_data_dir in the matter's pointer, probanda.json or the
+    legacy coclerk.json (parsed as a Windows path, since this may run in a
+    Linux sandbox). Never created here."""
     matter = Path(workspace)
     if not matter.is_dir():
         raise FileNotFoundError(f"Not an existing matter workspace: {workspace}")
@@ -749,10 +750,11 @@ def standard_output_dir(workspace, case_data_folder):
         raise FileNotFoundError(
             f"Case-data folder not found: {case_data_folder}. Initialize the "
             "matter with /case-data initialize, then pass the folder that "
-            "coclerk.json's case_data_dir names.")
-    pointer = matter / "coclerk.json"
-    if not pointer.is_file():
-        raise FileNotFoundError(f"coclerk.json not found in {matter}. Initialize "
+            "probanda.json's case_data_dir names.")
+    candidates = [matter / name for name in ("probanda.json", "coclerk.json")]
+    pointer = next((p for p in candidates if p.is_file()), None)
+    if pointer is None:
+        raise FileNotFoundError(f"probanda.json not found in {matter}. Initialize "
                                 "the matter with /case-data initialize.")
     raw = pointer.read_bytes()
     stored = json.loads(raw.replace(b"\x00", b"").decode("utf-8")).get("case_data_dir")
@@ -761,7 +763,7 @@ def standard_output_dir(workspace, case_data_folder):
                          "with /case-data initialize.")
     if folder.resolve().name.casefold() != PureWindowsPath(stored).name.casefold():
         raise ValueError(f"Case-data folder {case_data_folder} does not match "
-                         f"coclerk.json's case_data_dir ({stored}). Pass the "
+                         f"{pointer.name}'s case_data_dir ({stored}). Pass the "
                          "folder case_data_dir names.")
     return folder / "legal-memo-extractor"
 
@@ -778,10 +780,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--input-dir", required=True)
     ap.add_argument("--source", choices=["westlaw", "alexi", "auto"], default="auto")
-    ap.add_argument("--matter-root", help="matter workspace whose coclerk.json "
+    ap.add_argument("--matter-root", help="matter workspace whose probanda.json "
                     "names the case-data folder (derived from --input-dir if omitted)")
     ap.add_argument("--case-data-folder", help="the matter's case-data folder, as "
-                    "coclerk.json's case_data_dir names it; the standard output "
+                    "probanda.json's case_data_dir names it; the standard output "
                     "location is its legal-memo-extractor subfolder")
     ap.add_argument("--output", help="explicit output file path (overrides the "
                     "standard output location)")
@@ -805,7 +807,7 @@ def main(argv=None):
                   file=sys.stderr)
             return 2
         if not args.case_data_folder:
-            print("Pass --case-data-folder (the folder coclerk.json's case_data_dir "
+            print("Pass --case-data-folder (the folder probanda.json's case_data_dir "
                   "names) or --output.", file=sys.stderr)
             return 2
         try:

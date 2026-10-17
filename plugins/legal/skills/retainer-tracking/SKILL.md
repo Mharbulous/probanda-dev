@@ -35,13 +35,13 @@ This skill caches retainer data in the practice database for quick access. The s
 Mandatory data fields for this skill:
 | clientID | matterID | responsibleLawyer | TrustBalance | LastTrustDate |
 
-Optional additional fields are determined by the user's accounting system. CSV column mappings and system-specific details are stored in `coclerk.json` under `accounting.csv_mapping` (see `practice-data/SKILL.md` for the full schema).
+Optional additional fields are determined by the user's accounting system. CSV column mappings and system-specific details are stored in `probanda.json` under `accounting.csv_mapping` (see `practice-data/SKILL.md` for the full schema).
 
 For UNITY® Accounting (by Dye & Durham, formerly esilaw) — the most common accounting system for this skill — read `reference/UnityAccounting.md` for column names, sign convention, date format, and export instructions before mapping or importing.
 
 ### Privacy
 
-The `exclude_client_names` flag in `coclerk.json` controls whether client names are stored. When `true`, no client name is stored for any record and the import skips the name column entirely. This is set during the First Import Protocol and can be changed by the user at any time.
+The `exclude_client_names` flag in `probanda.json` controls whether client names are stored. When `true`, no client name is stored for any record and the import skips the name column entirely. This is set during the First Import Protocol and can be changed by the user at any time.
 
 
 ## Database
@@ -52,10 +52,10 @@ All practice-database access — reads, writes, and configuration — is owned b
 
 When the user provides a trust listing CSV:
 
-1. Check `coclerk.json` for `accounting.system` and `accounting.csv_mapping` (path resolution and config live in ``practice-data``).
+1. Check `probanda.json` for `accounting.system` and `accounting.csv_mapping` (path resolution and config live in ``practice-data``).
 2. **If either is missing:** run the First Import Protocol at `protocols/FirstImport.md` — this handles accounting system identification, privacy briefing, column mapping, and optional export research. After the protocol completes, continue from step 3 below.
-3. Load system-specific CSV mapping from `accounting.csv_mapping` in `coclerk.json` — this defines column names, date format, sign convention, and any quirks for that accounting system.
-4. If `accounting.exclude_client_names` is `true` in `coclerk.json`, skip the client name column and store no client name.
+3. Load system-specific CSV mapping from `accounting.csv_mapping` in `probanda.json` — this defines column names, date format, sign convention, and any quirks for that accounting system.
+4. If `accounting.exclude_client_names` is `true` in `probanda.json`, skip the client name column and store no client name.
 5. Parse the CSV with Python's `csv` module. Build one normalized row per line:
    - client number and matter number — the mapped client and matter values
    - client name and responsible lawyer — mapped values (omit the client name when `exclude_client_names` is set)
