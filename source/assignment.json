@@ -7,6 +7,8 @@
       "skills": [
         "ar-follow-up",
         "bill-client",
+        "calendar-reminders",
+        "call-contact",
         "case-data",
         "executive-assistant",
         "file-naming",
@@ -28,6 +30,7 @@
         "show-me",
         "suggestion",
         "task-prioritization",
+        "verify-bc-lawyer",
         "wip-tracker"
       ],
       "agents": [

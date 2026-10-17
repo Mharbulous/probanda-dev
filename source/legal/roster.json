@@ -1,6 +1,10 @@
 {
   "ar-follow-up": [],
   "bill-client": [],
+  "calendar-reminders": [
+    "agents"
+  ],
+  "call-contact": [],
   "case-data": [],
   "executive-assistant": [],
   "file-naming": [
@@ -28,5 +32,8 @@
   ],
   "suggestion": [],
   "task-prioritization": [],
+  "verify-bc-lawyer": [
+    "scripts"
+  ],
   "wip-tracker": []
 }

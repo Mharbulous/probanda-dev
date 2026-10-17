@@ -1,0 +1,7 @@
+interface:
+  display_name: "Calendar Reminders"
+  short_description: "Triage calendar obligations"
+  default_prompt: "Use $calendar-reminders to check what I need to do from my calendar."
+
+policy:
+  allow_implicit_invocation: true
