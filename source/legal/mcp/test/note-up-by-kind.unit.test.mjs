@@ -11,7 +11,12 @@ const { jurisdictionEdgeMarkers } = await import("../build/submission/forms/mark
 const { lawStatementMarkers } = await import("../build/submission/forms/law-statement-line.js");
 const { deriveProposals, proposalKey, recordLawStatementGlyphs, withNoteUpSteps } = await import("../build/submission/forms/proposal-inventory.js");
 
-/** A statement that has cleared 📜 📍 🔬 and is rated, on an authority of the given kind. */
+/** Today's local date, so a 'current' result is inside the freshness window. */
+const d = new Date();
+const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** A statement that has cleared 📜 📍 🔬 and is rated, on an authority of the given kind, its
+ * currency checked today. */
 const cleared = (authority_kind, currency_status, treatment = null) => ({
   statement_id: 7,
   authority_id: 3,
@@ -19,6 +24,7 @@ const cleared = (authority_kind, currency_status, treatment = null) => ({
   authority_citation: "SBC 2012, c 13",
   authority_kind,
   currency_status,
+  currency_checked_on: today,
   treatment,
   excerpt: "The passage.",
   pinpoint: "s 6",

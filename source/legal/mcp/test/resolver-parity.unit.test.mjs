@@ -8,7 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..", "..", "..");
 
 test("runtime and maintenance resolvers retain the live-selection helper", () => {
-  const runtime = readFileSync(join(repo, "source", "practice", "mcp", "src", "case", "backend.ts"), "utf-8");
+  const runtime = readFileSync(join(repo, "source", "legal", "mcp", "src", "case", "backend.ts"), "utf-8");
   const maintenance = readFileSync(
     join(repo, ".claude", "skills", "case-data", "references", "scripts", "resolve_paths.py"),
     "utf-8",

@@ -43,7 +43,7 @@ function fixture(t) {
     root,
     matter,
     env: { APPDATA: appData, LOCALAPPDATA: localAppData },
-    configPath: join(appData, "Coclerk", "coclerk.json"),
+    configPath: join(appData, "Coclerk", "probanda.json"),
   };
 }
 
@@ -197,9 +197,9 @@ test("config_set_root refuses a file that is not valid JSON", async (t) => {
   assert.equal(readFileSync(f.configPath, "utf-8"), "{ not json");
 });
 
-test("the path-resolution errors name config_status", (t) => {
+test("the path-resolution errors name their repair: /legal:probanda-setup for a missing file, config_status otherwise", (t) => {
   const f = fixture(t);
-  assert.throws(() => resolveCaseDataRoot(f.env), /not found\..*practice_data__config_status/);
+  assert.throws(() => resolveCaseDataRoot(f.env), /not found\..*\/legal:probanda-setup/);
   writeConfig(f, { version: 1 });
   assert.throws(() => resolveCaseDataRoot(f.env), /missing "case_data_root".*practice_data__config_status/);
 });

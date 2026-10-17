@@ -135,7 +135,7 @@ async function rejection(promise) {
   throw new Error("expected a rejection, got none");
 }
 
-const CANNOT_LOCATE = /Cannot locate the practice database: .*coclerk\.json not found/;
+const CANNOT_LOCATE = /Cannot locate the practice database: .*probanda\.json not found/;
 
 test("with no per-user coclerk.json, knowledge__list given matter_root lists the overlay under the matter pointer's 0. CASE DATA folder", async (t) => {
   const f = knowledgeFixture(t);

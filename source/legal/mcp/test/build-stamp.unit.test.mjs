@@ -14,9 +14,9 @@ test("an install already holding the current build: start a new session", () => 
 });
 
 test("an install holding another build: reinstall, then restart the app fully", () => {
-  assert.equal(buildNote("aaaaaaaaaaaa", "bbbbbbbbbbbb", "aaaaaaaaaaaa"), `${HEAD} Reinstall the practice plugin, then restart the app fully.`);
+  assert.equal(buildNote("aaaaaaaaaaaa", "bbbbbbbbbbbb", "aaaaaaaaaaaa"), `${HEAD} Reinstall the legal plugin, then restart the app fully.`);
 });
 
 test("an install whose stamp cannot be read: reinstall, then restart the app fully", () => {
-  assert.equal(buildNote("aaaaaaaaaaaa", "bbbbbbbbbbbb", null), `${HEAD} Reinstall the practice plugin, then restart the app fully.`);
+  assert.equal(buildNote("aaaaaaaaaaaa", "bbbbbbbbbbbb", null), `${HEAD} Reinstall the legal plugin, then restart the app fully.`);
 });

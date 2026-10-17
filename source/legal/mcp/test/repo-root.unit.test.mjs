@@ -44,7 +44,7 @@ function scratchDir(t, prefix) {
 /** Populates `dir` so it satisfies the marker predicate. */
 function makeMarked(dir) {
   mkdirSync(join(dir, ".claude", "skills"), { recursive: true });
-  mkdirSync(join(dir, "source", "practice", "mcp"), { recursive: true });
+  mkdirSync(join(dir, "source", "legal", "mcp"), { recursive: true });
   return dir;
 }
 
@@ -170,7 +170,7 @@ test("step 4 marker-validates %USERPROFILE%\\Git\\Coclerk", (t) => {
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 
   // Both markers -- resolves.
-  mkdirSync(join(half, "source", "practice", "mcp"), { recursive: true });
+  mkdirSync(join(half, "source", "legal", "mcp"), { recursive: true });
   assert.equal(resolveRepoRoot(env, req), half);
 });
 
@@ -244,7 +244,7 @@ test("the three surfaces keep their own error codes, and the message names both 
       assert.equal(err.code, c.code);
       assert.match(err.message, /COCLERK_REPO_ROOT/);
       assert.match(err.message, /repo_root/);
-      assert.match(err.message, /coclerk\.json/);
+      assert.match(err.message, /probanda\.json/);
     }
   }
 });

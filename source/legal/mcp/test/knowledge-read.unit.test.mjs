@@ -415,12 +415,12 @@ test("with no per-user coclerk.json, an unusable matter pointer refuses with poi
     const err = await rejection(callTool({}, "knowledge__read", { path: "_hosts.json", matter_root: matterRoot }));
     assert.equal(err.code, "pointer_unusable", name);
     assert.match(err.message, why, name);
-    assert.match(err.message, /Run \/case-data on this matter to initialize or repair coclerk\.json; drafting_forms__open_session never rewrites it\./, name);
+    assert.match(err.message, /Run \/case-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it\./, name);
   }
   const { matterRoot } = matterFixture(f, null, "L6 Bare");
   const err = await rejection(callTool({}, "knowledge__list", { dir: "draft/CAN/BC", matter_root: matterRoot }));
   assert.equal(err.code, "invalid_root");
-  assert.match(err.message, /has no coclerk\.json/);
+  assert.match(err.message, /has no probanda\.json or coclerk\.json/);
   assert.equal((await rejection(callTool({}, "knowledge__read", { path: "_hosts.json", matter_root: 7 }))).name, "ValidationError");
 });
 
@@ -432,5 +432,5 @@ test("overlay writes never fall back: knowledge__write takes no matter_root, and
   const refused = await rejection(callTool({}, "knowledge__write", { operation: "create", path: "_hosts.json", matter: "L8443", row, matter_root: matterRoot }));
   assert.match(refused.message, /unknown field "matter_root"/);
   const err = await rejection(callTool({}, "knowledge__write", { operation: "create", path: "_hosts.json", matter: "L8443", row }));
-  assert.match(err.message, /Cannot locate the practice database: .*coclerk\.json not found/);
+  assert.match(err.message, /Cannot locate the practice database: .*probanda\.json not found/);
 });

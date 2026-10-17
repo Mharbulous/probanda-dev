@@ -65,8 +65,8 @@ test("per-user coclerk.json absent: the knowledge_tree row carries the runtime's
   assert.equal(result.issues.length, 1);
   const [issue] = result.issues;
   assert.equal(issue.row, "knowledge_tree");
-  assert.match(issue.detail, /Cannot locate the practice database: .*coclerk\.json not found/);
-  assert.match(issue.detail, /case_data_root/);
+  assert.match(issue.detail, /Cannot locate the practice database: .*probanda\.json not found/);
+  assert.match(issue.detail, /run \/legal:probanda-setup/);
   assert.match(issue.caps, /publisher map/);
 });
 

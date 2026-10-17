@@ -388,7 +388,7 @@ test("no signer_fields_missing for a complete lawyer, a staff entry or an inacti
   assert.equal(retired.signer_fields_missing, undefined);
 });
 
-test("person and signature land in coclerk.json and every other key survives", async (t) => {
+test("person and signature land in probanda.json and coclerk.json, and every other key survives", async (t) => {
   const f = fixture(t);
   await upsert_firm_profile({ firm_name: "Example Law Corporation", roster_entry: ENTRY }, f.env);
 
@@ -397,8 +397,10 @@ test("person and signature land in coclerk.json and every other key survives", a
   writeFileSync(signature, Buffer.from("89504e470d0a1a0a", "hex"));
   const result = await upsert_firm_profile({ person: "pe", signature }, f.env);
   assert.deepEqual(result.changed, ["person", "signature"]);
-  assert.deepEqual(result.written, [f.configPath]);
-  assert.deepEqual(readJson(f.configPath), { ...f.config, person: "pe", signature });
+  // A legacy coclerk.json is migrated on write: both names get the same content.
+  const probandaPath = join(f.configPath, "..", "probanda.json");
+  assert.deepEqual(result.written, [probandaPath, f.configPath]);
+  for (const p of result.written) assert.deepEqual(readJson(p), { ...f.config, person: "pe", signature });
 });
 
 test("a person is refused when there is no roster, and accepted with this call's own new roster entry", async (t) => {
