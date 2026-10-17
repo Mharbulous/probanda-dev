@@ -19,7 +19,7 @@ Given a draft legal document and the matter's case authority files, this mode:
    (potential hallucination or a case that hasn't been obtained yet)
 3. Resolves each case file to a readable document through `/case-data`
 4. Checks every quoted passage with the front door's deterministic diff script
-5. Dispatches, per case file, an isolated `research:verify-claim` verdict for each proposition
+5. Dispatches, per case file, an isolated `researcher:verify-claim` verdict for each proposition
    the draft attributes to the case, and a read-only research subagent performing a structured
    chain-of-thought analysis of whether the case genuinely supports the document's arguments
 6. Dispatches a writing subagent that revises the document based on all reports, or reports the
@@ -98,7 +98,7 @@ Dispatch all of the following in a single turn so they run in parallel.
 ### 5a. Isolated verdicts — the verdict of record
 
 For each proposition the document attributes to a resolved case, dispatch one
-`research:verify-claim` agent exactly as the front door's Mode A step 3 does: the resolved
+`researcher:verify-claim` agent exactly as the front door's Mode A step 3 does: the resolved
 document and the bare claim, no matter context, no party names, no dates. Its verdict is the
 verdict of record for that proposition.
 

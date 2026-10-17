@@ -11,12 +11,12 @@ import os
 import sys
 from pathlib import Path
 
-PROBANDA = ("legal", "research", "litigator", "solicitor", "file-manager", "timekeeper", "lawyer")
+PROBANDA = ("legal", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "lawyer")
 REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "
     "For a change the practitioner wants, offer /legal:suggestion, which files it in "
-    "Probanda's Suggestion Box (it needs the research plugin), then carry on with the work at hand."
+    "Probanda's Suggestion Box (it needs the researcher plugin), then carry on with the work at hand."
 )
 
 

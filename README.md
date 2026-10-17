@@ -5,8 +5,8 @@ Probanda is a set of seven Claude Cowork plugins for legal practice in British C
 | Plugin | What it does | Requires |
 |---|---|---|
 | `legal` | The base: firm records, time, billing, case data and deadlines | nothing |
-| `research` | What the law is: legal research, citation and verification | `legal` |
-| `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `legal`, `research` |
+| `researcher` | What the law is: legal research, citation and verification | `legal` |
+| `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `legal`, `researcher` |
 | `solicitor` | Reserved. It ships no skills yet | `legal` |
 | `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `legal` |
 | `timekeeper` | Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries | `legal` |
@@ -19,7 +19,7 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 ```
 /plugin marketplace add Mharbulous/probanda-plugins
 /plugin install legal@probanda
-/plugin install research@probanda
+/plugin install researcher@probanda
 /plugin install litigator@probanda
 /plugin install file-manager@probanda
 /plugin install timekeeper@probanda

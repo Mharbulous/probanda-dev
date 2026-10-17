@@ -11,7 +11,7 @@
 // build-stamp.ts's outdated check stay on the chain alone.
 //
 // Between the two sits the sibling lookup (four-plugin split, decision 1): a
-// packaged install also serves a folder held by a `research`, `litigator` or
+// packaged install also serves a folder held by a `researcher`, `litigator` or
 // `solicitor` plugin installed beside it. See siblingInstalls() below.
 //
 // Nothing is baked at build time any more. A baked root is a per-build-machine
@@ -244,7 +244,7 @@ export function pluginManifest(installRoot: string): { name: string | null; vers
 
 /** The only plugins whose installs may serve skill source beside this one, in lookup order. Any other
  *  manifest name is ignored, so a stale `probanda` left beside them can never serve a file. */
-const SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager", "timekeeper"];
+const SIBLING_PLUGINS = ["legal", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
 
 export interface SiblingInstall {
   /** The manifest `name`, never the folder name: a host may name the folder `plugin_<id>`. */
@@ -270,7 +270,7 @@ export interface SiblingInstall {
  *
  * Scanned only from a packaged install. In a checkout or the test suite the own
  * root has no `skills/shared/`, so nothing is scanned: after the cutover the
- * repo's built `plugins/research/` would otherwise be picked up from
+ * repo's built `plugins/researcher/` would otherwise be picked up from
  * `source/legal/`, and a dev run would read built copies instead of source.
  *
  * Never cached: a host replaces these folders when it syncs, and the scan is a few
@@ -414,7 +414,7 @@ function rosterLine(installRoot: string, segment: string): string {
     `${folder} is not among them. ` +
     (siblings.length
       ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. `
-      : "No other Probanda plugin (legal, research, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") +
+      : "No other Probanda plugin (legal, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") +
     `The plugin that holds ${folder} is not installed on this PC's copy of the plugins ` +
     "(in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it."
   );

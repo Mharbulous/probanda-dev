@@ -9,11 +9,11 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_ROOT.parents[2]
 HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
-PLUGIN_JSON = REPO_ROOT / "source" / "research" / "plugin.json"
+PLUGIN_JSON = REPO_ROOT / "source" / "researcher" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/legal-research/hooks/block-main-session-canlii.py"
 
-LOCAL = "mcp__plugin_research_canlii__"
-BRIDGED = "mcp__remote-devices__plugin_research_canlii__"
+LOCAL = "mcp__plugin_researcher_canlii__"
+BRIDGED = "mcp__remote-devices__plugin_researcher_canlii__"
 
 
 def run_hook(stdin_text):
@@ -44,7 +44,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_plugin_agent_citator_call_is_allowed(self):
         # Inside an agent CanLII is note-up only (test_westlaw_first.py pins the
         # in-agent block).
-        for agent_type in ("research:research-agent", "research:research-paralegal"):
+        for agent_type in ("researcher:research-agent", "researcher:research-paralegal"):
             with self.subTest(agent_type=agent_type):
                 result = call(LOCAL + "get_case_citator", agent_id="a1b2", agent_type=agent_type)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -52,7 +52,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_raw_legislation_tools_are_blocked_in_every_agent(self):
         # The paralegal's legislation-currency mode retired into legislation_currency
         # (2026-10-06), so no agent keeps the raw legislation tools.
-        for agent_type in ("research:research-paralegal", "research:research-agent"):
+        for agent_type in ("researcher:research-paralegal", "researcher:research-agent"):
             for tool in ("get_legislation_databases", "browse_legislation",
                          "get_legislation_regulation_metadata"):
                 with self.subTest(agent_type=agent_type, tool=tool):
@@ -63,7 +63,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
         # Leg 1 of shared/statute-currency.md as one call: metadata, no statement of law.
         for prefix in (LOCAL, BRIDGED):
             for extra in ({}, {"agent_id": "a1b2", "agent_type": "general-purpose"},
-                          {"agent_id": "a1b2", "agent_type": "research:research-agent"}):
+                          {"agent_id": "a1b2", "agent_type": "researcher:research-agent"}):
                 with self.subTest(prefix=prefix, extra=extra):
                     self.assertEqual(call(prefix + "legislation_currency", **extra).returncode, 0)
 

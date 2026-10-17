@@ -21,7 +21,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const MCP_ROOT = resolve(HERE, "..");
 const REPO_ROOT = resolve(MCP_ROOT, "..", "..", "..");
 const LITIGATION_BUNDLE = join(MCP_ROOT, "dist", "litigation-mcp.js");
-const CANLII_BUNDLE = join(REPO_ROOT, "source", "research", "canlii-mcp", "dist", "canlii-mcp.js");
+const CANLII_BUNDLE = join(REPO_ROOT, "source", "researcher", "canlii-mcp", "dist", "canlii-mcp.js");
 
 // A spawned bundle's bootstrap starts the background render job (#589): keep its locks and status
 // mirrors out of the practitioner's %LOCALAPPDATA%. Every spawned server inherits process.env.

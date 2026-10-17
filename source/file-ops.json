@@ -102,6 +102,6 @@
     {"file": "source/legal/mcp/src/submission/scrutiny-review.ts", "op": "fs.rm", "count": 1, "why": "temp", "note": "Its scratch folder from mkdtempSync in the OS temp folder."},
     {"file": "source/legal/mcp/src/submission/scrutiny-review.ts", "op": "fs.unlink", "count": 1, "why": "own-output", "note": "Deletes only files matching OWN_FILE, the names this step writes."},
     {"file": "source/legal/mcp/src/tools/practice/config.ts", "op": "fs.rename", "count": 1, "why": "own-database", "note": "Writes Probanda's own config file through its own temp file."},
-    {"file": "source/research/canlii-mcp/src/dpapi-store.ts", "op": "fs.rename", "count": 1, "why": "own-database", "note": "Writes Probanda's own protected credential file through its own temp file."}
+    {"file": "source/researcher/canlii-mcp/src/dpapi-store.ts", "op": "fs.rename", "count": 1, "why": "own-database", "note": "Writes Probanda's own protected credential file through its own temp file."}
   ]
 }

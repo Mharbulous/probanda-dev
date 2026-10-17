@@ -114,7 +114,7 @@ not a stylistic preference.
    whole step exists for.
 
 3. **Proposition or pinpoint claim, even after step 2 → dispatch one fresh, session-isolated
-   read-only `research:verify-claim` agent**, whose body mirrors [`agents/verify-claim.md`](agents/verify-claim.md).
+   read-only `researcher:verify-claim` agent**, whose body mirrors [`agents/verify-claim.md`](agents/verify-claim.md).
    Provide the resolved document and the bare claim. No matter context,
    no party names, no dates — an incident or reference date is a matter fact under the
    anti-contamination rule, the same as party names.

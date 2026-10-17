@@ -122,7 +122,7 @@ Three things follow, and they are load-bearing together:
 
 ## 21. research-agent holds a read-only `case_data__query` grant — the documented second consumer
 
-The `research-agent` plugin agent (`source/research/agents/research-agent.md`) is granted `case_data__query` — and only `query`; never `execute`. This is a conscious, written exemption to "only /case-data calls case_data__*", adopted 2026-07-20 when a live E2E run proved the Skill-invocation hop needs the underlying tool present in the agent's own grant (Cowork wrappers load prose; tools do not follow). The gatekeeper boundary survives because the agent remains schema-ignorant: it invokes this skill's query operation and executes its instructions verbatim, contains no SQL or schema of its own, and skips `query.md` §1 per that file's read-only-caller rule. Any second agent wanting this grant needs its own entry here first — never a silent copy.
+The `research-agent` plugin agent (`source/researcher/agents/research-agent.md`) is granted `case_data__query` — and only `query`; never `execute`. This is a conscious, written exemption to "only /case-data calls case_data__*", adopted 2026-07-20 when a live E2E run proved the Skill-invocation hop needs the underlying tool present in the agent's own grant (Cowork wrappers load prose; tools do not follow). The gatekeeper boundary survives because the agent remains schema-ignorant: it invokes this skill's query operation and executes its instructions verbatim, contains no SQL or schema of its own, and skips `query.md` §1 per that file's read-only-caller rule. Any second agent wanting this grant needs its own entry here first — never a silent copy.
 
 ## 22. merge-authorities is the second sanctioned writer of law-side rows (2026-07-20)
 

@@ -172,7 +172,7 @@ affidavit content pattern and capture protocol; the form itself remains a forms-
   a statement of law, and this skill does not make one. Do not calculate a post-judgment
   period on the contractual rate, do not calculate one on the statutory rate, and do not
   report a total that silently spans judgment. Stop, route the question to
-  `/research:legal-research`, and calculate only what its answer supports. A calculation
+  `/researcher:legal-research`, and calculate only what its answer supports. A calculation
   that ran first and asked afterwards is the defect this stop exists to prevent -- the number
   is already in the practitioner's hands by then.
 

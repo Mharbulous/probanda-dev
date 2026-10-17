@@ -19,9 +19,9 @@ SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
 SOURCE = REPO_ROOT / "source"
-# Every plugin's source folder. The research plugin ships these agents and the CanLII server.
+# Every plugin's source folder. The researcher plugin ships these agents and the CanLII server.
 PLUGIN_SOURCES = sorted(p.parent for p in SOURCE.glob("*/roster.json"))
-LITIGATION = SOURCE / "research"
+LITIGATION = SOURCE / "researcher"
 RESEARCH_LAWYER = LITIGATION / "agents" / "research-agent.md"
 PARALEGAL_COPIES = (
     LITIGATION / "agents" / "research-paralegal.md",
@@ -30,9 +30,9 @@ HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
 CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "index.ts"
 CANLII_DIST = LITIGATION / "canlii-mcp" / "dist" / "canlii-mcp.js"
 
-CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_research_canlii__(.+)$")
-LOCAL = "mcp__plugin_research_canlii__"
-BRIDGED = "mcp__remote-devices__plugin_research_canlii__"
+CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_researcher_canlii__(.+)$")
+LOCAL = "mcp__plugin_researcher_canlii__"
+BRIDGED = "mcp__remote-devices__plugin_researcher_canlii__"
 LEGISLATION_TOOLS = ("get_legislation_databases", "browse_legislation",
                      "get_legislation_regulation_metadata")
 CITATOR_ALLOW_LIST = {"get_case_citator", "get_case_citator_tease", "configure_status"}
@@ -307,7 +307,7 @@ class CanliiServerTests(unittest.TestCase):
 
 
 class InAgentHookTests(unittest.TestCase):
-    AUDIT_AGENTS = ("research:research-agent",)
+    AUDIT_AGENTS = ("researcher:research-agent",)
 
     def test_audit_agents_are_blocked_from_every_non_citator_canlii_tool(self):
         for agent_type in self.AUDIT_AGENTS:
@@ -331,11 +331,11 @@ class InAgentHookTests(unittest.TestCase):
         for tool in LEGISLATION_TOOLS:
             with self.subTest(tool=tool):
                 result = run_hook(LOCAL + tool, agent_id="a1",
-                                  agent_type="research:research-paralegal")
+                                  agent_type="researcher:research-paralegal")
                 self.assertEqual(result.returncode, 2, result.stderr)
 
     def test_every_agent_may_run_legislation_currency(self):
-        for agent_type in self.AUDIT_AGENTS + ("research:research-paralegal",):
+        for agent_type in self.AUDIT_AGENTS + ("researcher:research-paralegal",):
             with self.subTest(agent_type=agent_type):
                 result = run_hook(LOCAL + "legislation_currency", agent_id="a1", agent_type=agent_type)
                 self.assertEqual(result.returncode, 0, result.stderr)

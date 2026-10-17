@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-// Shared by the commons server (source/research/commons-mcp/) and the practice
+// Shared by the commons server (source/researcher/commons-mcp/) and the practice
 // data server (source/legal/mcp/). Plain JavaScript with a hand-written
 // dpapi-store.d.ts beside it, because each package's tsc compiles only its own
 // src/ (rootDir), and a declaration file outside rootDir is read for types

@@ -1,4 +1,4 @@
-// build-stamp: f78481642208
+// build-stamp: f32fa7c48205
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15475,7 +15475,7 @@ function fileOpsToolDefinitions() {
   return [
     {
       name: "file_ops__trash",
-      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no coclerk.json at or above the path); `protected` (the workspace root, coclerk.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
+      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
       inputSchema: {
         type: "object",
         properties: {
@@ -15489,7 +15489,7 @@ function fileOpsToolDefinitions() {
     },
     {
       name: "file_ops__move",
-      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not coclerk.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
       inputSchema: {
         type: "object",
         properties: {
@@ -15515,7 +15515,7 @@ function housekeepingToolDefinitions() {
   return [
     {
       name: "housekeeping__preflight",
-      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without coclerk.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as case_data__query and case_data__execute find it): a non-empty list means a case_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as case_data__query and case_data__execute find it): a non-empty list means a case_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
@@ -15526,7 +15526,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__new_run",
-      description: "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one coclerk.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /case-data initialize first).",
+      description: "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /case-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -15691,118 +15691,29 @@ function isPlainObject3(value) {
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync,
+  existsSync as existsSync5,
   lstatSync,
   mkdirSync,
-  readdirSync,
-  realpathSync,
+  readdirSync as readdirSync4,
+  realpathSync as realpathSync2,
   renameSync,
-  statSync
+  statSync as statSync3
 } from "node:fs";
-import { win32 as pathWin32 } from "node:path";
-var MARKER = "coclerk.json";
-var TRASH = "TRASH";
-var TRASH_LOG = ".trash-log.jsonl";
-var PROTECTED_SEGMENTS = /* @__PURE__ */ new Set(["0. case data", "privileged", "disclosed"]);
-function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
-  if (typeof path !== "string" || !pathWin32.isAbsolute(path)) {
-    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
-  }
-  let target;
-  try {
-    target = pathWin32.join(realpathSync.native(pathWin32.dirname(path)), pathWin32.basename(path));
-    lstatSync(target);
-  } catch {
-    throw new DataServerError(`path does not exist: ${path}`, "not_found");
-  }
-  const stat = lstatSync(target);
-  const ancestors = [target];
-  for (let dir = pathWin32.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin32.dirname(dir)) {
-    ancestors.push(dir);
-  }
-  if (ancestors.some((dir) => existsSync(pathWin32.join(dir, ".git")))) {
-    throw new DataServerError(
-      `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
-      "git_worktree"
-    );
-  }
-  const root = ancestors.find((dir) => isFile(pathWin32.join(dir, MARKER)));
-  if (root === void 0) {
-    throw new DataServerError(`no ${MARKER} at or above the path; not a client-matter file: ${target}`, "not_a_matter_file");
-  }
-  const rel = pathWin32.relative(root, target);
-  const relParts = rel ? rel.split(pathWin32.sep) : [];
-  const first = relParts[0]?.toLowerCase();
-  if (relParts.length === 0 || relParts.length === 1 && first === MARKER || first === TRASH.toLowerCase() || target.split(pathWin32.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))) {
-    throw new DataServerError(
-      `path is protected (the workspace root, ${MARKER}, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
-      "protected"
-    );
-  }
-  let dest = pathWin32.join(root, TRASH, rel);
-  if (present(dest)) {
-    const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin32.extname(dest);
-    dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
-    if (present(dest)) {
-      throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
-    }
-  }
-  if (dryRun) return { would_move_from: target, would_move_to: dest };
-  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync(pathWin32.dirname(dest), { recursive: true });
-  try {
-    renameSync(target, dest);
-  } catch (err) {
-    if (err.code === "EXDEV") {
-      throw new DataServerError(
-        `cannot move across devices (a junction inside the matter?); nothing was moved: ${target}`,
-        "cross_device"
-      );
-    }
-    throw err;
-  }
-  try {
-    const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin32.join(root, TRASH, TRASH_LOG), line + "\n", "utf-8");
-  } catch (err) {
-    result.log_error = err instanceof Error ? err.message : String(err);
-  }
-  return result;
-}
-function isFile(path) {
-  return existsSync(path) && statSync(path).isFile();
-}
-function present(path) {
-  try {
-    lstatSync(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function stamp(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-}
-
-// src/file_ops/move.ts
-import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync3, openSync as openSync3, readdirSync as readdirSync7, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
-import { win32 as pathWin328 } from "node:path";
+import { win32 as pathWin323 } from "node:path";
 
 // src/files/matter-root.ts
-import { existsSync as existsSync5, readdirSync as readdirSync4, readFileSync as readFileSync2, statSync as statSync3 } from "node:fs";
-import { basename as basename2, dirname as dirname2, isAbsolute, join as join5, normalize, resolve as resolve2, win32 as pathWin323 } from "node:path";
+import { existsSync as existsSync4, readdirSync as readdirSync3, readFileSync as readFileSync2, statSync as statSync2 } from "node:fs";
+import { basename as basename2, dirname as dirname2, isAbsolute, join as join5, normalize, resolve as resolve2, win32 as pathWin322 } from "node:path";
 
 // src/python-driver.ts
 import { createHash } from "node:crypto";
-import { existsSync as existsSync2, linkSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, linkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 function pythonDriverFile(name, source) {
   const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
   const p = join(tmpdir(), `coclerk-${name}-${hash}.py`);
-  if (existsSync2(p)) return p;
+  if (existsSync(p)) return p;
   const temp = `${p}.${process.pid}.tmp`;
   writeFileSync(temp, source, "utf-8");
   try {
@@ -15818,7 +15729,7 @@ function pythonDriverFile(name, source) {
 // src/python-spawn.ts
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { readdirSync as readdirSync2, rmSync } from "node:fs";
+import { readdirSync, rmSync } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
 import { join as join2 } from "node:path";
 var pythonStarts = { count: 0 };
@@ -15870,7 +15781,7 @@ function runPythonDriver(opts) {
 function removeKilledStaging(tag, description = "staging copy of the database") {
   const pattern = new RegExp(`^coclerk_[a-z_]+_${tag}_`);
   const failed = [];
-  for (const name of readdirSync2(tmpdir2())) {
+  for (const name of readdirSync(tmpdir2())) {
     if (!pattern.test(name)) continue;
     const p = join2(tmpdir2(), name);
     try {
@@ -15886,34 +15797,44 @@ function removeKilledStaging(tag, description = "staging copy of the database") 
 var READ_TIMEOUT_MS = 2e4;
 var EXECUTE_TIMEOUT_MS = 45e3;
 function pythonTimeoutMs(env, defaultMs, variable) {
-  const override = env[variable];
-  if (override === void 0) return defaultMs;
-  const ms = Number(override);
-  if (!(ms > 0)) throw new ValidationError(`${variable} must be a positive number of milliseconds: ${override}`);
+  const override2 = env[variable];
+  if (override2 === void 0) return defaultMs;
+  const ms = Number(override2);
+  if (!(ms > 0)) throw new ValidationError(`${variable} must be a positive number of milliseconds: ${override2}`);
   return ms;
 }
 
 // src/repo-root.ts
-import { existsSync as existsSync4, readFileSync, readdirSync as readdirSync3, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync3, readFileSync, readdirSync as readdirSync2, statSync } from "node:fs";
 import { homedir as homedir2 } from "node:os";
-import { basename, dirname, join as join4, resolve, win32 as pathWin322 } from "node:path";
+import { basename, dirname, join as join4, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/config-path.ts
-import { existsSync as existsSync3 } from "node:fs";
+import { existsSync as existsSync2 } from "node:fs";
 import { homedir } from "node:os";
 import { join as join3 } from "node:path";
-function configPath(env) {
-  const override = env.COCLERK_CONFIG_PATH;
-  if (override) {
-    if (!existsSync3(override)) {
-      throw new ValidationError(
-        `COCLERK_CONFIG_PATH names ${override}, which does not exist. Create it, or unset the variable to read the live coclerk.json.`
-      );
-    }
-    return override;
+var CONFIG_FILE = "probanda.json";
+var LEGACY_CONFIG_FILE = "coclerk.json";
+function override(env) {
+  const named = env.COCLERK_CONFIG_PATH;
+  if (!named) return void 0;
+  if (!existsSync2(named)) {
+    throw new ValidationError(
+      `COCLERK_CONFIG_PATH names ${named}, which does not exist. Create it, or unset the variable to read the live ${CONFIG_FILE}.`
+    );
   }
-  return join3(env.APPDATA || join3(homedir(), "AppData", "Roaming"), "Coclerk", "coclerk.json");
+  return named;
+}
+function liveFolder(env) {
+  return join3(env.APPDATA || join3(homedir(), "AppData", "Roaming"), "Coclerk");
+}
+function configPath(env) {
+  const named = override(env);
+  if (named) return named;
+  const current = join3(liveFolder(env), CONFIG_FILE);
+  const legacy = join3(liveFolder(env), LEGACY_CONFIG_FILE);
+  return existsSync2(current) || !existsSync2(legacy) ? current : legacy;
 }
 
 // src/repo-root.ts
@@ -15975,7 +15896,7 @@ function walkUp(startDir) {
   }
 }
 function readConfigRepoRoot(cfgPath, tried) {
-  if (!existsSync4(cfgPath)) {
+  if (!existsSync3(cfgPath)) {
     tried.push(`"repo_root" in ${cfgPath} -- file not found`);
     return void 0;
   }
@@ -15998,7 +15919,7 @@ function conventionalCandidates(env) {
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
   if (!dir) return [];
-  return readdirSync3(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 }
 function pluginManifest(installRoot) {
   try {
@@ -16011,7 +15932,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["legal", "research", "litigator", "solicitor", "file-manager", "timekeeper"];
+var SIBLING_PLUGINS = ["legal", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
 function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -16046,14 +15967,14 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
 }
 function childDirs(dir) {
   try {
-    return readdirSync3(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join4(dir, entry.name));
+    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join4(dir, entry.name));
   } catch {
     return [];
   }
 }
 function modifiedMs(dir) {
   try {
-    return statSync2(dir).mtimeMs;
+    return statSync(dir).mtimeMs;
   } catch {
     return 0;
   }
@@ -16099,7 +16020,7 @@ ${rosterLine(installRoot, segment)}`, code);
 }
 function isDirectory(dir) {
   try {
-    return statSync2(dir).isDirectory();
+    return statSync(dir).isDirectory();
   } catch {
     return false;
   }
@@ -16111,7 +16032,7 @@ function rosterLine(installRoot, segment) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (legal, research, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (legal, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function missingMessage(subject, env, tried) {
   const cfg = configPath(env);
@@ -16139,6 +16060,7 @@ LEGACY_ARTIFACTS_DIR = '9. AI'
 ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'
 EXPECTED_USER_VERSION = 90
 EXPECTED_SCHEMA_VERSION = 5
+POINTER_NAMES = ('probanda.json', 'coclerk.json')
 DBS = ('main', 'law', 'privileged')
 DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
 
@@ -16271,14 +16193,13 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
 
 
 def read_pointer(matter_root):
-    root_ptr = norm_join(matter_root, 'coclerk.json')
-    legacy_ptr = norm_join(matter_root, LEGACY_ARTIFACTS_DIR, 'coclerk.json')
-    if os.path.exists(root_ptr):
-        pointer_path = root_ptr
-    elif os.path.exists(legacy_ptr):
-        pointer_path = legacy_ptr
-    else:
-        raise SystemExit("coclerk.json not found; initialize the matter first.")
+    # probanda.json first; coclerk.json is the legacy name, kept updated on every write so an
+    # older copy of the plugin still finds the matter (spec 2026-10-16, Option 1).
+    root_ptrs = [norm_join(matter_root, name) for name in POINTER_NAMES]
+    legacy_ptrs = [norm_join(matter_root, LEGACY_ARTIFACTS_DIR, name) for name in POINTER_NAMES]
+    pointer_path = next((p for p in root_ptrs + legacy_ptrs if os.path.exists(p)), None)
+    if pointer_path is None:
+        raise SystemExit("probanda.json not found; initialize the matter first.")
 
     with open(pointer_path, 'rb') as fh:
         raw = fh.read()
@@ -16288,8 +16209,8 @@ def read_pointer(matter_root):
     if schema_version != EXPECTED_SCHEMA_VERSION:
         raise SystemExit(
             "stale pointer -- re-run initialize "
-            f"(coclerk.json is schema_version {schema_version!r}, expected {EXPECTED_SCHEMA_VERSION})")
-    return root_ptr, legacy_ptr, pointer_path, pointer
+            f"(the pointer is schema_version {schema_version!r}, expected {EXPECTED_SCHEMA_VERSION})")
+    return root_ptrs, pointer_path in legacy_ptrs, pointer_path, pointer
 
 
 def locate_case_data_dir(matter_root):
@@ -16306,7 +16227,7 @@ def locate_case_data_dir(matter_root):
 
 def resolve_pointer(matter_root):
     matter_root = os.path.normpath(matter_root)
-    root_ptr, legacy_ptr, pointer_path, pointer = read_pointer(matter_root)
+    root_ptrs, from_legacy, pointer_path, pointer = read_pointer(matter_root)
 
     root = case_data_root(matter_root)
     legacy_dir = norm_join(matter_root, LEGACY_ARTIFACTS_DIR)
@@ -16322,7 +16243,7 @@ def resolve_pointer(matter_root):
         matter_root, stored, root, legacy_dir)
 
     # Legacy migration: 9. AI -> native sibling folder.
-    if is_legacy_value(pointer.get('case_data_dir')) or pointer_path == legacy_ptr:
+    if is_legacy_value(pointer.get('case_data_dir')) or from_legacy:
         os.makedirs(case_data_dir, exist_ok=True)
         if os.path.isdir(legacy_dir):
             for fn in ('main.sqlite', 'law.sqlite', 'privileged.sqlite'):
@@ -16346,8 +16267,11 @@ def resolve_pointer(matter_root):
         'evidence_sql_path': pointer.get(
             'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
     }
-    with open(root_ptr, 'w', encoding='utf-8') as fh:
-        json.dump(normalized, fh, indent=2)
+    # Migrate-on-write: probanda.json, and coclerk.json with the same content so an older
+    # copy of the plugin still finds the matter.
+    for root_ptr in root_ptrs:
+        with open(root_ptr, 'w', encoding='utf-8') as fh:
+            json.dump(normalized, fh, indent=2)
 
     main_sqlite = norm_join(case_data_dir, 'main.sqlite')
 
@@ -16368,7 +16292,7 @@ def resolve_pointer(matter_root):
     if rejected_nominee:
         warnings.append(
             "Stored case_data_dir nominee did not contain main.sqlite; "
-            f"selected live-derived location {case_data_dir} and healed coclerk.json.")
+            f"selected live-derived location {case_data_dir} and healed probanda.json.")
     if os.path.exists(evidence_sql):
         try:
             with open(evidence_sql, 'r', encoding='utf-8', errors='replace') as fh:
@@ -16663,30 +16587,34 @@ function caseDataFolder(matterRoot, env = process.env) {
 }
 
 // src/files/scope.ts
-import { realpathSync as realpathSync2 } from "node:fs";
+import { realpathSync } from "node:fs";
 function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
   try {
-    return realpathSync2.native(root);
+    return realpathSync.native(root);
   } catch {
     throw new DataServerError(missingMessage2, code);
   }
 }
 
 // src/files/matter-root.ts
+var POINTER_FILES = ["probanda.json", "coclerk.json"];
+function findPointer(root) {
+  return POINTER_FILES.map((name) => join5(root, name)).find((path) => existsSync4(path));
+}
 function validateMatterRoot(matterRoot) {
   if (typeof matterRoot !== "string" || matterRoot.length === 0) {
     throw new DataServerError("matter_root is required", "invalid_root");
   }
-  if (!pathWin323.isAbsolute(matterRoot)) {
+  if (!pathWin322.isAbsolute(matterRoot)) {
     throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
   }
   const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
-  if (!statSync3(canon).isDirectory()) {
+  if (!statSync2(canon).isDirectory()) {
     throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
   }
-  if (!existsSync5(pathWin323.join(canon, "coclerk.json"))) {
+  if (findPointer(canon) === void 0) {
     throw new DataServerError(
-      `matter_root has no coclerk.json \u2014 not an initialized matter: ${matterRoot}`,
+      `matter_root has no probanda.json or coclerk.json \u2014 not an initialized matter: ${matterRoot}`,
       "invalid_root"
     );
   }
@@ -16696,9 +16624,102 @@ function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
   const missing = `the matter's case-data folder does not exist: ${dir}. Run /case-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
-  if (!statSync3(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
+  if (!statSync2(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
 }
+
+// src/file_ops/trash.ts
+var TRASH = "TRASH";
+var TRASH_LOG = ".trash-log.jsonl";
+var PROTECTED_SEGMENTS = /* @__PURE__ */ new Set(["0. case data", "privileged", "disclosed"]);
+function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
+  if (typeof path !== "string" || !pathWin323.isAbsolute(path)) {
+    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
+  }
+  let target;
+  try {
+    target = pathWin323.join(realpathSync2.native(pathWin323.dirname(path)), pathWin323.basename(path));
+    lstatSync(target);
+  } catch {
+    throw new DataServerError(`path does not exist: ${path}`, "not_found");
+  }
+  const stat = lstatSync(target);
+  const ancestors = [target];
+  for (let dir = pathWin323.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin323.dirname(dir)) {
+    ancestors.push(dir);
+  }
+  if (ancestors.some((dir) => existsSync5(pathWin323.join(dir, ".git")))) {
+    throw new DataServerError(
+      `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
+      "git_worktree"
+    );
+  }
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin323.join(dir, marker))));
+  if (root === void 0) {
+    throw new DataServerError(
+      `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
+      "not_a_matter_file"
+    );
+  }
+  const rel = pathWin323.relative(root, target);
+  const relParts = rel ? rel.split(pathWin323.sep) : [];
+  const first = relParts[0]?.toLowerCase();
+  if (relParts.length === 0 || relParts.length === 1 && POINTER_FILES.includes(first) || first === TRASH.toLowerCase() || target.split(pathWin323.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))) {
+    throw new DataServerError(
+      `path is protected (the workspace root, the matter pointer, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
+      "protected"
+    );
+  }
+  let dest = pathWin323.join(root, TRASH, rel);
+  if (present(dest)) {
+    const suffix = ` (trashed ${stamp(now)})`;
+    const ext = stat.isDirectory() ? "" : pathWin323.extname(dest);
+    dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
+    if (present(dest)) {
+      throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
+    }
+  }
+  if (dryRun) return { would_move_from: target, would_move_to: dest };
+  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync4(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
+  mkdirSync(pathWin323.dirname(dest), { recursive: true });
+  try {
+    renameSync(target, dest);
+  } catch (err) {
+    if (err.code === "EXDEV") {
+      throw new DataServerError(
+        `cannot move across devices (a junction inside the matter?); nothing was moved: ${target}`,
+        "cross_device"
+      );
+    }
+    throw err;
+  }
+  try {
+    const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
+    appendFileSync(pathWin323.join(root, TRASH, TRASH_LOG), line + "\n", "utf-8");
+  } catch (err) {
+    result.log_error = err instanceof Error ? err.message : String(err);
+  }
+  return result;
+}
+function isFile(path) {
+  return existsSync5(path) && statSync3(path).isFile();
+}
+function present(path) {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function stamp(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+// src/file_ops/move.ts
+import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync3, openSync as openSync3, readdirSync as readdirSync7, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
+import { win32 as pathWin328 } from "node:path";
 
 // src/housekeeping/proposal.ts
 import { realpathSync as realpathSync3 } from "node:fs";
@@ -16993,18 +17014,18 @@ function resolveCaseDataRoot(env = process.env, fallback) {
     const derived = fallback?.() ?? null;
     if (derived !== null) return derived;
     throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /legal:probanda-setup, and never write coclerk.json by hand.`
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /legal:probanda-setup, and never write probanda.json by hand.`
     );
   }
   let root;
   try {
     root = JSON.parse(readFileSync3(configFile, "utf-8")).case_data_root;
   } catch (err) {
-    throw new ValidationError(`coclerk.json is not valid JSON: ${err.message}`);
+    throw new ValidationError(`${configFile} is not valid JSON: ${err.message}`);
   }
   if (typeof root !== "string" || root === "") {
     throw new ValidationError(
-      `coclerk.json is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
+      `${configFile} is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
     );
   }
   if (!existsSync6(root)) {
@@ -17309,7 +17330,7 @@ function templateRoot(env = process.env) {
     caseData = resolveCaseDataRoot(env);
   } catch (err) {
     throw new DataServerError(
-      `the template matter cannot be located: it sits beside coclerk.json's "case_data_root", which did not resolve (${err.message}). Fix "case_data_root", or set COCLERK_HOUSEKEEPING_TEMPLATE_ROOT.`,
+      `the template matter cannot be located: it sits beside probanda.json's "case_data_root", which did not resolve (${err.message}). Fix "case_data_root", or set COCLERK_HOUSEKEEPING_TEMPLATE_ROOT.`,
       "template_missing"
     );
   }
@@ -17592,8 +17613,8 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   }
   const srcRel = relativeInside(root, src, "source");
   const srcSegments = srcRel.split(pathWin328.sep).map((s) => s.toLowerCase());
-  if (srcSegments.length === 1 && srcSegments[0] === "coclerk.json" || srcSegments[0] === "trash" || srcSegments[0] === "0. case data" || inFirewall(srcSegments)) {
-    throw new DataServerError(`source is protected (coclerk.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
+  if (srcSegments.length === 1 && POINTER_FILES.includes(srcSegments[0]) || srcSegments[0] === "trash" || srcSegments[0] === "0. case data" || inFirewall(srcSegments)) {
+    throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
   const name = pathWin328.basename(destination);
   const nameProblem = bareNameProblem(name);
@@ -17858,10 +17879,10 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
 }
 
 // src/housekeeping/preflight.ts
-import { existsSync as existsSync11, readdirSync as readdirSync8 } from "node:fs";
+import { readdirSync as readdirSync8 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 function preflight(matterRoot, includeTemplate = false, env = process.env) {
-  const pointerless = typeof matterRoot === "string" && pathWin3210.isAbsolute(matterRoot) && isDirectory2(matterRoot) && !existsSync11(pathWin3210.join(matterRoot, "coclerk.json"));
+  const pointerless = typeof matterRoot === "string" && pathWin3210.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
   const out = pointerless ? { half_commit: [], case_data_found: false } : halfCommits(matterRoot, env);
   if (includeTemplate) {
     const root = templateRoot(env);

@@ -18,7 +18,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
-AGENTS = REPO_ROOT / "source" / "research" / "agents"
+AGENTS = REPO_ROOT / "source" / "researcher" / "agents"
 FETCHER = AGENTS / "legislation-fetcher.md"
 PLAYBOOK = SKILL_ROOT / "references" / "legislation-fetcher-playbook.md"
 

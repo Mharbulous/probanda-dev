@@ -2,7 +2,7 @@ Obey @COMMANDMENTS.md
 
 # Probanda plugin repository
 
-Seven plugins are developed here: `legal`, `research`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `lawyer`. Their source is the skill trees under `.claude/skills/` and, for each plugin, the files under `source/<plugin>/` (`plugin.json`, `roster.json`, agents, hooks and the MCP servers it ships). `source/assignment.json` says which plugin ships each skill, agent, hook and server. `plugins/<plugin>/` is built from them by `scripts/build_plugin.py`, which replaces each of the seven folders wholesale, and is never edited by hand. `.claude/skills/shared/` exists once in source and is copied whole into every plugin. To change a plugin, change the source, run `python scripts/build_plugin.py` and commit the result. `python scripts/build_plugin.py --check` reports whether each `plugins/<plugin>/` matches its source, and `python scripts/check_plugin.py` checks the seven built plugins.
+Seven plugins are developed here: `legal`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `lawyer`. Their source is the skill trees under `.claude/skills/` and, for each plugin, the files under `source/<plugin>/` (`plugin.json`, `roster.json`, agents, hooks and the MCP servers it ships). `source/assignment.json` says which plugin ships each skill, agent, hook and server. `plugins/<plugin>/` is built from them by `scripts/build_plugin.py`, which replaces each of the seven folders wholesale, and is never edited by hand. `.claude/skills/shared/` exists once in source and is copied whole into every plugin. To change a plugin, change the source, run `python scripts/build_plugin.py` and commit the result. `python scripts/build_plugin.py --check` reports whether each `plugins/<plugin>/` matches its source, and `python scripts/check_plugin.py` checks the seven built plugins.
 
 ## Releasing
 
@@ -23,19 +23,19 @@ The version rule:
 
 ## The move from CoClerk
 
-The source moved here from CoClerk and is no longer edited there. The `research` plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/research/hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
+The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. A few shipped files still mention those two skills; they are not available in Probanda.
 
 ## Permanent names
 
 These are permanent once published. Do not rename them.
 
-- The plugin names `legal`, `research`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `lawyer`.
+- The plugin names `legal`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `lawyer`.
 - The marketplace name `probanda`.
-- Every MCP server key in a plugin's `.mcp.json`: `data` and `contacts-calendars-email` in `legal`, `canlii` and `commons` in `research`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
+- Every MCP server key in a plugin's `.mcp.json`: `data` and `contacts-calendars-email` in `legal`, `canlii` and `commons` in `researcher`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
 
 Together they make up the tool names (`mcp__plugin_<plugin>_<server>__*`, for example `mcp__plugin_legal_data__*`), the agent names (`<plugin>:<agent>`), the install keys (`<plugin>@probanda`) and the `${CLAUDE_PLUGIN_DATA}` directory. A rename strands every user's installed copy and saved data. `displayName` and descriptions can change freely.
 
-The plugin name `probanda` is retired and never reused. It was the single plugin until the plugin split, and claude.ai still records it against every machine that installed it. The plugin name `file-admin` is retired too (renamed `file-manager` on 2026-10-15) and never reused. The plugin name `practice` is retired too (renamed `legal` on 2026-10-15) and never reused.
+The plugin name `probanda` is retired and never reused. It was the single plugin until the plugin split, and claude.ai still records it against every machine that installed it. The plugin name `file-admin` is retired too (renamed `file-manager` on 2026-10-15) and never reused. The plugin name `practice` is retired too (renamed `legal` on 2026-10-15) and never reused. The plugin name `research` is retired too (renamed `researcher` on 2026-10-17) and never reused.
 
 ## Cowork constraints
 
@@ -67,11 +67,11 @@ The repo must never be made public while this check fails on `main`.
 | Plugin | Role | Requires |
 |---|---|---|
 | `legal` | The base: firm records, time, billing, case data, and every part the others share | nothing |
-| `research` | What the law is | `legal` |
-| `litigator` | Court work on a matter | `legal`, `research` |
+| `researcher` | What the law is | `legal` |
+| `litigator` | Court work on a matter | `legal`, `researcher` |
 | `solicitor` | Reserved. Ships no skills | `legal` |
 | `file-manager` | Optional. Every tool, skill and agent that renames, moves, changes or deletes a file Probanda did not create. Without it, Probanda only reads or copies such files | `legal` |
 | `timekeeper` | Optional. Automated time tracking: capturing a day's time evidence, sorting it to matters, correcting TimeCamp and drafting time entries. Its tools stay in `legal`'s `data` server for now | `legal` |
 | `lawyer` | Skills for any lawyer, displayed as "Lawyer": `dyu` and `TLDR`. Independent of the others | nothing |
 
-`source/assignment.json` is the list of what each plugin ships. Prose points down only: a skill, agent or hook names nothing in a plugin its own plugin does not require. `lawyer` requires nothing, so it and every other plugin name nothing in it. `legal` names nothing in another plugin, `research` names only `legal`, `litigator` names `legal` and `research`, and `file-manager` and `timekeeper` name only `legal`. A step anywhere that moves, renames or trashes a file may call into `file-manager` conditionally: without it, the step stops and tells the practitioner, never falling back to a shell move or delete. An exception needs a ruling in `source/layering.json`, and `python scripts/check_layering.py` fails on an upward reference with no ruling. Commandment 7 is enforced by `python scripts/check_file_ops.py`: a new operation outside `file-manager` that renames, moves or deletes a file needs a ruling in `source/file-ops.json`, and a ruling covers a stated number of occurrences, each one read, and only of a file Probanda created. A hook ships in the plugin whose work it guards, and its matcher changes in the same commit as the name it matches. A skill name or agent name is unique across the seven plugins. legal-commons is merged into `research`. The plan and its history are in `docs/Plans/2026-10-13_four-plugin-split.md`, `file-manager`'s design in `docs/Plans/2026-10-14_file-admin-plugin.md`, and `timekeeper`'s in `docs/Specs/2026-10-15_timekeeper-plugin-spec.md`.
+`source/assignment.json` is the list of what each plugin ships. Prose points down only: a skill, agent or hook names nothing in a plugin its own plugin does not require. `lawyer` requires nothing, so it and every other plugin name nothing in it. `legal` names nothing in another plugin, `researcher` names only `legal`, `litigator` names `legal` and `researcher`, and `file-manager` and `timekeeper` name only `legal`. A step anywhere that moves, renames or trashes a file may call into `file-manager` conditionally: without it, the step stops and tells the practitioner, never falling back to a shell move or delete. An exception needs a ruling in `source/layering.json`, and `python scripts/check_layering.py` fails on an upward reference with no ruling. Commandment 7 is enforced by `python scripts/check_file_ops.py`: a new operation outside `file-manager` that renames, moves or deletes a file needs a ruling in `source/file-ops.json`, and a ruling covers a stated number of occurrences, each one read, and only of a file Probanda created. A hook ships in the plugin whose work it guards, and its matcher changes in the same commit as the name it matches. A skill name or agent name is unique across the seven plugins. legal-commons is merged into `researcher`. The plan and its history are in `docs/Plans/2026-10-13_four-plugin-split.md`, `file-manager`'s design in `docs/Plans/2026-10-14_file-admin-plugin.md`, and `timekeeper`'s in `docs/Specs/2026-10-15_timekeeper-plugin-spec.md`.

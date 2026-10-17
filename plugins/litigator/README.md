@@ -4,7 +4,7 @@ The Probanda plugin for court work on a matter: applying the law to the facts, d
 
 ## What to install, and in what order
 
-`litigator` requires `legal` and `research`. Install `legal` first, then `research`, then `litigator`.
+`litigator` requires `legal` and `researcher`. Install `legal` first, then `researcher`, then `litigator`.
 
 Not every host installs a required plugin for you, and a plugin whose required plugin is missing loads with tools and agents absent.
 

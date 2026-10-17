@@ -16,7 +16,7 @@
 // preamble after its frontmatter); repo-root.ts's resolveShippedRoot() picks the install
 // or a Coclerk checkout from the path's first segment alone, so a bundled skill
 // never needs a checkout and never silently reads one. A plugin installed beside
-// this one (`research`, `litigator`, `solicitor`) serves the folders it holds the
+// this one (`researcher`, `litigator`, `solicitor`) serves the folders it holds the
 // same way. Every result reports `shipped_from`, the `plugin` the file came from
 // with that plugin's `plugin_version`, and the running bundle's `build_stamp`.
 //

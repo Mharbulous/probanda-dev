@@ -23,7 +23,7 @@ const WORKDIR = workdirArg > 0 ? process.argv[workdirArg + 1] : mkdtempSync(join
 
 register("./ts-js-hook.mjs", import.meta.url);
 const { loadLegalCommonsConfig } = await import(
-  new URL("../../../source/research/commons-mcp/src/legal-commons/config.ts", import.meta.url).href
+  new URL("../../../source/researcher/commons-mcp/src/legal-commons/config.ts", import.meta.url).href
 );
 // The shell may hold a stale key; the stored file holds the working one.
 const config = await loadLegalCommonsConfig({ ...process.env, LEGAL_COMMONS_SUPABASE_KEY: "", SUPABASE_SERVICE_ROLE_KEY: "" });

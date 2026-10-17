@@ -11,9 +11,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("legal", "research", "litigator", "solicitor", "file-manager", "timekeeper", "lawyer")
+PLUGINS = ("legal", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "lawyer")
 BUNDLES = {"legal": ("mcp/dist/litigation-mcp.js",),
-           "research": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
+           "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
            "timekeeper": ("timecamp-mcp/dist/timecamp-mcp.js",)}
 
@@ -52,7 +52,7 @@ class BuildPluginTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in self.out.iterdir()), sorted(PLUGINS))
 
     def test_roster_skill_is_stamped_with_its_own_plugin(self):
-        for plugin, skill in (("legal", "case-data"), ("research", "legal-research"), ("litigator", "draft")):
+        for plugin, skill in (("legal", "case-data"), ("researcher", "legal-research"), ("litigator", "draft")):
             with self.subTest(plugin=plugin):
                 text = (self.out / plugin / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
                 self.assertIn(f"\n<!-- {plugin} v{self.versions[plugin]} -->\n> **Installed copy.**", text)
@@ -130,7 +130,7 @@ class BuildPluginTest(unittest.TestCase):
             shipped = out / "legal" / "skills" / "zz-public"
             self.assertEqual((shipped / "SKILL.md").read_bytes(), text.encode("utf-8"))
             self.assertTrue((shipped / "references" / "notes.txt").is_file())
-            self.assertFalse((out / "research" / "skills" / "zz-public").exists())
+            self.assertFalse((out / "researcher" / "skills" / "zz-public").exists())
 
             (repo / ".claude" / "skills" / "zz-public").mkdir()
             result = build("--repo", str(repo), "--out", str(repo / "out2"))

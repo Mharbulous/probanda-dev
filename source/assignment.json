@@ -58,7 +58,7 @@
         "contacts-calendars-email"
       ]
     },
-    "research": {
+    "researcher": {
       "requires": [
         "legal"
       ],
@@ -83,7 +83,7 @@
       "hooks": {
         "block-main-session-canlii": ".claude/skills/legal-research/hooks/block-main-session-canlii.py",
         "block-subagent-legal-research": ".claude/skills/legal-research/hooks/block-subagent-legal-research.py",
-        "commons-read-only": "source/research/hooks/commons-read-only.py"
+        "commons-read-only": "source/researcher/hooks/commons-read-only.py"
       },
       "servers": [
         "canlii",
@@ -93,7 +93,7 @@
     "litigator": {
       "requires": [
         "legal",
-        "research"
+        "researcher"
       ],
       "skills": [
         "apply-to-facts",

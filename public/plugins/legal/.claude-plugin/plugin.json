@@ -1,6 +1,6 @@
 {
   "name": "legal",
-  "displayName": "Probanda Legal",
+  "displayName": "Legal",
   "version": "0.0.1",
   "description": "The core Probanda plugin. Requires nothing. Install it first: every other Probanda plugin except lawyer requires it.",
   "author": {

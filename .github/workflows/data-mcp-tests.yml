@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           bash .github/scripts/changed-since-tested.sh data-mcp-tests.yml
-          '^(\.claude/skills/|source/legal/|source/research/|source/mcp-shared/|\.github/workflows/data-mcp-tests\.yml$)'
+          '^(\.claude/skills/|source/legal/|source/researcher/|source/mcp-shared/|\.github/workflows/data-mcp-tests\.yml$)'
 
   test:
     needs: changed
@@ -59,7 +59,7 @@ jobs:
         working-directory: ${{ runner.temp }}
 
       # Migrations load their SQL from .claude/skills over PYTHONPATH, and one test reads the
-      # canlii-mcp package under source/research. The data server imports the shared modules under
+      # canlii-mcp package under source/researcher. The data server imports the shared modules under
       # source/mcp-shared. Nothing else in the tree is needed.
       - uses: actions/checkout@v4
         with:
@@ -67,7 +67,7 @@ jobs:
           sparse-checkout: |
             .claude/skills
             source/legal
-            source/research
+            source/researcher
             source/mcp-shared
 
       - uses: actions/setup-node@v4

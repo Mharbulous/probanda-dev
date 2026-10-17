@@ -5,8 +5,8 @@ The core Probanda plugin: firm records, time, billing, case data, deadlines, and
 ## What to install, and in what order
 
 1. `legal`. It requires nothing.
-2. `research`, for questions about what the law is. It requires `legal`.
-3. `litigator`, for court work on a matter. It requires `legal` and `research`.
+2. `researcher`, for questions about what the law is. It requires `legal`.
+3. `litigator`, for court work on a matter. It requires `legal` and `researcher`.
 
 `solicitor` is reserved and ships no skills yet. It requires `legal`.
 
