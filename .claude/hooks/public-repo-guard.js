@@ -6,7 +6,7 @@
 //   - starting the publish-public workflow;
 //   - a write to public-approved.json, or running approve_public.py. A shell command that
 //     names either passes without asking only if it reads it or runs a single plain git add,
-//     commit, push, pull, fetch, status, diff, log or show. Two more single commands pass:
+//     commit, push, pull, fetch, status, diff, log, show or grep. Two more single commands pass:
 //     scripts/approve_public.py with no arguments, which shows the changes and writes
 //     nothing without a terminal, and a pytest run of its test file.
 // Reading the public repository (gh repo view, git ls-remote, git clone) passes without asking.
@@ -26,7 +26,7 @@ function ask(reason) {
 // The old names still reach the public repository: GitHub redirects them after a rename.
 const PUBLIC_REPO = /probanda-app[\\/](?:probanda(?:-legal)?|legal|plugins|litigation)\b/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
-const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show)|cat|head|tail|wc|grep)(?: |$)/;
+const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show|grep)|cat|head|tail|wc|grep)(?: |$)/;
 const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;
 const SHOW_ONLY = new RegExp(`^python3? ${quoted("scripts[\\\\/]approve_public\\.py")}$`);
 const TEST_RUN = new RegExp(`^python3? -m pytest (?:-q )?${quoted("scripts[\\\\/]tests[\\\\/]test_approve_public\\.py")}(?: -q)?$`);
