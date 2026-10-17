@@ -1,7 +1,7 @@
 {
   "name": "lawyer",
   "displayName": "Lawyer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Skills for any lawyer: restate a request before acting, and summarize a session. Requires nothing.",
   "author": {
     "name": "Probanda Legal",
