@@ -84,7 +84,9 @@ node cloud/items/tools/check_items.mjs [--workdir <dir>]
 It runs a scripted sequence against two fresh random tenants: a saved write, a
 refused write with a question, repeated `write_id`s returning the stored result
 byte for byte, a wrong key and no key getting 401, the write reply's keys, a
-sync from 0, a seed with a clashing pair and a refused second seed, and a scan
+sync from 0, a seed with a clashing pair and a refused second seed, a matter
+opened with a client contact, an affiliation, a refused delete of a linked
+contact, and a scan
 of every reply for rule-stating words. It prints one PASS or FAIL line per check
 and exits non-zero on any failure. At the end, pass or fail, it deletes both
 tenants' rows from every `ledger` table with `supabase db query --linked` and

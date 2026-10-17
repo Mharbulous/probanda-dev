@@ -183,6 +183,38 @@ async function run() {
   const r7c = await post("items-sync", { tenant: tenantB, store: "practice", since: 0 });
   check("7c sync of the seeded tenant returns the four items", r7c.status === 200 && r7c.json?.items?.length === 4,
     `status ${r7c.status}`);
+
+  // 9. Contacts (ADR 0009): a matter opened with a client contact, an affiliation, and a linked contact's delete.
+  const cClient = randomUUID();
+  const cMatter = randomUUID();
+  const person = randomUUID();
+  const role = randomUUID();
+  const r9a = await write({ tenant: tenantA, write_id: randomUUID(), store: "practice", tool: "upsert_client_matter", intent: {},
+    ops: [
+      ...clientMatterOps(cClient, cMatter, 3),
+      { op: "create", id: person, kind: "contact", tags: { entity: "person" }, hashes: hashes({ name: "Test person 3" }) },
+      { op: "upsert", id: role, kind: "matter_role", tags: { role: "client" }, links: { matter: cMatter, contact: person },
+        hashes: hashes({ from: "2026-10-16", case_proceeding_id: null }) },
+    ] });
+  check("9a matter opened with a client contact: contact and matter_role saved in the same write",
+    r9a.status === 200 && r9a.json?.saved === true && r9a.json.ops?.length === 4 && r9a.json.ops.every((o) => o.saved === true) &&
+      r9a.json.ops[2].as === person && r9a.json.ops[3].as === role,
+    `status ${r9a.status}, ${r9a.text.slice(0, 200)}`);
+  const org = randomUUID();
+  const affiliation = randomUUID();
+  const r9b = await write({ tenant: tenantA, write_id: randomUUID(), store: "practice", tool: "upsert_affiliation", intent: {},
+    ops: [
+      { op: "create", id: org, kind: "contact", tags: { entity: "organization" }, hashes: hashes({ name: "Test org 3" }) },
+      { op: "upsert", id: affiliation, kind: "affiliation", links: { person, organization: org }, hashes: hashes({ from: null }) },
+    ] });
+  check("9b affiliation saved", r9b.status === 200 && r9b.json?.saved === true && r9b.json.ops?.[1]?.as === affiliation,
+    `status ${r9b.status}, ${r9b.text.slice(0, 200)}`);
+  const r9c = await write({ tenant: tenantA, write_id: randomUUID(), store: "practice", tool: "delete_contact", intent: {},
+    ops: [{ op: "delete", id: person, kind: "contact" }] });
+  check("9c delete of a contact still linked refused with a question",
+    r9c.status === 200 && r9c.json?.saved === false && typeof r9c.json.question === "string" &&
+      r9c.json.question.endsWith("?") && r9c.json.question.includes(`{{item:${person}}}`),
+    `status ${r9c.status}, ${r9c.text.slice(0, 200)}`);
 }
 
 // The cleanup: delete both tenants' ledger rows, then count what remains.

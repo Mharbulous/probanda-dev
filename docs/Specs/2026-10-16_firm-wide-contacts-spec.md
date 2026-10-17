@@ -1,6 +1,7 @@
 # Spec: Firm-wide contacts in practice data
 
 Status: proposed, 2026-10-16. Implements `docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`.
+Cloud: applied and deployed, 2026-10-16. `cloud/items/rules.sql` with the `contact`, `affiliation` and `matter_role` kinds is applied to `nbzkuhgiqscjkypedqff`. `check_items.mjs` checks 9a to 9c pass against the deployed `items-write`: a client and matter written with a client contact and its `matter_role`, an affiliation, and the refused delete of a linked contact.
 Plugin: `legal` only. Paths and line numbers were read at HEAD `68bcd7a` unless marked **UNVERIFIED**.
 Glossary terms used: **Contact**, **Affiliation**, **Matter role**, **Client account**, **Counsel of record**.
 Out of scope: the conflict search, which gets its own spec.

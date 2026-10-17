@@ -311,7 +311,7 @@ begin
     'links', (select count(*) from rules.link_role),
     'keys', (select count(*) from rules.natural_key)) into v_counts;
   perform pg_temp.t_check('P3 applying both files twice leaves one copy of every table of the rulebook',
-    v_counts = '{"kinds": 14, "policies": 8, "vocabulary": 63, "tags": 11, "links": 14, "keys": 8}'::jsonb, v_counts::text);
+    v_counts = '{"kinds": 17, "policies": 8, "vocabulary": 73, "tags": 13, "links": 18, "keys": 10}'::jsonb, v_counts::text);
 end $t$;
 
 -- =============================================================================
