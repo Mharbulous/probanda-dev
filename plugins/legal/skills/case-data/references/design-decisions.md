@@ -1218,6 +1218,16 @@ Path D described its writes in prose, so every session rebuilt the same SQL and 
 
 No agent is granted the tool. `case_data__execute` is granted to none either, and the session that runs Path D calls both.
 
+## 69. Contacts and their matter roles are practice data (ADR 0009, 2026-10-16)
+
+A party's or counsel's contact details were copied into each matter's `parties` row, so one lawyer on three files was three records that drifted. Contacts now live once, firm-wide, as practice-data `contact` items, tied to matters by `matter_role` items that carry the case-data `party_id` and `proceeding_id` as `case_party_id` and `case_proceeding_id` (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`, spec `docs/Specs/2026-10-16_firm-wide-contacts-spec.md`).
+
+**`contact_info` is no longer written.** Existing values are left alone and serve only to pre-fill a contact. Counsel of record stays here as filed (#55).
+
+**Any write that adds a party or counsel proposes its contact and role in the same approval step** (`operations/proceedings-profile.md` §3, `operations/order-effects.md` Step 3). Case data is written first, for the `party_id`, then the practice items. A refused practice write leaves the case-data rows standing, and `practice_data__contact_checks` reports the party until its role is recorded.
+
+No schema change. `references/scripts/list_parties.py` reads every party, read-only, for that check.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.
