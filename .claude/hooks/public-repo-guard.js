@@ -41,7 +41,9 @@ const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?
 const SHOW_ONLY = new RegExp(`^python3? ${quoted("scripts[\\\\/]approve_public\\.py")}$`);
 const PYTEST_OPT = "(?: (?:-[qv]+|-k \\w+))*";
 const TEST_RUN = new RegExp(`^python3? -m pytest${PYTEST_OPT} ${quoted("scripts[\\\\/]tests[\\\\/]test_approve_public\\.py")}${PYTEST_OPT}$`);
-const CHAINING =/[;&<>`\n\r]|\$\(|\$\{/;
+// PowerShell also runs a bracketed command anywhere in a line (`cat (cp x public-approved.json)`),
+// so for it `(` chains too. Gotcha: a Bash `(` is a subshell only at the start, which ALLOWED refuses.
+const CHAINING = data.tool_name === "Bash" ? /[;&<>`\n\r]|\$\(|\$\{/ : /[;&<>`\n\r(]|\$\{/;
 // For Bash only, blank what the shell takes literally: backslash escapes, '...' and $'...' spans,
 // and "..." spans with no $ or backtick, so a ; or | inside a quoted grep pattern is not a separator.
 // PowerShell quotes differently (backslash does not escape), so its commands are tested raw.

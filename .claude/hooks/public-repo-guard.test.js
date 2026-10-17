@@ -61,6 +61,8 @@ const ASK = [
   "grep $'\\'' ; cp x public/public-approved.json ; echo ''",
   'grep "$(cp x public/public-approved.json)" y',
   // PowerShell: backslash does not escape a quote there.
+  ["cat (cp x public/public-approved.json)", "PowerShell"],
+  ["ls @(cp x public/public-approved.json)", "PowerShell"],
   ['grep "a\\"; cp x public/public-approved.json; echo \\"b" y', "PowerShell"],
   "gh workflow run publish-public",
   "git push https://github.com/Probanda-app/Probanda HEAD:main",
