@@ -5,7 +5,13 @@
 // command, or a git command that lands the file as it is, optionally piped into read-only
 // filters. A redirect into the file, a command substitution and --output (which makes git
 // diff/log/show write a file) are refused. Operators inside quotes are ignored, so a commit
-// message may mention the file and span several lines.
+// message may mention the file and span several lines. Also refused: an unquoted ( or a
+// script block { (PowerShell runs them), git -c, git grep -O, rg --pre, and sort or uniq
+// naming the file (their output operand).
+// Do not restrict: commands that only read the file or copy it elsewhere. sed -n with a
+// line-range print, jq, find without -delete/-exec/-fprint, cp with the file as source and
+// no options, git grep/ls-files, and printf or echo of a payload piped into this hook to
+// replay it. None of them can change the file, so commandment 1 does not cover them.
 const fs = require("fs");
 let input = "";
 try { input = fs.readFileSync(0, "utf8"); } catch (e) { /* no stdin */ }
@@ -13,12 +19,38 @@ let command = "";
 try { command = String(JSON.parse(input).tool_input.command || ""); } catch (e) { /* leave empty */ }
 
 const NAME = /commandments\.md/i;
-const READ = "cat|head|tail|wc|grep|rg|ls|less|more|file|stat|diff|cmp|sha256sum|md5sum|type|findstr|Get-Content|Get-Item|Get-ChildItem|Get-FileHash|Select-String|Test-Path";
+const READ = "cat|head|tail|wc|grep|rg|ls|less|more|file|stat|diff|cmp|sha256sum|md5sum|type|findstr|jq|Get-Content|Get-Item|Get-ChildItem|Get-FileHash|Select-String|Test-Path";
 const GIT = "add|commit|push|pull|fetch|merge|status|diff|log|show|blame|grep|ls-files|rev-parse|cat-file";
 const FILTER = "head|tail|wc|grep|rg|sort|uniq|cut|less|more|findstr|Select-String|Select-Object|Measure-Object";
-const ALLOWED = new RegExp(`^(?:git(?: -C (?:"[^"\\n]*"|'[^'\\n]*'|\\S+))? (?:${GIT})|${READ})(?: |$)`, "i");
+const GIT_PREFIX = `git(?: -C (?:"[^"\\n]*"|'[^'\\n]*'|\\S+))?`;
+const ALLOWED = new RegExp(`^(?:${READ})(?: |$)`, "i");
+const GIT_ALLOWED = new RegExp(`^${GIT_PREFIX} (?:${GIT})(?: |$)`); // case-sensitive, so -C never matches -c
+const GIT_GREP = new RegExp(`^${GIT_PREFIX} grep(?: |$)`);
+const SED_PRINT = /^sed -n (?:'[\d,$]+p'|"[\d,$]+p"|[\d,$]+p)(?: [^-\s]\S*)*$/;
+const FIND_WRITE = / -(?:delete|exec|execdir|ok|okdir|fprint0?|fprintf|fls)\b/;
+const REPLAY = /^node (?:\S*[\\/])?guard-commandments\.js$/;
 const FILTERS = new RegExp(`^(?:${FILTER})(?: |$)`, "i");
 const REDIRECT = />\s*(?:"[^"]*|'[^']*|\S*)commandments\.md/i;
+const QUOTED = /"(?:\\.|[^"\\])*"|'[^']*'/g;
+
+// cp may copy the file elsewhere: no options (-l, -s, -t), and the last operand is not the file.
+function copiesOut(first) {
+  const tokens = first.split(/\s+/);
+  return tokens[0] === "cp" && tokens.length >= 3 && tokens.every((t) => !t.startsWith("-")) && !NAME.test(tokens[tokens.length - 1]);
+}
+
+function readOnly(first) {
+  return ALLOWED.test(first) || GIT_ALLOWED.test(first) || SED_PRINT.test(first) ||
+    (/^find /.test(first) && !FIND_WRITE.test(first)) || copiesOut(first);
+}
+
+// Options that let a reading command or filter write a file or run a program.
+function writes(part) {
+  if (/^rg /i.test(part) && /(?:^| )--(?:pre|hostname-bin)(?:[= ]|$)/.test(part)) return true;
+  if (/^sort /i.test(part) && / --co/.test(part)) return true;
+  if (GIT_GREP.test(part) && part.split(/\s+/).some((t) => /^-[^-]*O|^--op/.test(t))) return true;
+  return /^(?:sort|uniq) /i.test(part) && NAME.test(part);
+}
 
 // Blank the operator characters inside quotes, so a quoted commit message is not split.
 function maskQuoted(text) {
@@ -49,8 +81,13 @@ const statements = maskQuoted(command)
 const unsafe = statements.some((statement) => {
   if (!NAME.test(statement)) return false;
   if (/`|\$\(|--output/.test(statement) || REDIRECT.test(statement)) return true;
-  const [first, ...rest] = statement.split("|").map((part) => part.trim());
-  return !ALLOWED.test(first) || rest.some((part) => !FILTERS.test(part));
+  if (/\(|(?:^|[^$@])\{/.test(statement.replace(QUOTED, ""))) return true;
+  const parts = statement.split("|").map((part) => part.trim());
+  if (parts.some(writes)) return true;
+  // printf or echo of a payload into this hook only prints the name: treat it as a read.
+  if (/^(?:printf|echo)(?: |$)/.test(parts[0]) && REPLAY.test(parts[1] || "")) parts.splice(0, 2, "cat");
+  const [first, ...rest] = parts;
+  return !readOnly(first) || rest.some((part) => !FILTERS.test(part));
 });
 if (unsafe) {
   process.stdout.write(JSON.stringify({

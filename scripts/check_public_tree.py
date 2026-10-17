@@ -17,6 +17,13 @@ Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
     a file that is a copy of a private source file, a long line repeated from
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
+--hook checks only for what could be a Trade Secret or User Data. Do not restrict it
+further: it lets through the write-time generic names (SQL built-ins, column names any
+schema uses, legal terms of art), lines of a standard licence such as MIT, CRLF endings,
+a file type off the allowlist and an unfinished CHANGELOG.md entry. None of these reveals
+Probanda's schema or anyone's data. The full-tree check (approve_public, export_public,
+CI) still reports all of them.
+
 The private side is .claude/skills/, cloud/ and the source folder of every plugin
 the repo builds (plugin_layout.py reads which from source/assignment.json). A
 private folder that is missing stops the check.
@@ -58,6 +65,41 @@ ALLOWED_NAMES = ("LICENSE",)
 # Schema identifiers that are also ordinary names outside the schema (a hook's
 # input has a `file_path` key). Adding one here is a deliberate act.
 GENERIC_IDENTIFIERS = frozenset(("file_path",))
+# Exempt at write time only (--hook): names Probanda's schema shares with the rest of the
+# world, so writing one reveals nothing of it. Three kinds, and nothing else:
+#   - built-ins of the SQL engines (SQLite, PostgreSQL and its catalogs and extensions);
+#   - column names any schema uses (audit timestamps, generic keys and times);
+#   - legal terms of art a lawyer writes as they are.
+# Never add a name that only Probanda uses: a table, view, index, trigger or function of
+# its own (causes_of_action and witness_statements are its tables, so they are not here),
+# or a column named for its own design (style_of_cause_or_title, evidence_link_id).
+WRITE_TIME_GENERIC = frozenset((
+    "array_agg", "array_append", "bool_and", "bool_or", "clock_timestamp", "column_default", "column_name",
+    "foreign_key_violation", "foreign_keys", "gen_random_uuid", "generate_series", "generation_expression",
+    "gin_trgm_ops", "group_concat", "has_function_privilege", "has_schema_privilege", "has_table_privilege",
+    "information_schema", "is_nullable", "json_array", "json_array_length", "json_each", "json_extract",
+    "json_group_array", "json_object", "json_remove", "json_set", "json_type", "jsonb_agg",
+    "jsonb_array_elements", "jsonb_array_elements_text", "jsonb_array_length", "jsonb_build_array",
+    "jsonb_build_object", "jsonb_each", "jsonb_object_agg", "jsonb_object_keys", "jsonb_path_exists",
+    "jsonb_set", "jsonb_strip_nulls", "jsonb_to_recordset", "jsonb_typeof", "num_nonnulls", "ordinal_position",
+    "pg_catalog", "pg_class", "pg_constraint", "pg_get_constraintdef", "pg_get_function_identity_arguments",
+    "pg_indexes", "pg_namespace", "pg_proc", "pg_temp", "pg_trgm", "regexp_replace", "role_table_grants",
+    "row_number", "search_path", "security_invoker", "split_part", "string_agg", "table_name", "table_schema",
+    "to_char", "to_jsonb", "to_tsvector", "ts_rank", "udt_name", "user_version", "websearch_to_tsquery",
+    "created_at", "created_by", "updated_at", "deleted_at", "user_id", "user_name", "file_name", "row_count",
+    "start_time", "end_time", "phone_number", "valid_from", "valid_to", "effective_from", "effective_to",
+    "schema_version",
+    "address_for_service", "associate_judge", "beyond_reasonable_doubt", "burden_of_proof", "case_law",
+    "cause_of_action", "clear_and_convincing", "co_counsel", "default_judgment", "defendant_by_counterclaim",
+    "good_law", "information_and_belief", "notice_of_application", "notice_to_admit", "of_counsel",
+    "opening_statement", "opposing_counsel", "opposing_party", "oral_reasons", "plaintiff_by_counterclaim",
+    "point_of_law", "response_to_civil_claim", "solicitor_client", "strict_proof", "style_of_cause",
+    "sworn_evidence", "third_party", "trial_management_conference", "witness_list", "witness_statement",
+    "work_product", "written_argument",
+))
+# A private file by one of these names is a standard licence, not Probanda's own text, so
+# at write time public/ may repeat its lines (an MIT LICENSE).
+LICENCE_NAMES = ("LICENSE", "LICENCE", "COPYING")
 LONG_LINE = 60
 
 SNAKE = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+")
@@ -106,8 +148,9 @@ def private_roots(repo):
     return (*PRIVATE_ROOTS, *sources), {f"{source}/{name}" for source in sources for name in SHARED_FILES}
 
 
-def fingerprints(repo):
-    """What the private side holds that public/ may not repeat."""
+def fingerprints(repo, hook=False):
+    """What the private side holds that public/ may not repeat. At write time (hook) the
+    write-time generic names and the private licence files do not count."""
     identifiers, tables, hashes, lines, sql = set(), set(), set(), set(), []
     roots, shared = private_roots(repo)
     for top in roots:
@@ -117,6 +160,8 @@ def fingerprints(repo):
             sys.exit(f"STOP: private folder {top}/ is missing, so public/ cannot be checked against it")
         for rel, data in walk(root):
             if f"{top}/{rel}" in shared:
+                continue
+            if hook and rel.rsplit("/", 1)[-1].split(".")[0].upper() in LICENCE_NAMES:
                 continue
             if data:
                 hashes.add(hashlib.sha256(data).hexdigest())
@@ -149,21 +194,23 @@ def fingerprints(repo):
     # A one-word table name is an ordinary word, so it counts only behind a
     # database qualifier the private SQL itself uses (`main.facts`).
     qualified = {(q.lower(), t.lower()) for text in sql for q, t in DOTTED.findall(text) if t.lower() in tables}
-    return {"identifiers": identifiers - GENERIC_IDENTIFIERS, "qualified": qualified,
+    generic = GENERIC_IDENTIFIERS | (WRITE_TIME_GENERIC if hook else frozenset())
+    return {"identifiers": identifiers - generic, "qualified": qualified,
             "hashes": hashes, "lines": lines}
 
 
-def tree_problems(files, prints, file_problems, matter_codes):
-    """[(path, line, message)] for {path under public/: bytes}."""
+def tree_problems(files, prints, file_problems, matter_codes, formats=True):
+    """[(path, line, message)] for {path under public/: bytes}. Without formats, the file
+    type allowlist and CRLF checks are left out."""
     found = []
     for rel, data in files.items():
         found += [(rel, n, msg) for _, n, msg, _ in file_problems(PurePosixPath(rel), data)]
         name = rel.rsplit("/", 1)[-1]
-        if name not in ALLOWED_NAMES and not name.lower().endswith(ALLOWED_SUFFIXES):
+        if formats and name not in ALLOWED_NAMES and not name.lower().endswith(ALLOWED_SUFFIXES):
             found.append((rel, 1, "file type is not on the public allowlist"))
         if data and hashlib.sha256(data).hexdigest() in prints["hashes"]:
             found.append((rel, 1, "is a copy of a private source file"))
-        if b"\r\n" in data:
+        if formats and b"\r\n" in data:
             found.append((rel, 1, "has CRLF line endings"))
         text = text_of(data)
         if text is None:
@@ -214,10 +261,12 @@ def commit_message(text):
     return f"{subject}\n\n{body}\n"
 
 
-def problems_in(repo, files):
-    found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
-                          load_script("check_plugin").matter_codes)
-    if CHANGELOG in files:
+def problems_in(repo, files, hook=False):
+    """Every problem in files. At write time (hook) only what could be a Trade Secret or
+    User Data counts: the format checks wait for the full-tree check."""
+    found = tree_problems(files, fingerprints(repo, hook), load_script("check_publishable").file_problems,
+                          load_script("check_plugin").matter_codes, formats=not hook)
+    if CHANGELOG in files and not hook:
         found += [(CHANGELOG, 1, message) for message in release_problems(text_of(files[CHANGELOG]) or "")]
     return found
 
@@ -283,7 +332,7 @@ def main():
             return 1
         if pending is None:
             return 0
-        problems = problems_in(repo, dict([pending]))
+        problems = problems_in(repo, dict([pending]), hook=True)
         report(problems)
         return 1 if problems else 0
     files = public_files(repo)

@@ -2,6 +2,10 @@
 // repository, so it never holds a Trade Secret or User Data (COMMANDMENTS.md). Before a file
 // under public/ is written, this hook has scripts/check_public_tree.py check the content the
 // write would leave, and refuses the write if it finds a problem or cannot be run.
+// Do not restrict: SQL built-ins, column names any schema uses and legal terms of art
+// (created_at, group_concat, style_of_cause), standard licence text, CRLF endings, a file
+// type off the allowlist, or an unfinished CHANGELOG.md entry. None is a Trade Secret or
+// User Data. The format checks belong to the full-tree check run by approve_public and CI.
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");

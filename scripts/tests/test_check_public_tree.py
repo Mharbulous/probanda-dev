@@ -21,6 +21,7 @@ _spec.loader.exec_module(public_tree)
 CREATE = "CREATE" + " TABLE"
 MATTER_CODE = "L" + "8443"
 LONG_PRIVATE_LINE = "The clerk counts back from the anchor and lands on the next open registry day."
+MIT_LINE = "Permission is hereby granted, free of charge, to any person obtaining a copy"
 
 PLANNED = '{"status": "planned", "plugins": {}}'
 
@@ -41,6 +42,10 @@ PRIVATE = {
     ".claude/skills/data/notes.md": f"Send the {CREATE} helper_view (section whole.\n\nThen read prose_after_blank here.\n",
     "cloud/pool/schema.sql": "create table if not exists pool.pooled_statements (\n  statement_text text\n);\n",
     "source/probanda/plugin.json": '{\n  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n',
+    ".claude/skills/data/references/generic.sql":
+        f"{CREATE} notes (\n  created_at TEXT,\n  style_of_cause TEXT,\n  style_of_cause_or_title TEXT\n);\n"
+        "SELECT group_concat(created_at) FROM notes;\n",
+    "source/probanda/mcp/LICENSE": f"MIT License\n\n{MIT_LINE}\n",
 }
 
 
@@ -163,6 +168,34 @@ class TreeProblemsTest(unittest.TestCase):
         self.assertEqual(self.messages({"plugins/practice/.claude-plugin/plugin.json":
                                         '{\n  "name": "practice",\n'
                                         '  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n'}), [])
+
+    def hook_messages(self, files):
+        files = {rel: data if isinstance(data, bytes) else data.encode("utf-8") for rel, data in files.items()}
+        return [msg for _, _, msg in public_tree.problems_in(self.repo, files, hook=True)]
+
+    def test_at_write_time_generic_names_licence_and_formats_pass(self):
+        cases = {"a.md": "Each record carries a created_at timestamp.\n",
+                 "b.md": "Aggregate with group_concat. Read the style_of_cause field.\n",
+                 "LICENSE": f"MIT License\n\n{MIT_LINE}\n",
+                 "c.md": b"one\r\ntwo\r\n",
+                 "plugins/a/hooks/run.sh": "#!/bin/sh\necho ok",
+                 "plugins/a/icon.svg": "<svg/>",
+                 "CHANGELOG.md": "## Short"}
+        for rel, data in cases.items():
+            self.assertEqual(self.hook_messages({rel: data}), [], rel)
+            self.assertNotEqual(self.messages({rel: data}), [], f"full-tree check must still report {rel}")
+
+    def test_at_write_time_private_names_and_secrets_are_still_reported(self):
+        for text, expected in [("Read style_of_cause_or_title.\n", "style_of_cause_or_title"),
+                               ("Each link is a row in evidence_links.\n", "evidence_links"),
+                               (f"intro\n  {LONG_PRIVATE_LINE}\n", "repeats a line"),
+                               (f"As in {MATTER_CODE}.\n", "matter code"),
+                               ('<!-- node id=draft title="x" -->\n', "rules-map marker"),
+                               (f"{CREATE} t (id)\n", "schema DDL")]:
+            found = self.hook_messages({"a.md": text})
+            self.assertTrue(any(expected in msg for msg in found), f"{expected!r} not in {found}")
+        self.assertTrue(any("copy of a private source file" in msg
+                            for msg in self.hook_messages({"skill.md": PRIVATE[".claude/skills/data/SKILL.md"]})))
 
     def test_public_files_reads_only_public(self):
         (self.repo / "public" / "sub").mkdir(parents=True)

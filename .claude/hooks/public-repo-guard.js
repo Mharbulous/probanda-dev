@@ -6,10 +6,15 @@
 //   - starting the publish-public workflow;
 //   - a write to public-approved.json, or running approve_public.py. A shell command that
 //     names either passes without asking only if it reads it or runs a single plain git add,
-//     commit, push, pull, fetch, status, diff, log, show or grep. Two more single commands pass:
+//     commit, push, pull, fetch, status, diff, log, show, grep, ls-files, ls-tree or blame. Two more single commands pass:
 //     scripts/approve_public.py with no arguments, which shows the changes and writes
 //     nothing without a terminal, and a pytest run of its test file.
 // Reading the public repository (gh repo view, git ls-remote, git clone) passes without asking.
+// Do not restrict: reads of either file neither approve nor publish, so these pass without asking:
+// git ls-files, ls-tree and blame; rg (but not --pre or --pre-glob, which run a program); jq with
+// no redirect (it cannot write a file); ls; a pipe into grep, head, tail, wc or sort (but not -o,
+// which writes); pytest of the test file with -q, -v or -k <word>; and a ; or | inside a quoted
+// Bash argument such as a grep pattern, which the shell takes literally.
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 let data = {};
@@ -26,11 +31,25 @@ function ask(reason) {
 // The old names still reach the public repository: GitHub redirects them after a rename.
 const PUBLIC_REPO = /probanda-app[\\/](?:probanda(?:-legal)?|legal|plugins|litigation)\b/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
-const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show|grep)|cat|head|tail|wc|grep)(?: |$)/;
+const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show|grep|ls-files|ls-tree|blame)|cat|head|tail|wc|grep|rg|jq|ls)(?: |$)/;
+// Options that write a file or run a program: git --output and -O/--open-files-in-pager (git
+// takes abbreviations such as --op, and -O inside a cluster such as -nO), rg --pre/--pre-glob.
+const OPTION_RUNS = /--o(?:p|ut)|--pre(?:-glob)?(?:[=\s]|$)|(?:^|\s)-[A-Za-z]*O/;
+// A pipe may feed only these readers, with no -o/--output/--compress-program (sort -o writes).
+const PIPE_TAIL = /^ *(?:grep|head|tail|wc|sort)(?: +(?!-\S*o|--(?:o|comp))\S+)* *$/;
 const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;
 const SHOW_ONLY = new RegExp(`^python3? ${quoted("scripts[\\\\/]approve_public\\.py")}$`);
-const TEST_RUN = new RegExp(`^python3? -m pytest (?:-q )?${quoted("scripts[\\\\/]tests[\\\\/]test_approve_public\\.py")}(?: -q)?$`);
-const CHAINING =/[;&|<>`\n\r]|\$\(|\$\{/;
+const PYTEST_OPT = "(?: (?:-[qv]+|-k \\w+))*";
+const TEST_RUN = new RegExp(`^python3? -m pytest${PYTEST_OPT} ${quoted("scripts[\\\\/]tests[\\\\/]test_approve_public\\.py")}${PYTEST_OPT}$`);
+const CHAINING =/[;&<>`\n\r]|\$\(|\$\{/;
+// For Bash only, blank what the shell takes literally: backslash escapes, '...' and $'...' spans,
+// and "..." spans with no $ or backtick, so a ; or | inside a quoted grep pattern is not a separator.
+// PowerShell quotes differently (backslash does not escape), so its commands are tested raw.
+function literalBlanked(command) {
+  if (data.tool_name !== "Bash") return command;
+  return command.replace(/\\[\s\S]|\$'(?:[^'\\]|\\[\s\S])*'|'[^']*'|"(?:[^"\\]|\\[\s\S])*"/g,
+    (m) => m[0] === "\\" ? "__" : m[0] === '"' && /[$`]/.test(m) ? m : '""');
+}
 const REPO_WRITE = /\bpush\b|\bremote\s+(?:add|set-url)\b|\bgh\s+(?:repo\s+(?:edit|delete|rename|archive|create|sync)|release|workflow|secret|variable)\b|\bgh\s+api\b.*(?:\s-X|--method|\s-f|\s-F|--field|--input)\b/i;
 
 if (typeof input.command === "string") {
@@ -49,8 +68,10 @@ if (typeof input.command === "string") {
       ask("This checkout's remote is Probanda-app/Probanda, so this push publishes to the public repository.");
     }
   }
-  const harmless = (ALLOWED.test(command) && !/--output|--open-files-in-pager|(?:^|\s)-O/.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
-  if (APPROVAL.test(command) && !(harmless && !CHAINING.test(command))) {
+  const plain = literalBlanked(command);
+  const [first, ...piped] = plain.split("|");
+  const harmless = (ALLOWED.test(first) && piped.every((s) => PIPE_TAIL.test(s)) && !OPTION_RUNS.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
+  if (APPROVAL.test(command) && !(harmless && !CHAINING.test(plain))) {
     ask("This command names public-approved.json or approve_public.py and may approve files for publication.");
   }
 } else {
