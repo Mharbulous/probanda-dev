@@ -3,7 +3,7 @@
 
 Hook event: UserPromptSubmit. The host runs a typed skill only when its name
 starts the message, and the practitioner types /dyu as the last word. When the
-prompt ends with /dyu, $dyu or /legal:dyu, this prints the skill's text as
+prompt ends with /dyu, $dyu or /lawyer:dyu, this prints the skill's text as
 context for that turn. Any other prompt prints nothing.
 """
 import json
@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-TRAILING_RE = re.compile(r"(?:^|\s)[/$](?:legal:)?dyu[\s.!?]*$", re.IGNORECASE)
+TRAILING_RE = re.compile(r"(?:^|\s)[/$](?:lawyer:)?dyu[\s.!?]*$", re.IGNORECASE)
 SKILL_MD = Path(__file__).resolve().parent.parent / "SKILL.md"
 HEADING = "# DYU"
 LEAD = ("The user's message ends with /dyu, which invokes the dyu skill. Its text follows. "

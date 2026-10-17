@@ -2,7 +2,7 @@
   "name": "legal",
   "displayName": "Probanda Legal",
   "version": "0.6.0",
-  "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines. Install it first. The research, litigator, solicitor, file-manager and timekeeper plugins all require it.",
+  "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines. Install it first. The research, litigator, solicitor, file-manager and timekeeper plugins all require it. The lawyer plugin does not require it.",
   "author": {
     "name": "Probanda",
     "url": "https://github.com/Probanda-app"
@@ -113,14 +113,6 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
-            ],
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
             ],
             "timeout": 10
           }

@@ -10,7 +10,7 @@
     {
       "name": "legal",
       "source": "./plugins/legal",
-      "description": "The core plugin. Requires nothing. Install it first: every other Probanda plugin requires it."
+      "description": "The core plugin. Requires nothing. Install it first: every other Probanda plugin except lawyer requires it."
     },
     {
       "name": "research",
@@ -26,6 +26,11 @@
       "name": "solicitor",
       "source": "./plugins/solicitor",
       "description": "Reserved for solicitor's work. Ships no skills yet. Requires legal. Install legal first."
+    },
+    {
+      "name": "lawyer",
+      "source": "./plugins/lawyer",
+      "description": "Skills for any lawyer: restate a request before acting, and summarize a session. Requires nothing."
     }
   ]
 }

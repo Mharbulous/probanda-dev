@@ -1,6 +1,6 @@
 # Probanda
 
-Probanda is a set of six Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `probanda`.
+Probanda is a set of seven Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `probanda`.
 
 | Plugin | What it does | Requires |
 |---|---|---|
@@ -10,6 +10,7 @@ Probanda is a set of six Claude Cowork plugins for legal practice in British Col
 | `solicitor` | Reserved. It ships no skills yet | `legal` |
 | `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `legal` |
 | `timekeeper` | Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries | `legal` |
+| `lawyer` | Skills for any lawyer: `dyu` restates a request before acting, `TLDR` summarizes a session | nothing |
 
 ## Install
 

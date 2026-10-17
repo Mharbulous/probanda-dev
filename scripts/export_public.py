@@ -35,7 +35,7 @@ REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = Path(__file__).resolve().parent
 
 # The plugins of the public repository, each under public/plugins/<name>/.
-PUBLIC_PLUGINS = ("legal", "research", "litigator", "solicitor")
+PUBLIC_PLUGINS = ("legal", "research", "litigator", "solicitor", "lawyer")
 # What a marketplace install needs, and the changelog the commit message comes from.
 # The export refuses without them.
 REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md", "CHANGELOG.md",

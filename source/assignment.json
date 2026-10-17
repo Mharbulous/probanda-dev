@@ -5,11 +5,9 @@
     "legal": {
       "requires": [],
       "skills": [
-        "TLDR",
         "ar-follow-up",
         "bill-client",
         "case-data",
-        "dyu",
         "executive-assistant",
         "file-naming",
         "file-review-prep",
@@ -53,8 +51,7 @@
         "plugin-cache-guard": "source/legal/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
-        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
-        "trailing-dyu": "public/plugins/legal/skills/dyu/hooks/trailing-dyu.py"
+        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py"
       },
       "servers": [
         "data",
@@ -150,6 +147,18 @@
       "servers": [
         "files"
       ]
+    },
+    "lawyer": {
+      "requires": [],
+      "skills": [
+        "TLDR",
+        "dyu"
+      ],
+      "agents": [],
+      "hooks": {
+        "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py"
+      },
+      "servers": []
     },
     "timekeeper": {
       "requires": [

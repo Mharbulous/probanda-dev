@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "practice" / "skills" / "dyu"
+SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "lawyer" / "skills" / "dyu"
 HOOK = SKILL_ROOT / "hooks" / "trailing-dyu.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
-PLUGIN_JSON = REPO_ROOT / "source" / "practice" / "plugin.json"
-PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "practice" / ".claude-plugin" / "plugin.json"
+PLUGIN_JSON = REPO_ROOT / "source" / "lawyer" / "plugin.json"
+PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "lawyer" / ".claude-plugin" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
 
 
@@ -28,7 +28,7 @@ class TrailingDyuTests(unittest.TestCase):
             "I want the letter to open with the offer, not the history. /dyu",
             "Two paragraphs.\n\nThe second one.\n/dyu\n",
             "Move the costs table up $dyu",
-            "Move the costs table up /practice:dyu",
+            "Move the costs table up /lawyer:dyu",
             "Is that what you meant? /DYU.",
             "/dyu",
         ):

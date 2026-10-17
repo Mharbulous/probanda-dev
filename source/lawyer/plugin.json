@@ -1,0 +1,28 @@
+{
+  "name": "lawyer",
+  "displayName": "Lawyer",
+  "version": "0.1.0",
+  "description": "Skills for any lawyer: restate a request before acting, and summarize a session. Requires nothing.",
+  "author": {
+    "name": "Probanda",
+    "url": "https://github.com/Probanda-app"
+  },
+  "homepage": "https://github.com/Probanda-app/Probanda",
+  "repository": "https://github.com/Probanda-app/Probanda",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
