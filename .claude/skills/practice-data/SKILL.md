@@ -36,7 +36,7 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | ar-data | `practice_data__ar_data` | no inputs; excludes non-billable matters, and its WIP hours count only billable entries (see Consumer Contract); WIP hours start at each matter's billing cutoff, the same one `wip-hours` derives, reported per row as `cutoff_date` and `cutoff_source` (`date_to`, `issue_date`, or null when the matter has no invoices and all its billable time counts) |
 | read-signals | `practice_data__read_signals` | returns the matter's signal states; returns no policies |
 | time-entries | `practice_data__time_entries_query` | matter ref, optional from_date/to_date; per-entry rows with matter/client context |
-| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path, and opening a matter (see Opening a Matter); optional `client_contacts` writes the client roles in the same write; returns `client_role_ids`, and `question` when a matter is created without `client_contacts` |
+| upsert-client-matter | `practice_data__upsert_client_matter` | CSV-import write path, and opening a matter (see Opening a Matter); optional `client_contacts` writes the client roles in the same write; optional `folder` records the matter's folder relative to the litigation library (see Opening a Matter step 4); returns `client_role_ids`, and `question` when a matter is created without `client_contacts` |
 | upsert-contact | `practice_data__upsert_contact` | one person or organization, firm-wide (see Contacts); create (omit `id`) or update; returns `contact_id`, `created` |
 | upsert-affiliation | `practice_data__upsert_affiliation` | a person contact tied to an organization contact, with optional `from`, `to`, `title`; re-entering the same tie returns it |
 | upsert-matter-role | `practice_data__upsert_matter_role` | a contact's role on a matter, with optional `case_party_id` and `case_proceeding_id`; proposing the same role twice returns it |
@@ -74,6 +74,7 @@ Opening a new matter always records who the client is (ADR 0009). The CSV import
 1. Ask the practitioner who the client is. For each name, call `contact-lookup` with it and offer what it returns, its `near` list included, as existing contacts. When none is the client, pre-fill a new contact from `contacts__search` on the name (its emails, phones and addresses), with `entity` set to `person` or `organization` as the practitioner says. Joint clients are one contact each.
 2. Show the matter and the client contacts to be written under `/show-me`, and ask once.
 3. On a yes, call `upsert-client-matter` with `client_contacts`: `{contact_id}` for an existing contact, the `upsert-contact` fields for a new one. The matter, any new contact and the client roles are saved together or not at all.
+4. When the matter's folder in the litigation library exists or is created, pass `folder` on the same call (or a later `upsert-client-matter`): its path relative to the library, the parent of `case_data_root` — never an absolute path. The delete hook reads this record as its second way of recognising a matter folder, so a folder whose pointer file is lost stays protected.
 
 ## Contacts
 

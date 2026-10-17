@@ -22,6 +22,15 @@ PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/safe-file-deletion/hooks/redirec
 DEVICE = "mcp__remote-devices__device_bash"
 DEVICE_ROOT = "$HOME/mnt/L4801 Merrow v. Tidewater"
 
+KV_BACKEND = REPO_ROOT / "source" / "legal" / "mcp" / "src" / "kv" / "backend.ts"
+
+
+def kv_schema():
+    """practice.db's kv_store schema, read from its one source (kv/backend.ts)
+    so the fixture tracks the real schema and this file holds no DDL."""
+    match = re.search(r'SCHEMA = """(.*?)"""', KV_BACKEND.read_text(encoding="utf-8"), re.DOTALL)
+    return match.group(1)
+
 
 class HookTestCase(unittest.TestCase):
     """Fixtures live under one temp base, but the hook runs with TEMP/TMP/TMPDIR
@@ -652,6 +661,90 @@ class HiddenTextTests(HookTestCase):
     def test_device_bash_encoded_command_is_decoded(self):
         self.assertAllowedSilently(self.call(DEVICE, "pwsh -enc " + encode("Get-ChildItem .")))
         self.assertDenied(self.call(DEVICE, "pwsh -enc " + encode("Remove-Item x")))
+
+
+class HomeFallbackTests(HookTestCase):
+    """Claude Code on Windows starts the hook without HOME set (spec
+    2026-10-16). home_value then falls back to os.path.expanduser("~"), so a
+    $HOME/... target still expands and is judged by where it really points."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        gitdir = cls.home / "Git" / "repo" / ".git"
+        gitdir.mkdir(parents=True)
+        (gitdir / "index.lock").write_text("", encoding="utf-8")
+        cls.homematter = cls.home / "L9 Home Matter"
+        cls.homematter.mkdir()
+        (cls.homematter / "coclerk.json").write_text("{}", encoding="utf-8")
+        (cls.homematter / "x.md").write_text("x", encoding="utf-8")
+        # expanduser("~") reads USERPROFILE on Windows and HOME on POSIX, so
+        # the variable removed from the hook's environment is the other one.
+        cls.unset = "HOME" if os.name == "nt" else "USERPROFILE"
+
+    def call_without_home(self, command, cwd):
+        env = {k: v for k, v in self.env.items() if k != self.unset}
+        payload = {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)}
+        return subprocess.run(
+            [sys.executable, str(HOOK)],
+            input=json.dumps(payload), capture_output=True, text=True, encoding="utf-8", env=env,
+        )
+
+    def test_worktree_delete_is_allowed_with_the_home_variable_unset(self):
+        # The blocked payload from the spec's evidence: rm of a stale
+        # .git/index.lock spelled through the home variable, run with that
+        # variable removed from the hook's environment.
+        command = 'rm "$' + self.unset + '/Git/repo/.git/index.lock"'
+        self.assertAllowedSilently(self.call_without_home(command, self.home / "Git" / "repo"))
+
+    def test_matter_delete_is_still_refused_with_the_home_variable_unset(self):
+        command = 'rm "$' + self.unset + '/L9 Home Matter/x.md"'
+        self.assertDenied(self.call_without_home(command, self.home))
+
+
+class MatterFolderTests(HookTestCase):
+    """The hook recognises a client matter folder two independent ways (spec
+    2026-10-16 §4.3), and a hit only ever adds protection (§9 Q1): a matter
+    folder inside a Git worktree is refused although the worktree is exempt."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # Check 1: a pointer file alone, one folder per accepted name.
+        for name in ("coclerk.json", "probanda.json"):
+            folder = cls.repo / ("matter-" + name.split(".")[0])
+            folder.mkdir()
+            (folder / name).write_text("{}", encoding="utf-8")
+            (folder / "x.md").write_text("x", encoding="utf-8")
+        # Check 2: practice data's folder record alone, no pointer file. The
+        # library is the parent of case_data_root, here the worktree itself.
+        import sqlite3
+        case_data = cls.repo / "0. CASE DATA"
+        (case_data / "_practice").mkdir(parents=True)
+        (cls.repo / "L1 Test").mkdir()
+        (cls.repo / "L1 Test" / "x.md").write_text("x", encoding="utf-8")
+        con = sqlite3.connect(case_data / "_practice" / "practice.db")
+        con.executescript(kv_schema())
+        item = {"kind": "matter", "data": {"folder": "L1 Test"}, "tags": {}, "state": None, "links": {}}
+        con.execute("INSERT INTO kv_store VALUES ('item', 'm1', ?, '')", (json.dumps(item),))
+        con.commit()
+        con.close()
+        settings = cls.base / "device-settings.json"
+        settings.write_text(json.dumps({"case_data_root": str(case_data)}), encoding="utf-8")
+        cls.env = {**cls.env, "COCLERK_CONFIG_PATH": str(settings)}
+
+    def test_pointer_file_alone_protects_inside_a_worktree(self):
+        for folder in ("matter-coclerk", "matter-probanda"):
+            with self.subTest(folder=folder):
+                command = 'rm "' + (self.repo / folder / "x.md").as_posix() + '"'
+                self.assertDenied(self.call("Bash", command, cwd=self.repo))
+
+    def test_practice_record_alone_protects_inside_a_worktree(self):
+        command = 'rm "' + (self.repo / "L1 Test" / "x.md").as_posix() + '"'
+        self.assertDenied(self.call("Bash", command, cwd=self.repo))
+
+    def test_the_rest_of_the_worktree_stays_exempt(self):
+        self.assertAllowedSilently(self.call("Bash", "rm x.md", cwd=self.repo))
 
 
 class PluginRegistrationTests(unittest.TestCase):

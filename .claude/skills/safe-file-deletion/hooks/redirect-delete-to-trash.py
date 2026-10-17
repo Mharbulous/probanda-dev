@@ -14,7 +14,8 @@ Decision rule
   2. Bash only: every location the command touches (the session cwd plus any
      absolute path or `~` form in the command or in that script or encoded
      text) really lands, through any link, inside a Git worktree or the OS temp
-     dir -> allow. So is a lone rm/unlink, after an optional `cd <absolute
+     dir, and none inside a client matter folder (a matter pointer file on an
+     ancestor, or practice data's folder record) -> allow. So is a lone rm/unlink, after an optional `cd <absolute
      dir> &&`, whose every target resolves there. Every rm/unlink target,
      chained or not, counts as a location, and a glob in a component rm follows
      counts by each match; an rm whose targets cannot be told gets no exemption.
@@ -356,11 +357,16 @@ def expand_vars(command):
     delete would slip through. Only the home forms expand: expanding every
     variable let prose such as `%COMSPEC%` conjure a system path (#643).
     """
-    def home_value(m):
-        name = next(g for g in m.groups() if g).upper()
-        return os.environ.get(name, m.group(0))
-
     home = os.path.expanduser("~").replace("\\", "/")
+
+    def home_value(m):
+        # Claude Code on Windows starts the hook without HOME set (spec
+        # 2026-10-16). An unset or empty home variable falls back to the
+        # folder expanduser finds, as the `~/` form already does, so the
+        # hook can still see where the path points.
+        name = next(g for g in m.groups() if g).upper()
+        return os.environ.get(name) or home
+
     text = HOME_FORM_RE.sub(home_value, command)
     return re.sub(r"(?<![\w~])~(?=/)", home, text)
 
@@ -437,6 +443,105 @@ def in_temp_dir(path):
         return False
 
 
+# ---------------------------------------------------------------------------
+# Client matter folders (spec 2026-10-16). A location inside one is never
+# exempt: a matter-folder hit only ever adds protection, so a matter folder
+# inside a Git worktree or the OS temp dir is refused too. A folder is
+# recognised two independent ways, so a lawyer deleting one marker file does
+# not leave the folder unprotected:
+#   1. an ancestor holds a matter pointer file (coclerk.json, or probanda.json
+#      once the rename lands);
+#   2. practice data's local record of matter folders names an ancestor: the
+#      `folder` data field on `matter` items in practice.db
+#      (<case_data_root>/_practice/practice.db, opened read-only), a path
+#      relative to the litigation library (the parent of case_data_root). The
+#      Roaming device settings file names case_data_root; COCLERK_CONFIG_PATH
+#      names another settings file to read in its place.
+# Any read error keeps the hook's existing behaviour: the failing check reads
+# as "not a matter folder" and the worktree/temp rules alone decide.
+# ---------------------------------------------------------------------------
+POINTER_NAMES = ("coclerk.json", "probanda.json")
+
+
+def _case_data_root():
+    """case_data_root from the device settings file, or None."""
+    override = os.environ.get("COCLERK_CONFIG_PATH")
+    if override:
+        candidates = [override]
+    else:
+        roaming = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
+        candidates = [os.path.join(roaming, "Coclerk", name) for name in ("probanda.json", "coclerk.json")]
+    for candidate in candidates:
+        try:
+            with open(candidate, encoding="utf-8") as fh:
+                root = json.load(fh).get("case_data_root")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(root, str) and root:
+            return root
+    return None
+
+
+def recorded_matter_folders():
+    """The absolute path of each matter folder practice data records, or [] when
+    the record cannot be read: the check then adds nothing."""
+    import sqlite3
+    root = _case_data_root()
+    if not root:
+        return []
+    db = os.path.join(root, "_practice", "practice.db")
+    if not os.path.isfile(db):
+        return []
+    library = os.path.dirname(os.path.abspath(root))
+    con = sqlite3.connect("file:" + Path(db).as_posix() + "?mode=ro", uri=True)
+    try:
+        rows = con.execute("SELECT value FROM kv_store WHERE namespace = 'item'").fetchall()
+    finally:
+        con.close()
+    folders = []
+    for (value,) in rows:
+        try:
+            item = json.loads(value)
+        except ValueError:
+            continue
+        if not isinstance(item, dict) or item.get("kind") != "matter":
+            continue
+        data = item.get("data")
+        folder = data.get("folder") if isinstance(data, dict) else None
+        if isinstance(folder, str) and folder and not os.path.isabs(folder):
+            folders.append(os.path.join(library, folder))
+    return folders
+
+
+_matter_folders = None
+
+
+def matter_folder_roots():
+    global _matter_folders
+    if _matter_folders is None:
+        try:
+            _matter_folders = recorded_matter_folders()
+        except Exception:
+            _matter_folders = []
+    return _matter_folders
+
+
+def _under(path, root):
+    child = os.path.normcase(os.path.abspath(path))
+    parent = os.path.normcase(os.path.abspath(root)).rstrip("\\/")
+    return child == parent or child.startswith(parent + os.sep)
+
+
+def in_matter_folder(path):
+    """Either check holds: an ancestor (of the nearest existing part) holds a
+    matter pointer file, or practice data's folder record names an ancestor."""
+    d = nearest_existing(path)
+    for anc in (d, *d.parents):
+        if any((anc / name).is_file() for name in POINTER_NAMES):
+            return True
+    return any(_under(path, root) for root in matter_folder_roots())
+
+
 def follows(word):
     """rm follows a link only when the target ends in a slash or /."""
     return re.search(r"[\\/]\.?$", str(word)) is not None
@@ -470,14 +575,17 @@ def landings(path, follow):
 
 
 def exempt(path, follow=None):
-    """True when `path` really lands inside a Git worktree or the OS temp dir.
-    follow=None (rm's rule unknown) requires both landings to be exempt. A `~`
-    form that did not expand, or a path or glob that fails to resolve, is not exempt."""
+    """True when `path` really lands inside a Git worktree or the OS temp dir,
+    and not inside a client matter folder: a matter-folder hit only ever adds
+    protection (spec 2026-10-16, §9 Q1). follow=None (rm's rule unknown)
+    requires both landings to be exempt. A `~` form that did not expand, or a
+    path or glob that fails to resolve, is not exempt."""
     if str(path).startswith("~"):
         return False
     rules = (False, True) if follow is None else (follow,)
     try:
-        return all(in_git_worktree(t) or in_temp_dir(t) for f in rules for t in landings(path, f))
+        return all((in_git_worktree(t) or in_temp_dir(t)) and not in_matter_folder(t)
+                   for f in rules for t in landings(path, f))
     except (OSError, ValueError, RuntimeError):
         return False
 

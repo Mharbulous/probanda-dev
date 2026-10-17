@@ -34,6 +34,20 @@ export async function upsert_client_matter(
   // prefix (`.L8443`); the matter number is what follows it.
   const mattNum = args.matt_num ? normalizeMattNum(args.matt_num) : args.matt_num;
 
+  // The matter's folder, relative to the litigation library (the parent of
+  // case_data_root), so a synced practice.db reads right on every device. The
+  // delete hook reads it as its second way of recognising a matter folder
+  // (spec 2026-10-16). Recorded by whoever creates the matter's pointer file
+  // and by the matter-opening step; the cloud sees only its HMAC.
+  if (args.folder !== undefined && args.folder !== null) {
+    const folder = asString(args.folder, "folder");
+    if (/^([A-Za-z]:|[\\/])/.test(folder)) {
+      throw new ValidationError(
+        "folder must be the matter folder's path relative to the litigation library, not an absolute path"
+      );
+    }
+  }
+
   const clientOp = newId();
   const matterOp = newId();
   const roleSpecs = clientRoleOps(store, args, matterOp, mattNum);
@@ -64,6 +78,7 @@ export async function upsert_client_matter(
         regular_trust: args.regular_trust,
         term_trust: args.term_trust,
         last_trust_date: args.last_trust_date,
+        folder: args.folder,
       },
     },
     ...roleSpecs,

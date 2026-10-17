@@ -228,6 +228,11 @@ export function practiceToolDefinitions(): ToolDefinition[] {
               additionalProperties: false,
             },
           },
+          folder: {
+            type: "string",
+            description:
+              "The matter folder's path relative to the litigation library (the parent of case_data_root), recorded when the matter's folder is created or opened; an absolute path is refused",
+          },
         },
         required: ["client_num"],
         additionalProperties: false,
