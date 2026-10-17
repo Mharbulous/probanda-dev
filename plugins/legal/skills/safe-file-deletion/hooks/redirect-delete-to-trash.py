@@ -32,9 +32,9 @@ Decision rule
   4. Otherwise -> deny (JSON permissionDecision on stdout, exit 0), naming the
      file_ops__trash tool.
 
-Registered in the project's .claude/settings.json and in
-~/.claude/settings.json. Fails OPEN on any unexpected error: a bug here must
-never be able to block all shell use.
+Registered in source/legal/plugin.json (shipped with the legal plugin) and, on
+a dev machine, in ~/.claude/settings.json. Fails OPEN on any unexpected error:
+a bug here must never be able to block all shell use.
 """
 import base64
 import codecs
@@ -527,8 +527,10 @@ def matter_folder_roots():
 
 
 def _under(path, root):
-    child = os.path.normcase(os.path.abspath(path))
-    parent = os.path.normcase(os.path.abspath(root)).rstrip("\\/")
+    # realpath on both sides: the target arrives fully resolved (landing), so a
+    # recorded folder reached through a junction or symlink must resolve too.
+    child = os.path.normcase(os.path.realpath(path))
+    parent = os.path.normcase(os.path.realpath(root)).rstrip("\\/")
     return child == parent or child.startswith(parent + os.sep)
 
 
@@ -537,9 +539,18 @@ def in_matter_folder(path):
     matter pointer file, or practice data's folder record names an ancestor."""
     d = nearest_existing(path)
     for anc in (d, *d.parents):
-        if any((anc / name).is_file() for name in POINTER_NAMES):
-            return True
-    return any(_under(path, root) for root in matter_folder_roots())
+        try:
+            if any((anc / name).is_file() for name in POINTER_NAMES):
+                return True
+        except OSError:
+            # A read error (e.g. PermissionError from is_file) reads as "not a
+            # matter folder": it must not leak into exempt()'s except and turn
+            # a worktree/temp path into a denial.
+            continue
+    try:
+        return any(_under(path, root) for root in matter_folder_roots())
+    except OSError:
+        return False
 
 
 def follows(word):
