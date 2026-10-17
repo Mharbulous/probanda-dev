@@ -49,7 +49,7 @@ if (typeof input.command === "string") {
       ask("This checkout's remote is Probanda-app/Probanda, so this push publishes to the public repository.");
     }
   }
-  const harmless = (ALLOWED.test(command) && !/--output/.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
+  const harmless = (ALLOWED.test(command) && !/--output|--open-files-in-pager|(?:^|\s)-O/.test(command)) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
   if (APPROVAL.test(command) && !(harmless && !CHAINING.test(command))) {
     ask("This command names public-approved.json or approve_public.py and may approve files for publication.");
   }
