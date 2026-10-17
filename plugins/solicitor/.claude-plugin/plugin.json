@@ -1,7 +1,7 @@
 {
   "name": "solicitor",
   "displayName": "Probanda Solicitor",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Reserved for solicitor's work. It ships no skills yet. Requires the legal plugin: install legal first.",
   "author": {
     "name": "Probanda",
