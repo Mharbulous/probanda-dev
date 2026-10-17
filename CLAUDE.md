@@ -6,7 +6,7 @@ Seven plugins are developed here: `legal`, `researcher`, `litigator`, `solicitor
 
 ## Releasing
 
-A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `probanda` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `Probanda_Legal_experimental` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
 
 The version rule:
 
@@ -30,12 +30,12 @@ The source moved here from CoClerk and is no longer edited there. The `researche
 These are permanent once published. Do not rename them.
 
 - The plugin names `legal`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `lawyer`.
-- The marketplace name `probanda`.
+- The marketplace names: `Probanda_Legal` for the public repository and `Probanda_Legal_experimental` for this one. A marketplace name cannot hold a space, so the readable "Probanda Legal" and "Probanda Legal (experimental)" go in `owner.name` and each plugin entry's `author.name`.
 - Every MCP server key in a plugin's `.mcp.json`: `data` and `contacts-calendars-email` in `legal`, `canlii` and `commons` in `researcher`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
 
-Together they make up the tool names (`mcp__plugin_<plugin>_<server>__*`, for example `mcp__plugin_legal_data__*`), the agent names (`<plugin>:<agent>`), the install keys (`<plugin>@probanda`) and the `${CLAUDE_PLUGIN_DATA}` directory. A rename strands every user's installed copy and saved data. `displayName` and descriptions can change freely.
+Together they make up the tool names (`mcp__plugin_<plugin>_<server>__*`, for example `mcp__plugin_legal_data__*`), the agent names (`<plugin>:<agent>`), the install keys (`<plugin>@Probanda_Legal` and `<plugin>@Probanda_Legal_experimental`) and the `${CLAUDE_PLUGIN_DATA}` directory. A rename strands every user's installed copy and saved data. `displayName` and descriptions can change freely.
 
-The plugin name `probanda` is retired and never reused. It was the single plugin until the plugin split, and claude.ai still records it against every machine that installed it. The plugin name `file-admin` is retired too (renamed `file-manager` on 2026-10-15) and never reused. The plugin name `practice` is retired too (renamed `legal` on 2026-10-15) and never reused. The plugin name `research` is retired too (renamed `researcher` on 2026-10-17) and never reused.
+The plugin name `probanda` is retired and never reused. It was the single plugin until the plugin split, and claude.ai still records it against every machine that installed it. The plugin name `file-admin` is retired too (renamed `file-manager` on 2026-10-15) and never reused. The plugin name `practice` is retired too (renamed `legal` on 2026-10-15) and never reused. The plugin name `research` is retired too (renamed `researcher` on 2026-10-17) and never reused. The marketplace name `probanda` is retired too (split into `Probanda_Legal` and `Probanda_Legal_experimental` on 2026-10-17) and never reused.
 
 ## Cowork constraints
 

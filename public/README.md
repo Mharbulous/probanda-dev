@@ -18,11 +18,11 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 
 ```
 /plugin marketplace add Probanda-app/Probanda
-/plugin install legal@probanda
-/plugin install researcher@probanda
-/plugin install litigator@probanda
-/plugin install solicitor@probanda
-/plugin install lawyer@probanda
+/plugin install legal@Probanda_Legal
+/plugin install researcher@Probanda_Legal
+/plugin install litigator@Probanda_Legal
+/plugin install solicitor@Probanda_Legal
+/plugin install lawyer@Probanda_Legal
 ```
 
 On Claude Code 2.1.275 or later each install works in one step:

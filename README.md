@@ -1,6 +1,6 @@
 # Probanda
 
-Probanda is a set of seven Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `probanda`.
+Probanda is a set of seven Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `Probanda_Legal_experimental`.
 
 | Plugin | What it does | Requires |
 |---|---|---|
@@ -18,11 +18,11 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 
 ```
 /plugin marketplace add Mharbulous/probanda-plugins
-/plugin install legal@probanda
-/plugin install researcher@probanda
-/plugin install litigator@probanda
-/plugin install file-manager@probanda
-/plugin install timekeeper@probanda
+/plugin install legal@Probanda_Legal_experimental
+/plugin install researcher@Probanda_Legal_experimental
+/plugin install litigator@Probanda_Legal_experimental
+/plugin install file-manager@Probanda_Legal_experimental
+/plugin install timekeeper@Probanda_Legal_experimental
 ```
 
 Keep to that order. Claude Code installs a required plugin with the plugin that requires it, but claude.ai and Cowork do not: there, a plugin whose required plugin is missing loads with tools and agents absent.
