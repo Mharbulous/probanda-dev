@@ -122,7 +122,10 @@ insert into rules.kind (kind, store, has_state, state_required, state_default, s
   ('signal',          'practice', true,  true,  null,     false),
   ('calendar_year',   'practice', true,  true,  null,     false),
   ('calendar_day',    'practice', false, false, null,     false),
-  ('rule_overlay',    'practice', true,  true,  null,     false);
+  ('rule_overlay',    'practice', true,  true,  null,     false),
+  ('contact',         'practice', false, false, null,     false),
+  ('affiliation',     'practice', false, false, null,     false),
+  ('matter_role',     'practice', false, false, null,     false);
 
 delete from rules.vocabulary;
 insert into rules.vocabulary (kind, field, value)
@@ -144,7 +147,10 @@ select v.kind, v.field, unnest(v.vals) from (values
   ('rule_overlay',  'record.offset.direction', array['before', 'after']),
   ('rule_overlay',  'record.counting', array['calendar', 'forward_n_business_days', 'backward_n_business_days', 'backward_full_business_days']),
   ('rule_overlay',  'record.semantics', array['mandatory', 'earliest_permissible', 'latest_permissible', 'permissive']),
-  ('rule_overlay',  'record.source.kind', array['oic_pdf', 'consolidation', 'regulation'])
+  ('rule_overlay',  'record.source.kind', array['oic_pdf', 'consolidation', 'regulation']),
+  ('contact',       'entity',          array['person', 'organization']),
+  ('matter_role',   'role',            array['client', 'prospective_client', 'opposing_party', 'opposing_counsel',
+                                             'co_counsel', 'expert', 'adjuster', 'referral_source'])
 ) as v(kind, field, vals);
 
 delete from rules.tag;
@@ -159,7 +165,9 @@ insert into rules.tag (kind, tag, form, required) values
   ('signal',       'signal_key',      'text',    true),
   ('calendar_day', 'status_category', 'vocab',   true),
   ('rule_overlay', 'deadline_type',   'text',    true),
-  ('rule_overlay', 'amending_reg',    'text',    true);
+  ('rule_overlay', 'amending_reg',    'text',    true),
+  ('contact',      'entity',          'vocab',   true),
+  ('matter_role',  'role',            'vocab',   true);
 
 delete from rules.link_role;
 insert into rules.link_role (kind, role, target_kind, required, synced) values
@@ -176,7 +184,11 @@ insert into rules.link_role (kind, role, target_kind, required, synced) values
   ('deadline',        'anchor',        'anchor',        false, true),
   ('payment',         'matter',        'matter',        true,  true),
   ('signal',          'matter',        'matter',        true,  true),
-  ('calendar_day',    'calendar_year', 'calendar_year', true,  false);
+  ('calendar_day',    'calendar_year', 'calendar_year', true,  false),
+  ('affiliation',     'person',        'contact',       true,  true),
+  ('affiliation',     'organization',  'contact',       true,  true),
+  ('matter_role',     'matter',        'matter',        true,  true),
+  ('matter_role',     'contact',       'contact',       true,  true);
 
 delete from rules.transition;
 insert into rules.transition (kind, from_state, to_state) values
@@ -195,7 +207,9 @@ insert into rules.natural_key (kind, purpose, rank, parts, states) values
                                   array['active', 'conflicted', 'occurred']),
   ('deadline',      'supersede', 1, array['link:matter*', 'link:anchor?', 'tag:deadline_type', 'hash:party_label?',
                                         'hash:proceeding_label?', 'hash:scenario_label?'],
-                                  array['active']);
+                                  array['active']),
+  ('affiliation',   'upsert',    1, array['link:person', 'link:organization', 'hash:from?'], null),
+  ('matter_role',   'upsert',    1, array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?'], null);
 
 delete from rules.status_policy;
 insert into rules.status_policy (status_label, required_signals, blocking_signals, auto_advance, description) values
@@ -970,6 +984,63 @@ begin
 end;
 $f$;
 
+-- R12. A contact has a name (firm-wide contacts spec 4.1).
+create or replace function rules.kind_contact(
+  p_tenant uuid, p_seq bigint, p_write jsonb, p_op jsonb, p_create boolean, p_cur ledger.item, p_new ledger.item)
+returns ledger.item language plpgsql stable
+set search_path = pg_catalog, pg_temp
+as $f$
+begin
+  if p_new.hashes->>'name' is null then
+    perform rules.refuse(format('What is the name of {{item:%s}}?', p_new.id));
+  end if;
+  return p_new;
+end;
+$f$;
+
+-- R12. An affiliation ties a person to an organization.
+create or replace function rules.kind_affiliation(
+  p_tenant uuid, p_seq bigint, p_write jsonb, p_op jsonb, p_create boolean, p_cur ledger.item, p_new ledger.item)
+returns ledger.item language plpgsql stable
+set search_path = pg_catalog, pg_temp
+as $f$
+declare
+  v_person text := p_new.links->>'person';
+  v_org text := p_new.links->>'organization';
+begin
+  if exists (
+    select 1 from ledger.item c
+    where c.tenant = p_tenant and c.id = v_person::uuid and c.tags->>'entity' is distinct from 'person') then
+    perform rules.refuse(format('Is {{item:%s}} a person?', v_person));
+  end if;
+  if exists (
+    select 1 from ledger.item c
+    where c.tenant = p_tenant and c.id = v_org::uuid and c.tags->>'entity' is distinct from 'organization') then
+    perform rules.refuse(format('Is {{item:%s}} an organization?', v_org));
+  end if;
+  return p_new;
+end;
+$f$;
+
+-- R12. A contact that an affiliation or a matter role still points to stays.
+create or replace function rules.kind_contact_delete(p_tenant uuid, p_contact uuid)
+returns void language plpgsql stable
+set search_path = pg_catalog, pg_temp
+as $f$
+declare
+  v_holder uuid;
+begin
+  select i.id into v_holder from ledger.item i
+  where i.tenant = p_tenant and not i.deleted and i.kind in ('affiliation', 'matter_role')
+    and p_contact::text in (i.links->>'person', i.links->>'organization', i.links->>'contact')
+  order by i.created_seq, i.created_at, i.id
+  limit 1;
+  if v_holder is not null then
+    perform rules.refuse(format('Which contact replaces {{item:%s}} on {{item:%s}}?', p_contact, v_holder));
+  end if;
+end;
+$f$;
+
 -- R8. Deleting an anchor deletes its sources and the deadlines derived from it.
 create or replace function rules.kind_anchor_delete(p_tenant uuid, p_seq bigint, p_anchor uuid)
 returns void language sql
@@ -1200,6 +1271,9 @@ begin
     if not found or v_cur.kind <> v_kind then
       perform rules.refuse(format('Which %s is meant? {{item:%s}} is not recorded.', replace(v_kind, '_', ' '), v_id));
     end if;
+    if v_kind = 'contact' then
+      perform rules.kind_contact_delete(p_tenant, v_id);
+    end if;
     update ledger.item i set deleted = true, seq = p_seq, updated_at = now()
     where i.tenant = p_tenant and i.id = v_id;
     if v_kind = 'anchor' then
@@ -1274,6 +1348,8 @@ begin
     when 'deadline'     then rules.kind_deadline(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
     when 'signal'       then rules.kind_signal(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
     when 'rule_overlay' then rules.kind_rule_overlay(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
+    when 'contact'      then rules.kind_contact(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
+    when 'affiliation'  then rules.kind_affiliation(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
     else v_new
   end;
 

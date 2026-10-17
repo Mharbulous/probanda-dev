@@ -1697,6 +1697,177 @@ begin
 end $t$;
 
 -- =============================================================================
+-- R12. Contacts, affiliations and matter roles (firm-wide contacts spec 4.1)
+-- =============================================================================
+
+create function pg_temp.contact(p_tenant uuid, p_entity text, p_name text)
+returns jsonb language sql as $f$
+  select pg_temp.w(p_tenant, 'upsert_contact', jsonb_build_array(pg_temp.op('create', gen_random_uuid(), 'contact',
+    jsonb_build_object('tags', jsonb_strip_nulls(jsonb_build_object('entity', p_entity)),
+      'hashes', jsonb_strip_nulls(jsonb_build_object('name', pg_temp.h(p_name)))))));
+$f$;
+
+create function pg_temp.mrole(p_tenant uuid, p_matter uuid, p_contact uuid, p_role text, p_proc text default null)
+returns jsonb language sql as $f$
+  select pg_temp.w(p_tenant, 'upsert_matter_role', jsonb_build_array(pg_temp.op('upsert', gen_random_uuid(), 'matter_role',
+    jsonb_build_object('tags', jsonb_build_object('role', p_role),
+      'links', jsonb_build_object('matter', p_matter, 'contact', p_contact),
+      'hashes', jsonb_build_object('case_proceeding_id', pg_temp.h(p_proc))))));
+$f$;
+
+create function pg_temp.affil(p_tenant uuid, p_person uuid, p_org uuid, p_from text default null)
+returns jsonb language sql as $f$
+  select pg_temp.w(p_tenant, 'upsert_affiliation', jsonb_build_array(pg_temp.op('upsert', gen_random_uuid(), 'affiliation',
+    jsonb_build_object('links', jsonb_build_object('person', p_person, 'organization', p_org),
+      'hashes', jsonb_build_object('from', pg_temp.h(p_from))))));
+$f$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  rp jsonb;
+  ro jsonb;
+  ra jsonb;
+  rr jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L200');
+  rp := pg_temp.contact(v_t, 'person', 'Jane Lawyer');
+  ro := pg_temp.contact(v_t, 'organization', 'Lawyer LLP');
+  ra := pg_temp.affil(v_t, pg_temp.as_id(rp), pg_temp.as_id(ro), '2020-01-01');
+  rr := pg_temp.mrole(v_t, v_m, pg_temp.as_id(rp), 'opposing_counsel');
+  perform pg_temp.t_check('R12 a contact, an affiliation and a matter role are each saved',
+    pg_temp.saved(rp) and pg_temp.saved(ro) and pg_temp.saved(ra) and pg_temp.saved(rr)
+    and pg_temp.live(v_t, 'contact') = 2 and pg_temp.live(v_t, 'affiliation') = 1 and pg_temp.live(v_t, 'matter_role') = 1
+    and (pg_temp.item(v_t, pg_temp.as_id(rp))).state is null,
+    format('%s / %s / %s / %s', rp, ro, ra, rr));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  r1 jsonb;
+  r2 jsonb;
+  r3 jsonb;
+  r4 jsonb;
+begin
+  r1 := pg_temp.contact(v_t, 'person', null);
+  r2 := pg_temp.contact(v_t, null, 'No Entity');
+  r3 := pg_temp.contact(v_t, 'robot', 'Wrong Entity');
+  r4 := pg_temp.contact(v_t, 'person', 'Named Person');
+  r4 := pg_temp.upd(v_t, 'upsert_contact', pg_temp.as_id(r4), 'contact', '{"hashes": {"name": null}}'::jsonb);
+  perform pg_temp.t_check('R12 a contact with no name, no entity or an unknown entity is refused, and so is clearing its name',
+    pg_temp.refused(r1) and pg_temp.refused(r2) and pg_temp.refused(r3) and pg_temp.refused(r4)
+    and r1->>'question' like 'What is the name of {{item:%' and pg_temp.live(v_t, 'contact') = 1,
+    format('%s / %s / %s / %s', r1, r2, r3, r4));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_p uuid;
+  v_o uuid;
+  r1 jsonb;
+  r2 jsonb;
+  r3 jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L201');
+  v_p := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'Pat Person'));
+  v_o := pg_temp.as_id(pg_temp.contact(v_t, 'organization', 'Org Inc.'));
+  r1 := pg_temp.mrole(v_t, v_m, v_p, 'co_party');
+  r2 := pg_temp.affil(v_t, v_o, v_o);
+  r3 := pg_temp.affil(v_t, v_p, v_p);
+  perform pg_temp.t_check('R12 an unknown role is refused, and an affiliation whose person is an organization or whose organization is a person is refused',
+    pg_temp.refused(r1) and pg_temp.refused(r2) and pg_temp.refused(r3)
+    and r2->>'question' = format('Is {{item:%s}} a person?', v_o)
+    and r3->>'question' = format('Is {{item:%s}} an organization?', v_p)
+    and pg_temp.live(v_t, 'matter_role') = 0 and pg_temp.live(v_t, 'affiliation') = 0,
+    format('%s / %s / %s', r1, r2, r3));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_p uuid;
+  r1 jsonb;
+  r2 jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L202');
+  v_p := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'Gone Person'));
+  r1 := pg_temp.w(v_t, 'merge_contact', jsonb_build_array(pg_temp.op('delete', v_p, 'contact')));
+  r2 := pg_temp.mrole(v_t, v_m, v_p, 'expert');
+  perform pg_temp.t_check('R12 a contact no item points to is deleted, and a role linked to it afterwards is refused',
+    pg_temp.saved(r1) and pg_temp.refused(r2) and pg_temp.live(v_t, 'matter_role') = 0,
+    format('%s / %s', r1, r2));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_p uuid;
+  v_o uuid;
+  r1 jsonb;
+  r2 jsonb;
+  r3 jsonb;
+  r4 jsonb;
+  a1 jsonb;
+  a2 jsonb;
+  a3 jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L203');
+  v_p := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'Twice Person'));
+  v_o := pg_temp.as_id(pg_temp.contact(v_t, 'organization', 'Twice Firm'));
+  r1 := pg_temp.mrole(v_t, v_m, v_p, 'client');
+  r2 := pg_temp.mrole(v_t, v_m, v_p, 'client');
+  r3 := pg_temp.mrole(v_t, v_m, v_p, 'client', 'proc-1');
+  r4 := pg_temp.mrole(v_t, v_m, v_p, 'client', 'proc-2');
+  a1 := pg_temp.affil(v_t, v_p, v_o, '2019-05-01');
+  a2 := pg_temp.affil(v_t, v_p, v_o, '2019-05-01');
+  a3 := pg_temp.affil(v_t, v_p, v_o, '2024-02-01');
+  perform pg_temp.t_check('R12 the same role twice is one item, the same role in two proceedings is two, and an affiliation with a new from is a second one',
+    pg_temp.saved(r1) and pg_temp.saved(r2) and pg_temp.as_id(r2) = pg_temp.as_id(r1)
+    and pg_temp.saved(r3) and pg_temp.saved(r4) and pg_temp.as_id(r3) <> pg_temp.as_id(r4)
+    and pg_temp.live(v_t, 'matter_role') = 3
+    and pg_temp.as_id(a2) = pg_temp.as_id(a1) and pg_temp.as_id(a3) <> pg_temp.as_id(a1)
+    and pg_temp.live(v_t, 'affiliation') = 2,
+    format('%s / %s / %s / %s / %s / %s / %s', r1, r2, r3, r4, a1, a2, a3));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_keep uuid;
+  v_spare uuid;
+  v_org uuid;
+  v_role uuid;
+  v_aff uuid;
+  r1 jsonb;
+  r2 jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L204');
+  v_keep := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'John Smith'));
+  v_spare := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'J. Smith'));
+  v_org := pg_temp.as_id(pg_temp.contact(v_t, 'organization', 'Smith Law'));
+  v_role := pg_temp.as_id(pg_temp.mrole(v_t, v_m, v_spare, 'opposing_party'));
+  v_aff := pg_temp.as_id(pg_temp.affil(v_t, v_spare, v_org));
+  r1 := pg_temp.w(v_t, 'merge_contact', jsonb_build_array(pg_temp.op('delete', v_spare, 'contact')));
+  r2 := pg_temp.w(v_t, 'merge_contact', jsonb_build_array(
+    pg_temp.op('update', v_role, 'matter_role', jsonb_build_object('links', jsonb_build_object('contact', v_keep))),
+    pg_temp.op('update', v_aff, 'affiliation', jsonb_build_object('links', jsonb_build_object('person', v_keep))),
+    pg_temp.op('delete', v_spare, 'contact')));
+  perform pg_temp.t_check('R12 a contact an item still points to is not deleted; one write that re-points its items and then deletes it is saved',
+    pg_temp.refused(r1) and r1->>'question' like format('Which contact replaces {{item:%s}} on {{item:%%', v_spare)
+    and pg_temp.saved(r2) and (pg_temp.item(v_t, v_spare)).deleted
+    and (pg_temp.item(v_t, v_role)).links->>'contact' = v_keep::text
+    and (pg_temp.item(v_t, v_aff)).links->>'person' = v_keep::text,
+    format('%s / %s', r1, r2));
+end $t$;
+
+-- =============================================================================
 -- Seed
 -- =============================================================================
 
