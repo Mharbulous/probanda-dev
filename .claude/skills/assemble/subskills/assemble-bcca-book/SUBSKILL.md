@@ -47,7 +47,7 @@ only -- see Error handling.
 2. **Locate the inputs.** Find `bcca-book.md` in the substance folder for
    the filing kind the practitioner named -- `bcca-book-substance` for a
    `bcca_stay_response` filing, `bcca-factum-substance` for a `bcca_factum`
-   filing, both under the case-data folder (the one `coclerk.json`'s
+   filing, both under the case-data folder (the one `probanda.json`'s
    `case_data_dir` names, passed by `/draft`; in Cowork, request access to that
    folder itself, never a parent or the firm root). Resolve the folder
    from the kind rather than probing both: a matter may hold one of each,

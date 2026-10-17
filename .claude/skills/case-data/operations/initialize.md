@@ -1,7 +1,7 @@
 # initialize — set up a new matter's case-data databases
 
-Runs **once per matter**, and is the one operation that runs **before `coclerk.json`
-exists** — it creates the pointer itself (Step 1) rather than reading one. Every operation
+Runs **once per matter**, and is the one operation that runs **before the matter pointer
+(`probanda.json`) exists** — it creates the pointer itself (Step 1) rather than reading one. Every operation
 derives `matter_root` from the current session's proven host path; this one also writes the
 initial breadcrumb. It reads
 `../shared/conventions.md` first (for the storage layout, the tool contract, and the
@@ -32,7 +32,8 @@ directly beneath. If it is absent, run `matter-skeleton.md` first. Steps 4–5's
 
 Before doing anything, confirm this matter has never been initialized:
 
-- **No `coclerk.json`** at the matter root, and none at the legacy `9. AI\coclerk.json`.
+- **No pointer** at the matter root — neither `probanda.json` nor the legacy name
+  `probanda.json` — and none at the legacy `9. AI\probanda.json`.
 - **No existing `.sqlite` files** in the resolved case-data folder (`main.sqlite`,
   `law.sqlite`, or `privileged.sqlite`).
 
@@ -53,16 +54,17 @@ If the pointer is `schema_version` 5 but **no `.sqlite` files** exist: Steps 1�
 
 ## Pointer upgrade (stale pointer, database already exists)
 
-Runs only when `coclerk.json` exists at a `schema_version` below 5 and the
+Runs only when a pointer (`probanda.json`, else `coclerk.json`) exists at a `schema_version` below 5 and the
 matter's `.sqlite` files already exist. Never runs schema DDL and never reseeds
 `matter_metadata` — the matter's data is untouched by this branch.
 
 The same `matter_root` derivation rule as full initialize applies: host-namespace
 path only, proven before writing.
 
-1. Read the existing `coclerk.json` (native Read).
-2. Derive `matter_root` = the absolute host path of the folder containing this
-   `coclerk.json` (this session's own path to that folder). Sanity-check that
+1. Read the existing pointer (native Read): `probanda.json` when it exists, else
+   `probanda.json` (a sub-v5 pointer predates the rename, so it is normally `probanda.json`).
+2. Derive `matter_root` = the absolute host path of the folder containing that
+   pointer (this session's own path to that folder). Sanity-check that
    `4. LAWYER BRIEF\` exists directly under it — if it doesn't, halt and report
    rather than guessing a wrong root (a wrong `matter_root` would misdirect the
    `evidence.sql` rebuild boundary onto another matter's data).
@@ -70,10 +72,12 @@ path only, proven before writing.
    database identity (`main.matter_metadata`, else the matter folder name).
    Treat the stored path only as a nominee and retain it only if it currently
    contains `main.sqlite`. Keep `evidence_sql_path` unchanged.
-4. Write `coclerk.json` back at the matter root (native Write, plain text — not
+4. Write the pointer back at the matter root (native Write, plain text — not
    a `case_data__*` call) in the `schema_version` 5 form (§2.2 of
    `../shared/conventions.md`): `schema_version: 5`, the derived `matter_root`,
    the re-derived `case_data_dir`, and the unchanged `evidence_sql_path`.
+   Write it twice, same content: as `probanda.json` and as `probanda.json`
+   (migrate-on-write, §2.1/§2.3 of `../shared/conventions.md`).
 5. Verify with one `case_data__query` call (e.g. a trivial `SELECT 1`) against
    the new pointer — this is the actual proof the upgrade succeeded, not the
    write in step 4 alone.
@@ -139,7 +143,9 @@ path only, proven before writing.
    The collapse is presentational only. Step 4 seeds both keys either way — the
    `matter_id` key takes the matter reference and the `matter_no` key takes the
    matter number, including when the two values are identical.
-4. Write `coclerk.json` at the matter root (native Write) in the schema_version 5 form
+4. Write the pointer at the matter root (native Write), twice with the same content — as
+   `probanda.json` and as `coclerk.json` (migrate-on-write, §2.1 of `../shared/conventions.md`,
+   so an older copy of the plugin still finds the matter) — in the schema_version 5 form
    (§2.2): `matter_root` = this session's own absolute host path to the matter folder;
    `case_data_dir` = the resolved `0. CASE DATA\<matter_id> <short_name>\` path.
    This stored value is an advisory breadcrumb: subsequent calls derive live
@@ -147,7 +153,7 @@ path only, proven before writing.
    `evidence_sql_path` = `..\0. CASE DATA\<matter_id> <short_name>\evidence.sql`, the
    dump beside the binaries, relative to the matter folder. This is a plain-text
    write via the native file-write tool — not a `case_data__*` call, and not staged —
-   `coclerk.json` is a plaintext artifact that lives safely in the synced matter tree
+   the pointer is a plaintext artifact that lives safely in the synced matter tree
    (§2.1). Every subsequent `case_data__*` call in this operation (Steps 4–5) reads
    `matter_root` back out of the pointer you just wrote.
 
@@ -267,6 +273,6 @@ separate steps.
 ## Step 5 — report
 
 Report every INSERT (the `matter_metadata` seed rows) and the resolved paths:
-`coclerk.json`, the case-data folder, and `evidence.sql`. Suggest the next step: run
+`probanda.json`, the case-data folder, and `evidence.sql`. Suggest the next step: run
 `proceedings-profile` to record the proceeding and parties, or `ingest` to load the
 first document.

@@ -20,7 +20,7 @@ emitter runs. Its paragraph numbers and authorities list match this file's.
 
 The `publish-bcca-factum` subskill writes the emitter's returned markdown
 verbatim to `{case-data folder}\bcca-factum-substance\bcca-factum.md` (the
-case-data folder being the one `coclerk.json`'s `case_data_dir` names),
+case-data folder being the one `probanda.json`'s `case_data_dir` names),
 then runs:
 
 ```

@@ -29,7 +29,7 @@ const KILLED_WRITE_ADVICE =
   "The write may already have committed: verify it by reading it back before retrying (/practice-data Conventions).";
 
 // Resolves the practice.db path (spec §5): COCLERK_DB_PATH wins (test override);
-// otherwise the Roaming coclerk.json `case_data_root` + `_practice\<name>`.
+// otherwise the Roaming probanda.json `case_data_root` + `_practice\<name>`.
 export function resolvePracticeDbPath(env: NodeJS.ProcessEnv = process.env): string {
   if (env.COCLERK_DB_PATH) return env.COCLERK_DB_PATH;
   const root = resolveCaseDataRoot(env);

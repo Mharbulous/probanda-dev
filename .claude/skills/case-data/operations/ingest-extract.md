@@ -1,6 +1,6 @@
 # Operation: ingest-extract
 
-Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read `../shared/conventions.md` first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 This operation extracts a case-data document from scratch and writes the resulting sources, facts, positions, evidence links, provenance, authorities, concepts, and criteria. It is reached from `../operations/ingest.md` when the gate determines a document is new, previously failed, or otherwise needs full extraction. It also owns the legal-authority ingestion path and the bulk `6. LAW\` classification cascade.
 

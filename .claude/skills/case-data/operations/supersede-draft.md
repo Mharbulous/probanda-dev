@@ -1,6 +1,6 @@
 # Operation: supersede-draft
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Internal. Reached from [`ingest.md`](ingest.md) (a file with no hash match, a match carrying `SUPERSEDE-PENDING:`, or, for §6c, a superseded match whose file was not moved), [`extract-facts.md`](extract-facts.md) §3b, and [`ingest-unattended.md`](ingest-unattended.md).
 

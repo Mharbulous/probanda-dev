@@ -10,7 +10,7 @@ their law are allowed to come from.
 <case-data folder>/bill-of-costs/
 ```
 
-The case-data folder is the one `coclerk.json`'s `case_data_dir` names. The
+The case-data folder is the one `probanda.json`'s `case_data_dir` names. The
 chain is a Code-tab (PC) job: the Cowork sandbox cannot see this folder, so each
 member refuses in Cowork before any tool call or file write (#1273).
 

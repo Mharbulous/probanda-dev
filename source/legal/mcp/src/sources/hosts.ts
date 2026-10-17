@@ -83,7 +83,7 @@ function filled(value: unknown): value is string {
  * `<case_data_root>\_practice\knowledge\_hosts.json`, read afresh on every call.
  * Without a configured case data root there is no overlay, so no firm hosts: the
  * shipped constant alone applies, and a fetch to a firm host is refused, naming it.
- * A configuration that is present but broken (coclerk.json not JSON, the configured
+ * A configuration that is present but broken (probanda.json not JSON, the configured
  * root missing) fails hard rather than reading as "no firm hosts".
  */
 export function overlayFirmHosts(env: NodeJS.ProcessEnv = process.env): string[] {
@@ -98,7 +98,7 @@ export function overlayFirmHosts(env: NodeJS.ProcessEnv = process.env): string[]
 }
 
 /**
- * Whether coclerk.json (where resolveCaseDataRoot reads it) exists and names a
+ * Whether probanda.json (where resolveCaseDataRoot reads it) exists and names a
  * case_data_root. A file that does not parse counts as configured, so its error surfaces.
  */
 function caseDataRootConfigured(env: NodeJS.ProcessEnv): boolean {

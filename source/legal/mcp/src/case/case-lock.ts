@@ -22,7 +22,7 @@
 // and is caught instead by the plan-token freshness check.
 //
 // Keyed on matter_root rather than case_data_dir so the lock can be taken
-// BEFORE pointer resolution, which itself rewrites coclerk.json and may move
+// BEFORE pointer resolution, which itself rewrites probanda.json and may move
 // binaries out of the legacy `9. AI` folder.
 
 import { createHash, randomUUID } from "node:crypto";

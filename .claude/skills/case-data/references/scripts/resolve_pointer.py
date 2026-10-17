@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """resolve_pointer.py — CLI wrapper around the pointer-resolution preamble.
 
-Resolves a matter's coclerk.json pointer to concrete database paths and prints
+Resolves a matter's probanda.json pointer (or legacy coclerk.json) to concrete database paths and prints
 them as JSON. A thin CLI over resolve_paths.resolve_pointer (which ports the
 inline preamble in ../../shared/conventions.md §2.3) and the staging helpers in
 fuse_safe_io.
@@ -21,7 +21,7 @@ import resolve_paths
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Resolve coclerk.json to database paths.")
+    ap = argparse.ArgumentParser(description="Resolve the matter pointer (probanda.json) to database paths.")
     ap.add_argument('matter_root', help="Path to the matter root folder.")
     ap.add_argument('--migrate-only', action='store_true',
                     help="Bypass the schema-version guard (migrate operation only).")

@@ -34,7 +34,7 @@
 //      (extracted under an app-data session directory, no .git or
 //      .claude/skills anywhere above it -- confirmed by inspection) this
 //      correctly finds nothing and falls through.
-//   3. %APPDATA%\Coclerk\coclerk.json -> optional "repo_root" key. Per-device
+//   3. %APPDATA%\Coclerk\probanda.json -> optional "repo_root" key. Per-device
 //      config that already exists for this purpose (see
 //      practice/backend.ts's "case_data_root", which this mirrors).
 //   4. Marker-validated probe of the conventional checkout location,
@@ -110,7 +110,7 @@ interface AutoDetectResult {
 }
 
 /** Positive results only -- a cached negative would survive the user creating
- * coclerk.json a moment later. Keyed on everything a result could depend on. */
+ * probanda.json a moment later. Keyed on everything a result could depend on. */
 const cache = new Map<string, string>();
 
 function autoDetect(env: NodeJS.ProcessEnv, startDir: string): AutoDetectResult {

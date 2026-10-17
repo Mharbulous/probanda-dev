@@ -19,8 +19,8 @@ import {
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { POINTER_FILES } from "../files/matter-root.js";
 
-const MARKER = "coclerk.json";
 const TRASH = "TRASH";
 const TRASH_LOG = ".trash-log.jsonl";
 // Path segments this tool never moves out of: the databases folder and the firewall zones.
@@ -66,9 +66,12 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date()): Tr
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => isFile(pathWin32.join(dir, MARKER)));
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin32.join(dir, marker))));
   if (root === undefined) {
-    throw new DataServerError(`no ${MARKER} at or above the path; not a client-matter file: ${target}`, "not_a_matter_file");
+    throw new DataServerError(
+      `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
+      "not_a_matter_file"
+    );
   }
 
   const rel = pathWin32.relative(root, target);
@@ -76,12 +79,12 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date()): Tr
   const first = relParts[0]?.toLowerCase();
   if (
     relParts.length === 0 ||
-    (relParts.length === 1 && first === MARKER) ||
+    (relParts.length === 1 && POINTER_FILES.includes(first)) ||
     first === TRASH.toLowerCase() ||
     target.split(pathWin32.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))
   ) {
     throw new DataServerError(
-      `path is protected (the workspace root, ${MARKER}, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
+      `path is protected (the workspace root, the matter pointer, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }

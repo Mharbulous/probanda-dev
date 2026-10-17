@@ -1,9 +1,9 @@
 // drafting_forms__open_session (#591, decided in #590): one session-entry call from a matter
 // folder. It replaces the hops a session used to pay before bootstrap -- proving the folder,
-// reading coclerk.json for db_path, the migrate round trip and the matter lookup -- each of which
+// reading probanda.json for db_path, the migrate round trip and the matter lookup -- each of which
 // also cost a model turn (#580: Path A 106 s, 83% model gap).
 //
-// The coclerk.json convention is /drafting-data's (its SKILL.md Configuration stays the
+// The probanda.json convention is /drafting-data's (its SKILL.md Configuration stays the
 // documented owner); this is its executable form. The resolver is READ-ONLY on purpose: it never
 // heals, rewrites or moves anything. case/backend.ts's resolve_pointer does all three, so it is
 // not reused here -- a missing or legacy pointer is refused and handed to /case-data.
@@ -77,7 +77,7 @@ export interface OpenSessionResult extends BootstrapResult {
   /** Present only when a precondition leaves a write path unusable for the whole session; the
    * session states each member and takes no job, while read-only work goes on (/draft section 6).
    * `practice_config_unreachable`: the case data root resolves neither from the per-user
-   * coclerk.json nor from this matter's `0. CASE DATA` folder, so drafting_data__create_writing,
+   * probanda.json nor from this matter's `0. CASE DATA` folder, so drafting_data__create_writing,
    * which resolves it the same way, would fail. Never set for a matter the practice database
    * simply does not list; that stays in matter_lookup. */
   blocking?: { code: string; message: string; remedy: string }[];
@@ -301,10 +301,10 @@ export async function lookUpMatter(
 const PRACTICE_CONFIG_REMEDY =
   "Repair through /practice-data: practice_data__config_status (with this matter_root) reports what is missing and any " +
   "candidate root, and practice_data__config_set_root sets case_data_root only on the practitioner's yes; then call " +
-  "drafting_forms__open_session again. open_session never writes coclerk.json.";
+  "drafting_forms__open_session again. open_session never writes probanda.json.";
 
 /** The case data root resolved exactly as drafting_data__create_writing resolves it (dispatch.ts):
- * the per-user coclerk.json, else this matter's `0. CASE DATA` folder. A failure is the session's
+ * the per-user probanda.json, else this matter's `0. CASE DATA` folder. A failure is the session's
  * one blocking precondition, reported at entry instead of at the first Writing. Writes nothing. */
 function practiceConfigBlocking(dbPath: string): NonNullable<OpenSessionResult["blocking"]> {
   try {

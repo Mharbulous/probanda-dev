@@ -128,7 +128,7 @@ This verification runs after the **{phase}** phase.
 
 ## Rules
 - If the output contains only "OK" lines and no "WARN" lines, the document passed.
-- If there are WARN lines about residual placeholders, check if they are in the known leave-blank set (like [mmmm d, yyyy], [number], [judge-date], [deponent name], [CONCISE SUMMARY], [OTHER ENACTMENT]). Leave-blank warnings are acceptable. A [FIRM ADDRESS], [FIRM EMAIL] or [FIRM FAX] token is NOT a leave-blank: those are filled from the firm block in coclerk.json, so a surviving one is a failure.
+- If there are WARN lines about residual placeholders, check if they are in the known leave-blank set (like [mmmm d, yyyy], [number], [judge-date], [deponent name], [CONCISE SUMMARY], [OTHER ENACTMENT]). Leave-blank warnings are acceptable. A [FIRM ADDRESS], [FIRM EMAIL] or [FIRM FAX] token is NOT a leave-blank: those are filled from the firm block in probanda.json, so a surviving one is a failure.
 - If there are WARN lines about actual unfilled placeholders that should have been substituted, the document failed.
 - ZWSP warnings are failures.
 - mc:Ignorable warnings are failures.{phase_rules}

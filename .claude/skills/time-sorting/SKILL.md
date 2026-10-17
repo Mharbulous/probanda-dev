@@ -179,7 +179,7 @@ Activities use source-native granularity — no rounding to billing increments. 
 
 ### Step 0: Check Timeline Data
 
-Read the time-tracking registry: `time_tracking` in the machine-level `coclerk.json` (location and No-registry rule: `protocols/FirstSetup.md`). If `time_tracking.sources` is absent or empty, stop and run that protocol first; never proceed without a registry. After the protocol completes, continue from Step 1.
+Read the time-tracking registry: `time_tracking` in the machine-level `probanda.json` (location and No-registry rule: `protocols/FirstSetup.md`). If `time_tracking.sources` is absent or empty, stop and run that protocol first; never proceed without a registry. After the protocol completes, continue from Step 1.
 
 Check that build-timeline has populated data for the target date:
 
@@ -229,7 +229,7 @@ For each ID in the array, fetch the full activity row:
 
 ``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "activity:{id}"`
 
-Build a working list of activity rows sorted by `start_ts`. Convert UTC timestamps to local time (from `coclerk.json` → `time_tracking.timezone`, default `"America/Vancouver"`) for display and gap-fill calculations. Work in local time for business-hours logic; store results in local `HH:MM` strings in the day object.
+Build a working list of activity rows sorted by `start_ts`. Convert UTC timestamps to local time (from `probanda.json` → `time_tracking.timezone`, default `"America/Vancouver"`) for display and gap-fill calculations. Work in local time for business-hours logic; store results in local `HH:MM` strings in the day object.
 
 Also load events for context signals:
 

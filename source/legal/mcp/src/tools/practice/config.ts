@@ -13,7 +13,7 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 
 import { loadCloudKey } from "../../cloud-key.js";
-import { configPath } from "../../config-path.js";
+import { CONFIG_FILE, configPath, configWritePaths, LEGACY_CONFIG_FILE } from "../../config-path.js";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { caseDataRootFromMatterRoot } from "../../files/matter-root.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
@@ -73,7 +73,7 @@ function redirectedCopies(env: NodeJS.ProcessEnv): string[] {
     return [];
   }
   return names
-    .map((name) => join(packages, name, "LocalCache", "Roaming", "Coclerk", "coclerk.json"))
+    .flatMap((name) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join(packages, name, "LocalCache", "Roaming", "Coclerk", file)))
     .filter(isFile);
 }
 
@@ -258,11 +258,14 @@ export async function config_set_root(
   const previous = typeof config.case_data_root === "string" ? config.case_data_root : null;
   config.case_data_root = root;
   if (initialize) mkdirSync(join(root, "_practice"), { recursive: true });
-  mkdirSync(dirname(path), { recursive: true });
-  const temp = `${path}.${process.pid}.tmp`;
-  writeFileSync(temp, JSON.stringify(config, null, 2) + "\n", "utf-8");
-  renameSync(temp, path);
-  const result: ConfigSetRootResult = { path, created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config) };
+  const written = configWritePaths(env);
+  for (const target of written) {
+    mkdirSync(dirname(target), { recursive: true });
+    const temp = `${target}.${process.pid}.tmp`;
+    writeFileSync(temp, JSON.stringify(config, null, 2) + "\n", "utf-8");
+    renameSync(temp, target);
+  }
+  const result: ConfigSetRootResult = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config) };
   if (initialize) {
     // Opening the store creates practice.db and its schema at the root just written.
     new PracticeStore(env).pendingCount();

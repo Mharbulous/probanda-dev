@@ -161,11 +161,11 @@ The extension is kept for this send alone: all mail reading goes through the leg
 `mail__*` tools.
 Never call a Hostinger tool or endpoint (`email_call_api_read`, `email_call_api_write`).
 
-0. **Read the delivery identity.** Read the `briefing` block of the per-install `coclerk.json`
+0. **Read the delivery identity.** Read the `briefing` block of the per-install `probanda.json`
    (schema owned by `/practice-data`): `mailbox` (sending address), `to` (recipient) and
    `greeting_name`. If the block or any of its three values is absent, do not send and do not
    substitute any other address or name: record the data gap "Briefing delivery not configured:
-   coclerk.json has no complete `briefing` block" and go to step 5. If `mail_send_email` is not in
+   probanda.json has no complete `briefing` block" and go to step 5. If `mail_send_email` is not in
    this session's tools, record "iCloud mail extension not available in this session" and go to
    step 5.
 1. **Confirm the sending address.** Call `mail_send_email` with the step 2 fields and

@@ -1,11 +1,11 @@
 // The page API's port and its per-page token, shared by the listener (server.ts) and the render
 // that writes the Loose Threads page.
 //
-// The port is `page_api_port` in the per-device coclerk.json (config-path.ts), 47615 when unset.
+// The port is `page_api_port` in the per-device probanda.json (config-path.ts), 47615 when unset.
 // The render embeds the same port it reads here.
 //
 // A page's token is HMAC-SHA256(secret, db_path + "\n" + proceeding_id), hex. The secret is 32
-// random bytes in `page-api.secret` beside coclerk.json, created on first need with an exclusive
+// random bytes in `page-api.secret` beside probanda.json, created on first need with an exclusive
 // create, so every data server process on the device, and every restart, computes the same token
 // and accepts only a db_path and proceeding a render wrote. Nothing is kept in memory.
 
@@ -20,7 +20,7 @@ export const DEFAULT_PAGE_API_PORT = 47615;
 const SECRET_FILE = "page-api.secret";
 const SECRET_BYTES = 32;
 
-/** The listener's port: coclerk.json's `page_api_port`, else 47615. A value that is not a port is refused. */
+/** The listener's port: probanda.json's `page_api_port`, else 47615. A value that is not a port is refused. */
 export function pageApiPort(env: NodeJS.ProcessEnv = process.env): number {
   const path = configPath(env);
   if (!existsSync(path)) return DEFAULT_PAGE_API_PORT;
@@ -32,7 +32,7 @@ export function pageApiPort(env: NodeJS.ProcessEnv = process.env): number {
   return value;
 }
 
-/** The secret's path: beside coclerk.json. */
+/** The secret's path: beside probanda.json. */
 export function pageApiSecretPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(dirname(configPath(env)), SECRET_FILE);
 }

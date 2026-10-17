@@ -82,7 +82,7 @@ at binding.
    book overwrite a filed stay response's. The factum's folder is the one
    `bcca-factum.md` already uses.
 
-   The case-data folder is the one `coclerk.json`'s `case_data_dir` names.
+   The case-data folder is the one `probanda.json`'s `case_data_dir` names.
    It must already exist: if it does not, stop and tell the practitioner to
    run `/case-data` initialize; never create it.
 

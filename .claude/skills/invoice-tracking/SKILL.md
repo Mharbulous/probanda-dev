@@ -50,7 +50,7 @@ Downstream skills depend on these field names and semantics. Renaming a field or
 
 When the user provides an invoice CSV:
 
-1. Check `coclerk.json` for `accounting.invoice_mapping` (path resolution and config live in ``practice-data``).
+1. Check `probanda.json` for `accounting.invoice_mapping` (path resolution and config live in ``practice-data``).
 2. **If `invoice_mapping` is missing:** run the **First Import Protocol** below, then continue from step 3.
 3. Load column mapping from `accounting.invoice_mapping`.
 4. Parse the CSV with Python's `csv` module using the confirmed mapping. Build one normalized row object per CSV line with these keys:
@@ -69,7 +69,7 @@ When the user provides an invoice CSV:
 
 When `accounting.invoice_mapping` is absent:
 
-1. Ask the user what accounting system they use (if not already in `accounting.system`). Write it back to `coclerk.json`.
+1. Ask the user what accounting system they use (if not already in `accounting.system`). Write it back to `probanda.json`.
 2. Show the user a sample of the CSV headers (first row).
 3. Ask the user to confirm which column maps to each required field:
 
@@ -84,7 +84,7 @@ When `accounting.invoice_mapping` is absent:
    | `status` | Invoice status (e.g. outstanding, paid, partial) |
 
 4. Confirm the date format (e.g. `YYYY-MM-DD`, `MM/DD/YYYY`).
-5. Write the confirmed mapping to `coclerk.json` under `accounting.invoice_mapping`:
+5. Write the confirmed mapping to `probanda.json` under `accounting.invoice_mapping`:
 
 ```json
 "invoice_mapping": {

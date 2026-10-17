@@ -12,7 +12,7 @@ For one active matter, pass the live host `matter_root` to a trivial
 For a read-only firm sweep in a local E1 environment, run:
 
 ```text
-python references/scripts/check_pointers.py "<Litigation - Documents root>" [--config "<AppData\Roaming\Coclerk\coclerk.json>"]
+python references/scripts/check_pointers.py "<Litigation - Documents root>" [--config "<AppData\Roaming\Coclerk\probanda.json>"]
 ```
 
 The CLI validates pointer schema and roots, all three SQLite files and headers,

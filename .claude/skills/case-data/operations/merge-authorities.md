@@ -1,6 +1,6 @@
 # Operation: merge-authorities
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Merges two `law.authorities` rows that are the **same case or statute** entered twice — collapsing the duplicate onto a surviving canonical row and tombstoning the other. It is the **second** sanctioned writer of law-side rows (the first is `ingest-extract`; text corrections belong to [`amend-law.md`](amend-law.md)), scoped strictly to **human-approved duplicate merges**. See design-decisions.md decision #22.
 

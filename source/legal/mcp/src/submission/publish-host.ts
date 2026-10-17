@@ -5,11 +5,11 @@
 // lands in the VM, so a fill run there writes nothing the practitioner receives. This server runs on
 // the host, so it runs the fill itself and returns the fill's JSON line unchanged. The server, not
 // the caller, decides every path: the matter folder is canonicalised, the case-data folder is the
-// one its coclerk.json names and must hold db_path, the Writing folder is one segment under the
+// one its probanda.json names and must hold db_path, the Writing folder is one segment under the
 // matter's one 0. DRAFT folder (publish-general and publish-bcca-factum write that folder's top
 // instead), and working files go only in the named subfolder of the case-data folder. Anything
 // resolving elsewhere, through a link included, is refused. assemble-tools.ts runs assemble-general's
-// binder through the same helpers (#1321, ADR 0027), taking the case-data folder from coclerk.json
+// binder through the same helpers (#1321, ADR 0027), taking the case-data folder from probanda.json
 // with no db_path, since the bind never opens the database (#1427).
 
 import { existsSync, readdirSync } from "node:fs";
@@ -60,7 +60,7 @@ export const PUBLISH_FILL_TIMEOUT_MS = 55_000;
 export interface PublishTarget {
   /** The canonical matter folder. */
   root: string;
-  /** The canonical case-data folder: coclerk.json's case_data_dir, which must hold db_path. */
+  /** The canonical case-data folder: probanda.json's case_data_dir, which must hold db_path. */
   caseData: string;
   /** The Writing folder, resolved: one segment under the matter's one 0. DRAFT folder. */
   writing: string;

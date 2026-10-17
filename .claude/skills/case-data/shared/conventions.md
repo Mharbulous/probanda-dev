@@ -14,7 +14,7 @@ All database I/O runs through three host-side MCP tools — `case_data__query` (
 
 One thing still happens in the calling session, not the backend — never via a runtime `open()`, which is unsafe on a mediated/FUSE-style mount:
 
-- **Read `coclerk.json`** from the matter root (native file-read tool — it is a matter file) to obtain `matter_root` (§2.2) — required on every `case_data__*` call.
+- **Read the matter pointer** — `probanda.json`, else the legacy `coclerk.json` (§2.1) — from the matter root (native file-read tool — it is a matter file) to obtain `matter_root` (§2.2) — required on every `case_data__*` call.
 
 A write does not read `references/triggers.sql`: `case_data__execute` loads it itself (§2.3). When an operation does read a file under `references/` (for example `queries.sql`), it is skill source, not a matter file: fetch it however this skill's own content arrived.
 
@@ -30,13 +30,13 @@ In a local command-line environment, the utility scripts under `references/scrip
 
 | Artifact | Location |
 |---|---|
-| `coclerk.json` (pointer) | matter root, or legacy fallback `9. AI\coclerk.json` |
+| `probanda.json` (pointer) | matter root. A reader falls back to `coclerk.json` (the pre-rename name, kept updated by every pointer write so an older copy of the plugin still finds the matter), then to the legacy `9. AI\coclerk.json` |
 | `main.sqlite`, `law.sqlite`, `privileged.sqlite` | native `0. CASE DATA\<matter_id> <short_name>\` — a **sibling** of the matter folder, inside the SharePoint-synced library |
 | `evidence.sql` (text dump) | beside the binaries, in `0. CASE DATA\<matter_id> <short_name>\` |
 
 The **staging discipline** is load-bearing, not the folder location. `0. CASE DATA` is itself inside the SharePoint-synced library, so no folder choice avoids the sync exposure — a synced/FUSE-style mount serves stale file-size metadata that corrupts binary SQLite reads and writes (see §1, E2). What keeps the binaries safe is never leaving a live handle on synced storage: temp-copy staging, `DELETE` journal, copy-back. A future "simplifier" MUST NOT operate on the native binaries in place or relocate the temp-staging flow. The pointer-resolution code below carries this same design note at the path constants for the same reason.
 
-### 2.2 `coclerk.json` pointer form (schema_version 5)
+### 2.2 `probanda.json` pointer form (schema_version 5)
 
 ```json
 {
@@ -63,7 +63,7 @@ A pointer at any version other than 5 is stale: every `case_data__*` call hard-f
 
 Pointer resolution, temp-copy staging, `ATTACH`, the schema-version guard, and the `evidence.sql` dump all run **inside** the `case_data__query` / `case_data__execute` tools now (permission-fatigue conversion, 2026-07-15+) — no operation file opens a connection, stages a copy, or runs `ATTACH` itself. Every operation follows the same three steps:
 
-1. Prove the current matter folder through a host-namespace surface and use that live absolute path as `matter_root` (§2.2). Read `coclerk.json` only to confirm initialization and inspect breadcrumbs; never reuse its stored `matter_root` as the live argument.
+1. Prove the current matter folder through a host-namespace surface and use that live absolute path as `matter_root` (§2.2). Read the pointer (`probanda.json`, else `coclerk.json`) only to confirm initialization and inspect breadcrumbs; never reuse its stored `matter_root` as the live argument.
 2. For a write, pass only `matter_root` and `sql_script`. `case_data__execute` loads the cross-database trigger layer itself, on every call, from this skill's own `references/triggers.sql` (the installed plugin's bundled skill source first, else the checkout, the same place `case_data__migrate` reads its reference SQL). If that file cannot be found or is empty, the call fails before anything is staged or committed: the tool refuses to write without the trigger layer (invariant I3).
 3. Call the tool:
    - **`case_data__query`** — `{ matter_root, sql, params? }`. `sql` must be a single `SELECT`/`WITH`/`PRAGMA` statement; the tool rejects anything else (use `case_data__execute` for writes).
@@ -75,7 +75,7 @@ Pointer resolution, temp-copy staging, `ATTACH`, the schema-version guard, and t
 
    - **`case_data__migrate`** — `{ matter_root, mode, plan_token?, user_confirmation?, backup_id? }`. The schema-upgrade path; `plan` then `apply`, gated on a plan token from a fresh dry-run (`user_confirmation` echoes the plan's `user_confirmation_required` string). Full contract in `../operations/migrate.md`; run it through the `migration-runner` subagent, not inline.
 
-After taking the live `matter_root`, resolution treats the stored `case_data_dir` only as a proof-gated nomination, derives the live location when it is unusable, and heals the breadcrumb. A query never creates an empty database: if resolved `main.sqlite` is absent it fails with **no case database found**. Verify the matter's live `0. CASE DATA` folder and restore `main.sqlite`, or initialize a genuinely new matter.
+After taking the live `matter_root`, resolution treats the stored `case_data_dir` only as a proof-gated nomination, derives the live location when it is unusable, and heals the breadcrumb — written to `probanda.json` and, with the same content, to `coclerk.json` (migrate-on-write: a matter still on `coclerk.json` gains `probanda.json` at its first write, and the old name stays updated so an older copy of the plugin keeps working, until a later release removes it). A query never creates an empty database: if resolved `main.sqlite` is absent it fails with **no case database found**. Verify the matter's live `0. CASE DATA` folder and restore `main.sqlite`, or initialize a genuinely new matter.
 
 Writes are serialized per matter: `case_data__execute` and `case_data__migrate` take one shared cross-process lock, so a call may fail with **`lock_unavailable`** when another session is writing to or migrating the same matter. That is not a bug to work around — retry once the other session finishes. **`lock_unavailable` is the one execute failure that is safe to retry as-is**: it is refused before any staging, so nothing was written and the verify-before-retry rule above does not apply to it. `case_data__query` never takes the lock.
 

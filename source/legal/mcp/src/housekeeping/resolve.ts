@@ -80,7 +80,7 @@ export function templateRoot(env: NodeJS.ProcessEnv = process.env): string {
     caseData = resolveCaseDataRoot(env);
   } catch (err) {
     throw new DataServerError(
-      `the template matter cannot be located: it sits beside coclerk.json's "case_data_root", which did not resolve ` +
+      `the template matter cannot be located: it sits beside probanda.json's "case_data_root", which did not resolve ` +
         `(${(err as Error).message}). Fix "case_data_root", or set COCLERK_HOUSEKEEPING_TEMPLATE_ROOT.`,
       "template_missing"
     );

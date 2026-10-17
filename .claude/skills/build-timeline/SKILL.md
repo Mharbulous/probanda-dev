@@ -181,7 +181,7 @@ and never resolved, matched, or acted on.
 - `start_ts` / `end_ts` — always ISO 8601 in **UTC** (trailing `Z`). Storage
   is in UTC so that timestamps are unambiguous and independent of local
   offset changes (DST, travel). Display and user input use the practitioner's
-  local timezone, read from `coclerk.json` → `time_tracking.timezone`
+  local timezone, read from `probanda.json` → `time_tracking.timezone`
   (default `"America/Vancouver"` if unset) — converted to UTC before storage
   and back to local for display.
 - `raw_type` — the source's native classification, kept as-is, or `null` when
@@ -228,7 +228,7 @@ and never resolved, matched, or acted on.
 ### Step 0: First-run setup
 
 Read the time-tracking registry: `time_tracking` in the machine-level
-`coclerk.json` (location and No-registry rule:
+`probanda.json` (location and No-registry rule:
 `time-sorting/protocols/FirstSetup.md`). If `time_tracking.sources` is absent
 or empty, stop and run that protocol first; never proceed without a
 registry. On subsequent runs this check passes through immediately.
@@ -238,7 +238,7 @@ registry. On subsequent runs this check passes through immediately.
 Default target is today in the practitioner's local timezone. Accepted user
 inputs: a single date ("build timeline for 2026-04-15"), a relative date
 ("yesterday", "today"), or a range ("build timeline for this week"). Interpret
-the input in local time (from `coclerk.json` → `time_tracking.timezone`,
+the input in local time (from `probanda.json` → `time_tracking.timezone`,
 default `"America/Vancouver"` if unset),
 then convert to UTC for the concrete `[start_ts, end_ts]` pair used
 downstream. For example, "2026-04-15 in Vancouver" becomes the UTC range
@@ -246,7 +246,7 @@ downstream. For example, "2026-04-15 in Vancouver" becomes the UTC range
 
 ### Step 2: Iterate over enabled sources
 
-For each source in `coclerk.json` → `time_tracking.sources` where `enabled` is
+For each source in `probanda.json` → `time_tracking.sources` where `enabled` is
 true, perform the source-specific fetch per `source.reference` — the reference
 file path already recorded on the registry entry (see `time-sorting/protocols/FirstSetup.md`
 for the entry schema). No name→file mapping is maintained here; adding a
@@ -373,7 +373,7 @@ The practitioner can ask to inspect the raw timeline, but:
   the practitioner to narrow it — full-day dumps are what downstream skills
   are for, not this one.
 - The Time column is rendered in the practitioner's local timezone (from
-  `coclerk.json` → `time_tracking.timezone`, default `"America/Vancouver"` if
+  `probanda.json` → `time_tracking.timezone`, default `"America/Vancouver"` if
   unset), even though rows are stored in
   UTC. Conversion happens at render time only.
 - Overlapping activities are shown as separate rows, sorted by start time.

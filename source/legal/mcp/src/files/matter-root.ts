@@ -8,12 +8,21 @@ import { caseDataFolder } from "../case/backend.js";
 import { DataServerError } from "../errors.js";
 import { canonicalRoot } from "./scope.js";
 
-/** The coclerk.json schema version /case-data writes (case/backend.ts EXPECTED_SCHEMA_VERSION). */
+/** The matter pointer's file names: probanda.json first, then the legacy coclerk.json, which
+ * /case-data keeps updated with the same content so an older copy of the plugin still finds the
+ * matter. Either one marks an initialized matter. */
+export const POINTER_FILES: readonly string[] = ["probanda.json", "coclerk.json"];
+/** The pointer schema version /case-data writes (case/backend.ts EXPECTED_SCHEMA_VERSION). */
 const POINTER_SCHEMA_VERSION = 5;
 const LEGACY_ARTIFACTS_DIR = "9. AI";
 const SUBMISSION_DB_FILE = "submission.sqlite";
 /** /case-data's folder for every matter's case-data folder (case/backend.ts CASE_DATA_FOLDER). */
 const CASE_DATA_FOLDER = "0. CASE DATA";
+
+/** root's pointer file: probanda.json when it exists, else coclerk.json when it exists, else undefined. */
+export function findPointer(root: string): string | undefined {
+  return POINTER_FILES.map((name) => join(root, name)).find((path) => existsSync(path));
+}
 
 /**
  * Same legitimacy contract as `case_data__query`: an existing directory carrying
@@ -32,9 +41,9 @@ export function validateMatterRoot(matterRoot: string): string {
   if (!statSync(canon).isDirectory()) {
     throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
   }
-  if (!existsSync(pathWin32.join(canon, "coclerk.json"))) {
+  if (findPointer(canon) === undefined) {
     throw new DataServerError(
-      `matter_root has no coclerk.json — not an initialized matter: ${matterRoot}`,
+      `matter_root has no probanda.json or coclerk.json — not an initialized matter: ${matterRoot}`,
       "invalid_root"
     );
   }
@@ -61,7 +70,7 @@ export function findDraftDir(root: string): string | undefined {
 }
 
 /**
- * The matter's case-data folder, canonical: the one coclerk.json's `case_data_dir` names, as
+ * The matter's case-data folder, canonical: the one its pointer's `case_data_dir` names, as
  * `case_data__query` resolves it. It must already exist; this server never creates it.
  */
 export function existingCaseDataFolder(root: string, env: NodeJS.ProcessEnv = process.env): string {
@@ -74,18 +83,18 @@ export function existingCaseDataFolder(root: string, env: NodeJS.ProcessEnv = pr
 
 function pointerRefusal(root: string, why: string): DataServerError {
   return new DataServerError(
-    `${join(root, "coclerk.json")} ${why}. Run /case-data on this matter to initialize or repair coclerk.json; ` +
+    `${findPointer(root) ?? join(root, POINTER_FILES[0])} ${why}. Run /case-data on this matter to initialize or repair its pointer; ` +
       "drafting_forms__open_session never rewrites it.",
     "pointer_unusable"
   );
 }
 
-/** matter_root -> the case_data_dir its coclerk.json names, normalized, read-only. The coclerk.json
+/** matter_root -> the case_data_dir its pointer (findPointer) names, normalized, read-only. The pointer
  * convention is /drafting-data's; a missing or legacy pointer is refused and handed to /case-data. */
 export function resolveCaseDataDir(root: string): string {
   let pointer: Record<string, unknown>;
   try {
-    pointer = JSON.parse(readFileSync(join(root, "coclerk.json"), "utf-8").replace(/\0/g, "")) as Record<string, unknown>;
+    pointer = JSON.parse(readFileSync(findPointer(root) ?? join(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, "")) as Record<string, unknown>;
   } catch (err) {
     throw pointerRefusal(root, `is not readable JSON (${(err as Error).message})`);
   }
@@ -109,7 +118,7 @@ export function resolveDbPath(root: string): string {
 }
 
 /**
- * The case data root a matter's case-data folder sits in, for when the per-user coclerk.json is
+ * The case data root a matter's case-data folder sits in, for when the per-user probanda.json is
  * absent: its parent, accepted only when that parent is a `0. CASE DATA` folder or the folder
  * COCLERK_CASE_DATA_ROOT names (/case-data's own layout), and is an existing directory. Anything
  * else is null, never a guess, so the caller's missing-file error stands. Writes nothing.
@@ -130,7 +139,7 @@ export function caseDataRootFromCaseDataDir(dir: string, env: NodeJS.ProcessEnv)
   return statSync(canon).isDirectory() ? canon : null;
 }
 
-/** The same, from a matter folder through its coclerk.json. An invalid folder or an unusable
+/** The same, from a matter folder through its pointer. An invalid folder or an unusable
  * pointer refuses (invalid_root, pointer_unusable) rather than returning null. */
 export function caseDataRootFromMatterRoot(matterRoot: unknown, env: NodeJS.ProcessEnv): string | null {
   const root = validateMatterRoot(matterRoot as string);

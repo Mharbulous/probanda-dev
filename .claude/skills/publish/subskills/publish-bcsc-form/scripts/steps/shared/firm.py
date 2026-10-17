@@ -2,7 +2,7 @@
 
 The firm's address, e-mail and fax are firm-wide constants, not matter data,
 so they live beside the other device-level settings in the Roaming
-coclerk.json that /practice-data documents. Reading them here keeps the
+probanda.json (legacy name coclerk.json) that /practice-data documents. Reading them here keeps the
 practitioner from retyping the same three values on every filing.
 """
 from __future__ import annotations
@@ -13,16 +13,20 @@ from pathlib import Path
 
 
 def config_path() -> Path:
-    """Locate the coclerk.json the MCP runtime reads (mcp/src/config-path.ts): the
-    file COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming one."""
+    """Locate the settings file the MCP runtime reads (mcp/src/config-path.ts): the
+    file COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming
+    probanda.json when it exists, else the legacy coclerk.json."""
     override = os.environ.get('COCLERK_CONFIG_PATH')
     if override:
         if not Path(override).is_file():
             raise RuntimeError(f'COCLERK_CONFIG_PATH names {override}, which does not exist. '
-                               'Create it, or unset the variable to read the live coclerk.json.')
+                               'Create it, or unset the variable to read the live probanda.json.')
         return Path(override)
     app_data = os.environ.get('APPDATA') or Path.home() / 'AppData' / 'Roaming'
-    return Path(app_data) / 'Coclerk' / 'coclerk.json'
+    folder = Path(app_data) / 'Coclerk'
+    current = folder / 'probanda.json'
+    legacy = folder / 'coclerk.json'
+    return current if current.is_file() or not legacy.is_file() else legacy
 
 
 def firm_context_fields() -> dict[str, str]:

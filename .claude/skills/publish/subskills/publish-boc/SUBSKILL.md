@@ -29,7 +29,7 @@ retry or probe in Cowork.
 
 Both read the shared working folder
 `{case-data folder}/bill-of-costs/`, the case-data folder being the one
-`coclerk.json`'s `case_data_dir` names. A bill of costs is an individual
+`probanda.json`'s `case_data_dir` names. A bill of costs is an individual
 document, so per the workspace output rule
 (`.claude/skills/shared/workspace-output-rule.md`) its `.docx`, Form 62's or
 Form 63's, is written at the top of the draft folder as `<stem>.docx`: the

@@ -649,7 +649,7 @@ function clientContext(args: ReturnType<typeof validateToolInput>): ClientContex
 }
 
 /** A knowledge read's seams: with `matter_root`, the case data root derived from that matter's
- * pointer when the per-user coclerk.json is absent (shared/knowledge-tree.md section 6). */
+ * pointer when the per-user probanda.json is absent (shared/knowledge-tree.md section 6). */
 function matterRootSeams(name: string, matterRoot: unknown): KnowledgeSeams | undefined {
   if (matterRoot === undefined) return undefined;
   if (typeof matterRoot !== "string") throw new ValidationError(`${name}.matter_root must be a string`);

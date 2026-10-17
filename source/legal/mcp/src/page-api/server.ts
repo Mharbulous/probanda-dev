@@ -52,7 +52,7 @@ export interface PageApi {
 }
 
 /** Starts the listener, or its retries while the port is busy, settling once the first try has
- * bound or failed. Rejects only when coclerk.json's page_api_port cannot be read; the caller logs that. */
+ * bound or failed. Rejects only when probanda.json's page_api_port cannot be read; the caller logs that. */
 export async function startPageApi(env: NodeJS.ProcessEnv = process.env, options: PageApiOptions = {}): Promise<PageApi> {
   const port = pageApiPort(env);
   const retryMs = options.retryMs ?? RETRY_MS;

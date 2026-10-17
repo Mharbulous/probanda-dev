@@ -1,14 +1,14 @@
 // Firm profile (spec §3.4, plan Phase 6). The firm's name and roster live in
 // `<case_data_root>\_practice\firm\firm.json`, its letterhead in `letterhead.docx`
 // beside it, and each person's email signature template in `email-signatures\`. This machine's roster key (`person`), signature path and the practitioner's
-// environment notes (`practice_quirks`) live in the Roaming coclerk.json. Files, not
+// environment notes (`practice_quirks`) live in the Roaming probanda.json. Files, not
 // practice.db rows: these tools never open the DB.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { inflateRawSync } from "node:zlib";
 
-import { configPath } from "../../config-path.js";
+import { configPath, configWritePaths } from "../../config-path.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { resolveCaseDataRoot } from "../../practice/backend.js";
 import { asString } from "./shared.js";
@@ -42,7 +42,7 @@ function readJson(path: string): Record<string, unknown> {
   }
 }
 
-// This machine's coclerk.json, or `{version: 1}` (config_set_root's seed) when it is absent.
+// This machine's probanda.json (or legacy coclerk.json), or `{version: 1}` (config_set_root's seed) when it is absent.
 // A COCLERK_CONFIG_PATH that names a missing file still fails in configPath.
 function readConfig(env: NodeJS.ProcessEnv): Record<string, unknown> {
   const path = configPath(env);
@@ -64,7 +64,7 @@ export interface FirmProfile {
   roster: RosterEntry[];
   letterhead: string | null;
   person: string | null;
-  /** This practitioner's environment notes from coclerk.json, or null when unset. */
+  /** This practitioner's environment notes from probanda.json, or null when unset. */
   practice_quirks: string | null;
   /** The Job Board's idle flag threshold in hours; present only when firm.json sets one. */
   idle_flag_hours?: number;
@@ -89,13 +89,13 @@ export function idleFlagHours(env: NodeJS.ProcessEnv = process.env): number | nu
 }
 
 // `letterhead` is null when none is registered: only a letter needs it, and its renderer
-// stops on null. `person` is null when this machine's coclerk.json does not set it.
+// stops on null. `person` is null when this machine's probanda.json does not set it.
 export async function firm_profile(env: NodeJS.ProcessEnv = process.env): Promise<FirmProfile> {
   return readFirmProfile(env);
 }
 
 // The same read, synchronous, for the render path (drafting_forms__render is synchronous).
-// `fallback` supplies the case data root when the per-user coclerk.json is absent (resolveCaseDataRoot).
+// `fallback` supplies the case data root when the per-user probanda.json is absent (resolveCaseDataRoot).
 export function readFirmProfile(env: NodeJS.ProcessEnv = process.env, fallback?: () => string | null): FirmProfile {
   const paths = firmPaths(env, fallback);
   const firm = existsSync(paths.firm) ? readJson(paths.firm) : undefined;
@@ -260,7 +260,7 @@ export const PRACTICE_QUIRKS_MAX = 1000;
 
 // Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead
 // and idle_flag_hours, at least one. Every input is checked before any file is written, so a
-// refusal leaves firm.json, the letterhead and coclerk.json as they were.
+// refusal leaves firm.json, the letterhead and probanda.json as they were.
 export async function upsert_firm_profile(
   args: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env
@@ -270,7 +270,7 @@ export async function upsert_firm_profile(
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
   // A call that sets only this machine's practice_quirks or signature needs no firm folder, so it
-  // still writes when coclerk.json or its case_data_root is not set up yet.
+  // still writes when probanda.json or its case_data_root is not set up yet.
   const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "idle_flag_hours"].some((input) => args[input] !== undefined);
   let resolved: { firm: string; letterhead: string } | undefined;
   try {
@@ -369,9 +369,11 @@ export async function upsert_firm_profile(
     result.written.push(paths.letterhead);
   }
   if (config) {
-    mkdirSync(dirname(configPath(env)), { recursive: true });
-    writeJson(configPath(env), config);
-    result.written.push(configPath(env));
+    for (const target of configWritePaths(env)) {
+      mkdirSync(dirname(target), { recursive: true });
+      writeJson(target, config);
+      result.written.push(target);
+    }
   }
   return result;
 }

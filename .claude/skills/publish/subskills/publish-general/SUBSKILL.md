@@ -22,7 +22,7 @@ At the top of the draft folder, the one folder matching `0. DRAFT*` under the ma
 1. `<name>.docx`, the deliverable.
 2. `<name> (format unverified).docx`, the review copy, written only while an item of the format file needs the practitioner's attention (step 8). Its warning is the body's first paragraph and never reaches the deliverable.
 
-The tool responses the fill reads are saved as JSON files in the working folder `<case-data folder>\publish-general\`, the case-data folder being the one `coclerk.json`'s `case_data_dir` names. It must already exist: if it does not, stop and tell the practitioner to run `/case-data` initialize; never create it. In Cowork, make no access request: the host tool below derives that folder itself. Create `publish-general\` if it is absent. The JSON files are rewritten in place on each run.
+The tool responses the fill reads are saved as JSON files in the working folder `<case-data folder>\publish-general\`, the case-data folder being the one `probanda.json`'s `case_data_dir` names. It must already exist: if it does not, stop and tell the practitioner to run `/case-data` initialize; never create it. In Cowork, make no access request: the host tool below derives that folder itself. Create `publish-general\` if it is absent. The JSON files are rewritten in place on each run.
 
 ## In Cowork
 

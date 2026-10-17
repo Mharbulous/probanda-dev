@@ -14,7 +14,7 @@
 //
 // Callers pass an absolute db_path -- the resolved location of one matter's
 // submission database -- rather than a matter_root the backend resolves
-// itself. Unlike case-data's coclerk.json pointer (which exists to survive a
+// itself. Unlike case-data's probanda.json pointer (which exists to survive a
 // matter folder rename independent of its database folder, and a legacy `9.
 // AI` migration), this is a brand-new schema with no legacy state and no
 // pointer file to heal, so the gatekeeper skill computes the path once and

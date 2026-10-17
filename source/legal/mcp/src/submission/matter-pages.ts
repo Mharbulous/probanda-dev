@@ -238,7 +238,7 @@ function generatorWrote(file: string): boolean {
  * mover: an older page name, and a registered view page no live filing has now. The current targets
  * at the folder's top, `names` and the Litigation Strategy, stay. A file without a
  * marker is the practitioner's and is left. A file that cannot be moved -- locked, gone, or outside a
- * matter with a coclerk.json -- is reported.
+ * matter with a probanda.json -- is reported.
  */
 function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "moved_to_trash" | "trash_skipped"> {
   const moved: { from: string; to: string }[] = [];

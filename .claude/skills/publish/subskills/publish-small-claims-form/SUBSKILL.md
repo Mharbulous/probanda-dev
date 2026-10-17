@@ -104,14 +104,14 @@ If the user asks to fill a form marked `—`, respond:
 
 ## Solicitor Details (from the firm profile)
 
-Fill every solicitor/lawyer field through `/practice-data`: the firm profile (`practice_data__firm_profile`), the matter lookup, and this machine's Roaming `Coclerk\coclerk.json` (layout owned by `/practice-data`):
+Fill every solicitor/lawyer field through `/practice-data`: the firm profile (`practice_data__firm_profile`), the matter lookup, and this machine's Roaming `Coclerk\probanda.json` (layout owned by `/practice-data`):
 
 | Field | Source |
 |-------|--------|
 | Name | the solicitor's roster entry, `name` |
 | Firm | the firm profile's `firm_name` |
 | Email (solicitor contact) | the solicitor's roster entry, `email` |
-| Street / Suite / City / Province / Postal | split from `coclerk.json`'s `firm.address` |
+| Street / Suite / City / Province / Postal | split from `probanda.json`'s `firm.address` |
 
 **The solicitor** is an active roster entry whose `role` is `lawyer`, chosen in this order:
 
@@ -123,7 +123,7 @@ Never fill a solicitor field from a `staff` entry. The choice belongs to this fo
 
 Split `firm.address` into street, suite (if any), city, province and postal code. If the split is not unambiguous, show it to the practitioner and confirm before filling.
 
-Never fill these fields from memory or from an earlier form. A form fill does not use the letterhead, so a null `letterhead` is not a gap. If the firm profile or its `firm_name` is missing, or a value the chosen step uses (`person` in step 2, the solicitor's `name` or `email`) is missing or empty, ask the practitioner once and write the answer back with `practice_data__upsert_firm_profile` before proceeding; a new roster entry needs every roster field. If the `firm` block is missing, ask the practitioner for its values and write them back to `coclerk.json` before proceeding.
+Never fill these fields from memory or from an earlier form. A form fill does not use the letterhead, so a null `letterhead` is not a gap. If the firm profile or its `firm_name` is missing, or a value the chosen step uses (`person` in step 2, the solicitor's `name` or `email`) is missing or empty, ask the practitioner once and write the answer back with `practice_data__upsert_firm_profile` before proceeding; a new roster entry needs every roster field. If the `firm` block is missing, ask the practitioner for its values and write them back to `probanda.json` before proceeding.
 
 ---
 

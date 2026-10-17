@@ -7,7 +7,7 @@
 // except to refuse the paths an asm32/asm33 locate result names outside the case-data folder.
 //
 // The server, not the caller, decides every path the harness may write: the matter folder is
-// canonicalised, the case-data folder is the one its coclerk.json names, the Writing folder is one
+// canonicalised, the case-data folder is the one its probanda.json names, the Writing folder is one
 // segment under the matter's 0. DRAFT folder (an individual form's out_name is one file name stem at
 // that folder's top instead), and session state lives in
 // {case-data folder}\form-sessions. A session made anywhere else, and the new-template operation

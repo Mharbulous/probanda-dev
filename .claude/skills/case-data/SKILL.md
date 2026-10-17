@@ -31,7 +31,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 
 | User intent | Operation file |
 |---|---|
-| "Set up an evidence database" / new matter, no `coclerk.json` | operations/initialize.md |
+| "Set up an evidence database" / new matter, no `probanda.json` | operations/initialize.md |
 | "Check pointer health" / diagnose stored-versus-live path drift / run a read-only pointer sweep | operations/pointer-health.md |
 | "Ingest this pleading/transcript/document" | operations/ingest.md (gate → ingest-verify.md or ingest-extract.md) |
 | "Log this client email / lawyer note / internal document" | operations/ingest.md |

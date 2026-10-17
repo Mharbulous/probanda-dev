@@ -50,7 +50,7 @@ writes the index. **Never re-implement the parsing inline.**
 ```
 python extract_memo_index.py --input-dir <folder of memos>
     [--source westlaw|alexi|auto]      # default auto (per-file detection)
-    [--matter-root <matter folder>]    # whose coclerk.json names the case-data folder
+    [--matter-root <matter folder>]    # whose probanda.json names the case-data folder
     [--case-data-folder <folder>]      # for the standard output location
     [--output <file>]                  # explicit override
     [--verified-citations <file>]      # see cross-check below
@@ -77,8 +77,8 @@ which is the honest default.
 ## Output location
 
 `<case-data folder>/legal-memo-extractor/research_memos_index.md`, the
-case-data folder being the one `coclerk.json`'s `case_data_dir` names. Resolve
-it from `coclerk.json` and pass it as `--case-data-folder`; in Cowork, where the
+case-data folder being the one `probanda.json`'s `case_data_dir` names. Resolve
+it from `probanda.json` and pass it as `--case-data-folder`; in Cowork, where the
 project mounts only the matter folder, first request access to the case-data
 folder itself (never a parent or the firm root) and pass the path the session
 sees. It must already exist: if it does not, stop and name `/case-data`

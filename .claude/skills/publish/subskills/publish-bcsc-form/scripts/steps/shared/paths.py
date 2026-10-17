@@ -9,7 +9,7 @@ Two buckets, per the workspace output rule in .claude/skills/shared/workspace-ou
 
 Neither is a guessed literal. The draft folder is resolved by glob, because
 real matters spell it inconsistently (with and without a trailing "s", in mixed
-case). The case-data folder is the one coclerk.json's case_data_dir names, and
+case). The case-data folder is the one probanda.json's case_data_dir names, and
 the caller passes the path it sees, since in Cowork's sandbox that folder is
 mounted apart from the matter. Neither the draft folder nor the case-data
 folder is ever created here; only the subfolder beneath each is.
@@ -226,15 +226,18 @@ def write_deliverables(ctx: dict, title: str, write,
 
 
 def _case_data_dir_name(matter_path: str | Path) -> str:
-    """Return the last segment of coclerk.json's case_data_dir.
+    """Return the last segment of the matter pointer's case_data_dir.
 
-    The stored value is a Windows path, but this script may run in Cowork's
-    Linux sandbox, so it is parsed as a Windows path on every host.
+    The pointer is probanda.json, falling back to the legacy coclerk.json on a
+    matter not yet migrated. The stored value is a Windows path, but this script
+    may run in Cowork's Linux sandbox, so it is parsed as a Windows path on
+    every host.
     """
-    pointer = Path(matter_path) / "coclerk.json"
-    if not pointer.is_file():
+    candidates = [Path(matter_path) / name for name in ("probanda.json", "coclerk.json")]
+    pointer = next((p for p in candidates if p.is_file()), None)
+    if pointer is None:
         raise RuntimeError(
-            f"No coclerk.json in {matter_path}. The matter is not initialized: "
+            f"No probanda.json in {matter_path}. The matter is not initialized: "
             f"run /case-data initialize for it, then try again."
         )
     data = json.loads(pointer.read_bytes().replace(b"\x00", b"").decode("utf-8"))
@@ -251,7 +254,7 @@ def case_data_output_dir(matter_path: str | Path, case_data_folder: str | Path,
                          workflow: str) -> Path:
     """Return this workflow's folder under the case-data folder, creating it if needed.
 
-    case_data_folder is the path the caller sees for the folder coclerk.json's
+    case_data_folder is the path the caller sees for the folder probanda.json's
     case_data_dir names. It must already exist and its name must match that
     entry's last segment; the case-data folder itself is never created here.
     """
@@ -261,14 +264,14 @@ def case_data_output_dir(matter_path: str | Path, case_data_folder: str | Path,
             f"case-data folder is not an existing directory: "
             f"{case_data_folder!r}. publish-bcsc-form never creates it. If the "
             f"matter is not initialized, run /case-data initialize; otherwise "
-            f"pass the folder coclerk.json's case_data_dir names to harness "
+            f"pass the folder probanda.json's case_data_dir names to harness "
             f"init with --case-data-folder (in Cowork, request access to that "
             f"folder first)."
         )
     expected = _case_data_dir_name(matter_path)
     if folder.name.casefold() != expected.casefold():
         raise RuntimeError(
-            f"case-data folder {str(folder)!r} does not match coclerk.json's "
+            f"case-data folder {str(folder)!r} does not match probanda.json's "
             f"case_data_dir, whose folder is {expected!r}. Pass the folder "
             f"case_data_dir names."
         )

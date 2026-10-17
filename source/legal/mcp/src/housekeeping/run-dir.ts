@@ -1,7 +1,7 @@
 // The /housekeeping run directory (housekeeping redesign spec §B8.1).
 //
 // Every file of a run lives in `<case-data folder>\housekeeping\<run-id>\`, the case-data folder
-// being the one the matter's coclerk.json names (.claude/skills/AGENTS.md "Workspace output
+// being the one the matter's probanda.json names (.claude/skills/AGENTS.md "Workspace output
 // rule"). It must already exist; `housekeeping` beneath it is created on demand. This server
 // writes every file of a run: the session cannot write into the case-data folder in the
 // linked-device topology. The confinement is a realpath equality, not a prefix test: the run
@@ -42,7 +42,7 @@ export interface Matter {
 }
 
 /**
- * Validates the matter root (coclerk.json present) and finds its case-data folder, which must
+ * Validates the matter root (probanda.json present) and finds its case-data folder, which must
  * exist (`case_data_missing` otherwise). A read never makes a folder.
  */
 export function openMatter(matterRoot: string): Matter {

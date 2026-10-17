@@ -33,7 +33,7 @@ Never fall back to `references/scripts/` from a Cowork session — see §5.
 | `backups` | `matter_root` | Lists this matter's backup sets. Read-only. |
 
 Every mode is annotated destructive, `plan` included: pointer resolution
-rewrites `coclerk.json` and may move binaries out of the legacy `9. AI` folder.
+rewrites `probanda.json` and may move binaries out of the legacy `9. AI` folder.
 
 ## 2. The gate
 

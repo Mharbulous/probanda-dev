@@ -2,7 +2,7 @@
 
 Run this protocol the first time a user invokes `/time-sorting`, `/build-timeline` or `/timecamping`, under the No-registry rule below. This covers one-time setup steps that do not repeat on subsequent sorts.
 
-**Registry location:** the time-tracking registry is the `time_tracking` block of the machine-level `coclerk.json`, the same file practice-data resolves for `case_data_root` (normally `AppData\Roaming\Coclerk\coclerk.json`; see practice-data's Configuration section, and under `COCLERK_CONFIG_PATH` the file that variable names is the one read and written back). It is per-practitioner, never in a matter's `coclerk.json`. `/time-sorting`, `/build-timeline` and `/timecamping` all read it there, and Step 5 below writes back to the same file the calling skill's Step 0 read.
+**Registry location:** the time-tracking registry is the `time_tracking` block of the machine-level `probanda.json`, the same file practice-data resolves for `case_data_root` (normally `AppData\Roaming\Coclerk\probanda.json`; see practice-data's Configuration section, and under `COCLERK_CONFIG_PATH` the file that variable names is the one read and written back). It is per-practitioner, never in a matter's `probanda.json`. `/time-sorting`, `/build-timeline` and `/timecamping` all read it there, and Step 5 below writes back to the same file the calling skill's Step 0 read.
 
 **No-registry rule (trigger):** when `time_tracking` is absent from that file, or `time_tracking.sources` is absent or empty, a `/time-sorting`, `/build-timeline` or `/timecamping` session stops and runs this protocol before anything else. It never proceeds without a registry, and never records a source `skipped` because the registry is missing. A source is `skipped` only because its registry entry says `enabled: false`.
 
@@ -106,7 +106,7 @@ If declined, skip.
 
 ## Step 5 — Save Configuration and Hand Off
 
-Save the time-tracking configuration under a new `time_tracking` top-level key of the machine-level `coclerk.json` (Registry location, above), writing back to the same file the calling skill's Step 0 read and keeping every other key:
+Save the time-tracking configuration under a new `time_tracking` top-level key of the machine-level `probanda.json` (Registry location, above), writing back to the same file the calling skill's Step 0 read and keeping every other key:
 
 ```json
 {
@@ -192,7 +192,7 @@ Return to the calling skill's Step 1 (in `/time-sorting`, Sync TimeCamp Project/
 
 ## What Does NOT Happen on Subsequent Sorts
 
-On future sorts, the following are already configured and read from `coclerk.json` without user interaction:
+On future sorts, the following are already configured and read from `probanda.json` without user interaction:
 
 - Which time-tracking sources are enabled
 - Authentication method for each source

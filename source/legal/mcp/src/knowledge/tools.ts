@@ -1136,7 +1136,7 @@ const CONFIRM_ACT: LawyerAct = { unset: "a confirmation has no author", act: "co
 export function rosterLawyer(profile: FirmProfile, what: LawyerAct): string {
   if (profile.person === null) {
     throw new DataServerError(
-      `person is not set: this machine's coclerk.json names no firm roster key ("person"), so ${what.unset}. ` +
+      `person is not set: this machine's probanda.json names no firm roster key ("person"), so ${what.unset}. ` +
         "Set it with practice_data__upsert_firm_profile, then retry.",
       "person_unset"
     );

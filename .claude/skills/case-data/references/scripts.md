@@ -103,7 +103,7 @@ reasons stated at their own entry below):
 
 | Script | Purpose | CLI invocation example |
 |---|---|---|
-| `resolve_pointer.py` | Resolve `coclerk.json` to concrete database paths; print them as JSON. | `python3 resolve_pointer.py "C:\...\8165.L8153 Example Matter"` |
+| `resolve_pointer.py` | Resolve `probanda.json` to concrete database paths; print them as JSON. | `python3 resolve_pointer.py "C:\...\8165.L8153 Example Matter"` |
 | `get_matter_profile.py` | Print `matter_metadata` completeness (present/missing keys) + per-proceeding parties summary. | `python3 get_matter_profile.py "C:\...\Example Matter"` |
 | `get_facts_for_drafting.py` | Read-only: facts with derived posture, current positions, and current evidence links — each with a computed citation. | `python3 get_facts_for_drafting.py "C:\...\Example Matter" --posture disputed` |
 | `get_legal_authorities_for_drafting.py` | Read-only: concepts, their elements/factors, and shaping authorities from `law.sqlite`. | `python3 get_legal_authorities_for_drafting.py "C:\...\Example Matter" --concept-type cause_of_action` |
@@ -138,7 +138,7 @@ reasons stated at their own entry below):
   write native binaries. The three `get_*` tools and `resolve_pointer.py`,
   `verify_sources.py`, `compute_hash.py`,
   `lint_comparative_gloss.py`, `parties_of_record.py`, `resolve_participant.py` are read-only with
-  respect to the databases (`resolve_pointer.py` may normalize `coclerk.json`, a
+  respect to the databases (`resolve_pointer.py` may normalize `probanda.json`, a
   plain-text artifact, per the resolution contract). `render_document.py`
   touches no database at all — it is a pure file-to-file text transform.
 - Each command-line tool imports `resolve_paths` and (where it touches binaries)

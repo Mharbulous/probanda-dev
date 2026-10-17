@@ -93,7 +93,7 @@ each file card names a host path it returns.
    The data folder is `<case-data folder>\vaniac-submissions\<filing folder>\`,
    the mockup folder's name without any leading `YYYY-MM-DD ` and without
    the `SUB` code. The case-data folder
-   is the one `coclerk.json`'s `case_data_dir` names; in Cowork, make no
+   is the one `probanda.json`'s `case_data_dir` names; in Cowork, make no
    access request: the host tool derives it. If the
    case-data folder does not exist, stop: the matter is not initialized
    (`/case-data` initialize). Create `vaniac-submissions\<filing folder>\`

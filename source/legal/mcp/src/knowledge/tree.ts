@@ -44,7 +44,7 @@ export interface KnowledgeSeams {
   env?: NodeJS.ProcessEnv;
   /** Test seam only: the install root resolveShippedRoot reads. */
   installRoot?: string;
-  /** The case data root when the per-user coclerk.json is absent (resolveCaseDataRoot's fallback); never passed to a write. */
+  /** The case data root when the per-user probanda.json is absent (resolveCaseDataRoot's fallback); never passed to a write. */
   caseDataRoot?: () => string | null;
 }
 

@@ -6,7 +6,7 @@ import { win32 as pathWin32 } from "node:path";
 
 import { HALF_COMMIT_PREFIX, caseDataFolder } from "../case/backend.js";
 import { DataServerError } from "../errors.js";
-import { validateMatterRoot } from "../files/matter-root.js";
+import { findPointer, validateMatterRoot } from "../files/matter-root.js";
 import { templateRoot } from "./resolve.js";
 import { isDirectory } from "./run-dir.js";
 
@@ -19,13 +19,14 @@ export interface Preflight {
 }
 
 export function preflight(matterRoot: string, includeTemplate = false, env: NodeJS.ProcessEnv = process.env): Preflight {
-  // A matter folder with no coclerk.json (none yet, or only a legacy `9. AI` pointer) has no case
-  // data to check: /housekeeping Step 4 offers to set it up. Anything not a directory still fails.
+  // A matter folder with no pointer (neither probanda.json nor coclerk.json yet, or only a
+  // legacy `9. AI` pointer) has no case data to check: /housekeeping Step 4 offers to set it up.
+  // Anything not a directory still fails.
   const pointerless =
     typeof matterRoot === "string" &&
     pathWin32.isAbsolute(matterRoot) &&
     isDirectory(matterRoot) &&
-    !existsSync(pathWin32.join(matterRoot, "coclerk.json"));
+    findPointer(matterRoot) === undefined;
   const out: Preflight = pointerless ? { half_commit: [], case_data_found: false } : halfCommits(matterRoot, env);
   if (includeTemplate) {
     const root = templateRoot(env);

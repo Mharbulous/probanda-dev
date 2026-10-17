@@ -48,6 +48,7 @@ LEGACY_ARTIFACTS_DIR = '9. AI'
 ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'
 EXPECTED_USER_VERSION = 90
 EXPECTED_SCHEMA_VERSION = 5
+POINTER_NAMES = ('probanda.json', 'coclerk.json')
 DBS = ('main', 'law', 'privileged')
 DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
 
@@ -180,14 +181,13 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
 
 
 def read_pointer(matter_root):
-    root_ptr = norm_join(matter_root, 'coclerk.json')
-    legacy_ptr = norm_join(matter_root, LEGACY_ARTIFACTS_DIR, 'coclerk.json')
-    if os.path.exists(root_ptr):
-        pointer_path = root_ptr
-    elif os.path.exists(legacy_ptr):
-        pointer_path = legacy_ptr
-    else:
-        raise SystemExit("coclerk.json not found; initialize the matter first.")
+    # probanda.json first; coclerk.json is the legacy name, kept updated on every write so an
+    # older copy of the plugin still finds the matter (spec 2026-10-16, Option 1).
+    root_ptrs = [norm_join(matter_root, name) for name in POINTER_NAMES]
+    legacy_ptrs = [norm_join(matter_root, LEGACY_ARTIFACTS_DIR, name) for name in POINTER_NAMES]
+    pointer_path = next((p for p in root_ptrs + legacy_ptrs if os.path.exists(p)), None)
+    if pointer_path is None:
+        raise SystemExit("probanda.json not found; initialize the matter first.")
 
     with open(pointer_path, 'rb') as fh:
         raw = fh.read()
@@ -197,8 +197,8 @@ def read_pointer(matter_root):
     if schema_version != EXPECTED_SCHEMA_VERSION:
         raise SystemExit(
             "stale pointer -- re-run initialize "
-            f"(coclerk.json is schema_version {schema_version!r}, expected {EXPECTED_SCHEMA_VERSION})")
-    return root_ptr, legacy_ptr, pointer_path, pointer
+            f"(the pointer is schema_version {schema_version!r}, expected {EXPECTED_SCHEMA_VERSION})")
+    return root_ptrs, pointer_path in legacy_ptrs, pointer_path, pointer
 
 
 def locate_case_data_dir(matter_root):
@@ -215,7 +215,7 @@ def locate_case_data_dir(matter_root):
 
 def resolve_pointer(matter_root):
     matter_root = os.path.normpath(matter_root)
-    root_ptr, legacy_ptr, pointer_path, pointer = read_pointer(matter_root)
+    root_ptrs, from_legacy, pointer_path, pointer = read_pointer(matter_root)
 
     root = case_data_root(matter_root)
     legacy_dir = norm_join(matter_root, LEGACY_ARTIFACTS_DIR)
@@ -231,7 +231,7 @@ def resolve_pointer(matter_root):
         matter_root, stored, root, legacy_dir)
 
     # Legacy migration: 9. AI -> native sibling folder.
-    if is_legacy_value(pointer.get('case_data_dir')) or pointer_path == legacy_ptr:
+    if is_legacy_value(pointer.get('case_data_dir')) or from_legacy:
         os.makedirs(case_data_dir, exist_ok=True)
         if os.path.isdir(legacy_dir):
             for fn in ('main.sqlite', 'law.sqlite', 'privileged.sqlite'):
@@ -255,8 +255,11 @@ def resolve_pointer(matter_root):
         'evidence_sql_path': pointer.get(
             'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
     }
-    with open(root_ptr, 'w', encoding='utf-8') as fh:
-        json.dump(normalized, fh, indent=2)
+    # Migrate-on-write: probanda.json, and coclerk.json with the same content so an older
+    # copy of the plugin still finds the matter.
+    for root_ptr in root_ptrs:
+        with open(root_ptr, 'w', encoding='utf-8') as fh:
+            json.dump(normalized, fh, indent=2)
 
     main_sqlite = norm_join(case_data_dir, 'main.sqlite')
 
@@ -277,7 +280,7 @@ def resolve_pointer(matter_root):
     if rejected_nominee:
         warnings.append(
             "Stored case_data_dir nominee did not contain main.sqlite; "
-            f"selected live-derived location {case_data_dir} and healed coclerk.json.")
+            f"selected live-derived location {case_data_dir} and healed probanda.json.")
     if os.path.exists(evidence_sql):
         try:
             with open(evidence_sql, 'r', encoding='utf-8', errors='replace') as fh:

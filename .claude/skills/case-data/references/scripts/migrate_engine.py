@@ -462,13 +462,12 @@ def rebuild_source_hash():
 
 def read_pointer_bytes(matter_root):
     """Raw pointer bytes BEFORE resolution rewrites them, for the backup."""
-    for candidate in (os.path.join(matter_root, 'coclerk.json'),
-                      os.path.join(matter_root, resolve_paths.LEGACY_ARTIFACTS_DIR,
-                                   'coclerk.json')):
-        if os.path.exists(candidate):
-            with open(candidate, 'rb') as fh:
-                return fh.read()
-    return None
+    candidate = resolve_paths.find_pointer(matter_root) or resolve_paths.find_pointer(
+        os.path.join(matter_root, resolve_paths.LEGACY_ARTIFACTS_DIR))
+    if candidate is None:
+        return None
+    with open(candidate, 'rb') as fh:
+        return fh.read()
 
 
 def resolve(matter_root):
@@ -614,7 +613,7 @@ def make_backup(slug, natives, resolved, pointer_bytes, meta):
             "user_version": read_user_version(dst),
         }
     if pointer_bytes is not None:
-        with open(os.path.join(target, 'coclerk.json'), 'wb') as fh:
+        with open(os.path.join(target, resolve_paths.POINTER_NAMES[0]), 'wb') as fh:
             fh.write(pointer_bytes)
     evidence_sql = resolved.get('evidence_sql')
     has_dump = bool(evidence_sql) and os.path.exists(evidence_sql)
@@ -1059,11 +1058,12 @@ def restore(matter_root, backup_id, user_confirmation):
                        backup_files_of(safety_dir), natives)
 
     pointer_restored = False
-    saved_pointer = os.path.join(backup_dir, 'coclerk.json')
-    if os.path.exists(saved_pointer) and resolved.get('pointer_path'):
+    saved_pointer = resolve_paths.find_pointer(backup_dir)
+    if saved_pointer and resolved.get('pointer_path'):
         with open(saved_pointer, 'rb') as fh:
             raw = fh.read()
-        write_text_atomic(resolved['pointer_path'], raw.decode('utf-8'))
+        for path in resolve_paths.pointer_paths(os.path.dirname(resolved['pointer_path'])):
+            write_text_atomic(path, raw.decode('utf-8'))
         pointer_restored = True
 
     dump_restored = False

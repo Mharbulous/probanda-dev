@@ -15,7 +15,7 @@ import { closeSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, r
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
-import { validateMatterRoot } from "../files/matter-root.js";
+import { POINTER_FILES, validateMatterRoot } from "../files/matter-root.js";
 import { bareNameProblem } from "../housekeeping/proposal.js";
 import { sameFile } from "../housekeeping/resolve.js";
 import { destinationProblem, inFirewall, isDraftFolder, supersededDestinationProblem } from "../housekeeping/zones.js";
@@ -62,12 +62,12 @@ export function fileOpsMove(
   const srcRel = relativeInside(root, src, "source");
   const srcSegments = srcRel.split(pathWin32.sep).map((s) => s.toLowerCase());
   if (
-    (srcSegments.length === 1 && srcSegments[0] === "coclerk.json") ||
+    (srcSegments.length === 1 && POINTER_FILES.includes(srcSegments[0])) ||
     srcSegments[0] === "trash" ||
     srcSegments[0] === "0. case data" ||
     inFirewall(srcSegments)
   ) {
-    throw new DataServerError(`source is protected (coclerk.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
+    throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
 
   const name = pathWin32.basename(destination);

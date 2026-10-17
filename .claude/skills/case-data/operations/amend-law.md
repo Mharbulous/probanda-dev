@@ -1,6 +1,6 @@
 # Operation: amend-law
 
-Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `coclerk.json` only to confirm initialization; halt on any tool error per §2.3.
+Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
 Corrects **law-side text** — an authority's `fact_pattern` /
 `loss_description` / `disposition` / `citation`, an authority edge's

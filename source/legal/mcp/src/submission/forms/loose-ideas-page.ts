@@ -91,7 +91,7 @@ export interface LooseIdeasData {
 }
 
 /** The page's data for one filing, from the drafting database, with the listener's port and this
- * page's token read from this device's coclerk.json and page-api.secret. */
+ * page's token read from this device's probanda.json and page-api.secret. */
 export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: NodeJS.ProcessEnv = process.env): LooseIdeasData {
   const seeds = inRankOrder(withFromFiling(dbPath, filing.proceeding_id, filing.id, fetchOpenSeeds(dbPath, filing.proceeding_id)));
   const ideas = seeds.map(
