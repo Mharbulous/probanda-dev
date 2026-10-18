@@ -236,14 +236,25 @@ Edge functions log only error codes. Postgres must not log statement parameters 
 - A short `PRIVACY.md` in the Public Folder's plugin, shown on the local application page before submission. Submitting is consent (PIPA ss. 6-10).
 - It says what is looked up and collected and why, the retention above, that the directory record and firm-site email come from public sources, and that Brahm reviews applications the automatic check cannot settle.
 - It tells lawyers to include no client information in a suggestion.
-- It names every party that touches the data, with its country: Supabase and AWS (US companies, data stored in Canada, and US law can reach data a US provider holds); Anthropic (the firm-site check, which may keep those details for up to 30 days and longer where its usage policy or the law requires, and suggestion triage); GitHub (suggestion plan issues in Probanda's private repo); and the email sender for one-time links and alerts (section 11).
+- It names every party that touches the data, with its country: Supabase and AWS (US companies, data stored in Canada, and US law can reach data a US provider holds); Anthropic (the firm-site check, which may keep those details for up to 30 days and longer where its usage policy or the law requires, and suggestion triage); GitHub (suggestion plan issues in Probanda's private repo); and Amazon SES, the email sender (section 8.7). AWS therefore appears twice: as Supabase's host and as Probanda's email sender.
+- While maintainer copies are on (section 8.7), it says Probanda's maintainer receives a copy of every email Probanda sends, to check that the system works, in a mailbox hosted by Apple (a US company), and that those copies are outside the deletions in section 8.4.
 - Breach notice, in these words: "If a breach of Probanda's security creates a real risk of significant harm to you, Probanda will tell you as soon as it can and report the breach to BC's Information and Privacy Commissioner." It covers identities and the item ledger.
 - Privacy officer: Brahm (s. 4(3)). Access and correction requests are answered within 30 days (s. 29(1)).
 - The no-warranty statement goes in the licence (section 8.2), not the notice.
 
 ### 8.6 Access requests
 
-Answered with all of the lawyer's own Cross Data, including counters, alerts and attribution ([58](https://github.com/Mharbulous/probanda-dev/issues/58) decision 4).
+Answered with all of the lawyer's own Cross Data, including counters, alerts and attribution ([58](https://github.com/Mharbulous/probanda-dev/issues/58) decision 4), and any maintainer copies of emails sent to them (section 8.7).
+
+### 8.7 The email sender
+
+From [Choose the email sender for one-time links and alerts](https://github.com/Mharbulous/probanda-dev/issues/110).
+
+- **Amazon SES, configured in `ca-central-1`**, sends every Probanda email: the one-time links (sections 2.3 and 3.2), the suspension and collision notices (sections 2.3 and 2.5) and the alerts to Brahm (section 6.10). The edge function calls the SES API at `email.ca-central-1.amazonaws.com` with a signed request. The notice says: "Amazon SES (Amazon Web Services, a US company), configured in Canada (ca-central-1). The message itself travels over the internet to your own mail provider." It never says the mail is sent from Canada, because SES does not guarantee where its sending IP addresses sit. No dedicated IP is bought.
+- **The sender** is `Probanda <verification@probanda.app>` (Brahm, 2026-10-18), on Probanda's own domain `probanda.app` and never a law firm's. It is not a no-reply address: a reply to it reaches Brahm, so a lawyer whose link failed can say so.
+- **The maintainer address** is `brahm@dorst.ca`, held in `access.limit`. Alerts (section 6.10) and maintainer copies go there. Its mail is hosted by Apple iCloud Mail.
+- **Maintainer copies.** While a switch in `access.limit` is on, every Probanda email to a lawyer also goes to the maintainer address as a blind copy, live link included (Brahm, 2026-10-18). It serves two purposes: Brahm's own end-to-end tests before any real lawyer applies, and watching the first real sign-ups for glitches. It stays on until Brahm is confident the system works, and turning it off needs no redeploy. While it is on, a click on Brahm's copy verifies the account or approves the device just as the lawyer's own click would.
+- Rejected: Resend (a new party, with its logs and metadata stored in the US), Supabase Auth's mailer (it serves only Supabase Auth, which lawyer accounts do not use), and a law firm's Microsoft 365 mailbox (a mailbox credential in Probanda's cloud, and Probanda's mail sent as the firm).
 
 ## 9. Documents this spec supersedes
 
@@ -264,7 +275,7 @@ Stage 1 of that plan is applied and deployed, and the Suggestion Box is live. Th
 
 ## 11. Not decided here
 
-- **The email sender** for one-time links and alerts. [58](https://github.com/Mharbulous/probanda-dev/issues/58) left the naming to this spec, which adds no decision, so it is a new ticket on the map: [Choose the email sender for one-time links and alerts](https://github.com/Mharbulous/probanda-dev/issues/110).
+Nothing. The two points left open at assembly were decided on the map: the email sender (section 8.7) and the provisional-account caps (section 6).
 
 ## 12. Checks at build time
 
@@ -274,9 +285,14 @@ Facts the build confirms before relying on them. None is a decision.
 2. The project's plan and its backup window are recorded here before the notice's deletion wording ships.
 3. The 200-version commons write cap is checked against the largest decomposition in the pool.
 4. `source/researcher/commons-mcp/test/suggestion-box.test.mjs` still asserts the removed GitHub route and must follow the code ([51](https://github.com/Mharbulous/probanda-dev/issues/51)).
+5. AWS's SES data-protection page confirms that SES keeps no message content after delivery, and Virtual Deliverability Manager and mail archiving stay off (section 8.7).
 
 ## 13. Brahm's own steps
 
 - Delete `%LOCALAPPDATA%\Coclerk\suggestion-box\credential.json.dpapi` on each of his machines and revoke its GitHub token ([51](https://github.com/Mharbulous/probanda-dev/issues/51)).
 - Rotate the project secret at install-keys stage 5, as that plan says.
+- Open Probanda's AWS account and keep it like the project secret: its root email, MFA and payment card are Probanda assets (section 8.7).
+- Verify `probanda.app` in SES, set its SPF, DKIM and DMARC records, and route mail sent to `verification@probanda.app` to himself.
+- Request SES production access. Until AWS grants it, SES sends only to verified addresses, so firm-site verification cannot run: this request is on the critical path for lawyer onboarding. Reviews have taken from a day to over a week, AWS refuses a vague use case, and it looks for a public page describing Probanda.
+- Turn maintainer copies off (section 8.7) once he is confident the system works.
 - `docs/Correspondence/2026-10-16_lsbc-status-check-enquiry.eml` is an unsent, orphaned draft ([63](https://github.com/Mharbulous/probanda-dev/issues/63)). A deletion hook kept it in place.
