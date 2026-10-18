@@ -265,8 +265,8 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
 
 // configure_credential's persistence path (writeProtectedJson -> DPAPI on
 // win32) is covered separately in dpapi-store.test.mjs; here we cover the
-// validation and probe that run before any file I/O, so these pass on every
-// platform the test suite runs on.
+// validation and probe that run on the key page before any file I/O, so these
+// pass on every platform the test suite runs on.
 function fakeConfigurable(probeFails = false) {
   let key = "";
   return {
@@ -281,37 +281,43 @@ function fakeConfigurable(probeFails = false) {
   };
 }
 
-test("configure_credential rejects a missing static_key before touching local storage", async () => {
-  const lc = fakeLegalCommons();
-  await assert.rejects(
-    () => index.callTool(context(lc), "legal_commons__configure_credential", {}),
-    /static_key/
-  );
-});
+// The key is typed on the local page configure_credential serves, never passed
+// as a tool argument. Posts `secret` to that page and returns its HTML.
+async function pasteOnKeyPage(lc, secret) {
+  const result = await index.callTool(context(lc), "legal_commons__configure_credential", {});
+  assert.equal(result.status, "awaiting_key");
+  assert.match(result.url, /^http:\/\/127\.0\.0\.1:\d+\/commons\/[0-9a-f]{48}$/);
+  const res = await fetch(result.url, { method: "POST", body: new URLSearchParams({ secret }) });
+  assert.equal(res.status, 200);
+  return res.text();
+}
 
-test("configure_credential rejects the publishable key without probing or saving it", async () => {
+test("configure_credential refuses a static_key argument", async () => {
   const lc = fakeConfigurable();
   await assert.rejects(
-    () => index.callTool(context(lc), "legal_commons__configure_credential", {
-      static_key: "sb_publishable_ABCDEFGHIJKLMNOP",
-    }),
-    /publishable \(anon\) key/
+    () => index.callTool(context(lc), "legal_commons__configure_credential", { static_key: "sb_secret_X" }),
+    /unknown field/
   );
+  assert.equal(lc.staticKey(), "", "must not go live");
+});
+
+test("configure_credential's page rejects the publishable key without probing or saving it", async () => {
+  const lc = fakeConfigurable();
+  const html = await pasteOnKeyPage(lc, "sb_publishable_ABCDEFGHIJKLMNOP");
+  assert.match(html, /Not saved: that is the project&#39;s publishable key/);
   assert.equal(lc.probeCount, 0, "must fail before spending a network round trip");
   assert.equal(lc.staticKey(), "", "must not go live");
 });
 
 // A wrong key arriving mid-session must not knock out a session that was
 // already working — the probe failure has to roll the live key back.
-test("configure_credential restores the previous key when the probe fails", async () => {
+test("configure_credential's page restores the previous key when the probe fails", async () => {
   const lc = fakeConfigurable(true);
   lc.setStaticKey("sb_secret_ALREADYWORKING");
-  await assert.rejects(
-    () => index.callTool(context(lc), "legal_commons__configure_credential", {
-      static_key: "sb_secret_WRONGKEY",
-    }),
-    /did not work against the legal-commons pool/
-  );
+  const html = await pasteOnKeyPage(lc, "sb_secret_WRONGKEY");
+  assert.match(html, /Not saved: that key did not work against the legal-commons pool/);
+  assert.ok(!html.includes("sb_secret_WRONGKEY"), "the page does not echo the key");
+  assert.equal(lc.probeCount, 1);
   assert.equal(lc.staticKey(), "sb_secret_ALREADYWORKING");
 });
 
