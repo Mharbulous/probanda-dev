@@ -101,5 +101,42 @@ Status is a single labelled field, "Current status". Only the value "Practising"
 
 ### Still unestablished
 
-- The full set of values "Current status" can take, including the value for a suspended member.
+- The full set of values "Current status" can take, including the value for a suspended member. Settled, except for "Retired", by section 5.
 - Whether high-volume searching is rate-limited.
+
+## 5. The values of "Current status" (issue #64, 2026-10-18)
+
+Observed with plain `curl` on 2026-10-18, with no browser: one search and one detail page per status class, through the ordinary search URL in section 4. Each candidate was chosen from a public LSBC source that states their status class: a discipline summary or consent agreement on lawsociety.bc.ca, or a candidate's own statement in an LSBC Bencher election package. Only the "Current status" value and its legend were read. No other field was recorded, and the email CAPTCHA was never opened. Names are left out on purpose.
+
+### The categories LSBC defines
+
+The Registration page (https://www.lawsociety.bc.ca/for-lawyers/registration-and-licensee-services/membership-category-change-and-voluntary-resignation/) says a lawyer who will not practise may apply for one of "three membership categories: Non-practising Retired Former (voluntary resignation)". The same page says membership also terminates on judicial appointment or on failing to pay the annual fee by December 31. Suspension and disbarment are discipline outcomes, not categories a lawyer applies for.
+
+### Values observed
+
+| Status class | Source of the candidate | "Current status" value, verbatim |
+|---|---|---|
+| Practising | Brahm Dorst's own record (as in section 4) | `Practising` |
+| Non-practising | Bencher candidate's own statement, 2025 District 1 package: "currently a non-practising member" | `Non-practising` |
+| Suspended | Rule 3-7.1 consent agreement approved 2026-04-10: "consented to a suspension of six months" | `Suspended*` |
+| Former member | Rule 4-29 admission accepted 2026-04-02: resignation "effective April 9, 2026" | `Former member` |
+| Disbarred | LSBC news item, April 2026: declared ungovernable and disbarred | `Disbarred` |
+| Retired | not observed (see below) | not observed |
+
+The asterisk on `Suspended*` belongs to the value. It points to a footnote at the foot of that member's page, verbatim: "*A suspended lawyer is temporarily disqualified from practising law. For more information on a suspended lawyer, or publically available information about a lawyer's professional conduct record, please call the Law Society at 604.669.2533 or 1.800.903.5300 (toll-free) /TTY 604.443.5700." So a suspension shows in "Current status" itself, not only under "Current practice restrictions". The `Non-practising` page carries no footnote. The `Former member` and `Disbarred` pages were not checked for one.
+
+The value sits in the HTML as `<div class="col-sm-3 form-label">Current status</div>` followed by `<div class="col-sm-9">` holding `<p>VALUE</p>`.
+
+### Retired: not observed
+
+Three people described as retired lawyers on firm or roster pages (an ADR roster, a firm profile and a legal directory listing) returned no directory result under their surnames. Their pages may be out of date, or they may have left the Law Society more than two years ago, after which the directory drops former members. No current retired member was found from a public source, so the exact string is unobserved. The Registration page calls the category "Retired", and the About page (section 1) says retired lawyers are listed. The value is probably `Retired`, but that is unconfirmed.
+
+### Not tested
+
+- Whether an administrative suspension (for example for unpaid fees or a missing trust report) also shows as `Suspended*`, or under a different value. Only a discipline suspension was observed.
+- Whether a member who resigned on judicial appointment shows `Former member` or something else.
+- Whether a former member whose membership ended for non-payment shows `Former member`.
+
+### The "exact match" search option does not match exactly
+
+Section 4 maps `txt_search_type=3` to "exact match", and the form's own option list agrees (`1` starts with, `3` exact match, `2` contains). In use, `3` returned the same results as `1`. A last-name search for a four-letter prefix returned four members under both, and a search for one surname under `3` returned six members whose surnames only start with it. `2` ("contains") behaved as labelled. So a lookup by exact surname returns every surname that starts with it, and the caller must filter the names itself.
