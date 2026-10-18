@@ -23,7 +23,8 @@
 3. *User Data* is saved only to the *User's Machine*, except that *Probanda's Cloud* may hold:
    - a hash of it keyed with a secret that never leaves the *User's Machine*;
    - feedback about the Probanda plugin that the user expressly submits, stripped of anything that identifies a person, an entity or a matter;
-   - in the legal commons database, the official published text of the rules of procedure and practice directions of a court, tribunal or arbitral body.
+   - in the legal commons database, the official published text of the rules of procedure and practice directions of a court, tribunal or arbitral body;
+   - what verifying that a person is a practising lawyer requires.
 
 4. *Trade Secrets* are saved only to *Probanda's Cloud* and never sent to the *User's Machine*, except that the plugin may hold links in memory for a task at hand.
 
