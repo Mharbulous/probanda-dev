@@ -395,7 +395,7 @@ test("each client instance names itself when not configured", async () => {
     message:
       "legal-commons is not configured: call legal_commons__configure_credential once with the " +
       "Supabase service_role / sb_secret_ key (Cowork does not inject LEGAL_COMMONS_SUPABASE_KEY " +
-      "from userConfig into this process — see plugins/lawyer-commons/docs/ADR-002-key-delivery.md), " +
+      "from userConfig into this process — see plugins/legal-commons/docs/ADR-002-key-delivery.md), " +
       "or set LEGAL_COMMONS_SUPABASE_KEY directly in the runtime environment (Claude Code CLI / dev).",
   });
 

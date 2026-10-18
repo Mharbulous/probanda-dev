@@ -218,7 +218,7 @@ which returns a link to a page on this computer. The practitioner pastes the key
 that page, never in chat; the page validates it against the pool and stores it
 encrypted on the host, where it survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
-(see `plugins/lawyer-commons/docs/ADR-002-key-delivery.md`). An environment variable
+(see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
 still wins where one is genuinely set, which is the Claude Code CLI / developer path.
 
 On a "not configured" error, check `legal_commons__configure_status` first — it
