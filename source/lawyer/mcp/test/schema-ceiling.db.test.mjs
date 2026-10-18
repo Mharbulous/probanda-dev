@@ -11,10 +11,10 @@
 // that loses to a baked value and therefore does nothing on a real bundled server.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import test, { after } from "node:test";
+import test, { after, before } from "node:test";
 
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-schema-ceiling-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
@@ -24,10 +24,22 @@ const { submissionFormsBootstrap } = await import("../build/submission/forms.js"
 const { CEILING_SEAM_ENV, OVERRIDE_ENV, renderableSchemaVersion, schemaSourceStatus } = await import(
   "../build/submission/schema-ceiling.js"
 );
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { submissionDataQuery } = await import("../build/submission/backend.js");
 
 const ENGINE_TARGET = currentSchemaVersion();
+
+// A database one hop behind the engine target, built once through the engine and copied per test,
+// so a test of that hop migrates only that hop. Migrating the whole chain from an empty file runs
+// past the Python driver's limit on the CI runner (#81).
+const ONE_BEHIND_DIR = mkdtempSync(join(tmpdir(), "coclerk-schema-ceiling-behind-"));
+const ONE_BEHIND_PATH = join(ONE_BEHIND_DIR, "submission.sqlite");
+before(() => submissionDbAt(ONE_BEHIND_PATH, ENGINE_TARGET - 1));
+after(() => rmSync(ONE_BEHIND_DIR, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+function oneHopBehindDb(dbPath) {
+  copyFileSync(ONE_BEHIND_PATH, dbPath);
+  assert.equal(Number(recordedVersion(dbPath)), ENGINE_TARGET - 1);
+}
 
 /** Restores every seam this suite sets, whatever the test does. */
 function sandbox(t) {
@@ -88,6 +100,7 @@ test("withheld: a migration past the bundle's ceiling refuses, and touches nothi
 
 test("override: COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA lets the hop through, and says so", async (t) => {
   const { dbPath } = sandbox(t);
+  oneHopBehindDb(dbPath);
   process.env[CEILING_SEAM_ENV] = String(ENGINE_TARGET - 1);
   process.env[OVERRIDE_ENV] = "1";
 
@@ -101,6 +114,7 @@ test("override: COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA lets the hop through, an
 
 test("normal path: a hop the bundle understands still migrates as it does today", async (t) => {
   const { dbPath } = sandbox(t);
+  oneHopBehindDb(dbPath);
   process.env[CEILING_SEAM_ENV] = String(ENGINE_TARGET);
   delete process.env[OVERRIDE_ENV];
 
