@@ -66,7 +66,7 @@ The source that best captures what the practitioner was *doing* determines the a
 #### 3.4 Source Attribution for Every Classified Block
 
 Every classified time block must trace back to the raw source data that produced the classification. The practitioner should be able to see *why* a block was classified the way it was — which sources contributed, what signals were used.
-**Why:** This is the time-sorting-specific application of the parent plugin's "Show Your Work" principle (3.4). Time classifications inform billing decisions. An opaque classification that turns out to be wrong erodes trust in the entire system.
+**Why:** This is the time-sorting-specific application of the parent plugin's "Show, Don't Tell" principle (3.5). Time classifications inform billing decisions. An opaque classification that turns out to be wrong erodes trust in the entire system.
 **Violation example:** The skill outputs "2:00-2:30pm — Smith file, phone call" without showing that the activity type came from a Telus call record and the matter attribution came from a TimeCamp window title showing "Smith - LEAP" during the call.
 
 ### Litmus Test

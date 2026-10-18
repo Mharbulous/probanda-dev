@@ -95,9 +95,11 @@ ALWAYS give each kind of matter data — parties, counsel of record, proceedings
 **Why:** The plugin's value is that it remembers so the practitioner does not have to (Problem 5). A remembered copy that silently falls out of date is worse than no memory, because the practitioner has stopped checking. Two copies with no re-sync always drift, and nothing tells the drafting session which one is current.
 **Violation example:** A drafting session builds a document's counsel details from the submission database's own copy of party and counsel data. Nothing re-syncs that copy, so when the counsel details change, the draft goes out of date without warning while looking authoritative.
 
-### 3.5 Show Your Work
+### 3.5 Show, Don't Tell
 
-Every skill output that involves a calculation, ranking, or recommendation must cite where the data came from and how the result was derived. Users should be able to verify the reasoning, not just see the conclusion.
+Probanda shows the lawyer the evidence and never asks the lawyer to trust what it says. Its aim is to make the lawyer's own verification fast: each claim sits beside every source behind it, never scattered across folders, tools or sessions. Probanda runs its own checks too, but they supplement the lawyer's verification and never supersede it. A status, flag or date appears only beside what it describes: what was checked, by what, and against which source. It never stands alone as a reason to rely, though a record of a check may remind the lawyer what is still to do. A calculation, ranking or recommendation cites its data and how the result was derived.
+**Why:** Every lawyer must verify the law they rely on, and Probanda warrants nothing. Evidence shown beside a claim lets the lawyer check it quickly. A status gives them nothing to check, so they must either redo the work or rely on Probanda's word.
+**Violation example:** The legal commons serves an authority marked "last noted up on 2026-09-01". The reader is asked to trust that someone noted it up, did it correctly, and that nothing has changed since. Instead the commons shows the proposition, the authority it cites, the treatments recorded against that authority, and the correction history. The reader checks the proposition against the cited authority's text and notes the authority up.
 **Violation example:** The File Prioritizer says "Smith v Jones is your top priority" without showing the factors (funded retainer held for 3 weeks, filing deadline in 5 days, no recent activity) that produced that ranking.
 
 ### 3.6 Accuracy First, Efficiency Later
