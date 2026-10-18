@@ -1,16 +1,15 @@
 # Probanda
 
-Probanda is a set of seven Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `Probanda_Legal_experimental`.
+Probanda is a set of six Claude Cowork plugins for legal practice in British Columbia, in one marketplace named `Probanda_Legal_experimental`.
 
 | Plugin | What it does | Requires |
 |---|---|---|
-| `legal` | The base: firm records, time, billing, case data and deadlines | nothing |
-| `researcher` | What the law is: legal research, citation and verification | `legal` |
-| `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `legal`, `researcher` |
-| `solicitor` | Reserved. It ships no skills yet | `legal` |
-| `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `legal` |
-| `timekeeper` | Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries | `legal` |
-| `lawyer` | Skills for any lawyer: `dyu` restates a request before acting, `TLDR` summarizes a session | nothing |
+| `lawyer` | The base: firm records, time, billing, case data and deadlines, and skills for any lawyer: `dyu` restates a request before acting, `TLDR` summarizes a session | nothing |
+| `researcher` | What the law is: legal research, citation and verification | `lawyer` |
+| `litigator` | Court work on a matter: applying the law to the facts, drafting, court forms and filing packages | `lawyer`, `researcher` |
+| `solicitor` | Reserved. It ships no skills yet | `lawyer` |
+| `file-manager` | Optional. Every Probanda tool that renames, moves or deletes your own files: matter housekeeping, routing accounting files, applying approved renames | `lawyer` |
+| `timekeeper` | Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries | `lawyer` |
 
 ## Install
 
@@ -18,7 +17,7 @@ In Claude, add this repository as a plugin marketplace, then install the plugins
 
 ```
 /plugin marketplace add Mharbulous/probanda-plugins
-/plugin install legal@Probanda_Legal_experimental
+/plugin install lawyer@Probanda_Legal_experimental
 /plugin install researcher@Probanda_Legal_experimental
 /plugin install litigator@Probanda_Legal_experimental
 /plugin install file-manager@Probanda_Legal_experimental
@@ -35,4 +34,4 @@ Keep to that order. Claude Code installs a required plugin with the plugin that 
 
 This repository is private during development. The install commands above work only for accounts that have been given access to it. The public repository, `Probanda-app/Probanda`, still offers the single plugin `probanda` until the public plugins are split the same way.
 
-The five plugins replace the single plugin `probanda`, which itself combined two CoClerk plugins: `litigation`, and the read side of `legal-commons`. If you have any of those three installed, uninstall it before installing these, or every skill will appear twice.
+The five plugins replace the single plugin `probanda`, which itself combined two CoClerk plugins: `litigation`, and the read side of `legal-commons`. If you have any of those three installed, uninstall it before installing these, or every skill will appear twice. The same goes for `legal`, whose contents moved into `lawyer` on 2026-10-17. Your data is untouched: it lives outside the plugins.

@@ -18,16 +18,16 @@ description: >
   Downloads folder.
 model: sonnet
 tools:
-  - mcp__plugin_legal_data__skill_source__read
-  - mcp__plugin_legal_data__research_filing__list_downloads
-  - mcp__plugin_legal_data__research_filing__list_law_folder
-  - mcp__plugin_legal_data__research_filing__file_download
-  - mcp__plugin_legal_data__research_filing__append_manifest
-  - mcp__remote-devices__plugin_legal_data__skill_source__read
-  - mcp__remote-devices__plugin_legal_data__research_filing__list_downloads
-  - mcp__remote-devices__plugin_legal_data__research_filing__list_law_folder
-  - mcp__remote-devices__plugin_legal_data__research_filing__file_download
-  - mcp__remote-devices__plugin_legal_data__research_filing__append_manifest
+  - mcp__plugin_lawyer_data__skill_source__read
+  - mcp__plugin_lawyer_data__research_filing__list_downloads
+  - mcp__plugin_lawyer_data__research_filing__list_law_folder
+  - mcp__plugin_lawyer_data__research_filing__file_download
+  - mcp__plugin_lawyer_data__research_filing__append_manifest
+  - mcp__remote-devices__plugin_lawyer_data__skill_source__read
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__list_downloads
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__list_law_folder
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__file_download
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__append_manifest
   - mcp__claude-in-chrome__tabs_context_mcp
   - mcp__claude-in-chrome__tabs_create_mcp
   - mcp__claude-in-chrome__tabs_close_mcp
@@ -59,8 +59,8 @@ report: responsiveness in deep-research mode.
 ## Modes and playbooks
 
 The caller names the mode. Each mode's procedure lives in a playbook you fetch
-at mode entry via `mcp__plugin_legal_data__skill_source__read` (in a Cowork
-Project session, `mcp__remote-devices__plugin_legal_data__skill_source__read`)
+at mode entry via `mcp__plugin_lawyer_data__skill_source__read` (in a Cowork
+Project session, `mcp__remote-devices__plugin_lawyer_data__skill_source__read`)
 — follow it exactly, never proceeding from a remembered procedure:
 
 | Caller supplies | Mode | Playbook (skill_source path) |
@@ -69,7 +69,7 @@ Project session, `mcp__remote-devices__plugin_legal_data__skill_source__read`)
 | Citations + `source` policy, no query | **Citation** | `shared/research-paralegal/citation-download.md` |
 
 **Playbook fetch failure hard-fails the invocation**: return
-`status: blocked (mechanics-unavailable)` with the guidance "check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion". Never run a
+`status: blocked (mechanics-unavailable)` with the guidance "check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /lawyer:suggestion". Never run a
 mode from memory. (A playbook is the whole procedure; this severity applies to
 every mode. The one graduated-severity exception — a failed
 `shared/canlii-download-mechanics.md` sub-fetch when Westlaw remains the
@@ -142,7 +142,7 @@ operative primary — lives in the citation-download playbook.)
 
 Chrome saves to the OS Downloads folder, not the destination folder. Filing is
 done host-side by the `research_filing__*` tools (in a Cowork Project session,
-their `mcp__remote-devices__plugin_legal_data__research_filing__*` names):
+their `mcp__remote-devices__plugin_lawyer_data__research_filing__*` names):
 no Downloads folder resolution, no folder requests, no shell, no paths to
 Downloads — the server finds Downloads itself.
 
@@ -163,7 +163,7 @@ Downloads — the server finds Downloads itself.
 If any `research_filing__*` tool is absent from your grant, your installed
 plugin predates this machinery or the host dropped the tool at spawn: return
 `status: blocked (mechanics-unavailable)` with the update-and-restart
-guidance (check for updates in the desktop app, fully restart it, run /legal:suggestion if the problem persists) and stop — never fabricate a filing result, and never file by any
+guidance (check for updates in the desktop app, fully restart it, run /lawyer:suggestion if the problem persists) and stop — never fabricate a filing result, and never file by any
 other means.
 
 ## Download manifest (all modes)

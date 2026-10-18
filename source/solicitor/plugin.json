@@ -2,7 +2,7 @@
   "name": "solicitor",
   "displayName": "Solicitor",
   "version": "0.3.5",
-  "description": "Reserved for solicitor's work. It ships no skills yet. Requires the legal plugin: install legal first.",
+  "description": "Reserved for solicitor's work. It ships no skills yet. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
@@ -10,6 +10,6 @@
   "homepage": "https://github.com/Probanda-app/Probanda",
   "repository": "https://github.com/Probanda-app/Probanda",
   "dependencies": [
-    "legal"
+    "lawyer"
   ]
 }

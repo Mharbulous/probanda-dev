@@ -1,11 +1,11 @@
 ---
 name: build-timeline
-description: "Sole ingester of raw time evidence into the timeline store, one date at a time, from the registered sources: TimeCamp, Telus Business Connect, Google Calendar, the iCloud calendar (Work and Home calendars, read through the legal plugin's calendar tools), sent mail (the iCloud copy of the Microsoft 365 Sent Items, read through the legal plugin's mail tools), and SyncoPaid screen-activity blocks, plus a one-time historical bulk import of Chrometa screen-activity logs. Use to build/refresh/re-import raw time-tracking data for a date, or to run the Chrometa historical import. Raw data only -- does not classify time or assign it to matters (that is time-sorting), and does not bill."
+description: "Sole ingester of raw time evidence into the timeline store, one date at a time, from the registered sources: TimeCamp, Telus Business Connect, Google Calendar, the iCloud calendar (Work and Home calendars, read through the lawyer plugin's calendar tools), sent mail (the iCloud copy of the Microsoft 365 Sent Items, read through the lawyer plugin's mail tools), and SyncoPaid screen-activity blocks, plus a one-time historical bulk import of Chrometa screen-activity logs. Use to build/refresh/re-import raw time-tracking data for a date, or to run the Chrometa historical import. Raw data only -- does not classify time or assign it to matters (that is time-sorting), and does not bill."
 dependencies:
   - time-pipeline-data  # continuous timeline store under the `timeline` namespace
   - google-calendar-mcp # calendar events (optional — degrades gracefully if unavailable)
-  - calendar tools of the legal plugin's contacts-calendars-email server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
-  - mail tools of the legal plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
+  - calendar tools of the lawyer plugin's contacts-calendars-email server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
+  - mail tools of the lawyer plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
 ---
 
 ## Contents

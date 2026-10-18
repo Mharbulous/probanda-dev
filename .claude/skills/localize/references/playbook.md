@@ -2,7 +2,7 @@
 
 Read by the `localize-helper` agent over `skill_source__read`, path `localize/references/playbook.md`. The record contract, grammar, index shapes, resolve and sidecar are `shared/knowledge-tree.md`. This file is the tool sequence per operation and how to handle each result.
 
-Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_legal_data__<name>` and `mcp__remote-devices__plugin_legal_data__<name>` this host grants.
+Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_lawyer_data__<name>` and `mcp__remote-devices__plugin_lawyer_data__<name>` this host grants.
 
 ## 1. Rules for every run
 
@@ -33,7 +33,7 @@ Every tool below is named without its prefix. Call it under whichever of `mcp__p
 | error `exists` | `knowledge__write` `create` on the requested document | Another run created it. `knowledge__read` it and return that path with status `exists`. |
 | error `not_found` | `knowledge__retire`, a second time | Counts as done. |
 | error `person_unset`, `not_a_lawyer`, `not_active`, `rule_ref_not_found` or `not_correctable` | `knowledge__write` confirm or correct | Return `refused` with the runtime's code and message. For the first three the caller asks once and calls again. |
-| error `shipped_path` | `knowledge__write` | A shipped file is never written from a matter session. Return `refused`, reason `shipped_path`: the caller says that a shipped file changes only in a plugin update, so offer `/legal:suggestion` naming the file and what changed. |
+| error `shipped_path` | `knowledge__write` | A shipped file is never written from a matter session. Return `refused`, reason `shipped_path`: the caller says that a shipped file changes only in a plugin update, so offer `/lawyer:suggestion` naming the file and what changed. |
 | any error not named above, on a `create` at section 3, step 3 or 4, after an earlier file of the same run landed | `knowledge__write`, matter run | Stop. Return `refused` with the tool's code and message, and on the detail of every requested document `written`, the knowledge path of every file this run wrote, and `saved_copy`, the source record's `saved_copy` result (`moved`, `to`) where one was written. No index row has been written, so nothing resolves to them. A re-call of `create` with the same arguments completes the set: section 3, step 3 skips each source record that already exists, and `exists` on the other files counts as written. Never retire them: a retire deletes a `_fetched\` PDF no live file cites, which may be the practitioner's saved copy. |
 | any error not named above, on a `create` at section 3, step 5 or 6 | `knowledge__write`, matter run | Stop. Return `refused` with the tool's code and message, and `written` on the detail of every requested document. The venue may already resolve without its kinds row. A re-call of `create` with the same arguments then resolves the venue at step 1, so it is not new, and the kind as `not_found`, so the run writes the documents (`exists` counts as written) and then the missing kinds row. |
 | no admitted source | the dispatch names no source of the kinds `shared/knowledge-tree.md` §8 admits, and none is reachable by fetch | Return `no_official_source`. |

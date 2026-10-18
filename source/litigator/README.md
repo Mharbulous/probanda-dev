@@ -1,10 +1,10 @@
 # litigator
 
-The Probanda plugin for court work on a matter: applying the law to the facts, drafting, court forms, filing packages and calculations. It ships no server. Its skills use the `data` server that `legal` ships.
+The Probanda plugin for court work on a matter: applying the law to the facts, drafting, court forms, filing packages and calculations. It ships no server. Its skills use the `data` server that `lawyer` ships.
 
 ## What to install, and in what order
 
-`litigator` requires `legal` and `researcher`. Install `legal` first, then `researcher`, then `litigator`.
+`litigator` requires `lawyer` and `researcher`. Install `lawyer` first, then `researcher`, then `litigator`.
 
 Not every host installs a required plugin for you, and a plugin whose required plugin is missing loads with tools and agents absent.
 

@@ -7,7 +7,7 @@ description: "Diagnose a Probanda plugin tool, connector or MCP call that fails 
 
 The front end to the `researcher:troubleshooter` agent. The agent searches the troubleshooting store and the web, ranks the causes and screens what it records. This skill only briefs it and relays its answer: never search, rank or record yourself.
 
-A practice_data error that `probanda.json` was not found is not a fault: Probanda has not been set up on that device. Send the practitioner to `/legal:probanda-setup` instead of diagnosing it.
+A practice_data error that `probanda.json` was not found is not a fault: Probanda has not been set up on that device. Send the practitioner to `/lawyer:probanda-setup` instead of diagnosing it.
 
 1. **Gather.** The symptom, the tools involved, the exact error text and what was already tried. Copy the error text as it appeared. If you do not have it, ask for it; never invent it. Leave out every client, matter, person and document.
 2. **Diagnose.** Dispatch `researcher:troubleshooter` with `mode: diagnose` and those four facts.

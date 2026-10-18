@@ -173,9 +173,9 @@ class ExportTest(unittest.TestCase):
     def test_every_public_plugin_needs_its_manifest_and_gets_its_own_summary_rows(self):
         self.assertEqual(export_public.REQUIRED_FILES[3:],
                          tuple(f"plugins/{name}/.claude-plugin/plugin.json" for name in export_public.PUBLIC_PLUGINS))
-        files = {"plugins/legal/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
+        files = {"plugins/lawyer/skills/x/SKILL.md": b"12", "plugins/other/skills/x/SKILL.md": b"1", "README.md": b""}
         self.assertEqual(export_public.tree_summary(files),
-                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/legal/skills/")])
+                         [(1, 0, "README.md"), (1, 1, "plugins/"), (1, 2, "plugins/lawyer/skills/")])
 
     def test_plan_writes_nothing_and_reports_the_gate(self):
         self.repo_with(PUBLIC)

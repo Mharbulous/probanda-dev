@@ -51,7 +51,7 @@ from context.
   Routing rules: <<ABSOLUTE PATH, or skill_source__read PATH, TO file-sorting/profiles/accounting/notes/routing-rules.md>>
 If this is an absolute path, Read it directly. If instead it's a
 skill_source__read path (this prose isn't mounted on disk in this session),
-fetch it with the mcp__plugin_legal_data__skill_source__read tool
+fetch it with the mcp__plugin_lawyer_data__skill_source__read tool
 before using it. This file has the full 7 routing rules, worked examples,
 and the vendor list for rule 4. Do not consult any other reference file.
 

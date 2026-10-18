@@ -268,7 +268,7 @@ was the stated reason migrate could not be a tool at all, and it ran E1-only. It
 - The bypass is a hardcoded literal at exactly one call site (`references/scripts/migrate_engine.py`,
   `resolve()`), never derived from tool input. No argument to `case_data__migrate` can flip it.
 - `case_data__query`/`case_data__execute` run in a **separate spawn** whose pointer resolver is a
-  hand-ported copy in `source/legal/mcp/src/case/backend.ts` taking one positional argument.
+  hand-ported copy in `source/lawyer/mcp/src/case/backend.ts` taking one positional argument.
   There is no `migrate_only` parameter to pass — not a guarded one, none.
 
 **Never "simplify" that backend into importing `resolve_paths`.** The duplication looks like debt
@@ -313,7 +313,7 @@ that is the machine that ran it.
 ## 28. Every case-data write takes one cross-process lock (2026-07-27)
 
 `case_data__execute` and `case_data__migrate` both take the same host-local lock, keyed on
-`matter_root` (`source/legal/mcp/src/case/case-lock.ts`). Contention refuses with
+`matter_root` (`source/lawyer/mcp/src/case/case-lock.ts`). Contention refuses with
 `lock_unavailable` after ~2s of retries rather than queueing indefinitely.
 
 **What it defends against.** Both writers work the same way: stage temp copies of all three
@@ -339,7 +339,7 @@ means a crashed migrate — both writers say so in a warning rather than proceed
 
 ## 29. A schema bump touches a dozen files across two languages — work the checklist
 
-The version is not derived anywhere; it is restated in `schema.sql`, `migrations.sql`, four operation docs, five Python scripts, a test file's name and class, and a hand-ported duplicate guard inside the MCP runtime's TypeScript. `references/schema-bump.md` is the complete surface, in dependency order. Work it whole and in one commit — every guard is `version < EXPECTED_USER_VERSION` → reject, so the moment a new guard ships, every matter still on the old version fails closed until it migrates. The two most-missed surfaces are `source/legal/mcp/src/case/backend.ts` (a deliberate duplicate — see #27 — which therefore never inherits a change to `resolve_paths.py`) and the `source/legal/mcp/test/case-tools.db.test.mjs` boundary pins that go with it.
+The version is not derived anywhere; it is restated in `schema.sql`, `migrations.sql`, four operation docs, five Python scripts, a test file's name and class, and a hand-ported duplicate guard inside the MCP runtime's TypeScript. `references/schema-bump.md` is the complete surface, in dependency order. Work it whole and in one commit — every guard is `version < EXPECTED_USER_VERSION` → reject, so the moment a new guard ships, every matter still on the old version fails closed until it migrates. The two most-missed surfaces are `source/lawyer/mcp/src/case/backend.ts` (a deliberate duplicate — see #27 — which therefore never inherits a change to `resolve_paths.py`) and the `source/lawyer/mcp/test/case-tools.db.test.mjs` boundary pins that go with it.
 
 **The same rule governs the separate application schema (`application_state.SCHEMA_VERSION`), plus one of its own: a bump adds its own predecessor to `MIGRATION_SOURCE_SCHEMA_VERSIONS` as an explicit literal.** That set was `{1, 2, SCHEMA_VERSION}` until 2026-07-29, so the 8 → 9 bump silently turned it into `{1, 2, 9}` — dropping the schema-8 source path before anyone wrote one, and it would have done the same to 9 on the next bump. Never put `SCHEMA_VERSION` in that set.
 
@@ -348,7 +348,7 @@ The version is not derived anywhere; it is restated in `schema.sql`, `migrations
 ## 30. report_context is a sanctioned in-tree read-only consumer of main/law (2026-07-28)
 
 `application_state.py` carries one operation — `case_data__application_report_context`, reachable
-only server-side from the draft-application path in source/legal/mcp/src/application/engine.ts (deleted, #374)
+only server-side from the draft-application path in source/lawyer/mcp/src/application/engine.ts (deleted, #374)
 — that reads `main.sqlite` and `law.sqlite` directly. It assembles the live case-context the
 show-don't-tell Draft Application renders: style of proceeding, party roster, referenced fact
 statements with posture, and law-side noting-up currency. The boundary holds because of **what
@@ -417,7 +417,7 @@ and §4 renders it in that window.
   names the offending fields (`invalid_authority_content` / `invalid_content`). A CHECK would raise
   an opaque `IntegrityError`. Only the kind enum is schema-level, because that alone is a categorical
   invariant (see the closing principle). The same rule is restated in
-  source/legal/mcp/src/application/change-payloads.ts (deleted, #374) for the reason that
+  source/lawyer/mcp/src/application/change-payloads.ts (deleted, #374) for the reason that
   module existed at all: to fail before the worker is discarded, not after.
 - **The parts join the no-op short-circuit.** `_upsert_content` skips a byte-identical re-upsert, and
   the citation parts are compared alongside the other five columns — otherwise a corrected pinpoint
@@ -496,7 +496,7 @@ Schema 10 separates the entities the domain model draws — statement, excerpt, 
 
 `PRIMARY_SOURCE_STATUSES` accepted `{verified, not_primary, validation_unavailable}` while the `authority_integrity_observations` CHECK allowed only two of them. `not_primary` therefore passed `_normalize_authority_integrity_observation`, passed `application_engine__validate_operation_result` (`change-payloads.ts` types the field as a bare string), and then died at the INSERT with a bare `sqlite3.IntegrityError`. Schema 12 widens the CHECK; the value was always the correct one, since a textbook cannot honestly be recorded as primary authority and `change-payloads.md` instructs workers to emit it.
 
-**The failure mode is the point, not the typo.** source/legal/mcp/src/application/state.ts (deleted, #374) caught `ApplicationStateError` and returned its named code; every other exception becomes `internal_error` / "Unexpected application-state driver failure". So a business-rule violation is legible and a constraint violation is not — this one surfaced as an apparent backend fault, and a live session spent a subagent and ~230k tokens inventing a missing-practitioner-checkpoint precondition to explain it before the real cause was found. **Read a bare `internal_error` from this surface as an unhandled host exception, never as a business rule.**
+**The failure mode is the point, not the typo.** source/lawyer/mcp/src/application/state.ts (deleted, #374) caught `ApplicationStateError` and returned its named code; every other exception becomes `internal_error` / "Unexpected application-state driver failure". So a business-rule violation is legible and a constraint violation is not — this one surfaced as an apparent backend fault, and a live session spent a subagent and ~230k tokens inventing a missing-practitioner-checkpoint precondition to explain it before the real cause was found. **Read a bare `internal_error` from this surface as an unhandled host exception, never as a business rule.**
 
 **The invariant, stated once so it is checkable:** every `*_STATUSES` set in this file and the CHECK on the column it guards are one decision written twice, and they must be compared whenever either moves. At the time of writing the four sibling columns (`excerpt_status`, `treatment_status`, `statutory_currency_status`, `jurisdiction_status`) all agree with their enums; only this one had drifted. Widening a Python enum without its CHECK is not a lenient failure — it is an opaque one, and it clears every gate before it fails.
 
@@ -558,7 +558,7 @@ This is **not** commit `0088d95`'s defect rebuilt. There the criteria were *abse
 
 **The audit trail is a `source_references` row, uniformly.** For the same reason — no `notes` column anywhere on the surface — every applied change writes one `main.source_references` row (`reference_type = 'procedural'`, `source_id` = the order, `source_locator` = the operative term) whose `description` carries the `ORDER-EFFECT:` marker. This is a **new marker family**, sibling to #22's `[MERGED-INTO:]`, and the conventions §5 prefix rule does not apply to it: it must never route anything to a review queue. The row is written `verified = 1` because the practitioner personally approved its content, which is exactly what conventions §4 value `1` means.
 
-**Deadline arithmetic delegates, always.** An order changing a trial date proposes the `trial_date` field and then recommends the `legal:docket-clerk` agent, which owns anchor extraction and cascade recalculation. A second implementation of deadline arithmetic living inside case-data would be a second thing to keep correct, and the two would disagree.
+**Deadline arithmetic delegates, always.** An order changing a trial date proposes the `trial_date` field and then recommends the `lawyer:docket-clerk` agent, which owns anchor extraction and cascade recalculation. A second implementation of deadline arithmetic living inside case-data would be a second thing to keep correct, and the two would disagree.
 
 ## 37. Experts are witnesses; client instructions are privileged and bitemporal (v7.8)
 
@@ -700,7 +700,7 @@ This is purely additive: no existing row is read, rewritten, or backfilled, and 
 
 ## 45. Bookmark-driven book segmentation is a stdlib outline parser, three write-only report boundaries, and a three-level source tree — no schema change (2026-09-02)
 
-A BC Court of Appeal application/response book bundles reasons for judgment, the order, one or more affidavits, a memorandum of argument, and a table of authorities behind one set of PDF bookmarks, required by the registrar's own completion instructions. `/legal:ingest` previously ignored them entirely: a 257-page book fails both the page-1 jurat gate and the `AFF`/`SWORN` filename cue, so it would be force-fit through Path A or bounce. `references/scripts/extract_outline.py` reads a PDF's outline (Part-level and affidavit-level page ranges, and per-authority ranges in a book of authorities) and `shared/bookmark-segmentation.md` decides how to use it.
+A BC Court of Appeal application/response book bundles reasons for judgment, the order, one or more affidavits, a memorandum of argument, and a table of authorities behind one set of PDF bookmarks, required by the registrar's own completion instructions. `/lawyer:ingest` previously ignored them entirely: a 257-page book fails both the page-1 jurat gate and the `AFF`/`SWORN` filename cue, so it would be force-fit through Path A or bounce. `references/scripts/extract_outline.py` reads a PDF's outline (Part-level and affidavit-level page ranges, and per-authority ranges in a book of authorities) and `shared/bookmark-segmentation.md` decides how to use it.
 
 **Why a stdlib outline parser, not `pypdf` or PyMuPDF.** `pypdf` is not installed on the practitioner's machine and the repo forbids external packages (root `CLAUDE.md`); PyMuPDF (`fitz`) is installed and used by `/assemble`'s `assemble-affidavit` subskill, but that use was never recorded as an exception, may not be present in the Cowork sandbox, and this skill already has a written posture of refusing a PDF dependency rather than taking one (`lint_comparative_gloss.py`'s `SOURCE_UNSUPPORTED` for PDFs, and #40's rejection of Outlook COM after a `pip install` breach). `extract_outline.py` earns the same E1+E2 exemption as `render_document.py` (no database, no `resolve_paths`/`fuse_safe_io`, no matter pointer) and fails loudly (`{"error": ...}`, non-zero exit) on any parse failure rather than guessing a partial outline.
 

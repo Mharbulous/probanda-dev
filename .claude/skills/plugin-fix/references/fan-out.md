@@ -9,7 +9,7 @@ Read this after steps 1 to 3 of `SKILL.md` when rule 3 selects fan-out mode. The
 **b. Gather evidence** per rule 7: at most three lookups per defect.
 
 **c. Target design folder.**
-- For a defect in a Probanda plugin (`legal`, `researcher`, `litigator` or `solicitor`), it is the probanda-dev repo's `docs/Specs/` folder.
+- For a defect in a Probanda plugin (`lawyer`, `researcher`, `litigator` or `solicitor`), it is the probanda-dev repo's `docs/Specs/` folder.
 - For any other plugin, ask once which folder. Never guess.
 - Make one `device_request_folder_access` call for the repo's planning folder only, with a reason that names the spec files about to be written.
 - Read the newest spec in that folder and match its format: header lines, heading style and cross-reference style.

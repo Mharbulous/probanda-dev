@@ -4,7 +4,7 @@ description: >-
   Triage likely obligations and unfinished tasks from calendar events.
   Use for calendar reminder checks, personal obligation triage, "what do I need
   to do?", "what have I put off?", "ask me if I finished things", and
-  session-start reminder checks. Reads the calendar through the legal plugin's
+  session-start reminder checks. Reads the calendar through the lawyer plugin's
   calendar tools and never writes to it.
 ---
 
@@ -18,7 +18,7 @@ It does not answer agenda or day-summary prompts. It never writes to the calenda
 
 ## Query
 
-Use `mcp__plugin_legal_contacts-calendars-email__calendar__list_events`:
+Use `mcp__plugin_lawyer_contacts-calendars-email__calendar__list_events`:
 
 - `calendars`: omit it to read every calendar, unless the user names one (`calendar__list_calendars` lists the names).
 - `start`: the date 7 calendar days before today.

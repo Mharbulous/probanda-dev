@@ -6,7 +6,7 @@ Usage:
   python scripts/check_file_ops.py --report   also list every operation found with its ruling
 
 Commandment 7: file-manager is the only plugin that renames, moves, changes or
-deletes a file Probanda did not create. Every other plugin (legal, researcher,
+deletes a file Probanda did not create. Every other plugin (lawyer, researcher,
 litigator, solicitor) may do that only to a file Probanda created: its own
 rendered outputs, temp files, databases, knowledge overlay, run folders. Any
 other file goes through file-manager, conditionally: without it the step stops
@@ -60,11 +60,11 @@ SKIP_DIRS = {"__pycache__", "tests", "test", "determinizing-tests", "evals", ".p
 SKILL_EXTS = {".md", ".py", ".sh", ".ps1", ".bat", ".cmd", ".js", ".mjs", ".ts"}
 # The entry point of each MCP server, by its key in a plugin's .mcp.json.
 SERVER_ENTRIES = {
-    "data": "source/legal/mcp/src/index.ts",
+    "data": "source/lawyer/mcp/src/index.ts",
     "canlii": "source/researcher/canlii-mcp/src/index.ts",
     "commons": "source/researcher/commons-mcp/src/index.ts",
-    "timecamp": "source/legal/mcp/src/timecamp-index.ts",
-    "contacts-calendars-email": "source/legal/mcp/src/contacts-calendars-email-index.ts",
+    "timecamp": "source/lawyer/mcp/src/timecamp-index.ts",
+    "contacts-calendars-email": "source/lawyer/mcp/src/contacts-calendars-email-index.ts",
 }
 
 PY_OPS = [(f"os.{op}", re.compile(rf"\bos\.{op}\s*\(")) for op in ("rename", "replace", "remove", "unlink", "rmdir")]

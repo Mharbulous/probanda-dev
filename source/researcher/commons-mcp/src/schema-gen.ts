@@ -448,7 +448,7 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
       description:
         "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. " +
         "title and body are the whole post: they must name no person, entity, matter, document or path. " +
-        "source is user for the practitioner's own idea (through /legal:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). " +
+        "source is user for the practitioner's own idea (through /lawyer:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). " +
         "skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. " +
         "The server adds the researcher plugin's version itself. " +
         "Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; " +

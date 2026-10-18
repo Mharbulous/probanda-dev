@@ -185,7 +185,7 @@ existing authority row, so nothing else can.
 
 The pool also holds **court-rule records**: one row per deadline-rule period a
 practitioner verified locally against the rule's primary source (the
-firm rule overlay that `legal:docket-clerk` keeps). They are a separate kind of row from
+firm rule overlay that `lawyer:docket-clerk` keeps). They are a separate kind of row from
 principles, with their own four tools. Probanda ships no procedure that pushes, pulls,
 ratifies or retires them; this section states the rules every caller keeps.
 
@@ -218,7 +218,7 @@ which returns a link to a page on this computer. The practitioner pastes the key
 that page, never in chat; the page validates it against the pool and stores it
 encrypted on the host, where it survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
-(see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
+(see `plugins/lawyer-commons/docs/ADR-002-key-delivery.md`). An environment variable
 still wins where one is genuinely set, which is the Claude Code CLI / developer path.
 
 On a "not configured" error, check `legal_commons__configure_status` first — it

@@ -4,7 +4,7 @@ import { defaultStateDir, readProtectedJson } from "./dpapi-store.js";
 
 // The one Probanda's Cloud credential: the static Supabase key that the commons
 // server's legal_commons__configure_credential tool saves. Shared by the commons
-// server and the legal plugin's data server, so both read the same file with the same
+// server and the lawyer plugin's data server, so both read the same file with the same
 // overrides (docs/Plans/2026-10-14_practice-db-conversion.md, step 3). Plain
 // JavaScript for the reason given in dpapi-store.js.
 

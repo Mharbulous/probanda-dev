@@ -41,7 +41,7 @@ SCAN_EXTS = (".md", ".py", ".json", ".sql")
 EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 # Private skills, and one skills folder per public plugin.
 SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
-# The data server ships in legal, but these tool families belong to litigator's
+# The data server ships in lawyer, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
 # Tool families of a server, for a name written without its plugin prefix: the

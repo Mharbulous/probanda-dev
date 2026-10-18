@@ -34,7 +34,7 @@
 | Fact Posture | `main.v_fact_status.posture` (view, derived column) | Values: `disputed`\|`admitted`\|`not_admitted`\|`no_position`\|`claimed`\|`unaddressed`. Computed from `main.v_current_positions`; never stored on `facts`. |
 | Current positions (view) | `main.v_current_positions` | `WHERE valid_to IS NULL AND verified >= 0 AND pending_reverification = 0`. |
 | Issue | `main.issues` | `issue_id`, `title`, `description`, `issue_type`, `status`, `priority`. |
-| Issue.issue_type | `main.issues.issue_type` CHECK(`factual`\|`legal`\|`mixed`) | Question of fact / law / mixed fact and law. |
+| Issue.issue_type | `main.issues.issue_type` CHECK(`factual`\|`lawyer`\|`mixed`) | Question of fact / law / mixed fact and law. |
 | Issue.status (lifecycle) | `main.issues.status` CHECK(`open`\|`resolved`\|`abandoned`) | Lifecycle status of the issue itself — distinct from Fact Posture. |
 | Legal Concept | `law.legal_concepts` | `concept_id`, `name`, `concept_type`, `jurisdiction`, `in_force_date`, `repeal_date`. UNIQUE(name, jurisdiction). |
 | Legal Concept type (5 kinds in one table) | `law.legal_concepts.concept_type` CHECK(`cause_of_action`\|`doctrine`\|`test`\|`defence`\|`remedy`) | Discriminator — never split into separate tables. |

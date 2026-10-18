@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 // read on every later server start. env still wins outright, so Claude Code CLI
 // — which does inherit the user env — is unaffected.
 //
-// Ported from plugins/legal-commons/mcp/src/dpapi-store.ts + legal-commons/config.ts,
+// Ported from plugins/lawyer-commons/mcp/src/dpapi-store.ts + legal-commons/config.ts,
 // which is the proven pattern for exactly this Cowork delivery gap.
 
 export interface ResolvedKey {

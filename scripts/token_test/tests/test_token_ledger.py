@@ -58,7 +58,7 @@ class LedgerTest(unittest.TestCase):
             assistant("a2", "claude-haiku-5-5", usage(1, 0, 500, 2100, 100)),
             assistant("syn", "<synthetic>", usage(0, 0, 0, 0, 0)),
         ])
-        (subagents / "agent-abc.meta.json").write_text(json.dumps({"agentType": "legal:extract-facts"}))
+        (subagents / "agent-abc.meta.json").write_text(json.dumps({"agentType": "lawyer:extract-facts"}))
         write_jsonl(subagents / "agent-untagged.jsonl", [
             user([{"type": "text", "text": "No tag here"}]),
             assistant("u1", "claude-sonnet-5", usage(5, 0, 0, 0, 5)),
@@ -94,7 +94,7 @@ class LedgerTest(unittest.TestCase):
     def test_tagged_run_counts_each_call_once(self):
         run = self.run_row("E3-a-pdf_ocr-D007-2")
         self.assertEqual((run["experiment"], run["cell"], run["doc"], run["rep"]), ("E3", "a-pdf_ocr", "D007", "2"))
-        self.assertEqual((run["agent_id"], run["agent_type"], run["session"]), ("abc", "legal:extract-facts", "sess1"))
+        self.assertEqual((run["agent_id"], run["agent_type"], run["session"]), ("abc", "lawyer:extract-facts", "sess1"))
         self.assertEqual(run["calls"], 2)
         self.assertEqual([run[f] for f in token_ledger.TOKEN_FIELDS], [3, 2000, 500, 2200, 500, 40])
         expected = (3 * 0.10 + 2000 * 0.125 + 500 * 0.20 + 2200 * 0.01 + 500 * 0.50) / 1e6

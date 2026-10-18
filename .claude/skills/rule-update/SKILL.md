@@ -12,7 +12,7 @@ description: >
 
 # Rule update — drive the docket-clerk's workflow 10
 
-The `legal:docket-clerk` agent records a rule change in the firm rule overlay
+The `lawyer:docket-clerk` agent records a rule change in the firm rule overlay
 (`shared/docket-clerk/references/rule-update.md` §3), but it cannot fetch primary text, show a
 decision to the practitioner or spawn itself again. This skill does those three things, so the
 practitioner's only part is to approve each record. A weekly scheduled sweep finds changes
@@ -64,7 +64,7 @@ what a rule means. Writes go through the clerk. A question of law met on the way
      another decision's quotation or memory.
    - Copy each affected subrule **verbatim**. A scanned PDF's text can misread letters and
      digits, so check every number against the page as shown, not only the extracted text.
-3. **Spawn the clerk with the passages** (`legal:docket-clerk`, workflow 10). The prompt
+3. **Spawn the clerk with the passages** (`lawyer:docket-clerk`, workflow 10). The prompt
    carries: the live-issue answer, the instrument (reg, OIC, commencement), each passage
    verbatim with its subrule, the source URL and the fetch date. A prompt carrying passages
    skips the clerk's first spawn. Relay any open item other than an approval as

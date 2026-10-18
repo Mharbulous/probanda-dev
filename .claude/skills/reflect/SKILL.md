@@ -32,7 +32,7 @@ A retrospective on work already done in this session. The practitioner has stopp
 
 Scope: the session's substantive work up to this invocation, or the narrower segment the practitioner names. The retrospective can run as a full pipeline (phases 1→4 below) or enter at whichever phase the practitioner's request matches. Successive retrospective turns build one arc — plan, then analyze, then document, then preserve — not restarts.
 
-**Routing:** an introspection-style request (see the description's Phase-3 trigger list — "/introspection," "document what just happened," "E2E test report," "capture agent behavior," "turn this session into an E2E test") enters at Phase 3 directly and runs it alone, ending with the Step 7 handoff below. Phase 3 has no dependency on Phases 1/2 having run (its own Precondition is "None as to timing") — a bare Phase-3 request produces a complete report on its own. A bare `/reflect` or `/legal:reflect` invocation — no arguments and no phase-specific trigger phrase — defaults to the full pipeline (Phases 1→4, in order) rather than asking the practitioner which phase(s) to run.
+**Routing:** an introspection-style request (see the description's Phase-3 trigger list — "/introspection," "document what just happened," "E2E test report," "capture agent behavior," "turn this session into an E2E test") enters at Phase 3 directly and runs it alone, ending with the Step 7 handoff below. Phase 3 has no dependency on Phases 1/2 having run (its own Precondition is "None as to timing") — a bare Phase-3 request produces a complete report on its own. A bare `/reflect` or `/lawyer:reflect` invocation — no arguments and no phase-specific trigger phrase — defaults to the full pipeline (Phases 1→4, in order) rather than asking the practitioner which phase(s) to run.
 
 ## Phase 1 — Improvement planning (when the practitioner observed a problem and proposed a fix)
 
@@ -133,7 +133,7 @@ as it stands at the moment of invocation.
 
 **Runtime fit — check before Step 1.** Delivery, unlike timing, has a precondition: Steps 1,
 6, and 7 assume the Coclerk delivery environment — the `repo_docs__write` tool (full name
-`mcp__plugin_legal_data__repo_docs__write`) is available, or the Coclerk repo's
+`mcp__plugin_lawyer_data__repo_docs__write`) is available, or the Coclerk repo's
 `docs\E2E-tests\` tree is directly writable. Check whether either holds. If neither does —
 the skill was invoked from an unrelated project (a different repo in Claude Code CLI, for
 example) — still run the phase in full, taking the **non-Coclerk fallback** branches marked
@@ -533,7 +533,7 @@ on whether the repo is directly writable from this session:
 - **Cowork session** (the repo is not mounted, and there is no repo folder
   grant): write the report
   into the repo directly with the `repo_docs__write` tool on the litigation
-  data server (full name `mcp__plugin_legal_data__repo_docs__write`).
+  data server (full name `mcp__plugin_lawyer_data__repo_docs__write`).
   The `path` argument is relative to docs/ — e.g.
   `E2E-tests/2026-07-19-2243 demo-skill-e2e-test.md`. If the call still fails
   with code `exists`, retry once with a numeric suffix before the extension. Do

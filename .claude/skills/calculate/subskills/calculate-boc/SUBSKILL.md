@@ -14,7 +14,7 @@ Third member of the bill-of-costs chain. It computes the totals, puts them to th
 practitioner, and on approval writes the context file `/publish` fills from.
 
 **In Cowork, stop here.** In Cowork (this host grants the data tools as
-`mcp__remote-devices__plugin_legal_data__<name>`), stop before any tool
+`mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the case-data folder this chain works in
@@ -86,7 +86,7 @@ Put the summary to the practitioner with three pills, none preselected:
 
 - **Approve and publish** — the context file is written; open `/publish` with
   `publish-boc` through its front door. In a session that has already spawned
-  `legal:docket-clerk` in full mode, the lane hook refuses this: `publish` is in the drafting
+  `lawyer:docket-clerk` in full mode, the lane hook refuses this: `publish` is in the drafting
   lane and the two lanes stay in separate sessions. Say so and offer the other two.
 - **Approve, stop here** — the context file is written and nothing else happens.
 - **Adjust first** — with a required `.elicit-textarea` describing the

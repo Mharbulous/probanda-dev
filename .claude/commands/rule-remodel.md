@@ -4,7 +4,7 @@ description: Use only when the user explicitly invokes /rule-remodel in a Claude
 
 # Rule remodel
 
-Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships it. It brings a shipped rule file in this repo (`.claude/skills/shared/docket-clerk/references/`) up to an amending regulation, so a plugin release replaces the firm overlay records that `/legal:rule-update` wrote. After the release, `rule-update.md` §2 reconciliation marks each matching overlay record `superseded_by_shipped` on its next resolution. Repo sessions only: a Cowork session never edits these files.
+Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships it. It brings a shipped rule file in this repo (`.claude/skills/shared/docket-clerk/references/`) up to an amending regulation, so a plugin release replaces the firm overlay records that `/lawyer:rule-update` wrote. After the release, `rule-update.md` §2 reconciliation marks each matching overlay record `superseded_by_shipped` on its next resolution. Repo sessions only: a Cowork session never edits these files.
 
 ## Before starting
 
@@ -24,7 +24,7 @@ Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships i
    - Keep every superseded row, and end its Description with `In force to <day before commencement>.` (`rule-update.md` §4).
    - Add each new row with `In force from <commencement>.`, carrying the verbatim words it models.
    - A repealed rule with no successor keeps its row, marked repealed and in force to the day before.
-   - Add a new anchor type to the routing table in `source/legal/agents/docket-clerk.md`, and a new cross-anchor deadline to that file's Cascade note, in the same commit.
+   - Add a new anchor type to the routing table in `source/lawyer/agents/docket-clerk.md`, and a new cross-anchor deadline to that file's Cascade note, in the same commit.
    - List every amended subrule that no row models under "may need new modelling", so `sections: []` hides nothing.
 4. **Open questions.** Carry every construction question as an open question: the Interpretation Act s.25.2(3) added day (#740, `reckoning.md`), new wording such as "2 business days before", and the transition question for a period running across the commencement date. Never resolve one. Which side of an open question the stored date takes is the practitioner's decision; record it as theirs.
 5. **`rule-freshness.json`.**

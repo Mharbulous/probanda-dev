@@ -1,6 +1,6 @@
 // The commons key page: where the practitioner pastes the legal-commons key, so
 // it is never a tool argument and never passes through the chat or the model.
-// The shape of the legal data server's mail and TimeCamp pages: node:http on
+// The shape of the lawyer data server's mail and TimeCamp pages: node:http on
 // 127.0.0.1, port 0, started lazily and unref'd, one random path token per
 // link, only the newest link works, and a successful save spends it. The key
 // is never logged, echoed into a page or put in an error.

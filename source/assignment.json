@@ -2,7 +2,7 @@
   "status": "cutover",
   "note": "The plugin each unit ships in since the plugin split (docs/Plans/2026-10-13_four-plugin-split.md). A skill is named by its folder under .claude/skills/ or public/plugins/*/skills/, an agent by its file under source/<plugin>/agents/, a hook by its script's path from the repo root.",
   "plugins": {
-    "legal": {
+    "lawyer": {
       "requires": [],
       "skills": [
         "ar-follow-up",
@@ -10,6 +10,7 @@
         "calendar-reminders",
         "call-contact",
         "case-data",
+        "dyu",
         "executive-assistant",
         "file-naming",
         "file-review-prep",
@@ -30,6 +31,7 @@
         "show-me",
         "suggestion",
         "task-prioritization",
+        "TLDR",
         "verify-bc-lawyer",
         "wip-tracker"
       ],
@@ -48,13 +50,14 @@
         "verify-source"
       ],
       "hooks": {
-        "hidden-skills-note": "source/legal/hooks/hidden-skills-note.py",
+        "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
-        "mail-send-gate": "source/legal/hooks/mail-send-gate.py",
-        "plugin-cache-guard": "source/legal/hooks/plugin-cache-guard.py",
+        "mail-send-gate": "source/lawyer/hooks/mail-send-gate.py",
+        "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
-        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py"
+        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
+        "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py"
       },
       "servers": [
         "data",
@@ -63,7 +66,7 @@
     },
     "researcher": {
       "requires": [
-        "legal"
+        "lawyer"
       ],
       "skills": [
         "case-brief",
@@ -95,7 +98,7 @@
     },
     "litigator": {
       "requires": [
-        "legal",
+        "lawyer",
         "researcher"
       ],
       "skills": [
@@ -128,7 +131,7 @@
     },
     "solicitor": {
       "requires": [
-        "legal"
+        "lawyer"
       ],
       "skills": [],
       "agents": [],
@@ -137,7 +140,7 @@
     },
     "file-manager": {
       "requires": [
-        "legal"
+        "lawyer"
       ],
       "skills": [
         "file-apply",
@@ -154,21 +157,9 @@
         "files"
       ]
     },
-    "lawyer": {
-      "requires": [],
-      "skills": [
-        "TLDR",
-        "dyu"
-      ],
-      "agents": [],
-      "hooks": {
-        "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py"
-      },
-      "servers": []
-    },
     "timekeeper": {
       "requires": [
-        "legal"
+        "lawyer"
       ],
       "skills": [
         "build-timeline",

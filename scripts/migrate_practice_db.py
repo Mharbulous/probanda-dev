@@ -10,7 +10,7 @@ Migration steps 3 to 6 of docs/Plans/2026-10-14_practice-db-conversion.md, for o
 2. Reads every row of the 15 legacy tables, and stops unless the status
    policies are exactly the eight defaults.
 3. Writes practice.new.db beside the original, in the item form the data
-   server's practice store keeps (source/legal/mcp/src/practice/store.ts),
+   server's practice store keeps (source/lawyer/mcp/src/practice/store.ts),
    under a new tenant id and a new 32-byte hash key.
 4. Rebuilds every old row from its item with the data server's generic
    flattening (items.ts) and compares field by field. Any difference stops the
@@ -54,7 +54,7 @@ import uuid
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-KV_SOURCE = REPO / "source" / "legal" / "mcp" / "src" / "kv" / "backend.ts"
+KV_SOURCE = REPO / "source" / "lawyer" / "mcp" / "src" / "kv" / "backend.ts"
 COMMONS_KEY = REPO / "source" / "mcp-shared" / "commons-key.js"
 
 FORMAT = "items-1"

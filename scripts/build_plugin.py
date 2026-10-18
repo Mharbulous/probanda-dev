@@ -59,7 +59,7 @@ TREE_TEXT_EXTS = (".md", ".py", ".sql", ".json")
 TRANSIENT_ASSET_PREFIX = "~$"
 # Files written with LF line endings and scanned for old plugin identifiers.
 TEXT_SUFFIXES = {".md", ".py", ".json", ".js", ".txt", ".html", ".css", ".csv", ".yaml", ".yml", ".sql"}
-OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_")
+OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_legal_")
 # The single plugin's own identifiers, a tool name and an agent or skill prefix.
 # They are old in any plugin with another name.
 SINGLE_PLUGIN_IDENTIFIERS = (rb"plugin_probanda_", rb"probanda:[A-Za-z]")

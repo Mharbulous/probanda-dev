@@ -14,7 +14,7 @@ checks transcription, file consistency, prescribed wording, and assembly without
 turning a proposed admission into an established fact.
 
 **In Cowork, stop here.** In Cowork (this host grants the data tools as
-`mcp__remote-devices__plugin_legal_data__<name>`), stop before any tool call or file write.
+`mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool call or file write.
 This step runs on the PC, in a Claude Code session in the desktop app's Code tab, where the
 Probanda plugin is installed, not in a Cowork cloud sandbox, which cannot see the matter or
 case-data folders (ADR 0026). Tell the practitioner so, and how to run it there: open a Code-tab

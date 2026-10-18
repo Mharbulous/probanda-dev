@@ -99,14 +99,14 @@ current one.
   `AlreadyCurrentTests.user_version`), `test_check_pointers.py`,
   `test_resolve_paths.py` (a `write_db(..., version=<OLD>)` default —
   leave any test that deliberately exercises a *stale* version, e.g. legacy 76,
-  alone), and `source/legal/mcp/test/case-migrate.db.test.mjs` (its own
+  alone), and `source/lawyer/mcp/test/case-migrate.db.test.mjs` (its own
   `BUILD_FIXTURE` un-upgrade block plus every `MIGRATE ... -> v<OLD>`
   confirmation string). (The application-schema test files this list used to
   also name retired with that schema, 2026-08-27, #374.)
 
 ## 5. The duplicate guard in the MCP runtime — the one that gets missed
 
-`source/legal/mcp/src/case/backend.ts` carries a **hand-ported copy** of
+`source/lawyer/mcp/src/case/backend.ts` carries a **hand-ported copy** of
 the resolver as an embedded Python string. It is duplicated on purpose — the
 schema-guard bypass has to live in a different process from the read/write path
 (`design-decisions.md` #27, #28) — so it never picks up a change to `resolve_paths.py`.
@@ -122,7 +122,7 @@ Then, in `plugins/litigation/mcp`:
 npm test
 ```
 
-and update the boundary pins in `source/legal/mcp/test/case-tools.db.test.mjs`
+and update the boundary pins in `source/lawyer/mcp/test/case-tools.db.test.mjs`
 (the `fixture(NN)` calls and the asserted dump-header line). Finally release with `/release` — the
 bundle is tracked and shipped, so an un-rebuilt bundle ships the old guard.
 

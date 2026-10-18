@@ -133,7 +133,7 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    Query every atomic target fact and relief item, preserving its locator.
    Construct `ANSWERED_FACTS` / `ANSWERED_RELIEF` with caller-local opaque keys
    mapped to the real IDs. An originating pleading receives empty arrays.
-2. **Dispatch the extractor.** Dispatch the read-only `legal:extract-facts`
+2. **Dispatch the extractor.** Dispatch the read-only `lawyer:extract-facts`
    agent, whose body mirrors [`../agents/extract-facts.md`](../agents/extract-facts.md).
    Supply `MATTER_CONTEXT`, `DOCUMENT`,
    `ANSWERED_FACTS`, `ANSWERED_RELIEF`, and `OUTPUT: ingest`, which leaves
@@ -143,7 +143,7 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    `facts`, `fact_positions`, `relief_items`, `relief_positions`,
    `source_references`, and `unresolved_references` arrays.
    **If the Notice of Application gate above fired**, additionally dispatch the
-   read-only `legal:extract-sought-orders` agent, whose body mirrors
+   read-only `lawyer:extract-sought-orders` agent, whose body mirrors
    [`../agents/extract-sought-orders.md`](../agents/extract-sought-orders.md) (a second,
    separate dispatch — not a seventh array on this contract) supplying
    `MATTER_CONTEXT` and `DOCUMENT`. Its returned `sought_orders` array is
@@ -258,7 +258,7 @@ An affidavit is a compound document: a body source (`parent_source_id IS NULL`) 
 ### Pass 1 — Body
 
 1. Read the first 20 pages of the affidavit's range: `[1, 20]` when no `PAGE_RANGE` was supplied, `[range_start, range_start + 19]` when Path E supplied one. Never exhibit content. For scanned pages, render to PNG at **~150 DPI** into a **temp render directory** (OS temp — never the matter tree) and read the images.
-2. Dispatch the Pass-1 body subagent — the read-only `legal:extract-affidavit` agent, whose body mirrors [`../agents/extract-affidavit.md`](../agents/extract-affidavit.md), dispatched with `PASS = 1` and `OUTPUT` as Path A step 2 sets it — passing `PAGE_RANGE` when supplied. Pass it each rendered PNG page by explicit path, never the temp render directory.
+2. Dispatch the Pass-1 body subagent — the read-only `lawyer:extract-affidavit` agent, whose body mirrors [`../agents/extract-affidavit.md`](../agents/extract-affidavit.md), dispatched with `PASS = 1` and `OUTPUT` as Path A step 2 sets it — passing `PAGE_RANGE` when supplied. Pass it each rendered PNG page by explicit path, never the temp render directory.
 3. **Register the body source** in `main.sources`. **Standalone affidavit:** `parent_source_id = NULL`, dedup by `(file_hash, parent_source_id IS NULL)` — reuse an existing body with this hash and NULL parent rather than inserting a second one. **Path E evidence child:** `parent_source_id` = the book's `source_id`, dedup by `(parent_source_id, title)`, and record the range in `notes` as above. Either way, set `execution_status` on the body row from the gate's execution-status classification (`draft` / `affirmed` / `filed`). Exhibits inherit nothing — leave exhibit rows NULL; the body carries the jurat. Whether inserted or reused, the body row carries `ingestion_status = 'partial'` — never NULL — when the body transaction commits, so a run interrupted before or between exhibits reads as `partial`; the final status update after Pass 3 (or, for a `.docx` body, the upgrade to `complete` once Pass 1 commits) replaces it.
 4. **Register the deponent as a fact witness.** Upsert `main.witnesses` with `witness_type = 'fact'` and the deponent's name, then upsert `main.proceeding_witnesses` for the affidavit's proceeding. Set `called_by_party_id` only when the filing/calling party is established by the document or live matter data.
 5. **Insert body facts** with `basis_of_knowledge` (`personal` | `information_and_belief`) and `informant` from the subagent. **Privileged informant:** if the informant is privileged, set `informant = NULL` in `main.facts` and record the informant in `privileged.fact_provenance.source_note` (linking the fact to a privileged source), so the privileged identity never lands in main.
@@ -266,11 +266,11 @@ An affidavit is a compound document: a body source (`parent_source_id IS NULL`) 
 
 ### Pass 2 — Boundary scan (conditional)
 
-Only if Pass 1's `exhibit_inventory` lacked exhibit page starts. Dispatch the same `legal:extract-affidavit` agent with `PASS = 2` to locate exhibit stamp pages and compute each exhibit's content range (start … the page before the next stamp). For scanned documents, chunk the scan into **~40-page batches** — tiling the affidavit's own `PAGE_RANGE` when one was supplied by Path E, never the whole file. This pass **locates only** — it extracts nothing. Apply the scanned-stamp-page rendering rule and the `ocr_uncertain` → `OCR:`/`verified = 2` write rule from `../shared/bookmark-segmentation.md` §6.
+Only if Pass 1's `exhibit_inventory` lacked exhibit page starts. Dispatch the same `lawyer:extract-affidavit` agent with `PASS = 2` to locate exhibit stamp pages and compute each exhibit's content range (start … the page before the next stamp). For scanned documents, chunk the scan into **~40-page batches** — tiling the affidavit's own `PAGE_RANGE` when one was supplied by Path E, never the whole file. This pass **locates only** — it extracts nothing. Apply the scanned-stamp-page rendering rule and the `ocr_uncertain` → `OCR:`/`verified = 2` write rule from `../shared/bookmark-segmentation.md` §6.
 
 ### Pass 3 — Per exhibit
 
-One `legal:extract-affidavit` dispatch per exhibit with `PASS = 3`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**.
+One `lawyer:extract-affidavit` dispatch per exhibit with `PASS = 3`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**.
 
 For each exhibit:
 
@@ -287,7 +287,7 @@ Finally, set the **body** `ingestion_status`: `complete` if every exhibit was pr
 
 The backend-free semantics for authorities — contamination control, duplicate routing (hash then citation), the fresh-extraction write order, treatment deferral, the concept-completeness check, criterion-order continuation, the descriptor mapping, and the `6. LAW\` bulk cascade — live in `../shared/extraction-protocol.md` ("Legal authorities"). Authorities live in `law.sqlite` (zero client data, decision 10). This section supplies only the `law.sqlite` bindings for that protocol.
 
-- **Subagents:** case law → the `legal:extract-caselaw` agent, whose body mirrors [`../agents/extract-caselaw.md`](../agents/extract-caselaw.md) (verify path: `ingest-verify.md` §Path D); statute / regulation / treatise / other → the read-only `legal:extract-provision` agent, whose body mirrors [`../agents/extract-provision.md`](../agents/extract-provision.md). Build `LEGAL_CONTEXT` from the matter's live legal issues plus the optional `ISSUE_SCOPE` — never party names, never the style of cause. Supply `TREATMENT_VOCABULARY` to every dispatch: the whole text of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md), read fresh, never summarized. Supply `OUTPUT` as Path A step 2 sets it; a bundled book's dispatches always take `OUTPUT: ingest`, since `ingest-unattended.md` builds that file's block from its own read. Supply every case-law dispatch its own `RESULT_PATH`: the absolute path of a scratch file outside the matter tree, one per decision. The agent writes its result there and replies with one line, `ok <RESULT_PATH> <byte count>`. Read the result from that file, never from message text. The file holds exactly the strict JSON object of the agent's output contract and nothing else. Any other reply, or a file that is missing or is not that object, is a failed extraction.
+- **Subagents:** case law → the `lawyer:extract-caselaw` agent, whose body mirrors [`../agents/extract-caselaw.md`](../agents/extract-caselaw.md) (verify path: `ingest-verify.md` §Path D); statute / regulation / treatise / other → the read-only `lawyer:extract-provision` agent, whose body mirrors [`../agents/extract-provision.md`](../agents/extract-provision.md). Build `LEGAL_CONTEXT` from the matter's live legal issues plus the optional `ISSUE_SCOPE` — never party names, never the style of cause. Supply `TREATMENT_VOCABULARY` to every dispatch: the whole text of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md), read fresh, never summarized. Supply `OUTPUT` as Path A step 2 sets it; a bundled book's dispatches always take `OUTPUT: ingest`, since `ingest-unattended.md` builds that file's block from its own read. Supply every case-law dispatch its own `RESULT_PATH`: the absolute path of a scratch file outside the matter tree, one per decision. The agent writes its result there and replies with one line, `ok <RESULT_PATH> <byte count>`. Read the result from that file, never from message text. The file holds exactly the strict JSON object of the agent's output contract and nothing else. Any other reply, or a file that is missing or is not that object, is a failed extraction.
 - **Bundled books of authorities:** apply the BOA cascade in `../shared/extraction-protocol.md` ("Bundled books of authorities"). `law.authorities.file_path` and `file_hash` are the **book's**, and `notes` records `Bundled authority, pp. X–Y`. Supply `page_range` in `{{DOCUMENT}}` for the fresh-extraction dispatch.
 - **Hash / citation lookup:** `law.authorities.file_hash` (raw bytes); a "previously verified" hash match is one whose `last_verified_at` is set. Citation lookup reads `law.authorities.citation` and `law.authorities.notes`, then applies the **token-based** match of `../shared/extraction-protocol.md` (exact string or shared neutral token → reuse; a match on a `[MERGED-INTO:#<C> …]` tombstone redirects to `<C>`; a reporter-token or title-only match is reported for `merge-authorities.md`, never auto-reused). The tokenizer is `references/scripts/merge_authorities.py`'s — keep any inline check in lockstep with it.
 - **Second copy:** when the citation tier reuses an authority for a single-authority file, extract nothing. Append `[SECOND-COPY:<hash>]` (the file's own SHA-256) to the reused authority's `notes`, or to `<C>` on a tombstone, with conventions §11's append statement run against `law.authorities`. It is its own `case_data__execute` call, because a reuse has no document transaction. This applies whoever called this path (the gate, `ingest-unattended.md`, the folder scan), so the file reads as held from then on. The append's guard makes a re-presented file a no-op. A reporter-token or title-only match writes nothing. A bundled book's entries share the book's hash and write no marker.
@@ -339,13 +339,13 @@ If the document meets `order-effects.md` Step 1 detection — a court order, or 
 
 ## Date-setting correspondence (after completion)
 
-After the order-effects pass, check whether the just-registered top-level source is a date set by the forum (ADR 0024 D12): its `category` is `correspondence` or `court`, the document's own face shows it comes from the forum (a registry, judicial assistant, tribunal, arbitrator or case manager, read from its sender or signature block, never from the folder or filename), and it fixes a date (a hearing, trial, conference, or a date by which something must be done). Over-inclusive is fine: a false positive costs one report line. An order that order-effects already handed to `legal:docket-clerk` is not reported twice.
+After the order-effects pass, check whether the just-registered top-level source is a date set by the forum (ADR 0024 D12): its `category` is `correspondence` or `court`, the document's own face shows it comes from the forum (a registry, judicial assistant, tribunal, arbitrator or case manager, read from its sender or signature block, never from the folder or filename), and it fixes a date (a hearing, trial, conference, or a date by which something must be done). Over-inclusive is fine: a false positive costs one report line. An order that order-effects already handed to `lawyer:docket-clerk` is not reported twice.
 
 When it fires, add one line to the completion report and write nothing:
 
-> This document sets a date: <the event as the document states it>, <the date as written>, <locator per `../shared/conventions.md` §6>. Record it as an anchor through `legal:docket-clerk` (workflow 1, "Store anchor from document"), citing source <source_id> (<title>). Nothing was recorded here.
+> This document sets a date: <the event as the document states it>, <the date as written>, <locator per `../shared/conventions.md` §6>. Record it as an anchor through `lawyer:docket-clerk` (workflow 1, "Store anchor from document"), citing source <source_id> (<title>). Nothing was recorded here.
 
-This step never derives a deadline, never states time remaining, and never calls a `practice_data` anchor or deadline tool. Recording the anchor is `legal:docket-clerk`'s job, and doing it here would put this session in the deadline lane (`../../shared/deadline-isolation.md`). An unattended ingest writes a pending marker in place of the line ([`ingest-unattended.md`](ingest-unattended.md), Substitution 1h).
+This step never derives a deadline, never states time remaining, and never calls a `practice_data` anchor or deadline tool. Recording the anchor is `lawyer:docket-clerk`'s job, and doing it here would put this session in the deadline lane (`../../shared/deadline-isolation.md`). An unattended ingest writes a pending marker in place of the line ([`ingest-unattended.md`](ingest-unattended.md), Substitution 1h).
 
 ---
 
@@ -374,7 +374,7 @@ After the date-setting check, test whether the just-registered top-level `main.s
 
 When it matches, in an attended ingest:
 
-1. Dispatch the read-only `legal:delivery-checker` agent once for the letter, with `matter_root`, the file's path, name and size in bytes, and the practitioner's environment notes (`practice_data__firm_profile`, `practice_quirks`). Pass no draft: an ingest holds no Writing.
+1. Dispatch the read-only `lawyer:delivery-checker` agent once for the letter, with `matter_root`, the file's path, name and size in bytes, and the practitioner's environment notes (`practice_data__firm_profile`, `practice_quirks`). Pass no draft: an ingest holds no Writing.
 2. Add one line to the completion report for each stated method: the method, whether it was confirmed sent and confirmed delivered, and for anything not confirmed what was searched. A method the checker could not check is reported as not checked, with its reason, never as not sent.
 
 Ask the practitioner nothing here, and write nothing: the checker's result goes into the report and is kept nowhere, in no table, source row, note or file. A letter ingested again is checked again. The report line is the whole result, and no question about whether the letter went out is put before or after it. This step never derives a deadline or a deemed date of service from a sent or delivered time. An unattended ingest skips this step and its report says the letter's delivery was not checked.

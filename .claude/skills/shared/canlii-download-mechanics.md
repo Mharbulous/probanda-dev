@@ -3,7 +3,7 @@
 Canonical, verified mechanics for downloading a CanLII decision by neutral
 citation via a Claude-in-Chrome session and filing it. The `research-paralegal`
 agent fetches this file before its first CanLII download —
-`mcp__plugin_legal_data__skill_source__read`, path
+`mcp__plugin_lawyer_data__skill_source__read`, path
 `shared/canlii-download-mechanics.md` — and follows it exactly. Never proceed
 from remembered mechanics; if the fetch failed, apply your agent's
 fetch-failure rule.

@@ -25,7 +25,7 @@ For each such plugin P, its change set is everything since its last release: `gi
 
 A server's bundle in `dist/` is committed, and the build copies it as it is. Rebuild a bundle when the change set touches its `src/` or `scripts/`, or `source/mcp-shared/`. Also rebuild the data bundle when `.claude/skills/drafting-data/references/scripts/migrate_engine.py` changed, because its schema version is baked in.
 
-- Legal's `data` server and file-manager's `files` server come from one source. Run `node source/legal/mcp/node_modules/typescript/bin/tsc -p source/legal/mcp/tsconfig.json`, then `node source/legal/mcp/scripts/bundle.mjs`, which writes both bundles.
+- Lawyer's `data` server and file-manager's `files` server come from one source. Run `node source/lawyer/mcp/node_modules/typescript/bin/tsc -p source/lawyer/mcp/tsconfig.json`, then `node source/lawyer/mcp/scripts/bundle.mjs`, which writes both bundles.
 - Research's `commons` server: its local `tsc` as above, then its `scripts/bundle.mjs`. Research's `canlii` server: its `scripts/bundle.mjs`.
 
 Call `tsc` and `bundle.mjs` with `node` directly: the package-install guard hook blocks `npm run`. Check: `tsc` exits 0, and `git status` shows the `dist/` file changed.

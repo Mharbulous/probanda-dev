@@ -44,7 +44,7 @@ side effect). The response's `evidence_sql` field is the written path.
 
 The dump content itself — the `schema v9.0` header, the three section-marker-fenced
 `iterdump()` bodies, `journal_mode = DELETE` asserted before dumping — is produced
-inside the backend (`source/legal/mcp/src/case/backend.ts`, `write_dump`);
+inside the backend (`source/lawyer/mcp/src/case/backend.ts`, `write_dump`);
 this operation file no longer implements it. Report the `evidence_sql` path returned.
 As a mutating operation's terminal step, every `case_data__execute` call already IS
 the dump; there is no separate dump call to make after an ordinary write.

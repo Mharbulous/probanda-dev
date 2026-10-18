@@ -48,7 +48,7 @@ Do not restrict (the policy covers none of these; each was once a false deny):
     It still counts when a shell could run it (`bash -c "rm x"`, a pipe or
     redirect into a shell, `$(...)`).
 
-Registered in source/legal/plugin.json (shipped with the legal plugin) and, on
+Registered in source/lawyer/plugin.json (shipped with the lawyer plugin) and, on
 a dev machine, in ~/.claude/settings.json. Fails OPEN on any unexpected error:
 a bug here must never be able to block all shell use.
 """

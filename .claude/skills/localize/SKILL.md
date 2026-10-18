@@ -83,7 +83,7 @@ Each is a tool sequence the playbook spells out.
 - `create`: resolve, fetch, then write (matter run) or return the candidate (repo run). With `practitioner_layout`: resolve, check each `literal` part against the saved form, then write, with no fetch.
 - `confirm`: check the file's sources, then add a sidecar row. Called by the skill whose tree holds the file: `/draft` at mockup review, the docket-clerk agent's caller for periods.
 - `correct`: read, fetch, then add a `corrected` sidecar row.
-- `refresh`: check, fetch the changed source, then rewrite the source record and each changed item's passage. Never writes status. Runs only on the practitioner's yes, which the caller offers on a changed report, or, from `/draft`, when a research return reports an amendment in force to a rule or form an overlay file names. A shipped file seen from a matter session is fixed only by a plugin update: offer `/legal:suggestion` naming the file and what changed.
+- `refresh`: check, fetch the changed source, then rewrite the source record and each changed item's passage. Never writes status. Runs only on the practitioner's yes, which the caller offers on a changed report, or, from `/draft`, when a research return reports an amendment in force to a rule or form an overlay file names. A shipped file seen from a matter session is fixed only by a plugin update: offer `/lawyer:suggestion` naming the file and what changed.
 - `retire`: from a matter session, one overlay file, or the `shadowed_only: true` sweep over overlay files the shipped tree now holds identically. Sidecars move with their files.
 
 ## 7. Notice
