@@ -17,6 +17,13 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { proposalKey } = await import("../build/submission/forms/proposal-inventory.js");
 
+/** The local date `days` from today, as 📇's 30-day freshness window reads `currency_checked_on`. */
+function localDate(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** Renders filing 1 on a freshly seeded database and returns the manifest the render wrote
  * beside the first advocacy document, as forms-render-memo-order.db.test.mjs reads it. */
 async function inventoryOf(seed) {
@@ -144,7 +151,12 @@ test("a statute's 📇 reads its currency on the doctrinal line and the order's 
       "unchecked currency, treatment notwithstanding"
     );
     assert.deepEqual(
-      await state("UPDATE authorities SET currency_status = 'current' WHERE id = 1; UPDATE authorities SET currency_status = 'repealed' WHERE id = 2;"),
+      await state(`UPDATE authorities SET currency_status = 'current', currency_checked_on = '${localDate(-31)}' WHERE id = 1; UPDATE authorities SET currency_status = 'repealed' WHERE id = 2;`),
+      { statement1: true, order1: true, statement4: true, keys: ["note-up:authorities:1"] },
+      "a 'current' checked more than 30 days ago is stale and keeps 📇"
+    );
+    assert.deepEqual(
+      await state(`UPDATE authorities SET currency_checked_on = '${localDate(0)}' WHERE id = 1;`),
       { statement1: false, order1: false, statement4: true, keys: [] },
       "current clears 📇; repealed prints it and proposes nothing"
     );
