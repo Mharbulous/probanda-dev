@@ -6,7 +6,7 @@ matter database, using only the Python stdlib sqlite3 module -- no
 dependencies, no build step.
 
 Version is tracked in the db_meta table (key='schema_version'), not
-PRAGMA user_version -- a deliberate departure from case-data's convention,
+PRAGMA user_version -- a deliberate departure from matter-data's convention,
 fixed by the legal-submissions domain-model design (docs/Research/2026-08-18
 legal-submissions plugin domain model and schema (issue 291).md, section 2.3):
 db_meta also carries the 'revision' stamp bumped by every slice write, so
@@ -202,7 +202,7 @@ def _refuse_unreconciled_counsel(con):
         raise MigrateError(
             "parties rows " + ", ".join(f"{i} ({name!r}, proceeding {p})" for i, p, name in unlinked) +
             ": no case_party_id, and a counsel or address-for-service value the 42 -> 43 hop drops. "
-            "Link each to its case-data party and decide each value it holds (filing-checklists.md "
+            "Link each to its matter-data party and decide each value it holds (filing-checklists.md "
             "section 0), then migrate again. Nothing of that hop was applied.",
             code="counsel_not_reconciled",
             details={"table": "parties", "ids": [row[0] for row in unlinked]},
@@ -422,7 +422,7 @@ def _load_filing_layouts(con, draft_tree_path):
 
 def _backup_db(db_path):
     """Copy db_path aside (timestamped, UTC) before the first hop touches a
-    pre-existing database. Deliberately minimal (#353): not case-data's
+    pre-existing database. Deliberately minimal (#353): not matter-data's
     plan/apply/restore ceremony, just the copy-aside. The bare-file copy is
     complete because this database is contractually journal_mode=DELETE
     (enforced by data/backend.ts's guard), so no -wal/-shm sidecars exist,

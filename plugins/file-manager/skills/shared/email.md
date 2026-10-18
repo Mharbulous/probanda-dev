@@ -7,7 +7,7 @@ Read when: the practitioner asks to draft, prepare, email, send or forward an em
 **The route.** Call `drafting_forms__draft_harness` with `step` `write_email`. ToolSearch it. On a remote-device host its name carries the host's prefix. It writes `<output_name>.eml` with `X-Unsent: 1`, which the mail program opens as a new message ready to send. This route is the only author of a drafted `.eml`: never build one any other way, by a script, the Write tool or a mail library. Pass:
 
 - `matter_root`: the matter folder.
-- `to` (at least one) and `cc`: address strings, `"Name <a@b>"` or `"a@b"`. Take them from `/case-data` or `/drafting-data`, or as the practitioner gives them. Never guess an address.
+- `to` (at least one) and `cc`: address strings, `"Name <a@b>"` or `"a@b"`. Take them from `/matter-data` or `/drafting-data`, or as the practitioner gives them. Never guess an address.
 - `subject`: one line.
 - `body`: plain text, the message only. **The body carries no closing and no name.** The signature supplies them. A body whose last lines repeat this machine's roster `closing` or `name` while a signature applies is refused with `signoff_duplicates_signature`, and nothing is written.
 - `output_name`: a bare stem under `/file-naming`'s grammar, dated the day it is written. Optional `folder`: one folder name under the matter's `0. DRAFT` folder.

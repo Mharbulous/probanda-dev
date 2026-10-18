@@ -1,6 +1,6 @@
 """gen.matter_profile -- Fetch and confirm matter profile.
 
-Fetches the matter profile from /case-data, checks for gaps,
+Fetches the matter profile from /matter-data, checks for gaps,
 presents to lawyer for confirmation via ask_user sub-loop.
 The subagent formats the profile and returns it. The harness
 then emits ask_user so the lawyer confirms.
@@ -48,18 +48,18 @@ def _resolve_full_lawyer_name(short_name: str, parties: list[dict]) -> str:
 
 
 def _caption_fields_from_role_groups(proceeding: dict) -> dict:
-    """Map the validated /case-data role groups onto the template blocks."""
+    """Map the validated /matter-data role groups onto the template blocks."""
     if (
         "valid_role_groups" not in proceeding
         or "correction_required" not in proceeding
     ):
         raise RuntimeError(
-            "Validated party-role profile is unavailable; run /case-data "
+            "Validated party-role profile is unavailable; run /matter-data "
             "proceedings-profile before rendering."
         )
     if proceeding["correction_required"]:
         raise RuntimeError(
-            "Party-role correction required; run /case-data "
+            "Party-role correction required; run /matter-data "
             "proceedings-profile before rendering."
         )
 
@@ -143,7 +143,7 @@ def _role_integrity_problem(profile: dict) -> str | None:
     if not proceedings:
         return (
             "The validated party-role profile is unavailable. Run "
-            "/case-data profile, then try again."
+            "/matter-data profile, then try again."
         )
     for proceeding in proceedings:
         if (
@@ -152,11 +152,11 @@ def _role_integrity_problem(profile: dict) -> str | None:
         ):
             return (
                 "The validated party-role profile is unavailable. Run "
-                "/case-data proceedings-profile, then try again."
+                "/matter-data proceedings-profile, then try again."
             )
         if proceeding["correction_required"]:
             return (
-                "Party-role correction required. Run /case-data "
+                "Party-role correction required. Run /matter-data "
                 "proceedings-profile's confirmed correction path, then try again."
             )
     return None
@@ -202,7 +202,7 @@ def build_prompt(ctx: dict) -> str:
             matter_path = json.dumps(ctx["matter_path"])
             return f"""You are a matter profile retrieval agent for a BC Supreme Court form drafting system.
 
-Invoke `/case-data`'s `profile` operation for this matter folder:
+Invoke `/matter-data`'s `profile` operation for this matter folder:
 {matter_path}
 
 That operation must delegate proceedings completeness to `proceedings-profile`. Use the delegated operation's returned `valid_role_groups` in its returned canonical order and with its returned count-aware `role_label` values. Preserve its complete `correction_required` set. Do not reconstruct, filter, relabel, or reorder either section.
@@ -210,10 +210,10 @@ That operation must delegate proceedings completeness to `proceedings-profile`. 
 Return:
 {{"kind": "step_result", "data": {{"profile": {{"matter_metadata": {{}}, "gaps": [], "proceedings": [{{"court": "", "registry": "", "file_number": "", "courthouse_address": "", "valid_role_groups": [], "correction_required": []}}]}}}}}}
 
-Replace the empty values with the exact `/case-data` result.
+Replace the empty values with the exact `/matter-data` result.
 
 ## Constraints
-- Invoke `/case-data` `profile` and its delegated `proceedings-profile`; do not read or query case-data files directly.
+- Invoke `/matter-data` `profile` and its delegated `proceedings-profile`; do not read or query matter-data files directly.
 - Return ONLY the JSON object specified above."""
 
         return """You are a matter profile agent for a BC Supreme Court form drafting system.
@@ -250,7 +250,7 @@ The matter profile has gaps that must be filled before proceeding. Report these 
 {gap_list}
 
 Return:
-{{"kind": "ask_user", "question": "The matter profile has gaps that must be filled before I can proceed:\\n{gap_list}\\n\\nPlease run the case-data profile operation to fill these gaps, then try again.", "options": []}}
+{{"kind": "ask_user", "question": "The matter profile has gaps that must be filled before I can proceed:\\n{gap_list}\\n\\nPlease run the matter-data profile operation to fill these gaps, then try again.", "options": []}}
 
 ## Constraints
 - Return ONLY the JSON object specified above. Do not call Read, Bash, Grep, Glob, or any file-access tools."""

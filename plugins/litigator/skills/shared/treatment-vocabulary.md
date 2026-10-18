@@ -2,7 +2,7 @@
 
 This file is the single source of truth for every treatment and relationship
 value Probanda writes or reads, and for what each one means. Every writer and
-reader points here and none restates the definitions: case-data's extractors and
+reader points here and none restates the definitions: matter-data's extractors and
 verifiers, `ingest_authority.py`, `submission_law_bridge.py`, the legal-commons
 tools (`push`, `link_authority`, `amend_authority_edge`, `record_treatment`), and
 any citator import. Code that enforces these values keeps a bare list of code
@@ -104,7 +104,7 @@ backticks.
 
 ## Where each value is valid
 
-**Principle–authority link** (`relationship` on case-data
+**Principle–authority link** (`relationship` on matter-data
 `concept_authorities` and pool `principle_authority`): `establishes`,
 `extends`, `reformulates`, `follows`, `applies`, `approves`, `explains`,
 `harmonizes`, `refers_to`, `considers`, `distinguishes`, `limits`,
@@ -113,7 +113,7 @@ backticks.
 `superseded_by_statute`.
 
 **Authority–authority treatment edge** (`treatment` on pool `treatment` and
-case-data `authority_treatments`): `follows`, `applies`, `approves`,
+matter-data `authority_treatments`): `follows`, `applies`, `approves`,
 `explains`, `harmonizes`, `refers_to`, `distinguishes`, `limits`,
 `declines_to_extend`, `declines_to_follow`, `declines_to_apply`, `questions`,
 `disapproves`, `overrules`, `departs_from`, `abrogates`, `affirms`, `varies`,
@@ -128,7 +128,7 @@ decision.
 `reversed`, `varied`, `distinguished`, `overruled`, `superseded_by_statute`,
 `abrogated` (ADR 0008).
 
-**Local case-data store, until case-data leaves Exception 2** (ADR 0006): its
+**Local matter-data store, until matter-data leaves Exception 2** (ADR 0006): its
 CHECKs hold only part of the vocabulary.
 - A new link's `relationship` is written only as `establishes`, `applies` or
   `distinguishes`. An extracted link whose correct value is any other
@@ -144,7 +144,7 @@ CHECKs hold only part of the vocabulary.
 - `answered` is not a treatment. It records that the other side cited this
   authority against this concept and the filing answered it. Only a
   practitioner's tie writes it, the tie verifies it, and it never crosses to the
-  pool (case-data design decision 48).
+  pool (matter-data design decision 48).
 - `not_considered` is not the opposite of `considers`. It is the oral-reasons
   note that the court did not consider an authority it was referred to,
   recorded from the practitioner's own account. It carries no `edge_treatment`.

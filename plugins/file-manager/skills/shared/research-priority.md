@@ -17,7 +17,7 @@ Judicial consideration of legislation is answering (`statute-currency.md`).
 
 | Tier | Layer | Access path | Cost |
 |---|---|---|---|
-| 1 | Matter case data — ingested authorities, concepts, criteria, the legal spine | invoke `/case-data` (query) | local, free |
+| 1 | Matter case data — ingested authorities, concepts, criteria, the legal spine | invoke `/matter-data` (query) | local, free |
 | 2 | **The shared pooled layer** — matter-free principles, their public authorities, criteria and treatment edges | see "Reaching tier 2" below | cloud read, permission-prompted |
 | 3 | The matter's `6. LAW\` folder — memos and downloaded decisions not yet ingested | file reads → `/ingest` on anything load-bearing | local, free |
 | 4 | Westlaw: retrieval of decision text and Deep Research memos | the `/legal-research` caller, before the audit agent starts: `westlaw-query-optimizer` → `research-paralegal` (deep-research mode, and citation mode `westlaw-first`) | subscription, in-plan content only |

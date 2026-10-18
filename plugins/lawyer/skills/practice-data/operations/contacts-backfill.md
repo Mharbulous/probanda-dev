@@ -26,7 +26,7 @@ Group candidates across matters that share a name (ignoring case, punctuation an
 
 ## 4. Approve one group at a time
 
-Present one group at a time under `/show-me`, by the rule that governs aliases (`../../case-data/operations/participants.md` §Record): show the exact contact, affiliation and role items that would be written, each role with its matter, `case_party_id`, `case_proceeding_id` and proposed role. The practitioner approves the group, splits it, changes a role, or skips it.
+Present one group at a time under `/show-me`, by the rule that governs aliases (`../../matter-data/operations/participants.md` §Record): show the exact contact, affiliation and role items that would be written, each role with its matter, `case_party_id`, `case_proceeding_id` and proposed role. The practitioner approves the group, splits it, changes a role, or skips it.
 
 Nothing is written without a yes, and a yes covers exactly the items shown.
 

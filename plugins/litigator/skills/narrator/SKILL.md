@@ -12,7 +12,7 @@ description: >
   For blank form generation or final assembly, use /publish with publish-bcsc-form.
 ---
 
-<!-- litigator v0.5.5 -->
+<!-- litigator v0.6.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -34,7 +34,7 @@ Ask the practitioner for the matter workspace path if not already known from con
 
 In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/case-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
 
 Create `bcsc-form-substance\` beneath it if it does not exist.
 
@@ -51,12 +51,12 @@ If either file is missing, halt with the appropriate redirect:
 
 ### 3. Gather facts from case data
 
-Invoke `/case-data` to fetch facts for this matter. Request facts with:
+Invoke `/matter-data` to fetch facts for this matter. Request facts with:
 - Current posture: `agreed`, `admitted`, `not_denied`, `disputed`, `claimed`, or `unclaimed`
 - Computed pinpoint citations for the fact source, linked evidence, and party positions
 - Evidence-link counts and any position citations needed to explain admissions or disputes
 
-If no facts are found in case data, inform the practitioner: "No facts found in the case database. Ensure documents have been ingested via `/case-data` before drafting Part 2." Halt -- do not draft facts from training knowledge.
+If no facts are found in case data, inform the practitioner: "No facts found in the case database. Ensure documents have been ingested via `/matter-data` before drafting Part 2." Halt -- do not draft facts from training knowledge.
 
 ### 4. Check for existing draft
 
@@ -129,7 +129,7 @@ After writing both files: "Factual basis and material list saved. Start a new se
 
 - **Read peers:** `part-1-orders-sought.md` and `part-3-legal-basis.md` (both required)
 - **Write:** `part-2-factual-basis.md` and `part-4-material-relied-on.md`
-- **Case data:** exclusively via `/case-data` -- no direct database access
+- **Case data:** exclusively via `/matter-data` -- no direct database access
 - **No training knowledge as facts:** every factual assertion must trace to case data
 - **Every paragraph needs a citation:** no uncited factual paragraphs
 - **No .docx:** never touch templates or Word files

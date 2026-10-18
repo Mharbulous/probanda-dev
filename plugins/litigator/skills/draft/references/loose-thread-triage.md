@@ -17,7 +17,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 1. **`decision`: practitioner remarks and decisions already made.** The practitioner's own instruction or decision.
 2. **`tooling`: plugin and tooling feedback.** A tool failure, a missing feature, a skill or page defect. A thread about the plugin, its tools, skills or pages is `tooling` even when the practitioner said it: `decision` is for decisions about the matter.
-3. **`housekeeping`: case-data and law-folder housekeeping.** Ingesting a document, adding or correcting an authority row, filing a text.
+3. **`housekeeping`: matter-data and law-folder housekeeping.** Ingesting a document, adding or correcting an authority row, filing a text.
 4. **`research`: research offers and research questions.** An offered research run or an open question about the law.
 5. **`authority`: Writing doesn't match an authority as cited.** A proposition, pinpoint, excerpt or rule wording that departs from the authority.
 6. **`evidence`: Writing doesn't match the evidence or pleadings.** A fact, pinpoint, exhibit letter or party that departs from the record.

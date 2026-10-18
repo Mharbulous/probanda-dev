@@ -251,7 +251,7 @@ def read_source(path, lang="en", columns="auto"):
             text = handle.read()
     else:
         raise SourceError(
-            "unsupported extension; resolve the authority through case-data first "
+            "unsupported extension; resolve the authority through matter-data first "
             "so a .pdf, .docx, .md or .txt copy is on file"
         )
     words = tokenise(text)

@@ -34,10 +34,10 @@ verifier cannot quote means the claim is not confirmed.
 
 ## Consumers
 
-Verifier prompts (`case-data/agents/verify-edges.md`, `verify-law/agents/verify-claim.md`)
+Verifier prompts (`matter-data/agents/verify-edges.md`, `verify-law/agents/verify-claim.md`)
 **mirror these doctrines inline** because subagents read no repo files — this file is the
 maintainer-facing SSOT, and an edit here is not complete until the inline mirrors are updated.
-`case-data/shared/verification-protocol.md` defers here for these four doctrines and owns
+`matter-data/shared/verification-protocol.md` defers here for these four doctrines and owns
 everything else.
 
 Doctrine 3's marked block is copied exactly into every prompt that judges whose reasons a

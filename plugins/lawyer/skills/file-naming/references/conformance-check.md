@@ -11,7 +11,7 @@ them by bare filename.
   (the name gate) over the current names of the files it reviews, then its
   `housekeeping-namer` agent, or the session itself for a privileged-store file,
   runs **proposal mode** from each file's naming evidence.
-- **Ingest** (`../../case-data/operations/ingest-extract.md`) runs
+- **Ingest** (`../../matter-data/operations/ingest-extract.md`) runs
   **test mode** on a freshly ingested file's current name, then **proposal
   mode** from the just-extracted source metadata — no re-read of the file.
 

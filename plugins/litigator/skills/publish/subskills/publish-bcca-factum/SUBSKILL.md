@@ -73,7 +73,7 @@ host path it returns.
    with the first-class Write tool, never sandbox bash (mount-staleness bug,
    [#324](https://github.com/Mharbulous/CoClerk/issues/324)). The case-data
    folder is the one `probanda.json`'s `case_data_dir` names. It must already
-   exist: if it does not, stop and tell the practitioner to run `/case-data`
+   exist: if it does not, stop and tell the practitioner to run `/matter-data`
    initialize; never create it. Create the `bcca-factum-substance` folder
    if it doesn't exist.
 

@@ -14,7 +14,7 @@ description: >
   inspection.
 ---
 
-<!-- lawyer v0.1.3 -->
+<!-- lawyer v0.2.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -47,7 +47,7 @@ The practitioner's proposal is a hypothesis, not an instruction to execute.
 - Restate the problem and the proposed fix. If the practitioner asks you to restate before acting, restate and stop until confirmed.
 - Before planning, check whether the current behavior is a **deliberate design decision** (issue numbers, ADRs, design notes in the skill prose). Name the tension: reversing a documented decision is different work than fixing an oversight.
 - Ask whether a cheaper solution exists that preserves the original design decision — e.g., use data a tool already returns rather than moving where the tool writes. Present both options with honest costs.
-- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/case-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card (`shared/present-files.md`). Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
+- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/matter-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card (`shared/present-files.md`). Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
 
 ## Phase 2 — Drift analysis (actual session vs. the skills' current source)
 
@@ -454,7 +454,7 @@ the delegated source for a development wrapper]
 
 ### 4.1 [Short title] (Type[, Recurring])
 [What happened and why it's a finding, citing the Section 3 step(s) that evidence it.]
-[**Implicates:** the file or component the defect sits in (e.g. `case-data/SKILL.md`
+[**Implicates:** the file or component the defect sits in (e.g. `matter-data/SKILL.md`
 step 2; the form-rendering tool's write path). Say `unknown` rather than guess — this
 is the intake session's first-pass key for spotting a finding already on the issue queue, and
 triage's starting point for the agent brief's **Key interfaces**. Its literal path is

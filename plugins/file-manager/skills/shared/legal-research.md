@@ -148,8 +148,8 @@ other question runs the duties in their numbered order.
      `allow_host` set to it. A no, or a second refusal, ends that instrument.
    - `stopped`: a hard stop for that one instrument. Report its reason verbatim, mark
      the instrument unread, and carry on with the question.
-   - **A case-data copy, when nothing was filed.** Before marking an instrument unread
-     after a stop, or after a refusal the practitioner does not lift, ask `/case-data`
+   - **A matter-data copy, when nothing was filed.** Before marking an instrument unread
+     after a stop, or after a refusal the practitioner does not lift, ask `/matter-data`
      (query: which held authority carries this instrument's full text) for a copy. When
      it names one, use it in place of the fetch: its file (as an absolute host path, joined
      to the matter root when stored relative), its bundled page range if it
@@ -164,7 +164,7 @@ other question runs the duties in their numbered order.
    `{citation, title, path, sha256, currency_marker, currency, official}`. `title`,
    `path`, `sha256`, `currency_marker` and `official` come from the instrument's
    `downloaded` record in the issue folder's `case-download-manifest.json`, or from the
-   case-data copy used in its place, and are `none` for an instrument with neither.
+   matter-data copy used in its place, and are `none` for an instrument with neither.
    `currency` comes from that call, and is `validation_unavailable` when it fails. A
    `blocked (no-api-key)` status gives every instrument `validation_unavailable`;
    relay its two key paths to the practitioner.
@@ -320,7 +320,7 @@ the preliminary impression, the return it produces is persisted by the same rule
 as `<File stem> (preliminary).md`.
 
 Relay each `case-data:` flag in the return's notes in one line: its kind, its
-description and its evidence ids, with the offer to record it through `/case-data`.
+description and its evidence ids, with the offer to record it through `/matter-data`.
 Record nothing without the practitioner's yes. A `/draft` session holding a job
 handles them by its own rule instead (`/draft` `references/job-session.md`,
 "Case-data flags in a research return"). A return with no flag adds no line.
@@ -337,7 +337,7 @@ test below:
 
 - each `origin-correction:` line in the notes, one thread each;
 - each `case-data:` flag: every `pinpoint` flag together as one thread, each other flag its
-  own. The one-line offer above to record it through `/case-data` is still relayed.
+  own. The one-line offer above to record it through `/matter-data` is still relayed.
 
 A session holding no job captures them through `/drafting-data`'s capture with no job held
 (§8a). A `/draft` session holding a job captures them by its own rule instead (`/draft`

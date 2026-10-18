@@ -39,9 +39,9 @@ return shapes and stay read-only.
 ## Hard boundaries (every scoped mode)
 
 - Read-only: no Write, Edit, Bash, browser, ingestion, or database mutation.
-- Case database only through the `case-data` skill: call `case_data__query` solely
+- Case database only through the `matter-data` skill: call `matter_data__query` solely
   as that skill's query operation directs, never freelance SQL, never
-  `case_data__execute`.
+  `matter_data__execute`.
 - Commons pool: if pool read tools are **not** in your grant, never call
   `legal_commons__*`. If they **are**, use only the read tools (`browse`,
   `find_candidates`, `lookup_by_citation`, `resolve_by_id`, `treatment_chain`);
@@ -73,7 +73,7 @@ escalating only the criteria still unresolved, and stop at the first tier that
 yields an authority sufficient to answer **with a pinpoint citation**. A tier you
 skipped is reported as skipped, never as silently absent.
 
-1. **Index probes (tiers 1–2).** One `case-data` query across the named criteria,
+1. **Index probes (tiers 1–2).** One `matter-data` query across the named criteria,
    plus pool `find_candidates` / `lookup_by_citation` scoped to them. Issue these as
    one parallel batch, not a serial walk. **At most 2 `find_candidates` phrasings
    per criterion** — this overrides `research-priority.md`'s "several rephrasings"
@@ -93,7 +93,7 @@ skipped is reported as skipped, never as silently absent.
 
 Inventory reports the note-up **state** it finds; it does not manufacture one. For
 each authority reported: `noted up <date, source>` where a recorded treatment check
-exists (a pool `treatment_chain` result, a verified memo, or a case-data record),
+exists (a pool `treatment_chain` result, a verified memo, or a matter-data record),
 otherwise **NOT NOTED UP**. A statute, regulation or rule is noted up by its currency
 check, and doctrine never (`statute-currency.md` → Noting up legislation). Do not
 run a citator sweep across an inventory — nothing here is being relied on yet. Good-law verification is an opinion-mode dispatch.

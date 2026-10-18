@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here. "Save first" stays in S
 
 ## Section 8: New matter setup
 
-**Proceeding**, elicited once and reused forever by every later Writing: the forum, the registry or arbitration centre and file details, every party with its role in that forum's own vocabulary. Before asking, consult `/case-data` and the practice matter lookup and offer what the matter already holds for the practitioner to confirm or correct. Confirming borrowed data is an accuracy check, not an approval checkpoint. Each party is linked to its `/case-data` party when it is recorded.
+**Proceeding**, elicited once and reused forever by every later Writing: the forum, the registry or arbitration centre and file details, every party with its role in that forum's own vocabulary. Before asking, consult `/matter-data` and the practice matter lookup and offer what the matter already holds for the practitioner to confirm or correct. Confirming borrowed data is an accuracy check, not an approval checkpoint. Each party is linked to its `/matter-data` party when it is recorded.
 
 **Before the forum is chosen** (ADR 0018), the proceeding is created with the matter reference alone and no forum, and its work, starting with choosing the forum, is outlined as jobs on its own board. The forum, registry and file details and every party are gathered when the forum is chosen, by updating that same proceeding. Pursuing a second forum means a new proceeding, whose work is outlined fresh. No job moves between proceedings.
 
@@ -18,7 +18,7 @@ Before step 2, read `references/venue-and-kind-lookup.md`, which holds steps 2 t
 Two things happen before eliciting:
 
 1. **Recovery check first.** Ask the gatekeeper whether a retired Writing in this proceeding would be duplicated (same kind, same round, same subkind). A hit is offered, never applied: a decision form, `Recover <title> (retired <date>, <reason>)` beside `Start new`, nothing preselected, both options also stated in prose. On recover, perform the recovery write and go to render (section 11). No new Writing is created and the recovered substance is untouched.
-2. **The response seam** (ADR 0024 D12). The other side's delivered materials, and the forum's, are documents in `/case-data`, never our Writings. The seam is entered when the practitioner names the answering kind, or names an incoming document as the thing to answer, by its title or its `/case-data` source. Where the incoming document has a named answer, offer that kind by name for the practitioner to confirm:
+2. **The response seam** (ADR 0024 D12). The other side's delivered materials, and the forum's, are documents in `/matter-data`, never our Writings. The seam is entered when the practitioner names the answering kind, or names an incoming document as the thing to answer, by its title or its `/matter-data` source. Where the incoming document has a named answer, offer that kind by name for the practitioner to confirm:
 
    | Incoming | Answering kind |
    |---|---|

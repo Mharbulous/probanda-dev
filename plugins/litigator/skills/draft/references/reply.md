@@ -60,7 +60,7 @@ Run it on the latest saved version when the practitioner asks for a final check 
 1. **Typos and missing words.** List each with its paragraph and the correction, as a proposal.
 2. **Quoted passages.** Send each one, inline or indented, through `/verify-law` Mode A as its own claim.
    - The excerpt is the bare quoted text.
-   - The source is the authority the reply cites for it, or, for a quotation of the incoming message, that message's path. `/case-data` resolves either.
+   - The source is the authority the reply cites for it, or, for a quotation of the incoming message, that message's path. `/matter-data` resolves either.
    - Mode A's step 2 runs `diff_excerpt.py`. Report each result from the script's JSON alone: identical, or the differing words from its opcodes. Never judge a match by eye.
    - A quote whose source cannot be resolved is reported as unverified, with the reason.
 3. **Citations.** Send each citation's pinpoint through `/verify-law` Mode A too, and report its verdict.

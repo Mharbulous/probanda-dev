@@ -1,4 +1,4 @@
-// build-stamp: 1c6fdf142fcb
+// build-stamp: d93a496e4232
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108478,6 +108478,15 @@ $plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 
 
 // src/dav/tz.ts
 var formatters = /* @__PURE__ */ new Map();
+var BC_PROBE_MS = Date.UTC(2026, 10, 2, 18);
+function staleTzDataError(tz, vancouverOffset) {
+  if (vancouverOffset === -420) return null;
+  if (new Intl.DateTimeFormat("en-US", { timeZone: tz }).resolvedOptions().timeZone !== "America/Vancouver") return null;
+  return new DataServerError(
+    `This computer's Node.js (${process.version}, time zone data ${process.versions.tz ?? "unknown"}) still has British Columbia falling back to -08:00 on 1 November 2026, so its BC times would be an hour off. Install Node.js 22.23.3 or later, then restart Claude.`,
+    "stale_tz_data"
+  );
+}
 function wallParts(tz, ms2) {
   let f3 = formatters.get(tz);
   if (!f3) {
@@ -108505,7 +108514,16 @@ function isValidTimeZone(tz) {
     return false;
   }
 }
+var checkedZones = /* @__PURE__ */ new Set();
 function offsetMinutes(tz, ms2) {
+  if (!checkedZones.has(tz)) {
+    const stale = staleTzDataError(tz, hostOffset("America/Vancouver", BC_PROBE_MS));
+    if (stale) throw stale;
+    checkedZones.add(tz);
+  }
+  return hostOffset(tz, ms2);
+}
+function hostOffset(tz, ms2) {
   const p3 = wallParts(tz, ms2);
   const asUtc = Date.UTC(p3.y, p3.mo - 1, p3.d, p3.h, p3.mi, p3.s);
   return Math.round((asUtc - Math.floor(ms2 / 1e3) * 1e3) / 6e4);

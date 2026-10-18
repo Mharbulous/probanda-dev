@@ -5,7 +5,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 - `/legal-research` for every statement of law.
 - `/verify-law` for every verbatim check.
-- `/case-data` for seed data and for the retirement research hand-off.
+- `/matter-data` for seed data and for the retirement research hand-off.
 - `/calculate` with `court-interest-calculator` and `contract-interest-rates` for interest: elicit principal and dates as facts, never compute or estimate, store the reported total.
 - `/publish` at assembly, and `/assemble` to bind a package.
 - `/environment-gauge` for the mount-staleness rename round trip.

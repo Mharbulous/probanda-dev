@@ -1,7 +1,7 @@
 # The live-issue test
 
 Professional-conduct doctrine for agent legal work in this practice. This file is the single
-source of truth; the root `CLAUDE.md`/`AGENTS.md`, the case-data operations, and the handover
+source of truth; the root `CLAUDE.md`/`AGENTS.md`, the matter-data operations, and the handover
 skill point here rather than restating it. It is not a skill: it has no `SKILL.md`
 and is never wrapped. It ships inside the `skills/shared/` tree of the installed litigation
 `.plugin`. It also holds the canonical per-matter `CLAUDE.md`
@@ -85,7 +85,7 @@ durable suppression would silence nudges that should fire once the landscape shi
   session. The agent's own §3 restraint continues unchanged.
 - **After two waved-off nudges in one session, stand down entirely.**
 - On a confirmation, offer once: "want me to record that link so future sessions know?" — if
-  accepted, one `/case-data` write to the matter's issues linkage. Optional, never required.
+  accepted, one `/matter-data` write to the matter's issues linkage. Optional, never required.
 
 ## 5. Sessions with no matter (repo sessions, handovers)
 
@@ -109,7 +109,7 @@ list for §4. Rules:
 - **No architecture facts.** No backend or tool routing, no save locations, no schema or
   pointer versions, no row counts — nothing whose truth depends on this repo rather than on
   the matter. Matter facts are safe here (the lawyer sees and corrects them); architecture
-  facts rot invisibly (a matter file kept directing sessions to a retired case-data
+  facts rot invisibly (a matter file kept directing sessions to a retired matter-data
   backend for days after the 2026-07-14 teardown).
 - **This doctrine never lives there.** Per-matter copies of rules rot; this file is the only
   home.

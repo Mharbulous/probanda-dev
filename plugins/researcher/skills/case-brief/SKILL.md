@@ -4,10 +4,10 @@ disable-model-invocation: true
 description: >
   Produce a concise case brief from a court decision — Issues, Relevant Facts,
   Disposition, and Propositions (with ratio decidendi / obiter dictum labeling).
-  Optionally persists the decision as a legal authority via case-data.
+  Optionally persists the decision as a legal authority via matter-data.
 ---
 
-<!-- researcher v0.4.4 -->
+<!-- researcher v0.5.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -29,7 +29,7 @@ description: >
 
 ## Overview
 
-This skill reads a court decision and produces a structured four-section case brief as a chat response. After delivering the brief, it offers to persist the decision as a legal authority in the case database by delegating to ``case-data``.
+This skill reads a court decision and produces a structured four-section case brief as a chat response. After delivering the brief, it offers to persist the decision as a legal authority in the case database by delegating to ``matter-data``.
 
 ## Scope and Output
 
@@ -41,7 +41,7 @@ The user must provide the file path to the decision. This skill does not query d
 
 Before briefing, check whether the decision is already held as an authority, in
 the order `shared/research-priority.md` sets: tier 1, the matter's ingested layer
-via ``case-data``; then tier 2, the shared pooled layer by exact public citation
+via ``matter-data``; then tier 2, the shared pooled layer by exact public citation
 where this runtime can reach it (that file says how, and what to do when it
 cannot). Where either returns propositions already derived from this decision,
 say so and cite them alongside your own Section 4 — a proposition someone has
@@ -136,8 +136,8 @@ After delivering the brief, offer to persist the decision as a legal authority i
 
 **If the user accepts:**
 
-1. Invoke ``case-data`` for legal authority ingestion, passing the decision's file path and any issue scope the user specified.
-2. case-data handles extraction, authority registration, concept mapping, and all database writes. Do not pass schema-level details, SQL, or structured proposition data — case-data's own extraction subagents produce the schema-specific format it needs.
-3. Report what case-data persisted (authority registered, concepts found, criteria stored).
+1. Invoke ``matter-data`` for legal authority ingestion, passing the decision's file path and any issue scope the user specified.
+2. matter-data handles extraction, authority registration, concept mapping, and all database writes. Do not pass schema-level details, SQL, or structured proposition data — matter-data's own extraction subagents produce the schema-specific format it needs.
+3. Report what matter-data persisted (authority registered, concepts found, criteria stored).
 
-**Relationship to ``ingest``:** Both paths use case-data's legal authority ingest operation. ``ingest`` ingests directly without producing a brief. ``case-brief`` briefs first, then optionally persists — the user gets both a human-readable brief and persistent legal authority data. When briefing multiple decisions, offer persistence once after all briefs are delivered, not after each individual brief.
+**Relationship to ``ingest``:** Both paths use matter-data's legal authority ingest operation. ``ingest`` ingests directly without producing a brief. ``case-brief`` briefs first, then optionally persists — the user gets both a human-readable brief and persistent legal authority data. When briefing multiple decisions, offer persistence once after all briefs are delivered, not after each individual brief.

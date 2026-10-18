@@ -1,10 +1,10 @@
 ---
 name: "bill-client"
 disable-model-invocation: true
-description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter — walks through locating the last invoice, checking case-data, pulling unbilled TimeCamp time, cross-referencing phone call logs to catch missed billable time, and building a billing chart in Excel."
+description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter — walks through locating the last invoice, checking matter-data, pulling unbilled TimeCamp time, cross-referencing phone call logs to catch missed billable time, and building a billing chart in Excel."
 ---
 
-<!-- lawyer v0.1.3 -->
+<!-- lawyer v0.2.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -16,7 +16,7 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 | Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names | Before reading file names to find the last invoice |
 | Step 3 — Find the most recently sent bill | Housekeeping is current and the last invoice must be located |
 | Step 4 — Read the bill to find the exact last-billed date | Setting the start of the unbilled period |
-| Step 5 — Cross-check against case-data / practice-data | Verifying the last invoice or recording invoices |
+| Step 5 — Cross-check against matter-data / practice-data | Verifying the last invoice or recording invoices |
 | Step 6 — Pull unbilled time from TimeCamp | Pulling the matter's unbilled entries through the TimeCamp connector and writing the workbook |
 | Step 7 — Where the workbook goes | Naming the workbook and placing it in the BILLING folder |
 | Step 8 — Open and clean up the workbook | Opening the workbook, tying its total to the connector's, tidying the table |
@@ -35,15 +35,15 @@ End-to-end workflow for preparing the billing package for one litigation matter:
 
 Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`). The matter number is the leading token of the folder name (`L8166`). The client number is **not** derivable from the folder name — get it from case-data:
 
-- Invoke the `case-data` skill's `profile` operation for the matter. It reports the client number, client name, matter number and short name.
-- If the matter has never been initialized in case-data, the `case-data` skill's `initialize` operation will look up the client/matter via `practice-data` `matter-lookup` and seed it — do this before continuing.
+- Invoke the `matter-data` skill's `profile` operation for the matter. It reports the client number, client name, matter number and short name.
+- If the matter has never been initialized in matter-data, the `matter-data` skill's `initialize` operation will look up the client/matter via `practice-data` `matter-lookup` and seed it — do this before continuing.
 
 ## Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names
 
 Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`:
 
 1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
-2. Invoke the `case-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.
+2. Invoke the `matter-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.
 3. If every non-conforming file already has a review row (matched by name or hash), housekeeping is up to date — no action needed.
 4. If there are files that fail the naming grammar (`file-naming/scripts/name_gate.py`, against `file-naming/references/code-registry.md`) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-manager` plugin: if it is not available in this session, say that naming those files needs `file-manager` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
 
@@ -57,7 +57,7 @@ Read the invoice PDF. Look at the time-entry bar chart (or itemized list) and fi
 
 Sanity-check: the last billed date should be on or before the invoice date. If it's after, something is wrong — recheck.
 
-## Step 5 — Cross-check against case-data / practice-data
+## Step 5 — Cross-check against matter-data / practice-data
 
 Invoke the `practice-data` skill's `invoice-data` operation for the matter number to see what practice-data thinks the last invoice date is.
 
@@ -136,7 +136,7 @@ TimeCamp's automatic activity tracking regularly fails to recognize phone calls 
 
 ### Find the client's phone number(s)
 
-Get the client's name and phone number from case-data / the matter's intake documents (e.g. an Identification & Conflict Check Form in `2. SOLICITOR CLIENT`) — never guess or assume a number.
+Get the client's name and phone number from matter-data / the matter's intake documents (e.g. an Identification & Conflict Check Form in `2. SOLICITOR CLIENT`) — never guess or assume a number.
 
 ### Pull the call log — within the last 60 days
 

@@ -16,7 +16,7 @@ The agent only reads. This session acts on its result, updates the draft, record
 - **On `sent_copy_mismatch`** from the Sent write, when the copy passed has not been checked yet.
 - **When the practitioner asks** for a letter to be checked, for any letter file in the matter.
 
-An ingested letter is checked by `/case-data` at its ingest, not here. An unattended run never runs the check: it reports that the letter's delivery was not checked.
+An ingested letter is checked by `/matter-data` at its ingest, not here. An unattended run never runs the check: it reports that the letter's delivery was not checked.
 
 ## 3. Dispatch
 

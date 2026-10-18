@@ -14,9 +14,9 @@ tools:
   - Grep
   - Skill
   - mcp__plugin_lawyer_data__skill_source__read
-  - mcp__plugin_lawyer_data__case_data__query
+  - mcp__plugin_lawyer_data__matter_data__query
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
-  - mcp__remote-devices__plugin_lawyer_data__case_data__query
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__query
 ---
 
 # marshal-facts
@@ -51,11 +51,11 @@ the only mode). Each criterion carries a `ref`, its `text`, its `requirement_typ
 
 ## 3. How to reach case data
 
-Invoke the `case-data` skill and follow its routing to its query operation. Fetch that
+Invoke the `matter-data` skill and follow its routing to its query operation. Fetch that
 operation file and every file it names (its conventions, its named queries and its schema)
 with `skill_source__read`. Follow them as written, with these terms:
 
-- You are a read-only caller. You hold `case_data__query` and not `case_data__execute`, so
+- You are a read-only caller. You hold `matter_data__query` and not `matter_data__execute`, so
   skip the query operation's view-creation step. If a named query fails on a missing view,
   report that view and return `case_data_unavailable`. Never try to create it.
 - Pass `matter_root` from the dispatch on every call.
@@ -64,8 +64,8 @@ with `skill_source__read`. Follow them as written, with these terms:
 - Never read the privileged database unless the dispatch says so. A named query whose SQL
   reads a privileged table counts as reading it, so check each named query's SQL before
   binding it.
-- `case_data__query` is your only data surface. Never read a matter file, a privileged
-  folder or a case-data database file natively.
+- `matter_data__query` is your only data surface. Never read a matter file, a privileged
+  folder or a matter-data database file natively.
 
 ## 4. Procedure
 
@@ -74,12 +74,12 @@ For each criterion, in the order given:
 1. **Gather.** Search the record for what bears on it: facts, current positions by party,
    admissions, evidence links, and the existing stored criterion-to-fact links when the
    criterion's `source` names stored criterion ids. Use `scope_hints` as a starting point,
-   not a limit. Read admissions per party with case-data's per-party admitted-facts named
+   not a limit. Read admissions per party with matter-data's per-party admitted-facts named
    query, binding the proceeding and each party in `against_parties` in turn and then
    `for_party`, never its uncontested-facts query. The client's own admissions count as
    facts like any other.
 2. **Read discipline.** Exclude rejected rows, rows awaiting re-verification, and facts,
-   positions and evidence links from sources awaiting a privilege decision, as `case-data`'s
+   positions and evidence links from sources awaiting a privilege decision, as `matter-data`'s
    query operation and conventions define them. Flag rows still awaiting the AI verifier and
    rows in the lawyer's review queue: keep them, and list them in `unreviewed_facts[]`.
 3. **Classify each fact** as `supports`, `undermines` or `context` for this criterion, with
@@ -105,7 +105,7 @@ For each criterion, in the order given:
    citation form below. Do not quote whole pleadings.
 
 Record tensions you notice that bear on other issues go in `out_of_scope_observations[]`.
-Count every case-data call in `reads`.
+Count every matter-data call in `reads`.
 
 ## 5. Output contract
 
@@ -144,7 +144,7 @@ Return strict JSON only, with `status` first:
 }
 ```
 
-`posture` uses `case-data`'s posture legend as its query operation states it.
+`posture` uses `matter-data`'s posture legend as its query operation states it.
 
 On any tool failure after the refusal check, return
 `{"status": "case_data_unavailable", "error": "<the exact error text>"}` and stop.

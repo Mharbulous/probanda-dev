@@ -1,6 +1,6 @@
 ---
 name: extract-sought-orders
-description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only — never writes. Dispatched by /case-data ingest-extract, one instance per Notice of Application.
+description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per Notice of Application.
 tools:
   - Read
 ---

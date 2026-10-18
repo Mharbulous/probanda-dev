@@ -1,6 +1,6 @@
 ---
 name: verify-caselaw
-description: Compares one judicial decision's already-extracted authority, concepts, criteria and treatments against the decision itself, adversarially, in a session isolated from the extractor, and returns strict correction JSON. Read-only — never writes. Dispatched by /case-data ingest-verify, one instance per decision.
+description: Compares one judicial decision's already-extracted authority, concepts, criteria and treatments against the decision itself, adversarially, in a session isolated from the extractor, and returns strict correction JSON. Read-only — never writes. Dispatched by /matter-data ingest-verify, one instance per decision.
 model: opus
 tools:
   - Read

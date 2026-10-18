@@ -1,4 +1,4 @@
-// build-stamp: 602f6fab38ae
+// build-stamp: 7622fb44d76f
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15489,7 +15489,7 @@ function fileOpsToolDefinitions() {
     },
     {
       name: "file_ops__move",
-      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (matter-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
       inputSchema: {
         type: "object",
         properties: {
@@ -15515,7 +15515,7 @@ function housekeepingToolDefinitions() {
   return [
     {
       name: "housekeeping__preflight",
-      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as case_data__query and case_data__execute find it): a non-empty list means a case_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
@@ -15526,7 +15526,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__new_run",
-      description: "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /case-data initialize first).",
+      description: "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -15603,7 +15603,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__reconcile",
-      description: "Recovery for approved /housekeeping rows. Omit `run_id` to list every interrupted run of the matter (approval.json present, some move row without a journal line); pass it for the live run after a compaction, and immediately before each trash row of a live apply. Hashes each open row's old and new paths (SHA-256) and returns per row `state` (not_moved, moved, changed, missing, clash, duplicate_at_destination, trashed, unresolvable) and `action`: `apply` (checks in `resolution`, then steps 4-8), `needs_ingest_status` (answered-question or It's-final row not moved: call /case-data ingest-status first), `post_move_steps` (steps 5-8), `trash` (copy and twin both check out: call file_ops__trash), `journal_done`, or `journal_failed` with `reason`. A run whose move rows all have journal lines is closed, whatever retry entries it holds. Fails `approval_corrupt` (naming the file) when a run's approval.json is there but unreadable, with or without `run_id`: apply nothing. Moves and journals nothing itself.",
+      description: "Recovery for approved /housekeeping rows. Omit `run_id` to list every interrupted run of the matter (approval.json present, some move row without a journal line); pass it for the live run after a compaction, and immediately before each trash row of a live apply. Hashes each open row's old and new paths (SHA-256) and returns per row `state` (not_moved, moved, changed, missing, clash, duplicate_at_destination, trashed, unresolvable) and `action`: `apply` (checks in `resolution`, then steps 4-8), `needs_ingest_status` (answered-question or It's-final row not moved: call /matter-data ingest-status first), `post_move_steps` (steps 5-8), `trash` (copy and twin both check out: call file_ops__trash), `journal_done`, or `journal_failed` with `reason`. A run whose move rows all have journal lines is closed, whatever retry entries it holds. Fails `approval_corrupt` (naming the file) when a run's approval.json is there but unreadable, with or without `run_id`: apply nothing. Moves and journals nothing itself.",
       inputSchema: {
         type: "object",
         properties: matterRun,
@@ -15839,7 +15839,7 @@ function configPath(env) {
 
 // src/repo-root.ts
 var SKILLS_MARKER = join4(".claude", "skills");
-var CHECKOUT_MARKERS = [join4("source", "lawyer", "mcp"), join4("plugins", "dev-tools")];
+var CHECKOUT_MARKERS = [join4("source", "lawyer", "mcp"), join4(".claude", "skills", "plugin-packager")];
 var SELF_DIR = dirname(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -16284,7 +16284,7 @@ def resolve_pointer(matter_root):
             raise SystemExit(
                 f"Database schema is at v{major}.{minor} but this skill "
                 "requires v9.0. Run the migrate operation: call "
-                "case_data__migrate with mode 'plan' first, then 'apply' with "
+                "matter_data__migrate with mode 'plan' first, then 'apply' with "
                 "the plan_token it returns. (Not rebuild -- rebuild replays a "
                 "current dump and rejects an out-of-date one.)")
 
@@ -16385,11 +16385,11 @@ READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|
 def do_query(req, resolved):
     sql = req['sql'].strip()
     if not re.match(READ_ONLY_RE, sql):
-        raise SystemExit("case_data__query only accepts SELECT/WITH/PRAGMA statements; use case_data__execute for writes.")
+        raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
     if not os.path.exists(resolved['main_sqlite']):
         raise SystemExit(
             "No case database found: resolved main.sqlite is missing at "
-            f"{resolved['main_sqlite']}. Re-run case-data initialize for a new matter "
+            f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
             "or restore the database at the live-derived location.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_query_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
@@ -16426,9 +16426,9 @@ def atomic_replace_set(resolved, copies):
     the rest the old -- the cross-database inconsistency I5 exists to prevent.
 
     Ported from migrate_engine.atomic_replace_set rather than imported:
-    case_data__execute runs in a separate spawn whose Python is this
+    matter_data__execute runs in a separate spawn whose Python is this
     self-contained helper with no PYTHONPATH imports, and that process
-    separation is what contains the schema-guard bypass (case-data/references/design-decisions.md
+    separation is what contains the schema-guard bypass (matter-data/references/design-decisions.md
     #27). A shared import would collapse it.
 
     os.replace is atomic only within a volume and COCLERK_CASE_DATA_ROOT can
@@ -16477,7 +16477,7 @@ def atomic_replace_set(resolved, copies):
                         "state: %s carry the new state, the rest the previous. Do not "
                         "write again. Recover from evidence.sql (it still holds the last "
                         "committed state: maintain rebuild), or from the synced folder's "
-                        "version history, or from a case_data__migrate backup if one exists."
+                        "version history, or from a matter_data__migrate backup if one exists."
                         % (failed, exc, db, rollback_exc, ", ".join(replaced[i:])))
             raise SystemExit(
                 "Replacing %s.sqlite in native storage failed (%s); every database was "
@@ -16516,7 +16516,7 @@ def run_statements(con, req):
 def do_execute(req, resolved):
     triggers_sql = req.get('triggers_sql')
     if not triggers_sql or not triggers_sql.strip():
-        raise SystemExit("case_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
+        raise SystemExit("matter_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
         copies = stage_copies(resolved, tmp)
@@ -16571,11 +16571,11 @@ print(json.dumps(main()))
 function helperFile() {
   return pythonDriverFile("case-sqlite", PY_HELPER);
 }
-var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/case-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
+var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
 function runHelper(request, env) {
   const execute = request.op === "execute";
   return runPythonDriver({
-    label: "case-data sqlite helper",
+    label: "matter-data sqlite helper",
     driver: helperFile(),
     payload: JSON.stringify(request),
     env,
@@ -16623,7 +16623,7 @@ function validateMatterRoot(matterRoot) {
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
-  const missing = `the matter's case-data folder does not exist: ${dir}. Run /case-data initialize on this matter first.`;
+  const missing = `the matter's case-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
   if (!statSync2(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;

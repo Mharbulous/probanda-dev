@@ -65,7 +65,7 @@ yields per issue; a tier you skipped is reported as skipped. Independent probes
 *within* a tier go out as one parallel batch, not a serial walk. The tiers map onto
 your tools as follows:
 
-a. **Tier 1 — the matter's ingested layer.** Invoke the `case-data` skill (query
+a. **Tier 1 — the matter's ingested layer.** Invoke the `matter-data` skill (query
    operation) for ingested legal authorities, concepts, and criteria. This runs
    first, always: it is local and free, and its authority text is on file.
 b. **Tier 2 — the shared pooled layer (Layer 3 in the old numbering).** If pool
@@ -293,7 +293,7 @@ the scratchpad, in this order, and return only item 3:
    differ, a prior answer describing what case data does not show, a missing
    pinpoint. Write each on one line under a `Flags` heading, in exactly this shape:
    `case-data: <kind> : <short description> : <evidence ids>`, `<kind>` being
-   `discrepancy`, `correction` or `pinpoint`, and the evidence ids being the case-data
+   `discrepancy`, `correction` or `pinpoint`, and the evidence ids being the matter-data
    ids or file names the flag rests on. A flag says what the record shows, never what
    the law is, and you never record it yourself.
    When the spawn prompt's `Origin:` is not `none`, it quotes the draft's words the
@@ -378,7 +378,7 @@ notes file. Their shape is unchanged.
    client ID from the matter's data; the practitioner does not choose it at
    dispatch and `research-paralegal` never changes it. Research serving a
    client matter uses that matter's `{client}.{matter}` ID, taking the client
-   number from `/case-data` when the folder name lacks it; `PERSONAL` is only
+   number from `/matter-data` when the folder name lacks it; `PERSONAL` is only
    for research stated to be testing or authorized unbilled firm work, and its
    subfolder may sit outside any matter under a `6. LAW` folder. The caller runs
    `/legal-research` with `westlaw-query-optimizer`, then spawns
@@ -409,10 +409,10 @@ When a source comes back unavailable, name the actual cause; never guess at one:
   writes, and only through `research_filing__write_scratch` (Step 6).
 - CanLII: citator and `configure_status` only. Never call CanLII to find, read, or
   check the content of any decision.
-- Case database only through the `case-data` skill: call `case_data__query` solely
-  as that skill's query operation directs (documented exemption: case-data
+- Case database only through the `matter-data` skill: call `matter_data__query` solely
+  as that skill's query operation directs (documented exemption: matter-data
   `CLAUDE.md` #21), never freelance SQL against it, and never call
-  `case_data__execute`.
+  `matter_data__execute`.
 - Commons pool: if pool read tools are **not** in your grant, never call
   `legal_commons__*` — Layer 3 arrives only from the caller. If they **are** in your
   grant, use only the read tools (`browse`, `find_candidates`, `lookup_by_citation`,

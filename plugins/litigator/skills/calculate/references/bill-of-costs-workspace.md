@@ -16,7 +16,7 @@ member refuses in Cowork before any tool call or file write (#1273).
 
 `0. DRAFT` and the case-data folder must already exist. If either is absent, stop
 and tell the practitioner (a missing case-data folder means the matter is not
-initialized: name `/case-data` initialize) — do not create it and do not write
+initialized: name `/matter-data` initialize) — do not create it and do not write
 elsewhere. Only the `bill-of-costs/` leaf is created on demand.
 
 There is no fallback to any older folder name. A matter that has an older
