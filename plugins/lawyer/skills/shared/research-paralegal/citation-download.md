@@ -5,7 +5,7 @@
 The unified download-and-file machinery for court decisions by citation,
 Westlaw-first or CanLII-only. `research-paralegal` fetches this file at
 citation mode entry, and the deep-research playbook fetches it too (Stages 7
-and 9), via `mcp__plugin_legal_data__skill_source__read`, path
+and 9), via `mcp__plugin_lawyer_data__skill_source__read`, path
 `shared/research-paralegal/citation-download.md` — follow it exactly, never
 proceeding from a remembered procedure. The filing tools, collision handling,
 and the unified manifest live in the core agent; this file carries the
@@ -15,7 +15,7 @@ source-specific retrieval and identification.
 (`list_downloads`, `list_law_folder`, `file_download`, `append_manifest`). If
 any of them is absent from your grant, your installed plugin predates this
 machinery — return `status: blocked (mechanics-unavailable)` with the guidance
-"check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion",
+"check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /lawyer:suggestion",
 and do not download anything.
 
 ## Input contract (citation mode)
@@ -165,7 +165,7 @@ CanLII's download mechanics — deep-URL construction, the PDF-link trap, the
 `download`-attribute anchor, citation-as-written naming, no-snapshot-diff
 identification, and the 403 record-and-move-on rule — live in one canonical
 file, `shared/canlii-download-mechanics.md`. **Before the first CanLII
-download**, fetch it via `mcp__plugin_legal_data__skill_source__read`
+download**, fetch it via `mcp__plugin_lawyer_data__skill_source__read`
 (path `shared/canlii-download-mechanics.md`) and follow it exactly. Never
 proceed from remembered CanLII mechanics. CanLII serves **PDF only**; there is
 no format choice on this path.
@@ -175,7 +175,7 @@ no format choice on this path.
 
 - **Hard-fails the invocation when CanLII is the primary path** — `source:
   canlii-only`. Return
-  `status: blocked (mechanics-unavailable)` with the guidance: check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /legal:suggestion.
+  `status: blocked (mechanics-unavailable)` with the guidance: check for updates in the desktop app and fully restart it, then re-invoke; if the problem persists, run /lawyer:suggestion.
 - **Records-and-continues per citation when Westlaw remains the operative
   primary** — a `westlaw-first` batch still signed in, where CanLII is reached
   only for per-citation out-of-plan / not-found fallbacks. Record each affected

@@ -14,7 +14,7 @@ Second member of the bill-of-costs chain. It fills `tariffScale`, `unitValue` an
 `tariffItems[]` in the shared state file and nothing else.
 
 **In Cowork, stop here.** In Cowork (this host grants the data tools as
-`mcp__remote-devices__plugin_legal_data__<name>`), stop before any tool
+`mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
 Cowork cloud sandbox, which cannot see the case-data folder this chain works in
@@ -108,7 +108,7 @@ Wait for the subagent if it has not returned.
   bootstrap mode. **Bootstrap mode writes into the skill tree, which an installed
   plugin cannot do.** In a session that cannot write the skill tree (an installed
   plugin), offer only "Proceed with warning" or "Stop", and say plainly that the
-  installed plugin cannot update its references: `/legal:suggestion` naming the
+  installed plugin cannot update its references: `/lawyer:suggestion` naming the
   out-of-date source asks for a plugin release that does.
 - **"UNABLE TO VERIFY":** say in chat which sources failed and the last
   verification date from `subskills/itemize-boc/references/source-versions.md`,

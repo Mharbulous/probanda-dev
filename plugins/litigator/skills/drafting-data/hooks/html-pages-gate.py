@@ -152,7 +152,7 @@ def message(name, shell):
         "drafting_forms__board_card returns what a card holds when opened; "
         "drafting_forms__open_session returns the page paths and the filing list; /drafting-data's "
         "query tools and the markdown mockups hold everything else. A change the practitioner wants "
-        "to a page goes to /legal:suggestion: never look for or edit the generator. Developing the generator in Claude "
+        "to a page goes to /lawyer:suggestion: never look for or edit the generator. Developing the generator in Claude "
         "Code: set COCLERK_HTML_DEV=1 (this repo's .claude/settings.json sets it)."
     )
     if shell:

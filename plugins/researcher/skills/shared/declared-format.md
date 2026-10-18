@@ -26,7 +26,7 @@ The vocabulary is closed and owned by the runtime.
 
 | Property | Value |
 |---|---|
-| `paper` | `letter`, `legal` or `a4` |
+| `paper` | `letter`, `lawyer` or `a4` |
 | `margins` | object with `top`, `bottom`, `left` and `right`, each a length |
 | `typeface` | string |
 | `font_size` | length in `pt`, whose number is greater than zero |

@@ -16568,7 +16568,7 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /legal:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. The server adds the researcher plugin's version itself. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
+      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /lawyer:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. The server adds the researcher plugin's version itself. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
       inputSchema: objectSchema([
         { name: "title", type: "str" },
         { name: "body", type: "str" },
@@ -17076,7 +17076,7 @@ var LegalCommonsClient = class {
   async request(method, path, body, extraHeaders) {
     if (!this.config.staticKey) {
       throw new ValidationError(
-        (this.config.notConfiguredHint ?? "legal-commons is not configured: call legal_commons__configure_credential once with the Supabase service_role / sb_secret_ key (Cowork does not inject LEGAL_COMMONS_SUPABASE_KEY from userConfig into this process \u2014 see plugins/legal-commons/docs/ADR-002-key-delivery.md), or set LEGAL_COMMONS_SUPABASE_KEY directly in the runtime environment (Claude Code CLI / dev).") + // A stored-but-unreadable credential is a different problem with a
+        (this.config.notConfiguredHint ?? "legal-commons is not configured: call legal_commons__configure_credential once with the Supabase service_role / sb_secret_ key (Cowork does not inject LEGAL_COMMONS_SUPABASE_KEY from userConfig into this process \u2014 see plugins/lawyer-commons/docs/ADR-002-key-delivery.md), or set LEGAL_COMMONS_SUPABASE_KEY directly in the runtime environment (Claude Code CLI / dev).") + // A stored-but-unreadable credential is a different problem with a
         // different fix than never having configured one; say which it is.
         (this.config.credentialError ? ` A stored credential was found but could not be read (${this.config.credentialError}) \u2014 reconfiguring will replace it.` : "")
       );

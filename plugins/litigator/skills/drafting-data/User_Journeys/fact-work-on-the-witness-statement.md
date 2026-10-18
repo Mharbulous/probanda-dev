@@ -13,7 +13,7 @@ schema:
   - statement_paragraphs / paragraph_statements_of_fact (the link that moves a fact out of the subsection)
   - documents (instrument='witness_statement', execution — the statement's own sign-it column)
 machinery:
-  - renderer: renderWitnessStatements (source/legal/mcp/src/submission/forms/render-vaniac-submissions.ts) — the statement-level 🧩 and the trailing "Facts attributed to this witness, not yet in this statement" subsection (build #329)
+  - renderer: renderWitnessStatements (source/lawyer/mcp/src/submission/forms/render-vaniac-submissions.ts) — the statement-level 🧩 and the trailing "Facts attributed to this witness, not yet in this statement" subsection (build #329)
 work_markers: 🧩 no facts attributed to this witness (statement-level, derived) · 🗣️ talk to witness · ✍️ draft it · 📌 exhibit pinpoint missing — never 🖋️ and never 🧷 on an unlinked fact (build #329, decision #320; pinpoint split by basis #511)
 documents: VanIAC witness-statement mockups (one per witness)
 source: issue 329 build, 2026-08-23 (implements issue #320's ratified decision)

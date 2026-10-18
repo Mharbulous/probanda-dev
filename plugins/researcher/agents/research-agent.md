@@ -20,10 +20,10 @@ tools:
   - Glob
   - Grep
   - Skill
-  - mcp__plugin_legal_data__skill_source__read
-  - mcp__plugin_legal_data__case_data__query
-  - mcp__plugin_legal_data__research_filing__write_scratch
-  - mcp__plugin_legal_data__research_filing__legislation_search
+  - mcp__plugin_lawyer_data__skill_source__read
+  - mcp__plugin_lawyer_data__case_data__query
+  - mcp__plugin_lawyer_data__research_filing__write_scratch
+  - mcp__plugin_lawyer_data__research_filing__legislation_search
   - mcp__plugin_researcher_canlii__get_case_citator
   - mcp__plugin_researcher_canlii__get_case_citator_tease
   - mcp__plugin_researcher_canlii__configure_status
@@ -33,10 +33,10 @@ tools:
   - mcp__plugin_researcher_commons__legal_commons__resolve_by_id
   - mcp__plugin_researcher_commons__legal_commons__search
   - mcp__plugin_researcher_commons__legal_commons__treatment_chain
-  - mcp__remote-devices__plugin_legal_data__skill_source__read
-  - mcp__remote-devices__plugin_legal_data__case_data__query
-  - mcp__remote-devices__plugin_legal_data__research_filing__write_scratch
-  - mcp__remote-devices__plugin_legal_data__research_filing__legislation_search
+  - mcp__remote-devices__plugin_lawyer_data__skill_source__read
+  - mcp__remote-devices__plugin_lawyer_data__case_data__query
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__write_scratch
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__legislation_search
   - mcp__remote-devices__plugin_researcher_canlii__get_case_citator
   - mcp__remote-devices__plugin_researcher_canlii__get_case_citator_tease
   - mcp__remote-devices__plugin_researcher_canlii__configure_status
@@ -58,12 +58,12 @@ tools:
 
 Your protocol is the shared legal audit protocol; this file is a thin shim over it.
 
-1. Call the tool `mcp__plugin_legal_data__skill_source__read` (in a Cowork Project
-   session, `mcp__remote-devices__plugin_legal_data__skill_source__read`) with path
+1. Call the tool `mcp__plugin_lawyer_data__skill_source__read` (in a Cowork Project
+   session, `mcp__remote-devices__plugin_lawyer_data__skill_source__read`) with path
    `shared/legal-audit-protocol.md` and follow the returned protocol verbatim. It — and
    every file it loads — arrives as text with no location on your filesystem: fetch any
    further reference inside it with that same tool (its description says how to form the
    path), never with a native file read, and never by requesting folder access to the repo.
 2. If that tool is not in your tool list or returns an error, STOP and report the exact
-   failure to the user: the Probanda plugin's data server is unavailable — check for updates in the desktop app and fully restart it (a restart alone does nothing; an update without a restart does nothing), and if the problem persists run /legal:suggestion. Do not proceed from memory, do not fall back to reading repo
+   failure to the user: the Probanda plugin's data server is unavailable — check for updates in the desktop app and fully restart it (a restart alone does nothing; an update without a restart does nothing), and if the problem persists run /lawyer:suggestion. Do not proceed from memory, do not fall back to reading repo
    paths, and do not request folder access.

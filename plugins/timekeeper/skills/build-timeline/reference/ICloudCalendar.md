@@ -14,7 +14,7 @@ Configuration and data details for the practitioner's iCloud calendar. Load this
 
 This is the live calendar list of 2026-09-27. `Work` and `Home` are stored in full. `Home` is a personal calendar: a `Home` event may explain an unbilled gap but never supports billable time on its own (`/timecamping` Step 5). `/timecamping-data`'s ingest script refuses a row from any calendar other than `Work` or `Home`.
 
-**The route is the legal plugin's `contacts-calendars-email` server.** It reads the calendar over CalDAV with the Probanda mail connector's credential, set once through `mail__configure_credential` with the calendar fields (`time-sorting/protocols/FirstSetup.md`). The read uses exactly two of its calendar tools, `calendar__list_calendars` and `calendar__list_events`. Never call `calendar__get_event` or any `contacts__*` tool. The plugin has no calendar write tool, and build-timeline never writes to a source.
+**The route is the lawyer plugin's `contacts-calendars-email` server.** It reads the calendar over CalDAV with the Probanda mail connector's credential, set once through `mail__configure_credential` with the calendar fields (`time-sorting/protocols/FirstSetup.md`). The read uses exactly two of its calendar tools, `calendar__list_calendars` and `calendar__list_events`. Never call `calendar__get_event` or any `contacts__*` tool. The plugin has no calendar write tool, and build-timeline never writes to a source.
 
 ## Qualifying the route
 

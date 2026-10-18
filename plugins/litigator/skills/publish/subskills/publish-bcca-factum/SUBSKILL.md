@@ -27,7 +27,7 @@ List of Authorities' page numbers when it is opened.
 ## In Cowork
 
 In Cowork (this host grants the data tools as
-`mcp__remote-devices__plugin_legal_data__<name>`), the sandbox sees
+`mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox sees
 neither the matter folder nor the case-data folder, and the Write tool writes
 into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox
 shell, and never use the Write tool for `bcca-factum.md`. Run steps 1, 2, 3

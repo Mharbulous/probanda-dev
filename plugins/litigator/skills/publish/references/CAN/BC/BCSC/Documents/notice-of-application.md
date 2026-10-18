@@ -4,7 +4,7 @@ title: Notice of Application
 form_key: form-32
 version: not recorded
 template: subskills/publish-bcsc-form/templates/032-noa.dotx
-emitter: source/legal/mcp/src/submission/forms/render-form32-filed-face.ts
+emitter: source/lawyer/mcp/src/submission/forms/render-form32-filed-face.ts
 type_file: draft/CAN/BC/BCSC/Documents/notice-of-application.md
 conformed_to:
   - B.C. Reg. 105/2026
