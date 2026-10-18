@@ -4,7 +4,10 @@ Price every Cowork subagent run from its transcript, for the token-efficiency te
 
 Cowork writes each session as <project>/<session>.jsonl and each of its subagents as
 <project>/<session>/subagents/agent-<id>.jsonl, with a meta.json beside it. A test run is
-found by its tag: its prompt starts with `RUN <experiment>-<cell>-<doc>-<rep>`.
+found by its tag: a user message holding a line `RUN <experiment>-<cell>-<doc>-<rep>`, or a
+fork's `Your directive: RUN ...`. Each tagged message starts a new run in the transcript, so a
+subagent resumed by SendMessage with its own RUN line gets its own row. Calls before the
+transcript's first user message are the parent's, copied into a fork, and are not counted.
 
 One API call can appear on several transcript lines (one per content block), each repeating
 the call's usage. Lines are grouped by message id and the last line of each call is the one
@@ -36,7 +39,7 @@ RUN_COLUMNS = ["tag", "experiment", "cell", "doc", "rep", "session", "agent_id",
                "model", "effort", "calls"] + TOKEN_FIELDS + ["cost_usd"]
 SESSION_COLUMNS = ["session", "subagent_runs", "model", "calls"] + TOKEN_FIELDS + ["cost_usd"]
 
-TAG_RE = re.compile(r"^\s*RUN\s+(\S+)")
+TAG_RE = re.compile(r"^\s*(?:Your directive:\s*)?RUN\s+(\S+)", re.MULTILINE)
 DEFAULT_ROOT = Path.home() / "AppData" / "Roaming" / "Claude" / "local-agent-mode-sessions"
 DEFAULT_OUT = Path.home() / "token-test" / "results"
 
@@ -79,14 +82,24 @@ def call_cost(model, tokens):
             + tokens["cache_read"] * p_read + tokens["output"] * p_out) / 1_000_000
 
 
-def first_prompt(lines):
+def user_text(line):
+    content = (line.get("message") or {}).get("content")
+    if isinstance(content, str):
+        return content
+    return "\n".join(b.get("text", "") for b in content or [] if b.get("type") == "text")
+
+
+def split_runs(lines):
+    """Split one subagent transcript into (tag, lines) runs, starting at its first user message."""
+    runs = []
     for line in lines:
         if line.get("type") == "user":
-            content = (line.get("message") or {}).get("content")
-            if isinstance(content, str):
-                return content
-            return "\n".join(b.get("text", "") for b in content or [] if b.get("type") == "text")
-    return ""
+            match = TAG_RE.search(user_text(line))
+            if match or not runs:
+                runs.append((match.group(1) if match else "", []))
+        if runs:
+            runs[-1][1].append(line)
+    return runs
 
 
 def total(lines, where, skip_sidechain=False):
@@ -122,19 +135,17 @@ def ledger(roots, include_untagged=False):
     runs, sessions, mains = [], [], {}
     for root in roots:
         for path in sorted(Path(root).rglob("subagents/agent-*.jsonl")):
-            lines = read_jsonl(path)
-            match = TAG_RE.match(first_prompt(lines))
-            if not match and not include_untagged:
-                continue
-            tag = match.group(1) if match else ""
             meta_path = path.with_suffix(".meta.json")
             meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-            row = {"tag": tag, **(parse_tag(tag) if tag else {"experiment": "", "cell": "", "doc": "", "rep": ""}),
-                   "session": path.parent.parent.name, "agent_id": path.stem.removeprefix("agent-"),
-                   "agent_type": meta.get("agentType", "")}
-            row.update(total(lines, str(path)))
-            runs.append(row)
-            mains[row["session"]] = path.parent.parent.parent / f"{row['session']}.jsonl"
+            for tag, lines in split_runs(read_jsonl(path)):
+                if not tag and not include_untagged:
+                    continue
+                row = {"tag": tag, **(parse_tag(tag) if tag else {"experiment": "", "cell": "", "doc": "", "rep": ""}),
+                       "session": path.parent.parent.name, "agent_id": path.stem.removeprefix("agent-"),
+                       "agent_type": meta.get("agentType", "")}
+                row.update(total(lines, f"{path} run {tag or '(untagged)'}"))
+                runs.append(row)
+                mains[row["session"]] = path.parent.parent.parent / f"{row['session']}.jsonl"
     for session, main in mains.items():
         row = {"session": session, "subagent_runs": sum(r["session"] == session for r in runs)}
         row.update(total(read_jsonl(main), str(main), skip_sidechain=True))
