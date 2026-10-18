@@ -15,12 +15,12 @@ SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
 AGENTS = REPO_ROOT / "source" / "researcher" / "agents"
-PRACTICE_AGENTS = REPO_ROOT / "source" / "practice" / "agents"
+PRACTICE_AGENTS = REPO_ROOT / "source" / "lawyer" / "agents"
 FETCHER = AGENTS / "legislation-fetcher.md"
 PLAYBOOK = SKILL_ROOT / "references" / "legislation-fetcher-playbook.md"
 
-LOCAL = "mcp__plugin_practice_data__"
-BRIDGED = "mcp__remote-devices__plugin_practice_data__"
+LOCAL = "mcp__plugin_lawyer_data__"
+BRIDGED = "mcp__remote-devices__plugin_lawyer_data__"
 GRANTED = (
     "skill_source__read",
     "sources__fetch",

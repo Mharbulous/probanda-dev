@@ -39,7 +39,7 @@ class ResolvePathsTests(unittest.TestCase):
         con.close()
 
     def write_pointer(self, stored):
-        pointer_path = self.matter_root / "coclerk.json"
+        pointer_path = self.matter_root / "probanda.json"
         pointer_path.write_text(json.dumps({
             "schema_version": 5,
             "matter_root": r"C:\Users\DeletedProfile\Litigation - Documents\T9999 Scratch Matter",
@@ -63,6 +63,9 @@ class ResolvePathsTests(unittest.TestCase):
         self.assertEqual(
             Path(healed["evidence_sql_path"]),
             Path("..", "0. CASE DATA", "T9999 Scratch Matter", "evidence.sql"))
+        # The legacy coclerk.json pointer is read and migrated to probanda.json.
+        migrated = json.loads((self.matter_root / "probanda.json").read_text(encoding="utf-8"))
+        self.assertEqual(migrated, healed)
 
     def test_stale_nominee_loses_to_live_derived_database_and_warns(self):
         self.write_db(self.live_dir)

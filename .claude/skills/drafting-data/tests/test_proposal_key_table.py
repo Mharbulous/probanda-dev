@@ -20,7 +20,7 @@ import migrate_engine as engine  # noqa: E402
 
 CHECKLISTS = SKILL_ROOT / "references" / "filing-checklists.md"
 JOBS_CREATE = SKILL_ROOT / "references" / "jobs-create.md"
-FORMS = REPO / "source" / "practice" / "mcp" / "src" / "submission" / "forms"
+FORMS = REPO / "source" / "lawyer" / "mcp" / "src" / "submission" / "forms"
 INVENTORY = FORMS / "proposal-inventory.ts"
 SYMBOLS = FORMS / "symbol-table.ts"
 

@@ -74,7 +74,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_non_plugin_subagent_research_call_is_blocked(self):
         # An agent of another plugin, or of the retired single plugin, is not a research agent.
         for agent_type in ("general-purpose", "Explore", "research-paralegal", None,
-                           "practice:docket-clerk", "probanda" + ":research-agent"):
+                           "lawyer:docket-clerk", "probanda" + ":research-agent"):
             with self.subTest(agent_type=agent_type):
                 self.assertBlocked(call(LOCAL + "search", agent_id="a1b2", agent_type=agent_type))
 
@@ -85,7 +85,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
                     self.assertEqual(call(prefix + tool).returncode, 0)
 
     def test_other_tools_are_allowed(self):
-        for tool in ("mcp__plugin_practice_data__case_data__query", "Read", "WebSearch"):
+        for tool in ("mcp__plugin_lawyer_data__case_data__query", "Read", "WebSearch"):
             with self.subTest(tool=tool):
                 self.assertEqual(call(tool).returncode, 0)
 
@@ -106,7 +106,7 @@ class PluginRegistrationTests(unittest.TestCase):
         matcher = re.compile(entries[0]["matcher"])
         for name in (LOCAL + "search", BRIDGED + "search"):
             self.assertTrue(matcher.fullmatch(name), name)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_practice_data__case_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__case_data__query"))
 
 
 if __name__ == "__main__":

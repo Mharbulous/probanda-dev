@@ -14,7 +14,7 @@ SKILLS_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = SKILLS_ROOT.parents[1]
 FRONT_DOOR = SKILLS_ROOT / "legal-research" / "SKILL.md"
 GATE = SKILLS_ROOT / "shared" / "legal-research.md"
-SCHEMA = REPO_ROOT / "source" / "practice" / "mcp" / "src" / "schema-gen.ts"
+SCHEMA = REPO_ROOT / "source" / "lawyer" / "mcp" / "src" / "schema-gen.ts"
 TOOL = "research__preflight"
 
 

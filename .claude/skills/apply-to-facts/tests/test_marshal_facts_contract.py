@@ -21,10 +21,10 @@ EXPECTED_TOOLS = [
     "Glob",
     "Grep",
     "Skill",
-    "mcp__plugin_practice_data__skill_source__read",
-    "mcp__plugin_practice_data__case_data__query",
-    "mcp__remote-devices__plugin_practice_data__skill_source__read",
-    "mcp__remote-devices__plugin_practice_data__case_data__query",
+    "mcp__plugin_lawyer_data__skill_source__read",
+    "mcp__plugin_lawyer_data__case_data__query",
+    "mcp__remote-devices__plugin_lawyer_data__skill_source__read",
+    "mcp__remote-devices__plugin_lawyer_data__case_data__query",
 ]
 
 SQL_KEYWORDS = re.compile(r"\b(SELECT|FROM|JOIN|WHERE|INSERT|UPDATE|DELETE)\b")
