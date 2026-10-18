@@ -121,7 +121,7 @@ test("the dist-only bundle's bootstrap reports its build stamp, matching the rep
 test("a server spawned before a rebuild reports server_outdated from its bootstrap response alone", async () => {
   const stamp = bundleStamp(readFileSync(LITIGATION_BUNDLE, "utf-8"));
   const repoRoot = mkdtempSync(join(tmpdir(), "coclerk-build-stamp-repo-"));
-  const trackedBundle = join(repoRoot, "source", "practice", "mcp", "dist", "litigation-mcp.js");
+  const trackedBundle = join(repoRoot, "source", "lawyer", "mcp", "dist", "litigation-mcp.js");
   mkdirSync(dirname(trackedBundle), { recursive: true });
   copyFileSync(LITIGATION_BUNDLE, trackedBundle);
   // Bootstrap reads the schema version through the drafting-data migration scripts.
