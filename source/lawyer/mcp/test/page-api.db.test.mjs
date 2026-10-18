@@ -1,9 +1,9 @@
 // The page API (page-api/server.ts): the localhost listener through which the Loose Threads page's
-// Defer button writes seeds.deferred_at (schema v68). It answers /health, Chrome's preflight for a
+// status button writes seeds.deferred_at (schema v68). It answers /health, Chrome's preflight for a
 // file:// page, refuses a missing or wrong token, writes only an open loose thread of the token's
 // proceeding, and never throws when its port is busy: it retries, and takes the port when the
 // holder lets go. The page's own script, run against stand-in elements, draws a deferred loose
-// thread collapsed with no button and defers an open one through the real listener.
+// thread under Deferred and defers an open one through the real listener.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -247,10 +247,12 @@ function drawLooseThreads(html, fetchImpl) {
   runInNewContext(script, { window: { VIEW_PAGE: JSON.parse(line) }, document, fetch: fetchImpl, AbortController, setTimeout, clearTimeout, JSON, String });
   const cards = board.all().filter((n) => n.tag === "article");
   const card = (id) => cards.find((n) => n.all().some((c) => c.className === "where" && c.textContent.startsWith(`Loose thread ${id} `)));
-  return { header, board, card };
+  /** The heading of the section a card sits in. */
+  const sectionOf = (id) => card(id).parent.parent.children[0].text;
+  return { header, board, card, sectionOf };
 }
 
-test("the Loose Threads page carries deferred_at and the api block; a deferred thread draws collapsed with no button, an open one defers through the listener", async (t) => {
+test("the Loose Threads page carries deferred_at and the api block; a deferred thread draws under Deferred, an open one defers through the listener", async (t) => {
   const f = await fixture(t);
   await submissionDataExecute(f.dbPath, "UPDATE seeds SET deferred_at = '2026-10-08T09:00' WHERE id = 4;");
   const data = buildLooseIdeasData(f.dbPath, { id: 1, proceeding_id: 1 }, f.env);
@@ -263,19 +265,24 @@ test("the Loose Threads page carries deferred_at and the api block; a deferred t
   const off = drawLooseThreads(html, () => Promise.reject(new Error("connection refused")));
   await until(() => off.header.all().some((n) => n.className === "api-off"));
   assert.equal(off.header.all().find((n) => n.className === "api-off").textContent, "Buttons need the Claude desktop app running.");
-  assert.equal(off.card(1).all().find((n) => n.className === "defer").disabled, true);
+  assert.equal(off.card(1).all().find((n) => n.className === "status").disabled, true);
 
   // A listener: the open thread's button is enabled, and a click defers it in place.
   await listening(t, f);
   const on = drawLooseThreads(html, fetch);
-  assert.equal(on.card(4).className, "idea deferred");
-  assert.equal(on.card(4).all().some((n) => n.className === "defer"), false, "a deferred thread has no button");
-  const button = on.card(1).all().find((n) => n.className === "defer");
-  assert.equal(button.title, "Defer indefinitely");
+  const status = (id) => on.card(id).all().find((n) => n.className === "status");
+  assert.equal(on.sectionOf(4), "Deferred");
+  assert.equal(status(4).textContent, "Deferred");
+  assert.equal(status(4).title, "Click to bring back");
+  const button = status(1);
+  assert.equal(on.sectionOf(1), "Unranked");
+  assert.equal(button.textContent, "Unranked");
+  assert.equal(button.title, "Click to defer");
   await until(() => button.disabled === false);
   button.listeners.click();
-  await until(() => on.card(1).className === "idea deferred");
-  assert.equal(on.card(1).all().some((n) => n.className === "defer"), false);
+  await until(() => on.sectionOf(1) === "Deferred");
+  assert.equal(button.textContent, "Deferred");
+  assert.equal(button.title, "Click to bring back");
   assert.match(deferredAt(f, 1), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
   assert.equal(on.header.all().some((n) => n.className === "api-off"), false);
 });
@@ -315,7 +322,7 @@ test("on a database held at v74, fetchResolvedSeeds lists only the threads outli
   assert.deepEqual(fetchResolvedSeeds(dbPath, 1), [{ id: 3, idea: "Outlined into a live job.", how: "job", at: "2026-10-01T09:00", job_id: 10, job_title: "Live job" }]);
 });
 
-test("the Loose Threads page draws four tabs and a Resolved section, shown under its own tab and under All only while the checkbox is on", async (t) => {
+test("the Loose Threads page draws five tabs and a Resolved section, shown under its own tab and under All only while the checkbox is on", async (t) => {
   const f = await fixture(t);
   await submissionDataExecute(f.dbPath, RESOLVED);
   const draw = () => {
@@ -329,7 +336,7 @@ test("the Loose Threads page draws four tabs and a Resolved section, shown under
       tablist: nodes.find((n) => n.attrs.role === "tablist"),
       tabs: nodes.filter((n) => n.attrs.role === "tab"),
       folder: nodes.find((n) => n.attrs.role === "tabpanel"),
-      // Ranked, Unranked, Resolved.
+      // Ranked, Unranked, Deferred, Resolved.
       sections: nodes.filter((n) => n.tag === "section"),
       box: nodes.find((n) => n.className === "resolved-toggle"),
     };
@@ -338,71 +345,71 @@ test("the Loose Threads page draws four tabs and a Resolved section, shown under
 
   // Nothing ranked: the Ranked heading is hidden, so the checkbox ends the tab row.
   const unranked = draw();
-  assert.deepEqual(unranked.extra, [["Threads", "2"], ["Ranked", "0"], ["Unranked", "2"], ["Resolved", "5"]]);
-  assert.deepEqual(unranked.tablist.children.map((n) => n.className || n.attrs["data-filter"]), ["all", "ranked", "unranked", "resolved", "resolved-toggle"]);
+  assert.deepEqual(unranked.extra, [["Threads", "2"], ["Ranked", "0"], ["Unranked", "2"], ["Deferred", "0"], ["Resolved", "5"]]);
+  assert.deepEqual(unranked.tablist.children.map((n) => n.className || n.attrs["data-filter"]), ["all", "ranked", "unranked", "deferred", "resolved", "resolved-toggle"]);
   assert.equal(unranked.nodes.some((n) => n.className === "switch"), false, "no All groups switch with nothing ranked");
-  assert.deepEqual(hidden(unranked), [true, false, true]);
+  assert.deepEqual(hidden(unranked), [true, false, true, true]);
 
   // One ranked: the checkbox sits in the Ranked heading, before the All groups switch.
   await submissionDataExecute(f.dbPath, "UPDATE seeds SET rank = 1, rank_group = 'tooling', rank_reason = 'Blocks the others.' WHERE id = 1;");
   const p = draw();
-  assert.deepEqual(p.extra, [["Threads", "2"], ["Ranked", "1"], ["Unranked", "1"], ["Resolved", "5"]]);
-  assert.deepEqual(p.tabs.map((b) => [b.attrs["data-filter"], b.textContent]), [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["resolved", "Resolved"]]);
-  assert.equal(p.tablist.children.length, 4, "the tab row holds the tabs alone");
+  assert.deepEqual(p.extra, [["Threads", "2"], ["Ranked", "1"], ["Unranked", "1"], ["Deferred", "0"], ["Resolved", "5"]]);
+  assert.deepEqual(p.tabs.map((b) => [b.attrs["data-filter"], b.textContent]), [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]]);
+  assert.equal(p.tablist.children.length, 5, "the tab row holds the tabs alone");
   assert.equal(p.box.parent.tag, "h2");
   assert.equal(p.box.parent.text, "Ranked");
   assert.deepEqual(p.box.parent.children.map((n) => n.className), ["resolved-toggle", "switch"]);
-  assert.deepEqual(p.sections.map((s) => s.children[0].text), ["Ranked", "Unranked", "Resolved"]);
+  assert.deepEqual(p.sections.map((s) => s.children[0].text), ["Ranked", "Unranked", "Deferred", "Resolved"]);
 
   // All, the checkbox off: the resolved section is hidden until a click, and hidden again on the next.
   assert.equal(p.box.attrs.role, "checkbox");
   assert.equal(p.box.textContent, "☐ Show/Hide Resolved Threads");
   assert.equal(p.box.attrs["aria-checked"], "false");
   assert.equal(p.box.hidden, false);
-  assert.deepEqual(hidden(p), [false, false, true]);
+  assert.deepEqual(hidden(p), [false, false, true, true]);
   p.box.listeners.click();
   assert.equal(p.box.textContent, "☑ Show/Hide Resolved Threads");
   assert.equal(p.box.attrs["aria-checked"], "true");
-  assert.deepEqual(hidden(p), [false, false, false]);
+  assert.deepEqual(hidden(p), [false, false, true, false]);
   p.box.listeners.click();
   assert.equal(p.box.textContent, "☐ Show/Hide Resolved Threads");
   assert.equal(p.box.attrs["aria-checked"], "false");
-  assert.deepEqual(hidden(p), [false, false, true]);
+  assert.deepEqual(hidden(p), [false, false, true, true]);
 
   // The other tabs: Resolved shows its section with the checkbox off, and none of them shows the checkbox.
-  const [all, ranked, unrankedTab, resolved] = p.tabs;
+  const [all, ranked, unrankedTab, , resolved] = p.tabs;
   resolved.listeners.click();
-  assert.deepEqual(hidden(p), [true, true, false]);
+  assert.deepEqual(hidden(p), [true, true, true, false]);
   assert.equal(resolved.attrs["aria-selected"], "true");
   assert.equal(all.attrs["aria-selected"], "false");
   assert.equal(p.box.hidden, true);
   ranked.listeners.click();
-  assert.deepEqual(hidden(p), [false, true, true]);
+  assert.deepEqual(hidden(p), [false, true, true, true]);
   assert.equal(p.box.hidden, true);
   unrankedTab.listeners.click();
-  assert.deepEqual(hidden(p), [true, false, true]);
+  assert.deepEqual(hidden(p), [true, false, true, true]);
   assert.equal(p.box.hidden, true);
   all.listeners.click();
-  assert.deepEqual(hidden(p), [false, false, true]);
+  assert.deepEqual(hidden(p), [false, false, true, true]);
   assert.equal(p.box.hidden, false);
 
-  // One inert line per resolved thread, newest first.
-  assert.deepEqual(p.sections[2].children[1].children.map((n) => n.textContent), [
-    "Loose thread 5:  Discarded. *DISCARDED* Restore Discarded 2026-10-05",
-    "Loose thread 7:  Discarded after outlining. *DISCARDED* Restore Discarded 2026-10-04",
-    "Loose thread 6:  Suggested. *SUGGESTED* Suggested 2026-10-03",
-    "Loose thread 8:  Outlined into the later job. Taken up by Job #12: Later job",
-    "Loose thread 3:  Outlined into a live job. Taken up by Job #10: Live job",
+  // One inert line per resolved thread, newest first, each ending in its Resolved label.
+  assert.deepEqual(p.sections[3].children[1].children.map((n) => n.textContent), [
+    "Loose thread 5:  Discarded. *DISCARDED* Restore Discarded 2026-10-05Resolved",
+    "Loose thread 7:  Discarded after outlining. *DISCARDED* Restore Discarded 2026-10-04Resolved",
+    "Loose thread 6:  Suggested. *SUGGESTED* Suggested 2026-10-03Resolved",
+    "Loose thread 8:  Outlined into the later job. Taken up by Job #12: Later jobResolved",
+    "Loose thread 3:  Outlined into a live job. Taken up by Job #10: Live jobResolved",
   ]);
 
   // Nothing resolved: no checkbox is drawn, and the Resolved tab says it holds nothing.
   await submissionDataExecute(f.dbPath, "UPDATE seeds SET charted_into = NULL, discarded_at = NULL, suggested_at = NULL WHERE proceeding_id = 1;");
   const none = draw();
-  assert.equal(none.extra[3][1], "0");
+  assert.equal(none.extra[4][1], "0");
   assert.equal(none.box, undefined);
-  assert.equal(none.tabs.length, 4);
-  none.tabs[3].listeners.click();
-  assert.deepEqual(hidden(none), [true, true, true]);
+  assert.equal(none.tabs.length, 5);
+  none.tabs[4].listeners.click();
+  assert.deepEqual(hidden(none), [true, true, true, true]);
   assert.equal(none.folder.children.at(-1).textContent, "No loose thread under this tab.");
   assert.equal(none.folder.children.at(-1).hidden, false);
 });
