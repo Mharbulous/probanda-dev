@@ -274,6 +274,11 @@
     }
   ],
   "lapsed_keys": [],
+  "goals": {
+    "description": "Opening Submissions Package Drafting",
+    "statement": null,
+    "status": null
+  },
   "goal": {
     "sentence": "Completion Criteria",
     "state": "pending",

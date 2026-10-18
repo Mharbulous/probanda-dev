@@ -395,9 +395,10 @@ test("render refuses mockup mode on a retired filing, writing nothing but return
     // the state actually reads Retired.
     // Goal card design §2.9: a retired filing's card names the retirement and carries no criteria,
     // so the summary prints the State line in place of the two criteria lists.
-    const [header, todo, state, ...rest] = board.board_summary.split("\n");
+    const [header, todo, goal, state, ...rest] = board.board_summary.split("\n");
     assert.match(header, /^# Job Board — Matter L4801 · Client Ashbourne \(2417\) · Rev \d+$/);
     assert.equal(todo, "To Do: This matter's to-dos were not read.");
+    assert.equal(goal, "Goal: Opening Submissions Package Drafting (none)", "no statement of goals is stored, so the board's default reads none");
     assert.equal(state, "State: Retired 2026-09-10 — Retired on 2026-09-10 — decided", "expected the board's own state to read Retired");
     assert.deepEqual(rest, [], "no criteria and no lane");
     assert.equal(board.board_summary.includes("🎯"), false);
@@ -1287,7 +1288,7 @@ test("goal: a shelved Proposal reads met and is named, but a shelved note-up kee
     });
     assert.deepEqual(criterionOf(data, "noting-up"), {
       id: "noting-up",
-      text: "Every authority relied on is noted up",
+      text: "Note up all cited authorities",
       state: "unmet",
       outstanding: 1,
       items: ["Example v. Authority, 2020 BCSC 1"],
@@ -1585,7 +1586,9 @@ test("goal: a requisition's type declares no goal criteria, so its card says so,
   try {
     await freshSubmissionDb(f.dbPath);
     await seedBcscDefaultJudgment(f.dbPath);
-    await snapshotFromShipped(f.dbPath, 1, "requisition-default-judgment");
+    // Every shipped type now declares criteria, so the stored layout here declares none.
+    const stored = { layout: { ...shippedBlock("BCSC/Documents/requisition-default-judgment.md"), goal_criteria: [] }, venue: shippedBlock("BCSC/venue.md"), passage_hashes: {} };
+    await submissionDataWrite(f.dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
 
     const data = (submissionFormsRender(f.dbPath, 1, ASHBOURNE), boardDataOf(f.dbPath, 1, ASHBOURNE));
     assert.deepEqual(data.criteria, []);
