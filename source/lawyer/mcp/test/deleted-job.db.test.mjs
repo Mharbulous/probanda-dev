@@ -1,7 +1,8 @@
 // A deleted job (schema v54, jobs-closeout.md §10a): the row and every row pointing at it stay, every
-// reader skips it, and restore returns the exact prior state. The delete, restore, unshelve and holder
-// read run here as the gatekeeper's own SQL, read out of jobs-closeout.md, and the intake guard out of
-// jobs-create.md §3e, so a script that stops working there turns this red.
+// reader skips it, and restore returns the exact prior state. The delete runs through
+// drafting_data__delete_job. The restore, unshelve and holder read run here as the gatekeeper's own
+// SQL, read out of jobs-closeout.md, and the intake guard out of jobs-create.md §3e, so a script that
+// stops working there turns this red.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -14,6 +15,7 @@ const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = awai
 const { CARD_LANES, TODOS_NOT_READ, renderBoardSummary, submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
 const { submissionDataAssignJob } = await import("../build/submission/forms/assign-job.js");
 const { submissionDataCompleteJob } = await import("../build/submission/forms/complete-job.js");
+const { submissionDataDeleteJob } = await import("../build/submission/forms/delete-job.js");
 const { mockupDir, writeManifest } = await import("../build/submission/render-manifest.js");
 const { boardDataOf } = await import("./fixtures/forms-render-seeds.mjs");
 
@@ -39,12 +41,16 @@ function sqlAfter(text, anchor, nth) {
 /** The reference writes job 42; these scripts run on `id`. */
 const forJob = (sql, id) => sql.replace(/\b42\b/g, String(id));
 
-const DELETE = sqlAfter(CLOSEOUT, "**Deleting a mistaken job**", 0);
 const STATE_READ = sqlAfter(CLOSEOUT, "**Restoring a deleted job**", 0);
 const RESTORE = sqlAfter(CLOSEOUT, "**Restoring a deleted job**", 1);
 const HOLDER_READ = sqlAfter(CLOSEOUT, "**Restoring a deleted job**", 2);
 const UNSHELVE = sqlAfter(CLOSEOUT, "**Restoring a job**", 0);
-const INTAKE = sqlAfter(CREATE, "## 3e. Intake", 0);
+const INTAKE_SQL = sqlAfter(CREATE, "## 3e. Intake", 0);
+/** The reference's intake writes its own example job; here it guards the fixture's KEY. */
+const INTAKE_TITLE = /VALUES \(\d+, NULL, '([^']+)'/.exec(INTAKE_SQL)?.[1];
+const INTAKE_KEY = /proposal_key = '([^']+)'/.exec(INTAKE_SQL)?.[1];
+assert.ok(INTAKE_TITLE && INTAKE_KEY, "the intake script names a title and a proposal key");
+const INTAKE = INTAKE_SQL.replaceAll(INTAKE_KEY, KEY);
 
 /** The stored layout the v30 backfill writes on a BCSC Writing: the shipped type and venue blocks. */
 function shippedBlock(rel) {
@@ -54,7 +60,11 @@ function shippedBlock(rel) {
 
 const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql.replace(/;\s*$/, ""), params).rows;
 const job = (dbPath, id) => query(dbPath, STATE_READ.replace(/\b42\b/g, "?"), [id])[0];
+const row = (dbPath, id) => query(dbPath, "SELECT * FROM tickets WHERE id = ?", [id])[0];
 const run = async (dbPath, sql, id) => (await submissionDataExecute(dbPath, forJob(sql, id))).changes;
+/** One job's outcome from drafting_data__delete_job, called as session `token`. */
+const deleteJob = async (dbPath, id, token = "sess-a1") =>
+  (await submissionDataDeleteJob({ db_path: dbPath, ticket_ids: [id], session_token: token })).jobs[0];
 const board = (dbPath) => boardDataOf(dbPath, 1, CLIENT, NOW);
 // The attached and court file lanes read the matter's 0. DRAFT folder, so every lane needs draft_dir.
 const card = (dbPath, draft) => submissionFormsBoardCard({ db_path: dbPath, filing_id: 1, lanes: [...CARD_LANES], draft_dir: draft }, CLIENT, NOW).card;
@@ -114,8 +124,15 @@ test("a deleted job stays in the database and is on no card, in no count and in 
   assert.equal(ticketOf(before, 3).category, "waiting", "#3 waits on #2");
   assert.deepEqual(proposalOf(before).lane, "held");
 
-  assert.equal(await run(dbPath, DELETE, 2), 1);
+  const deleted = await deleteJob(dbPath, 2);
+  assert.equal(deleted.outcome, "deleted", "a queued job deletes");
+  assert.equal(deleted.changes, 1);
   assert.notEqual(job(dbPath, 2).deleted_at, null, "the row stays, stamped");
+  const stamped = row(dbPath, 2);
+  const again = await deleteJob(dbPath, 2);
+  assert.equal(again.outcome, "already_deleted");
+  assert.equal(again.changes, 0);
+  assert.deepEqual(row(dbPath, 2), stamped, "a second delete writes nothing");
   assert.equal(query(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = 2")[0].n, 1, "its step stays");
 
   const after = board(dbPath);
@@ -140,7 +157,7 @@ test("a deleted job stays in the database and is on no card, in no count and in 
 test("restore returns the board exactly as it was before the delete", async (t) => {
   const { dbPath } = await matter(t);
   const before = board(dbPath);
-  assert.equal(await run(dbPath, DELETE, 2), 1);
+  assert.equal((await deleteJob(dbPath, 2)).outcome, "deleted");
   assert.equal(await run(dbPath, RESTORE, 2), 1);
   assert.equal(job(dbPath, 2).deleted_at, null);
   assert.equal(JSON.stringify(board(dbPath)), JSON.stringify(before));
@@ -155,7 +172,7 @@ test("a shelved job deleted and restored stays shelved, and the unshelve never t
   assert.equal(ticketOf(board(dbPath), 2).category, "rejected");
   assert.equal(proposalOf(board(dbPath)), undefined, "the shelved job's snapshot row hides its Proposal");
 
-  assert.equal(await run(dbPath, DELETE, 2), 1, "a shelved queued job deletes");
+  assert.equal((await deleteJob(dbPath, 2)).outcome, "deleted", "a shelved queued job deletes");
   const deleted = board(dbPath);
   assert.equal(proposalOf(deleted).lane, "proposed", "a deleted job's snapshot row hides nothing");
   assert.deepEqual(deleted.lapsed_keys, [], "and never reads as lapsed");
@@ -170,7 +187,7 @@ test("a shelved job deleted and restored stays shelved, and the unshelve never t
 
   // On a deleted shelved job it writes nothing.
   await submissionDataExecute(dbPath, shelve);
-  assert.equal(await run(dbPath, DELETE, 2), 1);
+  assert.equal((await deleteJob(dbPath, 2)).outcome, "deleted");
   assert.equal(await run(dbPath, UNSHELVE, 2), 0);
   assert.notEqual(job(dbPath, 2).rejected_at, null);
   assert.equal(query(dbPath, "SELECT COUNT(*) AS n FROM proposal_rejections WHERE ticket_id = 2")[0].n, 1);
@@ -179,12 +196,12 @@ test("a shelved job deleted and restored stays shelved, and the unshelve never t
 test("a deleted job is never assigned, the gate row does not name it, and intake writes its key afresh", async (t) => {
   const { dbPath } = await matter(t);
   const gateItems = () => board(dbPath).criteria.find((c) => c.id === "gate").items;
-  const intakeRows = () => query(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE title = 'Note up: Smith v. Jones, 2023 BCCA 182'")[0].n;
+  const intakeRows = () => query(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE title = ?", [INTAKE_TITLE])[0].n;
   assert.ok(gateItems().includes(DELETED_TITLE), "an open job is named on the gate row");
   await submissionDataExecute(dbPath, INTAKE);
   assert.equal(intakeRows(), 0, "intake writes no job for a key a live job holds");
 
-  assert.equal(await run(dbPath, DELETE, 2), 1);
+  assert.equal((await deleteJob(dbPath, 2)).outcome, "deleted");
   const assigned = await submissionDataAssignJob({ db_path: dbPath, ticket_id: 2, session_token: "sess-a1" });
   assert.equal(assigned.outcome, "no_match");
   assert.match(assigned.note, /deleted/);
@@ -197,7 +214,7 @@ test("a deleted job is never assigned, the gate row does not name it, and intake
 
 test("restore is refused while another live job holds the deleted job's key, and lands once it is shelved", async (t) => {
   const { dbPath } = await matter(t);
-  assert.equal(await run(dbPath, DELETE, 2), 1);
+  assert.equal((await deleteJob(dbPath, 2)).outcome, "deleted");
   await submissionDataExecute(
     dbPath,
     `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
@@ -220,11 +237,42 @@ test("completing a job leaves its deleted either/or partner queued", async (t) =
     `UPDATE tickets SET status = 'wip', locked_by = 'sess-a1', locked_at = '2026-10-05T09:00' WHERE id = 1;
      INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 3);`
   );
-  assert.equal(await run(dbPath, DELETE, 3), 1);
+  assert.equal((await deleteJob(dbPath, 3)).outcome, "deleted");
   const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   const result = await submissionDataCompleteJob({ db_path: dbPath, ticket_id: 1, session_token: "sess-a1", draft_dir: draft }, CLIENT);
   assert.equal(result.outcome, "completed");
   assert.equal(result.superseded, 0);
   assert.deepEqual(query(dbPath, "SELECT status, superseded_by FROM tickets WHERE id = 3")[0], { status: "queued", superseded_by: null });
+});
+
+test("this session's own wip job deletes back to queued with no lock, and restores as a Ready job", async (t) => {
+  const { dbPath } = await matter(t);
+  await submissionDataExecute(dbPath, "UPDATE tickets SET status = 'wip', locked_by = 'sess-a1', locked_at = '2026-10-05T09:00' WHERE id = 2;");
+  const deleted = await deleteJob(dbPath, 2, "sess-a1");
+  assert.equal(deleted.outcome, "deleted");
+  assert.equal(deleted.changes, 1);
+  assert.deepEqual([deleted.status, deleted.locked_at], ["queued", null]);
+  assert.deepEqual([row(dbPath, 2).status, row(dbPath, 2).locked_by], ["queued", null], "the lock is cleared in the same write");
+
+  assert.equal(await run(dbPath, RESTORE, 2), 1);
+  assert.equal(ticketOf(board(dbPath), 2).category, "ready");
+  assert.deepEqual([row(dbPath, 2).locked_by, row(dbPath, 2).locked_at], [null, null]);
+});
+
+test("another session's wip job and a completed job are refused, and nothing is written", async (t) => {
+  const { dbPath } = await matter(t);
+  await submissionDataExecute(dbPath, "UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', locked_at = '2026-10-05T09:00' WHERE id = 2;");
+  const held = row(dbPath, 2);
+  const completed = row(dbPath, 4);
+
+  const elsewhere = await deleteJob(dbPath, 2, "sess-a1");
+  assert.equal(elsewhere.outcome, "held_elsewhere");
+  assert.equal(elsewhere.changes, 0);
+  assert.deepEqual(row(dbPath, 2), held);
+
+  const refused = await deleteJob(dbPath, 4, "sess-a1");
+  assert.equal(refused.outcome, "refused_status");
+  assert.equal(refused.changes, 0);
+  assert.deepEqual(row(dbPath, 4), completed);
 });
