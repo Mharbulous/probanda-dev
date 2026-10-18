@@ -1209,9 +1209,9 @@ class PluginRegistrationTests(unittest.TestCase):
         ]
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
-        for prefix in ("mcp__plugin_practice_data__", "mcp__remote-devices__plugin_practice_data__"):
+        for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
             self.assertTrue(matcher.fullmatch(prefix + "drafting_data__execute"), prefix)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_practice_data__drafting_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_data__query"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))
 
 
