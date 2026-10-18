@@ -6,9 +6,9 @@ Draft charted on 2026-10-17. The wayfinder map "Token-efficient /ingest and /hou
 Brahm wants empirical dollar-cost data to choose between two designs: doing housekeeping inside the ingest read (sharing one context), or always doing housekeeping on a cheap model (Haiku) apart from ingest (Opus). No existing skill or report measures this (two searches on 2026-10-17 found only unmeasured rules: "≤20 pages per read", "batches of ≤10", "about 15 per namer"). The protocol answers Q1–Q17 below by running read-only tests in Cowork on copies of real matter files, then pricing every subagent from its transcript.
 
 Facts this design rests on (checked 2026-10-17):
-- Cowork writes every subagent transcript on the Windows host under `%APPDATA%/Claude/local-agent-mode-sessions/…/.claude/projects/…/<session>/subagents/agent-<id>.jsonl`. Each line carries `model` and `usage`: `input_tokens`, `cache_creation.ephemeral_5m_input_tokens` and `ephemeral_1h_input_tokens`, `cache_read_input_tokens`, `output_tokens` and `output_tokens_details.thinking_tokens`. So cost can be measured exactly, after the run, with no telemetry setup.
+- Each Cowork subagent transcript line carries `model` and `usage`: `input_tokens`, `cache_creation.ephemeral_5m_input_tokens` and `ephemeral_1h_input_tokens`, `cache_read_input_tokens`, `output_tokens` and `output_tokens_details.thinking_tokens`. So cost can be measured exactly, after the run, with no telemetry setup. The transcripts no longer reach the Windows host (E0, 2026-10-17): the Cowork session ran in a remote sandbox, with the connected folder staged into `/mnt/user-data/uploads/`, and nothing was written under `%APPDATA%/Claude/local-agent-mode-sessions/`. Files the session writes into the connected folder do sync back, so every run sheet ends with the copy step under E0.
 - Prices per million tokens (platform pricing page): Haiku 5.5 is $0.10 in, $0.125/$0.20 cache write (5m/1h), $0.01 cache read, $0.50 out. Sonnet 5.5 is $2 / $2.50 / $4 / $0.10 / $10. Opus 5.5 is $4 / $5 / $8 / $0.20 / $20. Thinking tokens are billed as output.
-- Subagent cache TTL defaults to 5 minutes. A `fork` subagent inherits the parent context as a cache read. `SendMessage` resumes a subagent with its full history. No subagent rewind exists in the docs. None of these is confirmed in Cowork, which is why E0 checks them.
+- Subagent cache TTL defaults to 5 minutes. E0 confirmed in Cowork that a `fork` subagent inherits the parent context as a cache read, that `SendMessage` resumes a subagent with its full history, and that no subagent rewind exists (results under E0).
 - A PDF page read natively costs roughly 3k–8k tokens (its text plus a page image).
 
 ## Questions answered
@@ -53,6 +53,23 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - Is `pdftoppm` present in the VM (page-range PDF reads need it)?
 
   Later cells that depend on an unavailable feature are marked "not available in Cowork" rather than worked around.
+
+  **Results (run 2026-10-17, one session, about $0.68).** Checked against the subagent transcripts, not only the session's report. The session ran on Sonnet 5.5.
+  - **Per-call `model` and `effort`: available.** The Agent tool takes `model` (sonnet, opus, haiku, fable) and `effort` (low to max). `legal:extract-facts` with `model: haiku` ran every call on `claude-haiku-5-5`, and with neither set it ran on the session's `claude-sonnet-5-5`, since the agent pins no model. Thinking tokens on the same document were 3,842 at low effort against 9,819 at high (one run each).
+  - **`fork`: available, billed as a cache read.** The fork's own call read 149,523 tokens from cache and wrote 557. It ran on the parent's model, in the background, and answered from the inherited conversation without reading a file.
+  - **`SendMessage` resume: available.** The finished Haiku extractor resumed in the same transcript. Its first resumed call read 15,655 tokens of its own history from cache, and it stated the price without rereading the file.
+  - **Subagent rewind: not available.** ToolSearch for "rewind", "checkpoint" and "restore" found only unrelated plugin tools, and neither the Agent nor the SendMessage tool has such an option.
+  - **`pdftoppm`: available** (`/usr/bin/pdftoppm`, poppler 24.02.0). A Read with `pages: "2"` returned page 2 alone.
+
+  Also seen, for E1: the orchestrator writes its cache at the 1-hour price while subagents write at the 5-minute price, and the second Haiku extractor's first call read 7,214 tokens cached by the first, so siblings on one model share a cached prefix.
+
+  **Copy step, the last step of every run sheet.** Paste into the same Cowork task once it has finished, because a session can see only its own transcripts:
+
+  ```text
+  Copy this session's transcript files into the connected folder so they can be checked on the host. Find them with: find / -path '*/.claude/projects/*' -name '*.jsonl' 2>/dev/null | head -50. Copy this session's main <session-id>.jsonl file into a new folder named transcripts next to the test files, and copy its subagents folder, unchanged, to transcripts/<session-id>/subagents. If no such files exist in your sandbox, say so, list every place you looked, and write nothing. Then reply "copied" with the list of files written.
+  ```
+
+  `token_ledger.py` reads that `transcripts` folder as a root. It does not yet count a fork's run, and it adds a resumed run's calls to the original run's row.
 - **E1. Fixed cost and caching (Q8) ★.**
   - Measure each agent type's empty-task baseline on Haiku, Sonnet and Opus.
   - Compare 5 identical subagents started in one turn with 1 started first and 4 more started after it finishes.
