@@ -6,16 +6,17 @@
 -- suggestion_box__submit tool.
 --
 -- Who can do what:
--- - The only writer is the suggestion-submit Edge Function
---   (cloud/legal-commons/supabase/functions/suggestion-submit), which runs as
---   postgres over a direct connection and only inserts.
+-- - The suggestion-submit Edge Function
+--   (cloud/legal-commons/supabase/functions/suggestion-submit) is the only
+--   inserter. It runs as postgres over a direct connection.
+-- - suggestion-list and suggestion-set-status, project secret only, are how
+--   the maintainer reads and triages (cloud/suggestions/tools/triage.mjs).
 -- - A caller reaches it with the project secret or with an install key that
 --   holds the suggestions:write scope (functions/_shared/caller.ts). Such a key
 --   can therefore insert a suggestion and nothing else: it cannot read, update
 --   or delete any row, its own included.
 -- - No API role (public, anon, authenticated) has any right on this schema, and
---   the schema is not exposed through the API. The maintainer reads suggestions
---   in the dashboard or over a direct connection.
+--   the schema is not exposed through the API.
 --
 -- Apply after cloud/access/access.sql. Idempotent: safe to re-run.
 -- =============================================================================
@@ -31,6 +32,22 @@ create table if not exists suggestions.suggestion (
   source         text not null check (source in ('user', 'llm')),
   created_at     timestamptz not null default now()
 );
+
+-- Triage fields (docs/Specs/2026-10-18_suggestion-triage-spec.md). The commons
+-- server fills plugin_version from its own plugin.json; skill is the model's,
+-- optional. suggestion-set-status alone moves status off 'new' and sets
+-- issue_number and triaged_at. Rows saved before plugin_version existed read
+-- 'unrecorded'.
+alter table suggestions.suggestion add column if not exists plugin_version text;
+update suggestions.suggestion set plugin_version = 'unrecorded' where plugin_version is null;
+alter table suggestions.suggestion alter column plugin_version set not null;
+alter table suggestions.suggestion add column if not exists skill text;
+alter table suggestions.suggestion add column if not exists status text not null default 'new';
+alter table suggestions.suggestion add column if not exists issue_number integer;
+alter table suggestions.suggestion add column if not exists triaged_at timestamptz;
+alter table suggestions.suggestion drop constraint if exists suggestion_status_check;
+alter table suggestions.suggestion add constraint suggestion_status_check
+  check (status in ('new', 'approved', 'approved in part', 'rejected'));
 
 revoke all on schema suggestions from public, anon, authenticated;
 revoke all on all tables in schema suggestions from public, anon, authenticated;
