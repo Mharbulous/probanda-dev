@@ -65,9 +65,12 @@ function citedLine(md) {
 
 /** The shipped letter, every slot written, Cara as `to`, a Deliver job for the Pre-send gate job to copy
  * its billing anchor from, and, unless `cite` is false, one prose-cited case: the authority, its lead
- * statement and the link written in one script, the write contract's idiom (filing-checklists.md §13). */
+ * statement and the link written in one script, the write contract's idiom (filing-checklists.md §13).
+ * An `unconfirmed` letter is a Writing drafted before schema v40, so its stored layout predates the
+ * letter type declaring `noting-up` (render-general.ts, authorityUnconfirmed). */
 async function drafted(t, { cite = true, unconfirmed = false } = {}) {
-  const g = await generalWritingFixture(t, { front: null, block: LETTER_BLOCK });
+  const block = unconfirmed ? { ...LETTER_BLOCK, goal_criteria: LETTER_BLOCK.goal_criteria.filter((c) => c !== "noting-up") } : LETTER_BLOCK;
+  const g = await generalWritingFixture(t, { front: null, block });
   const { filing_id: id } = await g.createLetter({ proceeding_id: 1, unconfirmed });
   for (const [slot, text] of SLOTS) await g.prose(id, slot, text);
   await g.recipient(id, 1, "to");
@@ -204,7 +207,11 @@ test("a prose-cited statute's 📇 follows its currency, not its treatment, and 
   assert.deepEqual(await noteUp("UPDATE authorities SET kind = 'case' WHERE id = 4;"), [true, "unmet", 1], "a case with treatment ∅ is unchanged");
   assert.deepEqual(await noteUp("UPDATE authorities SET kind = 'statute' WHERE id = 4;"), [true, "unmet", 1], "unchecked currency");
   assert.deepEqual(await noteUp("UPDATE authorities SET currency_status = 'not-found' WHERE id = 4;"), [true, "unmet", 1]);
-  assert.deepEqual(await noteUp("UPDATE authorities SET currency_status = 'current' WHERE id = 4;"), [false, "met", 0], "current, treatment ∅");
+  assert.deepEqual(await noteUp("UPDATE authorities SET currency_status = 'current' WHERE id = 4;"), [true, "unmet", 1], "current with no check date is stale");
+  // A statute's 'current' stays fresh for 30 days from its check date, read against today's local date.
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  assert.deepEqual(await noteUp(`UPDATE authorities SET currency_checked_on = '${today}' WHERE id = 4;`), [false, "met", 0], "current, checked today, treatment ∅");
   assert.deepEqual(await noteUp("UPDATE authorities SET currency_status = 'repealed' WHERE id = 4;"), [true, "unmet", 1], "repealed: 📇, no job, still outstanding");
   assert.deepEqual(await noteUp("UPDATE authorities SET kind = 'doctrine', currency_status = NULL WHERE id = 4;"), [false, "met", 0]);
 });
