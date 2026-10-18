@@ -139,23 +139,23 @@ From [The Suggestion Box in Probanda's Cloud, and any GitHub mirror](https://git
 
 ## 6. Metering, caps, alerts and the fingerprint
 
-From [Usage metering, caps, enumeration alerts, canary rows and account sharing](https://github.com/Mharbulous/probanda-dev/issues/52), with the commons write cap from [The contribution ratio](https://github.com/Mharbulous/probanda-dev/issues/54).
+From [Usage metering, caps, enumeration alerts, canary rows and account sharing](https://github.com/Mharbulous/probanda-dev/issues/52), with the commons write cap from [The contribution ratio](https://github.com/Mharbulous/probanda-dev/issues/54) and the provisional cap from [Whether provisional accounts get tighter caps](https://github.com/Mharbulous/probanda-dev/issues/111).
 
 1. **Counters only.** Per account, hour and function: `calls` and `records`. Never which entries were read, never query text or reply content.
 2. **No canary rows.** No fabricated entry is ever served. Instead each reply from `commons-find` and `commons-read` lists a principle's authorities in an order fixed by the account: sorted by SHA-256 of account id, principle id and authority id. A copy is recognised by scoring copied principles against each account's expected order.
 3. **What counts.** Calls feed the token bucket. Records returned feed the daily cap. A record is one principle, authority, treatment, rule period or troubleshooting entry in a reply.
-4. **Per lawyer account.** Until accounts are built, counting is per key, which covers Brahm's minted bridge keys. Calls with the project secret are not metered. Whether a provisional account gets tighter caps is not decided: [Whether provisional accounts get tighter caps](https://github.com/Mharbulous/probanda-dev/issues/111).
-5. **Mechanism.** One SQL function in `access` replaces `resolve_key`: it looks up the key and spends a token in one round trip. `access.usage (account, hour, function, calls, records)` holds the counters, `access.limit` holds every number (changeable without a redeploy), and `access.alert` records each alert. `serve()` checks the daily cap before the work runs and adds the record count after it, so a reply can exceed the cap by at most one page.
+4. **Per lawyer account.** Until accounts are built, counting is per key, which covers Brahm's minted bridge keys. Calls with the project secret are not metered. A provisional account has a lower shared-read cap (item 6) and otherwise the same limits as a verified one (Brahm, [111](https://github.com/Mharbulous/probanda-dev/issues/111)).
+5. **Mechanism.** One SQL function in `access` replaces `resolve_key`: it looks up the key and spends a token in one round trip. `access.usage (account, hour, function, calls, records)` holds the counters, `access.limit` holds every number (changeable without a redeploy), with the account state as a column so a number can differ for provisional accounts, and `access.alert` records each alert. `serve()` checks the daily cap before the work runs and adds the record count after it, so a reply can exceed the cap by at most one page.
 6. **Starting numbers**, to be tuned from Brahm's own usage:
    - token bucket: 30 calls of burst, refilling 10 a minute, on every lawyer-key call;
-   - shared reads (`commons-find`, `commons-read`, `troubleshoot-search`): 2,000 records a day per account;
+   - shared reads (`commons-find`, `commons-read`, `troubleshoot-search`): 2,000 records a day per account, and 200 while the account is provisional. A provisional account traces to someone who never proved identity, so the fingerprint deters nothing there. The token bucket, page sizes, write caps and items functions do not differ by state. A read refused at the provisional cap gets the same 429 as any read cap and never mentions the account's state;
    - daily write caps: `troubleshoot-record` 10, `troubleshoot-confirm` 50, `suggestion-submit` 20, commons version writes 200 versions (one version per item);
    - page-size caps: `commons-find` 10, `browse_principles` 20, `find_candidates` 20, `troubleshoot-search` 10;
    - the items functions get the bucket only.
 7. **A bulk commons write** that would cross the cap (for example one `contribute_decomposition` call) is refused whole, with no partial save ([54](https://github.com/Mharbulous/probanda-dev/issues/54) decision 4).
 8. **Refusals.** A write refused at its cap replies `{saved: false}` with a guiding question that does not state the cap, such as "Can this entry wait until tomorrow?" (Commandment 6). A read refused at its cap gets 429 with the reset time.
 9. **A day** is a calendar day in America/Vancouver.
-10. **Alerts** only notify Brahm by email, carrying only the account id. Brahm acts by hand. They fire on: (a) the daily cap reached on 3 of the last 7 days; (b) shared reads in 16 or more distinct hours of one day; (c) more than 10 live keys on one account.
+10. **Alerts** only notify Brahm by email, carrying only the account id. Brahm acts by hand. They fire on: (a) the daily cap reached on 3 of the last 7 days; (b) shared reads in 16 or more distinct hours of one day; (c) more than 10 live keys on one account. Alert (a) also fires on a provisional account at its lower cap, which tells Brahm which queued application to settle first.
 11. A `browse_principles` keyword shorter than 3 characters gets 400.
 12. **Account sharing:** no location or IP signal, no device limit, no automatic response. Alert (c) is the only signal.
 13. **No contribution ratio** (Brahm, [54](https://github.com/Mharbulous/probanda-dev/issues/54)). The reviewed ratio design is recorded on that ticket for a future effort.
@@ -265,7 +265,6 @@ Stage 1 of that plan is applied and deployed, and the Suggestion Box is live. Th
 ## 11. Not decided here
 
 - **The email sender** for one-time links and alerts. [58](https://github.com/Mharbulous/probanda-dev/issues/58) left the naming to this spec, which adds no decision, so it is a new ticket on the map: [Choose the email sender for one-time links and alerts](https://github.com/Mharbulous/probanda-dev/issues/110).
-- **Tighter caps for provisional accounts.** [48](https://github.com/Mharbulous/probanda-dev/issues/48) asked [52](https://github.com/Mharbulous/probanda-dev/issues/52) to decide it, and #52 did not: [Whether provisional accounts get tighter caps](https://github.com/Mharbulous/probanda-dev/issues/111).
 
 ## 12. Checks at build time
 
