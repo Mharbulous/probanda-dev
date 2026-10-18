@@ -12,7 +12,7 @@ The practitioner's route for their own ideas about the plugin. Each post is save
 3. **Take their words.** Use what the practitioner said about the plugin, and nothing from the matter.
 4. **Draft.** A title of at most eight words, and a body of one short paragraph that keeps the practitioner's point and wording where it can. Remove every person, entity, matter, document and path. Name the plugin's part (a page, a skill, a tool) generically.
 5. **Show the exact text, then ask.** Show the title and the body exactly as they will be posted, then ask in plain text, under `/show-me`: "Would you like to submit this suggestion?" Yes | No | Modify. Under Yes, state the mechanism: `suggestion_box__submit · saved in Probanda's Cloud · free`.
-   - **Yes.** Only after an explicit yes, call `suggestion_box__submit({title, body, source: "user"})` with the text shown, unchanged.
+   - **Yes.** Only after an explicit yes, call `suggestion_box__submit({title, body, source: "user"})` with the text shown, unchanged. Add `skill` with the skill's name when the suggestion is about one skill.
    - **No.** Post nothing.
    - **Modify.** Take the practitioner's new text and show it again for a yes. Their edited text goes to the tool exactly as typed, because they are its author.
 6. **Report.** Say the suggestion was received, with the suggestion id the tool returns. A refused post (a redaction hit, Probanda's Cloud not reached, the key refused) is reported in one line with the kind of hit, never the text. Then offer to redraft once, or leave it.
