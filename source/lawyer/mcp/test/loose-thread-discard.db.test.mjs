@@ -82,8 +82,14 @@ function drawBoard(html) {
       return this.text + this.children.map((c) => c.textContent).join("");
     }
     appendChild(child) {
+      child.parent = this;
       this.children.push(child);
       return child;
+    }
+    after(sibling) {
+      const siblings = this.parent.children;
+      siblings.splice(siblings.indexOf(this) + 1, 0, sibling);
+      sibling.parent = this.parent;
     }
     setAttribute(key, value) {
       this.attrs[key] = String(value);
@@ -292,7 +298,7 @@ test("the Loose Threads page lists a discarded, a suggested and an outlined thre
   const html = renderViewPageHtml(LOOSE_IDEAS_PAGE, { filing: "", matter: "L8470", client: "", revision: 1, rendered: "2026-10-13 12:00" }, data);
   const page = JSON.parse(/^window\.VIEW_PAGE = (.*);$/m.exec(html)[1]);
   assert.deepEqual(page.data.resolved, data.resolved, "the page carries them");
-  assert.deepEqual(page.extra, [["Threads", "1"], ["Ranked", "0"], ["Unranked", "1"], ["Resolved", "3"]], "the header counts the open threads apart from the resolved");
+  assert.deepEqual(page.extra, [["Threads", "1"], ["Ranked", "0"], ["Unranked", "1"], ["Deferred", "0"], ["Resolved", "3"]], "the header counts the open threads apart from the resolved");
 });
 
 test("a database held at v74 has neither column and still reads, defers and draws", async (t) => {
