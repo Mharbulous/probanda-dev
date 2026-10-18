@@ -312,6 +312,7 @@ for (const [name, executable] of BROWSERS) {
           expression: `JSON.stringify({
             title: document.title,
             heading: document.querySelector("header h1").textContent,
+            writingTitle: (() => { const next = document.querySelector("header h1").nextElementSibling; return next && next.className === "writing-title" ? next.textContent : null; })(),
             sectionHeads: document.querySelectorAll("h2.section-head").length,
             proceeding: [...document.querySelector("header .meta.proceeding").childNodes].map((n) => n.nodeType === Node.TEXT_NODE ? n.textContent : [n.className, n.dataset.k ?? null, n.textContent]),
             refs: [...document.querySelectorAll("details.ticket .ref")].map((r) => [r.closest("details").id, r.textContent]),
@@ -333,6 +334,7 @@ for (const [name, executable] of BROWSERS) {
             ideasCue: document.querySelector("#ideas .cue")?.textContent ?? null,
             state: document.querySelector("#goal .head > .sentence + .lifecycle")?.textContent ?? null,
             first: document.querySelector(".board").firstElementChild.id,
+            second: document.querySelector(".board").firstElementChild.nextElementSibling.id,
             sentence: document.querySelector("#goal .sentence")?.textContent ?? null,
             doneSteps: document.querySelectorAll("ol.steps li.done").length,
             nextStep: document.querySelector("ol.steps li.next")?.textContent ?? null,
@@ -350,7 +352,8 @@ for (const [name, executable] of BROWSERS) {
 
         assert.deepEqual(problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.equal(page.title, "Job Board — L7001");
-        assert.equal(page.heading, "Job Board 1: Notice of Application", "the heading names the page's number and its Writing");
+        assert.equal(page.heading, "Job Board 1", "the heading names the page's number");
+        assert.equal(page.writingTitle, "Notice of Application", "the Writing's title on its own line under the heading");
         assert.equal(page.sectionHeads, 0, "no heading under the header: the page heading names the one section");
         assert.deepEqual(
           page.proceeding,
@@ -380,7 +383,8 @@ for (const [name, executable] of BROWSERS) {
         assert.equal(page.ideasLink, null, "no page links to another");
         assert.equal(page.ideasCue, "To see them, ask a session to show the Loose Threads page.");
         assert.equal(page.state, "Drafting");
-        assert.equal(page.first, "goal", "the Goal card sits above the first lane");
+        assert.equal(page.first, "goals", "the statement of goals' card is the board's first block");
+        assert.equal(page.second, "goal", "the Completion Criteria card follows it, above the first lane");
         assert.equal(page.sentence, data.goal.sentence);
         assert.equal(page.doneSteps, 1);
         assert.equal(page.nextStep, "Book the commissioner");
@@ -431,7 +435,9 @@ for (const [name, executable] of BROWSERS) {
         })()`;
         const board = await evaluate(cdp, `({
           sections: [...document.querySelectorAll(".board > section")].map((s) => s.id),
-          first: document.querySelector(".board").firstElementChild.id,
+          blocks: [...document.querySelector(".board").children].filter((b) => b.id).map((b) => b.id),
+          goalsHead: [...document.querySelectorAll("#goals .head > span")].map((s) => [s.className, s.textContent]),
+          goalsBody: [...document.querySelectorAll("#goals .goals-body > p")].map((p) => [p.className, p.textContent]),
           goalAbove: document.querySelector("#goal").getBoundingClientRect().bottom <= document.querySelector(".board > section").getBoundingClientRect().top,
           goalHead: [...document.querySelectorAll("#goal .head > span")].map((s) => [s.className, s.textContent]),
           proceedingRow: document.querySelector("header .meta.proceeding") !== null,
@@ -449,7 +455,13 @@ for (const [name, executable] of BROWSERS) {
         assert.equal(board.controls, 0, "no line carries a checkbox, a red X, a Go button or any other control");
         // Goal card design §2.9: the card sits above the first lane. The fixture's card string is
         // null, so the sentence is drawn alone, with no placeholder in its place.
-        assert.equal(board.first, "goal", "the Goal card is the board's first block");
+        assert.deepEqual(
+          board.blocks,
+          ["goals", "goal", "ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"],
+          "the statement of goals' card first, then the Completion Criteria card, then the nine lists"
+        );
+        assert.deepEqual(board.goalsHead, [["sentence", FIXTURE_BOARD.goals.description], ["label", "Goal"]], "closed: the description, labelled Goal");
+        assert.deepEqual(board.goalsBody, [["none", "No statement of goals yet"]], "the golden carries no statement");
         assert.equal(board.goalAbove, true, "the Goal card sits above the first lane");
         assert.deepEqual(board.goalHead, [["sentence", FIXTURE_BOARD.goal.sentence], ["lifecycle", "Drafting"]], "the sentence, then the Writing's state as a pill");
         assert.equal(board.proceedingRow, false, "a page with a Goal card and a blank proceeding draws no proceeding line");
@@ -504,9 +516,11 @@ for (const [name, executable] of BROWSERS) {
         { id: "noting-up", text: "Every authority is noted up", state: "met", outstanding: 0, items: ["shelved by you: a reserved point"], source: "inventory" },
         { id: "gate", text: "The pre-filing checks pass or are waived", state: "met", outstanding: 0, items: ["checks run on 2026-09-20", "step — WAIVED: reason"], source: "sqlite" },
       ];
+      const goals = { description: FIXTURE_BOARD.goals.description, statement: "Get the orders sought before the hearing.", status: "inferred" };
       const ticket5 = FIXTURE_BOARD.tickets.find((t) => t.id === 5);
       const data = {
         ...FIXTURE_BOARD,
+        goals,
         goal,
         criteria,
         tickets: [
@@ -533,7 +547,8 @@ for (const [name, executable] of BROWSERS) {
           const visible = (node) => node.checkVisibility();
           return {
             tag: card.tagName,
-            first: document.querySelector(".board").firstElementChild === card,
+            first: document.querySelector(".board").firstElementChild.id === "goals" && card.previousElementSibling.id === "goals",
+            goalsBody: [...document.querySelectorAll("#goals .goals-body > p")].map((p) => [p.className, p.textContent]),
             open: card.open,
             head: [...card.querySelectorAll(".head > span")].map((s) => [s.className, s.textContent]),
             reversed: style.backgroundColor === body.color && style.color === body.backgroundColor,
@@ -555,7 +570,8 @@ for (const [name, executable] of BROWSERS) {
         const closed = await evaluate(cdp, read);
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.equal(closed.tag, "DETAILS", "expanded and collapsed by the native element alone");
-        assert.equal(closed.first, true, "the Goal card sits above the first lane");
+        assert.equal(closed.first, true, "the Goal card sits under the statement of goals' card, above the first lane");
+        assert.deepEqual(closed.goalsBody, [["caption", "Inferred, not confirmed"], ["statement", goals.statement]], "an inferred statement is captioned as such");
         assert.equal(closed.open, false, "the Goal card starts collapsed");
         assert.deepEqual(closed.head, [["sentence", goal.sentence], ["lifecycle", "Drafting"], ["text", goal.text]], "collapsed: the sentence, the state pill and the card string");
         assert.equal(closed.reversed, true, "the Goal card reverses the page's colours");
@@ -600,7 +616,7 @@ for (const [name, executable] of BROWSERS) {
     }
   });
 
-  // A pre-filing board sends no goal: nothing is drawn in the Goal card's place.
+  // A pre-filing board sends no goal: nothing is drawn in the Completion Criteria card's place.
   test(`the Job Board draws no Goal card when the data carries no goal in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-nogoal-"));
     try {
@@ -618,16 +634,18 @@ for (const [name, executable] of BROWSERS) {
           const row = document.querySelector("header .meta.proceeding");
           return {
             goal: document.querySelector("#goal") === null,
-            firstTag: first.tagName,
             firstId: first.id,
+            nextTag: first.nextElementSibling.tagName,
+            nextId: first.nextElementSibling.id,
             proceeding: row && [...row.childNodes].map((n) => (n.nodeType === Node.TEXT_NODE ? n.textContent : [n.className, n.textContent])),
           };
         })()`);
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.equal(board.goal, true, "no Goal card is drawn");
         assert.deepEqual(board.proceeding, [["chip", "Drafting"]], "with no Goal card the state is a chip on the proceeding line, drawn though the proceeding is blank");
-        assert.equal(board.firstTag, "SECTION", "the first lane is the board's first block");
-        assert.equal(board.firstId, "ready");
+        assert.equal(board.firstId, "goals", "the statement of goals' card is still the board's first block");
+        assert.equal(board.nextTag, "SECTION", "the first lane follows it");
+        assert.equal(board.nextId, "ready");
       });
     } finally {
       rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
