@@ -416,7 +416,12 @@ function drawPage(file) {
     }
     appendChild(child) {
       this.children.push(child);
+      child.parent = this;
       return child;
+    }
+    after(node) {
+      this.parent.children.splice(this.parent.children.indexOf(this) + 1, 0, node);
+      node.parent = this.parent;
     }
     setAttribute(key, value) {
       this.attrs[key] = String(value);
@@ -540,7 +545,11 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   const { header, main } = drawPage(jobBoard);
   const rowOf = (className) => header.children.find((n) => n.className === className);
   const labelled = (row) => row.children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`);
-  assert.equal(header.children[0].textContent, "Job Board 1: Notice of Application", "the heading names the page's number and its Writing");
+  assert.deepEqual(
+    header.children.slice(0, 2).map((n) => [n.tag, n.className, n.textContent]),
+    [["h1", "", "Job Board 1"], ["p", "writing-title", "Notice of Application"]],
+    "the heading names the page's number, and the Writing's title is drawn directly after it"
+  );
   const metaRow = rowOf("meta");
   assert.deepEqual(labelled(metaRow), ["Matter: L9999", "Client: Lookup Client Ltd. (C-9999)"], "the meta row names the matter and the client with its number");
   assert.equal(metaRow.children.some((n) => n.attrs["data-k"] === "Rev" || n.attrs["data-k"] === "Rendered"), false, "no Rev or Rendered is drawn");
@@ -581,6 +590,7 @@ test("a pre-filing Job Board's header names its proceeding, draws its state as a
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const section = {
     meta: { revision: 1, matter: "", client: "", file: "", filing: "", filing_id: null, proceeding_id: 1, rendered: "2026-10-05 09:00", state: null, state_label: "No filing yet", state_since: null, ready_to_retire: false },
+    goals: { description: "Proceeding 1", statement: null, status: null },
     tickets: [], seeds: [], discardedSeeds: [], deleted: [], proposals: [], lapsed_keys: [],
   };
   const draw = (name, dates) => {
@@ -680,6 +690,7 @@ test("the fast-open render returns the short board_summary, and no lane, board d
     assert.deepEqual(board.board_summary.split("\n"), [
       "# Job Board — Matter L4801 · Client Ashbourne (2417) · Rev 1",
       "To Do: This matter's to-dos were not read.",
+      "Goal: Opening Submissions Package Drafting (none)",
       "State: Drafting — No completion criteria are declared for this type of Writing.",
     ]);
     assert.equal(/^## /m.test(board.board_summary), false, "no lane");
@@ -763,7 +774,7 @@ test("board_card(jobs) prints each job in board order: its collapsed line, a kin
         `  keys: factual-basis:submissions:1 = "${HELD}" (now: 🧾 "${HELD}")`,
         "  scope: facts, statements_of_law:12 · waits on: #1 (completed) · either-or: —",
         "- Job #4 Rebuild the evidence index · In Progress 1/2",
-        "  kind: work · priority: 2 · locked: 2026-09-02T10:05 · holder: sess-a1 · last activity: 2026-09-02T10:12",
+        "  kind: work · priority: 2 · taken: 2026-09-02T10:05 · holder: sess-a1 · last activity: 2026-09-02T10:12",
         "  intent: Reconcile the exhibit list against the disclosure log.",
         "  scope: — · waits on: — · either-or: —",
         "  steps: 1 ☑ Audit the exhibit list (2026-09-02T10:10) · 2 ☐ Reconcile against the disclosure log",
@@ -837,7 +848,7 @@ test("a job's card on the Job Board page draws its steps as its plan, with no in
     assert.ok(wip.some((n) => n.className === "chip wip" && n.textContent === "In Progress"));
     assert.deepEqual(wip.filter((n) => n.tag === "li").map((n) => n.textContent), ["Audit the exhibit list", "Reconcile against the disclosure log"]);
     assert.equal(wip.some((n) => n.className === "intent"), false, "no intent paragraph");
-    assert.deepEqual(terms(wip), ["Since", "Priority"], "no Plan row");
+    assert.deepEqual(terms(wip), ["Progress", "Taken", "Priority"], "no Plan row");
     assert.ok(terms(card(3)).includes("Blocked by"));
   } finally {
     f.cleanup();
@@ -970,7 +981,7 @@ test("board_card reads a proceeding with no filing", async () => {
       result.card,
       [
         "- Job #1 Review the arbitration clause · In Progress",
-        "  kind: work · priority: 0 · locked: 2026-09-19 09:30 · holder: sess-a · last activity: 2026-09-19 09:30",
+        "  kind: work · priority: 0 · taken: 2026-09-19 09:30 · holder: sess-a · last activity: 2026-09-19 09:30",
         "  intent: Read the contract.",
         "  scope: — · waits on: — · either-or: —",
         "## Loose Threads (1)",
@@ -1130,7 +1141,7 @@ test("a job's last activity counts the seeds captured from it, and its card list
     proceedingCard(f),
     [
       "- Job #1 Research the limitation point · In Progress 0/1",
-      "  kind: work · priority: 0 · locked: 2026-01-16 09:00 · holder: s-holder · last activity: 2026-01-16T09:20",
+      "  kind: work · priority: 0 · taken: 2026-01-16 09:00 · holder: s-holder · last activity: 2026-01-16T09:20",
       "  intent: When did time start to run?",
       "  scope: — · waits on: — · either-or: —",
       "  steps: 1 ☐ Run the research",
