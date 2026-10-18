@@ -29,7 +29,7 @@ const FAKE = {
   davUsername: "someone@example.test",
   caldavUrl: "https://caldav.example.test",
   carddavUrl: "https://contacts.example.test",
-  timezone: "America/Vancouver",
+  timezone: "America/Los_Angeles",
 };
 const CAL_BASE = "https://p01-caldav.example.test/123/calendars/";
 const WORK = { url: `${CAL_BASE}work/`, displayName: "Work", components: ["VEVENT"], calendarColor: "#ff0000" };
@@ -38,24 +38,26 @@ const TASKS = { url: `${CAL_BASE}tasks/`, displayName: "Tasks", components: ["VT
 
 const ics = (...lines) => ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//test//EN", ...lines, "END:VCALENDAR", ""].join("\r\n");
 
-// Weekly at 10:00 Vancouver time from Mon 5 Oct 2026, five times; 12 Oct cancelled;
+// Weekly at 10:00 Los Angeles time from Mon 5 Oct 2026, five times; 12 Oct cancelled;
 // 19 Oct moved to 14:00. 1 Nov 2026 ends daylight time, so 2 Nov is at -08:00.
+// Not Vancouver: from tz data 2026b, British Columbia stays on -07:00 after 1 Nov 2026,
+// so Vancouver's offset on 2 Nov depends on which tz data the host's Node ships.
 const SERIES = ics(
   "BEGIN:VEVENT",
   "UID:series-1",
   "SUMMARY:Weekly call",
-  "DTSTART;TZID=America/Vancouver:20261005T100000",
-  "DTEND;TZID=America/Vancouver:20261005T110000",
+  "DTSTART;TZID=America/Los_Angeles:20261005T100000",
+  "DTEND;TZID=America/Los_Angeles:20261005T110000",
   "RRULE:FREQ=WEEKLY;COUNT=5",
-  "EXDATE;TZID=America/Vancouver:20261012T100000",
+  "EXDATE;TZID=America/Los_Angeles:20261012T100000",
   "DESCRIPTION:Agenda",
   "END:VEVENT",
   "BEGIN:VEVENT",
   "UID:series-1",
-  "RECURRENCE-ID;TZID=America/Vancouver:20261019T100000",
+  "RECURRENCE-ID;TZID=America/Los_Angeles:20261019T100000",
   "SUMMARY:Weekly call (moved)",
-  "DTSTART;TZID=America/Vancouver:20261019T140000",
-  "DTEND;TZID=America/Vancouver:20261019T150000",
+  "DTSTART;TZID=America/Los_Angeles:20261019T140000",
+  "DTEND;TZID=America/Los_Angeles:20261019T150000",
   "END:VEVENT"
 );
 
@@ -127,7 +129,7 @@ test("list_calendars returns the event calendars only", async () => {
 test("list_events expands a series with an EXDATE and a moved occurrence, across the end of daylight time", async () => {
   const dav = fakeDav({ objects: { Work: [{ url: "/123/calendars/work/series-1.ics", etag: '"e1"', data: SERIES }] } });
   const result = await callTool(context(dav), "calendar__list_events", { start: "2026-10-01", end: "2026-11-02", calendars: ["work"] });
-  assert.equal(result.timezone, "America/Vancouver");
+  assert.equal(result.timezone, "America/Los_Angeles");
   assert.equal(result.count, 4);
   assert.deepEqual(
     result.events.map((e) => [e.title, e.start, e.end, e.modifiedOccurrence]),
@@ -420,11 +422,11 @@ test("list_events leaves out a cancelled occurrence of a series", async () => {
     [
       "BEGIN:VEVENT",
       "UID:series-1",
-      "RECURRENCE-ID;TZID=America/Vancouver:20261026T100000",
+      "RECURRENCE-ID;TZID=America/Los_Angeles:20261026T100000",
       "SUMMARY:Weekly call",
       "STATUS:CANCELLED",
-      "DTSTART;TZID=America/Vancouver:20261026T100000",
-      "DTEND;TZID=America/Vancouver:20261026T110000",
+      "DTSTART;TZID=America/Los_Angeles:20261026T100000",
+      "DTEND;TZID=America/Los_Angeles:20261026T110000",
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n")
