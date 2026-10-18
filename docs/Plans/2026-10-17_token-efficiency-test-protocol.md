@@ -75,6 +75,23 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - Compare 5 identical subagents started in one turn with 1 started first and 4 more started after it finishes.
   - Compare a second wave started 3 minutes later with one started 7 minutes later (5-minute TTL).
   - Measure: cache-write against cache-read tokens, and cost per run.
+
+  **Results (run 2026-10-18, two sessions, about $8.9: subagents $2.12 + $0.88, orchestrators on Sonnet $3.23 + $2.65).** The first session's waits were blocked (Cowork refuses `sleep`), so its timing steps were re-run in a second session (E1b) with Monitor waits on the clock. Wait gaps were checked against the subagent transcripts' start times. All runs had an empty task at effort medium.
+  - **Fixed prompt per run:** about 8.1k–9.5k tokens for `legal:extract-facts`, `legal:extract-affidavit`, `legal:extract-caselaw` and `file-manager:housekeeping-namer`, and 82.5k for `general-purpose` (its full tool list). Model makes no difference to size. Haiku often made 2 calls where Sonnet and Opus made 1.
+  - **Cost per run, cold / warm (mean of reps 2–3):**
+
+    | Agent | Haiku | Sonnet | Opus |
+    |---|---|---|---|
+    | Extractors and namer | $0.001 / $0.0006 | $0.023 / $0.0057 | $0.046 / $0.012 |
+    | general-purpose | $0.014 / $0.006 | $0.207 / $0.064 | $0.415 / $0.130 |
+
+    "Warm" means about 7.2k tokens read from cache and 1.8k written: the agent's shared prefix is cached, and the task prompt after it is new. A prompt identical to a cached one reads all 9k and costs $0.0029 on Opus. The cache is separate per model, and agent types share only about 1.3k tokens. So E2 should use `housekeeping-namer`, not a general-purpose namer, which costs about 10 times as much in fixed cost.
+  - **Five at once against one then four: no difference in caching.** Cowork launches parallel calls about 2 seconds apart, so in each parallel batch the first run wrote the full 9,009 tokens and the other four read them (3 of 3 reps). The one-then-four pattern also had exactly one cold run per batch (3 of 3).
+  - **Second wave after 3 minutes against 7 minutes: the 5-minute TTL holds.** After 3 minutes (3:18–3:20 from the last start of the first wave to the first start of the second), the second wave's first run read the cached prefix (3 of 3 reps). After 7 minutes (gaps 7:18 and 7:23), it wrote the whole 9,012 tokens again (2 of 2 reps). The third 7-minute rep did not start: the error was "the account's latest complete list of plugins does not hold its plugin's folder", probably a plugin sync replacing `legal` with `lawyer` mid-run. Later run sheets name agents by their current plugin.
+  - **What a lapsed cache costs:** about $0.035 per agent type per model on Opus. It matters only for many small runs separated by idle gaps longer than 5 minutes.
+  - **Orchestrator:** each session cost $2.65–3.23 on Sonnet for 87–93 calls, more than its subagents. It writes at the 1-hour price.
+
+  **Budget re-estimate against $150: it does not hold as drafted.** Fixed cost and caching add only about $5–20 across E2–E8. Page reads dominate: an Opus page costs about $0.026–0.073, $0.045 at the midpoint. The corpus (66 documents, 1,061 pages) puts E3(a) at about $48 per pass, $143 with 3 repeats, and E3(c) adds about $100. E2 is about $38. E2–E8 as drafted comes to about $280, in a range of $170–450. Choosing the cells that fit $150 is its own ticket, decided before E2.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
@@ -109,7 +126,7 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
 
 **Order:** E0, then E1, then the answer key, then E2–E8. E3 and E5 are the core. If the budget runs short, E4, E7 and E8 can be cut back to fewer cells.
 
-**Rough cost:** about 350–450 subagent runs. The estimate is $60–150 in all, dominated by Opus reads of long PDFs in E3 and E7. E0 and E1 give real figures to re-estimate from before the expensive runs.
+**Rough cost:** about 350–450 subagent runs. The estimate is $60–150 in all, dominated by Opus reads of long PDFs in E3 and E7. E0 and E1 give real figures to re-estimate from before the expensive runs. The re-estimate after E1 is about $280 (under E1).
 
 ## Analysis and the decision it feeds
 `score.py` writes `results\summary.csv` and Claude writes a short findings report. The report covers:
