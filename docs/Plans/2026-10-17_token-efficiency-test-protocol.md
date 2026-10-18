@@ -92,6 +92,25 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - **Orchestrator:** each session cost $2.65–3.23 on Sonnet for 87–93 calls, more than its subagents. It writes at the 1-hour price.
 
   **Budget re-estimate against $150: it does not hold as drafted.** Fixed cost and caching add only about $5–20 across E2–E8. Page reads dominate: an Opus page costs about $0.026–0.073, $0.045 at the midpoint. The corpus (66 documents, 1,061 pages) puts E3(a) at about $48 per pass, $143 with 3 repeats, and E3(c) adds about $100. E2 is about $38. E2–E8 as drafted comes to about $280, in a range of $170–450. Choosing the cells that fit $150 is its own ticket, decided before E2.
+
+  **Plan within $150 (decided 2026-10-18, map #100 ticket #112).**
+
+  This plan replaces the cells, repeats and order of E2–E8 below wherever they differ. Projected spend is about $128 for E2–E8, about $138 with the $10 spent on E0–E1. Brahm approved it.
+
+  - **Accuracy runs and repeats use the 12 keyed documents only** (143 pages, 10 of them 11 pages or fewer). Cost per page is near-deterministic in its input tokens, so cost-only cells run once.
+  - **Dropped:** E6's fork arm (a fork reads the parent's whole context, about 150k tokens against an extractor's 9k), its resume-after-5-minutes arm (a lapsed cache rewrites the whole history), and rewind (not available). E3(b)'s 5- and 10-page batches (they can save at most the $0.012 warm fixed cost, already measured). E8's full-return against write-to-file arm (the extractors hold only Read, so it needs a changed agent). It moves to the map's fog for the spec. Orchestrator cost is still read from every session's ledger.
+  - **Agent names:** `lawyer:extract-facts`, `lawyer:extract-affidavit`, `lawyer:extract-caselaw`, `file-manager:housekeeping-namer`. Each run sheet confirms they are listed before its first run.
+
+  | Session | Cells | Documents | Repeats | Est. |
+  |---|---|---|---|---|
+  | 1 | E3(a) keyed, Opus medium, one extractor per document. E5-A: SendMessage resume of each extractor within 5 minutes to name its file. E5-B: Haiku namer from page 1. E5-C: Haiku namer from the extractor's JSON. E3(b): keyed small documents batched to 20 and 40 pages. E6: one resume within 5 minutes with a second small document, against a fresh extractor | 12 keyed | 3 on the 10 small ones, 2 on D044 and D058 | ~$25 |
+  | 2 | E3(a) ladder: the median unkeyed document of each format × size cell, for cost per page against size. E3(c): D044 and D058 in 20-page reads, 5-page reads and chunk subagents | 22 + 2 | 1 | ~$29 |
+  | 3 | E7: Opus low and high, Sonnet low, medium and high, Haiku medium and high (Opus medium from session 1). E8: compact JSON | 10 small keyed + D058; E8 small keyed | 1 | ~$18 |
+  | 4 | E4: OCR native against text layer (D037, D048, D044); scanned at 150 and 100 dpi (D055, D066, D058); .msg whole against quoted history stripped (D027, D028, D024); attachments in the same subagent against a separate one | keyed | 1 | ~$7 |
+  | 5 | E2: a reader on Haiku or Sonnet reads 1, 2 or 5 pages and builds the naming-evidence block, then `housekeeping-namer` names the file. The all-pages arm is E5-A | 12 keyed + 2 settled | 1 | ~$6 |
+  | all | Fixed cost ~$5, Opus scorer for about 150 keyed runs ~$20, 5 Sonnet orchestrators ~$20 | | | ~$45 |
+
+  **Budget gate.** After each session, ledger spend plus the remaining estimate is checked against $150. If it would exceed the ceiling, cut in this order: E8 compact JSON, then the ladder's 1–5-page cells, then E7's Haiku-high and Opus-low cells. Sessions 1 and 2 are never cut.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
