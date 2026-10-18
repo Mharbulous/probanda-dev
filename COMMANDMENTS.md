@@ -7,8 +7,8 @@
 - **Item**: one piece of information that the Probanda plugin stores.
 - **Data**: the substance of an *Item*, meaning its text as well as any translation, portion or summary thereof.
 - **Metadata**: information about an *Item* that is not taken from its substance; such as its ID, its tags, its links to other items and its state.
-- **User Data**: *Data* not created by the Probanda plugin.
-- **Cross Data**: *Data* or *Metadata* that the proper functioning of the Probanda plugin requires stored on both the *User's Machine* and *Probanda's Cloud*; such as data IDs or generic tags.
+- **User Data**: *Data* not created by the Probanda plugin or obtained by *Probanda's Cloud* from a public website.
+- - **Cross Data**: *Data* or *Metadata* that the proper functioning of the Probanda plugin requires stored on both the *User's Machine* and *Probanda's Cloud*, such as data IDs or generic tags, and any *Data* or *Metadata* about a user that *Probanda's Cloud* holds. *Cross Data* about a user is never stored in a *Public Folder* and is accessible only to Probanda and that user.
 - **Trade Secrets**: any *Data* or *Metadata* that is not *Cross Data* or *User Data*.
 - **Development Plugin**: the form of the Probanda plugin held in Probanda's private repos.
 - **Published Plugin**: the form of the Probanda plugin held in a public repo and installed by users. It is made only from a *Public Folder*.
