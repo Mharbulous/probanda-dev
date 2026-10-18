@@ -818,7 +818,7 @@ class PluginRegistrationTests(unittest.TestCase):
         matcher = re.compile(entries[0]["matcher"])
         for name in ("Bash", "PowerShell", DEVICE, "mcp__foo__device_bash"):
             self.assertTrue(matcher.fullmatch(name), name)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__case_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__matter_data__query"))
 
 
 if __name__ == "__main__":

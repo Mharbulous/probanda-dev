@@ -67,10 +67,10 @@ An authority in the index is marked `✅ Text on file` only when its text is
 already in the matter's law database. That mark does not make it verified:
 nothing may rely on the authority until `research-agent` has returned it
 (`shared/legal-research.md`, item 2). The database is opaque to this skill:
-**delegate to the ``case-data`` skill** to list the citations of the
+**delegate to the ``matter-data`` skill** to list the citations of the
 authorities on file in the matter's law database (e.g. neutral citations),
 write them one per line to a temp file, and pass it as `--verified-citations`.
-When no matter database exists or case-data access isn't available in the
+When no matter database exists or matter-data access isn't available in the
 session, skip the cross-check — every authority then stays `Unverified lead`,
 which is the honest default.
 
@@ -81,7 +81,7 @@ case-data folder being the one `probanda.json`'s `case_data_dir` names. Resolve
 it from `probanda.json` and pass it as `--case-data-folder`; in Cowork, where the
 project mounts only the matter folder, first request access to the case-data
 folder itself (never a parent or the firm root) and pass the path the session
-sees. It must already exist: if it does not, stop and name `/case-data`
+sees. It must already exist: if it does not, stop and name `/matter-data`
 initialize, and never create it. The script finds the matter from
 `--matter-root`, or by walking up from `--input-dir`; when neither finds a
 matter workspace it refuses and asks for `--output` rather than guessing. It

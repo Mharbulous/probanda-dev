@@ -1,6 +1,6 @@
 ---
 name: verify-edges
-description: Verifies every legal edge citing one authority document against that document, adversarially, in a session isolated from the extractor, and returns strict verdict JSON. Read-only — never writes. Dispatched by /case-data verify-law, one instance per authority document.
+description: Verifies every legal edge citing one authority document against that document, adversarially, in a session isolated from the extractor, and returns strict verdict JSON. Read-only — never writes. Dispatched by /matter-data verify-law, one instance per authority document.
 model: opus
 tools:
   - Read

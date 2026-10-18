@@ -49,7 +49,7 @@ PUBLIC_SKILLS = ("public", "plugins", "*", "skills")
 COMMONS_AGENTS = ("troubleshooter",)
 
 # Forbidden database-particular tokens in the legal-commons gatekeeper skill:
-# matter data is reached only through /case-data, never by naming a local DB file.
+# matter data is reached only through /matter-data, never by naming a local DB file.
 COMMONS_FORBIDDEN = ["sqlite3", "law.sqlite", "main.sqlite", "privileged.sqlite", "practice.db"]
 
 # Python entry points the data runtime imports live from the skills tree. A rename
@@ -181,9 +181,9 @@ RECITAL_RULE_SKILL_MIRRORS = (
     "shared/legal-audit-protocol.md",
     "case-brief/agents/brief.md",
     "verify-law/agents/verify-claim.md",
-    "case-data/agents/verify-edges.md",
-    "case-data/agents/extract-caselaw.md",
-    "case-data/agents/verify-caselaw.md",
+    "matter-data/agents/verify-edges.md",
+    "matter-data/agents/extract-caselaw.md",
+    "matter-data/agents/verify-caselaw.md",
 )
 RECITAL_RULE_AGENT_MIRRORS = ("verify-claim", "verify-edges", "extract-caselaw", "verify-caselaw")
 RECITAL_RULE_BLOCK = re.compile(r"<!-- recital-rule: begin.*?<!-- recital-rule: end -->", re.S)

@@ -96,7 +96,7 @@ each file card names a host path it returns.
    is the one `probanda.json`'s `case_data_dir` names; in Cowork, make no
    access request: the host tool derives it. If the
    case-data folder does not exist, stop: the matter is not initialized
-   (`/case-data` initialize). Create `vaniac-submissions\<filing folder>\`
+   (`/matter-data` initialize). Create `vaniac-submissions\<filing folder>\`
    under it if it doesn't exist.
 
 4. **Take the round.** Read it from the filing folder's name: `Opening`,

@@ -1,8 +1,8 @@
 // Party and counsel read from case data (party/counsel SSOT; ADR 0011's 2026-09-30 amendment).
 //
-// Counsel of record and the address for service are court-record state, owned by /case-data, which
+// Counsel of record and the address for service are court-record state, owned by /matter-data, which
 // applies every counsel-change notice and order. A drafting Writing's party rows take those five
-// values from /case-data, read live through case/parties-of-record.ts and matched by
+// values from /matter-data, read live through case/parties-of-record.ts and matched by
 // `case_party_id`: the parties of record of the proceeding's file number, or, for a proceeding with
 // no file number yet, the linked parties themselves. Every row whose values cannot be read so is
 // drift, and holds them NULL, never the submission copy: drafting_forms__open_session returns the
@@ -13,7 +13,7 @@
 // hold before the copy is dropped: schema v43 drops it, and drafting_data__migrate refuses that hop
 // while any offer or drift row stands.
 //
-// No case-data table or column name appears here: the read returns this runtime's own field names.
+// No matter-data table or column name appears here: the read returns this runtime's own field names.
 
 import { dirname } from "node:path";
 
@@ -28,7 +28,7 @@ import {
 } from "./forms/query.js";
 import { readPartiesById, readPartiesOfRecord, type PartyOfRecord } from "../case/parties-of-record.js";
 
-/** The values /case-data owns, which a drafting Writing's party rows take from it. */
+/** The values /matter-data owns, which a drafting Writing's party rows take from it. */
 const CASE_DATA_FIELDS: readonly CaseDataField[] = ["counsel_name", "counsel_firm", "counsel_email", "counsel_phone", "address_for_service"];
 
 export interface PartiesDriftRow {
@@ -38,7 +38,7 @@ export interface PartiesDriftRow {
   name: string;
   role: string;
   case_party_id: number | null;
-  /** `unlinked`: no case_party_id. `not_of_record`: linked to a case-data party that is not a party
+  /** `unlinked`: no case_party_id. `not_of_record`: linked to a matter-data party that is not a party
    * of record in this proceeding, or, with no file number, that case data does not hold.
    * `unchecked`: case data could not be read for this proceeding, and `reason` says why. */
   kind: "unlinked" | "not_of_record" | "unchecked";
@@ -135,7 +135,7 @@ export interface CounselOffer {
   role: string;
   case_party_id: number | null;
   /** `offer`: case data holds another value for `field`, or none. `unlinked` / `not_of_record`: the
-   * party holds values and is linked to no case-data party of record, so nothing can be compared
+   * party holds values and is linked to no matter-data party of record, so nothing can be compared
    * until the confirm write links it. `unchecked`: case data could not be read, and `reason` says why. */
   kind: "offer" | "unlinked" | "not_of_record" | "unchecked";
   /** `offer` only: the field, case data's value (NULL when it holds none) and the value held here. */
@@ -160,7 +160,7 @@ function heldValues(p: Partial<Pick<PartyRow, CaseDataField>>): Partial<Record<C
 /**
  * The counsel offer-back: every value a party row of the database holds in the five columns that
  * case data does not hold for the party it is linked to, compared trimmed, read through the same
- * case-data read a drafting Writing uses. One row per party and field; one row per party holding
+ * matter-data read a drafting Writing uses. One row per party and field; one row per party holding
  * values that is unlinked, linked to a party not of record, or whose proceeding's case data cannot
  * be read. A proceeding none of whose parties holds a value is not read. Empty on a database the
  * columns are gone from (schema v43).
@@ -209,8 +209,8 @@ export function partiesDriftLines(rows: readonly PartiesDriftRow[]): string[] {
         ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is"
         : r.kind === "not_of_record"
           ? r.file_number === ""
-            ? `linked to case-data party ${r.case_party_id}, which case data does not hold; confirm the link`
-            : `linked to case-data party ${r.case_party_id}, which is not a party of record in ${r.file_number}; confirm the link`
+            ? `linked to matter-data party ${r.case_party_id}, which case data does not hold; confirm the link`
+            : `linked to matter-data party ${r.case_party_id}, which is not a party of record in ${r.file_number}; confirm the link`
           : `counsel and address for service not read from case data: ${r.reason}`;
     // 🏷️ *not recorded* (work-markers.md 1a): nothing usable is recorded until the row is confirmed
     // against the court record -- look up, not draft. It records no inventory entry, as the

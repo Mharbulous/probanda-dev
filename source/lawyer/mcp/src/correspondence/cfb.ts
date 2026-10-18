@@ -1,5 +1,5 @@
 // Just enough of the compound file binary format ([MS-CFB]) to list and read an Outlook .msg's
-// streams. Ported from /case-data's render_document.py `_Cfb`, which ingest uses; read-only.
+// streams. Ported from /matter-data's render_document.py `_Cfb`, which ingest uses; read-only.
 
 import { DataServerError } from "../errors.js";
 

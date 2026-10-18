@@ -140,14 +140,14 @@ terms:
 
 # Probanda glossary
 
-Schema anchors for the case-data terms: `.claude/skills/case-data/references/terminology-crosswalk.md`.
+Schema anchors for the matter-data terms: `.claude/skills/matter-data/references/terminology-crosswalk.md`.
 
 **Admission**:
 A party's concession of a postulate, recorded per party and per route — notice to admit, pleading, interrogatory, oral examination — and derived from the notice, its response and the dates, never stored as a flag. **Deemed admission** is the consequence the ladder derives when a response period expires unanswered; which consequence depends on the route — notice to admit: admitted, and silence on one item counts as no response for that item; pleading: a filed Response silent on a postulate means no knowledge, no Response at all means admitted but withdrawable until default judgment is entered. A response dated after the period does not displace a notice-to-admit deemed admission.
 _Avoid_: admitted fact (admission binds the admitting party only); source_kind (schema legacy).
 
 **Advice (answer grade)**:
-A recommendation that has been checked against everything within reach and is backed by targeted research from a separately-spawned agent working independently. Not the same word as legal advice to a client (apply-to-facts, case-data), which keeps its ordinary meaning.
+A recommendation that has been checked against everything within reach and is backed by targeted research from a separately-spawned agent working independently. Not the same word as legal advice to a client (apply-to-facts, matter-data), which keeps its ordinary meaning.
 _Avoid_: advice for an answer a second agent merely agreed with — agreement without new evidence leaves it a recommendation.
 
 **Affiliation**:
@@ -180,7 +180,7 @@ _Avoid_: annexure, appendix (fine in a specific document's own vocabulary, not a
 Reusable legal material with zero client data: case law, legislation, regulations, treatises. Authorities live outside any matter and are shared across matters.
 
 **Bare Row**:
-The `main.facts` row for a Fact known **only through privileged sources**: an ID and nothing else (`description = ''`, no category, date, source, notes, informant or basis). Privilege attaches to a Statement of Fact by its source and never to a Fact, and any summary, paraphrase or abridgement of a privileged statement is itself privileged, so the non-privileged store holds no wording for such a Fact. The Statement of Fact stays in `privileged.fact_provenance.source_note`, and only a privileged-side read (`@query_10`, `@query_22`) shows what the ID means. Nothing links to a bare row, and drafting, list and verification reads skip it. It becomes an ordinary fact only when a non-privileged source states the same Fact and the row takes that source's own Statement of Fact. See `.claude/skills/case-data/references/design-decisions.md` #67 and `.claude/skills/case-data/operations/bare-privileged-facts.md`.
+The `main.facts` row for a Fact known **only through privileged sources**: an ID and nothing else (`description = ''`, no category, date, source, notes, informant or basis). Privilege attaches to a Statement of Fact by its source and never to a Fact, and any summary, paraphrase or abridgement of a privileged statement is itself privileged, so the non-privileged store holds no wording for such a Fact. The Statement of Fact stays in `privileged.fact_provenance.source_note`, and only a privileged-side read (`@query_10`, `@query_22`) shows what the ID means. Nothing links to a bare row, and drafting, list and verification reads skip it. It becomes an ordinary fact only when a non-privileged source states the same Fact and the row takes that source's own Statement of Fact. See `.claude/skills/matter-data/references/design-decisions.md` #67 and `.claude/skills/matter-data/operations/bare-privileged-facts.md`.
 
 **Basis**:
 A distinct legal footing for an order sought, or for opposing one: **jurisdictional** (the court's authority to make the order on this application) or **doctrinal** (the doctrine or rule that supports or defeats it). An order may rest, or be opposed, on as many bases as the material supports.
@@ -226,7 +226,7 @@ _Avoid_: section, chapter (both name divisions within the text).
 
 **Contact**:
 One person or organization the firm deals with, or acts for or against, held once, firm-wide, in practice data as a `contact` item tagged `person` or `organization`. It is the source of truth for email, phone and address. The practitioner's address book only pre-fills it. Tied to organizations by **Affiliation** and to matters by **Matter role** (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`).
-_Avoid_: party (a role in a proceeding, recorded in case-data); participant (a role in a matter's documents); contact details copied onto a matter's records.
+_Avoid_: party (a role in a proceeding, recorded in matter-data); participant (a role in a matter's documents); contact details copied onto a matter's records.
 
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
@@ -237,7 +237,7 @@ A later segment of a bundle whose text matches an earlier segment: the scanned p
 _Avoid_: duplicate (reserved for the cross-file hash match at the ingest gate).
 
 **Counsel of record**:
-A party's lawyer and address for service as the court record shows them, changed only by a filed notice or an order. Held in case-data as filed (`.claude/skills/case-data/references/design-decisions.md` #55). It can differ from the lawyer **Contact**'s working details. When it does, the practitioner is asked whether a notice of change was filed, and neither record is overwritten.
+A party's lawyer and address for service as the court record shows them, changed only by a filed notice or an order. Held in matter-data as filed (`.claude/skills/matter-data/references/design-decisions.md` #55). It can differ from the lawyer **Contact**'s working details. When it does, the practitioner is asked whether a notice of change was filed, and neither record is overwritten.
 _Avoid_: the lawyer's contact details (those are the contact's).
 
 **Court Rule**:
@@ -410,8 +410,8 @@ The token that names a matter's folder and identifies the matter wherever our ow
 _Avoid_: matter ID (ambiguous three ways — see **Matter row key**); client ID (Westlaw's and UNITY's label for this same value, not ours); file number (that is the court's number for a proceeding).
 
 **Matter role**:
-A dated tie between a **Contact** and a matter, with one role from a fixed vocabulary (client, prospective client, opposing party, opposing counsel, co-counsel, expert, adjuster, referral source). It may point to the contact's case-data party and proceeding. Stored as a practice-data `matter_role` item. Witnesses and tribunal members have no matter role: they stay in case-data.
-_Avoid_: party (case-data's record of a role in a proceeding); participant.
+A dated tie between a **Contact** and a matter, with one role from a fixed vocabulary (client, prospective client, opposing party, opposing counsel, co-counsel, expert, adjuster, referral source). It may point to the contact's matter-data party and proceeding. Stored as a practice-data `matter_role` item. Witnesses and tribunal members have no matter role: they stay in matter-data.
+_Avoid_: party (matter-data's record of a role in a proceeding); participant.
 
 **Matter row key**:
 Not a practitioner-facing identifier at all: the practice database's internal generated primary key on a matter row, carried as a `matter_id` foreign-key column on its dependent tables. It is never displayed. The storage name `matter_id` is also used, unrelatedly, as the key under which case data and application state store the *matter reference* — those names are load-bearing in schema, JSON, and Python and are deliberately not being changed. Read `matter_id` as the name of a column, never as "the ID we show".
@@ -433,7 +433,7 @@ _Avoid_: suspicious, dubious (those are Doubt); treatment (the outcome, not the 
 A proposition stated but not necessary to the decision, and so persuasive only. It is the other value of the mark described under **Ratio decidendi**, recorded in the same place. A principle taken from legislation carries neither value.
 
 **Oral reasons**:
-A decision pronounced orally with no transcript, recorded in case-data as an authority of type `oral_reasons` whose citation names court, file number, judge and date — never a style of cause — and pooled as treatment notes only: which cited authorities the court followed, distinguished, declined to follow, or did not consider, from the practitioner's own account. No text, excerpt, or note crosses. A later transcript upgrades the same authority.
+A decision pronounced orally with no transcript, recorded in matter-data as an authority of type `oral_reasons` whose citation names court, file number, judge and date — never a style of cause — and pooled as treatment notes only: which cited authorities the court followed, distinguished, declined to follow, or did not consider, from the practitioner's own account. No text, excerpt, or note crosses. A later transcript upgrades the same authority.
 _Avoid_: unreported decision (a reported-elsewhere question, not a transcript question); judgment (implies written reasons).
 
 **Outlining**:
@@ -536,7 +536,7 @@ Whether a postulate, statement, authority, argument or order sought is held back
 _Avoid_: disposition (has its own legal meaning — the disposal of a proceeding); privileged flag.
 
 **Retire**:
-The practitioner's explicit act that ends a Writing: sets `retired_on` and a reason (appeal expired, appeal exhausted, settled, abandoned, adjourned generally, other), supersedes the Writing's open queued jobs, hands the Writing's research — law assertions, statements of law, authorities, the opposing authorities it answered, and any oral-decision treatment notes — to case-data through `ingest-submission-law`, and in the next turn initiates the consolidation push. Every retirement pushes; a court decision is never a precondition. A retired Writing is listed by bootstrap and never rendered again.
+The practitioner's explicit act that ends a Writing: sets `retired_on` and a reason (appeal expired, appeal exhausted, settled, abandoned, adjourned generally, other), supersedes the Writing's open queued jobs, hands the Writing's research — law assertions, statements of law, authorities, the opposing authorities it answered, and any oral-decision treatment notes — to matter-data through `ingest-submission-law`, and in the next turn initiates the consolidation push. Every retirement pushes; a court decision is never a precondition. A retired Writing is listed by bootstrap and never rendered again.
 _Avoid_: archive (taken); close, finalize (both already name other steps); delete (nothing is removed).
 
 **Revision stamp**:

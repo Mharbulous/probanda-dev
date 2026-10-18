@@ -2596,7 +2596,7 @@ class TestV40AuthorityConfirmed(unittest.TestCase):
 
 
 class TestV41PartiesSnapshot(unittest.TestCase):
-    """v41 (party/counsel SSOT): parties.case_party_id links a party to its case-data party,
+    """v41 (party/counsel SSOT): parties.case_party_id links a party to its matter-data party,
     and parties_snapshot holds the party rows a Writing printed when it was sent. The
     statement that first sets a Writing's filed_on fills the snapshot from the proceeding's
     current party rows, so a later change of counsel reaches drafting Writings only. The hop
@@ -2695,7 +2695,7 @@ class TestV41PartiesSnapshot(unittest.TestCase):
 
 
 class TestV42RuntimeWritesThePartiesSnapshot(unittest.TestCase):
-    """v42 (party/counsel SSOT): the runtime writes a Writing's parties_snapshot from the case-data
+    """v42 (party/counsel SSOT): the runtime writes a Writing's parties_snapshot from the matter-data
     read before it sets filed_on, so the copying trigger snapshot_parties_on_send is dropped, and a
     guard refuses to set filed_on on a Writing with no snapshot rows while its proceeding has a
     party. Existing snapshot rows are untouched."""

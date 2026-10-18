@@ -458,7 +458,7 @@ test("an idle_flag_hours that is not a positive number is refused and nothing is
   assert.equal(readFileSync(f.firmPath, "utf-8"), before, "firm.json untouched");
   assert.equal((await firm_profile(f.env)).idle_flag_hours, undefined, "unset, firm_profile carries no idle_flag_hours");
   assert.equal(idleFlagHours(f.env), null);
-  assert.equal(idleFlagHours({ APPDATA: join(f.scratch, "no-config") }), null, "an unconfigured case-data root reads as unset");
+  assert.equal(idleFlagHours({ APPDATA: join(f.scratch, "no-config") }), null, "an unconfigured matter-data root reads as unset");
 });
 
 test("input validation failures are hard errors", async (t) => {

@@ -15,7 +15,7 @@ This skill transforms a raw legal question into a well-crafted query optimized f
 
 Deep Research is tier 4 of `shared/research-priority.md`: the source of decision
 text and research memos when the matter does not already hold them. In one line,
-state what tiers 1–3 returned: the matter's ingested layer (`/case-data`), the
+state what tiers 1–3 returned: the matter's ingested layer (`/matter-data`), the
 shared pooled layer, and the matter's `6. LAW\` folder. Where a law-audit agent has
 already run, its per-tier coverage line answers this outright — quote it.
 
@@ -75,7 +75,7 @@ Output the optimized query in this exact format — use the horizontal rules and
 
 A dispatch that follows carries an existing `6. LAW\` subfolder and a verified
 client-matter ID. The caller chooses that ID: the matter's `{client}.{matter}`
-ID (client number from `/case-data` when the folder name lacks it) for research
+ID (client number from `/matter-data` when the folder name lacks it) for research
 serving a client matter, or `PERSONAL` only for research it states is testing
 or authorized unbilled firm work.
 

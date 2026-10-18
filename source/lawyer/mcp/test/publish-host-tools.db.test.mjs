@@ -125,7 +125,7 @@ for (const [tool, fixture] of Object.entries(FIXTURES)) {
     assert.equal(existsSync(f.subfolder), false);
   });
 
-  test(`${tool}: refuses a case-data subfolder that is a link elsewhere, and a database outside the case-data folder`, async (t) => {
+  test(`${tool}: refuses a matter-data subfolder that is a link elsewhere, and a database outside the case-data folder`, async (t) => {
     const f = await fixture(t);
     symlinkSync(f.outside, f.subfolder, "junction");
     assert.equal(codeOf(() => f.run()), "path_out_of_scope");
@@ -148,7 +148,7 @@ for (const [tool, fixture] of Object.entries(FIXTURES)) {
     assert.equal(existsSync(f.subfolder), false);
   });
 
-  test(`${tool}: the tool is registered and takes no case-data path from the caller`, async (t) => {
+  test(`${tool}: the tool is registered and takes no matter-data path from the caller`, async (t) => {
     const f = await fixture(t);
     const name = { general: "drafting_forms__publish_general", factum: "drafting_forms__publish_bcca_factum", vaniac: "drafting_forms__publish_vaniac_package" }[tool];
     await assert.rejects(callTool({}, name, { ...f.args, case_data_folder: f.caseData }), /unknown field "case_data_folder"/);

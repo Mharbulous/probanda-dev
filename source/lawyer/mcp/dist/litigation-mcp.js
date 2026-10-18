@@ -1,4 +1,4 @@
-// build-stamp: 5cf2c2d8e8cd
+// build-stamp: 56a2c90a60a2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -76756,7 +76756,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("upsert_matter_role"),
-      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the case-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         ...matterRef,
@@ -76838,13 +76838,13 @@ function practiceToolDefinitions() {
 }
 var SQL_PARAMS = { type: "array", items: {}, description: "Scalars only. Bind a list as one JSON string: IN (SELECT value FROM json_each(?))" };
 function caseDataPrefixed(name) {
-  return `case_data__${name}`;
+  return `matter_data__${name}`;
 }
 function caseDataToolDefinitions() {
   return [
     {
       name: caseDataPrefixed("query"),
-      description: "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -76859,7 +76859,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("execute"),
-      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /case-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with case_data__query before any further write or retry -- see /case-data's shared/conventions.md section 2.3. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "sql_script", type: "str" }
@@ -76868,7 +76868,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("resolve_participant"),
-      description: "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "name", type: "str" }
@@ -76877,7 +76877,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_authority"),
-      description: "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. A non-success result other than ok false does not prove nothing committed: re-read with matter_data__query before any retry, as for matter_data__execute. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "result_path", type: "str" },
@@ -76889,7 +76889,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("migrate"),
-      description: "Upgrade a matter's case databases to the current schema. Two-phase and gated: mode 'plan' dry-runs the whole migration chain on temp copies and returns a plan_token plus the exact user_confirmation string the practitioner must approve; mode 'apply' requires that plan_token and that confirmation, takes a host-local backup, and commits all three databases together or none. mode 'restore' reverts to a backup set; mode 'backups' lists them. This is the only tool that bypasses the schema-version guard, and the only one that may run against an out-of-date database. Run plan first, always. Only the /case-data skill may call this tool -- invoke it (Skill: lawyer:case-data) and follow its operations/migrate.md, which runs this tool through the migration-runner subagent rather than inline.",
+      description: "Upgrade a matter's case databases to the current schema. Two-phase and gated: mode 'plan' dry-runs the whole migration chain on temp copies and returns a plan_token plus the exact user_confirmation string the practitioner must approve; mode 'apply' requires that plan_token and that confirmation, takes a host-local backup, and commits all three databases together or none. mode 'restore' reverts to a backup set; mode 'backups' lists them. This is the only tool that bypasses the schema-version guard, and the only one that may run against an out-of-date database. Run plan first, always. Only the /matter-data skill may call this tool -- invoke it (Skill: lawyer:matter-data) and follow its operations/migrate.md, which runs this tool through the migration-runner subagent rather than inline.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "mode", type: "str" },
@@ -76903,7 +76903,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("procedural_history_append"),
-      description: "The only way to write a matter's ProceduralHistory.md (shared/procedural-history.md), at the top of matter_root. With date (YYYY-MM-DD, the event's date) and line (what happened, one line), it adds the bullet `- <line>` under the `## <date>` heading, creating the file, and the heading in newest-first order, when missing; source_path (the source file, relative to the matter folder) appends it in backticks, or told_on (YYYY-MM-DD) appends `(the practitioner, <told_on>)` for an event the practitioner told the session. Refused, writing nothing: the same bullet already under that heading (duplicate_entry); a line holding a date later than its heading (date_after_heading) -- record the event without the date it sets. Optional replaces, the full text of one existing entry, removes it first: the correction path, used only where case data contradicts the entry. With neither date nor line it stamps the file alone (the currency check's 'no'). Every call rewrites last_updated from this host's own clock, local time with its UTC offset. Asks nothing; never announce it. Returns {ok, path, last_updated, created, added, heading_created, replaced}. Called by /draft and /case-data at the writes shared/procedural-history.md names, and by any session recording an event the practitioner told it.",
+      description: "The only way to write a matter's ProceduralHistory.md (shared/procedural-history.md), at the top of matter_root. With date (YYYY-MM-DD, the event's date) and line (what happened, one line), it adds the bullet `- <line>` under the `## <date>` heading, creating the file, and the heading in newest-first order, when missing; source_path (the source file, relative to the matter folder) appends it in backticks, or told_on (YYYY-MM-DD) appends `(the practitioner, <told_on>)` for an event the practitioner told the session. Refused, writing nothing: the same bullet already under that heading (duplicate_entry); a line holding a date later than its heading (date_after_heading) -- record the event without the date it sets. Optional replaces, the full text of one existing entry, removes it first: the correction path, used only where case data contradicts the entry. With neither date nor line it stamps the file alone (the currency check's 'no'). Every call rewrites last_updated from this host's own clock, local time with its UTC offset. Asks nothing; never announce it. Returns {ok, path, last_updated, created, added, heading_created, replaced}. Called by /draft and /matter-data at the writes shared/procedural-history.md names, and by any session recording an event the practitioner told it.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "date", type: "str" },
@@ -77849,7 +77849,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("open_session"),
-      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /case-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the case-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. With status ok it also returns folders, every folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from folders, never from opened.ingest_inputs alone. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
+      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the matter-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. With status ok it also returns folders, every folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from folders, never from opened.ingest_inputs alone. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77946,7 +77946,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("bcsc_form_harness"),
-      description: "Run one publish-bcsc-form harness command on the host (issue #1267, ADR 0025), for a Cowork session, whose sandbox cannot reach the matter or case-data folders. Returns the harness's own JSON output unchanged (an action such as spawn_subagent, ask_user, retry, oow, missing_template, manual_edits, halt or done, or for list the session array); drive it exactly as publish-bcsc-form's shuttle protocol drives the harness's CLI. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). The server derives the case-data folder from probanda.json's case_data_dir (it must exist), keeps session state in <case-data folder>\\form-sessions, and passes the harness only paths it resolved itself. command and its fields: list; init (user_request, and exactly one of writing_folder -- a package's one folder name, created under the matter's 0. DRAFT folder -- or out_name -- an individual form's bare file name stem, no extension, composed under the firm's naming convention and written at the top of that folder; and edits_reviewed: true once the practitioner has seen a manual_edits report, so the fill writes the new copy anyway); classify and step (harness_session, result_json); resume and abandon (harness_session); reset (harness_session, new_request); clarify (harness_session, answer); rewind (harness_session, target_step_id). Refuses, with code path_out_of_scope, a writing_folder, out_name or harness_session that is not one name or resolves outside the matter or its form-sessions folder, and a session whose stored matter or case-data folder is not this matter's (abandon still clears it), and at an asm32/asm33 locate step a result_json whose form32_path, form33_path or context_path is not inside the case-data folder. Refuses the new-template operation (code new_template_refused), which writes into the plugin's own folder. Each call has a 55 s budget; a step killed by it (a Word or LibreOffice render) fails with code python_timeout and a message saying how to resume.",
+      description: "Run one publish-bcsc-form harness command on the host (issue #1267, ADR 0025), for a Cowork session, whose sandbox cannot reach the matter or case-data folders. Returns the harness's own JSON output unchanged (an action such as spawn_subagent, ask_user, retry, oow, missing_template, manual_edits, halt or done, or for list the session array); drive it exactly as publish-bcsc-form's shuttle protocol drives the harness's CLI. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). The server derives the matter-data folder from probanda.json's case_data_dir (it must exist), keeps session state in <case-data folder>\\form-sessions, and passes the harness only paths it resolved itself. command and its fields: list; init (user_request, and exactly one of writing_folder -- a package's one folder name, created under the matter's 0. DRAFT folder -- or out_name -- an individual form's bare file name stem, no extension, composed under the firm's naming convention and written at the top of that folder; and edits_reviewed: true once the practitioner has seen a manual_edits report, so the fill writes the new copy anyway); classify and step (harness_session, result_json); resume and abandon (harness_session); reset (harness_session, new_request); clarify (harness_session, answer); rewind (harness_session, target_step_id). Refuses, with code path_out_of_scope, a writing_folder, out_name or harness_session that is not one name or resolves outside the matter or its form-sessions folder, and a session whose stored matter or case-data folder is not this matter's (abandon still clears it), and at an asm32/asm33 locate step a result_json whose form32_path, form33_path or context_path is not inside the case-data folder. Refuses the new-template operation (code new_template_refused), which writes into the plugin's own folder. Each call has a 55 s budget; a step killed by it (a Word or LibreOffice render) fails with code python_timeout and a message saying how to resume.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78093,7 +78093,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("assemble_general"),
-      description: `assemble-general's Cowork route (issue #1321, ADR 0027): binds a general Writing's .docx and its enclosures into one PDF on the host, since a Cowork sandbox has neither PyMuPDF nor Word and cannot reach the matter or case-data folders. A Code-tab session runs bind_general.py in its own shell instead. docx_name is the Writing's .docx and pdf_name the PDF, each a bare file name at the top of the matter's one 0. DRAFT folder; pdf_name defaults to the .docx name with " UNSIGNED.pdf". enclosures are bound in order after the Writing, each bookmarked by its label: path is any host file (absolute, or relative to the matter folder), a PDF, .docx or image, and pages is one page ("4") or a range ("2-5") of a PDF. The server writes enclosures.json to <case-data folder>\\assemble-general\\, runs bind_general.py --manifest, and returns its JSON line unchanged: success with output, page_count and bookmarks, or error and detail (enclosure_unresolved names every enclosure it cannot bind, before anything is bound; output_exists when pdf_name is taken, nothing is ever overwritten; docx_missing; docx_conversion_failed). It returns no file content. matter_root is confined as for publish_general, and the case-data folder is the one its probanda.json names; the tool never opens the matter's database. A docx_name or pdf_name that is a path, or resolves elsewhere through a link, is refused (code path_out_of_scope). 55 s budget (code python_timeout).`,
+      description: `assemble-general's Cowork route (issue #1321, ADR 0027): binds a general Writing's .docx and its enclosures into one PDF on the host, since a Cowork sandbox has neither PyMuPDF nor Word and cannot reach the matter or matter-data folders. A Code-tab session runs bind_general.py in its own shell instead. docx_name is the Writing's .docx and pdf_name the PDF, each a bare file name at the top of the matter's one 0. DRAFT folder; pdf_name defaults to the .docx name with " UNSIGNED.pdf". enclosures are bound in order after the Writing, each bookmarked by its label: path is any host file (absolute, or relative to the matter folder), a PDF, .docx or image, and pages is one page ("4") or a range ("2-5") of a PDF. The server writes enclosures.json to <case-data folder>\\assemble-general\\, runs bind_general.py --manifest, and returns its JSON line unchanged: success with output, page_count and bookmarks, or error and detail (enclosure_unresolved names every enclosure it cannot bind, before anything is bound; output_exists when pdf_name is taken, nothing is ever overwritten; docx_missing; docx_conversion_failed). It returns no file content. matter_root is confined as for publish_general, and the case-data folder is the one its probanda.json names; the tool never opens the matter's database. A docx_name or pdf_name that is a path, or resolves elsewhere through a link, is refused (code path_out_of_scope). 55 s budget (code python_timeout).`,
       inputSchema: {
         type: "object",
         properties: {
@@ -78484,7 +78484,7 @@ import { homedir as homedir3 } from "node:os";
 import { basename, dirname as dirname2, join as join7, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
 var SKILLS_MARKER = join7(".claude", "skills");
-var CHECKOUT_MARKERS = [join7("source", "lawyer", "mcp"), join7("plugins", "dev-tools")];
+var CHECKOUT_MARKERS = [join7("source", "lawyer", "mcp"), join7(".claude", "skills", "plugin-packager")];
 var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -78683,7 +78683,7 @@ function rosterLine(installRoot, segment) {
   return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
-  return migrateScriptsDir("case-data", env, installRoot);
+  return migrateScriptsDir("matter-data", env, installRoot);
 }
 function timecampingDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("timecamping-data", env, installRoot);
@@ -78842,7 +78842,7 @@ async function acquireCaseLock(matterRoot, env = process.env) {
     }
   }
   throw new DataServerError(
-    `could not acquire the case-data write lock within ${LOCK_ATTEMPTS * LOCK_RETRY_MS / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this matter`,
+    `could not acquire the matter-data write lock within ${LOCK_ATTEMPTS * LOCK_RETRY_MS / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this matter`,
     "lock_unavailable"
   );
 }
@@ -79103,7 +79103,7 @@ def resolve_pointer(matter_root):
             raise SystemExit(
                 f"Database schema is at v{major}.{minor} but this skill "
                 "requires v9.0. Run the migrate operation: call "
-                "case_data__migrate with mode 'plan' first, then 'apply' with "
+                "matter_data__migrate with mode 'plan' first, then 'apply' with "
                 "the plan_token it returns. (Not rebuild -- rebuild replays a "
                 "current dump and rejects an out-of-date one.)")
 
@@ -79204,11 +79204,11 @@ READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|
 def do_query(req, resolved):
     sql = req['sql'].strip()
     if not re.match(READ_ONLY_RE, sql):
-        raise SystemExit("case_data__query only accepts SELECT/WITH/PRAGMA statements; use case_data__execute for writes.")
+        raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
     if not os.path.exists(resolved['main_sqlite']):
         raise SystemExit(
             "No case database found: resolved main.sqlite is missing at "
-            f"{resolved['main_sqlite']}. Re-run case-data initialize for a new matter "
+            f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
             "or restore the database at the live-derived location.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_query_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
@@ -79245,9 +79245,9 @@ def atomic_replace_set(resolved, copies):
     the rest the old -- the cross-database inconsistency I5 exists to prevent.
 
     Ported from migrate_engine.atomic_replace_set rather than imported:
-    case_data__execute runs in a separate spawn whose Python is this
+    matter_data__execute runs in a separate spawn whose Python is this
     self-contained helper with no PYTHONPATH imports, and that process
-    separation is what contains the schema-guard bypass (case-data/references/design-decisions.md
+    separation is what contains the schema-guard bypass (matter-data/references/design-decisions.md
     #27). A shared import would collapse it.
 
     os.replace is atomic only within a volume and COCLERK_CASE_DATA_ROOT can
@@ -79296,7 +79296,7 @@ def atomic_replace_set(resolved, copies):
                         "state: %s carry the new state, the rest the previous. Do not "
                         "write again. Recover from evidence.sql (it still holds the last "
                         "committed state: maintain rebuild), or from the synced folder's "
-                        "version history, or from a case_data__migrate backup if one exists."
+                        "version history, or from a matter_data__migrate backup if one exists."
                         % (failed, exc, db, rollback_exc, ", ".join(replaced[i:])))
             raise SystemExit(
                 "Replacing %s.sqlite in native storage failed (%s); every database was "
@@ -79335,7 +79335,7 @@ def run_statements(con, req):
 def do_execute(req, resolved):
     triggers_sql = req.get('triggers_sql')
     if not triggers_sql or not triggers_sql.strip():
-        raise SystemExit("case_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
+        raise SystemExit("matter_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
         copies = stage_copies(resolved, tmp)
@@ -79390,11 +79390,11 @@ print(json.dumps(main()))
 function helperFile2() {
   return pythonDriverFile("case-sqlite", PY_HELPER2);
 }
-var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/case-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
+var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
 function runHelper(request2, env) {
   const execute = request2.op === "execute";
   return runPythonDriver({
-    label: "case-data sqlite helper",
+    label: "matter-data sqlite helper",
     driver: helperFile2(),
     payload: JSON.stringify(request2),
     env,
@@ -79410,11 +79410,11 @@ function caseDataFolder(matterRoot, env = process.env) {
   return runHelper({ op: "locate", matter_root: matterRoot }, env).case_data_dir;
 }
 function caseDataTriggersSql(env) {
-  const shipped = resolveShippedRoot("case-data/references/triggers.sql", env, { subject: "the case-data trigger layer" });
-  const path = join8(shipped.root, "case-data", "references", "triggers.sql");
+  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, { subject: "the matter-data trigger layer" });
+  const path = join8(shipped.root, "matter-data", "references", "triggers.sql");
   if (!existsSync6(path)) {
     throw new DataServerError(
-      `case_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
+      `matter_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
       "skills_root_missing"
     );
   }
@@ -79438,7 +79438,7 @@ async function executeUnderLock(matterRoot, work, env) {
     }, env);
     if (lock.brokeStale) {
       result.warning = [
-        "broke a stale case-data write lock (>15 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
+        "broke a stale matter-data write lock (>15 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
         result.warning
       ].filter(Boolean).join(" -- ");
     }
@@ -79467,7 +79467,7 @@ main()
 function listCaseParties(caseDataDir, env = process.env) {
   try {
     const parsed = runPythonDriver({
-      label: "case-data party list",
+      label: "matter-data party list",
       driver: pythonDriverFile("case-list-parties-driver", DRIVER),
       payload: JSON.stringify({ case_data_dir: caseDataDir }),
       env,
@@ -79475,11 +79475,11 @@ function listCaseParties(caseDataDir, env = process.env) {
       extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) }
     });
     if (!parsed.ok || !parsed.result) {
-      return { status: "unavailable", reason: `listing the case-data parties failed: ${parsed.error ?? "no result"}` };
+      return { status: "unavailable", reason: `listing the matter-data parties failed: ${parsed.error ?? "no result"}` };
     }
     return parsed.result;
   } catch (err) {
-    return { status: "unavailable", reason: `listing the case-data parties failed: ${err.message}` };
+    return { status: "unavailable", reason: `listing the matter-data parties failed: ${err.message}` };
   }
 }
 
@@ -80692,14 +80692,14 @@ function findDraftDir(root) {
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
-  const missing = `the matter's case-data folder does not exist: ${dir}. Run /case-data initialize on this matter first.`;
+  const missing = `the matter's case-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
   if (!statSync3(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
 }
 function pointerRefusal(root, why) {
   return new DataServerError(
-    `${findPointer(root) ?? join11(root, POINTER_FILES[0])} ${why}. Run /case-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
+    `${findPointer(root) ?? join11(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
     "pointer_unusable"
   );
 }
@@ -81913,7 +81913,7 @@ async function caseDataMigrate(matterRoot, mode, opts = {}, env = process.env) {
     if (lock.brokeStale) {
       const warnings = Array.isArray(result.warnings) ? result.warnings : [];
       warnings.push(
-        "broke a stale case-data write lock (>15 min old) before running; if another session is still writing to or migrating this matter, stop and reconcile before continuing"
+        "broke a stale matter-data write lock (>15 min old) before running; if another session is still writing to or migrating this matter, stop and reconcile before continuing"
       );
       result.warnings = warnings;
     }
@@ -81932,7 +81932,7 @@ function runDriver(matterRoot, mode, opts, env) {
     backup_id: opts.backupId
   });
   const parsed = runPythonDriver({
-    label: "case-data migrate driver",
+    label: "matter-data migrate driver",
     driver: driverFile(),
     payload,
     env,
@@ -81944,7 +81944,7 @@ function runDriver(matterRoot, mode, opts, env) {
     const error2 = parsed.error ?? {};
     const details = error2.details && Object.keys(error2.details).length ? ` [${JSON.stringify(error2.details)}]` : "";
     throw new DataServerError(
-      `${error2.message ?? "case-data migrate refused"}${details}`,
+      `${error2.message ?? "matter-data migrate refused"}${details}`,
       error2.code ?? "migrate_error"
     );
   }
@@ -81971,7 +81971,7 @@ function resolveParticipant(matterRoot, name, env = process.env) {
   try {
     const caseDataDir = caseDataFolder(matterRoot, env);
     const parsed = runPythonDriver({
-      label: "case-data participant resolver",
+      label: "matter-data participant resolver",
       driver: pythonDriverFile("case-resolve-participant-driver", DRIVER2),
       payload: JSON.stringify({ case_data_dir: caseDataDir, name }),
       env,
@@ -82005,7 +82005,7 @@ main()
 `.trim();
 async function ingestAuthority(request2, env = process.env) {
   const parsed = runPythonDriver({
-    label: "case-data authority ingest planner",
+    label: "matter-data authority ingest planner",
     driver: pythonDriverFile("case-ingest-authority-driver", DRIVER3),
     payload: JSON.stringify(request2),
     env,
@@ -82013,7 +82013,7 @@ async function ingestAuthority(request2, env = process.env) {
     extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) }
   });
   if (!parsed.ok || !parsed.result) {
-    throw new DataServerError(`case_data__ingest_authority could not read the result: ${parsed.error ?? "no result"}. Nothing was written.`);
+    throw new DataServerError(`matter_data__ingest_authority could not read the result: ${parsed.error ?? "no result"}. Nothing was written.`);
   }
   const plan = parsed.result;
   if ("problems" in plan) return { ok: false, problems: plan.problems };
@@ -82061,7 +82061,7 @@ function checkIsoDate(value, field) {
   const [y3, m3, d3] = value.split("-").map(Number);
   const date3 = new Date(Date.UTC(y3, m3 - 1, d3));
   if (!ISO_DATE.test(value) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
-    throw new ValidationError(`case_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
+    throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
   }
 }
 function datesIn(text4) {
@@ -82120,13 +82120,13 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   const path = join15(root, FILE_NAME);
   const hasEntry = args.date !== void 0 || args.line !== void 0;
   if (hasEntry && (args.date === void 0 || args.line === void 0)) {
-    throw new ValidationError("case_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
   }
   if (!hasEntry && (args.source_path !== void 0 || args.told_on !== void 0 || args.replaces !== void 0)) {
-    throw new ValidationError("case_data__procedural_history_append: source_path, told_on and replaces need an entry (date and line)", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append: source_path, told_on and replaces need an entry (date and line)", "invalid_entry");
   }
   if (args.source_path !== void 0 && args.told_on !== void 0) {
-    throw new ValidationError("case_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
   const existing = existsSync14(path) ? readFileSync12(path, "utf-8") : void 0;
   const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
@@ -82139,12 +82139,12 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
     checkIsoDate(date3, "date");
     const line = args.line.trim().replace(/^- /, "");
     if (line === "" || /[\r\n]/.test(line)) {
-      throw new ValidationError("case_data__procedural_history_append.line must be one non-empty line", "invalid_entry");
+      throw new ValidationError("matter_data__procedural_history_append.line must be one non-empty line", "invalid_entry");
     }
     const later = datesIn(line).filter((d3) => d3 > date3);
     if (later.length > 0) {
       throw new ValidationError(
-        `case_data__procedural_history_append.line holds ${later.join(", ")}, later than its heading ${date3}. No entry holds a date later than its own heading: record the event without that date (shared/procedural-history.md)`,
+        `matter_data__procedural_history_append.line holds ${later.join(", ")}, later than its heading ${date3}. No entry holds a date later than its own heading: record the event without that date (shared/procedural-history.md)`,
         "date_after_heading"
       );
     }
@@ -82156,7 +82156,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
       const hits = sections.flatMap((s3) => s3.lines.filter((l3) => l3.trim() === target).map(() => s3));
       if (hits.length !== 1) {
         throw new ValidationError(
-          `case_data__procedural_history_append.replaces matches ${hits.length} entries; pass the full text of exactly one existing entry`,
+          `matter_data__procedural_history_append.replaces matches ${hits.length} entries; pass the full text of exactly one existing entry`,
           "replaces_not_found"
         );
       }
@@ -82173,7 +82173,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
       headingCreated = true;
     }
     if (section2.lines.some((l3) => l3.trim() === bullet)) {
-      throw new ValidationError(`case_data__procedural_history_append: ${date3} already holds ${JSON.stringify(bullet)}`, "duplicate_entry");
+      throw new ValidationError(`matter_data__procedural_history_append: ${date3} already holds ${JSON.stringify(bullet)}`, "duplicate_entry");
     }
     section2.lines = [...trimTrailingBlank(section2.lines), bullet];
   }
@@ -83148,7 +83148,7 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "not-recorded",
     title: "Record label, date or description",
-    condition: "`gaps.kind='not_recorded'`; derived, **three instances**: document identity (label \xB7 date \xB7 description) \u2205 \u2014 \u{1F9E9} precedent \xB7 a Form 8 provision with `order_sought.template_key` set but outside the Form 8 renderer's closed template set \u2014 the `unrecognized template_key \"<key>\"` text, on a primary or alternative provision alike, \u2295 \u2B1C by construction (a `template_key` \u2205 is \u2B1C's); `render_mode 'filed'` refuses while it holds, struck provisions excepted (#825) \xB7 a party row of a drafting Writing that case data does not confirm: `parties.case_party_id` \u2205, or linked to a case-data party not of record in the proceeding, or whose counsel of record (name, firm, email, telephone) or address for service differs from case data's, or unchecked because case data could not be read \u2014 one mockup-only line per party at the head of the venue document, no Job Board entry; `render_mode 'filed'` refuses while any holds. Never on a sent Writing (it prints from `parties_snapshot`), and never on a proceeding with no file number or a matter with no case-data database (party/counsel SSOT, schema v41)",
+    condition: "`gaps.kind='not_recorded'`; derived, **three instances**: document identity (label \xB7 date \xB7 description) \u2205 \u2014 \u{1F9E9} precedent \xB7 a Form 8 provision with `order_sought.template_key` set but outside the Form 8 renderer's closed template set \u2014 the `unrecognized template_key \"<key>\"` text, on a primary or alternative provision alike, \u2295 \u2B1C by construction (a `template_key` \u2205 is \u2B1C's); `render_mode 'filed'` refuses while it holds, struck provisions excepted (#825) \xB7 a party row of a drafting Writing that case data does not confirm: `parties.case_party_id` \u2205, or linked to a matter-data party not of record in the proceeding, or whose counsel of record (name, firm, email, telephone) or address for service differs from case data's, or unchecked because case data could not be read \u2014 one mockup-only line per party at the head of the venue document, no Job Board entry; `render_mode 'filed'` refuses while any holds. Never on a sent Writing (it prints from `parties_snapshot`), and never on a proceeding with no file number or a matter with no matter-data database (party/counsel SSOT, schema v41)",
     history: `v1; derived instance partly shipped \u2014 description \u2205 only, on the VanIAC Evidence Index only; label and date queued; the other filing kinds' lists queued (#777 defect 5); unrecognized-key instance shipped, filed gate shipped #825; definition broadened #858; party-drift instance shipped v41 (party/counsel SSOT, 2026-09-30); definition broadened again to "does not confirm" 2026-09-30`
   },
   {
@@ -85169,11 +85169,11 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
 }
 function read(caseDataDir, request2, env) {
   if (!existsSync16(join18(caseDataDir, "main.sqlite"))) {
-    return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
+    return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
     const parsed = runPythonDriver({
-      label: "case-data parties-of-record reader",
+      label: "matter-data parties-of-record reader",
       driver: pythonDriverFile("case-parties-of-record-driver", DRIVER4),
       payload: JSON.stringify({ case_data_dir: caseDataDir, ...request2 }),
       env,
@@ -85286,7 +85286,7 @@ function counselOffers(dbPath, env = process.env) {
 }
 function partiesDriftLines(rows21) {
   return rows21.map((r3) => {
-    const what = r3.kind === "unlinked" ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is" : r3.kind === "not_of_record" ? r3.file_number === "" ? `linked to case-data party ${r3.case_party_id}, which case data does not hold; confirm the link` : `linked to case-data party ${r3.case_party_id}, which is not a party of record in ${r3.file_number}; confirm the link` : `counsel and address for service not read from case data: ${r3.reason}`;
+    const what = r3.kind === "unlinked" ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is" : r3.kind === "not_of_record" ? r3.file_number === "" ? `linked to matter-data party ${r3.case_party_id}, which case data does not hold; confirm the link` : `linked to matter-data party ${r3.case_party_id}, which is not a party of record in ${r3.file_number}; confirm the link` : `counsel and address for service not read from case data: ${r3.reason}`;
     return mockupMessage(gapMarker("not_recorded"), `${r3.name} (${r3.role}): ${what}`);
   });
 }
@@ -85303,7 +85303,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "5cf2c2d8e8cd";
+var BUILD_STAMP = false ? null : "56a2c90a60a2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85504,7 +85504,7 @@ function assertCounselReconciled(dbPath, staged, env) {
   const drift = matterPartiesDrift(dbPath, env);
   if (offers.length === 0 && drift.rows.length === 0) return;
   throw new DataServerError(
-    `Migration of ${dbPath} to schema version ${COUNSEL_COPY_DROPPED} refused: that hop drops the submission copy of counsel of record and the address for service, which case data owns, and it waits until every party is linked and every value the copy holds is decided. ${offers.length} counsel offer(s) and ${drift.rows.length} parties_drift row(s) stand. ` + (staged !== void 0 ? `The database was first migrated to schema version ${COUNSEL_COPY_DROPPED - 1}, so its parties can be linked; nothing past it was applied. ` : "Nothing was written. ") + "Decide each with the practitioner (/drafting-data references/filing-checklists.md section 0): link each unlinked or not-of-record party through the confirm write, then apply each offer to case data through /case-data's gate, discard it here, or hold it, which keeps this database where it is. " + (offers.length > 0 ? `Counsel offers: ${offers.map(describeOffer).join("; ")}. ` : "") + (drift.rows.length > 0 ? `Drift: ${drift.rows.map(describeDrift).join("; ")}.` : "") + (drift.note !== void 0 ? ` (${drift.note})` : ""),
+    `Migration of ${dbPath} to schema version ${COUNSEL_COPY_DROPPED} refused: that hop drops the submission copy of counsel of record and the address for service, which case data owns, and it waits until every party is linked and every value the copy holds is decided. ${offers.length} counsel offer(s) and ${drift.rows.length} parties_drift row(s) stand. ` + (staged !== void 0 ? `The database was first migrated to schema version ${COUNSEL_COPY_DROPPED - 1}, so its parties can be linked; nothing past it was applied. ` : "Nothing was written. ") + "Decide each with the practitioner (/drafting-data references/filing-checklists.md section 0): link each unlinked or not-of-record party through the confirm write, then apply each offer to case data through /matter-data's gate, discard it here, or hold it, which keeps this database where it is. " + (offers.length > 0 ? `Counsel offers: ${offers.map(describeOffer).join("; ")}. ` : "") + (drift.rows.length > 0 ? `Drift: ${drift.rows.map(describeDrift).join("; ")}.` : "") + (drift.note !== void 0 ? ` (${drift.note})` : ""),
     "counsel_not_reconciled"
   );
 }
@@ -89959,7 +89959,7 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
   const { parties: parties2, drift } = draftingParties(dirname8(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
   if (drift.rows.length > 0) {
     throw new DataServerError(
-      `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + (drift.unchecked ? ` (${drift.unchecked.note})` : "") + `. Nothing was written. Confirm each with the practitioner and link it to its case-data party, or correct case data through /case-data first (references/filing-checklists.md \xA70), then call ${tool} again`,
+      `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + (drift.unchecked ? ` (${drift.unchecked.note})` : "") + `. Nothing was written. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again`,
       "parties_drift"
     );
   }
@@ -99545,7 +99545,7 @@ function confineCaseDataFolder(dbPath, caseDataFolder2) {
   if (!pathWin3213.isAbsolute(caseDataFolder2)) {
     throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder2}`);
   }
-  const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /case-data initialize on this matter first.`, "case_data_missing");
+  const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /matter-data initialize on this matter first.`, "case_data_missing");
   const dbFolder = canonicalRoot(pathWin3213.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
   if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
     throw new PathOutOfScopeError(
@@ -99681,7 +99681,7 @@ function partiesDriftRefusal(filingId, revision, drift, tool) {
     revision,
     parties_drift_gate_failed: true,
     ...driftReport(drift),
-    note: "Refusing to render the filed face: counsel of record and the address for service, which case data owns, could not be read for party row(s): " + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + `. Confirm each with the practitioner and link it to its case-data party, or correct case data through /case-data first (references/filing-checklists.md \xA70), then call ${tool} again.`
+    note: "Refusing to render the filed face: counsel of record and the address for service, which case data owns, could not be read for party row(s): " + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + `. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again.`
   };
 }
 function buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now = nowStamp()) {
@@ -100935,12 +100935,12 @@ var CORRESPONDENCE_GLOBS = FOLDER_GLOBS.slice(0, 2);
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS, env = process.env) {
   if (!existsSync31(join31(caseDataDir, "main.sqlite"))) {
-    return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
+    return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
     const timeoutMs = pythonTimeoutMs(env, COVERAGE_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS");
     const parsed = runPythonDriver({
-      label: "case-data ingest-coverage reader",
+      label: "matter-data ingest-coverage reader",
       driver: pythonDriverFile("case-ingest-coverage-driver", DRIVER5),
       payload: JSON.stringify({
         case_data_dir: caseDataDir,
@@ -100952,7 +100952,7 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS,
       timeoutMs,
       extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },
       timeoutAdvice: `Hashing the matter's folders needs more than its ${timeoutMs} ms budget. The session reports ingest coverage as unavailable for this opening; the check writes nothing, so nothing is lost.`,
-      stagingDescription: "staging copy of the case-data databases"
+      stagingDescription: "staging copy of the matter-data databases"
     });
     if (!parsed.ok || !parsed.result) {
       return { status: "unavailable", reason: `checking ingest coverage failed: ${parsed.error ?? "no result"}` };
@@ -101629,7 +101629,7 @@ main()
 var AUTHORITY_SOURCE_TIMEOUT_MS = 4e4;
 function resolveAuthoritySource(request2, env = process.env, installRoot) {
   const parsed = runPythonDriver({
-    label: "case-data authority-source resolver",
+    label: "matter-data authority-source resolver",
     driver: pythonDriverFile("case-authority-source-driver", DRIVER8),
     payload: JSON.stringify({
       case_data_dir: request2.caseDataDir,
@@ -101642,7 +101642,7 @@ function resolveAuthoritySource(request2, env = process.env, installRoot) {
     timeoutMs: AUTHORITY_SOURCE_TIMEOUT_MS,
     extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env, installRoot) },
     timeoutAdvice: "Word may still be converting, or the matter tree is slow to hash. A finished conversion is cached, so call again.",
-    stagingDescription: "staging copy of the case-data law database"
+    stagingDescription: "staging copy of the matter-data law database"
   });
   if (!parsed.ok || !parsed.result) {
     throw new DataServerError(`resolving the authority's file failed: ${parsed.error ?? "no result"}`);
@@ -105763,33 +105763,33 @@ async function callTool(context, name, rawArgs) {
   if (name.startsWith("practice_data__")) {
     return callPracticeTool(context.practiceDb, name, args);
   }
-  if (name === "case_data__query") {
+  if (name === "matter_data__query") {
     return caseDataQuery(
       args.matter_root,
       args.sql,
       args.params
     );
   }
-  if (name === "case_data__execute") {
+  if (name === "matter_data__execute") {
     return caseDataExecute(
       args.matter_root,
       args.sql_script
     );
   }
-  if (name === "case_data__resolve_participant") {
+  if (name === "matter_data__resolve_participant") {
     return resolveParticipant(args.matter_root, args.name);
   }
-  if (name === "case_data__ingest_authority") {
+  if (name === "matter_data__ingest_authority") {
     return ingestAuthority(args);
   }
-  if (name === "case_data__procedural_history_append") {
+  if (name === "matter_data__procedural_history_append") {
     return proceduralHistoryAppend(args);
   }
-  if (name === "case_data__migrate") {
+  if (name === "matter_data__migrate") {
     const mode = args.mode;
     if (!["plan", "apply", "restore", "backups"].includes(mode)) {
       throw new ValidationError(
-        `case_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
+        `matter_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
       );
     }
     return caseDataMigrate(args.matter_root, mode, {

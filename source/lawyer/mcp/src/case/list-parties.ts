@@ -1,10 +1,10 @@
 // Every party in one matter's case data, for practice_data__contact_checks' second check: a
-// case-data party no practice-data matter role points to (ADR 0009, firm-wide contacts spec 4.4).
+// matter-data party no practice-data matter role points to (ADR 0009, firm-wide contacts spec 4.4).
 //
-// Spawns /case-data's references/scripts/list_parties.py the way case/parties-of-record.ts
+// Spawns /matter-data's references/scripts/list_parties.py the way case/parties-of-record.ts
 // spawns parties_of_record.py: an embedded plumbing driver, the skill's scripts directory on
 // PYTHONPATH. Every table name and all the SQL stay in that script (#56). Read-only and lock-free,
-// like case_data__query (#28).
+// like matter_data__query (#28).
 
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
@@ -43,7 +43,7 @@ export interface CaseParty {
 
 export type CaseParties =
   | { status: "ok"; parties: CaseParty[] }
-  /** No case-data database in the matter's folder. */
+  /** No matter-data database in the matter's folder. */
   | { status: "not_applicable"; reason: string }
   /** A database behind the current schema, or a failed read. */
   | { status: "unavailable"; reason: string };
@@ -52,7 +52,7 @@ export type CaseParties =
 export function listCaseParties(caseDataDir: string, env: NodeJS.ProcessEnv = process.env): CaseParties {
   try {
     const parsed = runPythonDriver({
-      label: "case-data party list",
+      label: "matter-data party list",
       driver: pythonDriverFile("case-list-parties-driver", DRIVER),
       payload: JSON.stringify({ case_data_dir: caseDataDir }),
       env,
@@ -60,10 +60,10 @@ export function listCaseParties(caseDataDir: string, env: NodeJS.ProcessEnv = pr
       extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },
     }) as { ok: boolean; result?: CaseParties; error?: string };
     if (!parsed.ok || !parsed.result) {
-      return { status: "unavailable", reason: `listing the case-data parties failed: ${parsed.error ?? "no result"}` };
+      return { status: "unavailable", reason: `listing the matter-data parties failed: ${parsed.error ?? "no result"}` };
     }
     return parsed.result;
   } catch (err) {
-    return { status: "unavailable", reason: `listing the case-data parties failed: ${(err as Error).message}` };
+    return { status: "unavailable", reason: `listing the matter-data parties failed: ${(err as Error).message}` };
   }
 }

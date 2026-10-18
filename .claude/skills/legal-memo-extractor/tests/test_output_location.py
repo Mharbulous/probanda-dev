@@ -67,7 +67,7 @@ class TestStandardOutputDir(TempMatter):
         self.case_data.rmdir()
         with self.assertRaises(FileNotFoundError) as ctx:
             emi.standard_output_dir(self.matter, self.case_data)
-        self.assertIn("/case-data initialize", str(ctx.exception))
+        self.assertIn("/matter-data initialize", str(ctx.exception))
         self.assertFalse(self.case_data.exists())
 
     def test_name_mismatch_raises(self):

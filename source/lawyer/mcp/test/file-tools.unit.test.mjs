@@ -23,15 +23,15 @@ function skillsFixture() {
   const claudeSkills = join(root, ".claude", "skills");
   mkdirSync(join(skills, "demo", "stages"), { recursive: true });
   mkdirSync(join(skills, "shared"), { recursive: true });
-  mkdirSync(join(claudeSkills, "case-data", "operations"), { recursive: true });
+  mkdirSync(join(claudeSkills, "matter-data", "operations"), { recursive: true });
   writeFileSync(join(skills, "demo", "SKILL.md"), "# demo\nsee shared/conventions.md\n");
   writeFileSync(join(skills, "demo", "stages", "01-intake.md"), "intake\n");
   writeFileSync(join(skills, "shared", "conventions.md"), "conventions\n");
   writeFileSync(
-    join(claudeSkills, "case-data", "SKILL.md"),
-    "# case-data\nsee operations/ingest.md\n",
+    join(claudeSkills, "matter-data", "SKILL.md"),
+    "# matter-data\nsee operations/ingest.md\n",
   );
-  writeFileSync(join(claudeSkills, "case-data", "operations", "ingest.md"), "ingest\n");
+  writeFileSync(join(claudeSkills, "matter-data", "operations", "ingest.md"), "ingest\n");
   writeFileSync(join(root, "outside.md"), "SECRET\n");
   return {
     env: { COCLERK_REPO_ROOT: root },
@@ -75,12 +75,12 @@ test("skill_source__read returns content, size, sha256, and the containing dir",
 
 test("skill_source__read round-trips a real repo file byte-for-byte", () => {
   const env = { COCLERK_REPO_ROOT: REPO_ROOT };
-  const result = skillSourceRead("case-data/references/scripts/compute_hash.py", env);
-  const onDisk = readFileSync(join(REPO_ROOT, ".claude", "skills", "case-data", "references", "scripts", "compute_hash.py"));
+  const result = skillSourceRead("matter-data/references/scripts/compute_hash.py", env);
+  const onDisk = readFileSync(join(REPO_ROOT, ".claude", "skills", "matter-data", "references", "scripts", "compute_hash.py"));
   assert.equal(result.content, onDisk.toString("utf-8"));
   assert.equal(result.size, onDisk.byteLength);
   assert.equal(result.sha256, createHash("sha256").update(onDisk).digest("hex"));
-  assert.equal(result.dir, "case-data/references/scripts");
+  assert.equal(result.dir, "matter-data/references/scripts");
 });
 
 // A `match` read is a slice, so it earns its place only if the slice is whole.
@@ -157,17 +157,17 @@ test("skill_source__read `match` ORs several terms and hard-fails on a miss", ()
 test("skill_source__read serves skills rooted at .claude/skills", () => {
   const f = skillsFixture();
   try {
-    const root = skillSourceRead("case-data/SKILL.md", f.env);
-    assert.equal(root.path, "case-data/SKILL.md");
-    assert.equal(root.dir, "case-data");
-    assert.equal(root.content, "# case-data\nsee operations/ingest.md\n");
+    const root = skillSourceRead("matter-data/SKILL.md", f.env);
+    assert.equal(root.path, "matter-data/SKILL.md");
+    assert.equal(root.dir, "matter-data");
+    assert.equal(root.content, "# matter-data\nsee operations/ingest.md\n");
 
     const child = skillSourceRead(
       "operations/ingest.md",
       f.env,
       root.path,
     );
-    assert.equal(child.path, "case-data/operations/ingest.md");
+    assert.equal(child.path, "matter-data/operations/ingest.md");
     assert.equal(child.content, "ingest\n");
     assert.equal(
       skillSourceRead("../../shared/conventions.md", f.env, child.path).path,
@@ -175,15 +175,15 @@ test("skill_source__read serves skills rooted at .claude/skills", () => {
     );
 
     assert.equal(
-      skillSourceRead("case-data/SKILL.md", f.env).path,
-      "case-data/SKILL.md",
+      skillSourceRead("matter-data/SKILL.md", f.env).path,
+      "matter-data/SKILL.md",
     );
     assert.deepEqual(
-      skillSourceList("case-data", true, f.env).entries.map((e) => e.path),
+      skillSourceList("matter-data", true, f.env).entries.map((e) => e.path),
       [
-        "case-data/SKILL.md",
-        "case-data/operations",
-        "case-data/operations/ingest.md",
+        "matter-data/SKILL.md",
+        "matter-data/operations",
+        "matter-data/operations/ingest.md",
       ],
     );
   } finally {
@@ -345,7 +345,7 @@ test("skill_source__list lists a directory, and recurses on request", () => {
   const f = skillsFixture();
   try {
     const root = skillSourceList("", false, f.env);
-    assert.deepEqual(root.entries.map((e) => e.path), ["case-data", "demo", "shared"]);
+    assert.deepEqual(root.entries.map((e) => e.path), ["demo", "matter-data", "shared"]);
     assert.deepEqual(root.entries.map((e) => e.type), ["dir", "dir", "dir"]);
 
     const deep = skillSourceList("demo", true, f.env);

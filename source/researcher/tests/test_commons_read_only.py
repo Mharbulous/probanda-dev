@@ -86,7 +86,7 @@ class CommonsReadOnlyGuardTests(unittest.TestCase):
         pattern = re.compile(registered_matcher())
         for name in ("mcp__plugin_other_commons__legal_commons__push",
                      LOCAL.replace("commons__", "data__") + "legal_commons__push",
-                     "mcp__plugin_practice_data__case_data__query", "Read"):
+                     "mcp__plugin_practice_data__matter_data__query", "Read"):
             with self.subTest(name=name):
                 self.assertIsNone(pattern.fullmatch(name))
 

@@ -63,7 +63,7 @@ adding a value must change the runtime constant, not this schema.
 
 There is **no matter table in this namespace, by construction** — `REFERENCES
 matters(...)` is unrepresentable here. Layer-3 is matter-free; matter data lives in
-the local SQLite databases behind `/case-data` and `/practice-data` and is reached
+the local SQLite databases behind `/matter-data` and `/practice-data` and is reached
 only through those gatekeepers. Nothing in this directory should ever acquire a
 matter-scoped table, a `matter_id` column, or a per-user key table.
 
@@ -88,7 +88,7 @@ Read the provenance block at the top of each file before treating it as current.
 ## History
 
 This path previously held a byte-identical carryover of the retired pre-B5
-case-data schema — 22 matter-scoped tables plus `practice_*` tables, `_enc`/`_iv`
+matter-data schema — 22 matter-scoped tables plus `practice_*` tables, `_enc`/`_iv`
 encryption columns, and a `user_keys` keystore, none of which exist in this pool.
 It was dead from the moment the plugin was renamed (`090fc64`) and was deleted on
 2026-07-18. Do not reintroduce it; if you need it, it is in git history.

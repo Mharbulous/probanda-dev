@@ -20,7 +20,7 @@ export function confineCaseDataFolder(dbPath: string, caseDataFolder: string): s
   if (!pathWin32.isAbsolute(caseDataFolder)) {
     throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder}`);
   }
-  const folder = canonicalRoot(caseDataFolder, `case_data_folder not found: ${caseDataFolder}. Run /case-data initialize on this matter first.`, "case_data_missing");
+  const folder = canonicalRoot(caseDataFolder, `case_data_folder not found: ${caseDataFolder}. Run /matter-data initialize on this matter first.`, "case_data_missing");
   const dbFolder = canonicalRoot(pathWin32.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
   if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
     throw new PathOutOfScopeError(

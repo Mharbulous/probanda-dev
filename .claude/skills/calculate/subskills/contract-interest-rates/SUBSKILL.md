@@ -30,13 +30,13 @@ says nor what the bank rate did.
 
 ### 1. Find and pin down the contract's interest term
 
-Ask `case-data` to identify matter sources that may contain the executed agreement and related
+Ask `matter-data` to identify matter sources that may contain the executed agreement and related
 instruments; also inspect documents attached or quoted in the current session. Do not embed
-case-data storage, query, or tool particulars here—the gatekeeper owns source discovery.
+matter-data storage, query, or tool particulars here—the gatekeeper owns source discovery.
 
 Before calculating, establish whether the following are available: the executed agreement,
 supplementary conditions, schedules, appendices, change orders, and later written amendments.
-If `case-data` does not locate the executed agreement, ask whether it exists elsewhere in the
+If `matter-data` does not locate the executed agreement, ask whether it exists elsewhere in the
 matter folder. Read the whole available source set for provisions that delete, replace, or
 modify the interest term. The base clause alone is not the operative term when another
 instrument changes it.

@@ -43,7 +43,7 @@ The practitioner's proposal is a hypothesis, not an instruction to execute.
 - Restate the problem and the proposed fix. If the practitioner asks you to restate before acting, restate and stop until confirmed.
 - Before planning, check whether the current behavior is a **deliberate design decision** (issue numbers, ADRs, design notes in the skill prose). Name the tension: reversing a documented decision is different work than fixing an oversight.
 - Ask whether a cheaper solution exists that preserves the original design decision — e.g., use data a tool already returns rather than moving where the tool writes. Present both options with honest costs.
-- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/case-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card (`shared/present-files.md`). Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
+- If a written plan is requested: a dated file in the matter's `<case-data folder>\reflect\` (or project workspace), the case-data folder being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access to that folder itself, never a parent or the firm root; never create it: if it is absent, name `/matter-data` initialize), comparing options, recording the recommendation and its rationale, listing out-of-scope defects noticed along the way as separate follow-ups. Present it as a file card (`shared/present-files.md`). Where the recommended fix can be demonstrated immediately without engine changes, demonstrate it.
 
 ## Phase 2 — Drift analysis (actual session vs. the skills' current source)
 
@@ -450,7 +450,7 @@ the delegated source for a development wrapper]
 
 ### 4.1 [Short title] (Type[, Recurring])
 [What happened and why it's a finding, citing the Section 3 step(s) that evidence it.]
-[**Implicates:** the file or component the defect sits in (e.g. `case-data/SKILL.md`
+[**Implicates:** the file or component the defect sits in (e.g. `matter-data/SKILL.md`
 step 2; the form-rendering tool's write path). Say `unknown` rather than guess — this
 is the intake session's first-pass key for spotting a finding already on the issue queue, and
 triage's starting point for the agent brief's **Key interfaces**. Its literal path is

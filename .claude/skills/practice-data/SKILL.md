@@ -1,7 +1,7 @@
 ---
 name: practice-data
 user-invocable: false
-description: The firm's practice records for each client and matter. Look up or update trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines (docket-clerk) or case facts (case-data).
+description: The firm's practice records for each client and matter. Look up or update trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines (docket-clerk) or case facts (matter-data).
 ---
 
 ## Contents
@@ -41,7 +41,7 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | upsert-affiliation | `practice_data__upsert_affiliation` | a person contact tied to an organization contact, with optional `from`, `to`, `title`; re-entering the same tie returns it |
 | upsert-matter-role | `practice_data__upsert_matter_role` | a contact's role on a matter, with optional `case_party_id` and `case_proceeding_id`; proposing the same role twice returns it |
 | contact-lookup | `practice_data__contact_lookup` | `id` or `query`; local and offline; each contact with its affiliations and roles, plus `near`, the likely duplicates |
-| contact-checks | `practice_data__contact_checks` | read only; open matters with no client role, and case-data parties with no matter role; optional matter ref and `matter_root`; `unresolved` names what check 2 could not read |
+| contact-checks | `practice_data__contact_checks` | read only; open matters with no client role, and matter-data parties with no matter role; optional matter ref and `matter_root`; `unresolved` names what check 2 could not read |
 | merge-contact | `practice_data__merge_contact` | `keep_id`, `spare_id`; deletes no information; returns `conflicts` and writes nothing when the two differ |
 | contacts-backfill ("set up contacts from existing matters") | [`operations/contacts-backfill.md`](operations/contacts-backfill.md) | one-time, with approval |
 | insert-time-entry | `practice_data__insert_time_entry` | returns the new entry id; optional `billable` (defaults to the matter's own flag) and `batch_tag` (see Consumer Contract) |
@@ -78,7 +78,7 @@ Opening a new matter always records who the client is (ADR 0009). The CSV import
 
 ## Contacts
 
-A **contact** is one person or organization the firm deals with, held once for the whole firm (ADR 0009). An **affiliation** ties a person to an organization, such as a lawyer to a law firm, with dates. A **matter role** ties a contact to a matter as `client`, `prospective_client`, `opposing_party`, `opposing_counsel`, `co_counsel`, `expert`, `adjuster` or `referral_source`; Probanda's Cloud holds that list and asks about any other value. Who a matter's client is comes from its roles tagged `client`, never from the `client` item, which stays the billing account. Counsel of record stays in case data as filed (`case-data`, design decision #55).
+A **contact** is one person or organization the firm deals with, held once for the whole firm (ADR 0009). An **affiliation** ties a person to an organization, such as a lawyer to a law firm, with dates. A **matter role** ties a contact to a matter as `client`, `prospective_client`, `opposing_party`, `opposing_counsel`, `co_counsel`, `expert`, `adjuster` or `referral_source`; Probanda's Cloud holds that list and asks about any other value. Who a matter's client is comes from its roles tagged `client`, never from the `client` item, which stays the billing account. Counsel of record stays in case data as filed (`matter-data`, design decision #55).
 
 - **Never create a contact without asking.** Two contacts may share a name or an office email, so whether two records are one contact is the practitioner's decision. Before proposing a new contact, run `contact-lookup` on its name and show the `near` list.
 - **A role ends; it is not deleted.** Set `to` on a role that has ended. Nothing is deleted when a matter closes.

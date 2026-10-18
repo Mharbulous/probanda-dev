@@ -48,10 +48,10 @@ function plugin(dir, name, version, folders = [], { shared = true } = {}) {
   return dir;
 }
 
-/** A store holding the own install, `practice` 1.0.0 with `case-data`, in a folder named `practice`. */
+/** A store holding the own install, `practice` 1.0.0 with `matter-data`, in a folder named `practice`. */
 function store(t) {
   const dir = join(tempDir(t), "store");
-  return { dir, own: plugin(join(dir, "practice"), "practice", "1.0.0", ["case-data"]) };
+  return { dir, own: plugin(join(dir, "practice"), "practice", "1.0.0", ["matter-data"]) };
 }
 
 function checkout(t, folders) {
@@ -100,7 +100,7 @@ test("of several copies of one sibling, the version wins, then the ~g<N> suffix,
 
 test("an id-named sibling is recognised by the name in its manifest", (t) => {
   const dir = join(tempDir(t), "rpm");
-  const own = plugin(join(dir, "plugin_01abc"), "practice", "1.0.0", ["case-data"]);
+  const own = plugin(join(dir, "plugin_01abc"), "practice", "1.0.0", ["matter-data"]);
   const researcher = plugin(join(dir, "plugin_02def"), "researcher", "0.2.0", ["verify-law"]);
   const root = served(own, "verify-law/SKILL.md");
   assert.equal(root.root, join(researcher, "skills"));
@@ -109,7 +109,7 @@ test("an id-named sibling is recognised by the name in its manifest", (t) => {
 
 test("the <marketplace>/<plugin>/<version>/ layout is scanned two levels up, and the higher version wins", (t) => {
   const marketplace = join(tempDir(t), "marketplace");
-  const own = plugin(join(marketplace, "practice", "1.0.0"), "practice", "1.0.0", ["case-data"]);
+  const own = plugin(join(marketplace, "practice", "1.0.0"), "practice", "1.0.0", ["matter-data"]);
   plugin(join(marketplace, "researcher", "0.2.0"), "researcher", "0.2.0", ["verify-law"]);
   const higher = plugin(join(marketplace, "researcher", "0.10.0"), "researcher", "0.10.0", ["verify-law"]);
   assert.deepEqual(served(own, "verify-law/SKILL.md"), {
@@ -164,8 +164,8 @@ test("a sibling that holds the folder wins over a checkout that also holds it", 
 
 test("the own install wins over a sibling that holds the same folder", (t) => {
   const s = store(t);
-  plugin(join(s.dir, "researcher"), "researcher", "0.2.0", ["case-data"]);
-  assert.deepEqual(served(s.own, "case-data/SKILL.md"), {
+  plugin(join(s.dir, "researcher"), "researcher", "0.2.0", ["matter-data"]);
+  assert.deepEqual(served(s.own, "matter-data/SKILL.md"), {
     root: join(s.own, "skills"),
     shipped_from: "install",
     plugin: "practice",
@@ -194,7 +194,7 @@ test("skill_source__read and __list results name the sibling plugin and its vers
 
   const read = skillSourceRead("verify-law/SKILL.md", NO_CHECKOUT, undefined, undefined, s.own);
   assert.deepEqual([read.shipped_from, read.plugin, read.plugin_version], ["install", "researcher", "0.2.0"]);
-  const own = skillSourceRead("case-data/SKILL.md", NO_CHECKOUT, undefined, undefined, s.own);
+  const own = skillSourceRead("matter-data/SKILL.md", NO_CHECKOUT, undefined, undefined, s.own);
   assert.deepEqual([own.shipped_from, own.plugin, own.plugin_version], ["install", "practice", "1.0.0"]);
   // A checkout belongs to no plugin, and keeps reporting the running plugin's version.
   const dev = skillSourceRead("devtool/SKILL.md", co.env, undefined, undefined, s.own);
@@ -213,8 +213,8 @@ test("skill_source__read and __list results name the sibling plugin and its vers
   assert.deepEqual(
     root.entries.map((e) => [e.path, e.shipped_from, e.plugin]),
     [
-      ["case-data", "install", "practice"],
       ["devtool", "checkout", null],
+      ["matter-data", "install", "practice"],
       ["shared", "install", "practice"],
       ["verify-law", "install", "researcher"],
     ],
@@ -227,7 +227,7 @@ test("skill_source__read and __list results name the sibling plugin and its vers
 test("nothing is scanned when the own root is not a packaged install", (t) => {
   const dir = join(tempDir(t), "store");
   // No skills/shared/: a checkout's source folder, or a stale stub layout.
-  const own = plugin(join(dir, "practice"), "practice", "1.0.0", ["case-data"], { shared: false });
+  const own = plugin(join(dir, "practice"), "practice", "1.0.0", ["matter-data"], { shared: false });
   plugin(join(dir, "researcher"), "researcher", "0.2.0", ["verify-law"]);
   assert.deepEqual(siblingInstalls(own), []);
   const co = checkout(t, ["verify-law"]);

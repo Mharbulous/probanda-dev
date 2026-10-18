@@ -27,7 +27,7 @@ A Writing lives in exactly one pipeline, never both. `publish-bcsc-form`'s case-
 
 This kind answers a served BCSC Notice of Application. Offer it by name when the practitioner names that incoming document (`/draft`'s `SKILL.md` section 8, the response seam).
 
-Capture the served application's sought orders before responding to them. Prefer structured capture already in `/case-data`; failing that, read the served document from the matter file. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
+Capture the served application's sought orders before responding to them. Prefer structured capture already in `/matter-data`; failing that, read the served document from the matter file. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
 
 ## Deployment
 

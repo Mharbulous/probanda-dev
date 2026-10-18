@@ -76,11 +76,11 @@ only -- see Error handling.
    two entries.
 
    Then collect the exhibit bookmark text. For each part whose bookmark
-   starts with `Affidavit`, invoke `/case-data` for that affidavit's
+   starts with `Affidavit`, invoke `/matter-data` for that affidavit's
    exhibits, each with its exhibit letter or number, its description and
    its date. Write each description as `June 1, 2019 – <description>`,
-   or the description alone when case-data has no date. Leave out any exhibit
-   case-data doesn't have. Write the result to
+   or the description alone when matter-data has no date. Leave out any exhibit
+   matter-data doesn't have. Write the result to
    `<bcca-book-substance folder>\response-book-exhibits.json` with the Write
    tool, in the shape
    `subskills/assemble-bcca-book/references/book-binding-contract.md` "Book
@@ -140,7 +140,7 @@ only -- see Error handling.
    `no_text_layer` or `exhibit_stamp_repeated` means the stamps can't be
    read reliably: ask the practitioner for each exhibit's first page within
    that affidavit's PDF, add them as `pages` in the exhibits file, and rerun
-   both commands. `exhibit_text_unmatched` means case-data and the PDF
+   both commands. `exhibit_text_unmatched` means matter-data and the PDF
    disagree on an exhibit's letter: show the practitioner both and stop.
 
 6. **Check the numbering of each book that was built.** The same registry

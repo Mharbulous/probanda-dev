@@ -2,7 +2,7 @@
 //
 // One call assembles what a "Review scrutiny finding: " job presents. The statement and the
 // research lawyer's finding come from /drafting-data's statement_for_review.py, which opens the
-// drafting database read-only. The authority's own file comes from /case-data's
+// drafting database read-only. The authority's own file comes from /matter-data's
 // resolve_authority_source.py (case/authority-source.ts), found hash-first and converted to PDF by
 // Word into a host-local cache. verify-law's diff_excerpt.py checks the stored excerpt word for word
 // against that PDF, and show-me's highlight_pages.py cuts two highlighted extracts, each a PDF plus

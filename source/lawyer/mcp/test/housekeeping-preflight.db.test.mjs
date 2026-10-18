@@ -10,7 +10,7 @@ const { preflight } = await import("../build/housekeeping/preflight.js");
 /** A matter whose v5 pointer names a case-data folder beside it, created unless `absent`. */
 function setUp({ absent = false } = {}) {
   const m = matterFixture();
-  const caseData = join(m.base, "case-data");
+  const caseData = join(m.base, "matter-data");
   if (!absent) {
     mkdirSync(caseData);
     writeFileSync(join(caseData, "main.sqlite"), "");

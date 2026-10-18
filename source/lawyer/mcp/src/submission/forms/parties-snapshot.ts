@@ -1,5 +1,5 @@
 // The party rows a Writing is sent or filed with (party/counsel SSOT; submission schema v42). The
-// runtime writes them into `parties_snapshot` from the case-data read, in the transaction that sets
+// runtime writes them into `parties_snapshot` from the matter-data read, in the transaction that sets
 // the Writing's filed_on and ahead of that statement: drafting_data__record_sent and
 // drafting_data__record_filed. The v42 trigger guard_filings_parties_snapshot refuses to set
 // filed_on any other way while the proceeding has a party. The SQL here is the runtime's own, as
@@ -36,7 +36,7 @@ export function partiesSnapshotStatements(dbPath: string, filing: FilingRow, too
       `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` +
         drift.rows.map((r) => `${r.name} (${r.kind})`).join(", ") +
         (drift.unchecked ? ` (${drift.unchecked.note})` : "") +
-        ". Nothing was written. Confirm each with the practitioner and link it to its case-data party, or correct case data through /case-data first " +
+        ". Nothing was written. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first " +
         `(references/filing-checklists.md §0), then call ${tool} again`,
       "parties_drift"
     );

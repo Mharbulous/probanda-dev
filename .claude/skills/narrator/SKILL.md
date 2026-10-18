@@ -30,7 +30,7 @@ Ask the practitioner for the matter workspace path if not already known from con
 
 In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/case-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
 
 Create `bcsc-form-substance\` beneath it if it does not exist.
 
@@ -47,12 +47,12 @@ If either file is missing, halt with the appropriate redirect:
 
 ### 3. Gather facts from case data
 
-Invoke `/case-data` to fetch facts for this matter. Request facts with:
+Invoke `/matter-data` to fetch facts for this matter. Request facts with:
 - Current posture: `agreed`, `admitted`, `not_denied`, `disputed`, `claimed`, or `unclaimed`
 - Computed pinpoint citations for the fact source, linked evidence, and party positions
 - Evidence-link counts and any position citations needed to explain admissions or disputes
 
-If no facts are found in case data, inform the practitioner: "No facts found in the case database. Ensure documents have been ingested via `/case-data` before drafting Part 2." Halt -- do not draft facts from training knowledge.
+If no facts are found in case data, inform the practitioner: "No facts found in the case database. Ensure documents have been ingested via `/matter-data` before drafting Part 2." Halt -- do not draft facts from training knowledge.
 
 ### 4. Check for existing draft
 
@@ -125,7 +125,7 @@ After writing both files: "Factual basis and material list saved. Start a new se
 
 - **Read peers:** `part-1-orders-sought.md` and `part-3-legal-basis.md` (both required)
 - **Write:** `part-2-factual-basis.md` and `part-4-material-relied-on.md`
-- **Case data:** exclusively via `/case-data` -- no direct database access
+- **Case data:** exclusively via `/matter-data` -- no direct database access
 - **No training knowledge as facts:** every factual assertion must trace to case data
 - **Every paragraph needs a citation:** no uncited factual paragraphs
 - **No .docx:** never touch templates or Word files

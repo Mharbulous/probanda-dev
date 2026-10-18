@@ -326,7 +326,7 @@ test("the dist-only bundle resolves the repo with no COCLERK_REPO_ROOT set, the 
   await withDistOnlyServer(childEnv, async (client) => {
     const result = await client.callTool({
       name: "skill_source__read",
-      arguments: { path: "case-data/SKILL.md" },
+      arguments: { path: "matter-data/SKILL.md" },
     });
     assert.notEqual(result.isError, true, JSON.stringify(result));
   });

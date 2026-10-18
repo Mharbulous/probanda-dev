@@ -1,6 +1,6 @@
 ---
 name: extract-caselaw
-description: Reads one judicial decision and returns its transportable legal knowledge — the concepts it establishes or refines, their criteria, its disposition, and its treatment of prior authority — as strict JSON. When the caller names a result path, writes that JSON to the one scratch file at that path and nothing else; otherwise writes nothing. Dispatched by /case-data ingest-extract, one instance per decision.
+description: Reads one judicial decision and returns its transportable legal knowledge — the concepts it establishes or refines, their criteria, its disposition, and its treatment of prior authority — as strict JSON. When the caller names a result path, writes that JSON to the one scratch file at that path and nothing else; otherwise writes nothing. Dispatched by /matter-data ingest-extract, one instance per decision.
 tools:
   - Read
   - Write

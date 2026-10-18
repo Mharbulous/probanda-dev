@@ -16,7 +16,7 @@ after(() => triggerRoots.forEach((root) => rmSync(root, { recursive: true, force
 function triggersEnv(text, base = process.env) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-case-triggers-"));
   triggerRoots.push(root);
-  const references = join(root, ".claude", "skills", "case-data", "references");
+  const references = join(root, ".claude", "skills", "matter-data", "references");
   mkdirSync(references, { recursive: true });
   if (text !== null) writeFileSync(join(references, "triggers.sql"), text);
   return { ...base, COCLERK_REPO_ROOT: root };
@@ -34,7 +34,7 @@ function isolatedEnv() {
 
 function fixture(version) {
   const matterRoot = mkdtempSync(join(tmpdir(), "coclerk-case-runtime-"));
-  const caseDataDir = join(matterRoot, "case-data");
+  const caseDataDir = join(matterRoot, "matter-data");
   mkdirSync(caseDataDir);
   const main = join(caseDataDir, "main.sqlite");
   const python = process.env.COCLERK_PYTHON || "python";
@@ -216,19 +216,19 @@ test("execute bootstraps the live-derived location and rewrites matter_root", as
 // The guard names migrate, not rebuild: rebuild replays an already-current dump
 // and its require_source_version rejects an out-of-date one, so the old
 // "run the rebuild operation" text sent every agent down a dead end.
-test("case-data runtime rejects v8.9 and directs migrate to v9.0", () => {
+test("matter-data runtime rejects v8.9 and directs migrate to v9.0", () => {
   const f = fixture(89);
   try {
     assert.throws(
       () => caseDataQuery(f.matterRoot, "SELECT 1 AS ok"),
-      /schema is at v8\.9.*requires v9\.0.*case_data__migrate.*plan/s,
+      /schema is at v8\.9.*requires v9\.0.*matter_data__migrate.*plan/s,
     );
   } finally {
     f.cleanup();
   }
 });
 
-test("case-data runtime accepts v9.0 and writes a v9.0 dump header", async () => {
+test("matter-data runtime accepts v9.0 and writes a v9.0 dump header", async () => {
   const f = fixture(90);
   try {
     const result = caseDataQuery(f.matterRoot, "SELECT 1 AS ok");
@@ -402,7 +402,7 @@ test("a second execute is refused while another session holds the case lock", as
         () => caseDataExecute(f.matterRoot, "DROP TABLE marker;", triggersEnv("SELECT 1;", env)),
         (err) => {
           assert.equal(err.code, "lock_unavailable");
-          assert.match(err.message, /case-data write lock/);
+          assert.match(err.message, /matter-data write lock/);
           return true;
         },
       );
@@ -425,7 +425,7 @@ test("a second execute is refused while another session holds the case lock", as
 // fail on. DBS order is main, law, privileged.
 function twoNativeFixture() {
   const matterRoot = mkdtempSync(join(tmpdir(), "coclerk-case-copyback-"));
-  const caseDataDir = join(matterRoot, "case-data");
+  const caseDataDir = join(matterRoot, "matter-data");
   mkdirSync(caseDataDir);
   const python = process.env.COCLERK_PYTHON || "python";
   const seeded = spawnSync(
@@ -577,7 +577,7 @@ test("an aged case lock is taken over and reported as broken stale", async () =>
 // the dump ahead of the commit, so this window survives it. A caller that
 // treats non-success as "nothing was written" and blindly re-runs duplicates
 // rows. Occupying the evidence.sql path with a non-empty directory makes
-// write_dump's os.replace fail on demand. Guidance: /case-data
+// write_dump's os.replace fail on demand. Guidance: /matter-data
 // shared/conventions.md section 2.3.
 test("execute reports failure but keeps the committed write when the evidence.sql dump fails", async () => {
   const f = fixture(90);
@@ -593,7 +593,7 @@ test("execute reports failure but keeps the committed write when the evidence.sq
 
     await assert.rejects(
       () => caseDataExecute(f.matterRoot, "INSERT INTO t VALUES (1);", triggersEnv("SELECT 1;")),
-      /case-data sqlite helper/,
+      /matter-data sqlite helper/,
     );
 
     // The load-bearing assertion: the row is there despite the failure report.

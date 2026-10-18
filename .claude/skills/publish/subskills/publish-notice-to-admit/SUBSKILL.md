@@ -24,7 +24,7 @@ Cowork.
 ## Boundaries
 
 - British Columbia Supreme Court civil actions only: Rule 7-7 and Form 26.
-- Use `/case-data` for matter facts, parties, proceedings, and evidence. Keep database details
+- Use `/matter-data` for matter facts, parties, proceedings, and evidence. Keep database details
   inside that gatekeeper.
 - Do not contact the client or opposing party.
 - Do not decide that a disputed fact is true merely because the notice requests its admission.
@@ -50,7 +50,7 @@ the practitioner instructs you to do so.
 
 ## 2. Run one bounded verification pass
 
-Make one consolidated `/case-data` request for the proceeding profile, party roles, and records
+Make one consolidated `/matter-data` request for the proceeding profile, party roles, and records
 material to the proposed admissions. Read every source document the practitioner cites. If
 that pass exposes a concrete conflict, read only the single best obvious primary matter file
 needed to state the conflict accurately, then stop searching.
@@ -93,7 +93,7 @@ Read `references/form-26.md`. Create a working Markdown record in
 `<case-data folder>\publish-notice-to-admit\` containing the matter identity, verification table,
 final facts, document list, attachment hashes, and practitioner confirmations, and rewrite it in
 place on each run. The case-data folder is the one `probanda.json`'s `case_data_dir` names; it
-must already exist (if not, stop and name `/case-data` initialize; never create it). Keep that
+must already exist (if not, stop and name `/matter-data` initialize; never create it). Keep that
 record out of the filed document.
 
 Render the lawyer-facing DOCX at the top of the draft folder as `<stem>.docx`: the draft folder

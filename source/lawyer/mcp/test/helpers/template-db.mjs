@@ -68,7 +68,7 @@ export function submissionDbAt(dbPath, version) {
   if (res.status !== 0) throw new Error(`fixture migrate to v${version} failed: ${res.stderr}`);
 }
 
-/** SQL writing filing `filingId`'s parties_snapshot as the runtime's send writes it, from the case-data
+/** SQL writing filing `filingId`'s parties_snapshot as the runtime's send writes it, from the matter-data
  * read (forms/parties-snapshot.ts), for a test that sets filed_on by a raw update, which the schema v42
  * guard refuses while the filing has no snapshot and its proceeding has a party. */
 export function partiesSnapshotSql(dbPath, filingId) {

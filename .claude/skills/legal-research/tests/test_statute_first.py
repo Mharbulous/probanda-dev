@@ -2,7 +2,7 @@
 
 A statutory-text question runs duty 4 (legislation) before duty 3 (Westlaw), without
 renumbering the duties. An instrument the fetcher files nothing for falls back to a
-case-data copy. The audit protocol answers a negative statutory proposition only with a
+matter-data copy. The audit protocol answers a negative statutory proposition only with a
 whole-instrument search on record, and the audit agent holds the search tool.
 """
 import re
@@ -16,7 +16,7 @@ REPO_ROOT = SKILLS_ROOT.parents[1]
 GATE = SKILLS_ROOT / "shared" / "legal-research.md"
 SKILL = SKILL_ROOT / "SKILL.md"
 PROTOCOL = SKILLS_ROOT / "shared" / "legal-audit-protocol.md"
-CASE_DATA = SKILLS_ROOT / "case-data" / "SKILL.md"
+CASE_DATA = SKILLS_ROOT / "matter-data" / "SKILL.md"
 SCHEMA_GEN = REPO_ROOT / "source" / "lawyer" / "mcp" / "src" / "schema-gen.ts"
 AUDIT_AGENT = REPO_ROOT / "source" / "researcher" / "agents" / "research-agent.md"
 TOOL = "research_filing__legislation_search"
@@ -52,15 +52,15 @@ class GateTests(unittest.TestCase):
     def test_duty_four_names_the_exception_and_the_case_data_fallback(self):
         duty = self.text[self.text.index("4. **Legislation text"):self.text.index("**Westlaw unreachable is a hard stop.**")]
         self.assertIn("After the Westlaw duty (before it, for a statutory-text question)", duty)
-        fallback = duty[duty.index("**A case-data copy, when nothing was filed.**"):]
+        fallback = duty[duty.index("**A matter-data copy, when nothing was filed.**"):]
         for phrase in (
-            "ask `/case-data` (query: which held authority carries this instrument's full text)",
+            "ask `/matter-data` (query: which held authority carries this instrument's full text)",
             "its bundled page range",
             "`official: false`, whatever its source",
             "Only with no copy is the instrument unread.",
         ):
             self.assertIn(phrase, fallback)
-        self.assertIn("or from the case-data copy used in its place", duty)
+        self.assertIn("or from the matter-data copy used in its place", duty)
 
     def test_template_legislation_line_offers_the_case_data_form(self):
         line = next(l for l in self.raw.splitlines() if l.startswith("Legislation: <citation>"))
@@ -71,7 +71,7 @@ class GateTests(unittest.TestCase):
     def test_skill_step_three_carries_the_exception(self):
         text = flat(SKILL)
         step = text[text.index("3. Run Westlaw before the audit"):text.index("4. Spawn `research-agent`")]
-        self.assertIn("ask `/case-data` for a held copy before marking it unread", step)
+        self.assertIn("ask `/matter-data` for a held copy before marking it unread", step)
         self.assertIn("runs duty 4 first and Westlaw after it", step)
 
     def test_case_data_routes_the_lookup(self):

@@ -75,7 +75,7 @@ above and dispatch nothing.
 
 ## 3. Dispatch marshal-facts for the facts and the mapping
 
-Invoke ``case-data`` once, as a read-only lookup of the proceeding and the party ids only, not
+Invoke ``matter-data`` once, as a read-only lookup of the proceeding and the party ids only, not
 for facts: which proceeding this issue sits in, the client's party id, and the ids of the
 parties the question is tested against. Decline any backfill or profile-completion offer it
 makes; that is separate work for the practitioner to start.

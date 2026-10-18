@@ -1,9 +1,9 @@
-// Adapter for the /case-data migrate operation (case_data__migrate).
+// Adapter for the /matter-data migrate operation (matter_data__migrate).
 //
 // Shells out to host Python, importing migrate_engine.py from the skills tree
 // (resolved lazily -- see repo-root.ts) rather than embedding it:
 // the migration chain, the schema-guard bypass, and the reference SQL are all
-// case-data gatekept material and must stay inside the /case-data skill per the
+// matter-data gatekept material and must stay inside the /matter-data skill per the
 // root CLAUDE.md's database-encapsulation rule. Only this thin driver --
 // plumbing, no SQL -- is embedded as a string.
 //
@@ -84,7 +84,7 @@ export async function caseDataMigrate(
     if (lock.brokeStale) {
       const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
       warnings.push(
-        "broke a stale case-data write lock (>15 min old) before running; if another session " +
+        "broke a stale matter-data write lock (>15 min old) before running; if another session " +
           "is still writing to or migrating this matter, stop and reconcile before continuing"
       );
       result.warnings = warnings;
@@ -112,7 +112,7 @@ function runDriver(
   // Every mode shares the migrate budget (issue #612). The engine marks an apply in flight
   // before it replaces the databases, so a kill from then on is caught by its own guard.
   const parsed = runPythonDriver({
-    label: "case-data migrate driver",
+    label: "matter-data migrate driver",
     driver: driverFile(),
     payload,
     env,
@@ -131,7 +131,7 @@ function runDriver(
       ? ` [${JSON.stringify(error.details)}]`
       : "";
     throw new DataServerError(
-      `${error.message ?? "case-data migrate refused"}${details}`,
+      `${error.message ?? "matter-data migrate refused"}${details}`,
       error.code ?? "migrate_error"
     );
   }

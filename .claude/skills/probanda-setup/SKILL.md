@@ -21,7 +21,7 @@ Call `practice_data__config_status`.
 - If `exists` is `true`, the device is already set up. A broken file goes to practice-data's Conventions repair, not here.
 - Otherwise continue. Keep its `candidates`, its `cloud_credential` and its `redirected_copies` for later steps. A `redirected_copies` entry means an earlier install wrote its settings where the runtime does not read them. Tell the practitioner, and do not copy it.
 
-## Step 2 — Find the case-data root
+## Step 2 — Find the matter-data root
 
 The root is the practitioner's `0. CASE DATA` folder: the folder that holds `_practice\practice.db` and, beside the matter folders, each matter's case-data folder. In the default layout it sits in the same document library as the matter folders.
 

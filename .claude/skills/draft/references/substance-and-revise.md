@@ -6,7 +6,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 | Source | Rule |
 |---|---|
 | The practitioner | Anything only they know: relief sought, argument, witness evidence, what to hold in reserve, tactics, priority. |
-| `/case-data` and the practice matter lookup | Offered as a starting point, confirmed before writing. A convenience, not an integration: nothing syncs back while the Writing is live. Say so once if asked, never as a recurring disclaimer. Retirement is the one designed flow-back. Counsel of record and addresses for service are the exception: case data owns them, session entry compares them live, and a correction to them is written to case data through `/case-data` first (section 8). |
+| `/matter-data` and the practice matter lookup | Offered as a starting point, confirmed before writing. A convenience, not an integration: nothing syncs back while the Writing is live. Say so once if asked, never as a recurring disclaimer. Retirement is the one designed flow-back. Counsel of record and addresses for service are the exception: case data owns them, session entry compares them live, and a correction to them is written to case data through `/matter-data` first (section 8). |
 | `/legal-research` | Every statement of what the law is. Never supply legal content yourself. Leave the slot open and let its work marker render. |
 
 Before sending a research question, ask the gatekeeper whether the proceeding already holds an authority the practitioner reviewed and rejected on the same or a close proposition, and pass it as a named exclusion rather than re-researching it. The same applies to a rejected submission before drafting or proposing a new one. Full procedure: `references/authorities.md`.

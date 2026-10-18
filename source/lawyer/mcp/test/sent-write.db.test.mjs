@@ -257,7 +257,7 @@ test("a party row another recorder wrote between the read and the write is refus
   assert.deepEqual(printed(g, id), []);
 });
 
-test("the Sent write records the party rows from case data, and a later case-data change leaves them as sent", async (t) => {
+test("the Sent write records the party rows from case data, and a later matter-data change leaves them as sent", async (t) => {
   const { g, id } = await drafted(t);
   updateCaseData(g.f.scratch, "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
   await g.prose(id, "sender", "Fixture Law LLP");

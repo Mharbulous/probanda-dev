@@ -36,7 +36,7 @@ Ask the practitioner for the matter workspace path if not already known from con
 
 In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/case-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
 
 Create `bcsc-form-substance\` beneath it if it does not exist.
 
@@ -44,7 +44,7 @@ There is one substance folder per matter. If it already contains `part-*.md` fil
 
 ### 2. Resolve matter context
 
-Invoke `/case-data` to fetch:
+Invoke `/matter-data` to fetch:
 - Parties (names, roles, counsel)
 - Proceedings (court file number, registry)
 
@@ -100,6 +100,6 @@ After writing: "Orders sought saved to `part-1-orders-sought.md`. Start a new se
 
 - **Read peers:** none -- solver runs first in the chain
 - **Write:** only `part-1-orders-sought.md` in the substance folder
-- **Case data:** exclusively via `/case-data` -- no direct database access, no direct filesystem access to case data directories
+- **Case data:** exclusively via `/matter-data` -- no direct database access, no direct filesystem access to case data directories
 - **No .docx:** never touch templates or Word files
 - **Plain text only:** no markdown syntax, no JSON in the file body

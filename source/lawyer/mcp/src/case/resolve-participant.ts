@@ -1,12 +1,12 @@
-// case_data__resolve_participant: a name, surname or file-name code resolved to the participants it
-// could mean, each with every name, alias and file code on record (/case-data design-decisions.md
-// #65, #66). The first model-facing narrow case-data tool; /case-data's operations/participants.md
+// matter_data__resolve_participant: a name, surname or file-name code resolved to the participants it
+// could mean, each with every name, alias and file code on record (/matter-data design-decisions.md
+// #65, #66). The first model-facing narrow matter-data tool; /matter-data's operations/participants.md
 // is its only caller.
 //
-// Spawns /case-data's references/scripts/resolve_participant.py the way case/parties-of-record.ts
+// Spawns /matter-data's references/scripts/resolve_participant.py the way case/parties-of-record.ts
 // spawns parties_of_record.py: an embedded plumbing driver, the skill's scripts directory on
 // PYTHONPATH. Every table and column name and all the matching stay in that script, so this wrapper
-// holds no SQL and no schema. Read-only and lock-free, like case_data__query (#28).
+// holds no SQL and no schema. Read-only and lock-free, like matter_data__query (#28).
 
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
@@ -54,7 +54,7 @@ export type ParticipantResolution =
   | { status: "ok"; query: string; matches: ParticipantMatch[] }
   /** Nothing on record matches, exactly or near: search the name as given. */
   | { status: "not_found"; query: string; reason: string }
-  /** No name, no case-data database, a database behind the current schema, or a failed read. */
+  /** No name, no matter-data database, a database behind the current schema, or a failed read. */
   | { status: "unavailable"; reason: string };
 
 /**
@@ -65,7 +65,7 @@ export function resolveParticipant(matterRoot: string, name: string, env: NodeJS
   try {
     const caseDataDir = caseDataFolder(matterRoot, env);
     const parsed = runPythonDriver({
-      label: "case-data participant resolver",
+      label: "matter-data participant resolver",
       driver: pythonDriverFile("case-resolve-participant-driver", DRIVER),
       payload: JSON.stringify({ case_data_dir: caseDataDir, name }),
       env,

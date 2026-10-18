@@ -3,7 +3,7 @@
 //
 // Serves the `time_pipeline__get/set/list/delete` tool surface from a local
 // SQLite database, reached through the host Python `sqlite3` module (the same
-// ratified exception the practice and case-data backends use: shelling out to
+// ratified exception the practice and matter-data backends use: shelling out to
 // host Python keeps the Node >=20 pin and adds no node:sqlite dependency or
 // build step). The three former cowork-db namespaces (`timeline`, `timesort`,
 // `tedraft`) are not relational -- they are JSON blobs under string keys, so
@@ -20,7 +20,7 @@
 // This backend holds no knowledge of what a namespace or key means -- that
 // stays inside the /time-pipeline-data skill and its consumers
 // (build-timeline, time-sorting, time-entry-drafting), matching the
-// case_data__query/execute connection-discipline pattern.
+// matter_data__query/execute connection-discipline pattern.
 
 import { join } from "node:path";
 

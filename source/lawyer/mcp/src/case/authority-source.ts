@@ -1,11 +1,11 @@
 // The file of one stored authority, found hash-first and given as a PDF, for /draft's scrutiny
-// review (/case-data design-decisions.md #61).
+// review (/matter-data design-decisions.md #61).
 //
-// Spawns /case-data's references/scripts/resolve_authority_source.py the way
+// Spawns /matter-data's references/scripts/resolve_authority_source.py the way
 // case/parties-of-record.ts spawns parties_of_record.py: an embedded plumbing driver, the skill's
-// scripts directory on PYTHONPATH. Every case-data table and column name stays in that script, and
+// scripts directory on PYTHONPATH. Every matter-data table and column name stays in that script, and
 // its result already speaks the drafting runtime's field names (`path`, `sha256`), so this wrapper
-// holds no SQL and no schema. Read-only and lock-free, like case_data__query (#28); the one file it
+// holds no SQL and no schema. Read-only and lock-free, like matter_data__query (#28); the one file it
 // writes is the converted PDF in the host-local cache folder the caller names.
 
 import { homedir } from "node:os";
@@ -86,7 +86,7 @@ export type AuthoritySource =
 /** Finds and converts the authority's file. A failed or timed-out spawn throws, as every host step does. */
 export function resolveAuthoritySource(request: AuthoritySourceRequest, env: NodeJS.ProcessEnv = process.env, installRoot?: string): AuthoritySource {
   const parsed = runPythonDriver({
-    label: "case-data authority-source resolver",
+    label: "matter-data authority-source resolver",
     driver: pythonDriverFile("case-authority-source-driver", DRIVER),
     payload: JSON.stringify({
       case_data_dir: request.caseDataDir,
@@ -100,7 +100,7 @@ export function resolveAuthoritySource(request: AuthoritySourceRequest, env: Nod
     extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env, installRoot) },
     timeoutAdvice:
       "Word may still be converting, or the matter tree is slow to hash. A finished conversion is cached, so call again.",
-    stagingDescription: "staging copy of the case-data law database",
+    stagingDescription: "staging copy of the matter-data law database",
   }) as { ok: boolean; result?: AuthoritySource; error?: string };
   if (!parsed.ok || !parsed.result) {
     throw new DataServerError(`resolving the authority's file failed: ${parsed.error ?? "no result"}`);

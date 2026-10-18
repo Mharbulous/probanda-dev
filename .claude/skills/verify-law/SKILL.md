@@ -19,7 +19,7 @@ folder, not to the subskill's folder.
 
 Four modes. Mode A checks one conversational claim against its source and writes nothing. A caller
 holding several claims invokes Mode A once per claim. Mode B clears the matter's stored legal-edge
-backlog by delegating to `/case-data`.
+backlog by delegating to `/matter-data`.
 
 **Document mode.** If the first word of args is `verify-authorities`, or the practitioner asks to
 check the case authorities cited in a draft document, read
@@ -35,32 +35,32 @@ not a stylistic preference.
 
 ## Mode A — claim-level (on request only)
 
-1. **Resolve the source document** by delegating to `/case-data`: invoke it with the intent of
+1. **Resolve the source document** by delegating to `/matter-data`: invoke it with the intent of
    resolving the cited authority to a readable document (the routing row for "Resolve a cited
    authority to a readable document"). Loading its router and running that row in this
    session, conversion included, is delegating. This covers both a stored authority and a caller-named
-   un-ingested file in the matter tree, including one held outside case-data. A caller-named
+   un-ingested file in the matter tree, including one held outside matter-data. A caller-named
    file's report says no hash identity exists, resolved or not.
 
    Do not read the file natively and hand the raw path to the verifier. Most authority documents
    in this practice are Westlaw `.doc` files that are actually RTF, which the file-read tool
    refuses as binary — the verifier would return `document_read: false` on a document it could
-   have read. The RTF conversion discipline is case-data's; resolution is delegated even for
+   have read. The RTF conversion discipline is matter-data's; resolution is delegated even for
    un-ingested files so this skill never learns that discipline.
 
    **If resolution fails, say so before anything else, and say it precisely,** relaying only what
-   case-data reported back. For a stored authority, that is the recorded path tried and why it
+   matter-data reported back. For a stored authority, that is the recorded path tried and why it
    failed (missing, or its hash did not match), and that the hash search over the matter tree
    found no match, or else the resolved path and its conversion failure. For a caller-named file,
    that is the named path and why it could not be read, never a hash or folder search. Never
-   invent a folder or filename pattern case-data did not report. "Not on file" without the path
+   invent a folder or filename pattern matter-data did not report. "Not on file" without the path
    tried is not a report — the practitioner cannot check it. Then **offer** retrieval via the
    `research-paralegal` agent. Retrieval runs only on the practitioner's confirmation — one rule
    for CanLII and Westlaw alike — and never while another `research-paralegal` instance is in
    flight (it is the singleton owner of the shared Chrome session and Downloads folder). A caller
    holding a job on the Job Board records the citation on the job before that dispatch and closes it once
    it has landed (`/drafting-data`'s `jobs-common.md` §2, "Sources to get"). If
-   case-data's operation does not fit this citation, name the mismatch and ask. No other method.
+   matter-data's operation does not fit this citation, name the mismatch and ask. No other method.
 
    **Secondhand reproduction.** If the caller names another judgment on file that quotes the
    authority, the diff in step 2 may be run against that document instead. Its result is then
@@ -68,7 +68,7 @@ not a stylistic preference.
    source not verified."* Never present a reproduction match as verification of the primary
    source, and never drop the label when relaying the result to a caller or a practitioner. No
    search logic lives in this skill: resolution stays delegated, and this step only names back
-   what case-data reported.
+   what matter-data reported.
 
 2. **Verbatim excerpt claim → run the script first, always.** Whenever the claim is that a
    passage reproduces the source word for word — a stored verbatim excerpt, a block quote, a
@@ -175,7 +175,7 @@ before running.
 
 ## Mode B — batch
 
-Thin delegation: invoke `/case-data` and follow its own edge-verification operation, the one
+Thin delegation: invoke `/matter-data` and follow its own edge-verification operation, the one
 the router table names for "verify the legal edges". That operation owns worklist selection,
 live-issue scoping, resolution, dispatch, apply, corrections routing, stamping, and the report.
 Nothing relocates into this skill.
@@ -186,7 +186,7 @@ No MCP tool call into the shared legal-commons pool, and no invocation of the le
 drafting-data skills, or of the `drafting_data__*`/`drafting_forms__*` tools, anywhere under this tree — including references,
 the agent file, and any planning prose stored here. The packager's dependency-direction check
 scans this whole tree for the legal-commons tool and skill literals only, with a single exemption
-(case-data) that will not be widened. The drafting-data ban is this
+(matter-data) that will not be widened. The drafting-data ban is this
 skill's own rule: no mechanical check enforces it, so it holds only as written here. If a verdict
 bears on pooled material, surface a one-line note to the practitioner and stop — the pool-aware
 path is reached by description-based routing at runtime, never named here.

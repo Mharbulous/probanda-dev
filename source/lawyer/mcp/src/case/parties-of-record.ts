@@ -1,11 +1,11 @@
 // The parties of record of one proceeding, or the parties named by case_party_id where a proceeding
-// has no file number yet, read live from /case-data (party/counsel SSOT).
+// has no file number yet, read live from /matter-data (party/counsel SSOT).
 //
-// Spawns /case-data's references/scripts/parties_of_record.py the way case/migrate.ts spawns
+// Spawns /matter-data's references/scripts/parties_of_record.py the way case/migrate.ts spawns
 // migrate_engine.py: an embedded plumbing driver, the skill's scripts directory on PYTHONPATH.
-// Every case-data table and column name stays in that script (/case-data design-decisions.md #56),
+// Every matter-data table and column name stays in that script (/matter-data design-decisions.md #56),
 // and its result already speaks the drafting runtime's field names, so this wrapper holds no SQL
-// and no schema. Read-only and lock-free, like case_data__query (#28).
+// and no schema. Read-only and lock-free, like matter_data__query (#28).
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -46,13 +46,13 @@ export interface PartyOfRecord {
 
 export type PartiesOfRecord =
   | { status: "ok"; parties: PartyOfRecord[] }
-  /** No case-data database in the folder, or nothing asked for: there is nothing to read. */
+  /** No matter-data database in the folder, or nothing asked for: there is nothing to read. */
   | { status: "not_applicable"; reason: string }
   /** The record cannot be read as asked; the reason says why. */
   | { status: "unavailable"; reason: string };
 
 /**
- * The parties of record of the proceeding with `fileNumber`, from the case-data database in
+ * The parties of record of the proceeding with `fileNumber`, from the matter-data database in
  * `caseDataDir`. Never throws: a helper that fails or cannot start reads `unavailable`, naming
  * the failure, so a caller holds every party rather than passing one nobody checked.
  */
@@ -61,7 +61,7 @@ export function readPartiesOfRecord(caseDataDir: string, fileNumber: string, env
 }
 
 /**
- * The case-data parties with these ids, each with its own counsel and address for service and no
+ * The matter-data parties with these ids, each with its own counsel and address for service and no
  * per-proceeding override: a proceeding with no file number has no court record of its own. An id
  * case data does not hold is absent from `parties`. Never throws, as readPartiesOfRecord.
  */
@@ -72,11 +72,11 @@ export function readPartiesById(caseDataDir: string, casePartyIds: readonly numb
 function read(caseDataDir: string, request: object, env: NodeJS.ProcessEnv): PartiesOfRecord {
   // The script says the same; answering here spares a Python start where there is nothing to read.
   if (!existsSync(join(caseDataDir, "main.sqlite"))) {
-    return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
+    return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
     const parsed = runPythonDriver({
-      label: "case-data parties-of-record reader",
+      label: "matter-data parties-of-record reader",
       driver: pythonDriverFile("case-parties-of-record-driver", DRIVER),
       payload: JSON.stringify({ case_data_dir: caseDataDir, ...request }),
       env,

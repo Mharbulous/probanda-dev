@@ -29,7 +29,7 @@ export type State =
 export type Action =
   /** Re-run the §B9.4 checks (see `resolution`), then steps 4-8 for the row's kind. */
   | "apply"
-  /** An answered-question or It's-final row not yet moved: call /case-data ingest-status first. */
+  /** An answered-question or It's-final row not yet moved: call /matter-data ingest-status first. */
   | "needs_ingest_status"
   /** The file is at its new path: steps 5-8 for the row's kind. */
   | "post_move_steps"

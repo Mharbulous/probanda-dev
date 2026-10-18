@@ -9,14 +9,14 @@ import { DataServerError } from "../errors.js";
 import { canonicalRoot } from "./scope.js";
 
 /** The matter pointer's file names: probanda.json first, then the legacy coclerk.json, which
- * /case-data keeps updated with the same content so an older copy of the plugin still finds the
+ * /matter-data keeps updated with the same content so an older copy of the plugin still finds the
  * matter. Either one marks an initialized matter. */
 export const POINTER_FILES: readonly string[] = ["probanda.json", "coclerk.json"];
-/** The pointer schema version /case-data writes (case/backend.ts EXPECTED_SCHEMA_VERSION). */
+/** The pointer schema version /matter-data writes (case/backend.ts EXPECTED_SCHEMA_VERSION). */
 const POINTER_SCHEMA_VERSION = 5;
 const LEGACY_ARTIFACTS_DIR = "9. AI";
 const SUBMISSION_DB_FILE = "submission.sqlite";
-/** /case-data's folder for every matter's case-data folder (case/backend.ts CASE_DATA_FOLDER). */
+/** /matter-data's folder for every matter's case-data folder (case/backend.ts CASE_DATA_FOLDER). */
 const CASE_DATA_FOLDER = "0. CASE DATA";
 
 /** root's pointer file: probanda.json when it exists, else coclerk.json when it exists, else undefined. */
@@ -25,7 +25,7 @@ export function findPointer(root: string): string | undefined {
 }
 
 /**
- * Same legitimacy contract as `case_data__query`: an existing directory carrying
+ * Same legitimacy contract as `matter_data__query`: an existing directory carrying
  * the initialized-matter pointer. Stateless trust decision, no registration
  * handshake for an agent to socially engineer.
  */
@@ -71,11 +71,11 @@ export function findDraftDir(root: string): string | undefined {
 
 /**
  * The matter's case-data folder, canonical: the one its pointer's `case_data_dir` names, as
- * `case_data__query` resolves it. It must already exist; this server never creates it.
+ * `matter_data__query` resolves it. It must already exist; this server never creates it.
  */
 export function existingCaseDataFolder(root: string, env: NodeJS.ProcessEnv = process.env): string {
   const dir = caseDataFolder(root, env);
-  const missing = `the matter's case-data folder does not exist: ${dir}. Run /case-data initialize on this matter first.`;
+  const missing = `the matter's case-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
   if (!statSync(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
@@ -83,14 +83,14 @@ export function existingCaseDataFolder(root: string, env: NodeJS.ProcessEnv = pr
 
 function pointerRefusal(root: string, why: string): DataServerError {
   return new DataServerError(
-    `${findPointer(root) ?? join(root, POINTER_FILES[0])} ${why}. Run /case-data on this matter to initialize or repair its pointer; ` +
+    `${findPointer(root) ?? join(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; ` +
       "drafting_forms__open_session never rewrites it.",
     "pointer_unusable"
   );
 }
 
 /** matter_root -> the case_data_dir its pointer (findPointer) names, normalized, read-only. The pointer
- * convention is /drafting-data's; a missing or legacy pointer is refused and handed to /case-data. */
+ * convention is /drafting-data's; a missing or legacy pointer is refused and handed to /matter-data. */
 export function resolveCaseDataDir(root: string): string {
   let pointer: Record<string, unknown>;
   try {
@@ -120,7 +120,7 @@ export function resolveDbPath(root: string): string {
 /**
  * The case data root a matter's case-data folder sits in, for when the per-user probanda.json is
  * absent: its parent, accepted only when that parent is a `0. CASE DATA` folder or the folder
- * COCLERK_CASE_DATA_ROOT names (/case-data's own layout), and is an existing directory. Anything
+ * COCLERK_CASE_DATA_ROOT names (/matter-data's own layout), and is an existing directory. Anything
  * else is null, never a guess, so the caller's missing-file error stands. Writes nothing.
  */
 export function caseDataRootFromCaseDataDir(dir: string, env: NodeJS.ProcessEnv): string | null {

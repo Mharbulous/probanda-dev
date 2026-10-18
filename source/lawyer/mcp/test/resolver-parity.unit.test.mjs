@@ -10,7 +10,7 @@ const repo = resolve(here, "..", "..", "..", "..");
 test("runtime and maintenance resolvers retain the live-selection helper", () => {
   const runtime = readFileSync(join(repo, "source", "lawyer", "mcp", "src", "case", "backend.ts"), "utf-8");
   const maintenance = readFileSync(
-    join(repo, ".claude", "skills", "case-data", "references", "scripts", "resolve_paths.py"),
+    join(repo, ".claude", "skills", "matter-data", "references", "scripts", "resolve_paths.py"),
     "utf-8",
   );
 

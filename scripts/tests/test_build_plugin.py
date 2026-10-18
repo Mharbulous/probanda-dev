@@ -52,7 +52,7 @@ class BuildPluginTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in self.out.iterdir()), sorted(PLUGINS))
 
     def test_roster_skill_is_stamped_with_its_own_plugin(self):
-        for plugin, skill in (("lawyer", "case-data"), ("researcher", "legal-research"), ("litigator", "draft")):
+        for plugin, skill in (("lawyer", "matter-data"), ("researcher", "legal-research"), ("litigator", "draft")):
             with self.subTest(plugin=plugin):
                 text = (self.out / plugin / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
                 self.assertIn(f"\n<!-- {plugin} v{self.versions[plugin]} -->\n> **Installed copy.**", text)

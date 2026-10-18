@@ -147,7 +147,7 @@ def _check_drift(ctx: dict, folder: Path, series: list[tuple[str, str]]) -> None
 
 
 def fingerprint_store(ctx: dict) -> Path:
-    """The case-data file holding the fingerprints of every generated copy."""
+    """The matter-data file holding the fingerprints of every generated copy."""
     return case_data_output_dir(ctx["matter_path"], ctx.get("case_data_folder", ""),
                                 SUBSTANCE_WORKFLOW) / STORE_NAME
 
@@ -238,13 +238,13 @@ def _case_data_dir_name(matter_path: str | Path) -> str:
     if pointer is None:
         raise RuntimeError(
             f"No probanda.json in {matter_path}. The matter is not initialized: "
-            f"run /case-data initialize for it, then try again."
+            f"run /matter-data initialize for it, then try again."
         )
     data = json.loads(pointer.read_bytes().replace(b"\x00", b"").decode("utf-8"))
     name = PureWindowsPath(data.get("case_data_dir") or "").name
     if not name:
         raise RuntimeError(
-            f"{pointer} names no case_data_dir. Run /case-data initialize for "
+            f"{pointer} names no case_data_dir. Run /matter-data initialize for "
             f"this matter, then try again."
         )
     return name
@@ -263,7 +263,7 @@ def case_data_output_dir(matter_path: str | Path, case_data_folder: str | Path,
         raise RuntimeError(
             f"case-data folder is not an existing directory: "
             f"{case_data_folder!r}. publish-bcsc-form never creates it. If the "
-            f"matter is not initialized, run /case-data initialize; otherwise "
+            f"matter is not initialized, run /matter-data initialize; otherwise "
             f"pass the folder probanda.json's case_data_dir names to harness "
             f"init with --case-data-folder (in Cowork, request access to that "
             f"folder first)."

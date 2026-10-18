@@ -1,7 +1,7 @@
-// A real /case-data main.sqlite, built from /case-data's canonical schema.sql (party/counsel SSOT).
+// A real /matter-data main.sqlite, built from /matter-data's canonical schema.sql (party/counsel SSOT).
 //
 // The drafting runtime reads counsel of record and the address for service from case data, through
-// /case-data's own parties_of_record.py, in the folder holding the submission database. A test that
+// /matter-data's own parties_of_record.py, in the folder holding the submission database. A test that
 // renders a drafting Writing's parties writes this database beside its submission database, so the
 // render exercises the real read, never a seam.
 
@@ -26,7 +26,7 @@ con.close()
 
 function python(args) {
   const res = spawnSync(process.env.COCLERK_PYTHON || "python", args, { encoding: "utf-8" });
-  if (res.status !== 0) throw new Error(`case-data fixture failed: ${res.stderr}`);
+  if (res.status !== 0) throw new Error(`matter-data fixture failed: ${res.stderr}`);
 }
 
 /** Writes `<caseDataDir>/main.sqlite` from the canonical schema at the current version plus `seed`
@@ -59,7 +59,7 @@ export function writeCaseDataStores(caseDataDir, seed = "") {
   python(["-c", BUILD_SIDE_STORES, caseDataMigrateScriptsDir(process.env), caseDataDir]);
 }
 
-/** Runs `sql` against the case-data database in `caseDataDir`. */
+/** Runs `sql` against the matter-data database in `caseDataDir`. */
 export function updateCaseData(caseDataDir, sql) {
   python([
     "-c",
@@ -74,7 +74,7 @@ const lit = (value) => (value === null || value === undefined ? "NULL" : `'${Str
 /**
  * Seed SQL for case data holding `proceedings` and `parties`. Each party carries counsel and the
  * address for service under the drafting runtime's own field names, and is of record in each
- * `[proceedingId, role]` its `of_record` names (role in /case-data's vocabulary, e.g. "plaintiff").
+ * `[proceedingId, role]` its `of_record` names (role in /matter-data's vocabulary, e.g. "plaintiff").
  *
  *   proceedings: [{ id, file_number, court = "BCSC" }]
  *   parties: [{ id, name, counsel_name, counsel_firm, counsel_email, counsel_phone, address_for_service, of_record = [] }]

@@ -60,7 +60,7 @@ doc.save(sys.argv[1])`;
 
 const pdfFacts = (path) => JSON.parse(python("import sys, json, pymupdf\nd = pymupdf.open(sys.argv[1])\nprint(json.dumps([d.page_count, len(d.get_toc())]))", path));
 
-test("assemble_general: registered, taking the brief's arguments and no case-data or database path", async (t) => {
+test("assemble_general: registered, taking the brief's arguments and no matter-data or database path", async (t) => {
   const tool = buildToolDefinitions().find((d) => d.name === "drafting_forms__assemble_general");
   assert.ok(tool, "not in buildToolDefinitions()");
   assert.deepEqual(Object.keys(tool.inputSchema.properties), ["matter_root", "docx_name", "pdf_name", "enclosures"]);

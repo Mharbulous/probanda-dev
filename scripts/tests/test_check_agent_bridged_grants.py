@@ -24,8 +24,8 @@ _spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRI
 check_plugin = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(check_plugin)
 
-PLAIN = "mcp__plugin_probanda_data__case_data__query"
-BRIDGED = "mcp__remote-devices__plugin_probanda_data__case_data__query"
+PLAIN = "mcp__plugin_probanda_data__matter_data__query"
+BRIDGED = "mcp__remote-devices__plugin_probanda_data__matter_data__query"
 
 
 def agent(tools):

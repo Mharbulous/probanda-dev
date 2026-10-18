@@ -749,18 +749,18 @@ def standard_output_dir(workspace, case_data_folder):
     if not folder.is_dir():
         raise FileNotFoundError(
             f"Case-data folder not found: {case_data_folder}. Initialize the "
-            "matter with /case-data initialize, then pass the folder that "
+            "matter with /matter-data initialize, then pass the folder that "
             "probanda.json's case_data_dir names.")
     candidates = [matter / name for name in ("probanda.json", "coclerk.json")]
     pointer = next((p for p in candidates if p.is_file()), None)
     if pointer is None:
         raise FileNotFoundError(f"probanda.json not found in {matter}. Initialize "
-                                "the matter with /case-data initialize.")
+                                "the matter with /matter-data initialize.")
     raw = pointer.read_bytes()
     stored = json.loads(raw.replace(b"\x00", b"").decode("utf-8")).get("case_data_dir")
     if not stored:
         raise ValueError(f"{pointer} has no case_data_dir. Initialize the matter "
-                         "with /case-data initialize.")
+                         "with /matter-data initialize.")
     if folder.resolve().name.casefold() != PureWindowsPath(stored).name.casefold():
         raise ValueError(f"Case-data folder {case_data_folder} does not match "
                          f"{pointer.name}'s case_data_dir ({stored}). Pass the "
@@ -788,7 +788,7 @@ def main(argv=None):
     ap.add_argument("--output", help="explicit output file path (overrides the "
                     "standard output location)")
     ap.add_argument("--verified-citations", help="file with one citation string "
-                    "per line (produced by delegating to the /case-data skill); "
+                    "per line (produced by delegating to the /matter-data skill); "
                     "matching authorities are marked Text on file")
     ap.add_argument("--label", help="title suffix, e.g. 'Corvo Smoke Complaints (L8145)'")
     args = ap.parse_args(argv)

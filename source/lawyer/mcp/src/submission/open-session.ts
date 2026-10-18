@@ -6,7 +6,7 @@
 // The probanda.json convention is /drafting-data's (its SKILL.md Configuration stays the
 // documented owner); this is its executable form. The resolver is READ-ONLY on purpose: it never
 // heals, rewrites or moves anything. case/backend.ts's resolve_pointer does all three, so it is
-// not reused here -- a missing or legacy pointer is refused and handed to /case-data.
+// not reused here -- a missing or legacy pointer is refused and handed to /matter-data.
 //
 // Unlike drafting_forms__bootstrap, which stays a pure gate and still refuses on
 // migration_required (#351), this call migrates on its own initiative (#590 decision 2): the
@@ -105,7 +105,7 @@ export interface OpenSessionResult extends BootstrapResult {
   counsel_offers?: CounselOffer[];
   /** Read-only: the files in the folders the opened filing declares as its ingest inputs
    * (`opened.ingest_inputs.folders`) the case database does not yet hold, and, when a correspondence
-   * folder is among them, the newest dated correspondence it does (/case-data design-decisions #60).
+   * folder is among them, the newest dated correspondence it does (/matter-data design-decisions #60).
    * `to_ingest` names those files and `records` says, one entry per `to_ingest` path, why each is not
    * held: its verdict, its source, and the source it may be another version of. `folders` names the
    * folder patterns it covered and `checked_at` when it ran, so the input check can stand on it

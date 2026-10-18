@@ -1,5 +1,5 @@
-// Exclusive cross-process lock for case-data writes -- both `case_data__execute`
-// and `case_data__migrate` take it, so a write and a migration on one matter can
+// Exclusive cross-process lock for matter-data writes -- both `matter_data__execute`
+// and `matter_data__migrate` take it, so a write and a migration on one matter can
 // never interleave.
 //
 // A server process must never assume it is the only writer. How many
@@ -101,7 +101,7 @@ export async function acquireCaseLock(
   }
 
   throw new DataServerError(
-    `could not acquire the case-data write lock within ${
+    `could not acquire the matter-data write lock within ${
       (LOCK_ATTEMPTS * LOCK_RETRY_MS) / 1000
     }s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this matter`,
     "lock_unavailable"

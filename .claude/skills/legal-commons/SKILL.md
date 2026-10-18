@@ -12,9 +12,9 @@ stored in Supabase and served by the `legal_commons__*` MCP tools. Every read,
 the one push, and every amend go through this skill. Other skills consume the
 pool only through it.
 
-Sibling gatekeepers: `/case-data` (local per-matter case data, including the
+Sibling gatekeepers: `/matter-data` (local per-matter case data, including the
 working legal-knowledge layer) and `/practice-data` (local practice data).
-The consolidation/push skill is a **client** of `/case-data` + `/legal-commons`,
+The consolidation/push skill is a **client** of `/matter-data` + `/legal-commons`,
 never a gatekeeper itself.
 
 ## Encapsulation — absolute
@@ -90,7 +90,7 @@ bucket.
 
 **Never pass matter-identifying content** — matter strategy, `notes`,
 `file_path`/`file_hash`, `factual_context`, or precedent-vs-live-fact commentary
-belong in the local working layer (`/case-data`), and never cross. Compression,
+belong in the local working layer (`/matter-data`), and never cross. Compression,
 the severance/indirect-identifier screen, and dedup adjudication are the
 consolidation/push skill's job, upstream of this call.
 

@@ -71,7 +71,7 @@ Ask the practitioner for the matter workspace path if not already known from con
 
 In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/case-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
 
 If `bcsc-form-substance\` does not exist, halt: "No substance drafted yet. Run ``solver`` first." Polish never creates the folder.
 

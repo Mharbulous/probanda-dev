@@ -7,14 +7,14 @@
 //
 // `drafting_data__query` and `drafting_data__execute` are intentionally
 // NOT an entity/ORM surface (issue 292's "generic connection-discipline
-// primitives" framing, matching case-data's plan D2): this backend never
+// primitives" framing, matching matter-data's plan D2): this backend never
 // embeds a query, a table name, or a column name. All SQL and schema
 // knowledge stays inside the /drafting-data gatekeeper skill (build ticket
 // #295).
 //
 // Callers pass an absolute db_path -- the resolved location of one matter's
 // submission database -- rather than a matter_root the backend resolves
-// itself. Unlike case-data's probanda.json pointer (which exists to survive a
+// itself. Unlike matter-data's probanda.json pointer (which exists to survive a
 // matter folder rename independent of its database folder, and a legacy `9.
 // AI` migration), this is a brand-new schema with no legacy state and no
 // pointer file to heal, so the gatekeeper skill computes the path once and
@@ -22,12 +22,12 @@
 // genericity choice: the matter-workspace layout for the submission database
 // is /drafting-data's decision, not this primitive's.
 //
-// Simplified relative to case-data's backend on purpose (v1 has one database,
+// Simplified relative to matter-data's backend on purpose (v1 has one database,
 // not three ATTACHed together, and no evidence.sql dump requirement -- ADR
 // 0004 dropped the privileged/main/law split entirely): `execute` stages a
 // temp copy, mutates it under one BEGIN...COMMIT, and copies it back only
 // after a clean commit and a closed connection -- the same staged-mutation
-// discipline as case-data's I2, without the multi-database ATTACH or dump
+// discipline as matter-data's I2, without the multi-database ATTACH or dump
 // machinery that discipline was built around.
 //
 // `query` runs in one long-lived sidecar interpreter instead of a process per
@@ -455,7 +455,7 @@ export function submissionDataQuery(
 
 /**
  * Writes take the cross-process data lock (lock.ts) for the whole
- * stage -> mutate -> copy-back window, for the same reason case-data's execute
+ * stage -> mutate -> copy-back window, for the same reason matter-data's execute
  * does: without it, two sessions stage from the same starting bytes and the
  * second copy-back silently discards the first session's writes. `query` stays
  * lock-free on purpose -- it is the hot path and never copies anything back.

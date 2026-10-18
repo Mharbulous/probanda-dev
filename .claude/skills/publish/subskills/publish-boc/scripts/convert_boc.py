@@ -16,7 +16,7 @@ Structure handled:
   - TOTAL BILL OF COSTS table
   - Footer (date line + Signature of Assessing Officer)
 
-Programmatic scalars (filled by generate script from /case-data + lawyer input):
+Programmatic scalars (filled by generate script from /matter-data + lawyer input):
     [COURT FILE NUMBER], [REGISTRY], [ORIGINATING PARTY], [ORIGINATING PARTY ROLE],
     [RESPONDING PARTY], [RESPONDING PARTY ROLE], [PARTY CLAIMING COSTS],
     [COSTS SCALE], [UNIT VALUE], [COSTS ORDER], [COSTS TERMS]

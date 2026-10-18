@@ -379,8 +379,8 @@ class TestPlantedViolations(FixtureTest):
         self.assertOnlyFails("shipped-tree-purity", "differs from source: skills/alpha/references/rules.md")
 
     def test_agent_bridged_grants(self):
-        self.fixture.write("source/probanda/agents/helper.md", agent([PLAIN + "case_data__query"]))
-        self.assertOnlyFails("agent-bridged-grants", f"helper.md lacks the bridged twin {BRIDGED}case_data__query")
+        self.fixture.write("source/probanda/agents/helper.md", agent([PLAIN + "matter_data__query"]))
+        self.assertOnlyFails("agent-bridged-grants", f"helper.md lacks the bridged twin {BRIDGED}matter_data__query")
 
     def test_commons_encapsulation(self):
         self.fixture.write(".claude/skills/legal-commons/SKILL.md", COMMONS_SKILL_MD + "Reads practice.db.\n")
@@ -683,25 +683,25 @@ class TestAcrossPlugins(unittest.TestCase):
                          (False, "skill 'draft' ships in practice and litigator; agent 'clerk' ships in practice and litigator"))
 
     def layering(self, status, rulings):
-        self.assign(status, {"skills": ["show-me"]}, {"skills": ["case-data"]})
-        write(self.root, ".claude/skills/show-me/SKILL.md", "Ask `/case-data` first.\n")
-        write(self.root, ".claude/skills/case-data/SKILL.md", "Present it with /show-me.\n")
+        self.assign(status, {"skills": ["show-me"]}, {"skills": ["matter-data"]})
+        write(self.root, ".claude/skills/show-me/SKILL.md", "Ask `/matter-data` first.\n")
+        write(self.root, ".claude/skills/matter-data/SKILL.md", "Present it with /show-me.\n")
         write(self.root, "source/layering.json", json.dumps(rulings))
         return check_plugin.check_layering_rule(self.root)
 
-    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "case-data"}
+    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "matter-data"}
 
     def test_upward_reference_with_no_ruling_fails_before_and_at_cutover(self):
         for status in ("planned", "cutover"):
             with self.subTest(status=status):
                 self.assertEqual(self.layering(status, {"allowed": [], "todo": []}),
-                                 (False, "no ruling: .claude/skills/show-me/SKILL.md names case-data"))
+                                 (False, "no ruling: .claude/skills/show-me/SKILL.md names matter-data"))
 
     def test_reference_still_to_fix_passes_until_cutover_and_fails_at_it(self):
         rulings = {"allowed": [], "todo": [self.PAIR]}
         self.assertEqual(self.layering("planned", rulings), (True, "1 upward pairs, 1 still to fix before cutover"))
         self.assertEqual(self.layering("cutover", rulings),
-                         (False, "still to fix: .claude/skills/show-me/SKILL.md names case-data"))
+                         (False, "still to fix: .claude/skills/show-me/SKILL.md names matter-data"))
 
     def test_allowed_reference_passes_at_cutover_and_a_stale_ruling_fails(self):
         self.assertEqual(self.layering("cutover", {"allowed": [self.PAIR], "todo": []}), (True, "1 upward pairs"))

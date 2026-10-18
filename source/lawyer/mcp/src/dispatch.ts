@@ -136,7 +136,7 @@ export async function callTool(
     return callPracticeTool(context.practiceDb, name, args);
   }
 
-  if (name === "case_data__query") {
+  if (name === "matter_data__query") {
     return caseDataQuery(
       args.matter_root as string,
       args.sql as string,
@@ -144,30 +144,30 @@ export async function callTool(
     );
   }
 
-  if (name === "case_data__execute") {
+  if (name === "matter_data__execute") {
     return caseDataExecute(
       args.matter_root as string,
       args.sql_script as string
     );
   }
 
-  if (name === "case_data__resolve_participant") {
+  if (name === "matter_data__resolve_participant") {
     return resolveParticipant(args.matter_root as string, args.name as string);
   }
 
-  if (name === "case_data__ingest_authority") {
+  if (name === "matter_data__ingest_authority") {
     return ingestAuthority(args as unknown as AuthorityIngestRequest);
   }
 
-  if (name === "case_data__procedural_history_append") {
+  if (name === "matter_data__procedural_history_append") {
     return proceduralHistoryAppend(args as unknown as ProceduralHistoryAppendArgs);
   }
 
-  if (name === "case_data__migrate") {
+  if (name === "matter_data__migrate") {
     const mode = args.mode as string;
     if (!["plan", "apply", "restore", "backups"].includes(mode)) {
       throw new ValidationError(
-        `case_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
+        `matter_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
       );
     }
     return caseDataMigrate(args.matter_root as string, mode as MigrateMode, {

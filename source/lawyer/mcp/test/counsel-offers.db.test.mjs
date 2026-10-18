@@ -3,7 +3,7 @@
 // back to the practitioner, to apply to case data, discard here, or hold, and the migrate refuses
 // the hop that drops it (v43) while any offer or parties_drift row stands. Each matter's case-data
 // folder holds a real submission database migrated to v42, the last schema holding the copy, and a
-// case-data main.sqlite built from /case-data's canonical schema.
+// matter-data main.sqlite built from /matter-data's canonical schema.
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -104,7 +104,7 @@ test("an unlinked party holding values is one unlinked row naming them", async (
   assert.deepEqual(counselOffers(m.dbPath), [EMAIL_OFFER, { ...DEFENDANT, case_party_id: null, kind: "unlinked", held: { counsel_name: "Y. Counsel" } }]);
 });
 
-test("with no case-data database every party holding values is unchecked, saying why", async (t) => {
+test("with no matter-data database every party holding values is unchecked, saying why", async (t) => {
   const m = await matterFixture(t);
   rmSync(join(m.caseDataDir, "main.sqlite"));
   const offers = counselOffers(m.dbPath);
@@ -115,7 +115,7 @@ test("with no case-data database every party holding values is unchecked, saying
       [2, "unchecked", { counsel_name: "Y. Counsel" }],
     ]
   );
-  for (const o of offers) assert.match(o.reason, /no case-data database in /);
+  for (const o of offers) assert.match(o.reason, /no matter-data database in /);
 });
 
 test("open_session returns counsel_offers only when there is one", async (t) => {

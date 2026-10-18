@@ -43,7 +43,7 @@ def between(text, start, end):
 def relay_lines(notes):
     """The gate's relay: one line per flag, with the offer to record it."""
     return [
-        f"{kind}: {description} ({evidence}). Record it through /case-data?"
+        f"{kind}: {description} ({evidence}). Record it through /matter-data?"
         for kind, description, evidence in FLAG_LINE.findall(notes)
     ]
 
@@ -85,7 +85,7 @@ class GateRelayTests(unittest.TestCase):
         self.assertIn(
             "Relay each `case-data:` flag in the return's notes in one line: its kind, "
             "its description and its evidence ids, with the offer to record it through "
-            "`/case-data`. Record nothing without the practitioner's yes.",
+            "`/matter-data`. Record nothing without the practitioner's yes.",
             self.after,
         )
 
@@ -101,7 +101,7 @@ class GateRelayTests(unittest.TestCase):
             relay_lines(NOTES_ONE_DISCREPANCY),
             [
                 "discrepancy: FIXTURE copies A and B of the instrument differ on term 3 "
-                "(doc-1, doc-2). Record it through /case-data?"
+                "(doc-1, doc-2). Record it through /matter-data?"
             ],
         )
 

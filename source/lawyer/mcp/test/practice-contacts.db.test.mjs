@@ -125,7 +125,7 @@ test("contact_lookup finds by name, email or phone and lists likely duplicates a
   await assert.rejects(contacts.contact_lookup(store, {}), /requires id or query/);
 });
 
-test("check 2 lists each case-data party no matter role points to, by the case-data folder named for the matter", async (t) => {
+test("check 2 lists each matter-data party no matter role points to, by the case-data folder named for the matter", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "coclerk-contacts-root-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const { store } = await setup(t, "check2", { COCLERK_CASE_DATA_ROOT: root });

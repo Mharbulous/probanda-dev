@@ -1,12 +1,12 @@
 // Which files in the matter folders a caller names the case database does not yet hold, read at
-// session entry (/case-data design-decisions.md #60). The caller passes the folders the opened
+// session entry (/matter-data design-decisions.md #60). The caller passes the folders the opened
 // filing's type declares as its ingest inputs (shared/declared-layout.md section 5), drawn from the
 // solicitor-client, correspondence, court-file and discovery folders.
 //
-// Spawns /case-data's references/scripts/ingest_coverage.py the way case/parties-of-record.ts
+// Spawns /matter-data's references/scripts/ingest_coverage.py the way case/parties-of-record.ts
 // spawns parties_of_record.py: an embedded plumbing driver, the skill's scripts directory on
-// PYTHONPATH. The script runs /case-data's own ingest-coverage operation, so this wrapper holds no
-// SQL and no schema. Read-only and lock-free, like case_data__query (#28).
+// PYTHONPATH. The script runs /matter-data's own ingest-coverage operation, so this wrapper holds no
+// SQL and no schema. Read-only and lock-free, like matter_data__query (#28).
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -49,7 +49,7 @@ export type IngestCoverage =
       to_ingest: string[];
       /** One entry per `to_ingest` path, in the same order, saying why the file is not held:
        * `verdict` `none` is no usable record, `partial` a partly ingested one and `failed` a failed
-       * one. `source_id` is the case-data source behind the verdict, and `possible_version_of` the
+       * one. `source_id` is the matter-data source behind the verdict, and `possible_version_of` the
        * source its pending supersede marker names as another version of the file; each is null when
        * there is none. */
       records: {
@@ -73,14 +73,14 @@ export type IngestCoverage =
       /** When this check ran: an ISO 8601 UTC timestamp. */
       checked_at: string;
     }
-  /** No case-data database in the folder: there is nothing to check against. */
+  /** No matter-data database in the folder: there is nothing to check against. */
   | { status: "not_applicable"; reason: string }
   /** The check could not run; the reason says why. Never read as "ingested". */
   | { status: "unavailable"; reason: string };
 
 /**
  * The ingest coverage of `folderGlobs` in the matter at `matterRoot` (a host path, used for both the
- * walk and the stored-path comparison) against the case-data database in `caseDataDir`. The
+ * walk and the stored-path comparison) against the matter-data database in `caseDataDir`. The
  * solicitor-client and correspondence folders among them count as correspondence. Never throws: a
  * helper that fails, cannot start or outlives its budget reads `unavailable`, naming the failure.
  */
@@ -92,12 +92,12 @@ export function readIngestCoverage(
 ): IngestCoverage {
   // The script says the same; answering here spares a Python start where there is nothing to read.
   if (!existsSync(join(caseDataDir, "main.sqlite"))) {
-    return { status: "not_applicable", reason: `no case-data database in ${caseDataDir}` };
+    return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
     const timeoutMs = pythonTimeoutMs(env, COVERAGE_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS");
     const parsed = runPythonDriver({
-      label: "case-data ingest-coverage reader",
+      label: "matter-data ingest-coverage reader",
       driver: pythonDriverFile("case-ingest-coverage-driver", DRIVER),
       payload: JSON.stringify({
         case_data_dir: caseDataDir,
@@ -111,7 +111,7 @@ export function readIngestCoverage(
       timeoutAdvice:
         `Hashing the matter's folders needs more than its ${timeoutMs} ms budget. The session reports ` +
         "ingest coverage as unavailable for this opening; the check writes nothing, so nothing is lost.",
-      stagingDescription: "staging copy of the case-data databases",
+      stagingDescription: "staging copy of the matter-data databases",
     }) as { ok: boolean; result?: IngestCoverage; error?: string };
     if (!parsed.ok || !parsed.result) {
       return { status: "unavailable", reason: `checking ingest coverage failed: ${parsed.error ?? "no result"}` };

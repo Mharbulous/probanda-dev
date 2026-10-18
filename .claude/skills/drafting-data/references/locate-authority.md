@@ -1,6 +1,6 @@
 # Locate an authority's own text
 
-Owned by `/drafting-data`. Finds the file on disk that holds one `authorities` row's own text, so a caller can pass that path on (for a verbatim check, to `/verify-law`). It reads one row and lists the matter's `6. LAW` tree. It writes nothing, and it never opens, converts or hashes the file: making a file readable is `/case-data`'s job. There is no path or hash column to consult, so identity is by filename only, and the report says so.
+Owned by `/drafting-data`. Finds the file on disk that holds one `authorities` row's own text, so a caller can pass that path on (for a verbatim check, to `/verify-law`). It reads one row and lists the matter's `6. LAW` tree. It writes nothing, and it never opens, converts or hashes the file: making a file readable is `/matter-data`'s job. There is no path or hash column to consult, so identity is by filename only, and the report says so.
 
 ## Inputs
 

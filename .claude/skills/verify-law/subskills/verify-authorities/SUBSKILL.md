@@ -17,7 +17,7 @@ Given a draft legal document and the matter's case authority files, this mode:
 2. **Citation audit**: Identifies all cases cited in the document and cross-references them
    against case files saved locally — flagging any citation that has no corresponding local file
    (potential hallucination or a case that hasn't been obtained yet)
-3. Resolves each case file to a readable document through `/case-data`
+3. Resolves each case file to a readable document through `/matter-data`
 4. Checks every quoted passage with the front door's deterministic diff script
 5. Dispatches, per case file, an isolated `researcher:verify-claim` verdict for each proposition
    the draft attributes to the case, and a read-only research subagent performing a structured
@@ -55,7 +55,7 @@ document presents as a quotation from it.
 ## Step 2 — Citation audit: match citations against local files
 
 For each case cited in the document, check whether a corresponding file exists locally: first a
-stored authority, by resolving the citation through `/case-data` as in Step 3; otherwise a file in
+stored authority, by resolving the citation through `/matter-data` as in Step 3; otherwise a file in
 the case authority folder. List that folder and match by name, not by citation string — a match
 exists if the case name (or a recognizable portion of it) appears in a filename, e.g. *Hamian v.
 The Owners, Strata Plan NW 92* matches `Hamian v The Owners Strata Plan NW 92.doc`.
@@ -77,7 +77,7 @@ step 1.
 ## Step 3 — Resolve each case file to a readable document
 
 Resolve every matched case file exactly as the front door's Mode A step 1 does: delegate to
-`/case-data` with the intent of resolving the cited authority to a readable document, naming the
+`/matter-data` with the intent of resolving the cited authority to a readable document, naming the
 stored authority or the file found in Step 2. Case-data owns conversion (most authority files here
 are Westlaw `.doc` files that are actually RTF) and does it outside the matter's folders, so this
 mode writes no conversion files and has none to clean up. Report a resolution failure precisely,

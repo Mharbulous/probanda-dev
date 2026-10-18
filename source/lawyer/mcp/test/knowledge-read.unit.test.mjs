@@ -57,7 +57,7 @@ test("paths are relative, start with a tree-owning skill or a reserved entry, an
     "C:\\Windows\\win.ini",
     "\\\\server\\share\\x.md",
     "/draft/CAN/BC/venues.json",
-    "case-data/CAN/BC/venues.json",
+    "matter-data/CAN/BC/venues.json",
     "Draft/CAN/BC/venues.json",
     "draft/CAN/BC/BCSC/Documents/CON.md",
     "draft/CAN/BC/BCSC/Documents/a?b.md",
@@ -402,7 +402,7 @@ test("a per-user coclerk.json wins: matter_root is never resolved, so a matter f
   assert.ok(listed.entries.length > 0);
 });
 
-test("with no per-user coclerk.json, an unusable matter pointer refuses with pointer_unusable and its /case-data repair text; a folder with no pointer with invalid_root", async (t) => {
+test("with no per-user coclerk.json, an unusable matter pointer refuses with pointer_unusable and its /matter-data repair text; a folder with no pointer with invalid_root", async (t) => {
   const f = knowledgeFixture(t);
   useProcessEnv(t, f, { userFile: false });
   for (const [name, pointer, why] of [
@@ -415,7 +415,7 @@ test("with no per-user coclerk.json, an unusable matter pointer refuses with poi
     const err = await rejection(callTool({}, "knowledge__read", { path: "_hosts.json", matter_root: matterRoot }));
     assert.equal(err.code, "pointer_unusable", name);
     assert.match(err.message, why, name);
-    assert.match(err.message, /Run \/case-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it\./, name);
+    assert.match(err.message, /Run \/matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it\./, name);
   }
   const { matterRoot } = matterFixture(f, null, "L6 Bare");
   const err = await rejection(callTool({}, "knowledge__list", { dir: "draft/CAN/BC", matter_root: matterRoot }));

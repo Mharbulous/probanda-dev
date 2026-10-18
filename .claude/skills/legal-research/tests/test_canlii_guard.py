@@ -85,7 +85,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
                     self.assertEqual(call(prefix + tool).returncode, 0)
 
     def test_other_tools_are_allowed(self):
-        for tool in ("mcp__plugin_lawyer_data__case_data__query", "Read", "WebSearch"):
+        for tool in ("mcp__plugin_lawyer_data__matter_data__query", "Read", "WebSearch"):
             with self.subTest(tool=tool):
                 self.assertEqual(call(tool).returncode, 0)
 
@@ -106,7 +106,7 @@ class PluginRegistrationTests(unittest.TestCase):
         matcher = re.compile(entries[0]["matcher"])
         for name in (LOCAL + "search", BRIDGED + "search"):
             self.assertTrue(matcher.fullmatch(name), name)
-        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__case_data__query"))
+        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__matter_data__query"))
 
 
 if __name__ == "__main__":

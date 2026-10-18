@@ -421,7 +421,7 @@ function rosterLine(installRoot: string, segment: string): string {
 }
 
 /**
- * `.claude/skills/case-data/references/scripts/` -- owns migrate_engine.py.
+ * `.claude/skills/matter-data/references/scripts/` -- owns migrate_engine.py.
  *
  * Deliberately NOT the sibling `scripts/` dir: migrate_engine.py imports
  * `rebuild` and `resolve_paths`, which are bare sibling imports resolvable only
@@ -429,11 +429,11 @@ function rosterLine(installRoot: string, segment: string): string {
  * rebuild.read_ref(), which resolves `../` from rebuild.py's own __file__. One
  * PYTHONPATH entry, no sys.path munging.
  *
- * Served install-first (resolveShippedRoot): an install bundles case-data, so
+ * Served install-first (resolveShippedRoot): an install bundles matter-data, so
  * it needs no checkout. `installRoot` is the same test seam.
  */
 export function caseDataMigrateScriptsDir(env?: NodeJS.ProcessEnv, installRoot?: string): string {
-  return migrateScriptsDir("case-data", env, installRoot);
+  return migrateScriptsDir("matter-data", env, installRoot);
 }
 
 /**

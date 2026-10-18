@@ -75,7 +75,7 @@ def _current_version(con):
 def _backup_db(db_path):
     """Copy db_path aside (timestamped, UTC) before the first hop touches a
     pre-existing database. Deliberately minimal, mirroring drafting-data's
-    engine: not case-data's plan/apply/restore ceremony, just the copy-aside.
+    engine: not matter-data's plan/apply/restore ceremony, just the copy-aside.
     The bare-file copy is complete because this database is contractually
     journal_mode=DELETE (enforced by timecamping/backend.ts's guard), so no
     -wal/-shm sidecars exist, and at call time this process holds only a

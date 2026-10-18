@@ -22,7 +22,7 @@ PLUGINS = {
     "practice": {"requires": [], "skills": ["show-me"], "agents": ["docket-clerk"], "hooks": {}, "servers": ["data"]},
     "research": {"requires": ["practice"], "skills": ["legal-research"], "agents": [], "hooks": {},
                  "servers": ["commons"]},
-    "litigator": {"requires": ["practice", "research"], "skills": ["case-data", "draft"], "agents": [],
+    "litigator": {"requires": ["practice", "research"], "skills": ["matter-data", "draft"], "agents": [],
                   "hooks": {}, "servers": []},
 }
 
@@ -51,8 +51,8 @@ class ScanTest(unittest.TestCase):
                            if f["plugin"] != "shared"})
 
     def test_upward_reference_is_found(self):
-        self.assertEqual(self.pairs({"show-me/SKILL.md": "Ask `/case-data` first.\n"}),
-                         [(".claude/skills/show-me/SKILL.md", "case-data")])
+        self.assertEqual(self.pairs({"show-me/SKILL.md": "Ask `/matter-data` first.\n"}),
+                         [(".claude/skills/show-me/SKILL.md", "matter-data")])
 
     def test_downward_reference_is_not(self):
         self.assertEqual(self.pairs({"draft/SKILL.md": "Present it with /show-me, after /legal-research.\n"}), [])
@@ -78,23 +78,23 @@ class ScanTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             plugins = make_repo(root, {"show-me/SKILL.md": "x\n"},
-                                agents={"docket-clerk": "- mcp__plugin_probanda_data__case_data__query\n"})
+                                agents={"docket-clerk": "- mcp__plugin_probanda_data__matter_data__query\n"})
             plugins["practice"]["skills"].append("tldr")
             (root / "source" / "assignment.json").write_text(
                 json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
             for rel, text in (("source/practice/agents/docket-clerk.md", "- mcp__plugin_practice_data__rules__at\n"),
-                              ("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/case-data`.\n")):
+                              ("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/matter-data`.\n")):
                 (root / rel).parent.mkdir(parents=True)
                 (root / rel).write_text(text, encoding="utf-8")
             self.assertEqual(sorted({(f["file"], f["target"]) for f in check_layering.scan(root, plugins)}),
-                             [("public/plugins/practice/skills/tldr/SKILL.md", "case-data"),
+                             [("public/plugins/practice/skills/tldr/SKILL.md", "matter-data"),
                               ("source/practice/agents/docket-clerk.md", "rules__*")])
 
     def test_tests_folder_is_not_scanned(self):
-        self.assertEqual(self.pairs({"show-me/tests/test_x.py": "# /case-data\n"}), [])
+        self.assertEqual(self.pairs({"show-me/tests/test_x.py": "# /matter-data\n"}), [])
 
     def test_shared_is_reported_apart(self):
-        self.assertEqual(self.pairs({"shared/x.md": "Ask `/case-data`.\n", "show-me/SKILL.md": "x\n"}), [])
+        self.assertEqual(self.pairs({"shared/x.md": "Ask `/matter-data`.\n", "show-me/SKILL.md": "x\n"}), [])
 
     def test_hook_script_in_another_plugins_folder(self):
         found = self.pairs({"draft/hooks/gate.py": "pass\n", "show-me/SKILL.md": "x\n"},
@@ -106,7 +106,7 @@ class RulingTest(unittest.TestCase):
     def run_main(self, rulings, strict):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            make_repo(root, {"show-me/SKILL.md": "Ask `/case-data` first.\n"})
+            make_repo(root, {"show-me/SKILL.md": "Ask `/matter-data` first.\n"})
             (root / "source" / "layering.json").write_text(json.dumps(rulings), encoding="utf-8")
             argv = ["check_layering.py", "--repo", str(root)] + ([] if strict else ["--report"])
             old, sys.argv = sys.argv, argv
@@ -115,7 +115,7 @@ class RulingTest(unittest.TestCase):
             finally:
                 sys.argv = old
 
-    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "case-data"}
+    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "matter-data"}
 
     def test_no_ruling_fails_both_modes(self):
         empty = {"allowed": [], "todo": []}

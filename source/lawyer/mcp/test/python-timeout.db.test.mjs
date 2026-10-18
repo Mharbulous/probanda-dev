@@ -1,4 +1,4 @@
-// Issue #612: case-data and timecamping-data ran host Python through spawnSync with no timeout, so
+// Issue #612: matter-data and timecamping-data ran host Python through spawnSync with no timeout, so
 // a hung helper froze every tool on the server. These pin the named timeout on each of their
 // Python paths and check that the server answers the next call once the helper is killed.
 
@@ -38,7 +38,7 @@ function isPythonTimeout(err) {
 function caseFixture(t) {
   const matterRoot = mkdtempSync(join(tmpdir(), "coclerk-case-timeout-"));
   t.after(() => rmSync(matterRoot, { recursive: true, force: true }));
-  const caseDataDir = join(matterRoot, "case-data");
+  const caseDataDir = join(matterRoot, "matter-data");
   mkdirSync(caseDataDir);
   const python = process.env.COCLERK_PYTHON || "python";
   const result = spawnSync(
@@ -54,7 +54,7 @@ function caseFixture(t) {
     evidence_sql_path: join("4. LAWYER BRIEF", "CoWork", "evidence.sql"),
   }));
   // execute reads triggers.sql from the skills tree (#1254): give it a synthetic one.
-  const references = join(matterRoot, "skills-root", ".claude", "skills", "case-data", "references");
+  const references = join(matterRoot, "skills-root", ".claude", "skills", "matter-data", "references");
   mkdirSync(references, { recursive: true });
   writeFileSync(join(references, "triggers.sql"), "SELECT 1;");
   return {
@@ -72,7 +72,7 @@ async function timecampingFixture(t) {
   return { env };
 }
 
-test("a case-data execute that outlives its budget fails with a named timeout that does not claim rollback, and the server answers the next calls", async (t) => {
+test("a matter-data execute that outlives its budget fails with a named timeout that does not claim rollback, and the server answers the next calls", async (t) => {
   const f = caseFixture(t);
   const tc = await timecampingFixture(t);
   await assert.rejects(() => caseDataExecute(f.matterRoot, "SELECT 1;", { ...f.env, [CASE_VAR]: "1" }), (err) => {
@@ -82,12 +82,12 @@ test("a case-data execute that outlives its budget fails with a named timeout th
     assert.doesNotMatch(err.message, /rolled back/);
     return true;
   });
-  // A different namespace answers, and so does case-data's own write path: the killed call freed the lock.
+  // A different namespace answers, and so does matter-data's own write path: the killed call freed the lock.
   assert.deepEqual(timecampingDataQuery("SELECT 1 AS ok", undefined, tc.env).rows, [{ ok: 1 }]);
   assert.deepEqual((await caseDataExecute(f.matterRoot, "SELECT 1;", f.env)).ok, true);
 });
 
-test("a case-data query that outlives its budget fails with a named timeout, and the next query recovers", async (t) => {
+test("a matter-data query that outlives its budget fails with a named timeout, and the next query recovers", async (t) => {
   const f = caseFixture(t);
   await withTimeoutOverride(CASE_VAR, 1, () =>
     assert.throws(() => caseDataQuery(f.matterRoot, "SELECT 1 AS ok"), (err) => {
@@ -100,7 +100,7 @@ test("a case-data query that outlives its budget fails with a named timeout, and
 });
 
 // The CREATE runs first and the CTE never finishes in budget, so the kill lands inside Python before COMMIT.
-test("a case-data execute killed mid-script leaves the databases untouched", async (t) => {
+test("a matter-data execute killed mid-script leaves the databases untouched", async (t) => {
   const f = caseFixture(t);
   const never = "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 1000000000) SELECT count(*) FROM c;";
   await withTempDir(f.matterRoot, () =>
@@ -114,14 +114,14 @@ test("a case-data execute killed mid-script leaves the databases untouched", asy
   assert.deepEqual(readdirSync(f.matterRoot).filter((name) => name.startsWith("coclerk_")), []);
 });
 
-// A copy of the case-data scripts whose plan staging stalls: sitecustomize runs at interpreter start
+// A copy of the matter-data scripts whose plan staging stalls: sitecustomize runs at interpreter start
 // (PYTHONPATH is the scripts dir) and, before the first copy into a plan folder, records that
 // folder in `sentinel` and sleeps past the budget.
 function stallingCaseDataRepo(t, sentinel) {
   const repo = mkdtempSync(join(tmpdir(), "coclerk-migrate-stall-repo-"));
   t.after(() => rmSync(repo, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
-  const references = join(repo, ".claude", "skills", "case-data", "references");
-  cpSync(join(import.meta.dirname, "..", "..", "..", "..", ".claude", "skills", "case-data", "references"), references, { recursive: true });
+  const references = join(repo, ".claude", "skills", "matter-data", "references");
+  cpSync(join(import.meta.dirname, "..", "..", "..", "..", ".claude", "skills", "matter-data", "references"), references, { recursive: true });
   writeFileSync(join(references, "scripts", "sitecustomize.py"), [
     "import os, shutil, time",
     "_copy2 = shutil.copy2",
@@ -136,11 +136,11 @@ function stallingCaseDataRepo(t, sentinel) {
   return repo;
 }
 
-test("the case-data migrate driver fails with a named timeout when it outlives its budget, and leaves no staging copy", async (t) => {
+test("the matter-data migrate driver fails with a named timeout when it outlives its budget, and leaves no staging copy", async (t) => {
   const f = caseFixture(t);
   // plan stages the whole set, so it refuses before staging unless law and privileged exist too.
   for (const db of ["law", "privileged"]) {
-    copyFileSync(join(f.matterRoot, "case-data", "main.sqlite"), join(f.matterRoot, "case-data", `${db}.sqlite`));
+    copyFileSync(join(f.matterRoot, "matter-data", "main.sqlite"), join(f.matterRoot, "matter-data", `${db}.sqlite`));
   }
   const temp = mkdtempSync(join(tmpdir(), "coclerk-migrate-timeout-temp-"));
   t.after(() => rmSync(temp, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));

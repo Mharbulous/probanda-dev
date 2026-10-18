@@ -323,12 +323,12 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "renderer's closed template set — the `unrecognized template_key \"<key>\"` text, on a primary or " +
       "alternative provision alike, ⊕ ⬜ by construction (a `template_key` ∅ is ⬜'s); `render_mode 'filed'` " +
       "refuses while it holds, struck provisions excepted (#825) · a party row of a drafting Writing that case " +
-      "data does not confirm: `parties.case_party_id` ∅, or linked to a case-data party not of record in the " +
+      "data does not confirm: `parties.case_party_id` ∅, or linked to a matter-data party not of record in the " +
       "proceeding, or whose counsel of record (name, firm, email, telephone) or address for service differs " +
       "from case data's, or unchecked because case data could not be read — one mockup-only line per party at " +
       "the head of the venue document, no Job Board entry; `render_mode 'filed'` refuses while any holds. Never " +
       "on a sent Writing (it prints from `parties_snapshot`), and never on a proceeding with no file number or " +
-      "a matter with no case-data database (party/counsel SSOT, schema v41)",
+      "a matter with no matter-data database (party/counsel SSOT, schema v41)",
     history:
       "v1; derived instance partly shipped — description ∅ only, on the VanIAC Evidence Index only; label and " +
       "date queued; the other filing kinds' lists queued (#777 defect 5); unrecognized-key instance shipped, " +

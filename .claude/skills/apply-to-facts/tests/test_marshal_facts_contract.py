@@ -14,7 +14,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[4]
 AGENT = REPO / "source" / "litigator" / "agents" / "marshal-facts.md"
 SKILL = REPO / ".claude" / "skills" / "apply-to-facts" / "SKILL.md"
-SCHEMA = REPO / ".claude" / "skills" / "case-data" / "references" / "schema.sql"
+SCHEMA = REPO / ".claude" / "skills" / "matter-data" / "references" / "schema.sql"
 
 EXPECTED_TOOLS = [
     "Read",
@@ -22,9 +22,9 @@ EXPECTED_TOOLS = [
     "Grep",
     "Skill",
     "mcp__plugin_lawyer_data__skill_source__read",
-    "mcp__plugin_lawyer_data__case_data__query",
+    "mcp__plugin_lawyer_data__matter_data__query",
     "mcp__remote-devices__plugin_lawyer_data__skill_source__read",
-    "mcp__remote-devices__plugin_lawyer_data__case_data__query",
+    "mcp__remote-devices__plugin_lawyer_data__matter_data__query",
 ]
 
 SQL_KEYWORDS = re.compile(r"\b(SELECT|FROM|JOIN|WHERE|INSERT|UPDATE|DELETE)\b")
@@ -33,7 +33,7 @@ BANNED_LITERALS = [
     "sqlite3.connect",
     ".sqlite",
     "@query_",
-    "case_data__",
+    "matter_data__",
     "schema.sql",
     "queries.sql",
     "v_fact_status",

@@ -21,7 +21,7 @@ tools:
   - Grep
   - Skill
   - mcp__plugin_lawyer_data__skill_source__read
-  - mcp__plugin_lawyer_data__case_data__query
+  - mcp__plugin_lawyer_data__matter_data__query
   - mcp__plugin_lawyer_data__research_filing__write_scratch
   - mcp__plugin_lawyer_data__research_filing__legislation_search
   - mcp__plugin_researcher_canlii__get_case_citator
@@ -34,7 +34,7 @@ tools:
   - mcp__plugin_researcher_commons__legal_commons__search
   - mcp__plugin_researcher_commons__legal_commons__treatment_chain
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
-  - mcp__remote-devices__plugin_lawyer_data__case_data__query
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__query
   - mcp__remote-devices__plugin_lawyer_data__research_filing__write_scratch
   - mcp__remote-devices__plugin_lawyer_data__research_filing__legislation_search
   - mcp__remote-devices__plugin_researcher_canlii__get_case_citator

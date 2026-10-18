@@ -60,7 +60,7 @@ class TestCaseDataOutputDir(_MatterFixture):
 
     def test_missing_case_data_folder_fails_and_is_not_created(self):
         missing = self.root / "0. CASE DATA" / "L9999 Nobody"
-        with self.assertRaisesRegex(RuntimeError, "/case-data initialize"):
+        with self.assertRaisesRegex(RuntimeError, "/matter-data initialize"):
             case_data_output_dir(self.matter, missing, SUBSTANCE_WORKFLOW)
         self.assertFalse(missing.exists())
 
@@ -100,7 +100,7 @@ class TestCaseDataOutputDir(_MatterFixture):
 
     def test_matter_without_coclerk_json_fails(self):
         (self.matter / "coclerk.json").unlink()
-        with self.assertRaisesRegex(RuntimeError, "/case-data initialize"):
+        with self.assertRaisesRegex(RuntimeError, "/matter-data initialize"):
             case_data_output_dir(self.matter, self.case_data, SUBSTANCE_WORKFLOW)
 
 

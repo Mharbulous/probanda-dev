@@ -1151,7 +1151,7 @@ test("a job's last activity counts the seeds captured from it, and its card list
   );
 });
 
-/** Points the firm profile, for this test only, at a scratch case-data root whose firm.json sets
+/** Points the firm profile, for this test only, at a scratch matter-data root whose firm.json sets
  * `hours` as idle_flag_hours, or none when undefined. */
 function firmIdleThreshold(t, hours) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-idle-flag-"));

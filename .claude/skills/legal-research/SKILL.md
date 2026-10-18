@@ -81,7 +81,7 @@ permitted to make statements of law.
    the same run. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
-   files nothing for, ask `/case-data` for a held copy before marking it unread. A
+   files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders.

@@ -20,7 +20,7 @@ import { DataServerError, PythonTimeoutError } from "./errors.js";
 export const pythonStarts = { count: 0 };
 
 export interface PythonDriverOptions {
-  /** Names the helper in every error, e.g. "case-data sqlite helper". */
+  /** Names the helper in every error, e.g. "matter-data sqlite helper". */
   label: string;
   driver: string;
   payload: string;

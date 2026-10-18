@@ -1,7 +1,7 @@
 ---
 name: timecamping-data
 user-invocable: false
-description: Sole gatekeeper for the timecamping database — evidence-source tables (TimeCamp time entries, TimeCamp computer activity, SyncoPaid screen captures, Telus call log, Google Calendar events, iCloud calendar events, sent mail), the assembly gate, inference proposals, practitioner determinations, and identifier-to-matter presumptions. Serves /timecamping's evidence-first pipeline (Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md). Not the authority on what happened in a matter (case-data) or on billed time (practice-data) — this is a single, fixed, per-practitioner database, not per-matter.
+description: Sole gatekeeper for the timecamping database — evidence-source tables (TimeCamp time entries, TimeCamp computer activity, SyncoPaid screen captures, Telus call log, Google Calendar events, iCloud calendar events, sent mail), the assembly gate, inference proposals, practitioner determinations, and identifier-to-matter presumptions. Serves /timecamping's evidence-first pipeline (Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md). Not the authority on what happened in a matter (matter-data) or on billed time (practice-data) — this is a single, fixed, per-practitioner database, not per-matter.
 ---
 
 ## Contents
@@ -17,7 +17,7 @@ description: Sole gatekeeper for the timecamping database — evidence-source ta
 
 # timecamping-data — router and schema owner
 
-Helper skill — not user-invocable. The single gatekeeper for the timecamping database: **one SQLite file, per practitioner** (not per matter, unlike `/case-data`), reached only through the `timecamping_data__*` MCP tools. No other skill may embed SQL, resolve the database path, or assume schema shape — all of that stays here.
+Helper skill — not user-invocable. The single gatekeeper for the timecamping database: **one SQLite file, per practitioner** (not per matter, unlike `/matter-data`), reached only through the `timecamping_data__*` MCP tools. No other skill may embed SQL, resolve the database path, or assume schema shape — all of that stays here.
 
 Design source of truth: `Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md` (the seven-point evidence-first pipeline, the evidence doctrine, the 9-row ceremony grid, the presumption lifecycle) and `.claude/skills/timecamping/VISION.md` (the core principle: inference forbidden until evidence assembly is complete, enforced by pipeline structure). This skill is the schema's home, not a restatement of the design doc — read it there for rationale; read `references/schema.sql` here for the current DDL.
 
@@ -79,7 +79,7 @@ Each of the first three also writes the source's status line: `fetched` with the
 
 **Shape**: seven source tables (`timecamp_time_entries`, `timecamp_computer_activities`, `syncopaid_captures`, `telus_calls`, `gcal_events`, `icloud_events`, `sent_mail`), one per evidence source (design doc step 2); `source_fetch_log`, the durable record the assembly gate reads (design doc step 3); `presumptions` and `proposals` (design doc step 5, the inference pass's output — one proposal *is* one time block, so there is no separate block table: a proposal's `evidence_chain` JSON column names every source row that fed it); `determinations` (design doc step 7, ceremony answers recorded as evidence for future corroboration); `db_meta` (schema version).
 
-**Not stored, deliberately**: what a proposal's matter reference *means* (`practice_data__matter_lookup` is the authority on matters); raw screenshot bytes (only a `screenshot_ref` handle — the SyncoPaid tool's own image store is the authority); anything about a matter's parties, proceedings, or filings (that lives in `/case-data`, and in other per-matter data stores outside this plugin).
+**Not stored, deliberately**: what a proposal's matter reference *means* (`practice_data__matter_lookup` is the authority on matters); raw screenshot bytes (only a `screenshot_ref` handle — the SyncoPaid tool's own image store is the authority); anything about a matter's parties, proceedings, or filings (that lives in `/matter-data`, and in other per-matter data stores outside this plugin).
 
 **Current version**: `db_meta.schema_version = 6` (v1 migration, issue #430 — the initial build; the additive 1 → 2 hop, issue #454 — registering Google Calendar as the fifth evidence source; the 2 → 3 hop, issue #938 — rewriting every `proposals.evidence_chain` entry's scalar `source_row_id` into a `source_row_ids` list, with no DDL change; the additive 3 → 4 hop, issue #997 — `proposals.entered_by_hand_at`; the additive 4 → 5 hop, issue #1199 — registering the iCloud calendar as the sixth evidence source; the additive 5 → 6 hop, issue #1261 — registering sent mail as the seventh evidence source), 12 tables. A database at an older version fails any statement naming a newer column: run `timecamping_data__migrate` first.
 
@@ -140,7 +140,7 @@ Each of the first three also writes the source's status line: `fetched` with the
 
 ## Configuration
 
-Unlike `case_data__*` (a `probanda.json` pointer resolving a per-matter folder) or a per-matter caller-resolved `db_path` convention, the `timecamping_data__*` backend takes **no database path parameter at all** (`bulk_upsert`'s `path` names the ingest file, not the database) — the database is a single, fixed, per-practitioner file, resolved entirely server-side, matching `practice_data__*`/`time_pipeline__*`. It lives at `0. CASE DATA\_practice\timecamping.db`, beside `practice.db` and `time_pipeline.db` (`source/lawyer/mcp/src/timecamping/backend.ts`'s `resolveTimecampingDbPath`, built on the same `resolveCaseDataRoot()` those two already use). `COCLERK_TIMECAMPING_DB_PATH` is the full-path test override; `COCLERK_TIMECAMPING_DB_NAME` overrides just the filename.
+Unlike `matter_data__*` (a `probanda.json` pointer resolving a per-matter folder) or a per-matter caller-resolved `db_path` convention, the `timecamping_data__*` backend takes **no database path parameter at all** (`bulk_upsert`'s `path` names the ingest file, not the database) — the database is a single, fixed, per-practitioner file, resolved entirely server-side, matching `practice_data__*`/`time_pipeline__*`. It lives at `0. CASE DATA\_practice\timecamping.db`, beside `practice.db` and `time_pipeline.db` (`source/lawyer/mcp/src/timecamping/backend.ts`'s `resolveTimecampingDbPath`, built on the same `resolveCaseDataRoot()` those two already use). `COCLERK_TIMECAMPING_DB_PATH` is the full-path test override; `COCLERK_TIMECAMPING_DB_NAME` overrides just the filename.
 
 ## Anti-Patterns
 

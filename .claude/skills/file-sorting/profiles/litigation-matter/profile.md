@@ -39,7 +39,7 @@ a `cd` into the shortened form fails.
 **Always skip** folders numbered `0` (drafts) and `1` (raw scans / working
 files — e.g. `0. DRAFT`, `1. RAW`, `1. CASEMAP`): these hold working material,
 not finished records, so renaming there adds noise. `0. DRAFT\Superseded` is
-case-data's deliberate destination for a superseded version of a court document,
+matter-data's deliberate destination for a superseded version of a court document,
 and is skipped like the rest of folder 0. Also skip any non-standard
 folder that doesn't map to a type above (e.g. a `9. AI` scratch folder) unless
 the user explicitly asks for it.
@@ -78,9 +78,9 @@ flagged token surfaces regardless of verdict.
 ## Record backend
 
 The review record lives in the matter's case database, reached **only** by
-invoking the `/case-data` skill — never queried directly.
+invoking the `/matter-data` skill — never queried directly.
 
-Invoke `/case-data` and ask whether this matter has a case database. It owns
+Invoke `/matter-data` and ask whether this matter has a case database. It owns
 locating and validating the matter pointer; do not go looking for pointer
 files yourself, and do not assume where they live.
 
@@ -98,9 +98,9 @@ reviewed fresh on this run and on every future run, because nothing will be
 remembered — and offer to set one up:
 
 - Use `AskUserQuestion` with two options: **set up the case database now**
-  (invoke `/case-data`, which owns initialization) or **run without the
+  (invoke `/matter-data`, which owns initialization) or **run without the
   record this time**.
-- If they choose to set it up, invoke `/case-data` and let it initialize.
+- If they choose to set it up, invoke `/matter-data` and let it initialize.
   Once initialization succeeds, tell the practitioner, word for word:
 
   > "The case database is now set up. To review and rename files, please start a new conversation and run housekeeping there — setting up the database and reviewing files are kept in separate conversations so each one's cost can be tracked on its own."
@@ -116,7 +116,7 @@ remembered — and offer to set one up:
 
 Ask once. Do not re-offer later in the same run.
 
-**If the record is unavailable for any other reason** — `/case-data` reports
+**If the record is unavailable for any other reason** — `/matter-data` reports
 a stale pointer, a schema-version guard failure, or its tools are absent from
 this session — say so explicitly, name the error it gave, and ask the same
 two-option question. Never swallow the failure and run as though the matter
@@ -125,11 +125,11 @@ problem the user needs to see. If they choose **set up the case database
 now** here, the same stop applies: once initialization succeeds, deliver
 the same verbatim message above and end the run.
 
-**Lookup intent:** `/case-data`'s housekeeping-log **lookup**, given a batch
+**Lookup intent:** `/matter-data`'s housekeeping-log **lookup**, given a batch
 of `{file_name, file_hash}` pairs — returns, per candidate, whether it's
 already reviewed and (if so) its outcome and date.
 
-**Record intent:** `/case-data`'s housekeeping-log **record**, given
+**Record intent:** `/matter-data`'s housekeeping-log **record**, given
 `{file_name, file_hash, folder_type, outcome}` rows for applied files only:
 `outcome` `renamed` (a move was applied: rename and file, rename in place, a
 same-matter move, or a root file filed under its current name),
@@ -137,7 +137,7 @@ same-matter move, or a root file filed under its current name),
 `not_ingested` (filed without ingesting); `file_name` the name the file now
 carries, and `folder_type` the folder type of the folder it now sits in. A
 "Move to 0. DRAFT unchanged" writes no row, and neither does an unapproved
-file. An ingest failure is recorded by `/case-data`'s ingest itself, as
+file. An ingest failure is recorded by `/matter-data`'s ingest itself, as
 `ingest_failed`. Never send a `declined` outcome — nothing writes it.
 
 ## Working files

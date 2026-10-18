@@ -1,7 +1,7 @@
 # CoClerk — Vision & Design Philosophy
 
 **Date:** 2026-04-11
-**Amended:** 2026-07-05 — Data Sovereignty rewritten for cloud-based case-data storage (see `planning/2. Plan/2026-07-05_case-data-cloud-migration-plan.md`).
+**Amended:** 2026-07-05 — Data Sovereignty rewritten for cloud-based matter-data storage (see `planning/2. Plan/2026-07-05_case-data-cloud-migration-plan.md`).
 **Amended:** 2026-09-25 — Rewritten for the two-plugin split (`litigation` base, optional `legal-commons` expansion).
 **Amended:** 2026-09-30 — Practitioner interview: added the drafting-context problem, the one-owner-per-kind data principle, the stop-on-unfiled-ingest rule for drafting, the workflow-based litmus test, and the never-sign rule; brought the TimeCamp and database wording up to date.
 
@@ -9,14 +9,14 @@
 
 CoClerk is a pair of Claude Cowork plugins for a BC litigation practice. The `litigation` plugin handles file management, deadline calculation, billing, time tracking, matter prioritization, case data, legal research, and submission drafting — all scoped to British Columbia law and designed for use alongside LEAP (practice management) and UNITY Accounting. The optional `legal-commons` plugin adds a shared pool of matter-free legal principles.
 
-Most data enters through conversation — pasted from LEAP or UNITY, uploaded as reports, or described by the user. All persistent state lives in local SQLite databases on the practitioner's machine, accessed via Python's built-in `sqlite3` module — no compiled binaries, no external dependencies, no build step. Each database has exactly one gatekeeper skill, the only skill that may touch it: practice data (`/practice-data`), case data such as parties, proceedings, facts, evidence and authorities (`/case-data`), submission drafting (`/drafting-data`), and the time-tracking stores (`/time-pipeline-data`, `/timecamping-data`). The only cloud surface is the matter-free legal-commons pool of shared legal principles, accessed through that plugin's own gatekeeper skill, which ships only in the `legal-commons` plugin. TimeCamp activity is read from TimeCamp's public REST API by `/build-timeline` and classified to client matters by `/time-sorting`.
+Most data enters through conversation — pasted from LEAP or UNITY, uploaded as reports, or described by the user. All persistent state lives in local SQLite databases on the practitioner's machine, accessed via Python's built-in `sqlite3` module — no compiled binaries, no external dependencies, no build step. Each database has exactly one gatekeeper skill, the only skill that may touch it: practice data (`/practice-data`), case data such as parties, proceedings, facts, evidence and authorities (`/matter-data`), submission drafting (`/drafting-data`), and the time-tracking stores (`/time-pipeline-data`, `/timecamping-data`). The only cloud surface is the matter-free legal-commons pool of shared legal principles, accessed through that plugin's own gatekeeper skill, which ships only in the `legal-commons` plugin. TimeCamp activity is read from TimeCamp's public REST API by `/build-timeline` and classified to client matters by `/time-sorting`.
 
 ### Two Plugins
 
 - **`litigation` is the self-contained base.** It carries every local-data skill, the plugin agents, the local data runtime, and the vendored CanLII runtime. Installing it alone yields a fully working practice. It contains no Supabase code.
 - **`legal-commons` is the optional expansion.** It is the sole Supabase surface: its gatekeeper skill over the shared pool, plus the skills that generalize a matter's principles and push them to the pool.
 - **The dependency runs one way: `legal-commons` → `litigation`, never the reverse.** No `litigation` skill invokes a tool of the `legal-commons` runtime, names a commons skill or agent, or checks whether commons is installed.
-- **The local databases are the seam between them.** A `legal-commons` skill reaches matter data only by delegating to `/case-data`, and never names a local database file.
+- **The local databases are the seam between them.** A `legal-commons` skill reaches matter data only by delegating to `/matter-data`, and never names a local database file.
 
 `/plugin-packager` enforces these rules mechanically at packaging time (its bundle-purity, dependency-direction, inverse-reference, and commons-encapsulation checks), so they do not rest on convention. Packaging and runtime detail is in `plugins/CLAUDE.md`.
 
@@ -32,7 +32,7 @@ Lawyers have professional and regulatory obligations around client data. The Law
 
 The storage rule is split by data domain:
 
-- **Case data is local.** Parties, proceedings, facts, evidence, and authorities reside in SQLite databases on the practitioner's own machine. The earlier cloud store (Supabase Postgres, client-side encrypted) was retired at the three-layer teardown (B5/B6, 2026-07-14) and the data migrated back to local storage; case-data operations no longer require internet connectivity.
+- **Case data is local.** Parties, proceedings, facts, evidence, and authorities reside in SQLite databases on the practitioner's own machine. The earlier cloud store (Supabase Postgres, client-side encrypted) was retired at the three-layer teardown (B5/B6, 2026-07-14) and the data migrated back to local storage; matter-data operations no longer require internet connectivity.
 - **Practice data remains local.** Matter status, retainer balances, time entries, and deadlines reside in a SQLite database on the practitioner's own machine and are never uploaded to any cloud environment.
 - **Only matter-free legal principles are pooled.** The one remaining cloud surface holds generalized, matter-free statements of law — no client identity, no matter facts. Every write to it is deliberate and permission-gated. It ships only in the `legal-commons` plugin, so a `litigation`-only install has no cloud storage at all.
 

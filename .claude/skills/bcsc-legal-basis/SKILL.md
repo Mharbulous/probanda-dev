@@ -29,7 +29,7 @@ Ask the practitioner for the matter workspace path if not already known from con
 
 In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/case-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
 
 Create `bcsc-form-substance\` beneath it if it does not exist.
 
@@ -39,14 +39,14 @@ Read `part-1-orders-sought.md` from the substance folder. This is required input
 
 ### 3. Gather legal authorities
 
-**Primary source:** Invoke `/case-data` to check whether legal authorities have been ingested for this matter. Request authority records organized by legal concept and criterion: authorities, concepts, concept-authority links, and legal criteria.
+**Primary source:** Invoke `/matter-data` to check whether legal authorities have been ingested for this matter. Request authority records organized by legal concept and criterion: authorities, concepts, concept-authority links, and legal criteria.
 
-**Fallback:** If `/case-data` has no legal authorities, read the matter's `6. LAW/` folder directly. Read all files in that folder -- these are the practitioner's collected legal research documents.
+**Fallback:** If `/matter-data` has no legal authorities, read the matter's `6. LAW/` folder directly. Read all files in that folder -- these are the practitioner's collected legal research documents.
 
 If both sources are empty, write a placeholder to `part-3-legal-basis.md`:
 ```
 (Part 3 placeholder -- no legal authorities available. Add legal research
-to the 6. LAW/ folder or ingest authorities via /case-data, then re-run
+to the 6. LAW/ folder or ingest authorities via /matter-data, then re-run
 /bcsc-legal-basis.)
 ```
 Inform the practitioner and halt. Do not draft legal argument from training knowledge.
@@ -110,7 +110,7 @@ After writing: "Legal basis saved to `part-3-legal-basis.md`. Start a new sessio
 
 - **Read peers:** `part-1-orders-sought.md` (required)
 - **Write:** only `part-3-legal-basis.md` in the substance folder
-- **Case data:** via `/case-data` for legal authorities; filesystem fallback to `6. LAW/` only when `/case-data` has no authorities
+- **Case data:** via `/matter-data` for legal authorities; filesystem fallback to `6. LAW/` only when `/matter-data` has no authorities
 - **No training knowledge as authority:** every citation must trace to a gathered source document
 - **No .docx:** never touch templates or Word files
 - **Plain text only:** no markdown syntax, no JSON in the file body

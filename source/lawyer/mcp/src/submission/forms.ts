@@ -343,7 +343,7 @@ function partiesFor(dbPath: string, proceeding: ProceedingRow, filing: FilingRow
   return draftingParties(dirname(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
 }
 
-/** The drift and every party's case-data values, as the render manifest's `parties_drift` records them:
+/** The drift and every party's matter-data values, as the render manifest's `parties_drift` records them:
  * case data's writes move no stamp input, so a counsel change there must miss the manifest. The one
  * construction shared by render, bootstrap's render_state and the background job's freshness check (#1308). */
 function partiesDigest({ parties, drift }: DraftingParties): string {
@@ -385,7 +385,7 @@ function partiesDriftRefusal(filingId: number, revision: number, drift: PartiesD
     note:
       "Refusing to render the filed face: counsel of record and the address for service, which case data owns, could not be read for party row(s): " +
       drift.rows.map((r) => `${r.name} (${r.kind})`).join(", ") +
-      ". Confirm each with the practitioner and link it to its case-data party, or correct case data through /case-data first " +
+      ". Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first " +
       `(references/filing-checklists.md §0), then call ${tool} again.`,
   };
 }
@@ -1059,7 +1059,7 @@ export function submissionFormsRender(
   const approvals = fetchApprovalsMark(dbPath);
   const loadMs = elapsedMs(loadStart);
   // Party/counsel SSOT: a drafting Writing's counsel and address for service are read live from
-  // case data, through /case-data's own script, so the filed-face refusal below rests on no caller input.
+  // case data, through /matter-data's own script, so the filed-face refusal below rests on no caller input.
   // A retired filing's mockup render, below, prints only the board, which reads no party: it reads none.
   // Nor does a Job Board with no Writing.
   const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);

@@ -49,7 +49,7 @@ def handle(notes, covered=(), asked=()):
     ideas = ([pinpoints] if pinpoints else []) + [[f] for f in others]
     blockers = [
         (
-            f"Resolve the case-data {kind}: {description} : {evidence}",
+            f"Resolve the matter-data {kind}: {description} : {evidence}",
             f"What should case data record? {description} : {evidence}",
         )
         for kind, description, evidence in rest
@@ -105,7 +105,7 @@ class CaseDataFlagJobTests(unittest.TestCase):
         self.assertIn("say they come from the research return", self.rule)
 
     def test_case_data_stays_the_writer_and_no_law_is_stated(self):
-        self.assertIn("records the answer through `/case-data`", self.rule)
+        self.assertIn("records the answer through `/matter-data`", self.rule)
         self.assertIn("the session states no law", self.rule)
 
     def test_an_asked_discrepancy_proposes_one_blocker_in_the_flags_words(self):
@@ -118,7 +118,7 @@ class CaseDataFlagJobTests(unittest.TestCase):
             blockers,
             [
                 (
-                    "Resolve the case-data discrepancy: FIXTURE copies A and B differ "
+                    "Resolve the matter-data discrepancy: FIXTURE copies A and B differ "
                     "on term 3 : doc-1, doc-2",
                     "What should case data record? FIXTURE copies A and B differ "
                     "on term 3 : doc-1, doc-2",

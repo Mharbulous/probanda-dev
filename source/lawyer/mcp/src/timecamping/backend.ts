@@ -9,7 +9,7 @@
 // and adds no node:sqlite dependency or build step).
 //
 // `timecamping_data__query` and `timecamping_data__execute` are generic
-// connection-discipline primitives, same as case_data__query/execute and
+// connection-discipline primitives, same as matter_data__query/execute and
 // drafting_data__query/execute: this backend never embeds a query, a table
 // name, or a column name. All SQL and schema knowledge stays inside the
 // /timecamping-data gatekeeper skill (root CLAUDE.md's database-encapsulation
@@ -21,7 +21,7 @@
 // here for the same reason: timecamping.db lives in the same SharePoint/OneDrive
 // -synced `0. CASE DATA` tree as practice.db and time_pipeline.db, where a
 // live handle left on a synced binary risks stale-metadata corruption (see
-// .claude/skills/case-data/shared/conventions.md §1/§2.1). `query` opens the
+// .claude/skills/matter-data/shared/conventions.md §1/§2.1). `query` opens the
 // live file directly with mode=ro -- the drafting-data precedent, since the
 // staging discipline binds writes, not reads.
 

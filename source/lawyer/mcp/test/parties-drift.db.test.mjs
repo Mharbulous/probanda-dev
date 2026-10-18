@@ -1,7 +1,7 @@
 // Party and counsel from case data (party/counsel SSOT): counsel of record and the address for
-// service are court-record state owned by /case-data. A matter's case-data folder holds both
+// service are court-record state owned by /matter-data. A matter's case-data folder holds both
 // databases here: a real submission database seeded with the BCSC consent-order requisition, and a
-// case-data main.sqlite built from /case-data's canonical schema.sql. A drafting Writing prints each
+// matter-data main.sqlite built from /matter-data's canonical schema.sql. A drafting Writing prints each
 // party's counsel from case data, read live through case_party_id; open_session reports every party
 // it cannot be read for, the filed render and the filed-face emitters refuse while one stands, the
 // mockup marks it for the human only, and a filed filing renders the party rows record_filed wrote
@@ -132,22 +132,22 @@ test("an unlinked party is drift, whatever case data says", async (t) => {
   );
 });
 
-test("no case-data proceeding with the file number gives a clear parties_drift_note, never a silent empty list", async (t) => {
+test("no matter-data proceeding with the file number gives a clear parties_drift_note, never a silent empty list", async (t) => {
   const m = await matterFixture(t, { caseSeed: CASE_SEED.replace(`'${FILE_NUMBER}'`, "'S-000001'") });
   const result = await openSession(t, m.matterRoot);
-  assert.match(result.parties_drift_note, new RegExp(`no case-data proceeding has file number ${FILE_NUMBER}`));
+  assert.match(result.parties_drift_note, new RegExp(`no matter-data proceeding has file number ${FILE_NUMBER}`));
   assert.deepEqual(result.parties_drift.map((r) => [r.party_id, r.kind]), [[1, "unchecked"], [2, "unchecked"]]);
   const filed = submissionFormsRender(m.dbPath, 1, CLIENT, "filed");
   assert.equal(filed.parties_drift_gate_failed, true);
   assert.deepEqual(filed.documents, []);
 });
 
-test("a proceeding with a file number and no case-data database is unchecked, and prints no counsel from the copy", async (t) => {
+test("a proceeding with a file number and no matter-data database is unchecked, and prints no counsel from the copy", async (t) => {
   const m = await matterFixture(t);
   rmSync(join(m.caseDataDir, "main.sqlite"));
   const session = await openSession(t, m.matterRoot);
   assert.deepEqual(session.parties_drift.map((r) => [r.party_id, r.kind]), [[1, "unchecked"], [2, "unchecked"]]);
-  assert.match(session.parties_drift_note, /no case-data database in /);
+  assert.match(session.parties_drift_note, /no matter-data database in /);
 
   const mockup = submissionFormsRender(m.dbPath, 1, CLIENT);
   assert.equal(mockup.parties_drift.length, 2);
@@ -289,7 +289,7 @@ test("with case data unreadable, bootstrap decides as render's memo check does f
   assert.equal(stateAt(m.dbPath), "stale", "case data readable again changes the digest");
 });
 
-test("after a case-data counsel change the background job queues the filing and re-renders it", async (t) => {
+test("after a matter-data counsel change the background job queues the filing and re-renders it", async (t) => {
   const m = await matterFixture(t);
   const args = { db_path: m.dbPath, client_name: CLIENT.clientName, client_no: CLIENT.clientNo, matter_no: CLIENT.matterNo };
   submissionFormsRender(m.dbPath, 1, CLIENT);
@@ -356,5 +356,5 @@ test("a proceeding with no file number reads each linked party's own counsel by 
   await submissionDataExecute(m.dbPath, "UPDATE parties SET case_party_id = 99 WHERE id = 1;");
   const relinked = submissionFormsRender(m.dbPath, 1, CLIENT);
   assert.deepEqual(relinked.parties_drift, [{ ...unlinkedPlaintiff, case_party_id: 99, kind: "not_of_record" }]);
-  assert.match(relinked.documents[0].markdown, /^🏷️ Larchmont \(B\.C\.\) Inc\. \(Plaintiff\): linked to case-data party 99, which case data does not hold/m);
+  assert.match(relinked.documents[0].markdown, /^🏷️ Larchmont \(B\.C\.\) Inc\. \(Plaintiff\): linked to matter-data party 99, which case data does not hold/m);
 });

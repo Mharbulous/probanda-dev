@@ -3,7 +3,7 @@
 //
 // Each tool takes identifiers plus only what the session composes, fetches its own inputs
 // in-process (the filed render, the format file, the firm profile, the factum emitter), writes the
-// working files the subskill names at the same case-data paths, and runs the subskill's fill script
+// working files the subskill names at the same matter-data paths, and runs the subskill's fill script
 // with the same argv the Code-tab route uses. A refusal from the render or the emitter comes back as
 // a refusal before anything is written or run.
 

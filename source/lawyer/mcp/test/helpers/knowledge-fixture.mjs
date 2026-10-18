@@ -57,7 +57,7 @@ export function knowledgeFixture(t) {
 }
 
 /**
- * A matter folder laid out as /case-data lays one out: `<scratch>\<name>\coclerk.json`, whose
+ * A matter folder laid out as /matter-data lays one out: `<scratch>\<name>\coclerk.json`, whose
  * `case_data_dir` is `<case data root>\<name>` (created). `pointer` is the pointer's raw text when a
  * string, otherwise fields merged over the default; `null` writes no pointer at all.
  */

@@ -155,7 +155,7 @@ for (const [label, fixture, code] of [
     const before = m.pointerBytes();
     await assert.rejects(
       callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }),
-      (err) => err.code === code && /\/case-data/.test(err.message)
+      (err) => err.code === code && /\/matter-data/.test(err.message)
     );
     assert.deepEqual(m.pointerBytes(), before);
   });
@@ -291,7 +291,7 @@ test("a per-user coclerk.json with a reachable case_data_root: nothing blocks", 
   assert.equal(result.blocking, undefined);
 });
 
-// /case-data design-decisions #60: open_session reports which files in the folders the opened
+// /matter-data design-decisions #60: open_session reports which files in the folders the opened
 // filing's type declares as its ingest inputs the case database does not yet hold, and checks them
 // only when that filing has a Ready job.
 
@@ -314,7 +314,7 @@ const LETTER = { forum: null, writing: { tree: { country: "CAN", jurisdiction: "
 const VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
 const SUBMISSIONS = { forum: VANIAC, writing: { tree: { country: "CAN", jurisdiction: "BC", venue: "Vancouver-International-Arbitration-Centre" }, kind: "submissions_package" } };
 
-/** A matter with a 0. DRAFT folder and case-data stores, whose one Writing is created from a shipped
+/** A matter with a 0. DRAFT folder and matter-data stores, whose one Writing is created from a shipped
  * type file; with `ready`, one queued job on that Writing. */
 async function declaringFixture(t, context, { forum, writing }, { ready = true } = {}) {
   const m = matterFixture(t);

@@ -44,7 +44,7 @@ test("a matter whose case-data folder does not exist is refused, and no folder i
   const m = matterFixture({}, { dirs: ["3. CORRESPONDENCE"] });
   try {
     rmSync(m.caseData, { recursive: true });
-    assert.throws(() => newRun(m.root), (err) => err.code === "case_data_missing" && /\/case-data initialize/.test(err.message));
+    assert.throws(() => newRun(m.root), (err) => err.code === "case_data_missing" && /\/matter-data initialize/.test(err.message));
     assert.equal(codeOf(() => writeRunFile(m.root, "20260924-100000-aaaa", "questions.json", "[]")), "case_data_missing");
     assert.deepEqual(readdirSync(m.base).sort(), ["Matter", "template"]);
     assert.deepEqual(foldersUnder(m.root), ["3. CORRESPONDENCE"]);

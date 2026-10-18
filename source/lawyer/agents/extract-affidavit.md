@@ -1,6 +1,6 @@
 ---
 name: extract-affidavit
-description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only — never writes. Dispatched by /case-data ingest-extract, one instance per pass and one per exhibit on Pass 3, in parallel batches.
+description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per pass and one per exhibit on Pass 3, in parallel batches.
 tools:
   - Read
 ---

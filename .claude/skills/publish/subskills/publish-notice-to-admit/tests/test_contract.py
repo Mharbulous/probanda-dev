@@ -22,7 +22,7 @@ class NoticeToAdmitContractTests(unittest.TestCase):
 
     def test_bounded_fact_verification_contract(self):
         for token in (
-            "Make one consolidated `/case-data` request",
+            "Make one consolidated `/matter-data` request",
             "read only the single best obvious primary matter file",
             "then stop searching",
             "`contradicted`",

@@ -520,7 +520,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("upsert_matter_role"),
-      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the case-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         ...matterRef,
@@ -609,23 +609,23 @@ export function practiceToolDefinitions(): ToolDefinition[] {
 const SQL_PARAMS = { type: "array", items: {}, description: "Scalars only. Bind a list as one JSON string: IN (SELECT value FROM json_each(?))" };
 
 function caseDataPrefixed(name: string): string {
-  return `case_data__${name}`;
+  return `matter_data__${name}`;
 }
 
 // Case-data connection-discipline surface (permission-fatigue conversion,
 // handover 123B, plan D2(a)). SQL and schema stay authored inside the
-// /case-data skill; this backend holds no table or column names. `query` and
+// /matter-data skill; this backend holds no table or column names. `query` and
 // `execute` are generic primitives; `migrate` is a runner whose migration SQL
 // and upgrade functions likewise live in the skill (references/migrations.sql,
 // references/scripts/), reached over PYTHONPATH and never embedded here.
-// Only the /case-data skill may call these tools -- see the per-tool description
+// Only the /matter-data skill may call these tools -- see the per-tool description
 // suffixes below for how a caller from another skill's workflow satisfies that.
 export function caseDataToolDefinitions(): ToolDefinition[] {
   return [
     {
       name: caseDataPrefixed("query"),
       description:
-        "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+        "Run a read-only SELECT/WITH/PRAGMA statement against a matter's attached main+law+privileged databases. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -641,9 +641,9 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
     {
       name: caseDataPrefixed("execute"),
       description:
-        "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /case-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. " +
-        "A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with case_data__query before any further write or retry -- see /case-data's shared/conventions.md section 2.3. " +
-        "Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+        "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. " +
+        "A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. " +
+        "Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "sql_script", type: "str" },
@@ -653,7 +653,7 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
     {
       name: caseDataPrefixed("resolve_participant"),
       description:
-        "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
+        "Resolve a name, surname or file-name code (e.g. SmithJ) to the matter's participants it could mean -- parties, counsel, witnesses, experts and tribunal members -- each with every name, alias and file code on record (search_terms). Exact matches first; a surname within two edits is returned as match 'near' with its distance and is never an identity. Read-only. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following its operations/participants.md, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "name", type: "str" },
@@ -665,8 +665,8 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       description:
         "Write one extracted legal authority from the extractor's result file: the authority row, its concepts, any determined-by stub concepts, the concept links and the criteria, in one transaction, then regenerate evidence.sql. result_path is the scratch file holding exactly the extractor's JSON object; file_path is the authority's file relative to the matter root and file_hash its SHA-256; bundled_pages is given only for an entry of a bundled book of authorities (e.g. '12-34'). " +
         "Returns ok true with authority_id, counts per table (inserted, skipped), stubs (each stub concept created) and the result's own treats_prior, which this tool does not write. Returns ok false with problems, and writes nothing, when the result fails a check or the file_hash is already registered under another citation. Re-running it on the same file inserts nothing. Never sets last_verified_at. " +
-        "A non-success result other than ok false does not prove nothing committed: re-read with case_data__query before any retry, as for case_data__execute. " +
-        "Only the /case-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:case-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
+        "A non-success result other than ok false does not prove nothing committed: re-read with matter_data__query before any retry, as for matter_data__execute. " +
+        "Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following its operations/ingest-extract.md Path D, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "result_path", type: "str" },
@@ -686,8 +686,8 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
         "backup, and commits all three databases together or none. mode 'restore' reverts " +
         "to a backup set; mode 'backups' lists them. This is the only tool that bypasses " +
         "the schema-version guard, and the only one that may run against an out-of-date " +
-        "database. Run plan first, always. Only the /case-data skill may call this tool " +
-        "-- invoke it (Skill: lawyer:case-data) and follow its operations/migrate.md, " +
+        "database. Run plan first, always. Only the /matter-data skill may call this tool " +
+        "-- invoke it (Skill: lawyer:matter-data) and follow its operations/migrate.md, " +
         "which runs this tool through the migration-runner subagent rather than inline.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
@@ -713,7 +713,7 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
         "correction path, used only where case data contradicts the entry. With neither date nor line it stamps the file " +
         "alone (the currency check's 'no'). Every call rewrites last_updated from this host's own clock, local time with " +
         "its UTC offset. Asks nothing; never announce it. Returns {ok, path, last_updated, created, added, heading_created, " +
-        "replaced}. Called by /draft and /case-data at the writes shared/procedural-history.md names, and by any session " +
+        "replaced}. Called by /draft and /matter-data at the writes shared/procedural-history.md names, and by any session " +
         "recording an event the practitioner told it.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
@@ -736,7 +736,7 @@ function timePipelinePrefixed(name: string): string {
 // cowork-db Go binary). Generic get/set/list/delete over a single
 // (namespace, key) -> value table; schema and SQL stay inside
 // time-pipeline/backend.ts, not the /time-pipeline-data skill, matching the
-// case_data__query/execute connection-discipline pattern.
+// matter_data__query/execute connection-discipline pattern.
 export function timePipelineToolDefinitions(): ToolDefinition[] {
   return [
     {
@@ -808,10 +808,10 @@ function timecampingPrefixed(name: string): string {
 
 // Timecamping-data connection-discipline surface (issue #430's evidence-first
 // storage layer). Same generic query/execute/migrate pattern as
-// case_data__*/drafting_data__*: SQL and schema stay authored inside the
+// matter_data__*/drafting_data__*: SQL and schema stay authored inside the
 // /timecamping-data skill; this backend holds no table or column names. Path
 // resolution is server-side and fixed (a single per-practitioner file, like
-// practice.db/time_pipeline.db) -- unlike case_data__*/drafting_data__*,
+// practice.db/time_pipeline.db) -- unlike matter_data__*/drafting_data__*,
 // there is no matter_root/db_path parameter to pass. Only the
 // /timecamping-data skill may call these tools -- see the per-tool
 // description suffixes below for how a caller from another skill's workflow
@@ -2190,7 +2190,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that " +
         "db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. " +
         "probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code " +
-        "pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /case-data as the " +
+        "pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the " +
         "repair. A database behind the current schema is migrated here, with the same copy-aside backup as " +
         "drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated and" +
         "server_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never " +
@@ -2231,7 +2231,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns " +
         "records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: " +
         "verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; " +
-        "source_id is the case-data source behind the verdict, and possible_version_of the source that file may " +
+        "source_id is the matter-data source behind the verdict, and possible_version_of the source that file may " +
         "be another version of; each is null when there is none. With status ok it also returns folders, every " +
         "folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from " +
         "folders, never from opened.ingest_inputs alone. " +
@@ -2419,7 +2419,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "sandbox cannot reach the matter or case-data folders. Returns the harness's own JSON output unchanged " +
         "(an action such as spawn_subagent, ask_user, retry, oow, missing_template, manual_edits, halt or done, or for list the " +
         "session array); drive it exactly as publish-bcsc-form's shuttle protocol drives the harness's CLI. " +
-        "matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). The server derives the case-data " +
+        "matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). The server derives the matter-data " +
         "folder from probanda.json's case_data_dir (it must exist), keeps session state in " +
         "<case-data folder>\\form-sessions, and passes the harness only paths it resolved itself. command and its " +
         "fields: list; init (user_request, and exactly one of writing_folder -- a package's one folder name, created " +
@@ -2682,7 +2682,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("assemble_general"),
       description:
         "assemble-general's Cowork route (issue #1321, ADR 0027): binds a general Writing's .docx and its enclosures into " +
-        "one PDF on the host, since a Cowork sandbox has neither PyMuPDF nor Word and cannot reach the matter or case-data " +
+        "one PDF on the host, since a Cowork sandbox has neither PyMuPDF nor Word and cannot reach the matter or matter-data " +
         "folders. A Code-tab session runs bind_general.py in its own shell instead. docx_name is the Writing's .docx and " +
         "pdf_name the PDF, each a bare file name at the top of the matter's one 0. DRAFT folder; pdf_name defaults to the " +
         ".docx name with \" UNSIGNED.pdf\". enclosures are bound in order after the Writing, each bookmarked by its label: " +
@@ -2771,7 +2771,7 @@ export function fileOpsToolDefinitions(): ToolDefinition[] {
     {
       name: "file_ops__move",
       description:
-        "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (case-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+        "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (matter-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
       inputSchema: {
         type: "object",
         properties: {
@@ -2802,7 +2802,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__preflight",
       description:
-        "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as case_data__query and case_data__execute find it): a non-empty list means a case_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+        "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
@@ -2814,7 +2814,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__new_run",
       description:
-        "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /case-data initialize first).",
+        "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -2897,7 +2897,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__reconcile",
       description:
-        "Recovery for approved /housekeeping rows. Omit `run_id` to list every interrupted run of the matter (approval.json present, some move row without a journal line); pass it for the live run after a compaction, and immediately before each trash row of a live apply. Hashes each open row's old and new paths (SHA-256) and returns per row `state` (not_moved, moved, changed, missing, clash, duplicate_at_destination, trashed, unresolvable) and `action`: `apply` (checks in `resolution`, then steps 4-8), `needs_ingest_status` (answered-question or It's-final row not moved: call /case-data ingest-status first), `post_move_steps` (steps 5-8), `trash` (copy and twin both check out: call file_ops__trash), `journal_done`, or `journal_failed` with `reason`. A run whose move rows all have journal lines is closed, whatever retry entries it holds. Fails `approval_corrupt` (naming the file) when a run's approval.json is there but unreadable, with or without `run_id`: apply nothing. Moves and journals nothing itself.",
+        "Recovery for approved /housekeeping rows. Omit `run_id` to list every interrupted run of the matter (approval.json present, some move row without a journal line); pass it for the live run after a compaction, and immediately before each trash row of a live apply. Hashes each open row's old and new paths (SHA-256) and returns per row `state` (not_moved, moved, changed, missing, clash, duplicate_at_destination, trashed, unresolvable) and `action`: `apply` (checks in `resolution`, then steps 4-8), `needs_ingest_status` (answered-question or It's-final row not moved: call /matter-data ingest-status first), `post_move_steps` (steps 5-8), `trash` (copy and twin both check out: call file_ops__trash), `journal_done`, or `journal_failed` with `reason`. A run whose move rows all have journal lines is closed, whatever retry entries it holds. Fails `approval_corrupt` (naming the file) when a run's approval.json is there but unreadable, with or without `run_id`: apply nothing. Moves and journals nothing itself.",
       inputSchema: {
         type: "object",
         properties: matterRun,
@@ -3293,7 +3293,7 @@ export function contactsToolDefinitions(): ToolDefinition[] {
 }
 
 // The one tool list every host and every session sees: local-backed practice
-// tools, local-backed case-data tools, and the host-side file surface. This
+// tools, local-backed matter-data tools, and the host-side file surface. This
 // litigation runtime has no Supabase surface and no layer-3 legal-commons
 // namespace. The application-state/application-engine namespaces (Phase 2,
 // decision memo Option C) retired 2026-08-27 (#374) with the application

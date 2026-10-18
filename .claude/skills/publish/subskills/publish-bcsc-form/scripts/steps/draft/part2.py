@@ -1,6 +1,6 @@
 """draft.part2 -- Factual basis (sourced from case data).
 
-Fetches facts from /case-data, injects them into the subagent prompt.
+Fetches facts from /matter-data, injects them into the subagent prompt.
 Subagent drafts paragraphs with per-paragraph pinpoint citations.
 Disk-write step: writes to part-2-factual-basis.md in the draft directory.
 
@@ -17,7 +17,7 @@ from steps.shared.paths import SUBSTANCE_WORKFLOW, case_data_output_dir
 
 CASE_DATA_FACTS_SCRIPT = (
     Path(__file__).resolve().parents[4]  # skills/
-    / "case-data" / "references" / "scripts" / "get_facts_for_drafting.py"
+    / "matter-data" / "references" / "scripts" / "get_facts_for_drafting.py"
 )
 
 max_retries = 3  # Large structured output; citation fixes are incremental
@@ -61,7 +61,7 @@ def _draft_dir(ctx: dict) -> Path:
 
 
 def _fetch_facts(ctx: dict) -> list[dict]:
-    """Fetch facts from case-data via get_facts_for_drafting.py.
+    """Fetch facts from matter-data via get_facts_for_drafting.py.
 
     Returns list of fact dicts with description, category, citation,
     origin_citation, evidence_count, evidence_citations, position_citations,
@@ -95,7 +95,7 @@ def precondition(ctx: dict) -> tuple[bool, str]:
     facts = _fetch_facts(ctx)
     if not facts and not ctx.get("facts"):
         return False, ("No facts found in the case database for this matter. "
-                       "Ensure documents have been ingested via /case-data "
+                       "Ensure documents have been ingested via /matter-data "
                        "(extract-facts operation) before drafting Part 2.")
     return True, ""
 

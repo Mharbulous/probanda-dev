@@ -13,7 +13,7 @@ structurally:
 - A per-authority **status**: `Unverified lead` (default) or
   `✅ Text on file` — the latter only when the authority matched a
   citation supplied via `--verified-citations` (produced by delegating to
-  ``case-data``; this skill never touches the database itself). The mark
+  ``matter-data``; this skill never touches the database itself). The mark
   says only that the authority's text is on file; reliance still goes
   through `research-agent` (`shared/legal-research.md`, item 2). Citation
   matching is digit-boundary-safe (`2021 BCCRT 49` does not match

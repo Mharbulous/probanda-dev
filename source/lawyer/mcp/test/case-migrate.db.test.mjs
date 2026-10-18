@@ -1,7 +1,7 @@
-// Adapter-level tests for case_data__migrate.
+// Adapter-level tests for matter_data__migrate.
 //
 // The engine's own behaviour (chain building, token, backup, restore) is
-// covered by .claude/skills/case-data/tests/test_migrate_engine.py. What these
+// covered by .claude/skills/matter-data/tests/test_migrate_engine.py. What these
 // prove is the wiring the Python suite cannot see: tool registration, dispatch
 // routing, repo-root/PYTHONPATH resolution to the skills tree, the MigrateError
 // round trip into a DataServerError, and lock release.
@@ -19,7 +19,7 @@ const { buildToolDefinitions } = await import("../build/schema-gen.js");
 const { callTool } = await import("../build/dispatch.js");
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
-const SCHEMA = join(REPO_ROOT, ".claude", "skills", "case-data", "references", "schema.sql");
+const SCHEMA = join(REPO_ROOT, ".claude", "skills", "matter-data", "references", "schema.sql");
 const PYTHON = process.env.COCLERK_PYTHON || "python";
 
 // Isolate every run from %LOCALAPPDATA% so a test never touches real backups.
@@ -102,7 +102,7 @@ for i, m in enumerate(marks):
 
 function fixture(version) {
   const matterRoot = mkdtempSync(join(tmpdir(), "coclerk-migrate-"));
-  const caseDataDir = join(matterRoot, "case-data");
+  const caseDataDir = join(matterRoot, "matter-data");
   mkdirSync(caseDataDir);
   mkdirSync(join(matterRoot, "4. LAWYER BRIEF", "CoWork"), { recursive: true });
   writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({
@@ -147,9 +147,9 @@ function userVersions(caseDataDir) {
   return res.stdout.trim().split(",").map(Number);
 }
 
-test("case_data__migrate is registered with a destructive annotation", () => {
-  const def = buildToolDefinitions().find((t) => t.name === "case_data__migrate");
-  assert.ok(def, "case_data__migrate is missing from the tool list");
+test("matter_data__migrate is registered with a destructive annotation", () => {
+  const def = buildToolDefinitions().find((t) => t.name === "matter_data__migrate");
+  assert.ok(def, "matter_data__migrate is missing from the tool list");
   assert.deepEqual(def.inputSchema.required, ["matter_root", "mode"]);
   // plan is destructive too: pointer resolution rewrites coclerk.json.
   assert.equal(def.annotations.destructiveHint, true);
@@ -158,7 +158,7 @@ test("case_data__migrate is registered with a destructive annotation", () => {
 
 test("dispatch rejects an unknown mode before spawning anything", async () => {
   await assert.rejects(
-    () => callTool({}, "case_data__migrate", { matter_root: "C:\\nope", mode: "sideways" }),
+    () => callTool({}, "matter_data__migrate", { matter_root: "C:\\nope", mode: "sideways" }),
     /unknown mode .*expected plan, apply, restore, or backups/,
   );
 });
@@ -247,7 +247,7 @@ test("a missing repo root fails loudly instead of silently skipping migrate", as
       () => caseDataMigrate(f.matterRoot, "plan", {}, env),
       (err) => {
         assert.equal(err.code, "repo_root_missing");
-        assert.match(err.message, /cannot locate the case-data maintenance scripts: no installed Probanda plugin holds it/);
+        assert.match(err.message, /cannot locate the matter-data maintenance scripts: no installed Probanda plugin holds it/);
         return true;
       },
     );

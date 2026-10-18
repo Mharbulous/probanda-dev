@@ -76,7 +76,7 @@ function isPositiveHours(value: unknown): value is number {
 
 /**
  * The firm's idle_flag_hours for the Job Board's idle flag, or null when firm.json is absent or
- * unreadable, sets none, or the case-data root is unconfigured (the background render job has no
+ * unreadable, sets none, or the matter-data root is unconfigured (the background render job has no
  * practice context). Never throws: a bad value is refused at upsert, never at render.
  */
 export function idleFlagHours(env: NodeJS.ProcessEnv = process.env): number | null {

@@ -73,7 +73,7 @@ guides to be loaded.
 # --- Resolve the harness inputs (before init) ---
 # {matter}: the matter folder.
 # {case-data folder}: the folder probanda.json's case_data_dir names. It must already
-# exist; if it does not, STOP and tell the practitioner to run /case-data initialize.
+# exist; if it does not, STOP and tell the practitioner to run /matter-data initialize.
 # Never create it. In a Code-tab (PC) session whose shell cannot yet reach it, first
 # request access to the case-data folder itself (never a parent or the firm root),
 # then use the path the session sees. If access is not granted, STOP: never build

@@ -1,13 +1,13 @@
-// Local case-data backend (permission-fatigue conversion, handover 123B).
+// Local matter-data backend (permission-fatigue conversion, handover 123B).
 //
-// Flips `/case-data` database I/O from in-VM Bash/Python heredocs to a
+// Flips `/matter-data` database I/O from in-VM Bash/Python heredocs to a
 // host-side MCP process, reached through the host Python `sqlite3` module (the
 // ratified CLAUDE.md exception: shelling out to host Python keeps the Node >=20
 // pin and adds no node:sqlite dependency or build step). Mirrors the B4
 // practice-data pattern (../practice/backend.ts) but is intentionally NOT an
-// entity/ORM surface: per plan D2, the two tools here (`case_data__query`,
-// `case_data__execute`) are generic connection-discipline primitives. All SQL
-// and schema knowledge stays inside the /case-data skill's operation files —
+// entity/ORM surface: per plan D2, the two tools here (`matter_data__query`,
+// `matter_data__execute`) are generic connection-discipline primitives. All SQL
+// and schema knowledge stays inside the /matter-data skill's operation files —
 // this backend never embeds a query, a table name, or a column name.
 //
 // Ported here, host-side, per plan D3/D4 (single code path, no in-VM fallback):
@@ -18,10 +18,10 @@
 //   - references/scripts/fuse_safe_io.py staging/ATTACH/DELETE-journal discipline.
 //   - references/scripts/dump.py evidence.sql regeneration (invariant I4).
 //
-// Invariants preserved (shared/conventions.md, case-data/references/design-decisions.md #12):
+// Invariants preserved (shared/conventions.md, matter-data/references/design-decisions.md #12):
 //   I1 three-file firewall (attach, never merge) -- I2 temp-copy staging, DELETE
 //   journal, WAL forbidden -- I3 TEMP triggers loaded per-connection on every
-//   execute, from the case-data skill's references/triggers.sql, which this
+//   execute, from the matter-data skill's references/triggers.sql, which this
 //   backend reads itself install-first, as migrate reads its reference SQL
 //   (design-decisions.md #52; the backend embeds no copy) --
 //   I4 dump after every mutation -- I5 one BEGIN...COMMIT per execute --
@@ -271,7 +271,7 @@ def resolve_pointer(matter_root):
             raise SystemExit(
                 f"Database schema is at v{major}.{minor} but this skill "
                 "requires v9.0. Run the migrate operation: call "
-                "case_data__migrate with mode 'plan' first, then 'apply' with "
+                "matter_data__migrate with mode 'plan' first, then 'apply' with "
                 "the plan_token it returns. (Not rebuild -- rebuild replays a "
                 "current dump and rejects an out-of-date one.)")
 
@@ -372,11 +372,11 @@ READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|
 def do_query(req, resolved):
     sql = req['sql'].strip()
     if not re.match(READ_ONLY_RE, sql):
-        raise SystemExit("case_data__query only accepts SELECT/WITH/PRAGMA statements; use case_data__execute for writes.")
+        raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
     if not os.path.exists(resolved['main_sqlite']):
         raise SystemExit(
             "No case database found: resolved main.sqlite is missing at "
-            f"{resolved['main_sqlite']}. Re-run case-data initialize for a new matter "
+            f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
             "or restore the database at the live-derived location.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_query_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
@@ -413,9 +413,9 @@ def atomic_replace_set(resolved, copies):
     the rest the old -- the cross-database inconsistency I5 exists to prevent.
 
     Ported from migrate_engine.atomic_replace_set rather than imported:
-    case_data__execute runs in a separate spawn whose Python is this
+    matter_data__execute runs in a separate spawn whose Python is this
     self-contained helper with no PYTHONPATH imports, and that process
-    separation is what contains the schema-guard bypass (case-data/references/design-decisions.md
+    separation is what contains the schema-guard bypass (matter-data/references/design-decisions.md
     #27). A shared import would collapse it.
 
     os.replace is atomic only within a volume and COCLERK_CASE_DATA_ROOT can
@@ -464,7 +464,7 @@ def atomic_replace_set(resolved, copies):
                         "state: %s carry the new state, the rest the previous. Do not "
                         "write again. Recover from evidence.sql (it still holds the last "
                         "committed state: maintain rebuild), or from the synced folder's "
-                        "version history, or from a case_data__migrate backup if one exists."
+                        "version history, or from a matter_data__migrate backup if one exists."
                         % (failed, exc, db, rollback_exc, ", ".join(replaced[i:])))
             raise SystemExit(
                 "Replacing %s.sqlite in native storage failed (%s); every database was "
@@ -503,7 +503,7 @@ def run_statements(con, req):
 def do_execute(req, resolved):
     triggers_sql = req.get('triggers_sql')
     if not triggers_sql or not triggers_sql.strip():
-        raise SystemExit("case_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
+        raise SystemExit("matter_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
     tmp = tempfile.mkdtemp(prefix=f'coclerk_case_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
     try:
         copies = stage_copies(resolved, tmp)
@@ -593,7 +593,7 @@ export type CaseStatementsResult =
 // A kill skips atomic_replace_set's undo and its sidecar cleanup, so a kill landing between
 // its renames leaves a mixed set and the sidecar behind (issue #612). The message says so.
 const EXECUTE_TIMEOUT_ADVICE =
-  "The write may already have committed: verify before retrying (/case-data shared/conventions.md §2.3). " +
+  "The write may already have committed: verify before retrying (/matter-data shared/conventions.md §2.3). " +
   `If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the ` +
   "commit-to-disk step and the databases may be a mix of new and previous state: do not write again " +
   "until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did " +
@@ -603,7 +603,7 @@ const EXECUTE_TIMEOUT_ADVICE =
 function runHelper(request: CaseQueryRequest | CaseLocateRequest | CaseExecuteRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
   const execute = request.op === "execute";
   return runPythonDriver({
-    label: "case-data sqlite helper",
+    label: "matter-data sqlite helper",
     driver: helperFile(),
     payload: JSON.stringify(request),
     env,
@@ -627,15 +627,15 @@ export function caseDataFolder(matterRoot: string, env: NodeJS.ProcessEnv = proc
   return (runHelper({ op: "locate", matter_root: matterRoot }, env) as { case_data_dir: string }).case_data_dir;
 }
 
-/** The cross-database trigger layer (#12), read fresh for every write from the case-data
+/** The cross-database trigger layer (#12), read fresh for every write from the matter-data
  * skill tree this server ships with, install-first (design-decisions.md #52). A missing file
  * fails here, before the lock or any staging; an empty one fails in do_execute, also before. */
 function caseDataTriggersSql(env: NodeJS.ProcessEnv): string {
-  const shipped = resolveShippedRoot("case-data/references/triggers.sql", env, { subject: "the case-data trigger layer" });
-  const path = join(shipped.root, "case-data", "references", "triggers.sql");
+  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, { subject: "the matter-data trigger layer" });
+  const path = join(shipped.root, "matter-data", "references", "triggers.sql");
   if (!existsSync(path)) {
     throw new DataServerError(
-      `case_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
+      `matter_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
       "skills_root_missing"
     );
   }
@@ -660,7 +660,7 @@ export async function caseDataExecute(
 /**
  * `caseDataExecute` for a list of statements that share one set of named params: the same lock,
  * staging, trigger layer, single transaction, commit to disk and evidence.sql dump. The SQL comes
- * from a script in the /case-data skill tree, never from this server. A refusal writes nothing.
+ * from a script in the /matter-data skill tree, never from this server. A refusal writes nothing.
  */
 export async function caseDataExecuteStatements(
   matterRoot: string,
@@ -690,7 +690,7 @@ async function executeUnderLock(
       // one almost certainly means a crashed migrate -- say so rather than
       // writing over whatever it left behind in silence.
       result.warning = [
-        "broke a stale case-data write lock (>15 min old) before writing; if another " +
+        "broke a stale matter-data write lock (>15 min old) before writing; if another " +
           "session is still writing to or migrating this matter, stop and reconcile",
         result.warning,
       ].filter(Boolean).join(" -- ");

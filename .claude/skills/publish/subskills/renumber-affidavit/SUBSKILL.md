@@ -39,7 +39,7 @@ Run the scripts from the repo root. The draft folder is the matter's one
 
 2. **Refuse a sworn or filed affidavit.** An affidavit's number is fixed once it
    is sworn, affirmed or filed, whichever comes first. Check before asking:
-   - Ask `/case-data` whether the matter records this affidavit as sworn,
+   - Ask `/matter-data` whether the matter records this affidavit as sworn,
      affirmed or filed. If it has no record of it, say so. A missing record is
      not "draft".
    - List the matter's court-file folder (`5. COURT FILE*`) for copies of this
@@ -104,7 +104,7 @@ Run the scripts from the repo root. The draft folder is the matter's one
      `assemble-affidavit`, and offer the old PDFs to TRASH on the same answer;
    - a filing's list of affidavits, such as a Notice of Application's Part 4
      entry: the filing's own drafting route;
-   - case data's record of the affidavit: `/case-data`;
+   - case data's record of the affidavit: `/matter-data`;
    - the Job Board's affidavit number: `/drafting-data`.
 
    Change none of these here.

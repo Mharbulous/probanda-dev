@@ -84,7 +84,7 @@ at binding.
 
    The case-data folder is the one `probanda.json`'s `case_data_dir` names.
    It must already exist: if it does not, stop and tell the practitioner to
-   run `/case-data` initialize; never create it.
+   run `/matter-data` initialize; never create it.
 
    Use the first-class Write tool -- never sandbox bash. Sandbox-path writes are
    subject to the Cowork mount-staleness bug

@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: >
   Produce a concise case brief from a court decision — Issues, Relevant Facts,
   Disposition, and Propositions (with ratio decidendi / obiter dictum labeling).
-  Optionally persists the decision as a legal authority via case-data.
+  Optionally persists the decision as a legal authority via matter-data.
 ---
 
 ## Contents
@@ -25,7 +25,7 @@ description: >
 
 ## Overview
 
-This skill reads a court decision and produces a structured four-section case brief as a chat response. After delivering the brief, it offers to persist the decision as a legal authority in the case database by delegating to ``case-data``.
+This skill reads a court decision and produces a structured four-section case brief as a chat response. After delivering the brief, it offers to persist the decision as a legal authority in the case database by delegating to ``matter-data``.
 
 ## Scope and Output
 
@@ -37,7 +37,7 @@ The user must provide the file path to the decision. This skill does not query d
 
 Before briefing, check whether the decision is already held as an authority, in
 the order `shared/research-priority.md` sets: tier 1, the matter's ingested layer
-via ``case-data``; then tier 2, the shared pooled layer by exact public citation
+via ``matter-data``; then tier 2, the shared pooled layer by exact public citation
 where this runtime can reach it (that file says how, and what to do when it
 cannot). Where either returns propositions already derived from this decision,
 say so and cite them alongside your own Section 4 — a proposition someone has
@@ -132,8 +132,8 @@ After delivering the brief, offer to persist the decision as a legal authority i
 
 **If the user accepts:**
 
-1. Invoke ``case-data`` for legal authority ingestion, passing the decision's file path and any issue scope the user specified.
-2. case-data handles extraction, authority registration, concept mapping, and all database writes. Do not pass schema-level details, SQL, or structured proposition data — case-data's own extraction subagents produce the schema-specific format it needs.
-3. Report what case-data persisted (authority registered, concepts found, criteria stored).
+1. Invoke ``matter-data`` for legal authority ingestion, passing the decision's file path and any issue scope the user specified.
+2. matter-data handles extraction, authority registration, concept mapping, and all database writes. Do not pass schema-level details, SQL, or structured proposition data — matter-data's own extraction subagents produce the schema-specific format it needs.
+3. Report what matter-data persisted (authority registered, concepts found, criteria stored).
 
-**Relationship to ``ingest``:** Both paths use case-data's legal authority ingest operation. ``ingest`` ingests directly without producing a brief. ``case-brief`` briefs first, then optionally persists — the user gets both a human-readable brief and persistent legal authority data. When briefing multiple decisions, offer persistence once after all briefs are delivered, not after each individual brief.
+**Relationship to ``ingest``:** Both paths use matter-data's legal authority ingest operation. ``ingest`` ingests directly without producing a brief. ``case-brief`` briefs first, then optionally persists — the user gets both a human-readable brief and persistent legal authority data. When briefing multiple decisions, offer persistence once after all briefs are delivered, not after each individual brief.

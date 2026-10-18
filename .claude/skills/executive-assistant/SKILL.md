@@ -273,7 +273,7 @@ Rules:
 ### Flags
 - ⚠ WIP silence — Harrison v Chan [L1887]: funded ($6,200), no time entries in 23 days
 - ⚠ Matter signal unconfirmed — Boyd v Metro [L2044]: retainer_agreement_signed unconfirmed
-- ⚠ Contact gaps — 2 open matters with no client recorded, 9 case-data parties with no matter role: set up contacts from existing matters
+- ⚠ Contact gaps — 2 open matters with no client recorded, 9 matter-data parties with no matter role: set up contacts from existing matters
 
 ---
 Top 3 to-dos for today (full ranked list via `task-prioritization`):

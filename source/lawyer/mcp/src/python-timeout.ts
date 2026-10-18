@@ -9,7 +9,7 @@ import { ValidationError } from "./errors.js";
 export const READ_TIMEOUT_MS = 20_000;
 export const WRITE_TIMEOUT_MS = 120_000;
 
-/** Issue #612. A healthy case-data or timecamping-data execute is one sub-second transaction, so
+/** Issue #612. A healthy matter-data or timecamping-data execute is one sub-second transaction, so
  * its budget sits under the bridge's 60s: the named timeout then reaches a caller still waiting.
  * Practice-data writes and time-pipeline set/delete take it too (#693); time-pipeline bulk_apply
  * takes WRITE_TIMEOUT_MS. */

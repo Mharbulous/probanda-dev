@@ -76,12 +76,12 @@ TEMPLATE = SKILL_ROOT / 'templates' / '032-noa.dotx'
 def _require_renderable_party_profile(context: dict, require_contract: bool) -> None:
     if require_contract and 'correction_required' not in context:
         raise RuntimeError(
-            'Validated party-role profile is unavailable; run /case-data '
+            'Validated party-role profile is unavailable; run /matter-data '
             'proceedings-profile before rendering.'
         )
     if context.get('correction_required'):
         raise RuntimeError(
-            'Party-role correction required; run /case-data '
+            'Party-role correction required; run /matter-data '
             'proceedings-profile before rendering.'
         )
 

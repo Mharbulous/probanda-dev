@@ -107,7 +107,7 @@ export interface PartyRow {
    * one value per party, since parties sharing an appeal role are not guaranteed to share a
    * lower-court role. NULL for non-BCCA proceedings and for any party not yet elicited. */
   lower_court_role: string | null;
-  /** The /case-data party this row stands for (schema v41, party/counsel SSOT); NULL until a session
+  /** The /matter-data party this row stands for (schema v41, party/counsel SSOT); NULL until a session
    * links it, and on a sent Writing's snapshot rows, which are never compared. */
   case_party_id: number | null;
 }
@@ -234,7 +234,7 @@ export function captionHeadingFor(filing: FilingRow, proceeding: ProceedingRow):
   return heading;
 }
 
-/** The values /case-data owns, which a party row takes from case data while its Writing drafts and
+/** The values /matter-data owns, which a party row takes from case data while its Writing drafts and
  * from `parties_snapshot` once it is sent, and never from `parties` (party/counsel SSOT). */
 export type CaseDataField = "counsel_name" | "counsel_firm" | "counsel_email" | "counsel_phone" | "address_for_service";
 
@@ -307,7 +307,7 @@ function hasRecipientsSnapshot(dbPath: string): boolean {
 /**
  * A Writing's recipients from its service list (schema v30): `to`, then `cc`, then `bcc`, each by
  * ordinal. A row with no party prints its own name, email and address. A party-linked row takes them
- * from the Writing's party rows (party/counsel SSOT), `parties`: the case-data read while the Writing
+ * from the Writing's party rows (party/counsel SSOT), `parties`: the matter-data read while the Writing
  * drafts, `parties_snapshot` once it is sent. Its name is the party's counsel, else the party's own
  * name; its email counsel's; its address the address for service; its capacity stays its own. Its own
  * name, email and address are never read: schema v43 holds them NULL. A sent Writing reads each

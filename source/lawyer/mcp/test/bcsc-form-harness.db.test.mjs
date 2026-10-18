@@ -83,7 +83,7 @@ test("init takes out_name in place of writing_folder for an individual form, and
   }
 });
 
-test("the tool takes no case-data path from the caller", async () => {
+test("the tool takes no matter-data path from the caller", async () => {
   const f = fixture();
   try {
     await assert.rejects(

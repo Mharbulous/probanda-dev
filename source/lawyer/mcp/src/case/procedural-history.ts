@@ -1,4 +1,4 @@
-// case_data__procedural_history_append: the one writer of a matter's ProceduralHistory.md
+// matter_data__procedural_history_append: the one writer of a matter's ProceduralHistory.md
 // (.claude/skills/shared/procedural-history.md). It runs host-side, so last_updated is the
 // host's own local time with its offset, never a session's hand conversion from a UTC shell.
 
@@ -45,7 +45,7 @@ function checkIsoDate(value: string, field: string): void {
   const [y, m, d] = value.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
   if (!ISO_DATE.test(value) || date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) {
-    throw new ValidationError(`case_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
+    throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
   }
 }
 
@@ -110,13 +110,13 @@ export function proceduralHistoryAppend(args: ProceduralHistoryAppendArgs, now: 
   const path = join(root, FILE_NAME);
   const hasEntry = args.date !== undefined || args.line !== undefined;
   if (hasEntry && (args.date === undefined || args.line === undefined)) {
-    throw new ValidationError("case_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
   }
   if (!hasEntry && (args.source_path !== undefined || args.told_on !== undefined || args.replaces !== undefined)) {
-    throw new ValidationError("case_data__procedural_history_append: source_path, told_on and replaces need an entry (date and line)", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append: source_path, told_on and replaces need an entry (date and line)", "invalid_entry");
   }
   if (args.source_path !== undefined && args.told_on !== undefined) {
-    throw new ValidationError("case_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
+    throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
 
   const existing = existsSync(path) ? readFileSync(path, "utf-8") : undefined;
@@ -131,12 +131,12 @@ export function proceduralHistoryAppend(args: ProceduralHistoryAppendArgs, now: 
     checkIsoDate(date, "date");
     const line = (args.line as string).trim().replace(/^- /, "");
     if (line === "" || /[\r\n]/.test(line)) {
-      throw new ValidationError("case_data__procedural_history_append.line must be one non-empty line", "invalid_entry");
+      throw new ValidationError("matter_data__procedural_history_append.line must be one non-empty line", "invalid_entry");
     }
     const later = datesIn(line).filter((d) => d > date);
     if (later.length > 0) {
       throw new ValidationError(
-        `case_data__procedural_history_append.line holds ${later.join(", ")}, later than its heading ${date}. No entry holds a date later than its own heading: record the event without that date (shared/procedural-history.md)`,
+        `matter_data__procedural_history_append.line holds ${later.join(", ")}, later than its heading ${date}. No entry holds a date later than its own heading: record the event without that date (shared/procedural-history.md)`,
         "date_after_heading"
       );
     }
@@ -151,7 +151,7 @@ export function proceduralHistoryAppend(args: ProceduralHistoryAppendArgs, now: 
       const hits = sections.flatMap((s) => s.lines.filter((l) => l.trim() === target).map(() => s));
       if (hits.length !== 1) {
         throw new ValidationError(
-          `case_data__procedural_history_append.replaces matches ${hits.length} entries; pass the full text of exactly one existing entry`,
+          `matter_data__procedural_history_append.replaces matches ${hits.length} entries; pass the full text of exactly one existing entry`,
           "replaces_not_found"
         );
       }
@@ -169,7 +169,7 @@ export function proceduralHistoryAppend(args: ProceduralHistoryAppendArgs, now: 
       headingCreated = true;
     }
     if (section.lines.some((l) => l.trim() === bullet)) {
-      throw new ValidationError(`case_data__procedural_history_append: ${date} already holds ${JSON.stringify(bullet)}`, "duplicate_entry");
+      throw new ValidationError(`matter_data__procedural_history_append: ${date} already holds ${JSON.stringify(bullet)}`, "duplicate_entry");
     }
     section.lines = [...trimTrailingBlank(section.lines), bullet];
   }

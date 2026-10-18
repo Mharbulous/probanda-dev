@@ -1,7 +1,7 @@
-// The drafting runtime reads /case-data only through /case-data's own script (party/counsel SSOT;
-// /case-data design-decisions.md #56), so no case-data table or column name may appear in the
+// The drafting runtime reads /matter-data only through /matter-data's own script (party/counsel SSOT;
+// /matter-data design-decisions.md #56), so no matter-data table or column name may appear in the
 // TypeScript under src/submission/. The identifiers are read from both canonical schemas with host
-// Python, so a column /case-data adds later is covered without editing this test.
+// Python, so a column /matter-data adds later is covered without editing this test.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -40,14 +40,14 @@ print(json.dumps({"case": sorted(case), "submission": sorted(submission)}))
 
 // Case-data identifiers that are also ordinary words, or this runtime's own names for its own
 // concepts, and appeared under src/submission/ before this test. None of them is a read of case
-// data. Only an identifier on this list may appear; anything else case-data names fails the test.
+// data. Only an identifier on this list may appear; anything else matter-data names fails the test.
 const PREDATING_WORDS = new Set([
   "admission_id", "author", "category", "court", "date", "disposition", "file_name", "finding",
   "issues", "jurisdiction", "listed", "notes", "outcome", "positions", "qualified", "reason", "recipient",
   "relief_items", "scope", "sources", "verified",
 ]);
 
-// A case-data identifier that one file must write because another contract names it: `lawyer_name` is
+// A matter-data identifier that one file must write because another contract names it: `lawyer_name` is
 // a key of the publish sidecar (publish-bcsc-form's assembly-input-contract.md), filled from the
 // runtime's own counsel_name. Allowed in that file only.
 const CONTRACT_KEYS = new Set(["publish-sidecar.ts: lawyer_name"]);
@@ -58,7 +58,7 @@ function tsFiles(dir) {
   );
 }
 
-test("no case-data table or column name appears in the TypeScript under src/submission/", () => {
+test("no matter-data table or column name appears in the TypeScript under src/submission/", () => {
   const res = spawnSync(
     process.env.COCLERK_PYTHON || "python",
     ["-c", IDENTIFIERS, caseDataMigrateScriptsDir(process.env), join(submissionDataMigrateScriptsDir(process.env), "..", "schema.sql")],

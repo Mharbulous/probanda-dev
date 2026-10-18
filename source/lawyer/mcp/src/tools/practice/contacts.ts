@@ -178,7 +178,7 @@ export async function contact_lookup(
 
 // ---- contact_checks ----
 
-/** A case-data folder's leading matter number, read as /case-data's parse_folder_name reads it. */
+/** A case-data folder's leading matter number, read as /matter-data's parse_folder_name reads it. */
 function folderMatterNum(name: string): string | null {
   const match = /^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+/.exec(name);
   return match ? normalizeMattNum(match[1]).replace(/[-.]+$/, "").toLowerCase() : null;

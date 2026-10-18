@@ -1,6 +1,6 @@
 // drafting_forms__draft_harness step scrutiny_review (ADR 0036): the review package for one statement
 // of law, run against a synthetic matter. The authority is a reportlab PDF in 6. LAW, recorded in a
-// case-data law database built from the canonical schema; the RTF test calls Microsoft Word and is
+// matter-data law database built from the canonical schema; the RTF test calls Microsoft Word and is
 // skipped where Word is not installed. Temp directories only; never a live matter.
 
 import assert from "node:assert/strict";

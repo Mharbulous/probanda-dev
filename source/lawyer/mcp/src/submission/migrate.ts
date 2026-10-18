@@ -185,7 +185,7 @@ function assertCounselReconciled(dbPath: string, staged: Record<string, unknown>
         ? `The database was first migrated to schema version ${COUNSEL_COPY_DROPPED - 1}, so its parties can be linked; nothing past it was applied. `
         : "Nothing was written. ") +
       "Decide each with the practitioner (/drafting-data references/filing-checklists.md section 0): link each unlinked or " +
-      "not-of-record party through the confirm write, then apply each offer to case data through /case-data's gate, discard " +
+      "not-of-record party through the confirm write, then apply each offer to case data through /matter-data's gate, discard " +
       "it here, or hold it, which keeps this database where it is. " +
       (offers.length > 0 ? `Counsel offers: ${offers.map(describeOffer).join("; ")}. ` : "") +
       (drift.rows.length > 0 ? `Drift: ${drift.rows.map(describeDrift).join("; ")}.` : "") +

@@ -4,7 +4,7 @@
 // matter root and outside its protected zones. The destination must be inside a matter folder
 // outside folders 0 and 1, TRASH, and any privileged or disclosed tree, with two exceptions: the
 // matter's `0. DRAFT*` folder itself, only for "Move to 0. DRAFT unchanged", which keeps the
-// current name; and that folder's `Superseded` subfolder, only for case-data's supersede-draft
+// current name; and that folder's `Superseded` subfolder, only for matter-data's supersede-draft
 // (`superseded`), under any name (the rules live in housekeeping/zones.ts). Only folders named in
 // `create_folders` are created. It never overwrites and never adds a suffix, and refuses a
 // cross-device move before creating anything. Every refusal is thrown before the first filesystem change. Even under a race

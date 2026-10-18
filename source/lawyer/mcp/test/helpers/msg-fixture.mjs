@@ -1,4 +1,4 @@
-// Synthetic Outlook .msg files for the reply route's reader tests. buildMsg ports /case-data's
+// Synthetic Outlook .msg files for the reply route's reader tests. buildMsg ports /matter-data's
 // test_render_document.py build_msg: a minimal compound file whose streams under 4096 bytes land in
 // the mini stream and larger ones in FAT sectors. Every name and address is invented.
 

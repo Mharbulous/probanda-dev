@@ -1,12 +1,12 @@
-// case_data__ingest_authority: the Path D writes for one extracted authority, from the extractor's
-// result file (/case-data design-decisions.md #68). /case-data's operations/ingest-extract.md
+// matter_data__ingest_authority: the Path D writes for one extracted authority, from the extractor's
+// result file (/matter-data design-decisions.md #68). /matter-data's operations/ingest-extract.md
 // Path D is its only caller.
 //
-// Spawns /case-data's references/scripts/ingest_authority.py the way case/resolve-participant.ts
+// Spawns /matter-data's references/scripts/ingest_authority.py the way case/resolve-participant.ts
 // spawns resolve_participant.py: an embedded plumbing driver, the skill's scripts directory on
 // PYTHONPATH. The script checks the result and returns the statements to run, with every table and
 // column name in them, so this wrapper holds no SQL and no schema. The statements run through
-// case_data__execute's own path (backend.ts): the case lock, one transaction, the trigger layer and
+// matter_data__execute's own path (backend.ts): the case lock, one transaction, the trigger layer and
 // the evidence.sql dump.
 
 import { DataServerError } from "../errors.js";
@@ -63,7 +63,7 @@ export type AuthorityIngest =
       counts: Record<string, { inserted: number; skipped: number }>;
       /** Each determined-by concept stubbed because no concept of that name was held. */
       stubs: Array<{ name: string; jurisdiction: string | null }>;
-      /** The result's own treats_prior, unwritten: treatments stay with case_data__execute. */
+      /** The result's own treats_prior, unwritten: treatments stay with matter_data__execute. */
       treats_prior: unknown;
       /** Links unwritten because the relationship CHECK cannot hold their value
        *  (shared/treatment-vocabulary.md). Reported to the practitioner, never remapped. */
@@ -76,7 +76,7 @@ export type AuthorityIngest =
 
 export async function ingestAuthority(request: AuthorityIngestRequest, env: NodeJS.ProcessEnv = process.env): Promise<AuthorityIngest> {
   const parsed = runPythonDriver({
-    label: "case-data authority ingest planner",
+    label: "matter-data authority ingest planner",
     driver: pythonDriverFile("case-ingest-authority-driver", DRIVER),
     payload: JSON.stringify(request),
     env,
@@ -84,7 +84,7 @@ export async function ingestAuthority(request: AuthorityIngestRequest, env: Node
     extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },
   }) as { ok: boolean; result?: AuthorityPlan; error?: string };
   if (!parsed.ok || !parsed.result) {
-    throw new DataServerError(`case_data__ingest_authority could not read the result: ${parsed.error ?? "no result"}. Nothing was written.`);
+    throw new DataServerError(`matter_data__ingest_authority could not read the result: ${parsed.error ?? "no result"}. Nothing was written.`);
   }
   const plan = parsed.result;
   if ("problems" in plan) return { ok: false, problems: plan.problems };

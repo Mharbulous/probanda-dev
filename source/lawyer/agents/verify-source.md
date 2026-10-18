@@ -1,6 +1,6 @@
 ---
 name: verify-source
-description: Compares one source document's already-extracted facts, factual positions, relief and source references against the document itself, adversarially, in a session isolated from the extractor, and returns strict correction JSON. Read-only — never writes. Dispatched by /case-data ingest-verify, one instance per source document.
+description: Compares one source document's already-extracted facts, factual positions, relief and source references against the document itself, adversarially, in a session isolated from the extractor, and returns strict correction JSON. Read-only — never writes. Dispatched by /matter-data ingest-verify, one instance per source document.
 model: opus
 tools:
   - Read
