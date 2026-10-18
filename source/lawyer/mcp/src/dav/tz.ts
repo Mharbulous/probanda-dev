@@ -3,7 +3,7 @@
 // event names without defining it. Ported from the practitioner's own
 // mail, calendar and contacts desktop extension (MIT).
 
-import { ValidationError } from "../errors.js";
+import { DataServerError, ValidationError } from "../errors.js";
 
 interface Wall {
   y: number;
@@ -15,6 +15,23 @@ interface Wall {
 }
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
+
+// tz data 2026b put British Columbia on permanent -07:00 from 2026-11-01. A host whose
+// Node carries older data (2026a or before) still falls back to -08:00, so every BC time
+// from that date would be an hour off. Refuse rather than answer wrong.
+const BC_PROBE_MS = Date.UTC(2026, 10, 2, 18);
+
+/** The error for zone `tz` when the host's Vancouver offset at the probe is `vancouverOffset`, else null. */
+export function staleTzDataError(tz: string, vancouverOffset: number): DataServerError | null {
+  if (vancouverOffset === -420) return null;
+  if (new Intl.DateTimeFormat("en-US", { timeZone: tz }).resolvedOptions().timeZone !== "America/Vancouver") return null;
+  return new DataServerError(
+    `This computer's Node.js (${process.version}, time zone data ${process.versions.tz ?? "unknown"}) still has ` +
+      "British Columbia falling back to -08:00 on 1 November 2026, so its BC times would be an hour off. " +
+      "Install Node.js 22.23.3 or later, then restart Claude.",
+    "stale_tz_data",
+  );
+}
 
 function wallParts(tz: string, ms: number): Wall {
   let f = formatters.get(tz);
@@ -45,8 +62,19 @@ export function isValidTimeZone(tz: string): boolean {
   }
 }
 
+const checkedZones = new Set<string>();
+
 /** UTC offset of `tz` at instant `ms`, in minutes (e.g. -420 for PDT). */
 export function offsetMinutes(tz: string, ms: number): number {
+  if (!checkedZones.has(tz)) {
+    const stale = staleTzDataError(tz, hostOffset("America/Vancouver", BC_PROBE_MS));
+    if (stale) throw stale;
+    checkedZones.add(tz);
+  }
+  return hostOffset(tz, ms);
+}
+
+function hostOffset(tz: string, ms: number): number {
   const p = wallParts(tz, ms);
   const asUtc = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s);
   return Math.round((asUtc - Math.floor(ms / 1000) * 1000) / 60000);
