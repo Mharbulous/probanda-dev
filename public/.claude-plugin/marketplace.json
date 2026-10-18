@@ -8,34 +8,28 @@
   "forceRemoveDeletedPlugins": true,
   "plugins": [
     {
-      "name": "legal",
-      "source": "./plugins/legal",
+      "name": "lawyer",
+      "source": "./plugins/lawyer",
       "author": {"name": "Probanda Legal", "url": "https://github.com/Probanda-app"},
-      "description": "The core plugin. Requires nothing. Install it first: every other Probanda plugin except lawyer requires it."
+      "description": "The core plugin, with skills for any lawyer. Requires nothing. Install it first: every other Probanda plugin requires it."
     },
     {
       "name": "researcher",
       "source": "./plugins/researcher",
       "author": {"name": "Probanda Legal", "url": "https://github.com/Probanda-app"},
-      "description": "What the law is: legal citation. Requires legal. Install legal first, then researcher."
+      "description": "What the law is: legal citation. Requires lawyer. Install lawyer first, then researcher."
     },
     {
       "name": "litigator",
       "source": "./plugins/litigator",
       "author": {"name": "Probanda Legal", "url": "https://github.com/Probanda-app"},
-      "description": "Court work on a matter. Requires legal and researcher. Install legal, then researcher, then litigator."
+      "description": "Court work on a matter. Requires lawyer and researcher. Install lawyer, then researcher, then litigator."
     },
     {
       "name": "solicitor",
       "source": "./plugins/solicitor",
       "author": {"name": "Probanda Legal", "url": "https://github.com/Probanda-app"},
-      "description": "Reserved for solicitor's work. Ships no skills yet. Requires legal. Install legal first."
-    },
-    {
-      "name": "lawyer",
-      "source": "./plugins/lawyer",
-      "author": {"name": "Probanda Legal", "url": "https://github.com/Probanda-app"},
-      "description": "Skills for any lawyer: restate a request before acting, and summarize a session. Requires nothing."
+      "description": "Reserved for solicitor's work. Ships no skills yet. Requires lawyer. Install lawyer first."
     }
   ]
 }

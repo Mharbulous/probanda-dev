@@ -2,7 +2,7 @@
   "name": "researcher",
   "displayName": "Researcher",
   "version": "0.0.1",
-  "description": "What the law is: legal citation. Requires the legal plugin: install legal first, then researcher.",
+  "description": "What the law is: legal citation. Requires the lawyer plugin: install lawyer first, then researcher.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
@@ -10,6 +10,6 @@
   "homepage": "https://github.com/Probanda-app/Probanda",
   "repository": "https://github.com/Probanda-app/Probanda",
   "dependencies": [
-    "legal"
+    "lawyer"
   ]
 }

@@ -2,7 +2,7 @@
   "name": "litigator",
   "displayName": "Litigator",
   "version": "0.0.1",
-  "description": "Court work on a matter. Requires the legal and researcher plugins: install legal, then researcher, then litigator.",
+  "description": "Court work on a matter. Requires the lawyer and researcher plugins: install lawyer, then researcher, then litigator.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
@@ -10,7 +10,7 @@
   "homepage": "https://github.com/Probanda-app/Probanda",
   "repository": "https://github.com/Probanda-app/Probanda",
   "dependencies": [
-    "legal",
+    "lawyer",
     "researcher"
   ]
 }
