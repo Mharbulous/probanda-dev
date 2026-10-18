@@ -53,9 +53,9 @@ import { configPath } from "./config-path.js";
 import { DataServerError } from "./errors.js";
 
 /** A dir is a repo root iff it holds SKILLS_MARKER and at least one of CHECKOUT_MARKERS, as directories:
- *  `source/lawyer/mcp` marks a Probanda checkout, `plugins/dev-tools` a CoClerk checkout. */
+ *  `source/lawyer/mcp` marks a Probanda checkout, `.claude/skills/plugin-packager` a CoClerk checkout. */
 const SKILLS_MARKER = join(".claude", "skills");
-const CHECKOUT_MARKERS = [join("source", "lawyer", "mcp"), join("plugins", "dev-tools")] as const;
+const CHECKOUT_MARKERS = [join("source", "lawyer", "mcp"), join(".claude", "skills", "plugin-packager")] as const;
 
 const SELF_DIR = dirname(fileURLToPath(import.meta.url));
 

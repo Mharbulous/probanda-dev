@@ -97,16 +97,22 @@ test("walk-up requires BOTH markers", (t) => {
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 });
 
-test("walk-up also accepts a CoClerk checkout: .claude/skills with plugins/dev-tools", (t) => {
+test("walk-up also accepts a CoClerk checkout: .claude/skills with .claude/skills/plugin-packager", (t) => {
+  const { env, req, startDir } = isolatedEnv(t);
+  mkdirSync(join(startDir, ".claude", "skills", "plugin-packager"), { recursive: true });
+  assert.equal(resolveRepoRoot(env, req), startDir);
+});
+
+test("walk-up no longer accepts .claude/skills with plugins/dev-tools, which CoClerk retired", (t) => {
   const { env, req, startDir } = isolatedEnv(t);
   mkdirSync(join(startDir, ".claude", "skills"), { recursive: true });
   mkdirSync(join(startDir, "plugins", "dev-tools"), { recursive: true });
-  assert.equal(resolveRepoRoot(env, req), startDir);
+  assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 });
 
 test("walk-up does not false-positive on the shape of an extracted .plugin install", (t) => {
   // Verified shape of a real installed plugin: .claude-plugin/, mcp/, skills/,
-  // agents/ -- but neither .claude/skills nor source/practice/mcp nor plugins/dev-tools.
+  // agents/ -- but neither .claude/skills nor source/practice/mcp nor .claude/skills/plugin-packager.
   const { env, startDir } = isolatedEnv(t);
   mkdirSync(join(startDir, ".claude-plugin"), { recursive: true });
   mkdirSync(join(startDir, "mcp", "dist"), { recursive: true });
