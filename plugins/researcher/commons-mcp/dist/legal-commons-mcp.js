@@ -16568,11 +16568,12 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /legal:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
+      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /legal:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. The server adds the researcher plugin's version itself. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
       inputSchema: objectSchema([
         { name: "title", type: "str" },
         { name: "body", type: "str" },
-        { name: "source", type: "str", enum: ["user", "llm"] }
+        { name: "source", type: "str", enum: ["user", "llm"] },
+        { name: "skill", type: "str" }
       ], ["title", "body", "source"])
     }
   ];
@@ -16885,8 +16886,22 @@ async function configureStatus2(client) {
 }
 
 // src/suggestion-box/tools.ts
+import { readFileSync } from "node:fs";
 var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves";
 var SOURCES = /* @__PURE__ */ new Set(["user", "llm"]);
+var MANIFEST = new URL("../../.claude-plugin/plugin.json", import.meta.url);
+function pluginVersion() {
+  let version2;
+  try {
+    version2 = JSON.parse(readFileSync(MANIFEST, "utf-8")).version;
+  } catch {
+    throw new ValidationError("submit could not read the researcher plugin's version from its plugin.json, so nothing was sent");
+  }
+  if (typeof version2 !== "string" || !version2) {
+    throw new ValidationError("the researcher plugin's plugin.json names no version, so nothing was sent");
+  }
+  return version2;
+}
 function isSuggestionBoxToolName(name) {
   return name.startsWith("suggestion_box__");
 }
@@ -16906,11 +16921,14 @@ async function submit(client, args) {
   if (!body) throw new ValidationError("submit requires a body");
   const source = String(args.source ?? "");
   if (!SOURCES.has(source)) throw new ValidationError("submit requires source: user or llm");
+  const skill = args.skill === void 0 ? void 0 : String(args.skill).trim();
+  if (skill === "") throw new ValidationError("submit's skill, when given, must name a skill");
   const hits = findRedactionHits({ title, body });
   if (hits.length > 0) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
   }
-  const saved = await client.callFunction("suggestion-submit", { title, body, source });
+  const post = { title, body, source, plugin_version: pluginVersion(), ...skill ? { skill } : {} };
+  const saved = await client.callFunction("suggestion-submit", post);
   if (typeof saved?.suggestion_id !== "string") {
     throw new ValidationError("Probanda's Cloud did not confirm the suggestion, so it may not have been saved");
   }
