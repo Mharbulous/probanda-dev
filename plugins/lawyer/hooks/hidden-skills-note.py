@@ -16,7 +16,10 @@ NOTE = (
     "to type it as /<plugin>:<name>, where <plugin> is the Probanda plugin that ships it "
     "(lawyer, researcher, litigator, solicitor, file-manager or timekeeper). A change the practitioner "
     "wants to the plugin goes to /lawyer:suggestion, which posts it only when the "
-    "researcher plugin is installed; never edit the installed plugin."
+    "researcher plugin is installed; never edit the installed plugin. Also invoke "
+    "/lawyer:suggestion, at most once a session, after a task the practitioner accepted "
+    "that took corrections or workarounds, or after stopping because Probanda cannot do "
+    "what was needed."
 )
 
 if __name__ == "__main__":

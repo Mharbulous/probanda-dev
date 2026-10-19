@@ -1,14 +1,14 @@
 {
   "name": "lawyer",
   "displayName": "Lawyer",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines, plus skills for any lawyer (restate a request before acting, summarize a session). Install it first. The researcher, litigator, solicitor, file-manager and timekeeper plugins all require it.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
   },
-  "homepage": "https://github.com/Probanda-app/Probanda",
-  "repository": "https://github.com/Probanda-app/Probanda",
+  "homepage": "https://github.com/Probanda-app/Legal",
+  "repository": "https://github.com/Probanda-app/Legal",
   "mcpServers": "./.mcp.json",
   "hooks": {
     "PreToolUse": [
@@ -99,6 +99,14 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/hidden-skills-note.py"
+            ],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/inject-preferences.py"
             ],
             "timeout": 10
           }

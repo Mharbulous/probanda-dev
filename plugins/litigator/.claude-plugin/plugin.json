@@ -1,14 +1,14 @@
 {
   "name": "litigator",
   "displayName": "Litigator",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Court work on a matter, for British Columbia lawyers: applying the law to the facts, drafting, court forms, filing packages and calculations. Requires the lawyer and researcher plugins: install lawyer, then researcher, then litigator.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
   },
-  "homepage": "https://github.com/Probanda-app/Probanda",
-  "repository": "https://github.com/Probanda-app/Probanda",
+  "homepage": "https://github.com/Probanda-app/Legal",
+  "repository": "https://github.com/Probanda-app/Legal",
   "dependencies": [
     "lawyer",
     "researcher"

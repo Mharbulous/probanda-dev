@@ -1,14 +1,14 @@
 {
   "name": "researcher",
   "displayName": "Researcher",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "What the law is, for British Columbia lawyers: legal research, citation and verification against audited authorities. Requires the lawyer plugin: install lawyer first, then researcher.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
   },
-  "homepage": "https://github.com/Probanda-app/Probanda",
-  "repository": "https://github.com/Probanda-app/Probanda",
+  "homepage": "https://github.com/Probanda-app/Legal",
+  "repository": "https://github.com/Probanda-app/Legal",
   "dependencies": [
     "lawyer"
   ],
