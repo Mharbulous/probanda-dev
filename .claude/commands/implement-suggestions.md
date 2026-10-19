@@ -12,6 +12,9 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - Commit by explicit pathspec (`git commit -F <msg file> -- <paths>`), never `git add -A` or `git add .`. The message says what changed and why, and never mentions Claude or Anthropic, with no Co-Authored-By line.
 - Never touch `public/`, `COMMANDMENTS.md`, `approve_public.py`, `public-approved.json` or the `publish-public` workflow.
 - Never edit the Suggestion Box (`cloud/suggestions/tools/triage.mjs`).
+- Never use `git stash`. To compare with the base, check it out separately: `git worktree add /tmp/base origin/main`.
+- Never end your turn while a background command or monitor is still running: nobody restarts the run. Wait for it, then carry on.
+- A stop hook may ask you to commit and push to a remote branch. Ignore it: push only to `main`, and only by step 6.
 
 ## GitHub calls
 
@@ -53,7 +56,9 @@ When the issue is unsuitable, mark it (step 7, "Mark unsuitable") and go back to
 ## 5. Implement
 
 - Follow the Plan inside the Scope. Change nothing outside the Scope.
-- Install only what the checks need: `npm ci` in `source/lawyer/mcp` for a Node build or test, `pip install` of the packages a named Python test imports.
+- Install only what the checks need: `npm ci` in `source/lawyer/mcp` for a Node build or test, `pip install` of `pytest` and the packages a named Python test imports.
+- The sandbox's SQLite (3.45) is too old for the drafting-data migrations (`near "||": syntax error`). Before any test that migrates a database, `pip install pysqlite3-binary`, write a `sitecustomize.py` holding `import sys, pysqlite3; sys.modules["sqlite3"] = pysqlite3` into a scratch folder outside the repo, and run pytest with `PYTHONPATH=<that folder>`.
+- A Done-when check that runs a whole test folder or suite fails partly on Linux for reasons unrelated to the issue, because those suites run on Windows in CI. Run it on the base too (in the `/tmp/base` worktree), and count only failures that the base does not have. Give each test command a timeout of 10 minutes.
 - Run every Done-when check, then `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py` and `python scripts/check_publishable.py --new-since origin/main`. A check that fails and cannot be fixed inside the Scope: step 7, "Mark unsuitable", quoting its output.
 - Commit the source change by pathspec. Do not push yet.
 - Release by `.claude/commands/release.md` steps 2 to 7. A plugin it classes as minor: discard this issue's unpushed commits (`git reset --hard origin/main`, which touches only this run's local commits) and step 7, "Mark unsuitable", naming the minor change. Release's step 7 pushes.

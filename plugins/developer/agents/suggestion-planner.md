@@ -1,6 +1,6 @@
 ---
 name: suggestion-planner
-description: In /suggestion-triage only, turns one Probanda suggestion into the GitHub issue that later sessions execute. Decomposes it, keeps only the parts that beat doing nothing or remove complexity without making Probanda worse, and writes the implementation plan for those. Read-only. Dispatched once per suggestion by the suggestion-triage skill.
+description: In /suggestion-triage only, turns one Probanda suggestion into the GitHub issue that later sessions execute. Decomposes it, keeps only the parts that beat doing nothing or remove complexity without making Probanda worse, and writes the implementation plan for those, a plan for the suggestion as proposed, and a closing TLDR. Read-only. Dispatched once per suggestion by the suggestion-triage skill.
 model: fable
 effort: medium
 tools: Read, Glob, Grep
@@ -29,8 +29,10 @@ Return exactly this, and nothing else:
    - **Scope**: the files a session may change, and what is out of bounds.
    - **Done when**: the checks that prove it.
    - A last line: `Suggestion <suggestion_id>`.
+4. **As proposed**, for the suggestion exactly as written, every part kept. With `Verdict: all`, the line `As proposed: same as above`. Otherwise, either a second issue (a `Title:` line, then the Suggestion, Plan, Scope and Done when sections and the `Suggestion <suggestion_id>` line), or the line `As proposed: cannot be built, because <one line>`.
+5. **TLDR**, last: the suggestion in one or two lines, what your plan kept, dropped or changed (one line each), and the verdict. Then one line for each choice, approve as proposed, approve with your adjustments, and dismiss, giving its gain over doing nothing. Mark `(Recommended)` each choice that beats doing nothing, or mark doing nothing when none does.
 
-With `Verdict: none`, the body holds the Suggestion and Parts sections and the last line, and no plan.
+With `Verdict: none`, the body holds the Suggestion and Parts sections and the last line, and no plan. The As proposed and TLDR sections still follow it.
 
 ## Rules
 
