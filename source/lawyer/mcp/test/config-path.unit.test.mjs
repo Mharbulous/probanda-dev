@@ -2,7 +2,7 @@
 // Two env objects in one process stand for two sessions: one on the live file, one on scratch.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -28,11 +28,32 @@ function fixture(t) {
   return { scratch, appData, liveRoot, scratchRoot, overrideFile };
 }
 
-test("unset or empty, the override is ignored and APPDATA's coclerk.json is read", (t) => {
+test("unset or empty, the override is ignored and the first read migrates Coclerk into Probanda", (t) => {
   const f = fixture(t);
-  const live = join(f.appData, "Coclerk", "coclerk.json");
+  const legacy = join(f.appData, "Coclerk", "coclerk.json");
+  const legacyText = readFileSync(legacy, "utf-8");
+  writeFileSync(join(f.appData, "Coclerk", "preferences.json"), "{}");
+  const live = join(f.appData, "Probanda", "probanda.json");
   assert.equal(configPath({ APPDATA: f.appData }), live);
+  assert.equal(readFileSync(live, "utf-8"), legacyText, "the settings are copied as they were");
+  assert.equal(readFileSync(join(f.appData, "Probanda", "preferences.json"), "utf-8"), "{}", "the folder's other files come too");
+  assert.equal(readFileSync(legacy, "utf-8"), legacyText, "nothing in Coclerk is changed");
   assert.equal(configPath({ APPDATA: f.appData, COCLERK_CONFIG_PATH: "" }), live);
+});
+
+test("once Probanda holds probanda.json, Coclerk is never read again", (t) => {
+  const f = fixture(t);
+  mkdirSync(join(f.appData, "Probanda"));
+  const live = join(f.appData, "Probanda", "probanda.json");
+  writeFileSync(live, JSON.stringify({ case_data_root: f.scratchRoot }));
+  assert.equal(configPath({ APPDATA: f.appData }), live);
+  assert.equal(resolveCaseDataRoot({ APPDATA: f.appData }), f.scratchRoot);
+});
+
+test("an override never migrates", (t) => {
+  const f = fixture(t);
+  assert.equal(configPath({ APPDATA: f.appData, COCLERK_CONFIG_PATH: f.overrideFile }), f.overrideFile);
+  assert.equal(existsSync(join(f.appData, "Probanda")), false);
 });
 
 test("one session reads scratch while another reads live", (t) => {

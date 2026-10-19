@@ -1,7 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { dirname } from "node:path";
 
 import { AmbiguousMatchError, NotFoundError, ValidationError } from "../../errors.js";
 import { rowsOf, type Item, type Row } from "../../practice/items.js";
+import { resolveCaseDataRoot } from "../../practice/matter-data-root.js";
+
+/** The litigation library: the folder holding "0. CASE DATA" and the matter folders. A matter's
+ * `folder` data field is relative to it, so a synced practice.db reads right on every device. */
+export function litigationLibrary(env: NodeJS.ProcessEnv): string {
+  return dirname(resolveCaseDataRoot(env));
+}
 
 export interface MatterRef {
   matt_num?: unknown;

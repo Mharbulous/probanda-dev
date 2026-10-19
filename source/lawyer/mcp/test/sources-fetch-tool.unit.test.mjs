@@ -196,11 +196,11 @@ test("a broken configuration or a malformed _hosts.json fails hard, never readin
   const err = await rejection(sourcesFetch({ url: "https://firm.test/rules" }, { ...f.seams, fetcher }));
   assert.equal(err.code, "invalid_hosts_file");
 
-  const config = join(f.seams.env.APPDATA, "Coclerk", "coclerk.json");
+  const config = join(f.seams.env.APPDATA, "Probanda", "probanda.json");
   writeFileSync(config, JSON.stringify({ case_data_root: join(f.scratch, "moved away") }));
   assert.throws(() => overlayFirmHosts(f.seams.env), /Configured case_data_root does not exist/);
   writeFileSync(config, "{ not json");
-  assert.throws(() => overlayFirmHosts(f.seams.env), /coclerk\.json is not valid JSON/);
+  assert.throws(() => overlayFirmHosts(f.seams.env), /probanda\.json is not valid JSON/);
 });
 
 test("match on a PDF is refused", async (t) => {

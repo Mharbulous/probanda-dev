@@ -2,6 +2,8 @@
 // calls Probanda's Cloud, so every read works offline. What each returns by default (L2), the
 // billing cutoff (L1) and matter references (L4) stay here, on the user's machine.
 
+import { join } from "node:path";
+
 import type { Item, Row } from "../../practice/items.js";
 import { rowsOf } from "../../practice/items.js";
 import type { PracticeStore } from "../../practice/store.js";
@@ -9,6 +11,7 @@ import {
   clientContext,
   effectiveCutoff,
   isBillable,
+  litigationLibrary,
   loadClientsById,
   normalizeMattNum,
   requireMatter,
@@ -49,6 +52,9 @@ export async function matter_lookup(
     matched = matters.filter((matter) => matter.matt_num === normalizeMattNum(args.matt_num));
   } else if (args.file_number) {
     matched = matters.filter((matter) => matter.file_number === String(args.file_number));
+  } else if (args.project_id) {
+    const project = String(args.project_id);
+    matched = matters.filter((matter) => Array.isArray(matter.projects) && matter.projects.includes(project));
   } else if (args.client_name) {
     const needle = String(args.client_name).toLowerCase();
     const matchingClientIds = new Set(
@@ -59,7 +65,24 @@ export async function matter_lookup(
     matched = matters.filter((matter) => matchingClientIds.has(String(matter.client_id)));
   }
 
-  return { rows: matched.map((matter) => withClient(matter, clients)) };
+  return { rows: withMatterRoots(matched.map((matter) => withClient(matter, clients)), store.env) };
+}
+
+// Each row with a `folder` gains `matter_root`, the folder's absolute path on this device, computed
+// here and never stored. When the library cannot be resolved, matter_root is null and says why.
+function withMatterRoots(rows: Row[], env: NodeJS.ProcessEnv): Row[] {
+  if (!rows.some((row) => typeof row.folder === "string")) return rows;
+  let library: string | null = null;
+  let error = "";
+  try {
+    library = litigationLibrary(env);
+  } catch (err) {
+    error = (err as Error).message;
+  }
+  return rows.map((row) => {
+    if (typeof row.folder !== "string") return row;
+    return library !== null ? { ...row, matter_root: join(library, row.folder) } : { ...row, matter_root: null, matter_root_error: error };
+  });
 }
 
 export async function trust_summary(

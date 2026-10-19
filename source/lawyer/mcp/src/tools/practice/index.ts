@@ -16,6 +16,7 @@ import {
   delete_anchor,
   ingest_court_calendar_year,
   insert_time_entry,
+  link_matter,
   manage_payment_in_flight,
   record_retainer_notice,
   set_status,
@@ -115,6 +116,8 @@ function route(store: PracticeStore, name: string, args: Record<string, unknown>
       return time_entries_query(store, args);
     case "practice_data__upsert_client_matter":
       return upsert_client_matter(store, args);
+    case "practice_data__link_matter":
+      return link_matter(store, args);
     case "practice_data__insert_time_entry":
       return insert_time_entry(store, args);
     case "practice_data__set_time_entries_billable":

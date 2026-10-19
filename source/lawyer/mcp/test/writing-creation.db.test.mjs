@@ -194,9 +194,9 @@ test("the signer: a staff person is no default, a passed key must be a roster la
   assert.equal((await refusal(g.createLetter({ signer_key: "pe" }))).code, "invalid_signer");
 });
 
-test("with no per-user coclerk.json, create_writing finds the overlay and firm profile from the database's 0. CASE DATA folder, and stores no default signer", async (t) => {
+test("with no per-user probanda.json, create_writing finds the overlay and firm profile from the database's 0. CASE DATA folder, and stores no default signer", async (t) => {
   const g = await generalWritingFixture(t);
-  rmSync(join(g.f.seams.env.APPDATA, "Coclerk", "coclerk.json"));
+  rmSync(join(g.f.seams.env.APPDATA, "Probanda", "probanda.json"));
   // /matter-data's layout: the matter's matter-data folder sits directly in the 0. CASE DATA folder.
   const dbPath = join(g.f.caseRoot, "L1 Test", "submission.sqlite");
   mkdirSync(dirname(dbPath));

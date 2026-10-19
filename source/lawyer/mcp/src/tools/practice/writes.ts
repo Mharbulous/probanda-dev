@@ -3,12 +3,14 @@
 // those ops must satisfy are Probanda's Cloud's: a refused write returns its question and
 // changes nothing.
 
+import { isAbsolute, relative } from "node:path";
+
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { flatten, rowsOf, type Item, type Row } from "../../practice/items.js";
 import type { OpSpec } from "../../practice/ops.js";
 import type { PracticeStore } from "../../practice/store.js";
 import { contactOp, today } from "./contacts.js";
-import { asString, newId, normalizeMattNum, nowIso, requireMatter, resolveMatter } from "./shared.js";
+import { asString, litigationLibrary, newId, normalizeMattNum, nowIso, requireMatter, resolveMatter } from "./shared.js";
 
 /** The empty labels that are sent as null, never as the hash of "". */
 const LABELS = ["party_label", "proceeding_label", "scenario_label"];
@@ -93,6 +95,51 @@ export async function upsert_client_matter(
     client_role_ids: ops.filter((op) => roleIds.has(op.id)).map((op) => op.as),
     ...(matterCreated && args.client_contacts == null ? { question: "Who is the client on this matter?" } : {}),
   };
+}
+
+// Records where a matter's folder is and which claude.ai Projects belong to it, so a session in a
+// Project can find the matter root. `matter_root` is stored as `folder`, relative to the
+// litigation library, never absolute. A Project belongs to one matter: the cloud sees only the
+// hash of the whole `projects` list, so that check runs here.
+export async function link_matter(store: PracticeStore, args: Record<string, unknown>): Promise<Row> {
+  const items = store.items();
+  const { id, row } = requireMatter(items, args);
+  const data: Record<string, unknown> = {};
+  if (args.matter_root !== undefined && args.matter_root !== null) {
+    data.folder = libraryRelative(asString(args.matter_root, "matter_root"), store.env);
+  }
+  if (args.project_id !== undefined && args.project_id !== null) {
+    const project = asString(args.project_id, "project_id");
+    const current = Array.isArray(row.projects) ? row.projects.map(String) : [];
+    if (args.unlink_project === true) {
+      data.projects = current.filter((linked) => linked !== project);
+    } else {
+      const other = rowsOf(items, "matter").find((matter) => matter.id !== id && Array.isArray(matter.projects) && matter.projects.includes(project));
+      if (other) {
+        throw new ValidationError(
+          `Refused: Project ${project} is already linked to matter ${String(other.matt_num ?? other.id)}. ` +
+            "Unlink it there first (unlink_project). Nothing was saved."
+        );
+      }
+      data.projects = current.includes(project) ? current : [...current, project];
+    }
+  }
+  if (Object.keys(data).length === 0) throw new ValidationError("link_matter needs matter_root or project_id");
+  const { items: after } = await store.write("link_matter", {}, [{ op: "update", id, kind: "matter", data }]);
+  return rowOf(after, id);
+}
+
+function libraryRelative(matterRoot: string, env: NodeJS.ProcessEnv): string {
+  if (!isAbsolute(matterRoot)) throw new ValidationError("matter_root must be the matter folder's absolute path");
+  const library = litigationLibrary(env);
+  const folder = relative(library, matterRoot);
+  if (folder === "" || folder.startsWith("..") || isAbsolute(folder)) {
+    throw new ValidationError(
+      `Refused: ${matterRoot} is not a folder inside the litigation library ${library} (the folder holding ` +
+        `"0. CASE DATA"). Nothing was saved.`
+    );
+  }
+  return folder;
 }
 
 // client_contacts (firm-wide contacts spec 4.3): each new contact, then one client role per

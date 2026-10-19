@@ -36,9 +36,9 @@ function fixture(t) {
   t.after(() => rmSync(scratch, { recursive: true, force: true }));
   const appData = join(scratch, "appdata");
   const root = join(scratch, "0. CASE DATA");
-  mkdirSync(join(appData, "Coclerk"), { recursive: true });
+  mkdirSync(join(appData, "Probanda"), { recursive: true });
   mkdirSync(root);
-  const configPath = join(appData, "Coclerk", "coclerk.json");
+  const configPath = join(appData, "Probanda", "probanda.json");
   const config = { ...CONFIG, case_data_root: root };
   writeFileSync(configPath, JSON.stringify(config, null, 2));
   const firmDir = join(root, "_practice", "firm");
@@ -268,7 +268,7 @@ test("registration refuses split tokens, naming each token and its part, and wri
     }
   );
   assert.equal(existsSync(f.firmDir), false, "no firm folder, firm.json or letterhead written");
-  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "coclerk.json untouched");
+  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "probanda.json untouched");
 });
 
 test("registration with differing theme faces reports them and still registers the file as-is", async (t) => {
@@ -388,8 +388,10 @@ test("no signer_fields_missing for a complete lawyer, a staff entry or an inacti
   assert.equal(retired.signer_fields_missing, undefined);
 });
 
-test("person and signature land in probanda.json and coclerk.json, and every other key survives", async (t) => {
+test("person and signature land in Probanda's probanda.json and both Coclerk names, and every other key survives", async (t) => {
   const f = fixture(t);
+  const legacyFolder = join(f.configPath, "..", "..", "Coclerk");
+  mkdirSync(legacyFolder);
   await upsert_firm_profile({ firm_name: "Example Law Corporation", roster_entry: ENTRY }, f.env);
 
   await assert.rejects(upsert_firm_profile({ person: "nobody" }, f.env), /person "nobody" is not a key in the firm roster/);
@@ -397,9 +399,8 @@ test("person and signature land in probanda.json and coclerk.json, and every oth
   writeFileSync(signature, Buffer.from("89504e470d0a1a0a", "hex"));
   const result = await upsert_firm_profile({ person: "pe", signature }, f.env);
   assert.deepEqual(result.changed, ["person", "signature"]);
-  // A legacy coclerk.json is migrated on write: both names get the same content.
-  const probandaPath = join(f.configPath, "..", "probanda.json");
-  assert.deepEqual(result.written, [probandaPath, f.configPath]);
+  // While the Coclerk folder exists, an older copy of the plugin still reads it: every name gets the same content.
+  assert.deepEqual(result.written, [f.configPath, join(legacyFolder, "probanda.json"), join(legacyFolder, "coclerk.json")]);
   for (const p of result.written) assert.deepEqual(readJson(p), { ...f.config, person: "pe", signature });
 });
 
@@ -412,7 +413,7 @@ test("a person is refused when there is no roster, and accepted with this call's
     assert.ok(err.message.includes(`${f.firmPath} is absent or has no roster`), err.message);
     return true;
   });
-  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "coclerk.json untouched");
+  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "probanda.json untouched");
   assert.equal(existsSync(f.firmDir), false);
 
   const result = await upsert_firm_profile({ roster_entry: ENTRY, person: "pe" }, f.env);
@@ -431,7 +432,7 @@ test("a signature whose file is absent is refused and nothing is written", async
     assert.ok(err.message.includes(`signature file not found: ${signature}`), err.message);
     return true;
   });
-  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "coclerk.json untouched");
+  assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "probanda.json untouched");
   assert.equal(existsSync(f.firmDir), false, "no firm folder or firm.json written");
 });
 

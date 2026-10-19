@@ -20,7 +20,8 @@ So this gate refuses:
   below it;
 - Bash, PowerShell, device_bash and workspace__bash whose command text names a
   page (best effort: a page reached through a variable or a wildcard passes);
-- every other device_* tool with any string input naming a page, except
+- every other device_* tool with any string input naming a page (for
+  device_request_folder_access, its path only, never its reason), except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
   `To Do List.html`), `Work Board.html` (the practice-wide page beside
   practice.db), `Job Board <id>.html`,
@@ -79,6 +80,8 @@ FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "M
 SHELL_TOOL = re.compile(r"Bash|PowerShell|mcp__(.+__)?device_bash|mcp__(.+__)?workspace__bash")
 DEVICE_TOOL = re.compile(r"mcp__(.+__)?device_.*")
 STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
+# A folder grant reads no page, so only its path is judged: a reason naming a page passes.
+FOLDER_TOOL = re.compile(r"mcp__(.+__)?device_request_folder_access")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
 # practice-wide Work Board beside practice.db, the
 # id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>"), the
@@ -157,8 +160,8 @@ def message(name, shell):
     text = (
         f'Refused (HTML pages principle, shared/html-pages.md): "{name}" is a Probanda plugin page, '
         "a human interface generated from the plugin's databases. An agent never views, reads, greps, "
-        "parses, scripts over, stages, authors or requests a screenshot; however, an agent may present "
-        "the html to a human user for them to view, and an agent may view screenshots provided by a "
+        "parses, scripts over, authors or requests a screenshot; however, an agent may present "
+        "the html to a human user for them to view, staging it first where presenting needs that, and an agent may view screenshots provided by a "
         "human user on the user's own initiative. Use the data instead: "
         "drafting_forms__render naming Work_board returns board_summary; "
         "drafting_forms__board_card returns what a card holds when opened; "
@@ -197,7 +200,7 @@ def main():
         hit = first_hit([command]) if isinstance(command, str) else None
         shell = True
     elif DEVICE_TOOL.fullmatch(tool):
-        texts = strings(tool_input)
+        texts = strings(tool_input.get("path")) if FOLDER_TOOL.fullmatch(tool) else strings(tool_input)
         if STAGE_TOOL.fullmatch(tool):
             texts = (t for t in texts if not STAGEABLE.fullmatch(basename(t).lower()))
         hit = first_hit(texts)

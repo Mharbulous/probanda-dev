@@ -43,12 +43,12 @@ function fixture(t) {
     root,
     matter,
     env: { APPDATA: appData, LOCALAPPDATA: localAppData },
-    configPath: join(appData, "Coclerk", "probanda.json"),
+    configPath: join(appData, "Probanda", "probanda.json"),
   };
 }
 
 function writeConfig(f, value) {
-  mkdirSync(join(f.env.APPDATA, "Coclerk"), { recursive: true });
+  mkdirSync(join(f.env.APPDATA, "Probanda"), { recursive: true });
   writeFileSync(f.configPath, typeof value === "string" ? value : JSON.stringify(value, null, 2));
 }
 

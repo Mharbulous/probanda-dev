@@ -202,7 +202,7 @@ export async function generalWritingFixture(t, { person = "pe", front = LEARNED_
     else process.env.APPDATA = saved;
   });
   const setPerson = (key) =>
-    writeFileSync(join(appData, "Coclerk", "coclerk.json"), JSON.stringify({ case_data_root: f.caseRoot, ...(key ? { person: key } : {}) }));
+    writeFileSync(join(appData, "Probanda", "probanda.json"), JSON.stringify({ case_data_root: f.caseRoot, ...(key ? { person: key } : {}) }));
   setPerson(person);
   const firmDir = join(f.caseRoot, "_practice", "firm");
   mkdirSync(firmDir, { recursive: true });

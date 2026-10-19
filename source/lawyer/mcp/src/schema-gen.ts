@@ -129,11 +129,12 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     // ---- Reads ----
     {
       name: practicePrefixed("matter_lookup"),
-      description: "Find a matter by matter_id, matt_num, file_number, or client name (provide at least one). matter_id is the row uuid other tools return, so their rows round-trip here directly. Returns matters with client fields and trust columns.",
+      description: "Find a matter by matter_id, matt_num, file_number, project_id (a claude.ai Project linked to it by link_matter) or client name (provide at least one). matter_id is the row uuid other tools return, so their rows round-trip here directly. Returns matters with client fields and trust columns, plus folder (relative to the litigation library), projects (linked Project ids) and, when folder is recorded, matter_root: the matter folder's absolute path on this device, or null with matter_root_error when the library cannot be resolved.",
       inputSchema: objectSchema([
         { name: "matter_id", type: "str" },
         { name: "matt_num", type: "str" },
         { name: "file_number", type: "str" },
+        { name: "project_id", type: "str" },
         { name: "client_name", type: "str" },
       ]),
     },
@@ -237,6 +238,17 @@ export function practiceToolDefinitions(): ToolDefinition[] {
         required: ["client_num"],
         additionalProperties: false,
       },
+    },
+    {
+      name: practicePrefixed("link_matter"),
+      description: "Record where an existing matter's folder is, and link or unlink a claude.ai Project to it, so a session in that Project finds the matter root with matter_lookup's project_id. matter_root is the matter folder's absolute path on this device; it is stored as folder, relative to the litigation library (the parent of case_data_root), and a path outside the library is refused. project_id is added to the matter's projects, or removed with unlink_project: true; a Project already linked to another matter is refused, since a matter can have several Projects but a Project one matter. Give matter_root, project_id or both. Returns the matter row.",
+      inputSchema: objectSchema([
+        ...matterRef,
+        { name: "file_number", type: "str" },
+        { name: "matter_root", type: "str" },
+        { name: "project_id", type: "str" },
+        { name: "unlink_project", type: "bool" },
+      ]),
     },
     {
       name: practicePrefixed("insert_time_entry"),

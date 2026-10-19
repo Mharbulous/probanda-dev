@@ -10,9 +10,9 @@ function fixture(t) {
   const scratch = mkdtempSync(join(tmpdir(), "coclerk-practice-path-"));
   t.after(() => rmSync(scratch, { recursive: true, force: true }));
   const appData = join(scratch, "appdata");
-  const configDir = join(appData, "Coclerk");
+  const configDir = join(appData, "Probanda");
   mkdirSync(configDir, { recursive: true });
-  return { scratch, appData, configPath: join(configDir, "coclerk.json") };
+  return { scratch, appData, configPath: join(configDir, "probanda.json") };
 }
 
 test("configured practice case_data_root must already exist and creates no _practice directory", (t) => {
@@ -22,7 +22,7 @@ test("configured practice case_data_root must already exist and creates no _prac
 
   assert.throws(
     () => resolvePracticeDbPath({ APPDATA: f.appData }),
-    /case_data_root.*does not exist.*coclerk\.json/i,
+    /case_data_root.*does not exist.*Probanda\\probanda\.json/i,
   );
   assert.equal(existsSync(join(missingRoot, "_practice")), false);
 });

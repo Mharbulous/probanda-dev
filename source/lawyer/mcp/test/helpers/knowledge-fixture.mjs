@@ -29,7 +29,7 @@ export function knowledgeFixture(t) {
   const appData = join(scratch, "appdata");
   const caseRoot = join(scratch, "0. CASE DATA");
   mkdirSync(caseRoot);
-  write(join(appData, "Coclerk", "coclerk.json"), JSON.stringify({ case_data_root: caseRoot }));
+  write(join(appData, "Probanda", "probanda.json"), JSON.stringify({ case_data_root: caseRoot }));
   const overlay = join(caseRoot, "_practice", "knowledge");
   const shippedPath = (rel) => {
     const [skill, ...rest] = rel.split("/");
@@ -92,7 +92,7 @@ export function useProcessEnv(t, f, { userFile = true } = {}) {
   delete process.env.COCLERK_CONFIG_PATH;
   delete process.env.COCLERK_CASE_DATA_ROOT;
   process.env.APPDATA = f.seams.env.APPDATA;
-  if (!userFile) rmSync(join(f.seams.env.APPDATA, "Coclerk", "coclerk.json"));
+  if (!userFile) rmSync(join(f.seams.env.APPDATA, "Probanda", "probanda.json"));
 }
 
 /** The runtime's passage hash (src/knowledge/sidecar.ts passageHash): whitespace collapsed, sha256 hex. */

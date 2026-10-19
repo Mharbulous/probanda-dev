@@ -163,6 +163,13 @@ class GateTest(unittest.TestCase):
         self.assertAllowed(call("mcp__remote-devices__device_stage_files",
                                 {"paths": ["/mnt/<matter>/0. DRAFT/SUB <filing title>/Evidence Index.md"]}))
 
+    def test_a_folder_request_is_judged_by_its_path_not_its_reason(self):
+        for tool in ["mcp__remote-devices__device_request_folder_access", "mcp__device_request_folder_access"]:
+            with self.subTest(tool=tool):
+                self.assertAllowed(call(tool, {"path": "/mnt/<matter>",
+                                               "reason": "to show Job Board 1.html and write drafts"}))
+                self.assertDenied(call(tool, {"path": "/mnt/<matter>/0. DRAFT/Job Board 1.html", "reason": "x"}))
+
     def test_staging_the_current_pages_is_allowed(self):
         for tool in ["mcp__remote-devices__device_stage_files", "mcp__device_stage_files"]:
             for name in STAGEABLE_NAMES:

@@ -50,6 +50,7 @@ const PRACTICE_TOOL_NAMES = [
   "practice_data__read_signals",
   "practice_data__time_entries_query",
   "practice_data__upsert_client_matter",
+  "practice_data__link_matter",
   "practice_data__insert_time_entry",
   "practice_data__set_time_entries_billable",
   "practice_data__upsert_task",

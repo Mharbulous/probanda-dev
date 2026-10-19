@@ -71,7 +71,7 @@ function fixture(t, person = "pe") {
 
 function setPerson(f, person) {
   const config = { case_data_root: f.caseRoot, ...(person === null ? {} : { person }) };
-  writeFileSync(join(f.seams.env.APPDATA, "Coclerk", "coclerk.json"), JSON.stringify(config));
+  writeFileSync(join(f.seams.env.APPDATA, "Probanda", "probanda.json"), JSON.stringify(config));
 }
 
 const write = (f, args) => knowledgeWrite({ path: FILE, matter: "L8443", ...args }, f.seams);
