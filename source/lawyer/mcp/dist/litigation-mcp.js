@@ -1,4 +1,4 @@
-// build-stamp: 56520b7a5c1b
+// build-stamp: 2bd0ecb29f5b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -80993,8 +80993,28 @@ async function config_set_root(args, env = process.env) {
 import { existsSync as existsSync13, readFileSync as readFileSync11 } from "node:fs";
 import { dirname as dirname6, join as join14 } from "node:path";
 
-// src/submission/forms/board-template.ts
-var BOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
+// src/compose-template.ts
+var INCLUDE = /@@include\(([^)]*)\)@@/g;
+var DATA = "@@data@@";
+function expand(name, files, chain) {
+  if (chain.includes(name)) throw new Error(`template include cycle: ${[...chain, name].join(" -> ")}`);
+  const text5 = files[name];
+  if (text5 === void 0) {
+    throw new Error(`template "${name}" is missing${chain.length ? ` (included by "${chain.at(-1)}")` : ""}`);
+  }
+  return text5.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
+}
+function composeTemplate(entry, files) {
+  const page = expand(entry, files, []);
+  const parts = page.split(DATA);
+  if (parts.length !== 2) throw new Error(`template "${entry}" has ${parts.length - 1} ${DATA} markers; it needs exactly one`);
+  const [head, tail] = parts;
+  if (head.includes("@@") || tail.includes("@@")) throw new Error(`template "${entry}" holds a leftover @@ after composing`);
+  return { head, tail };
+}
+
+// src/templates/work-board/board.css.ts
+var board_css_default = `/* Job Board stylesheet (design doc \xA77, 2026-09-08). System fonts only: no
    network fetch, so the board reads offline and inside a sandboxed pane. One
    accent, used three times: the Ready heading, the in-progress chip, links.
    Palette and heading font evoke the Logica Law brand sheet (2026-09-18)
@@ -81089,7 +81109,7 @@ p.deleted a{color:inherit}
    line in ordinary ink, unstruck. */
 p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
 
-/* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
+/* Proposal cards (design \xA713). Read-only: text, then glyph, with any status pinned right. A long
    line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
    whole line. */
 .proposal{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:12px 14px}
@@ -81115,48 +81135,16 @@ section>p.cue{margin:12px 0 0;font-size:12px;color:var(--muted)}
   details.ticket,details.seed,details.goal,.proposal{opacity:1;break-inside:avoid}
   details.ticket>.body,details.seed>.body,details.goal>ul.criteria,details.items>ul.items{display:flex}
   .chip,.bar,.bar i,ol.steps li.done::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
-`;
+}`;
 
-// src/submission/forms/practice-board-shell.ts
-var PRACTICE_BOARD_FILE = "Work Board.html";
-var PRACTICE_BOARD_MARKER = "data-practice-board-shell";
-var PRACTICE_CSS = String.raw`
-ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-li.item{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
-li.item .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
-li.item .label{font-weight:500}
-li.item .date,li.item .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}
-li.item .flag{font-size:12px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:0 8px}
-li.item.flagged{border-color:var(--accent)}
-li.item .line{margin:0;font-size:13px;color:var(--muted)}
-header p.alert{margin:8px 0 0;padding:6px 10px;border:2px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:600;font-size:13.5px}
-p.note{margin:0 0 12px;color:var(--accent);font-size:13.5px}
-footer{margin:18px 0 0;font-size:12px;color:var(--muted)}
-`;
-var HEAD = String.raw`<!doctype html>
-<html lang="en" ${PRACTICE_BOARD_MARKER}>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Work Board</title>
-<style>
-${BOARD_CSS}${PRACTICE_CSS}</style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>Work Board</h1>
-    <div class="meta"></div>
-  </header>
-  <div class="board"></div>
-  <footer></footer>
-</main>
-<script>
-`;
-var TAIL = String.raw`</script>
-<script>
-(function () {
+// src/templates/work-board/work-board.css.ts
+var work_board_css_default = "ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.item{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.item .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.item .label{font-weight:500}\nli.item .date,li.item .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.item .flag{font-size:12px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:0 8px}\nli.item.flagged{border-color:var(--accent)}\nli.item .line{margin:0;font-size:13px;color:var(--muted)}\nheader p.alert{margin:8px 0 0;padding:6px 10px;border:2px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:600;font-size:13.5px}\np.note{margin:0 0 12px;color:var(--accent);font-size:13.5px}\nfooter{margin:18px 0 0;font-size:12px;color:var(--muted)}";
+
+// src/templates/work-board/work-board.html.ts
+var work_board_html_default = '<!doctype html>\n<html lang="en" data-practice-board-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Work Board</title>\n<style>\n@@include(board.css)@@\n\n@@include(work-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Work Board</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n  <footer></footer>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(work-board.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/work-board/work-board.js.ts
+var work_board_js_default = `(function () {
   "use strict";
   var data = window.PRACTICE_BOARD;
   var header = document.querySelector("header");
@@ -81202,15 +81190,15 @@ var TAIL = String.raw`</script>
     var line = el("p", "line");
     var parts = [i.matter, i.client];
     parts.forEach(function (part, n) {
-      if (n > 0) line.appendChild(document.createTextNode(" · "));
+      if (n > 0) line.appendChild(document.createTextNode(" \xB7 "));
       line.appendChild(el("span", "", part));
     });
     if (i.matter_status) {
-      line.appendChild(document.createTextNode(" · "));
+      line.appendChild(document.createTextNode(" \xB7 "));
       line.appendChild(el("span", "chip", i.matter_status.replace(/_/g, " ")));
     }
     if (!i.billable) {
-      line.appendChild(document.createTextNode(" · "));
+      line.appendChild(document.createTextNode(" \xB7 "));
       line.appendChild(el("span", "chip", "Non-billable"));
     }
     li.appendChild(line);
@@ -81236,18 +81224,24 @@ var TAIL = String.raw`</script>
   var p = data.panels;
   section("overdue", "Overdue", p.overdue, "Nothing recorded as overdue.");
   section("due-today", "Due today", p.due_today, "Nothing recorded as due today.");
-  section("coming-up", "Coming up — next " + meta.horizon_days + " days", p.coming_up, "Nothing recorded in the next " + meta.horizon_days + " days.");
+  section("coming-up", "Coming up \u2014 next " + meta.horizon_days + " days", p.coming_up, "Nothing recorded in the next " + meta.horizon_days + " days.");
   section("other", "Other open work", p.other, "No other open work recorded.");
 
   var foot = "Every matter in the practice, billable or not. Met and dismissed deadlines and events that have occurred are not shown.";
   if (data.excluded_test_matters > 0) foot += " " + data.excluded_test_matters + (data.excluded_test_matters === 1 ? " matter" : " matters") + " with status 'test' left out.";
   else foot += " Matters with status 'test' are left out.";
   document.querySelector("footer").textContent = foot;
-})();
-</script>
-</body>
-</html>
-`;
+})();`;
+
+// src/submission/forms/practice-board-shell.ts
+var PRACTICE_BOARD_FILE = "Work Board.html";
+var PRACTICE_BOARD_MARKER = "data-practice-board-shell";
+var { head: HEAD, tail: TAIL } = composeTemplate("work-board.html", {
+  "work-board.html": work_board_html_default,
+  "board.css": board_css_default,
+  "work-board.css": work_board_css_default,
+  "work-board.js": work_board_js_default
+});
 function renderPracticeBoardHtml(data) {
   return `${HEAD}window.PRACTICE_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
 ${TAIL}`;
@@ -81704,8 +81698,7 @@ function localDate(d3) {
   const pad = (n3) => String(n3).padStart(2, "0");
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}`;
 }
-async function render_practice_board(store) {
-  const now = /* @__PURE__ */ new Date();
+async function buildPracticeBoardData(store, now) {
   const today4 = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
   const matterRows = store.rows("matter");
@@ -81781,13 +81774,17 @@ async function render_practice_board(store) {
     else panels.other.push(i3);
   }
   const pad = (n3) => String(n3).padStart(2, "0");
-  const data = {
+  return {
     meta: { rendered: `${today4} ${pad(now.getHours())}:${pad(now.getMinutes())}`, today: today4, horizon_days: HORIZON_DAYS },
     panels,
     notes,
     conflicted,
     excluded_test_matters: testMatters.size
   };
+}
+async function render_practice_board(store) {
+  const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
+  const { panels } = data;
   const file = join14(dirname6(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
   if (existsSync13(file) && !readFileSync11(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
@@ -81801,11 +81798,11 @@ async function render_practice_board(store) {
       due_today: panels.due_today.length,
       coming_up: panels.coming_up.length,
       other: panels.other.length,
-      flagged: items.filter((i3) => i3.flag !== null).length,
-      conflicted
+      flagged: Object.values(panels).flat().filter((i3) => i3.flag !== null).length,
+      conflicted: data.conflicted
     },
-    excluded_test_matters: testMatters.size,
-    read_failures: notes.length
+    excluded_test_matters: data.excluded_test_matters,
+    read_failures: data.notes.length
   };
 }
 
@@ -85357,7 +85354,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "56520b7a5c1b";
+var BUILD_STAMP = false ? null : "2bd0ecb29f5b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94669,6 +94666,10 @@ function courtFileAffidavits(dbPath, filingId, matterRoot) {
     return { ...base, court_file: latest, court_file_made_on: madeOn, mismatch };
   });
 }
+
+// src/submission/forms/board-template.ts
+var BOARD_CSS = `${board_css_default}
+`;
 
 // src/submission/forms/matter-board-shell.ts
 var MATTER_BOARD_FILE = "Litigation Strategy.html";

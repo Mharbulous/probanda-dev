@@ -32,8 +32,8 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export async function render_practice_board(store: PracticeStore): Promise<Record<string, unknown>> {
-  const now = new Date();
+/** The Work Board's data as of `now`, which sets today, the horizon and the rendered time. */
+export async function buildPracticeBoardData(store: PracticeStore, now: Date): Promise<PracticeBoardData> {
   const today = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
 
@@ -119,13 +119,18 @@ export async function render_practice_board(store: PracticeStore): Promise<Recor
   }
 
   const pad = (n: number) => String(n).padStart(2, "0");
-  const data: PracticeBoardData = {
+  return {
     meta: { rendered: `${today} ${pad(now.getHours())}:${pad(now.getMinutes())}`, today, horizon_days: HORIZON_DAYS },
     panels,
     notes,
     conflicted,
     excluded_test_matters: testMatters.size,
   };
+}
+
+export async function render_practice_board(store: PracticeStore): Promise<Record<string, unknown>> {
+  const data = await buildPracticeBoardData(store, new Date());
+  const { panels } = data;
 
   const file = join(dirname(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
   if (existsSync(file) && !readFileSync(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
@@ -141,10 +146,10 @@ export async function render_practice_board(store: PracticeStore): Promise<Recor
       due_today: panels.due_today.length,
       coming_up: panels.coming_up.length,
       other: panels.other.length,
-      flagged: items.filter((i) => i.flag !== null).length,
-      conflicted,
+      flagged: Object.values(panels).flat().filter((i) => i.flag !== null).length,
+      conflicted: data.conflicted,
     },
-    excluded_test_matters: testMatters.size,
-    read_failures: notes.length,
+    excluded_test_matters: data.excluded_test_matters,
+    read_failures: data.notes.length,
   };
 }
