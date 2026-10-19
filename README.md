@@ -16,7 +16,7 @@ Probanda is a set of six Claude Cowork plugins for legal practice in British Col
 In Claude, add this repository as a plugin marketplace, then install the plugins from it in this order:
 
 ```
-/plugin marketplace add Mharbulous/probanda-plugins
+/plugin marketplace add Mharbulous/probanda-dev
 /plugin install lawyer@Probanda_Legal_experimental
 /plugin install researcher@Probanda_Legal_experimental
 /plugin install litigator@Probanda_Legal_experimental
