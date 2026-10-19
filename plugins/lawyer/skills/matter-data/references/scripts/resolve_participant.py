@@ -1,6 +1,6 @@
 """resolve_participant.py — resolve a name to the participants it could mean (MODULE + CLI).
 
-Read-only. Given a case-data folder and a name as someone wrote or said it (a
+Read-only. Given a matter-data folder and a name as someone wrote or said it (a
 full name, a surname, "Surname, Given", "J. Surname", or a firm file-name code
 such as `SmithJ`), returns every participant it could mean, with every name,
 alias and file code on record for each, so a caller can search for all of

@@ -1,6 +1,6 @@
 """list_parties.py — every party in a matter's case data (MODULE + CLI).
 
-Read-only. Given a case-data folder, returns every party with its type, its
+Read-only. Given a matter-data folder, returns every party with its type, its
 counsel of record, its address and contact_info, and each proceeding it is a
 party to with its role there. practice_data__contact_checks spawns it over
 PYTHONPATH, as the drafting runtime spawns parties_of_record.py (#56), to find

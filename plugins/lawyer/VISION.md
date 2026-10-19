@@ -1,7 +1,7 @@
 # CoClerk — Vision & Design Philosophy
 
 **Date:** 2026-04-11
-**Amended:** 2026-07-05 — Data Sovereignty rewritten for cloud-based matter-data storage (see `planning/2. Plan/2026-07-05_case-data-cloud-migration-plan.md`).
+**Amended:** 2026-07-05 — Data Sovereignty rewritten for cloud-based matter-data storage (see `planning/2. Plan/2026-07-05_matter-data-cloud-migration-plan.md`).
 **Amended:** 2026-09-25 — Rewritten for the two-plugin split (`litigation` base, optional `legal-commons` expansion).
 **Amended:** 2026-09-30 — Practitioner interview: added the drafting-context problem, the one-owner-per-kind data principle, the stop-on-unfiled-ingest rule for drafting, the workflow-based litmus test, and the never-sign rule; brought the TimeCamp and database wording up to date.
 

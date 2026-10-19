@@ -38,7 +38,7 @@ submission = names([open(sys.argv[2], encoding='utf-8').read()])
 print(json.dumps({"case": sorted(case), "submission": sorted(submission)}))
 `;
 
-// Case-data identifiers that are also ordinary words, or this runtime's own names for its own
+// matter-data identifiers that are also ordinary words, or this runtime's own names for its own
 // concepts, and appeared under src/submission/ before this test. None of them is a read of case
 // data. Only an identifier on this list may appear; anything else matter-data names fails the test.
 const PREDATING_WORDS = new Set([

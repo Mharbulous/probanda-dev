@@ -1,4 +1,4 @@
-// The matter root and its case-data folder, validated the way every matter-scoped
+// The matter root and its matter-data folder, validated the way every matter-scoped
 // tool on this surface needs them.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -16,7 +16,7 @@ export const POINTER_FILES: readonly string[] = ["probanda.json", "coclerk.json"
 const POINTER_SCHEMA_VERSION = 5;
 const LEGACY_ARTIFACTS_DIR = "9. AI";
 const SUBMISSION_DB_FILE = "submission.sqlite";
-/** /matter-data's folder for every matter's case-data folder (case/backend.ts CASE_DATA_FOLDER). */
+/** /matter-data's folder for every matter's matter-data folder (case/backend.ts CASE_DATA_FOLDER). */
 const CASE_DATA_FOLDER = "0. CASE DATA";
 
 /** root's pointer file: probanda.json when it exists, else coclerk.json when it exists, else undefined. */
@@ -70,12 +70,12 @@ export function findDraftDir(root: string): string | undefined {
 }
 
 /**
- * The matter's case-data folder, canonical: the one its pointer's `case_data_dir` names, as
+ * The matter's matter-data folder, canonical: the one its pointer's `case_data_dir` names, as
  * `matter_data__query` resolves it. It must already exist; this server never creates it.
  */
 export function existingCaseDataFolder(root: string, env: NodeJS.ProcessEnv = process.env): string {
   const dir = caseDataFolder(root, env);
-  const missing = `the matter's case-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
+  const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
   if (!statSync(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
@@ -118,7 +118,7 @@ export function resolveDbPath(root: string): string {
 }
 
 /**
- * The case data root a matter's case-data folder sits in, for when the per-user probanda.json is
+ * The case data root a matter's matter-data folder sits in, for when the per-user probanda.json is
  * absent: its parent, accepted only when that parent is a `0. CASE DATA` folder or the folder
  * COCLERK_CASE_DATA_ROOT names (/matter-data's own layout), and is an existing directory. Anything
  * else is null, never a guess, so the caller's missing-file error stands. Writes nothing.
@@ -146,7 +146,7 @@ export function caseDataRootFromMatterRoot(matterRoot: unknown, env: NodeJS.Proc
   return caseDataRootFromCaseDataDir(resolveCaseDataDir(root), env);
 }
 
-/** The same, from a drafting database, which sits directly in the matter's case-data folder. */
+/** The same, from a drafting database, which sits directly in the matter's matter-data folder. */
 export function caseDataRootFromDbPath(dbPath: string, env: NodeJS.ProcessEnv): string | null {
   return caseDataRootFromCaseDataDir(dirname(dbPath), env);
 }

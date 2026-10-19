@@ -21,7 +21,7 @@ rename goes through `/file-apply`'s apply, in the `file-manager` plugin.
 `mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
-Cowork cloud sandbox, which cannot see the matter or case-data folders (ADR
+Cowork cloud sandbox, which cannot see the matter or matter-data folders (ADR
 0026). Tell the practitioner so, and how to run it there: open a Code-tab
 session in the matter's folder and ask for the same publish step. Do not
 retry or probe in Cowork.

@@ -12,7 +12,7 @@ import test from "node:test";
 
 import { knowledgeFile, passageHash } from "./helpers/knowledge-fixture.mjs";
 import { assertFiledFaceClean } from "./helpers/filed-face-scan.mjs";
-import { updateCaseData } from "./helpers/case-data-fixture.mjs";
+import { updateCaseData } from "./helpers/matter-data-fixture.mjs";
 import { partiesSnapshotSql } from "./helpers/template-db.mjs";
 import {
   BCSC_TREE,

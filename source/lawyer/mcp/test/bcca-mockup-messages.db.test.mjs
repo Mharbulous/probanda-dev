@@ -20,7 +20,7 @@ import test from "node:test";
 import { STAY_RESPONSE_CASE_DATA, STAY_RESPONSE_SEED } from "./fixtures/bcca-stay-response-seed.mjs";
 import { FACTUM_CASE_DATA, FACTUM_SEED } from "./fixtures/bcca-factum-seed.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");

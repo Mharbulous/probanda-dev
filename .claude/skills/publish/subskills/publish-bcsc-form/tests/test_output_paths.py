@@ -1,6 +1,6 @@
 """Output paths under the workspace output rule (#1168).
 
-Working files go to <case-data folder>/<workflow>/, the case-data folder being
+Working files go to <matter-data folder>/<workflow>/, the matter-data folder being
 the path the caller passes, checked against coclerk.json's case_data_dir. Final
 documents go to <the one 0. DRAFT* folder>/<Writing folder>/. Nothing creates
 a lawyer-brief or CoWork folder.
@@ -65,7 +65,7 @@ class TestCaseDataOutputDir(_MatterFixture):
         self.assertFalse(missing.exists())
 
     def test_unset_case_data_folder_fails_naming_the_init_option(self):
-        with self.assertRaisesRegex(RuntimeError, "--case-data-folder"):
+        with self.assertRaisesRegex(RuntimeError, "--matter-data-folder"):
             case_data_output_dir(self.matter, "", SUBSTANCE_WORKFLOW)
 
     def test_folder_named_differently_from_case_data_dir_fails(self):
@@ -144,7 +144,7 @@ class TestSessionCarriesTheFolders(_MatterFixture):
     def test_init_cli_stores_the_folders_in_the_session(self):
         argv = ["harness.py", "init", "Generate a Form 17",
                 "--matter-path", str(self.matter),
-                "--case-data-folder", str(self.case_data),
+                "--matter-data-folder", str(self.case_data),
                 "--writing-folder", "REQ Default judgment"]
         out = io.StringIO()
         cwd = os.getcwd()

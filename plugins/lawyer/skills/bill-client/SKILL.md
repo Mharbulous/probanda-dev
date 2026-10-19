@@ -33,7 +33,7 @@ End-to-end workflow for preparing the billing package for one litigation matter:
 
 ## Step 1 — Identify the matter and client number
 
-Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`). The matter number is the leading token of the folder name (`L8166`). The client number is **not** derivable from the folder name — get it from case-data:
+Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`). The matter number is the leading token of the folder name (`L8166`). The client number is **not** derivable from the folder name — get it from matter-data:
 
 - Invoke the `matter-data` skill's `profile` operation for the matter. It reports the client number, client name, matter number and short name.
 - If the matter has never been initialized in matter-data, the `matter-data` skill's `initialize` operation will look up the client/matter via `practice-data` `matter-lookup` and seed it — do this before continuing.

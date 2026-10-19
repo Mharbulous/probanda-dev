@@ -27,7 +27,7 @@
 // Before applying any hop to a pre-existing database the engine copies the
 // db file aside (timestamped .bak-*, next to the db; a fresh create backs
 // up nothing) -- added by #353 once a prior schema version existed to
-// migrate FROM (#307). Case-data's heavier plan/apply/restore/backups
+// migrate FROM (#307). matter-data's heavier plan/apply/restore/backups
 // ceremony stays deliberately unported (KISS): the copy-aside is the whole
 // backup story, and restore is a by-hand file copy.
 //

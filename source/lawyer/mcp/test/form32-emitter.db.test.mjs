@@ -23,7 +23,7 @@ const HARNESS_PATH = bcscFormHarnessPath(process.env, join(HERE, "no-install"));
 const PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
 
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsEmitForm32, submissionFormsRender } = await import("../build/submission/forms.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");

@@ -7,7 +7,7 @@ import { matterFixture } from "./helpers/housekeeping-fixture.mjs";
 
 const { preflight } = await import("../build/housekeeping/preflight.js");
 
-/** A matter whose v5 pointer names a case-data folder beside it, created unless `absent`. */
+/** A matter whose v5 pointer names a matter-data folder beside it, created unless `absent`. */
 function setUp({ absent = false } = {}) {
   const m = matterFixture();
   const caseData = join(m.base, "matter-data");
@@ -19,7 +19,7 @@ function setUp({ absent = false } = {}) {
   return { m, caseData };
 }
 
-test("no half-commit folder: an empty list, the case-data folder found, and the pointer untouched", () => {
+test("no half-commit folder: an empty list, the matter-data folder found, and the pointer untouched", () => {
   const { m } = setUp();
   try {
     const pointer = readFileSync(join(m.root, "coclerk.json"), "utf-8");
@@ -55,7 +55,7 @@ test("several half-commit folders are all named, and nothing else in the folder 
   }
 });
 
-test("a missing case-data folder is reported, not an error", () => {
+test("a missing matter-data folder is reported, not an error", () => {
   const { m } = setUp({ absent: true });
   try {
     assert.deepEqual(preflight(m.root, false, m.env), { half_commit: [], case_data_found: false });

@@ -1,5 +1,5 @@
 // emit_form32 / emit_form33's optional case_data_folder (#1267, ADR 0025): the server writes the
-// filed face to <case-data folder>\bcsc-form-substance\form-3N.md, where publish-bcsc-form's
+// filed face to <matter-data folder>\bcsc-form-substance\form-3N.md, where publish-bcsc-form's
 // asm32/asm33 locate steps read it. Temp directories only.
 
 import assert from "node:assert/strict";
@@ -11,7 +11,7 @@ import test from "node:test";
 import { DEFAULT_JUDGMENT_CASE_DATA, seedApplicationResponse } from "./fixtures/forms-render-seeds.mjs";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionFormsEmitForm32, submissionFormsEmitForm33 } = await import("../build/submission/forms.js");
 const { writeSubstanceFile } = await import("../build/submission/substance-file.js");
 const { callTool } = await import("../build/dispatch.js");

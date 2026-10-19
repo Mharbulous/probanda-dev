@@ -26,7 +26,7 @@
 // Before applying any hop to a pre-existing database the engine copies the
 // db file aside (timestamped .bak-*, next to the db; a fresh create backs
 // up nothing) -- same KISS copy-aside-only backup story as drafting-data's
-// engine (no case-data-style plan/apply/restore ceremony; restore is a
+// engine (no matter-data-style plan/apply/restore ceremony; restore is a
 // by-hand file copy).
 //
 // PYTHONIOENCODING=utf-8 on every spawn, for the reason documented in

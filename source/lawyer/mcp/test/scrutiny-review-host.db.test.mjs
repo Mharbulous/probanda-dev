@@ -14,7 +14,7 @@ import test from "node:test";
 import { codeOf } from "./helpers/housekeeping-fixture.mjs";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writeCaseDataStores } = await import("./helpers/case-data-fixture.mjs");
+const { writeCaseDataStores } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { draftHarness } = await import("../build/submission/draft-harness.js");
 
@@ -124,7 +124,7 @@ function python(args) {
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
-/** A matter with 0. DRAFT and 6. LAW, its case-data folder holding the drafting and law databases. */
+/** A matter with 0. DRAFT and 6. LAW, its matter-data folder holding the drafting and law databases. */
 async function fixture(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-scrutiny-test-"));
   t.after(() => rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
@@ -438,7 +438,7 @@ test("scrutiny_review: a file it did not write is left alone, listed, and never 
   assert.ok(readFileSync(notes).equals(bytes), "the foreign file changed on the second call");
 });
 
-test("scrutiny_review: a db_path outside the matter's case-data folder is refused path_out_of_scope", async (t) => {
+test("scrutiny_review: a db_path outside the matter's matter-data folder is refused path_out_of_scope", async (t) => {
   const f = await fixture(t);
   const elsewhere = join(f.base, "elsewhere");
   mkdirSync(elsewhere);

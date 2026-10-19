@@ -1,6 +1,6 @@
 // drafting_forms__publish_general, publish_bcca_factum and publish_vaniac_package (#1268, ADR 0026):
 // /publish's fills run host-side for a Cowork session. Each happy path runs the real fill script
-// against a synthetic matter and case-data folder. Temp directories only; never a live matter.
+// against a synthetic matter and matter-data folder. Temp directories only; never a live matter.
 
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
@@ -15,7 +15,7 @@ import { seedVaniacProceeding } from "./fixtures/forms-render-seeds.mjs";
 import { FACTUM_CASE_DATA, FACTUM_SEED } from "./fixtures/bcca-factum-seed.mjs";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { publishBccaFactum, publishGeneral, publishVaniacPackage } = await import("../build/submission/publish-tools.js");
 const { callTool } = await import("../build/dispatch.js");
@@ -37,7 +37,7 @@ function matterOver(t, caseData) {
   return { base, root: realpathSync.native(root), draft: realpathSync.native(join(root, "0. DRAFT")), caseData: realpathSync.native(caseData), outside };
 }
 
-/** A database seeded by `seed`, in a fresh case-data folder. */
+/** A database seeded by `seed`, in a fresh matter-data folder. */
 async function seededCaseData(t, seed) {
   const caseData = mkdtempSync(join(tmpdir(), "coclerk-publish-cd-"));
   t.after(() => rmSync(caseData, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
@@ -125,7 +125,7 @@ for (const [tool, fixture] of Object.entries(FIXTURES)) {
     assert.equal(existsSync(f.subfolder), false);
   });
 
-  test(`${tool}: refuses a matter-data subfolder that is a link elsewhere, and a database outside the case-data folder`, async (t) => {
+  test(`${tool}: refuses a matter-data subfolder that is a link elsewhere, and a database outside the matter-data folder`, async (t) => {
     const f = await fixture(t);
     symlinkSync(f.outside, f.subfolder, "junction");
     assert.equal(codeOf(() => f.run()), "path_out_of_scope");

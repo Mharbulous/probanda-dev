@@ -12,7 +12,7 @@ import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedBcs
 import { FACTUM_CASE_DATA, FACTUM_SEED } from "./fixtures/bcca-factum-seed.mjs";
 import { STAY_RESPONSE_CASE_DATA, STAY_RESPONSE_SEED, STAY_RESPONSE_POSITIONS } from "./fixtures/bcca-stay-response-seed.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { updateCaseData, writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { updateCaseData, writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 

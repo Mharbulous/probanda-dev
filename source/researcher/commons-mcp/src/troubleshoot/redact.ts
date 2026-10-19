@@ -14,7 +14,7 @@ const PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
 // Compared case-insensitively, as Windows paths are.
 const USER_SEGMENTS = [...PLACEHOLDERS, "public", "default", "%username%", "$env:username"];
 
-// What may follow `Litigation - Documents\`: the case-data root (the tree's own
+// What may follow `Litigation - Documents\`: the matter-data root (the tree's own
 // structure) or a placeholder. After `0. CASE DATA\` only a placeholder may.
 const DOCUMENTS_SEGMENTS = ["0. case data", ...PLACEHOLDERS];
 

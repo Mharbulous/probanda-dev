@@ -39,7 +39,7 @@ Then one call, `drafting_forms__open_session`, with the matter folder's absolute
 - Timeout or no response: retry once with identical arguments, then stop and quote the error verbatim.
 
 <!-- atom id=draft.enter.keep ops=enter -->
-**Keep for the whole session:** the database path, the case-data folder (the folder holding that database; in Cowork, request access to that folder itself, never a parent or the firm root, before writing there, and use the path the session sees), the draft folder returned, the matter identity returned, the session identity token minted, the session start stamp. Carry the token verbatim to every render call, and never state it in chat. If the token is ever lost or uncertain, stop before any job write, say so, name the jobs believed to be this session's and when each was locked, and ask. Never mint a replacement. A nightly session holds one token per run (`references/nightly-launch.md`).
+**Keep for the whole session:** the database path, the matter-data folder (the folder holding that database; in Cowork, request access to that folder itself, never a parent or the firm root, before writing there, and use the path the session sees), the draft folder returned, the matter identity returned, the session identity token minted, the session start stamp. Carry the token verbatim to every render call, and never state it in chat. If the token is ever lost or uncertain, stop before any job write, say so, name the jobs believed to be this session's and when each was locked, and ask. Never mint a replacement. A nightly session holds one token per run (`references/nightly-launch.md`).
 
 <!-- atom id=draft.enter.responses ops=enter -->
 **Response handling:**

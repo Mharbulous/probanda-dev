@@ -46,7 +46,7 @@ def fake_convert(docx: Path, out: Path) -> Path:
 
 @pytest.fixture
 def published(tmp_path: Path) -> dict:
-    """A SUB folder holding Package\\ and a case-data folder holding the source
+    """A SUB folder holding Package\\ and a matter-data folder holding the source
     files and package index, as publish-vaniac-package leaves them, and a
     matter root holding the exhibit sources the Source trace names."""
     sub = tmp_path / 'matter' / '0. DRAFT' / 'SUB Claimant Opening Submissions'

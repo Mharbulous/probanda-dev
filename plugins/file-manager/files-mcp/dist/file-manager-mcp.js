@@ -15515,7 +15515,7 @@ function housekeepingToolDefinitions() {
   return [
     {
       name: "housekeeping__preflight",
-      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's matter-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the matter-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
@@ -15526,7 +15526,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__new_run",
-      description: "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /matter-data initialize first).",
+      description: "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -16215,7 +16215,7 @@ def read_pointer(matter_root):
 
 
 def locate_case_data_dir(matter_root):
-    """The case-data folder resolve_pointer chooses, found without writing: no pointer heal, no
+    """The matter-data folder resolve_pointer chooses, found without writing: no pointer heal, no
     legacy migration, no database version guard. A legacy (9. AI) pointer means no execute has
     run since, so skipping its migration cannot hide an execute sidecar."""
     matter_root = os.path.normpath(matter_root)
@@ -16571,7 +16571,7 @@ print(json.dumps(main()))
 function helperFile() {
   return pythonDriverFile("case-sqlite", PY_HELPER);
 }
-var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
+var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's matter-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
 function runHelper(request, env) {
   const execute = request.op === "execute";
   return runPythonDriver({
@@ -16623,7 +16623,7 @@ function validateMatterRoot(matterRoot) {
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
-  const missing = `the matter's case-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
+  const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
   if (!statSync2(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
@@ -16667,7 +16667,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   const first = relParts[0]?.toLowerCase();
   if (relParts.length === 0 || relParts.length === 1 && POINTER_FILES.includes(first) || first === TRASH.toLowerCase() || target.split(pathWin323.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))) {
     throw new DataServerError(
-      `path is protected (the workspace root, the matter pointer, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
+      `path is protected (the workspace root, the matter pointer, ${TRASH}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }
@@ -17006,7 +17006,7 @@ var Checker = class {
 import { readdirSync as readdirSync6, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
 import { win32 as pathWin327 } from "node:path";
 
-// src/practice/case-data-root.ts
+// src/practice/matter-data-root.ts
 import { existsSync as existsSync6, readFileSync as readFileSync3 } from "node:fs";
 var CONFIG_STATUS_HINT = "Call practice_data__config_status to see what is missing and the candidate root.";
 function resolveCaseDataRoot(env = process.env, fallback) {
@@ -17191,7 +17191,7 @@ function confineRunDir(matter, runId) {
   const real = realpathSync4.native(expected);
   const segments = pathWin326.relative(matter.caseData, real).split(pathWin326.sep);
   if (real.toLowerCase() !== expected.toLowerCase() || inFirewall(segments)) {
-    throw new DataServerError(`run directory resolves outside the case-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
+    throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
   }
   return real;
 }

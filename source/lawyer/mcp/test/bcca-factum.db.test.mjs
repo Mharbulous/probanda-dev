@@ -12,7 +12,7 @@ import test from "node:test";
 
 import { assertMatchesGolden, replaceStamp } from "./fixtures/forms-render-seeds.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { assertFiledFaceClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");

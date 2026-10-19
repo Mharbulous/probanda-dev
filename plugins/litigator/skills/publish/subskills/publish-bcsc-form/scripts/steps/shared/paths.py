@@ -4,14 +4,14 @@ Two buckets, per the workspace output rule in .claude/skills/shared/workspace-ou
 
 - writing_output_dir   -> <the matter's draft folder>/<Writing folder>/ (final
   .docx / PDF). The Writing folder's name comes from the caller.
-- case_data_output_dir -> <case-data folder>/<workflow>/ (working files). The
-  case-data folder's path comes from the caller.
+- case_data_output_dir -> <matter-data folder>/<workflow>/ (working files). The
+  matter-data folder's path comes from the caller.
 
 Neither is a guessed literal. The draft folder is resolved by glob, because
 real matters spell it inconsistently (with and without a trailing "s", in mixed
-case). The case-data folder is the one probanda.json's case_data_dir names, and
+case). The matter-data folder is the one probanda.json's case_data_dir names, and
 the caller passes the path it sees, since in Cowork's sandbox that folder is
-mounted apart from the matter. Neither the draft folder nor the case-data
+mounted apart from the matter. Neither the draft folder nor the matter-data
 folder is ever created here; only the subfolder beneath each is.
 
 An individual form takes no Writing folder (#1324): write_deliverables saves
@@ -26,7 +26,7 @@ from pathlib import Path, PureWindowsPath
 
 from steps.shared.fingerprint import STORE_NAME, ManualEdits, drift
 
-# Workflow folder names under the case-data folder.
+# Workflow folder names under the matter-data folder.
 SUBSTANCE_WORKFLOW = "bcsc-form-substance"
 # Forms filed as a package (#1324): their .docx stays in the Writing folder.
 PACKAGE_FORMS = ("form-32", "form-33")
@@ -252,26 +252,26 @@ def _case_data_dir_name(matter_path: str | Path) -> str:
 
 def case_data_output_dir(matter_path: str | Path, case_data_folder: str | Path,
                          workflow: str) -> Path:
-    """Return this workflow's folder under the case-data folder, creating it if needed.
+    """Return this workflow's folder under the matter-data folder, creating it if needed.
 
     case_data_folder is the path the caller sees for the folder probanda.json's
     case_data_dir names. It must already exist and its name must match that
-    entry's last segment; the case-data folder itself is never created here.
+    entry's last segment; the matter-data folder itself is never created here.
     """
     folder = Path(case_data_folder) if case_data_folder else None
     if folder is None or not folder.is_dir():
         raise RuntimeError(
-            f"case-data folder is not an existing directory: "
+            f"matter-data folder is not an existing directory: "
             f"{case_data_folder!r}. publish-bcsc-form never creates it. If the "
             f"matter is not initialized, run /matter-data initialize; otherwise "
             f"pass the folder probanda.json's case_data_dir names to harness "
-            f"init with --case-data-folder (in Cowork, request access to that "
+            f"init with --matter-data-folder (in Cowork, request access to that "
             f"folder first)."
         )
     expected = _case_data_dir_name(matter_path)
     if folder.name.casefold() != expected.casefold():
         raise RuntimeError(
-            f"case-data folder {str(folder)!r} does not match probanda.json's "
+            f"matter-data folder {str(folder)!r} does not match probanda.json's "
             f"case_data_dir, whose folder is {expected!r}. Pass the folder "
             f"case_data_dir names."
         )

@@ -22,11 +22,11 @@ At the top of the draft folder, the one folder matching `0. DRAFT*` under the ma
 1. `<name>.docx`, the deliverable.
 2. `<name> (format unverified).docx`, the review copy, written only while an item of the format file needs the practitioner's attention (step 8). Its warning is the body's first paragraph and never reaches the deliverable.
 
-The tool responses the fill reads are saved as JSON files in the working folder `<case-data folder>\publish-general\`, the case-data folder being the one `probanda.json`'s `case_data_dir` names. It must already exist: if it does not, stop and tell the practitioner to run `/matter-data` initialize; never create it. In Cowork, make no access request: the host tool below derives that folder itself. Create `publish-general\` if it is absent. The JSON files are rewritten in place on each run.
+The tool responses the fill reads are saved as JSON files in the working folder `<matter-data folder>\publish-general\`, the matter-data folder being the one `probanda.json`'s `case_data_dir` names. It must already exist: if it does not, stop and tell the practitioner to run `/matter-data` initialize; never create it. In Cowork, make no access request: the host tool below derives that folder itself. Create `publish-general\` if it is absent. The JSON files are rewritten in place on each run.
 
 ## In Cowork
 
-In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox sees neither the matter folder nor the case-data folder, and the Write tool writes into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox shell, and never use the Write tool for a working file. Run steps 1 to 4 for their checks, refusals and payloads, but save nothing: compose `letter.json`'s and `tokens.json`'s content as JSON objects instead of writing them. In place of step 5, call `drafting_forms__publish_general` with:
+In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox sees neither the matter folder nor the matter-data folder, and the Write tool writes into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox shell, and never use the Write tool for a working file. Run steps 1 to 4 for their checks, refusals and payloads, but save nothing: compose `letter.json`'s and `tokens.json`'s content as JSON objects instead of writing them. In place of step 5, call `drafting_forms__publish_general` with:
 
 - `matter_root`: the matter folder's host path, as `drafting_forms__open_session` takes it
 - `db_path`: step 1's database path
@@ -35,7 +35,7 @@ In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawye
 - `format_path`: step 3's knowledge path
 - `letter` and `tokens`: step 4's payloads, only when step 4 calls for them
 
-The server renders the filed face, reads the format file and, for a letterhead Writing, the firm profile itself, writes the working files in the real `<case-data folder>\publish-general\`, runs the fill into the real draft folder and returns the fill's JSON line unchanged. Steps 6 to 10 read it as they read the fill's. Relay any refusal verbatim, whether the fill's, a render refusal (such as `confirmation_gate_failed`), `bespoke_renderer`, `path_out_of_scope` or `python_timeout`: its message says what to do next. Do not look for the files in the sandbox: the tool's result is the check, and a file card names the host path it returns.
+The server renders the filed face, reads the format file and, for a letterhead Writing, the firm profile itself, writes the working files in the real `<matter-data folder>\publish-general\`, runs the fill into the real draft folder and returns the fill's JSON line unchanged. Steps 6 to 10 read it as they read the fill's. Relay any refusal verbatim, whether the fill's, a render refusal (such as `confirmation_gate_failed`), `bespoke_renderer`, `path_out_of_scope` or `python_timeout`: its message says what to do next. Do not look for the files in the sandbox: the tool's result is the check, and a file card names the host path it returns.
 
 ## Steps
 

@@ -1,5 +1,5 @@
 // Party and counsel from case data (party/counsel SSOT): counsel of record and the address for
-// service are court-record state owned by /matter-data. A matter's case-data folder holds both
+// service are court-record state owned by /matter-data. A matter's matter-data folder holds both
 // databases here: a real submission database seeded with the BCSC consent-order requisition, and a
 // matter-data main.sqlite built from /matter-data's canonical schema.sql. A drafting Writing prints each
 // party's counsel from case data, read live through case_party_id; open_session reports every party
@@ -31,7 +31,7 @@ const {
   submissionFormsRender,
 } = await import("../build/submission/forms.js");
 const { toFiledFace } = await import("../build/submission/forms/filed-face.js");
-const { updateCaseData, writeCaseData } = await import("./helpers/case-data-fixture.mjs");
+const { updateCaseData, writeCaseData } = await import("./helpers/matter-data-fixture.mjs");
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { seedBcscConsentOrder } = await import("./fixtures/forms-render-seeds.mjs");
 

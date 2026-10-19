@@ -23,7 +23,7 @@ Call `practice_data__config_status`.
 
 ## Step 2 — Find the matter-data root
 
-The root is the practitioner's `0. CASE DATA` folder: the folder that holds `_practice\practice.db` and, beside the matter folders, each matter's case-data folder. In the default layout it sits in the same document library as the matter folders.
+The root is the practitioner's `0. CASE DATA` folder: the folder that holds `_practice\practice.db` and, beside the matter folders, each matter's matter-data folder. In the default layout it sits in the same document library as the matter folders.
 
 1. **Candidates.** `config_status` lists `candidates` with `source: "scan"`: folders under the user's profile named `0. CASE DATA`, or holding `_practice\practice.db`. The scan follows symlinks and junctions, so it finds a folder in a synced SharePoint or other cloud library reached through a link, and lists it at the path where it was found. A candidate with `practice_db_exists: true` is an existing Probanda root (another device already set it up). `scan_truncated: true` means the scan stopped early and the folder may still exist.
 2. **No candidate, or none is right.** Ask the practitioner where their matter folders are, and have them grant access to that folder with the session's folder-access tool (`request_cowork_directory` in Cowork). If they decline, stop and say that the folder is needed. List it, and look for a `0. CASE DATA` folder. A folder entry whose type is "symlink" or a junction is a folder: list it too. If there is none, propose creating `0. CASE DATA` in the folder that holds the matter folders.

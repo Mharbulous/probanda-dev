@@ -8,8 +8,8 @@
 //
 // Output location (#324, keyed by filing id since #1317): <dirname(db_path)>/
 // mockups/Filing <id>/, archive copies in a sibling archive/ -- i.e. inside the matter's
-// case-data folder, NOT the practitioner's matter workspace. A Cowork
-// Project mounts only the matter folder, so the case-data folder sits
+// matter-data folder, NOT the practitioner's matter workspace. A Cowork
+// Project mounts only the matter folder, so the matter-data folder sits
 // outside every sandbox FUSE mount and is reached only host-side through
 // these tools; keeping the mockups there keeps both the write and any later
 // access clear of the known mount-staleness bug. Deterministic from db_path
@@ -1586,7 +1586,7 @@ export interface EmitForm32Refusal {
  * renderMode:'filed' precedent: under the contract's "Division of
  * discipline" the emitter owns filed-face content and the caller owns
  * placement, so the caller (the draft skill, /draft) writes the returned
- * markdown to {case-data folder}/bcsc-form-substance/form-32.md itself.
+ * markdown to {matter-data folder}/bcsc-form-substance/form-32.md itself.
  * Same ahead-of-bundle schema gate as
  * submissionFormsRender -- rendering against a schema newer than the
  * installed bundle is unsafe the same way here as anywhere else.

@@ -54,7 +54,7 @@ function fixture(version) {
 }
 
 function liveDerivedFixture({
-  stored = "C:\\Users\\DeletedProfile\\case-data",
+  stored = "C:\\Users\\DeletedProfile\\matter-data",
   createDatabase = true,
   matterFolder = "T9999 Scratch Matter",
   databaseFolder = matterFolder,
@@ -240,7 +240,7 @@ test("matter-data runtime accepts v9.0 and writes a v9.0 dump header", async () 
   }
 });
 
-test("a pointer without evidence_sql_path gets its dump in the case-data folder", async () => {
+test("a pointer without evidence_sql_path gets its dump in the matter-data folder", async () => {
   const f = liveDerivedFixture();
   try {
     writeFileSync(f.pointerPath, JSON.stringify({ schema_version: 5, case_data_dir: f.caseDataDir }));

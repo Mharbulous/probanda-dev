@@ -143,7 +143,7 @@ file. An ingest failure is recorded by `/matter-data`'s ingest itself, as
 ## Working files
 
 A `/housekeeping` run's files live in its run directory,
-`<case-data folder>\housekeeping\<run-id>\`, where the case-data folder is the
+`<matter-data folder>\housekeeping\<run-id>\`, where the matter-data folder is the
 one the matter's `probanda.json` names in `case_data_dir` — never a guessed
 literal. It must already exist; `housekeeping` beneath it is created on demand.
 The litigation data server creates the directory

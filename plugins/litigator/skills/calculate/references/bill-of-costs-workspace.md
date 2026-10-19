@@ -7,15 +7,15 @@ their law are allowed to come from.
 ## The working folder
 
 ```
-<case-data folder>/bill-of-costs/
+<matter-data folder>/bill-of-costs/
 ```
 
-The case-data folder is the one `probanda.json`'s `case_data_dir` names. The
+The matter-data folder is the one `probanda.json`'s `case_data_dir` names. The
 chain is a Code-tab (PC) job: the Cowork sandbox cannot see this folder, so each
 member refuses in Cowork before any tool call or file write (#1273).
 
-`0. DRAFT` and the case-data folder must already exist. If either is absent, stop
-and tell the practitioner (a missing case-data folder means the matter is not
+`0. DRAFT` and the matter-data folder must already exist. If either is absent, stop
+and tell the practitioner (a missing matter-data folder means the matter is not
 initialized: name `/matter-data` initialize) — do not create it and do not write
 elsewhere. Only the `bill-of-costs/` leaf is created on demand.
 

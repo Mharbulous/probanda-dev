@@ -544,7 +544,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("contact_checks"),
-      description: "Read only. Two gap checks. matters_without_client: each open matter (status not closed) with no matter role tagged client whose to is empty or later than today. parties_without_role: each party in a matter's case data whose party_id is no matter role's case_party_id on that matter. With a matter ref (matt_num or matter_id) both checks cover that matter, and check 2 reads the case data that matter_root's probanda.json names (omit matter_root and check 2 is skipped for it). Without a matter ref check 1 covers every open matter, and check 2 every open matter with one case-data folder under the case data root whose name starts with its matter number and holds main.sqlite. unresolved lists each matter check 2 could not read, with the reason (no matter number, two candidate folders, a database behind the current schema). Returns {matters_without_client, parties_without_role, unresolved}.",
+      description: "Read only. Two gap checks. matters_without_client: each open matter (status not closed) with no matter role tagged client whose to is empty or later than today. parties_without_role: each party in a matter's case data whose party_id is no matter role's case_party_id on that matter. With a matter ref (matt_num or matter_id) both checks cover that matter, and check 2 reads the case data that matter_root's probanda.json names (omit matter_root and check 2 is skipped for it). Without a matter ref check 1 covers every open matter, and check 2 every open matter with one matter-data folder under the case data root whose name starts with its matter number and holds main.sqlite. unresolved lists each matter check 2 could not read, with the reason (no matter number, two candidate folders, a database behind the current schema). Returns {matters_without_client, parties_without_role, unresolved}.",
       inputSchema: objectSchema([
         ...matterRef,
         { name: "matter_root", type: "str" },
@@ -612,7 +612,7 @@ function caseDataPrefixed(name: string): string {
   return `matter_data__${name}`;
 }
 
-// Case-data connection-discipline surface (permission-fatigue conversion,
+// matter-data connection-discipline surface (permission-fatigue conversion,
 // handover 123B, plan D2(a)). SQL and schema stay authored inside the
 // /matter-data skill; this backend holds no table or column names. `query` and
 // `execute` are generic primitives; `migrate` is a runner whose migration SQL
@@ -2265,10 +2265,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "asm32 operation hard-validates and fills into the court-ready .docx. Writes nothing to disk; returns " +
         "{ file_name: 'form-32.md', markdown, warnings }; a lenient emit's warnings also name each Part 2 fact with no " +
         "court record, whose evidence reference names no document. The caller writes the markdown to the matter's substance folder " +
-        "({case-data folder}/bcsc-form-substance/form-32.md) and then invokes /publish with publish-bcsc-form and " +
+        "({matter-data folder}/bcsc-form-substance/form-32.md) and then invokes /publish with publish-bcsc-form and " +
         "the explicit asm32 token -- this tool never writes there itself, because the contract gives the emitter the " +
         "content and the caller the file's placement. Exception (ADR 0025): given optional case_data_folder, the absolute " +
-        "host path of the matter's case-data folder (the folder holding db_path; anything else is refused), the server " +
+        "host path of the matter's matter-data folder (the folder holding db_path; anything else is refused), the server " +
         "also writes the markdown to <case_data_folder>\\bcsc-form-substance\\form-32.md itself, creating only that " +
         "subfolder, and returns written_path -- use it in Cowork, where the session's own write lands in its sandbox. On a drafting filing with party drift it refuses as render's filed mode does (parties_drift_gate_failed). Refuses on a filing that isn't notice_of_application, on an empty Part 2 " +
         "with no pure-law decision of counsel recorded (filings.pure_law_on, schema v49), when Part 2 facts and that " +
@@ -2305,7 +2305,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Book's cover page and table of contents, the Book of Authorities' cover page and table of contents), and for a " +
         "factum the two Book of Authorities documents alone, since a factum has no response-book half. " +
         "Writes nothing to disk; returns { file_name: 'bcca-book.md', markdown }. The caller writes the markdown " +
-        "to the filing's substance folder ({case-data folder}/bcca-book-substance/bcca-book.md for a stay " +
+        "to the filing's substance folder ({matter-data folder}/bcca-book-substance/bcca-book.md for a stay " +
         "response, .../bcca-factum-substance/bcca-book.md for a factum) and " +
         "then invokes /publish with publish-bcca-book -- this tool never writes there itself, because the contract gives " +
         "the emitter the content and the caller the file's placement. On a drafting filing with party drift it refuses as render's filed mode does (parties_drift_gate_failed). Refuses on a filing that is neither bcca_stay_response nor bcca_factum, on missing " +
@@ -2331,7 +2331,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "with publish-bcca-factum fills it into the court's respondent's factum template. dated_on " +
         "(YYYY-MM-DD) is the date the factum is dated; it is never stored. Writes nothing to disk; returns " +
         "{ file_name: 'bcca-factum.md', markdown }. The caller writes the markdown to " +
-        "{case-data folder}/bcca-factum-substance/bcca-factum.md and then invokes /publish with publish-bcca-factum. " +
+        "{matter-data folder}/bcca-factum-substance/bcca-factum.md and then invokes /publish with publish-bcca-factum. " +
         "On a drafting filing with party drift it refuses as render's filed mode does (parties_drift_gate_failed). Refuses on a filing that isn't bcca_factum, on missing content (file_number, an Appellant/Respondent " +
         "party pair, the client party, chronology, opening statement, place of signing, Part 1, a deployed " +
         "submission, an order sought, a citation, or an enactment excerpt -- naming it), and on a database ahead " +
@@ -2356,10 +2356,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "publish-bcsc-form's " +
         "asm33 operation hard-validates and fills into the court-ready .docx. Writes nothing to disk; returns " +
         "{ file_name: 'form-33.md', markdown }. The caller writes the markdown to the matter's substance folder " +
-        "({case-data folder}/bcsc-form-substance/form-33.md) and then invokes /publish with publish-bcsc-form and " +
+        "({matter-data folder}/bcsc-form-substance/form-33.md) and then invokes /publish with publish-bcsc-form and " +
         "the explicit asm33 token -- this tool never writes there itself, because the contract gives the emitter the " +
         "content and the caller the file's placement. Exception (ADR 0025): given optional case_data_folder, the absolute " +
-        "host path of the matter's case-data folder (the folder holding db_path; anything else is refused), the server " +
+        "host path of the matter's matter-data folder (the folder holding db_path; anything else is refused), the server " +
         "also writes the markdown to <case_data_folder>\\bcsc-form-substance\\form-33.md itself, creating only that " +
         "subfolder, and returns written_path -- use it in Cowork, where the session's own write lands in its sandbox. On a drafting filing with party drift it refuses as render's filed mode does (parties_drift_gate_failed). Refuses on a filing that isn't application_response, on any opposing order " +
         "with no position taken, on an empty Part 4 with no pure-law decision of counsel recorded (filings.pure_law_on, " +
@@ -2390,7 +2390,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "label, file_path), then the numbered paragraphs with each exhibit printed as **Exhibit \"A\"**, lettered " +
         "exactly as the affidavit's mockup letters it. publish-bcsc-form's Form 109 fill reads it. Writes nothing to " +
         "disk; returns { file_name: 'affidavit-<document_id>.md', markdown, revision }. Exception (ADR 0025): given " +
-        "optional case_data_folder, the absolute host path of the matter's case-data folder (the folder holding " +
+        "optional case_data_folder, the absolute host path of the matter's matter-data folder (the folder holding " +
         "db_path; anything else is refused), the server also writes the markdown to " +
         "<case_data_folder>\\bcsc-form-substance\\affidavit-<document_id>.md itself, creating only that subfolder, and " +
         "returns written_path -- use it in Cowork. On a drafting filing with party drift it refuses as render's filed " +
@@ -2416,12 +2416,12 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("bcsc_form_harness"),
       description:
         "Run one publish-bcsc-form harness command on the host (issue #1267, ADR 0025), for a Cowork session, whose " +
-        "sandbox cannot reach the matter or case-data folders. Returns the harness's own JSON output unchanged " +
+        "sandbox cannot reach the matter or matter-data folders. Returns the harness's own JSON output unchanged " +
         "(an action such as spawn_subagent, ask_user, retry, oow, missing_template, manual_edits, halt or done, or for list the " +
         "session array); drive it exactly as publish-bcsc-form's shuttle protocol drives the harness's CLI. " +
         "matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). The server derives the matter-data " +
         "folder from probanda.json's case_data_dir (it must exist), keeps session state in " +
-        "<case-data folder>\\form-sessions, and passes the harness only paths it resolved itself. command and its " +
+        "<matter-data folder>\\form-sessions, and passes the harness only paths it resolved itself. command and its " +
         "fields: list; init (user_request, and exactly one of writing_folder -- a package's one folder name, created " +
         "under the matter's 0. DRAFT folder -- or out_name -- an individual form's bare file name stem, no extension, " +
         "composed under the firm's naming convention and written at the top of that folder; and edits_reviewed: true " +
@@ -2429,9 +2429,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "(harness_session, result_json); resume and abandon (harness_session); reset (harness_session, " +
         "new_request); clarify (harness_session, answer); rewind (harness_session, target_step_id). Refuses, with code " +
         "path_out_of_scope, a writing_folder, out_name or harness_session that is not one name or resolves outside the matter " +
-        "or its form-sessions folder, and a session whose stored matter or case-data folder is not this matter's " +
+        "or its form-sessions folder, and a session whose stored matter or matter-data folder is not this matter's " +
         "(abandon still clears it), and at an asm32/asm33 locate step a result_json whose form32_path, " +
-        "form33_path or context_path is not inside the case-data folder. Refuses the new-template operation (code new_template_refused), which writes " +
+        "form33_path or context_path is not inside the matter-data folder. Refuses the new-template operation (code new_template_refused), which writes " +
         "into the plugin's own folder. Each call has a 55 s budget; a step killed by it (a Word or LibreOffice " +
         "render) fails with code python_timeout and a message saying how to resume.",
       inputSchema: {
@@ -2458,16 +2458,16 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("publish_general"),
       description:
         "publish-general's Cowork route (issue #1268, ADR 0026): renders a general Writing's .docx on the host, since a " +
-        "Cowork sandbox cannot reach the matter or case-data folders. A Code-tab session runs fill_general.py in its own " +
+        "Cowork sandbox cannot reach the matter or matter-data folders. A Code-tab session runs fill_general.py in its own " +
         "shell instead. The server renders the filing's filed face, reads format_path (the venue's format.md knowledge path) " +
         "and, for a letterhead Writing, the firm profile itself; writes filed.json, format.json, profile.json, and letter.json " +
-        "and tokens.json when given, to <case-data folder>\\publish-general\\; then runs fill_general.py, which writes " +
+        "and tokens.json when given, to <matter-data folder>\\publish-general\\; then runs fill_general.py, which writes " +
         "<output_name>.docx at the top of the matter's one 0. DRAFT folder (never created), and returns its JSON line " +
         "unchanged (success, or error and detail). output_name is a bare file name stem, no extension, that the caller " +
         "composed under the firm's naming convention; a taken name gets the next \" vN\", reported as versioned_from, and " +
         "nothing is ever overwritten. letter is render_letterhead.py's payload and tokens the header/footer token values, " +
         "as publish-general composes them. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json); the " +
-        "case-data folder is the one its case_data_dir names and must hold db_path. Refuses, code path_out_of_scope, an " +
+        "matter-data folder is the one its case_data_dir names and must hold db_path. Refuses, code path_out_of_scope, an " +
         "output_name that is a path and any path resolving elsewhere. A render refusal (e.g. confirmation_gate_failed) or a " +
         "bespoke renderer comes back as { success: false, error, detail } and nothing is written or run. " +
         "55 s budget (code python_timeout).",
@@ -2514,7 +2514,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves " +
         "elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; " +
         "and any other step. 55 s budget (code python_timeout). " +
-        "step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's case-data folder, and statement_id; " +
+        "step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; " +
         "optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are " +
         "derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the " +
         "highlight script cannot find dropped and returned as context_paras_not_found; source_path, a file the practitioner named; " +
@@ -2627,9 +2627,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("publish_bcca_factum"),
       description:
         "publish-bcca-factum's Cowork route (issue #1268, ADR 0026): renders a bcca_factum filing's .docx on the host, since " +
-        "a Cowork sandbox cannot reach the matter or case-data folders. A Code-tab session runs fill_factum.py in its own " +
+        "a Cowork sandbox cannot reach the matter or matter-data folders. A Code-tab session runs fill_factum.py in its own " +
         "shell instead. The server calls the factum emitter with dated_on (YYYY-MM-DD) itself, writes bcca-factum.md " +
-        "verbatim to <case-data folder>\\bcca-factum-substance\\, runs fill_factum.py --validate and then the fill, which " +
+        "verbatim to <matter-data folder>\\bcca-factum-substance\\, runs fill_factum.py --validate and then the fill, which " +
         "writes <output_name>.docx at the top of the matter's one 0. DRAFT folder (never created), and returns the JSON line " +
         "of the first run that refuses, else the fill's, unchanged. output_name is a bare file name stem, no extension, that " +
         "the caller composed under the firm's naming convention; a taken name gets the next \" vN\", reported as " +
@@ -2655,12 +2655,12 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("publish_vaniac_package"),
       description:
         "publish-vaniac-package's Cowork route (issue #1268, ADR 0026): renders a VanIAC exchange package's .docx files on " +
-        "the host, since a Cowork sandbox cannot reach the matter or case-data folders. A Code-tab session runs " +
+        "the host, since a Cowork sandbox cannot reach the matter or matter-data folders. A Code-tab session runs " +
         "fill_vaniac.py in its own shell instead. writing_folder is the filing's mockup folder, SUB <filing folder> with or " +
         "without a leading YYYY-MM-DD, under the matter's one 0. DRAFT folder. Before writing anything the server refuses " +
         "(output_exists) while its Package folder holds Index.docx or any Written Argument of the * or Witness Statement of * " +
         "file, PDFs included. It then renders the filed face, writes Written Arguments.md, Evidence Index.md and each " +
-        "Witness Statement - <name>.md verbatim to <case-data folder>\\vaniac-submissions\\<filing folder>\\, runs " +
+        "Witness Statement - <name>.md verbatim to <matter-data folder>\\vaniac-submissions\\<filing folder>\\, runs " +
         "fill_vaniac.py with round and one --witness per witness statement rendered, and returns its JSON line unchanged. " +
         "matter_root and db_path are confined as for publish_general (code path_out_of_scope). A render refusal comes back " +
         "as { success: false, error, detail } and nothing is written or run. 55 s budget (code python_timeout).",
@@ -2687,11 +2687,11 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "pdf_name the PDF, each a bare file name at the top of the matter's one 0. DRAFT folder; pdf_name defaults to the " +
         ".docx name with \" UNSIGNED.pdf\". enclosures are bound in order after the Writing, each bookmarked by its label: " +
         "path is any host file (absolute, or relative to the matter folder), a PDF, .docx or image, and pages is one page " +
-        "(\"4\") or a range (\"2-5\") of a PDF. The server writes enclosures.json to <case-data folder>\\assemble-general\\, " +
+        "(\"4\") or a range (\"2-5\") of a PDF. The server writes enclosures.json to <matter-data folder>\\assemble-general\\, " +
         "runs bind_general.py --manifest, and returns its JSON line unchanged: success with output, page_count and bookmarks, " +
         "or error and detail (enclosure_unresolved names every enclosure it cannot bind, before anything is bound; " +
         "output_exists when pdf_name is taken, nothing is ever overwritten; docx_missing; docx_conversion_failed). It returns " +
-        "no file content. matter_root is confined as for publish_general, and the case-data folder is the one its " +
+        "no file content. matter_root is confined as for publish_general, and the matter-data folder is the one its " +
         "probanda.json names; the tool never opens the matter's database. A docx_name or pdf_name that is a " +
         "path, or resolves elsewhere through a link, is refused (code path_out_of_scope). 55 s budget (code python_timeout).",
       inputSchema: {
@@ -2792,7 +2792,7 @@ export function fileOpsToolDefinitions(): ToolDefinition[] {
 
 // /housekeeping's preflight, run files, approval page, approval wait, resolve, recovery and journal
 // (planning/1. Design/2026-09-23_housekeeping-redesign-spec.md §B8-§B10). Every write lands in
-// the matter's `<case-data folder>\housekeeping\<run-id>\` directory and nowhere else.
+// the matter's `<matter-data folder>\housekeeping\<run-id>\` directory and nowhere else.
 export function housekeepingToolDefinitions(): ToolDefinition[] {
   const matterRun = {
     matter_root: { type: "string" },
@@ -2802,7 +2802,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__preflight",
       description:
-        "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's case-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the case-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+        "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's matter-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the matter-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
@@ -2814,7 +2814,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__new_run",
       description:
-        "Start a /housekeeping run for a client matter: create `<case-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the case-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the case-data folder does not exist (run /matter-data initialize first).",
+        "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },

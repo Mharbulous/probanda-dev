@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { seededDbFixture, seedVaniacProceeding, seedTickets, boardDataOf, ASHBOURNE, draftFolder, CONSENT_ORDER_CASE_DATA } from "./fixtures/forms-render-seeds.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");
 const { proposalKey } = await import("../build/submission/forms/proposal-inventory.js");

@@ -13,7 +13,7 @@ import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedApp
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
 const { freshSubmissionDb, partiesSnapshotSql } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 const { hopsFrom } = await import("./helpers/schema-hops.mjs");
 const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js");

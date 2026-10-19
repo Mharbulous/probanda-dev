@@ -30,10 +30,10 @@ filename `bcca-book.md`:
 
 | Filing kind | Path |
 |---|---|
-| `bcca_stay_response` | `{case-data folder}\bcca-book-substance\bcca-book.md` |
-| `bcca_factum` | `{case-data folder}\bcca-factum-substance\bcca-book.md` |
+| `bcca_stay_response` | `{matter-data folder}\bcca-book-substance\bcca-book.md` |
+| `bcca_factum` | `{matter-data folder}\bcca-factum-substance\bcca-book.md` |
 
-The case-data folder is the one `probanda.json`'s `case_data_dir` names.
+The matter-data folder is the one `probanda.json`'s `case_data_dir` names.
 The folders are separate because a matter may hold both filings, and one
 shared path would let a factum's book overwrite a filed stay response's.
 The factum's folder is the one `bcca-factum.md` already uses.

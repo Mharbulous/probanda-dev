@@ -34,7 +34,7 @@ Before doing anything, confirm this matter has never been initialized:
 
 - **No pointer** at the matter root — neither `probanda.json` nor the legacy name
   `coclerk.json` — and none at the legacy `9. AI\coclerk.json`.
-- **No existing `.sqlite` files** in the resolved case-data folder (`main.sqlite`,
+- **No existing `.sqlite` files** in the resolved matter-data folder (`main.sqlite`,
   `law.sqlite`, or `privileged.sqlite`).
 
 If **neither** exists, proceed with Steps 1–5 below (new matter).
@@ -284,6 +284,6 @@ separate steps.
 ## Step 5 — report
 
 Report every INSERT (the `matter_metadata` seed rows) and the resolved paths:
-`probanda.json`, the case-data folder, and `evidence.sql`. Suggest the next step: run
+`probanda.json`, the matter-data folder, and `evidence.sql`. Suggest the next step: run
 `proceedings-profile` to record the proceeding and parties, or `ingest` to load the
 first document.

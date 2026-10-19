@@ -1,4 +1,4 @@
-"""Case-data flags in a research return: a contradicted record is corrected first, every
+"""matter-data flags in a research return: a contradicted record is corrected first, every
 other flag is captured first, and a flag becomes a blocker job only when the practitioner asks.
 
 Spec `2026-10-05_audit-flags-to-draft-jobs-spec.md`, as changed by e7eab6b (no blocker
@@ -12,15 +12,15 @@ from pathlib import Path
 DRAFT = Path(__file__).resolve().parents[1]
 JOB_SESSION = DRAFT / "references" / "job-session.md"
 FLAG_LINE = re.compile(
-    r"^case-data: (discrepancy|correction|pinpoint) : (.+?) : (.+)$", re.MULTILINE
+    r"^matter-data: (discrepancy|correction|pinpoint) : (.+?) : (.+)$", re.MULTILINE
 )
 
 # Fixture notes. Placeholder wording, no matter content.
 NOTES = """# Internal research notes
 Flags
-case-data: discrepancy : FIXTURE copies A and B differ on term 3 : doc-1, doc-2
-case-data: pinpoint : FIXTURE add para 14 to fact 9 : ev-9
-case-data: pinpoint : FIXTURE add para 22 to fact 11 : ev-11
+matter-data: discrepancy : FIXTURE copies A and B differ on term 3 : doc-1, doc-2
+matter-data: pinpoint : FIXTURE add para 14 to fact 9 : ev-9
+matter-data: pinpoint : FIXTURE add para 22 to fact 11 : ev-11
 """
 NOTES_NO_FLAGS = "# Internal research notes\n"
 
@@ -31,7 +31,7 @@ def flat(text):
 
 def rule():
     text = JOB_SESSION.read_text(encoding="utf-8")
-    start = text.index("- **Case-data flags in a research return:**")
+    start = text.index("- **matter-data flags in a research return:**")
     return flat(text[start:text.index("\n", start)])
 
 
@@ -100,7 +100,7 @@ class CaseDataFlagJobTests(unittest.TestCase):
         self.assertEqual((len(corrected), len(ideas), blockers), (0, 2, []))
 
     def test_frames_are_fixed(self):
-        self.assertIn("title `Resolve the case-data <kind>: <flag>`", self.rule)
+        self.assertIn("title `Resolve the matter-data <kind>: <flag>`", self.rule)
         self.assertIn("intent `What should case data record? <flag>`", self.rule)
         self.assertIn("say they come from the research return", self.rule)
 
@@ -127,7 +127,7 @@ class CaseDataFlagJobTests(unittest.TestCase):
         )
 
     def test_no_flags_changes_nothing(self):
-        self.assertIn("A return with no `case-data:` line changes nothing.", self.rule)
+        self.assertIn("A return with no `matter-data:` line changes nothing.", self.rule)
         self.assertEqual(handle(NOTES_NO_FLAGS), ([], [], []))
 
 

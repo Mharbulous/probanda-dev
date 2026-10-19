@@ -36,7 +36,7 @@ export function destinationProblem(segments: string[], draftUnchanged = false): 
 
 /**
  * Why the matter-root-relative folder `segments` is not where a superseded version goes, or null.
- * Case-data's supersede-draft files the earlier version of a court document in exactly
+ * matter-data's supersede-draft files the earlier version of a court document in exactly
  * `<draftFolder>\Superseded`, `draftFolder` being the matter's one `0. DRAFT*` folder.
  */
 export function supersededDestinationProblem(segments: string[], draftFolder: string): string | null {

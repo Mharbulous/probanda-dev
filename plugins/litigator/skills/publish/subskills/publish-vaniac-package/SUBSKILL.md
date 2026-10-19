@@ -27,7 +27,7 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
 3. `Package\Index.docx`: the cover page, then the index of the whole
    package. Its page column stays blank; the bound PDF carries the numbers.
 
-In the filing's data folder, `<case-data folder>\vaniac-submissions\<filing folder>\`:
+In the filing's data folder, `<matter-data folder>\vaniac-submissions\<filing folder>\`:
 
 4. The source files the render returned: `Written Arguments.md`,
    `Evidence Index.md` and one `Witness Statement - <name>.md` per witness.
@@ -50,7 +50,7 @@ text. The practitioner places each expert report in `Package\` as
 
 In Cowork (this host grants the data tools as
 `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox sees
-neither the matter folder nor the case-data folder, and the Write tool writes
+neither the matter folder nor the matter-data folder, and the Write tool writes
 into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox
 shell, and never use the Write tool for a source file. Run steps 1 to 4 (from
 step 3, only the mockup folder's name), then, in place of steps 5 to 8, call
@@ -90,12 +90,12 @@ each file card names a host path it returns.
    the `SUB` code and the filing folder. Read that section for the mechanics;
    do not re-derive them here. It holds no date prefix.
 
-   The data folder is `<case-data folder>\vaniac-submissions\<filing folder>\`,
+   The data folder is `<matter-data folder>\vaniac-submissions\<filing folder>\`,
    the mockup folder's name without any leading `YYYY-MM-DD ` and without
-   the `SUB` code. The case-data folder
+   the `SUB` code. The matter-data folder
    is the one `probanda.json`'s `case_data_dir` names; in Cowork, make no
    access request: the host tool derives it. If the
-   case-data folder does not exist, stop: the matter is not initialized
+   matter-data folder does not exist, stop: the matter is not initialized
    (`/matter-data` initialize). Create `vaniac-submissions\<filing folder>\`
    under it if it doesn't exist.
 

@@ -7,7 +7,7 @@
 
 // The case data STAY_RESPONSE_SEED's parties are linked to (case_party_id), holding exactly their
 // counsel and address for service (party/counsel SSOT); a test writes it beside the database with
-// helpers/case-data-fixture.mjs's writePartiesOfRecord.
+// helpers/matter-data-fixture.mjs's writePartiesOfRecord.
 export const STAY_RESPONSE_CASE_DATA = {
   proceedings: [{ id: 1, court: "BCCA", file_number: "CA52140" }],
   parties: [

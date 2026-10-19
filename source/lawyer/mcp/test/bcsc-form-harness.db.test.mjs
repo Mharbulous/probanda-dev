@@ -50,13 +50,13 @@ function fixture() {
   return { ...m, install, scripts, root, caseData, sessions, run, session };
 }
 
-test("init derives the case-data folder from coclerk.json and passes only resolved paths, with session state in form-sessions", () => {
+test("init derives the matter-data folder from coclerk.json and passes only resolved paths, with session state in form-sessions", () => {
   const f = fixture();
   try {
     const action = f.run({ command: "init", user_request: "generate a blank Notice of Application", writing_folder: "NOA Stay" });
     assert.deepEqual(action, {
       action: "spawn_subagent",
-      argv: ["init", "--matter-path", f.root, "--case-data-folder", f.caseData, "--writing-folder", "NOA Stay", "--", "generate a blank Notice of Application"],
+      argv: ["init", "--matter-path", f.root, "--matter-data-folder", f.caseData, "--writing-folder", "NOA Stay", "--", "generate a blank Notice of Application"],
       sessions_dir: f.sessions,
     });
   } finally {
@@ -69,7 +69,7 @@ test("init takes out_name in place of writing_folder for an individual form, and
   try {
     const stem = "2026-10-01 REQ re default judgment";
     const action = f.run({ command: "init", user_request: "generate a requisition", out_name: stem });
-    assert.deepEqual(action.argv, ["init", "--matter-path", f.root, "--case-data-folder", f.caseData, "--out-name", stem, "--", "generate a requisition"]);
+    assert.deepEqual(action.argv, ["init", "--matter-path", f.root, "--matter-data-folder", f.caseData, "--out-name", stem, "--", "generate a requisition"]);
     const one = /exactly one of writing_folder \(a package\) and out_name \(an individual form\)/;
     assert.throws(() => f.run({ command: "init", user_request: "x" }), one);
     assert.throws(() => f.run({ command: "init", user_request: "x", writing_folder: "", out_name: "" }), one);
@@ -116,7 +116,7 @@ test("output printed before the harness's JSON goes to stderr, and the JSON stil
   }
 });
 
-test("at an asm32 or asm33 locate step, result_json paths outside the case-data folder are refused", () => {
+test("at an asm32 or asm33 locate step, result_json paths outside the matter-data folder are refused", () => {
   const f = fixture();
   const outside = mkdtempSync(join(tmpdir(), "coclerk-outside-"));
   try {
@@ -232,7 +232,7 @@ test("refuses a form-sessions folder that is a link elsewhere", () => {
   }
 });
 
-test("refuses a session made for another matter or case-data folder, but abandon clears it", () => {
+test("refuses a session made for another matter or matter-data folder, but abandon clears it", () => {
   const f = fixture();
   try {
     f.session("sandbox", { matter_path: "/sessions/x/mnt/Matter", case_data_folder: "/sessions/x/mnt/case data" });
@@ -247,7 +247,7 @@ test("refuses a session made for another matter or case-data folder, but abandon
   }
 });
 
-test("refuses a matter with no coclerk.json and a matter whose case-data folder does not exist", () => {
+test("refuses a matter with no coclerk.json and a matter whose matter-data folder does not exist", () => {
   const f = fixture();
   try {
     assert.equal(codeOf(() => bcscFormHarness({ matter_root: f.base, command: "list" }, process.env, f.install)), "invalid_root");
@@ -403,7 +403,7 @@ test("the real harness runs asm32 from init to done in one call", { skip: render
   }
 });
 
-test("the real harness starts a session under the case-data folder's form-sessions, with the resolved paths", () => {
+test("the real harness starts a session under the matter-data folder's form-sessions, with the resolved paths", () => {
   const f = fixture();
   const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
   const real = (args) => bcscFormHarness({ matter_root: f.root, ...args }, env, join(f.base, "no-install"));

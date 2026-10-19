@@ -1,5 +1,5 @@
 // Entity shape shared by the practice registry (practice-registry.ts) and the
-// local practice backend. The case-data cloud `ENTITIES` array and its generated
+// local practice backend. The matter-data cloud `ENTITIES` array and its generated
 // tool surface were removed at the three-layer teardown (B5, 2026-07-14); what
 // remains is only the generic type vocabulary the surviving practice namespace
 // builds its own registry on.

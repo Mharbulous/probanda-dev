@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { seededDbFixture, seedVaniacProceeding, assertMatchesGolden, findFile, replaceStamp } from "./fixtures/forms-render-seeds.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");

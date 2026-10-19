@@ -19,7 +19,7 @@ const VALIDATOR = subskillScriptPath("publish", "publish-bcca-factum", "fill_fac
 const PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitBccaFactum } = await import("../build/submission/forms.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");

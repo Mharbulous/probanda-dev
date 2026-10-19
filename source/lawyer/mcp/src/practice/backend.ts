@@ -10,12 +10,12 @@
 
 import { join } from "node:path";
 
-import { resolveCaseDataRoot } from "./case-data-root.js";
+import { resolveCaseDataRoot } from "./matter-data-root.js";
 import { DataServerError } from "../errors.js";
 import { isKvRead, runKv, type KvOp, type KvRequest, type KvWrite } from "../kv/backend.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 
-// Moved to ./case-data-root.ts; re-exported for the modules that import it from here.
+// Moved to ./matter-data-root.ts; re-exported for the modules that import it from here.
 export { resolveCaseDataRoot };
 
 /** Issue #693. Every write is one transaction, so a kill leaves it whole or absent. */

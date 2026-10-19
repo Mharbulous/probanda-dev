@@ -16,7 +16,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
-import { updateCaseData } from "./helpers/case-data-fixture.mjs";
+import { updateCaseData } from "./helpers/matter-data-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
 import { partiesSnapshotSql } from "./helpers/template-db.mjs";

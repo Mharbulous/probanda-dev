@@ -4,7 +4,7 @@ The skills assume the layout of the practice Probanda was built for. Each conven
 
 | Default | Owned by | How it is found | Used for |
 |---|---|---|---|
-| `0. CASE DATA\` beside the matter folders, holding `_practice\` and one `<matter_id> <short_name>\` folder per matter | `matter-data/shared/conventions.md` §2.1 | Probanda's own. Setup creates it (step 3). Case-data's initialize creates the per-matter folders | every practice and matter-data tool |
+| `0. CASE DATA\` beside the matter folders, holding `_practice\` and one `<matter_id> <short_name>\` folder per matter | `matter-data/shared/conventions.md` §2.1 | Probanda's own. Setup creates it (step 3). matter-data's initialize creates the per-matter folders | every practice and matter-data tool |
 | `4. LAWYER BRIEF\` directly in each matter folder | `matter-data/shared/conventions.md` §2.2 (root proof) | fixed name | proving a matter folder before case data is set up or written |
 | `0. DRAFT*\` in each matter folder, exactly one | the data server, which looks for the one folder whose name starts with `0. DRAFT` | name prefix | drafts, Job Boards and published court documents |
 | `6. LAW\<issue>\` in each matter folder | the data server's research filing tools | fixed name `6. LAW` | filing legal research and downloaded authorities |

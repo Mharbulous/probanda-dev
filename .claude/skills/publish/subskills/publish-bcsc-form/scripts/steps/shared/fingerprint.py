@@ -10,7 +10,7 @@ the newest copy is compared with the last fingerprint: changed text can be
 carried into the drafting database by /draft's on-the-fly revision, and a
 format-only change is reported as one that will not carry.
 
-The fingerprints are agent data, so they live in one file in the case-data
+The fingerprints are agent data, so they live in one file in the matter-data
 folder (workspace output rule), rewritten in place and keyed by the copy's path
 under the draft folder. Nothing here writes to a database.
 """

@@ -128,7 +128,7 @@ function staleFixture(version) {
   writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({
     schema_version: 5,
     matter_root: "C:\\Users\\DeletedProfile\\Matter",
-    case_data_dir: "C:\\Users\\DeletedProfile\\case-data",
+    case_data_dir: "C:\\Users\\DeletedProfile\\matter-data",
     evidence_sql_path: join("4. LAWYER BRIEF", "CoWork", "evidence.sql"),
   }));
   const res = spawnSync(PYTHON, ["-c", BUILD_FIXTURE, SCHEMA, caseDataDir, String(version)], {

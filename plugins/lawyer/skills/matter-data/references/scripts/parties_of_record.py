@@ -1,6 +1,6 @@
 """parties_of_record.py — the parties of record of one proceeding (MODULE + CLI).
 
-Read-only. Given a case-data folder and a proceeding's file number, returns
+Read-only. Given a matter-data folder and a proceeding's file number, returns
 each party of record of that proceeding with its counsel and address for
 service, each value resolved to the party's per-proceeding override when set,
 else the party's own value (design-decisions.md #55). Given no file number and

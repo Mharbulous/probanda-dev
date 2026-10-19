@@ -78,7 +78,7 @@ step 1.
 
 Resolve every matched case file exactly as the front door's Mode A step 1 does: delegate to
 `/matter-data` with the intent of resolving the cited authority to a readable document, naming the
-stored authority or the file found in Step 2. Case-data owns conversion (most authority files here
+stored authority or the file found in Step 2. matter-data owns conversion (most authority files here
 are Westlaw `.doc` files that are actually RTF) and does it outside the matter's folders, so this
 mode writes no conversion files and has none to clean up. Report a resolution failure precisely,
 as Mode A step 1 requires, and do not proceed with unverified analysis for that case.

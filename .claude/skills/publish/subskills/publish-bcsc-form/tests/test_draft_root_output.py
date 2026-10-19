@@ -259,7 +259,7 @@ class TestHarness(_Matter):
     def test_init_stores_out_name_in_the_session(self):
         argv = ["harness.py", "init", "Generate a Form 17",
                 "--matter-path", str(self.matter),
-                "--case-data-folder", str(self.case_data),
+                "--matter-data-folder", str(self.case_data),
                 "--out-name", STEM]
         out = io.StringIO()
         cwd = os.getcwd()

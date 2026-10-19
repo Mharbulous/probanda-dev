@@ -240,7 +240,7 @@ class HarnessTest(unittest.TestCase):
     def test_unset_case_data_folder_halts_saying_so(self):
         action = harness.cmd_init("asmaff 7", writing_folder="NOA Stay")
         self.assertEqual(action["action"], "halt")
-        self.assertIn("--case-data-folder", action["error"])
+        self.assertIn("--matter-data-folder", action["error"])
 
     def test_token_without_a_document_id_halts(self):
         action = self.init("asmaff")

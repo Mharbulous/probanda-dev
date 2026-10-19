@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { updateCaseData } = await import("./helpers/case-data-fixture.mjs");
+const { updateCaseData } = await import("./helpers/matter-data-fixture.mjs");
 const { seedBcscConsentOrder } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { callTool } = await import("../build/dispatch.js");

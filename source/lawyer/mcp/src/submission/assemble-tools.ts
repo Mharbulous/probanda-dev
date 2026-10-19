@@ -1,10 +1,10 @@
 // assemble-general's host tool for a Cowork session (#1321, ADR 0027): binds a general Writing's
 // .docx and its enclosures into one PDF host-side, through publish-host.ts. The Cowork sandbox has
-// neither PyMuPDF nor Word and cannot reach the matter or case-data folders.
+// neither PyMuPDF nor Word and cannot reach the matter or matter-data folders.
 //
 // The server decides where the Writing is read and where everything is written: the .docx and the
 // PDF are bare names at the top of the matter's one 0. DRAFT folder, and enclosures.json goes only
-// in <case-data folder>\assemble-general\. An enclosure may come from any host path: the lawyer's
+// in <matter-data folder>\assemble-general\. An enclosure may come from any host path: the lawyer's
 // own signature, not a folder rule, is the safeguard (Brahm, #1321). The tool returns the binder's
 // JSON line only, never file content.
 

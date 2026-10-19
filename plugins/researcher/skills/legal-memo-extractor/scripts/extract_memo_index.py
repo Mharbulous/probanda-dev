@@ -735,7 +735,7 @@ def validate(memo, warnings):
 # ---------------------------------------------------------------- output dir
 
 def standard_output_dir(workspace, case_data_folder):
-    """{case-data folder}/legal-memo-extractor.
+    """{matter-data folder}/legal-memo-extractor.
 
     case_data_folder is the folder probanda.json's case_data_dir names, passed
     by the caller. It must be an existing directory whose name is the last
@@ -748,7 +748,7 @@ def standard_output_dir(workspace, case_data_folder):
     folder = Path(case_data_folder)
     if not folder.is_dir():
         raise FileNotFoundError(
-            f"Case-data folder not found: {case_data_folder}. Initialize the "
+            f"matter-data folder not found: {case_data_folder}. Initialize the "
             "matter with /matter-data initialize, then pass the folder that "
             "probanda.json's case_data_dir names.")
     candidates = [matter / name for name in ("probanda.json", "coclerk.json")]
@@ -762,7 +762,7 @@ def standard_output_dir(workspace, case_data_folder):
         raise ValueError(f"{pointer} has no case_data_dir. Initialize the matter "
                          "with /matter-data initialize.")
     if folder.resolve().name.casefold() != PureWindowsPath(stored).name.casefold():
-        raise ValueError(f"Case-data folder {case_data_folder} does not match "
+        raise ValueError(f"matter-data folder {case_data_folder} does not match "
                          f"{pointer.name}'s case_data_dir ({stored}). Pass the "
                          "folder case_data_dir names.")
     return folder / "legal-memo-extractor"
@@ -781,8 +781,8 @@ def main(argv=None):
     ap.add_argument("--input-dir", required=True)
     ap.add_argument("--source", choices=["westlaw", "alexi", "auto"], default="auto")
     ap.add_argument("--matter-root", help="matter workspace whose probanda.json "
-                    "names the case-data folder (derived from --input-dir if omitted)")
-    ap.add_argument("--case-data-folder", help="the matter's case-data folder, as "
+                    "names the matter-data folder (derived from --input-dir if omitted)")
+    ap.add_argument("--matter-data-folder", help="the matter's matter-data folder, as "
                     "probanda.json's case_data_dir names it; the standard output "
                     "location is its legal-memo-extractor subfolder")
     ap.add_argument("--output", help="explicit output file path (overrides the "
@@ -807,7 +807,7 @@ def main(argv=None):
                   file=sys.stderr)
             return 2
         if not args.case_data_folder:
-            print("Pass --case-data-folder (the folder probanda.json's case_data_dir "
+            print("Pass --matter-data-folder (the folder probanda.json's case_data_dir "
                   "names) or --output.", file=sys.stderr)
             return 2
         try:

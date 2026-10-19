@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const { submissionDataExecute, submissionDataQuery } = await import("../../build/submission/backend.js");
 const { filingBoardData } = await import("../../build/submission/matter-pages.js");
 const { fetchProceeding, fetchRevision } = await import("../../build/submission/forms/query.js");
-const { writePartiesOfRecord } = await import("../helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("../helpers/matter-data-fixture.mjs");
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = HERE;

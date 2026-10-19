@@ -13,4 +13,4 @@ The stamp warns anyone relying on a principle link that the authority under it h
 
 ## Consequences
 
-- The change is pool-only. The local `concept_authorities.treatment` and `legal_criteria.treatment` columns are limited by CHECKs to the five original values. They gain nothing until case-data is converted (ADR 0006).
+- The change is pool-only. The local `concept_authorities.treatment` and `legal_criteria.treatment` columns are limited by CHECKs to the five original values. They gain nothing until matter-data is converted (ADR 0006).

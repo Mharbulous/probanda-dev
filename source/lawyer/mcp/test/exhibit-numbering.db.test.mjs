@@ -12,7 +12,7 @@ import test from "node:test";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { DEFAULT_JUDGMENT_CASE_DATA } = await import("./fixtures/forms-render-seeds.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitForm32 } = await import("../build/submission/forms.js");
 

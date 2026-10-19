@@ -13,7 +13,7 @@ tools:
   - mcp__remote-devices__plugin_lawyer_data__matter_data__query
 ---
 
-# Case-data schema migration runner
+# matter-data schema migration runner
 
 **Lane:** migration — exclusive resource: one matter's three case databases. Never run two instances against the same matter; the tool takes a host-local lock and the second instance will be refused.
 

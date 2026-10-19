@@ -1,7 +1,7 @@
 """Tests for parties_of_record.py, the read-only parties-of-record read the
 drafting runtime spawns (design-decisions.md #55, #56).
 
-Each fixture is a case-data folder holding a main.sqlite built from the
+Each fixture is a matter-data folder holding a main.sqlite built from the
 canonical schema.sql and stamped at the current version.
 
 Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_parties_of_record.py"

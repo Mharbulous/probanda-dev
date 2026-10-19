@@ -1,7 +1,7 @@
 """Tests for ingest_coverage.py, the host-side run of operations/ingest-coverage.md
 the drafting runtime spawns at session entry (design-decisions.md #60).
 
-Each fixture is a case-data folder holding main, law and privileged built from
+Each fixture is a matter-data folder holding main, law and privileged built from
 the canonical schema.sql, main stamped at the current version, beside a temp
 matter folder.
 

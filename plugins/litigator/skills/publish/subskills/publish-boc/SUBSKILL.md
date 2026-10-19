@@ -22,13 +22,13 @@ anything is filled:
 `mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
-Cowork cloud sandbox, which cannot see the matter or case-data folders (ADR
+Cowork cloud sandbox, which cannot see the matter or matter-data folders (ADR
 0026). Tell the practitioner so, and how to run it there: open a Code-tab
 session in the matter's folder and ask for the same publish step. Do not
 retry or probe in Cowork.
 
 Both read the shared working folder
-`{case-data folder}/bill-of-costs/`, the case-data folder being the one
+`{matter-data folder}/bill-of-costs/`, the matter-data folder being the one
 `probanda.json`'s `case_data_dir` names. A bill of costs is an individual
 document, so per the workspace output rule
 (`.claude/skills/shared/workspace-output-rule.md`) its `.docx`, Form 62's or

@@ -1,6 +1,6 @@
 # Workspace output rule
 
-When a skill writes a file for a litigation matter, the file's kind picks the destination. Data goes to the matter's case-data folder; documents go to the matter's draft folder. There is no third place, with three exceptions, below.
+When a skill writes a file for a litigation matter, the file's kind picks the destination. Data goes to the matter's matter-data folder; documents go to the matter's draft folder. There is no third place, with three exceptions, below.
 
 **1. Documents** — anything written for the practitioner or the forum to read: Word (`.docx`/`.doc`) and PDF deliverables, a mockup's presentation copy, and a Markdown draft or report meant for the practitioner to read (a client letter's draft, an overstatement review, a blackline):
 
@@ -18,12 +18,12 @@ A mockup presentation copy is disposable and regenerable: overwritten in place o
 **2. Data** — agent working state: `.json`, `.jsonl`, indexes, previews, substance intermediates, session state, queues, scratch:
 
 ```
-<case-data folder>\<skill-or-workflow name>\
+<matter-data folder>\<skill-or-workflow name>\
 ```
 
-The case-data folder is the matter's `..\0. CASE DATA\<matter name>\`, the folder `probanda.json`'s `case_data_dir` names — never a guessed literal. It must already exist: a writing skill never creates it, and its absence means the matter is not initialized (fail loudly, naming `/matter-data` initialize). `<skill-or-workflow name>` names the producer (e.g. `bcsc-form-substance`, `bill-of-costs`, `housekeeping`); a folder several skills hand files through keeps its one workflow name, and a workflow handling several instances nests one further level under a stable instance id. The subfolder is created on demand. Data files are rewritten in place — a workflow that re-reads its own data file must find one file, not a pile of versions.
+The matter-data folder is the matter's `..\0. CASE DATA\<matter name>\`, the folder `probanda.json`'s `case_data_dir` names — never a guessed literal. It must already exist: a writing skill never creates it, and its absence means the matter is not initialized (fail loudly, naming `/matter-data` initialize). `<skill-or-workflow name>` names the producer (e.g. `bcsc-form-substance`, `bill-of-costs`, `housekeeping`); a folder several skills hand files through keeps its one workflow name, and a workflow handling several instances nests one further level under a stable instance id. The subfolder is created on demand. Data files are rewritten in place — a workflow that re-reads its own data file must find one file, not a pile of versions.
 
-- **Reaching it:** MCP tools resolve the case-data folder host-side, through matter-data's own resolver. A Cowork project mounts only the matter folder, so a session that writes data with its own file tools, or runs a script in the sandbox, first requests access to the case-data folder itself (its path from `case_data_dir`), never to a parent or firm root, and passes a script the path the session sees. A script handed a case-data folder checks that it exists and that its name matches the last segment of `case_data_dir`, and fails loudly otherwise.
+- **Reaching it:** MCP tools resolve the matter-data folder host-side, through matter-data's own resolver. A Cowork project mounts only the matter folder, so a session that writes data with its own file tools, or runs a script in the sandbox, first requests access to the matter-data folder itself (its path from `case_data_dir`), never to a parent or firm root, and passes a script the path the session sees. A script handed a matter-data folder checks that it exists and that its name matches the last segment of `case_data_dir`, and fails loudly otherwise.
 
 **The first exception:** research-agent answers are filed under `6. LAW\`, which `shared/legal-research.md` owns, because tier-3 audits read them there.
 
@@ -33,4 +33,4 @@ The case-data folder is the matter's `..\0. CASE DATA\<matter name>\`, the folde
 
 No skill creates `4. LAWYER BRIEF` or any `CoWork` folder, and no skill writes matter files to `.claude`, `AI\`, or dated folders named for a specific agent such as `Claude` or `Codex`. Copying the firm's own matter template into a new matter (`/matter-data`'s matter skeleton) is not a skill output and is unaffected.
 
-Outside this rule: matter-data's own files, which sit at the top of the case-data folder; files that are not matter files at all (time-pipeline store data, skill eval reports); and /housekeeping's Move to `0. DRAFT` unchanged, which moves the practitioner's own existing file rather than writing one: a root-level file flagged as the firm's unfinished draft, or a root file of a kind ingest cannot read, goes to the top of the draft folder under its current name.
+Outside this rule: matter-data's own files, which sit at the top of the matter-data folder; files that are not matter files at all (time-pipeline store data, skill eval reports); and /housekeeping's Move to `0. DRAFT` unchanged, which moves the practitioner's own existing file rather than writing one: a root-level file flagged as the firm's unfinished draft, or a root file of a kind ingest cannot read, goes to the top of the draft folder under its current name.

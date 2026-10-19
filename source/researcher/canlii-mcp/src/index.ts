@@ -508,7 +508,7 @@ server.tool(
 	})
 );
 
-// One cheap authenticated request (the case-database index) — confirms a key is
+// One cheap authenticated request (the matter-database index) — confirms a key is
 // accepted before it is persisted, so a wrong-but-plausible key fails here with
 // a clear cause instead of on some later lookup.
 async function probeKey(): Promise<void> {

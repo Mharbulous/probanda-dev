@@ -1,7 +1,7 @@
 """Tests for list_parties.py, the read-only list of every party that
 practice_data__contact_checks spawns (ADR 0009, firm-wide contacts spec 4.4).
 
-Each fixture is a case-data folder holding a main.sqlite built from the
+Each fixture is a matter-data folder holding a main.sqlite built from the
 canonical schema.sql and stamped at the current version.
 
 Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_list_parties.py"

@@ -69,7 +69,7 @@ class ResolvePathsTests(unittest.TestCase):
 
     def test_stale_nominee_loses_to_live_derived_database_and_warns(self):
         self.write_db(self.live_dir)
-        pointer_path = self.write_pointer(r"C:\Users\DeletedProfile\case-data")
+        pointer_path = self.write_pointer(r"C:\Users\DeletedProfile\matter-data")
         warnings = []
 
         resolved = resolve_paths.resolve_pointer(str(self.matter_root), warn=warnings.append)
@@ -141,7 +141,7 @@ class ResolvePathsTests(unittest.TestCase):
 
     def test_migrate_only_allows_an_old_live_derived_database(self):
         self.write_db(self.live_dir, version=76)
-        self.write_pointer(r"C:\Users\DeletedProfile\case-data")
+        self.write_pointer(r"C:\Users\DeletedProfile\matter-data")
         resolved = resolve_paths.resolve_pointer(str(self.matter_root), migrate_only=True)
         self.assertEqual(Path(resolved["case_data_dir"]), self.live_dir)
 

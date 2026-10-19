@@ -25,7 +25,7 @@ function foldersUnder(dir) {
   return readdirSync(dir, { withFileTypes: true, recursive: true }).filter((e) => e.isDirectory()).map((e) => e.name);
 }
 
-test("the run directory is created under <case-data folder>\\housekeeping\\, and nothing is created in the matter", () => {
+test("the run directory is created under <matter-data folder>\\housekeeping\\, and nothing is created in the matter", () => {
   const m = matterFixture({}, { dirs: ["3. CORRESPONDENCE"] });
   try {
     assert.equal(existsSync(join(m.caseData, "housekeeping")), false);
@@ -40,7 +40,7 @@ test("the run directory is created under <case-data folder>\\housekeeping\\, and
   }
 });
 
-test("a matter whose case-data folder does not exist is refused, and no folder is created", () => {
+test("a matter whose matter-data folder does not exist is refused, and no folder is created", () => {
   const m = matterFixture({}, { dirs: ["3. CORRESPONDENCE"] });
   try {
     rmSync(m.caseData, { recursive: true });
@@ -97,7 +97,7 @@ test("write_run_file writes only the three run files; refuses reserved and other
       assert.equal(readFileSync(written.path, "utf-8"), "[]");
     }
 
-    // A junction planted at housekeeping carries every write outside the case-data folder: refused, nothing created.
+    // A junction planted at housekeeping carries every write outside the matter-data folder: refused, nothing created.
     const junctioned = matterFixture();
     try {
       symlinkSync(outside, join(junctioned.caseData, "housekeeping"), "junction");

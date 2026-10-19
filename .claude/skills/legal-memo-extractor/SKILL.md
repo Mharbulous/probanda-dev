@@ -50,8 +50,8 @@ writes the index. **Never re-implement the parsing inline.**
 ```
 python extract_memo_index.py --input-dir <folder of memos>
     [--source westlaw|alexi|auto]      # default auto (per-file detection)
-    [--matter-root <matter folder>]    # whose probanda.json names the case-data folder
-    [--case-data-folder <folder>]      # for the standard output location
+    [--matter-root <matter folder>]    # whose probanda.json names the matter-data folder
+    [--matter-data-folder <folder>]      # for the standard output location
     [--output <file>]                  # explicit override
     [--verified-citations <file>]      # see cross-check below
     [--label "<Matter name (code)>"]   # index title suffix
@@ -76,16 +76,16 @@ which is the honest default.
 
 ## Output location
 
-`<case-data folder>/legal-memo-extractor/research_memos_index.md`, the
-case-data folder being the one `probanda.json`'s `case_data_dir` names. Resolve
-it from `probanda.json` and pass it as `--case-data-folder`; in Cowork, where the
-project mounts only the matter folder, first request access to the case-data
+`<matter-data folder>/legal-memo-extractor/research_memos_index.md`, the
+matter-data folder being the one `probanda.json`'s `case_data_dir` names. Resolve
+it from `probanda.json` and pass it as `--matter-data-folder`; in Cowork, where the
+project mounts only the matter folder, first request access to the matter-data
 folder itself (never a parent or the firm root) and pass the path the session
 sees. It must already exist: if it does not, stop and name `/matter-data`
 initialize, and never create it. The script finds the matter from
 `--matter-root`, or by walking up from `--input-dir`; when neither finds a
 matter workspace it refuses and asks for `--output` rather than guessing. It
-also refuses a case-data folder that is missing or whose name is not the last
+also refuses a matter-data folder that is missing or whose name is not the last
 segment of `case_data_dir`. One combined index covers all sources, grouped by
 source.
 

@@ -10,7 +10,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { writePartiesOfRecord } from "./case-data-fixture.mjs";
+import { writePartiesOfRecord } from "./matter-data-fixture.mjs";
 import { knowledgeFile, knowledgeFixture } from "./knowledge-fixture.mjs";
 
 const { freshSubmissionDb, submissionDbAt } = await import("./template-db.mjs");

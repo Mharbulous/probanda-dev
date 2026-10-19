@@ -309,7 +309,7 @@ export type RankGroup = "decision" | "tooling" | "housekeeping" | "research" | "
 export const RANK_GROUP_LABELS: Readonly<Record<RankGroup, string>> = {
   decision: "Practitioner remarks and decisions already made",
   tooling: "Plugin and tooling feedback",
-  housekeeping: "Case-data and law-folder housekeeping",
+  housekeeping: "matter-data and law-folder housekeeping",
   research: "Research offers and research questions",
   authority: "Writing doesn't match an authority as cited",
   evidence: "Writing doesn't match the evidence or pleadings",

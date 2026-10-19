@@ -28,7 +28,7 @@ const { matterToken } = await import("../build/submission/open-session.js");
 const { formCurrency } = await import("../build/submission/form-currency.js");
 const { nowStamp } = await import("../build/submission/forms.js");
 const { closePageServer } = await import("../build/housekeeping/server.js");
-const { writeCaseDataStores } = await import("./helpers/case-data-fixture.mjs");
+const { writeCaseDataStores } = await import("./helpers/matter-data-fixture.mjs");
 after(() => closePageServer());
 
 /** A real database one schema version behind: the migration engine run to TARGET - 1. */

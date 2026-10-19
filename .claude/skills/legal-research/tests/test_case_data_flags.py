@@ -1,6 +1,6 @@
-"""Regression lock for case-data flags: the audit notes' fixed shape and the gate's relay.
+"""Regression lock for matter-data flags: the audit notes' fixed shape and the gate's relay.
 
-Spec `2026-10-05_audit-flags-to-draft-jobs-spec.md`: every case-data flag in an audit
+Spec `2026-10-05_audit-flags-to-draft-jobs-spec.md`: every matter-data flag in an audit
 return reaches the practitioner as a proposed action. The audit agent writes each flag
 in one fixed line, the gate relays each in one line with the offer to record it, and a
 `/draft` session holding a job takes its own rule instead.
@@ -11,15 +11,15 @@ from pathlib import Path
 
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
-SHAPE = "`case-data: <kind> : <short description> : <evidence ids>`"
+SHAPE = "`matter-data: <kind> : <short description> : <evidence ids>`"
 FLAG_LINE = re.compile(
-    r"^case-data: (discrepancy|correction|pinpoint) : (.+?) : (.+)$", re.MULTILINE
+    r"^matter-data: (discrepancy|correction|pinpoint) : (.+?) : (.+)$", re.MULTILINE
 )
 
 # Fixture notes. Placeholder wording, no matter content.
 NOTES_ONE_DISCREPANCY = """# Internal research notes
 Flags
-case-data: discrepancy : FIXTURE copies A and B of the instrument differ on term 3 : doc-1, doc-2
+matter-data: discrepancy : FIXTURE copies A and B of the instrument differ on term 3 : doc-1, doc-2
 /ingest: FIXTURE decision file
 """
 NOTES_NO_FLAGS = """# Internal research notes
@@ -57,7 +57,7 @@ class FlagShapeTests(unittest.TestCase):
 
     def test_notes_carry_every_case_data_flag(self):
         self.assertIn(
-            "every `/ingest` flag, every case-data flag, "
+            "every `/ingest` flag, every matter-data flag, "
             "and the Step 5 offers",
             self.step_six,
         )
@@ -83,7 +83,7 @@ class GateRelayTests(unittest.TestCase):
 
     def test_each_flag_is_relayed_in_one_line_with_the_offer(self):
         self.assertIn(
-            "Relay each `case-data:` flag in the return's notes in one line: its kind, "
+            "Relay each `matter-data:` flag in the return's notes in one line: its kind, "
             "its description and its evidence ids, with the offer to record it through "
             "`/matter-data`. Record nothing without the practitioner's yes.",
             self.after,
@@ -92,7 +92,7 @@ class GateRelayTests(unittest.TestCase):
     def test_a_draft_job_takes_its_own_rule(self):
         self.assertIn(
             "A `/draft` session holding a job handles them by its own rule instead "
-            "(`/draft` `references/job-session.md`, \"Case-data flags in a research return\")",
+            "(`/draft` `references/job-session.md`, \"matter-data flags in a research return\")",
             self.after,
         )
 

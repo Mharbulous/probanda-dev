@@ -1,7 +1,7 @@
 """Tests for resolve_participant.py, the read-only participant resolver behind
 matter_data__resolve_participant (design-decisions.md #65, #66).
 
-Each fixture is a case-data folder holding a main.sqlite built from the
+Each fixture is a matter-data folder holding a main.sqlite built from the
 canonical schema.sql and stamped at the current version. Every name is invented.
 
 Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_resolve_participant.py"

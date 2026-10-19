@@ -202,7 +202,7 @@ def read_pointer(matter_root):
 
 
 def locate_case_data_dir(matter_root):
-    """The case-data folder resolve_pointer chooses, found without writing: no pointer heal, no
+    """The matter-data folder resolve_pointer chooses, found without writing: no pointer heal, no
     legacy migration, no database version guard. A legacy (9. AI) pointer means no execute has
     run since, so skipping its migration cannot hide an execute sidecar."""
     matter_root = os.path.normpath(matter_root)
@@ -594,7 +594,7 @@ export type CaseStatementsResult =
 // its renames leaves a mixed set and the sidecar behind (issue #612). The message says so.
 const EXECUTE_TIMEOUT_ADVICE =
   "The write may already have committed: verify before retrying (/matter-data shared/conventions.md §2.3). " +
-  `If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's case-data folder, the kill landed inside the ` +
+  `If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's matter-data folder, the kill landed inside the ` +
   "commit-to-disk step and the databases may be a mix of new and previous state: do not write again " +
   "until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did " +
   "not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a " +
@@ -621,7 +621,7 @@ export function caseDataQuery(
   return result as { rows: Record<string, unknown>[]; warning?: string | null };
 }
 
-/** The matter's case-data folder as query and execute resolve it, found without writing
+/** The matter's matter-data folder as query and execute resolve it, found without writing
  * anything (no pointer heal, no legacy migration). It may not exist. */
 export function caseDataFolder(matterRoot: string, env: NodeJS.ProcessEnv = process.env): string {
   return (runHelper({ op: "locate", matter_root: matterRoot }, env) as { case_data_dir: string }).case_data_dir;

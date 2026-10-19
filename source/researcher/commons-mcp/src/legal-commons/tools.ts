@@ -278,7 +278,7 @@ export const TREATMENT_VALUES = [
 
 // RELATIONSHIP_VALUES — present tense, what an authority does for a principle;
 // `principle_authority.relationship`. Never appellate history, never `answered`
-// (case-data decision 48: it never crosses).
+// (matter-data decision 48: it never crosses).
 export const RELATIONSHIP_VALUES = [
   "establishes",
   "extends",

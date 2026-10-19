@@ -98,13 +98,13 @@ class TestMainOutputResolution(TempMatter):
     def test_without_case_data_folder_refuses(self):
         code, err = self.run_main()
         self.assertEqual(code, 2)
-        self.assertIn("--case-data-folder", err)
+        self.assertIn("--matter-data-folder", err)
         self.assert_no_old_folders()
 
     def test_mismatched_case_data_folder_refuses_before_parsing(self):
         other = self.root / "0. CASE DATA" / "L9999 Other"
         other.mkdir()
-        code, err = self.run_main("--case-data-folder", str(other))
+        code, err = self.run_main("--matter-data-folder", str(other))
         self.assertEqual(code, 2)
         self.assertIn("does not match", err)
         self.assertEqual(list(other.iterdir()), [])
@@ -115,7 +115,7 @@ class TestMainOutputResolution(TempMatter):
         with redirect_stderr(io.StringIO()):
             code = emi.main(["--input-dir", str(self.memos),
                              "--matter-root", str(self.matter),
-                             "--case-data-folder", str(self.case_data)])
+                             "--matter-data-folder", str(self.case_data)])
         self.assertEqual(code, 1)
         self.assertEqual(list(self.case_data.iterdir()), [])
         self.assert_no_old_folders()

@@ -11,7 +11,7 @@ import { templateRoot } from "./resolve.js";
 import { isDirectory } from "./run-dir.js";
 
 export interface Preflight {
-  /** Absolute paths of every `.coclerk_execute_*` entry in the matter's case-data folder. */
+  /** Absolute paths of every `.coclerk_execute_*` entry in the matter's matter-data folder. */
   half_commit: string[];
   case_data_found: boolean;
   /** Template-relative folder paths, every level, backslash separators. Only when asked for. */

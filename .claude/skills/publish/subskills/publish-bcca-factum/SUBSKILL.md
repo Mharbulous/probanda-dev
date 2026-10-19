@@ -28,7 +28,7 @@ List of Authorities' page numbers when it is opened.
 
 In Cowork (this host grants the data tools as
 `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox sees
-neither the matter folder nor the case-data folder, and the Write tool writes
+neither the matter folder nor the matter-data folder, and the Write tool writes
 into the sandbox, not the host (ADR 0026). Never run the fill in the sandbox
 shell, and never use the Write tool for `bcca-factum.md`. Run steps 1, 2, 3
 and 6, then, in place of steps 4, 5 and 7, call
@@ -42,7 +42,7 @@ and 6, then, in place of steps 4, 5 and 7, call
 - `dated_on`: step 3's date, `YYYY-MM-DD`
 
 The server calls the emitter, writes `bcca-factum.md` verbatim in the real
-`{case-data folder}\bcca-factum-substance\`, validates it, fills the factum
+`{matter-data folder}\bcca-factum-substance\`, validates it, fills the factum
 into the real draft folder and returns the JSON line unchanged. Step 7
 reads it as it reads the fill's. Relay any refusal verbatim, whether the
 emitter's (what is missing), the fill's, `path_out_of_scope` or
@@ -69,9 +69,9 @@ host path it returns.
 
 5. **Write the interchange file.** Write the returned markdown **verbatim,
    byte-for-byte** to
-   `{case-data folder}\bcca-factum-substance\bcca-factum.md`
+   `{matter-data folder}\bcca-factum-substance\bcca-factum.md`
    with the first-class Write tool, never sandbox bash (mount-staleness bug,
-   [#324](https://github.com/Mharbulous/CoClerk/issues/324)). The case-data
+   [#324](https://github.com/Mharbulous/CoClerk/issues/324)). The matter-data
    folder is the one `probanda.json`'s `case_data_dir` names. It must already
    exist: if it does not, stop and tell the practitioner to run `/matter-data`
    initialize; never create it. Create the `bcca-factum-substance` folder

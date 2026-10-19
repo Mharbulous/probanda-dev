@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { caseDataFolder } from "../../case/backend.js";
 import { listCaseParties } from "../../case/list-parties.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
-import { resolveCaseDataRoot } from "../../practice/case-data-root.js";
+import { resolveCaseDataRoot } from "../../practice/matter-data-root.js";
 import { flatten, rowsOf, type Item, type Row } from "../../practice/items.js";
 import { canonicalJson, type OpSpec } from "../../practice/ops.js";
 import type { PracticeStore } from "../../practice/store.js";
@@ -178,7 +178,7 @@ export async function contact_lookup(
 
 // ---- contact_checks ----
 
-/** A case-data folder's leading matter number, read as /matter-data's parse_folder_name reads it. */
+/** A matter-data folder's leading matter number, read as /matter-data's parse_folder_name reads it. */
 function folderMatterNum(name: string): string | null {
   const match = /^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+/.exec(name);
   return match ? normalizeMattNum(match[1]).replace(/[-.]+$/, "").toLowerCase() : null;
@@ -214,14 +214,14 @@ export async function contact_checks(
   const miss = (matter: Row | null, reason: string) =>
     unresolved.push({ matter_id: matter ? String(matter.id) : null, matt_num: matter ? (matter.matt_num as string) ?? null : null, reason });
 
-  // The case-data folder of each matter check 2 reads.
+  // The matter-data folder of each matter check 2 reads.
   const folders: [Row, string][] = [];
   if (one) {
     if (args.matter_root) {
       try {
         folders.push([one.row, caseDataFolder(String(args.matter_root), store.env)]);
       } catch (err) {
-        miss(one.row, `its case-data folder could not be found from matter_root: ${(err as Error).message}`);
+        miss(one.row, `its matter-data folder could not be found from matter_root: ${(err as Error).message}`);
       }
     }
   } else if (matters.length) {
@@ -238,12 +238,12 @@ export async function contact_checks(
         .map((entry) => entry.name);
       for (const matter of matters) {
         if (!matter.matt_num) {
-          miss(matter, "it has no matter number to find its case-data folder by");
+          miss(matter, "it has no matter number to find its matter-data folder by");
           continue;
         }
         const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
         const named = children.filter((name) => folderMatterNum(name) === wanted);
-        if (named.length > 1) miss(matter, `more than one case-data folder starts with its matter number: ${named.join(", ")}`);
+        if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.join(", ")}`);
         else if (named.length === 1) folders.push([matter, join(caseDataRoot, named[0])]);
       }
     }

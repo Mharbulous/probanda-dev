@@ -3,7 +3,7 @@
 // A Cowork session's Write tool lands in its sandbox, not on the host, so asm32/asm33 (run host-side
 // by drafting_forms__bcsc_form_harness) would never see the file. Given case_data_folder, the
 // emitter writes form-32.md / form-33.md itself, where publish-bcsc-form's locate steps read it:
-// {case-data folder}\bcsc-form-substance\. The case-data folder must be the one holding the filing's
+// {matter-data folder}\bcsc-form-substance\. The matter-data folder must be the one holding the filing's
 // submission database (open_session derives db_path as <case_data_dir>\submission.sqlite), and no
 // link along the way may lead elsewhere.
 
@@ -15,7 +15,7 @@ import { PathOutOfScopeError, canonicalRoot } from "../files/scope.js";
 /** publish-bcsc-form's SUBSTANCE_WORKFLOW (scripts/steps/shared/paths.py). */
 export const BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 
-/** The canonical case-data folder, which must be the folder holding `dbPath`. */
+/** The canonical matter-data folder, which must be the folder holding `dbPath`. */
 export function confineCaseDataFolder(dbPath: string, caseDataFolder: string): string {
   if (!pathWin32.isAbsolute(caseDataFolder)) {
     throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder}`);
@@ -24,7 +24,7 @@ export function confineCaseDataFolder(dbPath: string, caseDataFolder: string): s
   const dbFolder = canonicalRoot(pathWin32.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
   if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
     throw new PathOutOfScopeError(
-      `case_data_folder must be the matter's case-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder} (${folder})`
+      `case_data_folder must be the matter's matter-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder} (${folder})`
     );
   }
   return folder;

@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { proposalKey } = await import("../build/submission/forms/proposal-inventory.js");

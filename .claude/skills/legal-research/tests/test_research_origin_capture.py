@@ -21,7 +21,7 @@ ORIGIN_CORRECTION = re.compile(r"^origin-correction: (.+?) : (.+?) : (.+)$", re.
 # Fixture notes. Placeholder wording, no matter content.
 NOTES_WITH_ORIGIN = """# Internal research notes
 Flags
-case-data: pinpoint : FIXTURE pinpoint missing on the instrument : doc-1
+matter-data: pinpoint : FIXTURE pinpoint missing on the instrument : doc-1
 Origin
 origin-correction: the FIXTURE Act provides no route : the FIXTURE Act provides a limited route : Issue 1
 Offers
@@ -69,7 +69,7 @@ def relay(notes, sort):
 def captures(notes, sort):
     """One thread per correction and per captured offer, all pinpoint flags as one thread."""
     corrections = [m.group(0) for m in ORIGIN_CORRECTION.finditer(notes)]
-    pinpoints = [l for l in notes.splitlines() if l.startswith("case-data: pinpoint")]
+    pinpoints = [l for l in notes.splitlines() if l.startswith("matter-data: pinpoint")]
     captured = offers_by_class(notes, sort, "on")
     return corrections + captured +(["\n".join(pinpoints)] if pinpoints else [])
 

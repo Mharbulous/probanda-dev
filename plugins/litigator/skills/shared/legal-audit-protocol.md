@@ -287,12 +287,12 @@ preliminary impression the practitioner asked for), write the notes and the memo
 the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
-   the per-tier notes, every `/ingest` flag, every case-data
-   flag, and the Step 5 offers. A case-data flag is a place where the matter's own
+   the per-tier notes, every `/ingest` flag, every matter-data
+   flag, and the Step 5 offers. A matter-data flag is a place where the matter's own
    record disagrees with itself or with what you read: two copies of a document that
    differ, a prior answer describing what case data does not show, a missing
    pinpoint. Write each on one line under a `Flags` heading, in exactly this shape:
-   `case-data: <kind> : <short description> : <evidence ids>`, `<kind>` being
+   `matter-data: <kind> : <short description> : <evidence ids>`, `<kind>` being
    `discrepancy`, `correction` or `pinpoint`, and the evidence ids being the matter-data
    ids or file names the flag rests on. A flag says what the record shows, never what
    the law is, and you never record it yourself.

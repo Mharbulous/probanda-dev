@@ -1,12 +1,12 @@
 # Plan: convert practice.db to comply with Commandments 4 and 5
 
-> **Steps 1 to 10 are done (2026-10-15).** Step 10: Brahm removed practice-data from Exception 2 of `COMMANDMENTS.md` (755fe0f), which now lists case-data, drafting-data and timetracking-data. Step 9 moved the legacy file, the two old backups and `_retired/` to the case-data `TRASH/_practice/`, and no database in `_practice` holds a `practice_` table. Step 7 released practice and file-admin 0.2.2 (072debe) and converted the one practice.db. Before converting, 12 matter statuses `Open`/`Active` were set to `active` and one free-text deadline type became `manual_reminder`, with its text moved to the start of `rule_description`, at Brahm's choice. The read snapshots compared with 0 differences, and the live write round trip and the offline test passed.
+> **Steps 1 to 10 are done (2026-10-15).** Step 10: Brahm removed practice-data from Exception 2 of `COMMANDMENTS.md` (755fe0f), which now lists matter-data, drafting-data and timetracking-data. Step 9 moved the legacy file, the two old backups and `_retired/` to the matter-data `TRASH/_practice/`, and no database in `_practice` holds a `practice_` table. Step 7 released practice and file-admin 0.2.2 (072debe) and converted the one practice.db. Before converting, 12 matter statuses `Open`/`Active` were set to `active` and one free-text deadline type became `manual_reminder`, with its text moved to the start of `rule_description`, at Brahm's choice. The read snapshots compared with 0 differences, and the live write round trip and the offline test passed.
 
 Written 2026-10-14. On completion, practice-data is the first legacy store to leave the list in Exception 2 of `COMMANDMENTS.md`.
 
 ## Context
 
-Exception 2 lets four legacy local stores keep Trade Secrets while they are converted: case-data, drafting-data, timecamping-data and practice-data. A store leaves the list once it complies with Commandments 4 and 5. practice-data goes first because no skill embeds SQL against it. Skills reach it only through the `practice_data__*` tools of the `data` server.
+Exception 2 lets four legacy local stores keep Trade Secrets while they are converted: matter-data, drafting-data, timecamping-data and practice-data. A store leaves the list once it complies with Commandments 4 and 5. practice-data goes first because no skill embeds SQL against it. Skills reach it only through the `practice_data__*` tools of the `data` server.
 
 Today the data server ships the store's rulebook to the user's machine. That is the violation this plan removes:
 
@@ -28,7 +28,7 @@ The outcome: practice.db becomes one generic table holding items, tags and links
 ## What the files show (2026-10-14)
 
 - **Callers.** No skill, agent, hook or script reads practice.db except through the tools. Inside the server, `dispatch.ts:519`, `submission/matter-dates.ts:67`, `submission/matter-todos.ts:29` and `submission/open-session.ts:271` call `callPracticeTool` and read `matter_lookup`, `active_deadlines` and `open_tasks` rows. `render_practice_board` reads through the same admin object.
-- **Skill prose names the tables.** `task-prioritization`, `executive-assistant`, `wip-tracker`, `ar-follow-up`, `matter-status-tracking`, `file-review-prep`, `invoice-reviewing`, `time-entry-drafting`, `case-data/references/terminology-crosswalk.md`, `drafting-data` and `practice-data` itself name tables or columns (`matters.status`, "the `deadlines` table", `practice_anchors`). None embeds SQL.
+- **Skill prose names the tables.** `task-prioritization`, `executive-assistant`, `wip-tracker`, `ar-follow-up`, `matter-status-tracking`, `file-review-prep`, `invoice-reviewing`, `time-entry-drafting`, `matter-data/references/terminology-crosswalk.md`, `drafting-data` and `practice-data` itself name tables or columns (`matters.status`, "the `deadlines` table", `practice_anchors`). None embeds SQL.
 - **Response fields skills rely on** are the current row fields, flattened: `id`, `matter_id`, `anchor_id`, `status`, `review_flag`, `scenario_label`, `filing_ref`, the nudge fields, `regular_trust`, `cutoff_date`, `cutoff_source`, `client_name`, `matt_num` and so on. `matter-status-tracking` also reads `read_signals.policies` (`auto_advance`, `required_signals`) and computes the next status itself.
 - **The commons credential** is the project's secret key (`sb_secret_` or `service_role`), DPAPI-encrypted at `%LOCALAPPDATA%\Coclerk\legal-commons\credential.json.dpapi` by `commons-mcp/src/dpapi-store.ts` and `legal-commons/config.ts`. It is one shared key and carries no user identity. The data server has no Supabase or DPAPI code today.
 - **Edge functions** live in `cloud/legal-commons/supabase/functions/`, check the caller with `callerSecretKey` in `_shared/pool.ts` (the `apikey` header against `SUPABASE_SECRET_KEYS`), and deploy with `supabase functions deploy --use-api --project-ref nbzkuhgiqscjkypedqff --workdir cloud/legal-commons`. No network failure or paused project is handled anywhere today: a failed `fetch` surfaces as "fetch failed".
@@ -192,7 +192,7 @@ Skill and agent changes (step 8):
 
 - **`matter-status-tracking`** stops computing the next status from `policies`. It proposes the status it judges right with `set_status` and relays the cloud's question if refused.
 - **`practice-data/SKILL.md`**: Conventions says writes now need Probanda's Cloud and reads do not ("zero cloud calls" becomes "zero cloud calls on reads"). "auto-seeds the 8 default lifecycle policies" goes. The Consumer Contract's table column and the `practice_anchors`, `practice_deadlines` and `practice_anchor_sources` names become item kinds. The `python_timeout` advice extends to the pending-write replay.
-- **Table and column names** become item and field wording in `task-prioritization`, `executive-assistant`, `wip-tracker`, `ar-follow-up`, `matter-status-tracking`, `file-review-prep`, `invoice-reviewing`, `time-entry-drafting`, `case-data/references/terminology-crosswalk.md` and `drafting-data/SKILL.md:132`. For example, "Reads from: `matters`, `clients`, `time_entries`" becomes "Reads matters, clients and time entries through `/practice-data`".
+- **Table and column names** become item and field wording in `task-prioritization`, `executive-assistant`, `wip-tracker`, `ar-follow-up`, `matter-status-tracking`, `file-review-prep`, `invoice-reviewing`, `time-entry-drafting`, `matter-data/references/terminology-crosswalk.md` and `drafting-data/SKILL.md:132`. For example, "Reads from: `matters`, `clients`, `time_entries`" becomes "Reads matters, clients and time entries through `/practice-data`".
 - `docket-clerk.md` and the `shared/docket-clerk/` references keep their field names (`review_flag='rule_stale'`), because those are tool fields, not columns.
 
 ## Migration of existing databases
@@ -252,13 +252,13 @@ Each has a default the executing session takes if he says nothing before the ste
 In Exception 2, replace:
 
 ```text
-For local databases, this exception covers only these legacy stores: case-data, drafting-data, timecamping-data and practice-data.
+For local databases, this exception covers only these legacy stores: matter-data, drafting-data, timecamping-data and practice-data.
 ```
 
 with:
 
 ```text
-For local databases, this exception covers only these legacy stores: case-data, drafting-data and timecamping-data.
+For local databases, this exception covers only these legacy stores: matter-data, drafting-data and timecamping-data.
 ```
 
 ## Risks

@@ -1,6 +1,6 @@
 """asmaff.locate -- find and strictly parse the emitted affidavit-<document_id>.md.
 
-The path is derived from the session's case-data folder and document id, never taken from the
+The path is derived from the session's matter-data folder and document id, never taken from the
 subagent's reply, so the reply carries no path to confine.
 """
 from steps.asmaff.common import parse_affidavit, substance_path
@@ -11,7 +11,7 @@ response_schema = {"type":"object","properties":{"kind":{"const":"step_result"},
 
 def precondition(ctx):
     if not ctx.get("case_data_folder"):
-        return False, "asmaff needs the case-data folder: pass it to harness init with --case-data-folder."
+        return False, "asmaff needs the matter-data folder: pass it to harness init with --matter-data-folder."
     path = substance_path(ctx["case_data_folder"], ctx["affidavit_document_id"])
     if not path.is_file():
         return False, (f"{path} not found. Emit it with drafting_forms__emit_affidavit for this "

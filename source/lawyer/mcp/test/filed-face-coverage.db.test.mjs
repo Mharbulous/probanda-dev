@@ -43,7 +43,7 @@ import { STAY_RESPONSE_CASE_DATA, STAY_RESPONSE_SEED, STAY_RESPONSE_POSITIONS } 
 import { assertHeadingListInStep } from "./helpers/filed-face-scan.mjs";
 import { FACTUM_CASE_DATA, FACTUM_SEED } from "./fixtures/bcca-factum-seed.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { REGISTERED_FILLERS } = await import("../build/submission/forms/filler-registry.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");

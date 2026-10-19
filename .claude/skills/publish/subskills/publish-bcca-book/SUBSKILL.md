@@ -21,7 +21,7 @@ filed PDFs is a separate step: `/assemble` with `assemble-bcca-book`.
 `mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
-Cowork cloud sandbox, which cannot see the matter or case-data folders (ADR
+Cowork cloud sandbox, which cannot see the matter or matter-data folders (ADR
 0026). Tell the practitioner so, and how to run it there: open a Code-tab
 session in the matter's folder and ask for the same publish step. Do not
 retry or probe in Cowork.
@@ -75,14 +75,14 @@ at binding.
 
    | Filing kind | Path |
    |---|---|
-   | `bcca_stay_response` | `{case-data folder}\bcca-book-substance\bcca-book.md` |
-   | `bcca_factum` | `{case-data folder}\bcca-factum-substance\bcca-book.md` |
+   | `bcca_stay_response` | `{matter-data folder}\bcca-book-substance\bcca-book.md` |
+   | `bcca_factum` | `{matter-data folder}\bcca-factum-substance\bcca-book.md` |
 
    A matter may hold both filings, so one shared path would let a factum's
    book overwrite a filed stay response's. The factum's folder is the one
    `bcca-factum.md` already uses.
 
-   The case-data folder is the one `probanda.json`'s `case_data_dir` names.
+   The matter-data folder is the one `probanda.json`'s `case_data_dir` names.
    It must already exist: if it does not, stop and tell the practitioner to
    run `/matter-data` initialize; never create it.
 

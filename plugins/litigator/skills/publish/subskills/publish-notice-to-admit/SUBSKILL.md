@@ -17,7 +17,7 @@ turning a proposed admission into an established fact.
 `mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool call or file write.
 This step runs on the PC, in a Claude Code session in the desktop app's Code tab, where the
 Probanda plugin is installed, not in a Cowork cloud sandbox, which cannot see the matter or
-case-data folders (ADR 0026). Tell the practitioner so, and how to run it there: open a Code-tab
+matter-data folders (ADR 0026). Tell the practitioner so, and how to run it there: open a Code-tab
 session in the matter's folder and ask for the same publish step. Do not retry or probe in
 Cowork.
 
@@ -90,9 +90,9 @@ confirmed. Do not deliver a package with a listed document missing.
 ## 4. Build the canonical draft
 
 Read `references/form-26.md`. Create a working Markdown record in
-`<case-data folder>\publish-notice-to-admit\` containing the matter identity, verification table,
+`<matter-data folder>\publish-notice-to-admit\` containing the matter identity, verification table,
 final facts, document list, attachment hashes, and practitioner confirmations, and rewrite it in
-place on each run. The case-data folder is the one `probanda.json`'s `case_data_dir` names; it
+place on each run. The matter-data folder is the one `probanda.json`'s `case_data_dir` names; it
 must already exist (if not, stop and name `/matter-data` initialize; never create it). Keep that
 record out of the filed document.
 

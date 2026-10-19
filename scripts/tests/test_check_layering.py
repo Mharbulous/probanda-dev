@@ -63,7 +63,7 @@ class ScanTest(unittest.TestCase):
                          [(".claude/skills/show-me/SKILL.md", "draft")])
 
     def test_folder_named_for_a_skill_is_not_the_skill(self):
-        self.assertEqual(self.pairs({"show-me/SKILL.md": "Save it in the case-data folder.\n"}), [])
+        self.assertEqual(self.pairs({"show-me/SKILL.md": "Save it in the matter-data folder.\n"}), [])
 
     def test_tool_of_a_higher_plugin(self):
         self.assertEqual(

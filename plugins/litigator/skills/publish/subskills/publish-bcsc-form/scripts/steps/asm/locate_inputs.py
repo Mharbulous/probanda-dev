@@ -51,7 +51,7 @@ def _draft_dir(ctx: dict) -> Path:
     """The substance folder is a constant per matter -- no scan, no baton.
 
     Both the producer (gen.fill / draft.partN) and this reader resolve to the
-    same {case-data folder}/bcsc-form-substance/ path, so the same-session
+    same {matter-data folder}/bcsc-form-substance/ path, so the same-session
     handoff is safe by construction.
     """
     matter_path = ctx.get("matter_path", "")

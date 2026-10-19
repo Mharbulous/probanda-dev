@@ -49,7 +49,7 @@ def read_sidecar(path: Path) -> tuple[dict, list[dict]]:
         return {}, [missing_datum(
             "publish_sidecar",
             f"The emitter's {path.name} was not found beside the form, so the caption shows placeholders. "
-            "Emit the form again with its case-data folder, then publish again.")]
+            "Emit the form again with its matter-data folder, then publish again.")]
     data = json.loads(path.read_bytes().rstrip(b"\x00").decode("utf-8"))
     if not isinstance(data, dict) or not isinstance(data.get("caption"), dict) or not isinstance(data.get("warnings"), list):
         raise ValueError(f"{path} is not the emitter's publish sidecar: it needs a caption object and a warnings list")

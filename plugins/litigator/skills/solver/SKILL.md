@@ -34,13 +34,13 @@ The form type does not affect how orders are drafted -- it only matters at assem
 
 ### 1. Locate the substance folder
 
-Ask the practitioner for the matter workspace path if not already known from context. The substance folder is a fixed path under the matter's case-data folder, the one `{workspace}\probanda.json`'s `case_data_dir` names:
+Ask the practitioner for the matter workspace path if not already known from context. The substance folder is a fixed path under the matter's matter-data folder, the one `{workspace}\probanda.json`'s `case_data_dir` names:
 
-`<case-data folder>\bcsc-form-substance\`
+`<matter-data folder>\bcsc-form-substance\`
 
-In Cowork, where the project mounts only the matter folder, first request access to the case-data folder itself (never a parent or the firm root) and use the path the session sees.
+In Cowork, where the project mounts only the matter folder, first request access to the matter-data folder itself (never a parent or the firm root) and use the path the session sees.
 
-If the case-data folder does not exist, halt: "Case-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the case-data folder.
+If the matter-data folder does not exist, halt: "matter-data folder not found for `{workspace}`. Initialize the matter with `/matter-data` initialize." Do not substitute another folder, and never create the matter-data folder.
 
 Create `bcsc-form-substance\` beneath it if it does not exist.
 

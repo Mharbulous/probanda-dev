@@ -191,7 +191,7 @@ export async function config_status(
     try {
       const root = caseDataRootFromMatterRoot(args.matter_root, env);
       if (root !== null) status.candidates.push({ root, source: "matter_root", practice_db_exists: rootWorks(root) });
-      else status.candidate_error = "the matter's case-data folder does not sit in a \"0. CASE DATA\" folder";
+      else status.candidate_error = "the matter's matter-data folder does not sit in a \"0. CASE DATA\" folder";
     } catch (err) {
       status.candidate_error = (err as Error).message;
     }

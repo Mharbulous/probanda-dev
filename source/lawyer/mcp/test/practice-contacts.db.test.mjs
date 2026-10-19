@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { writePartiesOfRecord } from "./helpers/case-data-fixture.mjs";
+import { writePartiesOfRecord } from "./helpers/matter-data-fixture.mjs";
 import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 
 const { PracticeStore } = await import("../build/practice/store.js");
@@ -125,7 +125,7 @@ test("contact_lookup finds by name, email or phone and lists likely duplicates a
   await assert.rejects(contacts.contact_lookup(store, {}), /requires id or query/);
 });
 
-test("check 2 lists each matter-data party no matter role points to, by the case-data folder named for the matter", async (t) => {
+test("check 2 lists each matter-data party no matter role points to, by the matter-data folder named for the matter", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "coclerk-contacts-root-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const { store } = await setup(t, "check2", { COCLERK_CASE_DATA_ROOT: root });
@@ -155,7 +155,7 @@ test("check 2 lists each matter-data party no matter role points to, by the case
   const twice = await contacts.contact_checks(store, {});
   assert.deepEqual(twice.parties_without_role, []);
   assert.deepEqual(twice.unresolved.map((row) => [row.matter_id, row.matt_num]), [[matter_id, "L108"]]);
-  assert.match(twice.unresolved[0].reason, /more than one case-data folder/);
+  assert.match(twice.unresolved[0].reason, /more than one matter-data folder/);
 });
 
 test("merge_contact combines lists, keeps the spare's name, moves and combines its roles, and deletes the spare", async (t) => {

@@ -66,7 +66,7 @@ rebuild.** Rebuild is how a hand-corrected dump becomes the live database.
 
 Steps:
 
-1. Read `evidence.sql` (native — case-data folder) and `../references/triggers.sql`
+1. Read `evidence.sql` (native — matter-data folder) and `../references/triggers.sql`
    (and `../references/queries.sql` for the views) as §1 of
    `../shared/conventions.md` directs.
 2. Parse the three sections by their `-- ===== v6 BEGIN <db> =====` /

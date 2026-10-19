@@ -1,15 +1,15 @@
 // The /publish fills run host-side for a Cowork session (#1268, ADR 0026), in the shape of
 // bcsc-form-harness.ts (ADR 0025).
 //
-// The Cowork sandbox sees neither the matter folder nor its case-data folder, and its Write tool
+// The Cowork sandbox sees neither the matter folder nor its matter-data folder, and its Write tool
 // lands in the VM, so a fill run there writes nothing the practitioner receives. This server runs on
 // the host, so it runs the fill itself and returns the fill's JSON line unchanged. The server, not
-// the caller, decides every path: the matter folder is canonicalised, the case-data folder is the
+// the caller, decides every path: the matter folder is canonicalised, the matter-data folder is the
 // one its probanda.json names and must hold db_path, the Writing folder is one segment under the
 // matter's one 0. DRAFT folder (publish-general and publish-bcca-factum write that folder's top
-// instead), and working files go only in the named subfolder of the case-data folder. Anything
+// instead), and working files go only in the named subfolder of the matter-data folder. Anything
 // resolving elsewhere, through a link included, is refused. assemble-tools.ts runs assemble-general's
-// binder through the same helpers (#1321, ADR 0027), taking the case-data folder from probanda.json
+// binder through the same helpers (#1321, ADR 0027), taking the matter-data folder from probanda.json
 // with no db_path, since the bind never opens the database (#1427).
 
 import { existsSync, readdirSync } from "node:fs";
@@ -60,7 +60,7 @@ export const PUBLISH_FILL_TIMEOUT_MS = 55_000;
 export interface PublishTarget {
   /** The canonical matter folder. */
   root: string;
-  /** The canonical case-data folder: probanda.json's case_data_dir, which must hold db_path. */
+  /** The canonical matter-data folder: probanda.json's case_data_dir, which must hold db_path. */
   caseData: string;
   /** The Writing folder, resolved: one segment under the matter's one 0. DRAFT folder. */
   writing: string;
@@ -111,7 +111,7 @@ export function bindDraftTarget(matterRoot: string, env: NodeJS.ProcessEnv): Dra
   return { root, caseData: existingCaseDataFolder(root, env), draft: draftFolder(root) };
 }
 
-/** Writes one working file into <case-data folder>\<folders...>, creating only those folders. */
+/** Writes one working file into <matter-data folder>\<folders...>, creating only those folders. */
 export function writeWorkingFile(target: { caseData: string }, folders: string[], fileName: string, text: string): string {
   return writeSubstanceFile(target.caseData, fileName, text, folders);
 }

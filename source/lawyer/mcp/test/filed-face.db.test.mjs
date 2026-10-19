@@ -23,7 +23,7 @@ const CLAIMANT_CASE_DATA = {
     { id: 2, name: "Respondent Co." },
   ],
 };
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 

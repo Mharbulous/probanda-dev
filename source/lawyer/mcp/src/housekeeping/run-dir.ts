@@ -1,11 +1,11 @@
 // The /housekeeping run directory (housekeeping redesign spec §B8.1).
 //
-// Every file of a run lives in `<case-data folder>\housekeeping\<run-id>\`, the case-data folder
+// Every file of a run lives in `<matter-data folder>\housekeeping\<run-id>\`, the matter-data folder
 // being the one the matter's probanda.json names (.claude/skills/AGENTS.md "Workspace output
 // rule"). It must already exist; `housekeeping` beneath it is created on demand. This server
-// writes every file of a run: the session cannot write into the case-data folder in the
+// writes every file of a run: the session cannot write into the matter-data folder in the
 // linked-device topology. The confinement is a realpath equality, not a prefix test: the run
-// directory's canonical path must be exactly the canonical case-data folder, `housekeeping` and
+// directory's canonical path must be exactly the canonical matter-data folder, `housekeeping` and
 // the run id, so a junction anywhere along that chain fails it.
 //
 // Run directories are never deleted by code, and every reader tolerates a missing one. A name
@@ -35,14 +35,14 @@ export const JOURNAL = "applied.jsonl";
 export interface Matter {
   /** Canonical (realpath) matter root. */
   root: string;
-  /** Canonical case-data folder, which exists. */
+  /** Canonical matter-data folder, which exists. */
   caseData: string;
-  /** Canonical `<case-data folder>\housekeeping`, whether or not it exists yet. */
+  /** Canonical `<matter-data folder>\housekeeping`, whether or not it exists yet. */
   housekeeping: string;
 }
 
 /**
- * Validates the matter root (probanda.json present) and finds its case-data folder, which must
+ * Validates the matter root (probanda.json present) and finds its matter-data folder, which must
  * exist (`case_data_missing` otherwise). A read never makes a folder.
  */
 export function openMatter(matterRoot: string): Matter {
@@ -95,7 +95,7 @@ function confineRunDir(matter: Matter, runId: string): string {
   const real = realpathSync.native(expected);
   const segments = pathWin32.relative(matter.caseData, real).split(pathWin32.sep);
   if (real.toLowerCase() !== expected.toLowerCase() || inFirewall(segments)) {
-    throw new DataServerError(`run directory resolves outside the case-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
+    throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
   }
   return real;
 }
@@ -109,7 +109,7 @@ export function runFilePath(runDir: string, fileName: string): string {
   return path;
 }
 
-/** Run ids under the case-data folder's housekeeping folder, oldest first. A missing folder is no runs. */
+/** Run ids under the matter-data folder's housekeeping folder, oldest first. A missing folder is no runs. */
 export function listRuns(matter: Matter): string[] {
   if (!isDirectory(matter.housekeeping)) return [];
   return readdirSync(matter.housekeeping, { withFileTypes: true })

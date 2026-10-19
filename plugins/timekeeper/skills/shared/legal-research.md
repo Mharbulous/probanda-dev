@@ -319,11 +319,11 @@ tier 1. A closed gate saves and ingests nothing. If the practitioner then asks f
 the preliminary impression, the return it produces is persisted by the same rule,
 as `<File stem> (preliminary).md`.
 
-Relay each `case-data:` flag in the return's notes in one line: its kind, its
+Relay each `matter-data:` flag in the return's notes in one line: its kind, its
 description and its evidence ids, with the offer to record it through `/matter-data`.
 Record nothing without the practitioner's yes. A `/draft` session holding a job
 handles them by its own rule instead (`/draft` `references/job-session.md`,
-"Case-data flags in a research return"). A return with no flag adds no line.
+"matter-data flags in a research return"). A return with no flag adds no line.
 
 **With a board, the return's open items are sorted against it.** This step runs after the
 persistence steps above, for a return they persisted, wherever a board resolves. In a
@@ -336,7 +336,7 @@ return and at most five sentences, with no recommendation, once each has passed 
 test below:
 
 - each `origin-correction:` line in the notes, one thread each;
-- each `case-data:` flag: every `pinpoint` flag together as one thread, each other flag its
+- each `matter-data:` flag: every `pinpoint` flag together as one thread, each other flag its
   own. The one-line offer above to record it through `/matter-data` is still relayed.
 
 A session holding no job captures them through `/drafting-data`'s capture with no job held
@@ -344,7 +344,7 @@ A session holding no job captures them through `/drafting-data`'s capture with n
 SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
-line, a `case-data:` flag or an offer, read `drafting_forms__board_card` with
+line, a `matter-data:` flag or an offer, read `drafting_forms__board_card` with
 `lanes: ["loose_threads"]`. An item that restates the held job's own title or intent, or the
 idea of an open loose thread (the thread the held job is working included), is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own

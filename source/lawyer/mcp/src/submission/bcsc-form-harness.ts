@@ -1,16 +1,16 @@
 // publish-bcsc-form's harness, run host-side for a Cowork session (#1267, ADR 0025).
 //
-// The Cowork sandbox cannot see the matter folder or its case-data folder, so a harness run there
+// The Cowork sandbox cannot see the matter folder or its matter-data folder, so a harness run there
 // never writes context.json where asm32 reads it. This server runs on the host, so it runs the
 // harness itself: one harness CLI call per tool call, through the shared host-Python spawn, and the
 // harness's JSON action goes back to the caller unchanged. Nothing here interprets the protocol,
-// except to refuse the paths an asm32/asm33 locate result names outside the case-data folder.
+// except to refuse the paths an asm32/asm33 locate result names outside the matter-data folder.
 //
 // The server, not the caller, decides every path the harness may write: the matter folder is
-// canonicalised, the case-data folder is the one its probanda.json names, the Writing folder is one
+// canonicalised, the matter-data folder is the one its probanda.json names, the Writing folder is one
 // segment under the matter's 0. DRAFT folder (an individual form's out_name is one file name stem at
 // that folder's top instead), and session state lives in
-// {case-data folder}\form-sessions. A session made anywhere else, and the new-template operation
+// {matter-data folder}\form-sessions. A session made anywhere else, and the new-template operation
 // (which writes into the plugin's own folder), are refused.
 
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
@@ -111,7 +111,7 @@ export function bcscFormHarness(args: HarnessArgs, env: NodeJS.ProcessEnv = proc
     if ((writingFolder === "") === (outName === "")) {
       throw new ValidationError("drafting_forms__bcsc_form_harness init takes exactly one of writing_folder (a package) and out_name (an individual form)");
     }
-    argv.push("--matter-path", root, "--case-data-folder", caseData);
+    argv.push("--matter-path", root, "--matter-data-folder", caseData);
     if (writingFolder !== "") {
       confineWritingFolder(root, writingFolder);
       argv.push("--writing-folder", writingFolder);
@@ -161,7 +161,7 @@ export function assertSegment(value: string, label: string): void {
   }
 }
 
-/** {case-data folder}\form-sessions, refused if it exists but resolves elsewhere (a link). */
+/** {matter-data folder}\form-sessions, refused if it exists but resolves elsewhere (a link). */
 function confinedSessionsDir(caseData: string): string {
   const dir = pathWin32.join(caseData, "form-sessions");
   if (existsSync(dir) && realpathSync.native(dir).toLowerCase() !== dir.toLowerCase()) {
@@ -196,7 +196,7 @@ export function confineWritingFolder(root: string, writingFolder: string): strin
 
 /**
  * A session this tool drives must have been made by it for this matter: its stored matter and
- * case-data folders must be the ones this call resolved, since the harness writes to them.
+ * matter-data folders must be the ones this call resolved, since the harness writes to them.
  */
 function checkSession(root: string, caseData: string, sessions: string, sessionId: string): Record<string, unknown> {
   const ctxPath = pathWin32.join(confineSessionDir(sessions, sessionId), "ctx.json");
@@ -211,7 +211,7 @@ function checkSession(root: string, caseData: string, sessions: string, sessionI
   if (!same(ctx.matter_path, root) || !same(ctx.case_data_folder, caseData)) {
     throw new PathOutOfScopeError(
       `session ${sessionId} was not started by this tool for this matter (its matter folder is ${JSON.stringify(ctx.matter_path)}, ` +
-        `its case-data folder ${JSON.stringify(ctx.case_data_folder)}). Abandon it and start again with command init.`
+        `its matter-data folder ${JSON.stringify(ctx.case_data_folder)}). Abandon it and start again with command init.`
     );
   }
   if (typeof ctx.writing_folder === "string" && ctx.writing_folder !== "") confineWritingFolder(root, ctx.writing_folder);
@@ -223,7 +223,7 @@ function checkSession(root: string, caseData: string, sessions: string, sessionI
 /**
  * asm32.locate and asm33.locate take their input paths from the step result, and asm32/asm33.transform
  * then write working files beside them. At those steps every such path must resolve inside the
- * case-data folder, where the emitters put the substance files.
+ * matter-data folder, where the emitters put the substance files.
  */
 const LOCATE_STEPS = new Set(["asm32.locate", "asm33.locate"]);
 const LOCATE_PATH_KEYS = ["form32_path", "form33_path", "context_path"];
@@ -244,7 +244,7 @@ function confineLocatePaths(caseData: string, resultJson: string): void {
     if (value === undefined) continue;
     const label = `result_json data.${key}`;
     if (typeof value !== "string" || !pathWin32.isAbsolute(value)) {
-      throw new PathOutOfScopeError(`${label} must be an absolute path inside the case-data folder ${caseData}: ${JSON.stringify(value)}`);
+      throw new PathOutOfScopeError(`${label} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
     const resolved = existsSync(value) ? realpathSync.native(value) : pathWin32.resolve(value);
     assertContained(caseData, resolved, label, value);

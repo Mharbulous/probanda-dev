@@ -14,7 +14,7 @@ import test from "node:test";
 import { assertMatchesGolden, replaceStamp } from "./fixtures/forms-render-seeds.mjs";
 import { STAY_RESPONSE_CASE_DATA, STAY_RESPONSE_SEED as SEED, STAY_RESPONSE_POSITIONS } from "./fixtures/bcca-stay-response-seed.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsEmitBccaBook, submissionFormsRender } = await import("../build/submission/forms.js");

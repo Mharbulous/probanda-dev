@@ -72,15 +72,15 @@ guides to be loaded.
 ```
 # --- Resolve the harness inputs (before init) ---
 # {matter}: the matter folder.
-# {case-data folder}: the folder probanda.json's case_data_dir names. It must already
+# {matter-data folder}: the folder probanda.json's case_data_dir names. It must already
 # exist; if it does not, STOP and tell the practitioner to run /matter-data initialize.
 # Never create it. In a Code-tab (PC) session whose shell cannot yet reach it, first
-# request access to the case-data folder itself (never a parent or the firm root),
+# request access to the matter-data folder itself (never a parent or the firm root),
 # then use the path the session sees. If access is not granted, STOP: never build
-# stand-in copies of the matter or case-data folders in scratch (#1240).
+# stand-in copies of the matter or matter-data folders in scratch (#1240).
 # In Cowork, make no such request: the sandbox sees neither the matter folder nor the
-# case-data folder (#1241), and the host tool in the Cowork branch below derives the
-# case-data folder itself.
+# matter-data folder (#1241), and the host tool in the Cowork branch below derives the
+# matter-data folder itself.
 # A package is Form 32 or Form 33, or an affidavit (Form 109, 15 or 16) the caller says
 # is sworn for one. Every other form is an individual form.
 # {stem}: an individual form's file name stem. Compose it under /file-naming's grammar
@@ -91,7 +91,7 @@ guides to be loaded.
 # The caller passes it: /draft, the folder its mockup presentation copy was rendered
 # into; for an affidavit sworn for a package, that package's folder. For a Form 32 or
 # 33 with no Writing, name a `{CODE} {description}` folder by /file-naming's grammar.
-# Working files go under {case-data folder}; a package's finished .docx goes under
+# Working files go under {matter-data folder}; a package's finished .docx goes under
 # {writing folder}.
 # Never infer an affidavit ordinal into user_request.
 
@@ -100,7 +100,7 @@ guides to be loaded.
 HARNESS = "python .claude/skills/publish/subskills/publish-bcsc-form/scripts/harness.py"
 #
 # Cowork: never run the harness in the sandbox shell, which cannot see the matter
-# folder or the case-data folder (#1267, ADR 0025). Each BASH("{HARNESS} <command> ...")
+# folder or the matter-data folder (#1267, ADR 0025). Each BASH("{HARNESS} <command> ...")
 # below is instead one call to the tool drafting_forms__bcsc_form_harness, which runs
 # the harness on the host and returns its JSON output unchanged:
 #   matter_root    = the matter folder's host path, as drafting_forms__open_session takes it
@@ -112,9 +112,9 @@ HARNESS = "python .claude/skills/publish/subskills/publish-bcsc-form/scripts/har
 #   out_name       = {stem} (init only, an individual form)
 #   writing_folder = {writing folder} (init only, a package; never with out_name)
 #   edits_reviewed = true (init only, and only after a manual_edits action; see below)
-# There is no case-data folder argument: the server derives it from probanda.json and keeps
+# There is no matter-data folder argument: the server derives it from probanda.json and keeps
 # session state in its form-sessions folder. A done payload's context_path is then a host
-# path in the real case-data folder.
+# path in the real matter-data folder.
 # If the tool refuses (new-template, a path outside the matter) or times out, tell the
 # practitioner its message, which says what to do next.
 # Two operations are Code-tab (PC) jobs in Cowork, because a subagent must reach a host
@@ -134,7 +134,7 @@ if a session in sessions matches user_request:
 else:
     # An individual form passes --out-name '{stem}'; a package passes
     # --writing-folder '{writing folder}' in its place. The harness refuses both or neither.
-    response = BASH("{HARNESS} init '<user_request>' --matter-path '{matter}' --case-data-folder '{case-data folder}' --out-name '{stem}'")
+    response = BASH("{HARNESS} init '<user_request>' --matter-path '{matter}' --matter-data-folder '{matter-data folder}' --out-name '{stem}'")
 
 # --- Session id: carried forward from every response ---
 # classify, reset and clarify rename the session and return the new id; the old id
@@ -217,16 +217,16 @@ After Generate completes (blank form produced), end with:
 
 > "Blank form saved to `{output_path}` (at the top of the matter's draft folder, or in the `{writing folder}` folder for a package). Handoff file saved to `{context_path}`. Start a new session and run `/solver` to draft the orders sought."
 
-Before saying so, check that `{context_path}` exists in the real case-data folder,
+Before saying so, check that `{context_path}` exists in the real matter-data folder,
 the one `probanda.json`'s `case_data_dir` names, and not in a scratch or `/tmp` copy.
 A later Assemble run reads that file, and it cannot see a sandbox copy (#1240).
-If the file is anywhere else, or the case-data folder was never reachable, do not
-report success: never build stand-in copies of the matter or case-data folders to get
+If the file is anywhere else, or the matter-data folder was never reachable, do not
+report success: never build stand-in copies of the matter or matter-data folders to get
 past it. Stop and tell the practitioner what was written and where, and that access to
-the real case-data folder is needed.
+the real matter-data folder is needed.
 
 In Cowork, the host tool's `done` payload is that check: the server wrote
-`{context_path}` in the real case-data folder, the one it derived from `probanda.json`.
+`{context_path}` in the real matter-data folder, the one it derived from `probanda.json`.
 The sandbox cannot see that folder, so do not look for the file there.
 
 **Service affidavits (Forms 15 and 16) are complete at Generate** — there are no
@@ -247,7 +247,7 @@ If the practitioner names a folder for the form, pass that name as `{writing fol
 
 ## Manual edits to the last copy
 
-Each finished run records a fingerprint of every Word copy it wrote: each paragraph's text, and a hash of its text and format, in `fingerprints.json` in the case-data folder's `bcsc-form-substance` folder. When `done` carries `fingerprint_error`, tell the practitioner in one line that the next publish cannot check that copy for edits.
+Each finished run records a fingerprint of every Word copy it wrote: each paragraph's text, and a hash of its text and format, in `fingerprints.json` in the matter-data folder's `bcsc-form-substance` folder. When `done` carries `fingerprint_error`, tell the practitioner in one line that the next publish cannot check that copy for edits.
 
 Before the fill writes the next copy of the same series, the harness compares the series' newest copy with the last copy it generated. A newer copy it did not write (a session's patch, a copy saved from Word) or an edit made to its own copy returns `manual_edits` instead of writing anything, with `copies`: one entry per series, each with `newest` (the copy read), `generated` (the copy it was compared with) and `changes`. Each change has `kind` and `paragraph`, the paragraph's number in the newest copy (none for a removed paragraph):
 

@@ -3,7 +3,7 @@
 -- Each section is one version hop, applied in full by
 -- references/scripts/migrate_engine.py. Marker format:
 --   -- MIGRATE <from_int> -> <to_int>
--- Single database (unlike case-data's main/law/privileged split), so no
+-- Single database (unlike matter-data's main/law/privileged split), so no
 -- "DB:" tag is needed on the marker.
 --
 -- Every hop's SQL is self-contained and must end by stamping
@@ -3191,12 +3191,12 @@ UPDATE db_meta SET value = '40' WHERE key = 'schema_version';
 -- MIGRATE 40 -> 41
 -- Party and counsel are read from case data, and a sent Writing keeps the
 -- party rows it printed (party/counsel SSOT). Counsel of record and the
--- address for service are court-record state, owned by /case-data, which
+-- address for service are court-record state, owned by /matter-data, which
 -- applies every counsel-change notice and order. The parties rows here were
 -- copied from it once and never re-read, so a change of counsel after setup
 -- went stale.
 --
--- 1. parties.case_party_id names the /case-data party a row stands for, NULL
+-- 1. parties.case_party_id names the /matter-data party a row stands for, NULL
 --    until a session links it. The runtime compares a linked row's counsel
 --    and address for service with case data and reports a row that differs,
 --    or is unlinked, as drift.
@@ -3283,7 +3283,7 @@ UPDATE db_meta SET value = '41' WHERE key = 'schema_version';
 -- to copy.
 --
 -- 1. snapshot_parties_on_send is dropped. submission_data__record_sent and
---    submission_data__record_filed write parties_snapshot from the case-data
+--    submission_data__record_filed write parties_snapshot from the matter-data
 --    read, in the same transaction and before the statement that sets
 --    filed_on, and refuse while a party drifts. A Writing that already has
 --    snapshot rows keeps them, as before.
@@ -3308,7 +3308,7 @@ UPDATE db_meta SET value = '42' WHERE key = 'schema_version';
 
 -- MIGRATE 42 -> 43
 -- The submission copy of counsel of record is dropped (party/counsel SSOT).
--- Counsel of record and the address for service are owned by /case-data: a
+-- Counsel of record and the address for service are owned by /matter-data: a
 -- drafting Writing reads them from case data through parties.case_party_id
 -- (v41), and a sent one prints its parties_snapshot rows (v41, written by the
 -- runtime since v42). Nothing reads the copy any more, and an editable copy
@@ -3323,7 +3323,7 @@ UPDATE db_meta SET value = '42' WHERE key = 'schema_version';
 --
 -- 2. recipients' name, email and address become nullable, and a party-linked
 --    row holds none of them: it takes all three from its party's read (the
---    case-data read while a Writing drafts, parties_snapshot once it is sent).
+--    matter-data read while a Writing drafts, parties_snapshot once it is sent).
 --    CHECK (party_id IS NOT NULL OR name IS NOT NULL) keeps a name on every
 --    other row (the forum, a witness, an expert), and CHECK (party_id IS NULL
 --    OR (name IS NULL AND email IS NULL AND address IS NULL)) keeps the copy

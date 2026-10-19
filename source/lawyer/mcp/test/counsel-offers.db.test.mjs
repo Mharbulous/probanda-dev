@@ -1,7 +1,7 @@
 // The counsel offer-back (party/counsel SSOT): before the submission copy of counsel of record and
 // the address for service is dropped, every value it holds that case data does not hold is offered
 // back to the practitioner, to apply to case data, discard here, or hold, and the migrate refuses
-// the hop that drops it (v43) while any offer or parties_drift row stands. Each matter's case-data
+// the hop that drops it (v43) while any offer or parties_drift row stands. Each matter's matter-data
 // folder holds a real submission database migrated to v42, the last schema holding the copy, and a
 // matter-data main.sqlite built from /matter-data's canonical schema.
 
@@ -22,7 +22,7 @@ const { submissionDataExecute, submissionDataQuery } = await import("../build/su
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 const { hopsFrom } = await import("./helpers/schema-hops.mjs");
 const { counselOffers } = await import("../build/submission/parties-drift.js");
-const { updateCaseData, writePartiesOfRecord } = await import("./helpers/case-data-fixture.mjs");
+const { updateCaseData, writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDbAt } = await import("./helpers/template-db.mjs");
 
 const FILE_NUMBER = "S-290002";

@@ -20,7 +20,7 @@ const PYTHON = process.env.COCLERK_PYTHON || "python";
 const DOCX = "2026-10-01 LT Bert re invoice.docx";
 const UNSIGNED = "2026-10-01 LT Bert re invoice UNSIGNED.pdf";
 
-/** A matter folder with one 0. DRAFT folder, and a case-data folder outside it holding the database. */
+/** A matter folder with one 0. DRAFT folder, and a matter-data folder outside it holding the database. */
 function matter(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-assemble-"));
   t.after(() => rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
@@ -100,7 +100,7 @@ test("assemble_general: refuses a docx_name or pdf_name that is a path, or of th
   assert.equal(existsSync(f.subfolder), false);
 });
 
-test("assemble_general: refuses a matter_root without coclerk.json, and a matter whose case-data folder does not exist", (t) => {
+test("assemble_general: refuses a matter_root without coclerk.json, and a matter whose matter-data folder does not exist", (t) => {
   const f = matter(t);
   assert.equal(codeOf(() => f.run({ matter_root: f.outside })), "invalid_root");
   rmSync(f.caseData, { recursive: true });

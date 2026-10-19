@@ -17,11 +17,11 @@ ADR 0009 makes each person or organization the firm deals with one `contact`, so
 3. **Every matter counts**, whatever its status (open, closed or declined) and however old. Each hit shows the matter's status and, where it has one, its closing date.
 4. **Roles on the subject's own matter are excluded.** A subject is never a conflict with itself.
 5. **Affiliations are followed one step, past and current.** A subject that is a person is also checked through every organization it is or was affiliated with. A subject that is an organization is also checked through every person who is or was affiliated with it. A hit found this way is marked "via affiliation" and shows the affiliation's `from`, `to` and `title`. The search does not take a second step, from that person to their other organizations.
-6. **Witnesses and tribunal members are not searched.** Under ADR 0009 they stay in case-data only and have no `matter_role`.
+6. **Witnesses and tribunal members are not searched.** Under ADR 0009 they stay in matter-data only and have no `matter_role`.
 
 ## 3. The `other_names` field
 
-`contact` gains one data field beside those in the contacts spec §4.1, `other_names[]`: a list of former names, trade names and other spellings of the same person or organization. Each entry is written only with the practitioner's approval, under the same rule as case-data aliases (`.claude/skills/case-data/references/design-decisions.md` #65): a near match the search turns up is proposed, never recorded. Like every data field, it is held locally in clear and sent to the cloud only as a keyed hash (`source/legal/mcp/src/practice/ops.ts`). The contacts spec §4.1 gets a one-line note naming this field when it is built. The search does not read case-data's `participant_aliases`. When two contacts turn out to be one, they are joined by the contacts spec's route (re-point the roles and affiliations, delete the spare), never by the search.
+`contact` gains one data field beside those in the contacts spec §4.1, `other_names[]`: a list of former names, trade names and other spellings of the same person or organization. Each entry is written only with the practitioner's approval, under the same rule as matter-data aliases (`.claude/skills/matter-data/references/design-decisions.md` #65): a near match the search turns up is proposed, never recorded. Like every data field, it is held locally in clear and sent to the cloud only as a keyed hash (`source/legal/mcp/src/practice/ops.ts`). The contacts spec §4.1 gets a one-line note naming this field when it is built. The search does not read matter-data's `participant_aliases`. When two contacts turn out to be one, they are joined by the contacts spec's route (re-point the roles and affiliations, delete the spare), never by the search.
 
 ## 4. Matching rules
 
@@ -35,7 +35,7 @@ A pool contact matches a subject when any of the following holds. Each hit says 
 2. **Email:** any address in the subject's list equals any in the contact's `emails[]`, after trimming and lower-casing.
 3. **Phone:** any number in the subject's list equals any in the contact's `phones[]`, after reducing both to digits and dropping a leading North American `1`.
 
-Name rules apply only between contacts with the same `entity` tag (`person` against `person`, `organization` against `organization`). Email and phone match across types. The implementation reuses #66's matcher logic rather than writing a second one. Where that logic is Python in case-data's tree and the search is TypeScript in the data server, the port must pass the same cases as #66's tests (§9).
+Name rules apply only between contacts with the same `entity` tag (`person` against `person`, `organization` against `organization`). Email and phone match across types. The implementation reuses #66's matcher logic rather than writing a second one. Where that logic is Python in matter-data's tree and the search is TypeScript in the data server, the port must pass the same cases as #66's tests (§9).
 
 ## 5. What counts as a possible conflict
 
@@ -69,7 +69,7 @@ Unattended runs report their hits and stop. They never set the signal.
 - The search sees only what this machine's `practice.db` holds, because item data never leaves the machine that wrote it (contacts spec §2).
 - No subject's details leave the machine, and nothing is written to the cloud by the search itself. The only cloud write is the practitioner-approved signal.
 - A near match is a search result, never an identity. Two contacts are merged, or an other name recorded, only on the practitioner's approval (§3).
-- Case-data is not read or written by the search (ADR 0009).
+- matter-data is not read or written by the search (ADR 0009).
 - Prose points down only: everything here lives in `legal`.
 
 ## 9. Implementation plan
@@ -90,11 +90,11 @@ Unattended runs report their hits and stop. They never set the signal.
 | 2 | Which matters are searched | All, open, closed and declined, at any date, with status and closing date shown |
 | 3 | How far affiliations are followed | One step, past and current, marked "via affiliation" with dates and title |
 | 4 | Name-matching rules | #66's rules, plus exact normalized email or phone |
-| 5 | Other names | An approved `other_names` field on `contact`. Case-data aliases are not read |
+| 5 | Other names | An approved `other_names` field on `contact`. matter-data aliases are not read |
 | 6 | When it runs | On request, at matter opening, and whenever a `client`, `prospective_client` or `opposing_party` role is proposed |
 | 7 | What it records | Only on the practitioner's word: `conflict_check_completed` and a dated `CONF` report in the matter folder |
 
-Options rejected: flagging only the pairs in 1 and hiding other matches (hides an opposing expert who is a former client); flagging every match (buries the real conflicts); a cut-off in years (a former client's duty does not lapse); current affiliations only, or two steps; exact names only, or fuzzed given names; reading each matter's case-data aliases (slow, and ties the two stores together); running only on request or only at opening (misses a party who joins mid-file); keeping no report.
+Options rejected: flagging only the pairs in 1 and hiding other matches (hides an opposing expert who is a former client); flagging every match (buries the real conflicts); a cut-off in years (a former client's duty does not lapse); current affiliations only, or two steps; exact names only, or fuzzed given names; reading each matter's matter-data aliases (slow, and ties the two stores together); running only on request or only at opening (misses a party who joins mid-file); keeping no report.
 
 ## 11. Verify against HEAD before building
 

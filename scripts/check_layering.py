@@ -97,7 +97,7 @@ def name_pattern(name):
               rf"|(?:skills|\.\.)/{n}/")              # skills/draft/ or ../draft/
     if "-" not in name:
         return re.compile(marked)
-    # "the case-data folder" is a folder on disk, not the skill.
+    # "the matter-data folder" is a folder on disk, not the skill.
     return re.compile(rf"{marked}|(?<![\w/-]){n}(?![\w-]|\.md|[ -]folder)")
 
 

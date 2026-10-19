@@ -1,5 +1,5 @@
 // matter_data__resolve_participant end to end (/matter-data design-decisions.md #65, #66): the tool
-// resolves the matter's case-data folder from its coclerk.json and spawns /matter-data's own
+// resolves the matter's matter-data folder from its coclerk.json and spawns /matter-data's own
 // resolve_participant.py against a real main.sqlite built from the canonical schema. The matching
 // itself is pinned by the skill's test_resolve_participant.py; this pins the tool surface. Every
 // name is invented.
@@ -12,7 +12,7 @@ import test from "node:test";
 
 const { callTool } = await import("../build/dispatch.js");
 const { buildToolDefinitions } = await import("../build/schema-gen.js");
-const { writeCaseData } = await import("./helpers/case-data-fixture.mjs");
+const { writeCaseData } = await import("./helpers/matter-data-fixture.mjs");
 
 const TOOL = "matter_data__resolve_participant";
 

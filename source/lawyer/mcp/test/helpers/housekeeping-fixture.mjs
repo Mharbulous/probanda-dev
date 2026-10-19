@@ -20,8 +20,8 @@ const TEMPLATE_DIRS = [
 ];
 
 /**
- * A throwaway matter (a coclerk.json naming its case-data folder, standard folders, `files`) beside
- * that case-data folder and a throwaway template tree.
+ * A throwaway matter (a coclerk.json naming its matter-data folder, standard folders, `files`) beside
+ * that matter-data folder and a throwaway template tree.
  */
 export function matterFixture(files = {}, { dirs = MATTER_DIRS } = {}) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-hk-"));

@@ -17,7 +17,7 @@ practitioner, and on approval writes the context file `/publish` fills from.
 `mcp__remote-devices__plugin_lawyer_data__<name>`), stop before any tool
 call or file write. This step runs on the PC, in a Claude Code session in the
 desktop app's Code tab, where the Probanda plugin is installed, not in a
-Cowork cloud sandbox, which cannot see the case-data folder this chain works in
+Cowork cloud sandbox, which cannot see the matter-data folder this chain works in
 (#1273, as for `publish-boc` under ADR 0026). Tell the practitioner so, and how
 to run it there: open a Code-tab session in the matter's folder and ask for
 the same bill-of-costs step. Do not retry or probe in Cowork.
@@ -37,7 +37,7 @@ Every figure is computed by the script, never in chat. Run:
 
 ```bash
 python subskills/calculate-boc/scripts/boc_context.py \
-    --state "<case-data folder>/bill-of-costs/bill-of-costs.json"
+    --state "<matter-data folder>/bill-of-costs/bill-of-costs.json"
 ```
 
 Resolve `subskills/calculate-boc/scripts/` from `/calculate`'s own folder: in a

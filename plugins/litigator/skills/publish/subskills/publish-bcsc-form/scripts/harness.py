@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent          # scripts/
 SKILL_ROOT = HERE.parent                        # publish-bcsc-form/
 # Session state lives beside the scripts by default, but the install dir may be
 # read-only (Cowork) and is wiped on reinstall, so DRAFT_BCSC_SESSIONS_DIR relocates
-# it into the matter's case-data folder ({case-data folder}/form-sessions) when set.
+# it into the matter's matter-data folder ({matter-data folder}/form-sessions) when set.
 SESSIONS_DIR = Path(os.environ["DRAFT_BCSC_SESSIONS_DIR"]) if "DRAFT_BCSC_SESSIONS_DIR" in os.environ else SKILL_ROOT / "sessions"
 
 # ---------------------------------------------------------------------------
@@ -297,7 +297,7 @@ def new_ctx(user_request: str, matter_id: str = "",
         "user_request": user_request,
         "matter_id": matter_id,
         "matter_path": matter_path,
-        # Supplied by the caller at init: working files go under the case-data
+        # Supplied by the caller at init: working files go under the matter-data
         # folder, final documents under the Writing's folder in the draft folder
         # (a package) or at the draft folder's root as <out_name>.docx (#1324).
         "case_data_folder": case_data_folder,
@@ -1008,7 +1008,7 @@ def main():
     p_init = sub.add_parser("init")
     p_init.add_argument("user_request")
     p_init.add_argument("--matter-path", default="")
-    p_init.add_argument("--case-data-folder", default="")
+    p_init.add_argument("--matter-data-folder", default="")
     p_init.add_argument("--writing-folder", default="")
     p_init.add_argument("--out-name", default="")
     p_init.add_argument("--edits-reviewed", action="store_true")

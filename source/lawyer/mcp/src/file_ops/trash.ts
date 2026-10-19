@@ -84,7 +84,7 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date()): Tr
     target.split(pathWin32.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))
   ) {
     throw new DataServerError(
-      `path is protected (the workspace root, the matter pointer, ${TRASH}, the case-data folder, or a privileged/disclosed tree): ${target}`,
+      `path is protected (the workspace root, the matter pointer, ${TRASH}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }

@@ -16,9 +16,9 @@ Depends on `assemble/subskills/assemble-bcca-book/scripts/paginate_book.py` for 
 
 ## In Cowork
 
-In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox has neither PyMuPDF nor Word, sees neither the matter folder nor the case-data folder, and its Write tool writes into the sandbox, not the host (ADR 0027). Never run the binder in the sandbox shell, and never write `enclosures.json` with the Write tool. Run steps 1 and 2 for their checks and the practitioner's answers, but save nothing. In place of writing `enclosures.json` and of step 3, call `drafting_forms__assemble_general` with:
+In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), the sandbox has neither PyMuPDF nor Word, sees neither the matter folder nor the matter-data folder, and its Write tool writes into the sandbox, not the host (ADR 0027). Never run the binder in the sandbox shell, and never write `enclosures.json` with the Write tool. Run steps 1 and 2 for their checks and the practitioner's answers, but save nothing. In place of writing `enclosures.json` and of step 3, call `drafting_forms__assemble_general` with:
 
-- `matter_root`: the matter folder's absolute host path. The server finds the case-data folder from the matter's `probanda.json` itself and never opens the drafting database, so do not call `drafting_forms__open_session` for a bind: it can migrate the database and raise counsel refusals that have nothing to do with the bind (#1427)
+- `matter_root`: the matter folder's absolute host path. The server finds the matter-data folder from the matter's `probanda.json` itself and never opens the drafting database, so do not call `drafting_forms__open_session` for a bind: it can migrate the database and raise counsel refusals that have nothing to do with the bind (#1427)
 - `docx_name`: the bare file name of the deliverable `publish-general` reported, at the top of the draft folder
 - `pdf_name`: only after an `output_exists`, the next free ` vN UNSIGNED.pdf` name; left out, the PDF is the `.docx` name with ` UNSIGNED.pdf`
 - `enclosures`: step 2's list in the letter's order, each `{label, path, pages}`, where `path` is the host path of the file the practitioner named (absolute, or relative to the matter folder) and `pages` is left out for the whole file
@@ -27,7 +27,7 @@ The tool binds any file named, from anywhere on the PC: the safeguard is the law
 
 ## 1. Locate the Writing
 
-The `.docx` is the deliverable at the top of the draft folder, resolved by glob per the workspace output rule (`.claude/skills/shared/workspace-output-rule.md`): the `deliverable` path `publish-general` reported, else ask the practitioner which file. Never bind its review copy, `<name> (format unverified).docx`. The working folder is `<case-data folder>\assemble-general\`, the case-data folder being the one `probanda.json`'s `case_data_dir` names; create `assemble-general\` if it is absent.
+The `.docx` is the deliverable at the top of the draft folder, resolved by glob per the workspace output rule (`.claude/skills/shared/workspace-output-rule.md`): the `deliverable` path `publish-general` reported, else ask the practitioner which file. Never bind its review copy, `<name> (format unverified).docx`. The working folder is `<matter-data folder>\assemble-general\`, the matter-data folder being the one `probanda.json`'s `case_data_dir` names; create `assemble-general\` if it is absent.
 
 ## 2. Name the enclosures
 
