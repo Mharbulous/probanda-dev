@@ -2985,13 +2985,16 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
 }
 
 // The mail__* tools (docs/Plans/2026-10-15_imap-mail.md): the practitioner's
-// mailbox over IMAP, read-only apart from save_draft, which only appends a draft.
-// Served by the `data` server only, never by file-manager's `files` server.
+// mailbox over IMAP, read-only apart from save_draft, which only appends a draft,
+// and create_folder, rename_folder and move_messages, which organize it. No tool
+// deletes mail or a folder. Served by the `data` server only, never by
+// file-manager's `files` server.
 export function mailToolDefinitions(): ToolDefinition[] {
   const errors =
     " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), " +
     "`mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
+  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
   const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
   const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
   const bodyOptions = {
@@ -3235,6 +3238,65 @@ export function mailToolDefinitions(): ToolDefinition[] {
           folder: { type: "string", description: "Default: the Drafts folder." },
         },
         required: ["eml_path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true },
+    },
+    {
+      name: "mail__create_folder",
+      description:
+        "Create a folder: `name`, inside `parent` when given (an exact folder name from mail__list_folders), else at the " +
+        "top level. Returns {created, path}. Refuses a missing parent (`mail_not_found`) and a folder that already " +
+        "exists (`mail_folder_exists`)." +
+        organizes +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The new folder's own name, without its parent's path." },
+          parent: { type: "string", description: "Exact folder name from mail__list_folders. Default: the top level." },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false },
+    },
+    {
+      name: "mail__rename_folder",
+      description:
+        "Rename a folder, or move it under another folder: `folder` and `new_name` are full folder paths as " +
+        "mail__list_folders shows them. Its messages and subfolders go with it. Returns {renamed, from, to}. Refuses " +
+        "INBOX and the special-use folders, such as Sent, Drafts, Trash, Junk and Archive (`mail_protected_folder`), a " +
+        "missing folder (`mail_not_found`) and a `new_name` already taken (`mail_folder_exists`)." +
+        organizes +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder, new_name: { type: "string" } },
+        required: ["folder", "new_name"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true },
+    },
+    {
+      name: "mail__move_messages",
+      description:
+        "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in " +
+        "`folder` (1-500, from a list or search). Only those messages leave `folder`. Uses the server's MOVE, or on a " +
+        "server without it a copy followed by the removal of exactly the copied UIDs (UIDPLUS); a server with neither " +
+        "is refused (`mail_move_unsupported`) and nothing changes. Moving to the Trash folder is a move; the mail server " +
+        "may empty its Trash on its own schedule. Returns {folder, destination, method, moved: [{uid, newUid?}], " +
+        "notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works." +
+        organizes +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder: { type: "string", description: "Exact folder name from mail__list_folders." },
+          uids: { type: "array", items: { type: "integer", minimum: 1 }, minItems: 1, maxItems: 500 },
+          destination: { type: "string", description: "Exact folder name from mail__list_folders." },
+        },
+        required: ["folder", "uids", "destination"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true },

@@ -16,6 +16,7 @@ export interface FolderEntry {
   path: string;
   specialUse?: string;
   flags?: Set<string>;
+  delimiter?: string;
 }
 
 export interface FetchedMessage extends FetchedSummary {
@@ -24,16 +25,28 @@ export interface FetchedMessage extends FetchedSummary {
   headers?: Buffer;
 }
 
+/** What messageCopy and messageMove return: source UID to destination UID, when the server reports it. */
+export interface CopyResult {
+  destination: string;
+  uidMap?: Map<number, number>;
+}
+
 // The part of imapflow's ImapFlow the mail tools use. A read opens its folder
-// read-only, so the server never sets \Seen as a side effect; the type allows no
-// other open.
+// read-only, so the server never sets \Seen as a side effect. Only
+// mail__move_messages opens a folder writable.
 export interface ImapClientLike {
+  capabilities: Map<string, boolean | number>;
   connect(): Promise<void>;
   logout(): Promise<void>;
   close(): void;
   list(): Promise<FolderEntry[]>;
   status(path: string, query: Record<string, boolean>): Promise<Record<string, unknown>>;
-  mailboxOpen(path: string, options: { readOnly: true }): Promise<{ exists: number }>;
+  mailboxOpen(path: string, options: { readOnly: boolean }): Promise<{ exists: number }>;
+  mailboxCreate(path: string): Promise<{ path: string; created?: boolean }>;
+  mailboxRename(path: string, newPath: string): Promise<{ path: string; newPath: string }>;
+  messageMove(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;
+  messageCopy(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;
+  messageDelete(range: string, options: { uid: true }): Promise<boolean>;
   fetch(range: string | number[], query: Record<string, unknown>, options?: { uid?: boolean }): AsyncIterable<FetchedMessage>;
   fetchOne(seq: string, query: Record<string, unknown>, options?: { uid?: boolean }): Promise<FetchedMessage | false | undefined>;
   search(query: Record<string, unknown>, options?: { uid?: boolean }): Promise<number[] | false | undefined>;

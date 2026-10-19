@@ -1,8 +1,8 @@
 // The mail__* tools of the lawyer plugin's data server (docs/Plans/2026-10-15_imap-mail.md,
-// step 4): IMAP reads, plus save_draft, the one write, which only appends to a
-// folder. No tool sends, deletes, moves, copies, flags, marks read or creates a
-// folder. Every read opens its folder read-only. Tool definitions live in
-// schema-gen.ts.
+// step 4): IMAP reads, save_draft, which only appends to a folder, and three
+// organizing writes: create_folder, rename_folder and move_messages. No tool
+// sends, deletes a message or a folder, flags or marks read. Every read opens its
+// folder read-only. Tool definitions live in schema-gen.ts.
 
 import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, win32 as pathWin32 } from "node:path";
@@ -31,6 +31,7 @@ import {
   runImap,
   sentFolder,
   withImap,
+  type CopyResult,
   type FolderEntry,
   type ImapClientFactory,
   type ImapClientLike,
@@ -82,6 +83,12 @@ export function callMailTool(context: MailContext, name: string, args: Args): Pr
       return findThreadMessages(run, args);
     case "mail__save_draft":
       return saveDraft(run, args);
+    case "mail__create_folder":
+      return createFolder(run, args);
+    case "mail__rename_folder":
+      return renameFolder(run, args);
+    case "mail__move_messages":
+      return moveMessages(run, args);
     default:
       throw new ValidationError(`Unknown tool "${name}"`);
   }
@@ -552,4 +559,150 @@ async function saveDraft(run: Run, args: Args): Promise<unknown> {
     if (!appended) throw new DataServerError(`the server did not accept the draft into "${folder}"`, "mail_error");
     return { saved: true, folder: appended.destination || folder, uid: appended.uid, messageId: parts.headers.get("message-id") };
   });
+}
+
+// --- organizing (writes) ------------------------------------------------------------
+
+const MOVE_MAX = 500;
+
+// INBOX is case-insensitive in IMAP; every other folder name is exact.
+function findFolder(list: FolderEntry[], path: string): FolderEntry | undefined {
+  const inbox = path.toUpperCase() === "INBOX";
+  return list.find((f) => f.path === path || (inbox && f.path.toUpperCase() === "INBOX"));
+}
+
+const folderMissing = (path: string): DataServerError =>
+  new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");
+
+const folderExists = (path: string): DataServerError =>
+  new DataServerError(`a folder named "${path}" already exists`, "mail_folder_exists");
+
+function folderName(label: string, value: unknown): string {
+  const name = String(value ?? "").trim();
+  if (!name || !PRINTABLE.test(name)) throw new ValidationError(`${label} must be a folder name of printable characters`);
+  return name;
+}
+
+function createFolder(run: Run, args: Args): Promise<unknown> {
+  const name = folderName("mail__create_folder.name", args.name);
+  const parent = args.parent as string | undefined;
+  return run(`creating the folder "${name}"`, async (client) => {
+    const list = await client.list();
+    const under = parent === undefined ? undefined : findFolder(list, parent);
+    if (parent !== undefined && !under) throw folderMissing(parent);
+    const delimiter = under?.delimiter ?? list.find((f) => f.delimiter)?.delimiter;
+    if (delimiter && name.includes(delimiter)) {
+      throw new ValidationError(`mail__create_folder.name may not hold "${delimiter}"; pass parent to create a subfolder`);
+    }
+    const path = under ? `${under.path}${delimiter ?? "/"}${name}` : name;
+    if (findFolder(list, path)) throw folderExists(path);
+    const created = await client.mailboxCreate(path);
+    return { created: true, path: created.path || path };
+  });
+}
+
+// The inbox and the special-use folders (Sent, Drafts, Trash, Junk, Archive) are
+// never renamed: mail clients and the other mail tools find them by those roles.
+function renameFolder(run: Run, args: Args): Promise<unknown> {
+  const folder = folderName("mail__rename_folder.folder", args.folder);
+  const newName = folderName("mail__rename_folder.new_name", args.new_name);
+  return run(`renaming the folder "${folder}"`, async (client) => {
+    const list = await client.list();
+    const entry = findFolder(list, folder);
+    if (!entry) throw folderMissing(folder);
+    if (entry.path.toUpperCase() === "INBOX" || entry.specialUse) {
+      throw new DataServerError(
+        `"${entry.path}" is the inbox or a special-use folder (${entry.specialUse ?? "\\Inbox"}), so it is never renamed`,
+        "mail_protected_folder"
+      );
+    }
+    if (findFolder(list, newName)) throw folderExists(newName);
+    const renamed = await client.mailboxRename(entry.path, newName);
+    return { renamed: true, from: entry.path, to: renamed.newPath || newName };
+  });
+}
+
+// Moves only the named UIDs. imapflow's messageMove, on a server without MOVE,
+// copies and then removes with an unscoped command that would also remove every
+// other message marked deleted in the folder, and does so even when the copy
+// failed. So the route is chosen here: MOVE, else copyThenRemove on a UIDPLUS
+// server, else a refusal before anything changes.
+function moveMessages(run: Run, args: Args): Promise<unknown> {
+  const folder = folderName("mail__move_messages.folder", args.folder);
+  const destination = folderName("mail__move_messages.destination", args.destination);
+  const uids = args.uids;
+  if (!Array.isArray(uids) || uids.length === 0 || uids.length > MOVE_MAX || uids.some((u) => !Number.isInteger(u) || u < 1)) {
+    throw new ValidationError(`mail__move_messages.uids must be a list of 1 to ${MOVE_MAX} message UIDs from a list or search of folder`);
+  }
+  const wanted = [...new Set(uids as number[])].sort((a, b) => a - b);
+  return run(`moving messages from "${folder}" to "${destination}"`, async (client) => {
+    const list = await client.list();
+    const ends = [findFolder(list, folder), findFolder(list, destination)];
+    for (const [i, path] of [folder, destination].entries()) {
+      if (!ends[i]) throw folderMissing(path);
+      if (ends[i]?.flags?.has("\\Noselect")) {
+        throw new DataServerError(`"${path}" holds only folders, not messages`, "mail_not_selectable");
+      }
+    }
+    const [source, target] = [ends[0]!.path, ends[1]!.path];
+    if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
+    const canMove = client.capabilities.has("MOVE");
+    if (!canMove && !client.capabilities.has("UIDPLUS")) {
+      throw new DataServerError(
+        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking the removal of " +
+          "other messages; nothing was changed. Move them in the practitioner's mail program instead.",
+        "mail_move_unsupported"
+      );
+    }
+    await client.mailboxOpen(source, { readOnly: false });
+    const present = new Set((await client.search({ uid: wanted.join(",") }, { uid: true })) || []);
+    const existing = wanted.filter((u) => present.has(u));
+    const notFound = wanted.filter((u) => !present.has(u));
+    if (existing.length === 0) {
+      throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
+    }
+    const range = existing.join(",");
+    let result: CopyResult | false;
+    if (canMove) {
+      result = await client.messageMove(range, target, { uid: true });
+      if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
+    } else {
+      result = await copyThenRemove(client, range, source, target);
+    }
+    const left = new Set((await client.search({ uid: range }, { uid: true })) || []);
+    const map = result.uidMap;
+    return {
+      folder: source,
+      destination: target,
+      method: canMove ? "MOVE" : "COPY + UID EXPUNGE",
+      moved: existing.filter((u) => !left.has(u)).map((u) => (map?.has(u) ? { uid: u, newUid: map.get(u) } : { uid: u })),
+      notFound,
+      notMoved: existing.filter((u) => left.has(u)),
+    };
+  });
+}
+
+// Copies, then removes from the source only the UIDs the server confirms it
+// copied. With UIDPLUS, messageDelete with uid: true is a UID-scoped removal of
+// exactly those UIDs.
+async function copyThenRemove(client: ImapClientLike, range: string, source: string, target: string): Promise<CopyResult> {
+  const copy = await client.messageCopy(range, target, { uid: true });
+  if (!copy) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was moved`, "mail_error");
+  const confirmed = [...(copy.uidMap?.keys() ?? [])];
+  if (confirmed.length === 0) {
+    throw new DataServerError(
+      `the server copied the messages to "${target}" but did not say which, so the originals were left in "${source}"; ` +
+        `"${target}" may now hold copies`,
+      "mail_error"
+    );
+  }
+  if (!client.capabilities.has("UIDPLUS")) throw new DataServerError("the server does not offer UIDPLUS; nothing was removed", "mail_move_unsupported");
+  const removed = await client.messageDelete(confirmed.join(","), { uid: true });
+  if (!removed) {
+    throw new DataServerError(
+      `the messages were copied to "${target}" but the originals could not be removed from "${source}", so each is now in both folders`,
+      "mail_error"
+    );
+  }
+  return copy;
 }
