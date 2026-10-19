@@ -1163,6 +1163,64 @@ export function fileToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: "preferences__read",
+      description:
+        "Read this person's saved preferences: standing instructions they asked Probanda to follow whenever a named skill runs. `person` is this machine's probanda.json `person`; when it is unset the call fails with `person_unset`, set it with practice_data__upsert_firm_profile. Returns {person, entries: [{id, skill, instruction, created_on, retired_on, plugin_version}]}, the active (unretired) entries only, all of them or those for one `skill` (\"<plugin>:<skill>\", e.g. \"lawyer:draft\"). Apply each entry's instruction when its skill runs.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          skill: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
+      name: "preferences__write",
+      description:
+        "Save or retire one of this person's preferences. `op: \"add\"` takes `skill` (\"<plugin>:<skill>\", e.g. \"lawyer:draft\") and `instruction`, the person's standing instruction to that skill in generic terms, and returns {status: \"saved\", id}. An instruction that names an email address, a path on this computer, a particular matter's folder, or runs over 2000 characters is refused with `identifying_detail` and a question about how to say it generically; nothing is saved. `op: \"retire\"` takes `id` and marks that entry retired, so it stops applying; the entry stays in the file. An unknown id is `not_found`. `person_unset` as for preferences__read.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          op: { type: "string", enum: ["add", "retire"] },
+          skill: { type: "string" },
+          instruction: { type: "string" },
+          id: { type: "string" },
+        },
+        required: ["op"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "suggestion_log__read",
+      description:
+        "Read this device's log of suggestions it posted to the Probanda team. Returns {suggestions: [{suggestion_id, title, posted_on, last_status, last_shown_status}]}; an empty list when none were posted from this device. `last_status` is the last status known (\"new\", \"approved\", \"approved in part\" or \"rejected\"), and `last_shown_status` is the last one shown to the person, null until one is shown.",
+      inputSchema: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
+      name: "suggestion_log__write",
+      description:
+        "Update this device's log of posted suggestions. `op: \"add\"` takes `suggestion_id` and `title` after a suggestion is posted, recorded with status \"new\" (an id already logged returns `exists`). `op: \"seen\"` takes `suggestion_id` and `status` (\"new\", \"approved\", \"approved in part\" or \"rejected\") once that status has been shown to the person, and sets both `last_status` and `last_shown_status` to it. An id not in the log is `not_found`.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          op: { type: "string", enum: ["add", "seen"] },
+          suggestion_id: { type: "string" },
+          title: { type: "string" },
+          status: { type: "string", enum: ["new", "approved", "approved in part", "rejected"] },
+        },
+        required: ["op", "suggestion_id"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: "sources__fetch",
       description:
         "Fetch one published source on this machine (https only, the shipped hosts plus the firm's approved `_hosts.json` hosts, redirects followed to five hops within them, a browser User-Agent), memoized in this server process per URL for 24 hours. An HTML page returns {kind: \"html\", url, final_url, status, size, sha256, blocks_total, blocks_matched?, text}: the page split into blocks (p, li, h1-h6, div, br, tr), whitespace collapsed, one block per line; `match` (a string or strings; literal, case-insensitive, any of them) keeps only the blocks containing one, and no matching block is an error. Text above 200 KB returns `truncated: true` and no text: narrow it with `match`. A PDF returns {kind: \"pdf\", url, status, size, sha256, saved_path}; with `save: true` the bytes are written to the overlay's `_fetched\\<host>\\<first 12 hex of the sha256>.pdf`, the only thing this tool writes (`saved_path` is null otherwise, and `save` on an HTML page is refused). A refused or failed fetch returns {refused: \"host_not_allowed\" | \"fetch_failed\", host, url, redirect_from?, detail?, status?, hosts_fetched}, not an error. `knowledge__write` checks excerpts against the memoized text.",

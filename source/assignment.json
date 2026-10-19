@@ -58,6 +58,7 @@
       "hooks": {
         "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
+        "inject-preferences": "source/lawyer/hooks/inject-preferences.py",
         "mail-send-gate": "source/lawyer/hooks/mail-send-gate.py",
         "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",

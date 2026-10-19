@@ -78,6 +78,7 @@ import { rulesLifecycle } from "./files/rules-lifecycle.js";
 import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
+import { preferencesRead, preferencesWrite, suggestionLogRead, suggestionLogWrite } from "./preferences/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
 import {
   appendManifest,
@@ -524,6 +525,22 @@ export async function callTool(
 
   if (name === "knowledge__retire") {
     return knowledgeRetire(args);
+  }
+
+  if (name === "preferences__read") {
+    return preferencesRead(args);
+  }
+
+  if (name === "preferences__write") {
+    return preferencesWrite(args);
+  }
+
+  if (name === "suggestion_log__read") {
+    return suggestionLogRead();
+  }
+
+  if (name === "suggestion_log__write") {
+    return suggestionLogWrite(args);
   }
 
   if (name === "sources__fetch") {

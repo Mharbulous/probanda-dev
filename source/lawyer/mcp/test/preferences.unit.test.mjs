@@ -1,0 +1,121 @@
+// preferences__read/write and suggestion_log__read/write: a person's preferences in
+// `<case_data_root>\_practice\preferences\<person>.json`, retired in place, screened for
+// identifying detail; and the device-local suggestion log beside probanda.json.
+
+import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
+
+const { preferencesRead, preferencesWrite, suggestionLogRead, suggestionLogWrite } = await import("../build/preferences/tools.js");
+
+function fixture(t, person = "bd") {
+  const scratch = mkdtempSync(join(tmpdir(), "probanda-preferences-"));
+  t.after(() => rmSync(scratch, { recursive: true, force: true }));
+  const root = join(scratch, "0. CASE DATA");
+  mkdirSync(root);
+  const config = join(scratch, "device", "probanda.json");
+  mkdirSync(join(scratch, "device"));
+  writeFileSync(config, JSON.stringify({ case_data_root: root, ...(person ? { person } : {}) }));
+  const installRoot = join(scratch, "install");
+  mkdirSync(join(installRoot, ".claude-plugin"), { recursive: true });
+  writeFileSync(join(installRoot, ".claude-plugin", "plugin.json"), JSON.stringify({ name: "lawyer", version: "9.9.9" }));
+  return {
+    env: { COCLERK_CONFIG_PATH: config },
+    seams: { installRoot },
+    prefsFile: join(root, "_practice", "preferences", `${person}.json`),
+    logFile: join(scratch, "device", "suggestions.local.json"),
+  };
+}
+
+async function rejection(fn) {
+  try {
+    await fn();
+  } catch (err) {
+    return err;
+  }
+  throw new Error("expected a rejection, got none");
+}
+
+test("add then read returns the active entries, all or for one skill", async (t) => {
+  const f = fixture(t);
+  const a = await preferencesWrite({ op: "add", skill: "lawyer:draft", instruction: "Use short paragraphs." }, f.env, f.seams);
+  await preferencesWrite({ op: "add", skill: "lawyer:show-me", instruction: "Show the page, not a quote." }, f.env, f.seams);
+  assert.equal(a.status, "saved");
+  const all = preferencesRead({}, f.env);
+  assert.equal(all.person, "bd");
+  assert.equal(all.entries.length, 2);
+  const one = preferencesRead({ skill: "lawyer:draft" }, f.env);
+  assert.equal(one.entries.length, 1);
+  assert.equal(one.entries[0].id, a.id);
+  assert.equal(one.entries[0].instruction, "Use short paragraphs.");
+  assert.equal(one.entries[0].retired_on, null);
+  assert.equal(one.entries[0].plugin_version, "9.9.9");
+  assert.match(one.entries[0].created_on, /^\d{4}-\d{2}-\d{2}$/);
+  const file = JSON.parse(readFileSync(f.prefsFile, "utf-8"));
+  assert.equal(file.person, "bd");
+});
+
+test("retire stamps retired_on inside the file and read no longer returns it", async (t) => {
+  const f = fixture(t);
+  const { id } = await preferencesWrite({ op: "add", skill: "lawyer:draft", instruction: "Use short paragraphs." }, f.env, f.seams);
+  const retired = await preferencesWrite({ op: "retire", id }, f.env, f.seams);
+  assert.equal(retired.status, "retired");
+  assert.deepEqual(preferencesRead({}, f.env).entries, []);
+  const file = JSON.parse(readFileSync(f.prefsFile, "utf-8"));
+  assert.equal(file.entries.length, 1);
+  assert.equal(file.entries[0].retired_on, retired.retired_on);
+  assert.equal((await preferencesWrite({ op: "retire", id }, f.env, f.seams)).status, "already_retired");
+  assert.equal((await rejection(() => preferencesWrite({ op: "retire", id: "nope" }, f.env, f.seams))).code, "not_found");
+});
+
+test("an instruction with identifying detail is refused with a question and nothing is saved", async (t) => {
+  const f = fixture(t);
+  for (const instruction of [
+    "Always copy jane.doe@example.com on letters.",
+    "Save drafts to C:\\Users\\jdoe\\Desktop first.",
+    "File it under 0. CASE DATA\\Smith v Jones.",
+    "x".repeat(2001),
+  ]) {
+    const err = await rejection(() => preferencesWrite({ op: "add", skill: "lawyer:draft", instruction }, f.env, f.seams));
+    assert.equal(err.code, "identifying_detail");
+    assert.match(err.message, /\?/);
+    assert.doesNotMatch(err.message, /jane|jdoe|Smith/);
+  }
+  assert.deepEqual(preferencesRead({}, f.env).entries, []);
+});
+
+test("a malformed skill name is refused", async (t) => {
+  const f = fixture(t);
+  const err = await rejection(() => preferencesWrite({ op: "add", skill: "draft", instruction: "Use short paragraphs." }, f.env, f.seams));
+  assert.equal(err.name, "ValidationError");
+});
+
+test("person unset is a hard error naming the key and the tool that sets it", async (t) => {
+  const f = fixture(t, null);
+  for (const call of [() => preferencesRead({}, f.env), () => preferencesWrite({ op: "add", skill: "lawyer:draft", instruction: "x" }, f.env, f.seams)]) {
+    const err = await rejection(call);
+    assert.equal(err.code, "person_unset");
+    assert.match(err.message, /"person"/);
+    assert.match(err.message, /practice_data__upsert_firm_profile/);
+  }
+});
+
+test("the suggestion log sits beside probanda.json: add, then seen sets both statuses", async (t) => {
+  const f = fixture(t);
+  assert.deepEqual(suggestionLogRead(f.env).suggestions, []);
+  assert.equal((await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Shorter letters" }, f.env)).status, "added");
+  assert.equal((await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Shorter letters" }, f.env)).status, "exists");
+  let [entry] = suggestionLogRead(f.env).suggestions;
+  assert.equal(entry.last_status, "new");
+  assert.equal(entry.last_shown_status, null);
+  assert.match(entry.posted_on, /^\d{4}-\d{2}-\d{2}$/);
+  await suggestionLogWrite({ op: "seen", suggestion_id: "s-1", status: "approved in part" }, f.env);
+  [entry] = suggestionLogRead(f.env).suggestions;
+  assert.equal(entry.last_status, "approved in part");
+  assert.equal(entry.last_shown_status, "approved in part");
+  assert.equal(JSON.parse(readFileSync(f.logFile, "utf-8")).suggestions.length, 1);
+  assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-2", status: "new" }, f.env))).code, "not_found");
+  assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-1", status: "done" }, f.env))).name, "ValidationError");
+});
