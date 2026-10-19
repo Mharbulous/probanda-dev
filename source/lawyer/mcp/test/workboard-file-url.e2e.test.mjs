@@ -271,6 +271,41 @@ test("the Job Board's shell composes no retirement text of its own", () => {
   assert.equal(source.includes("retirement of this Writing"), false);
 });
 
+// The statement of goals' card body: each child's class and text, and for the statement its rows,
+// each row's indent and its cells.
+const GOALS_BODY = `[...document.querySelectorAll("#goals .goals-body > *")].map((el) => el.classList.contains("statement")
+  ? [el.className, el.textContent, [...el.querySelectorAll(".row")].map((r) => [r.style.marginLeft, [...r.children].map((c) => [c.className, c.textContent])])]
+  : [el.className, el.textContent])`;
+// A nested statement in the paralegal-posture syntax, with one line it does not recognise. The
+// inferred form ends each goal with "?".
+const CONFIRMED_STATEMENT = [
+  "Goal 1: Obtain the order sought in the notice of application, with costs payable forthwith in any event of the cause.",
+  "Goal 2, any one of:",
+  "  Goal 2(a): Obtain an adjournment of the hearing to a date at least thirty days after the respondent's further affidavit is served.",
+  "  or alternatively,",
+  "  Goal 2(b), both of:",
+  "    Goal 2(b)(i): Obtain leave to file a reply affidavit responding to the new evidence in the respondent's affidavit.",
+  "    and",
+  "    Goal 2(b)(ii): Obtain an order that the respondent pay the costs thrown away by the adjournment.",
+  "  (see the attached note on timing)",
+].join("\n");
+const INFERRED_STATEMENT = CONFIRMED_STATEMENT.split("\n").map((l) => (/^ *Goal[^:]*: \S/.test(l) ? l.replace(/\.$/, "?") : l)).join("\n");
+const statementRows = (inferred) => {
+  const end = inferred ? "?" : ".";
+  const connector = inferred ? "text" : "text connector";
+  return [
+    ["0em", [["label", "Goal 1:"], ["text", "Obtain the order sought in the notice of application, with costs payable forthwith in any event of the cause" + end]]],
+    ["0em", [["label", "Goal 2, any one of:"], ["text", ""]]],
+    ["1.5em", [["label", "Goal 2(a):"], ["text", "Obtain an adjournment of the hearing to a date at least thirty days after the respondent's further affidavit is served" + end]]],
+    ["1.5em", [[connector, "or alternatively,"]]],
+    ["1.5em", [["label", "Goal 2(b), both of:"], ["text", ""]]],
+    ["3em", [["label", "Goal 2(b)(i):"], ["text", "Obtain leave to file a reply affidavit responding to the new evidence in the respondent's affidavit" + end]]],
+    ["3em", [[connector, "and"]]],
+    ["3em", [["label", "Goal 2(b)(ii):"], ["text", "Obtain an order that the respondent pay the costs thrown away by the adjournment" + end]]],
+    ["1.5em", [["text", "  (see the attached note on timing)"]]],
+  ];
+};
+
 if (BROWSERS.length === 0) {
   test("the Job Board and the Litigation Strategy open from disk in a browser", (t) => {
     t.skip(`no Chrome or Edge found; looked in: ${CANDIDATES.map(([, path]) => path).filter(Boolean).join("; ")} (or set CHROME_PATH)`);
@@ -437,7 +472,7 @@ for (const [name, executable] of BROWSERS) {
           sections: [...document.querySelectorAll(".board > section")].map((s) => s.id),
           blocks: [...document.querySelector(".board").children].filter((b) => b.id).map((b) => b.id),
           goalsHead: [...document.querySelectorAll("#goals .head > span")].map((s) => [s.className, s.textContent]),
-          goalsBody: [...document.querySelectorAll("#goals .goals-body > p")].map((p) => [p.className, p.textContent]),
+          goalsBody: ${GOALS_BODY},
           goalAbove: document.querySelector("#goal").getBoundingClientRect().bottom <= document.querySelector(".board > section").getBoundingClientRect().top,
           goalHead: [...document.querySelectorAll("#goal .head > span")].map((s) => [s.className, s.textContent]),
           proceedingRow: document.querySelector("header .meta.proceeding") !== null,
@@ -502,6 +537,38 @@ for (const [name, executable] of BROWSERS) {
     }
   });
 
+  // A confirmed statement: the same rows, the connectors set apart, no caption. Laid out as rows, so a
+  // label never wraps and a wrapped line returns to its text cell's edge, not the card's margin.
+  test(`the Job Board draws a confirmed statement of goals as rows in ${name}`, { timeout: 120000 }, async () => {
+    const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-goals-"));
+    try {
+      const data = { ...FIXTURE_BOARD, goals: { description: FIXTURE_BOARD.goals.description, statement: CONFIRMED_STATEMENT, status: "confirmed" } };
+      const page = join(dir, "goals.html");
+      writeFileSync(page, renderWorkBoardHtml(pageOf(data)), "utf-8");
+
+      await withBrowser(executable, async (cdp) => {
+        const seen = watchPage(cdp);
+        await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1200, height: 1000, deviceScaleFactor: 1, mobile: false });
+        await openFile(cdp, page);
+        const read = await evaluate(cdp, `(() => {
+          document.querySelector("#goals").open = true;
+          const row = document.querySelector("#goals .row");
+          return {
+            body: ${GOALS_BODY},
+            rowDisplay: getComputedStyle(row).display,
+            labelWrap: getComputedStyle(row.querySelector(".label")).whiteSpace,
+          };
+        })()`);
+        assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
+        assert.deepEqual(read.body, [["statement", read.body[0][1], statementRows(false)]], "a confirmed statement has no caption, and its connectors carry the connector class");
+        assert.equal(read.rowDisplay, "flex", "each line is a row of cells");
+        assert.equal(read.labelWrap, "nowrap", "a label never wraps");
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    }
+  });
+
   // Goal card plan Phase 5: the Goal card and the server-composed ticket strings, drawn as given.
   // Injected here rather than in the shared fixture: a card string, one criterion in each state, a
   // ticket carrying a subtitle, and a superseded ticket carrying a reason and no pointer.
@@ -516,7 +583,7 @@ for (const [name, executable] of BROWSERS) {
         { id: "noting-up", text: "Every authority is noted up", state: "met", outstanding: 0, items: ["shelved by you: a reserved point"], source: "inventory" },
         { id: "gate", text: "The pre-filing checks pass or are waived", state: "met", outstanding: 0, items: ["checks run on 2026-09-20", "step — WAIVED: reason"], source: "sqlite" },
       ];
-      const goals = { description: FIXTURE_BOARD.goals.description, statement: "Get the orders sought before the hearing.", status: "inferred" };
+      const goals = { description: FIXTURE_BOARD.goals.description, statement: INFERRED_STATEMENT, status: "inferred" };
       const ticket5 = FIXTURE_BOARD.tickets.find((t) => t.id === 5);
       const data = {
         ...FIXTURE_BOARD,
@@ -548,7 +615,7 @@ for (const [name, executable] of BROWSERS) {
           return {
             tag: card.tagName,
             first: document.querySelector(".board").firstElementChild.id === "goals" && card.previousElementSibling.id === "goals",
-            goalsBody: [...document.querySelectorAll("#goals .goals-body > p")].map((p) => [p.className, p.textContent]),
+            goalsBody: ${GOALS_BODY},
             open: card.open,
             head: [...card.querySelectorAll(".head > span")].map((s) => [s.className, s.textContent]),
             reversed: style.backgroundColor === body.color && style.color === body.backgroundColor,
@@ -571,7 +638,12 @@ for (const [name, executable] of BROWSERS) {
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.equal(closed.tag, "DETAILS", "expanded and collapsed by the native element alone");
         assert.equal(closed.first, true, "the Goal card sits under the statement of goals' card, above the first lane");
-        assert.deepEqual(closed.goalsBody, [["caption", "Inferred, not confirmed"], ["statement", goals.statement]], "an inferred statement is captioned as such");
+        assert.deepEqual(
+          closed.goalsBody,
+          [["caption", "Inferred, not confirmed"], ["statement", closed.goalsBody[1][1], statementRows(true)]],
+          "an inferred statement is captioned as such and drawn as one row per line, labels in their own cell, 1.5em per level, no connector styling"
+        );
+        assert.equal(closed.goalsBody[1][2][8][1][0][1], "  (see the attached note on timing)", "an unrecognised line is one text cell, exactly as stored");
         assert.equal(closed.open, false, "the Goal card starts collapsed");
         assert.deepEqual(closed.head, [["sentence", goal.sentence], ["lifecycle", "Drafting"], ["text", goal.text]], "collapsed: the sentence, the state pill and the card string");
         assert.equal(closed.reversed, true, "the Goal card reverses the page's colours");

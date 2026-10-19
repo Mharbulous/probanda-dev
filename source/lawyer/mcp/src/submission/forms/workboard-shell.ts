@@ -66,11 +66,16 @@ header .meta .flag{margin-left:6px;color:var(--accent)}
 header .meta .flag::before,header .meta .note::before{content:none}
 header .meta span:not([data-k])::before{content:none}
 /* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
-   and collapse. Its body keeps the stored statement's indentation and line breaks; an inferred one is
-   italic under its caption, and a board with none says so in a muted line. */
+   and collapse. Its body renders the statement's syntax as rows, a label cell beside a text cell, and
+   prints an unrecognised line as written; an inferred one is italic under its caption, and a board
+   with none says so in a muted line. */
 .goals .head .label{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
 .goals .goals-body{margin-top:14px;padding-top:12px;border-top:1px solid currentColor;font-size:13.5px}
-.goals .statement{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.goals .statement{margin:0;overflow-wrap:anywhere}
+.goals .row{display:flex;gap:0 8px;align-items:baseline}
+.goals .row .label{flex:0 0 auto;white-space:nowrap}
+.goals .row .text{flex:1 1 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.goals .row .connector{font-style:italic}
 .goals[data-status="inferred"] .statement{font-style:italic}
 .goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
 .goals .none{margin:0;opacity:.75}
@@ -658,10 +663,33 @@ const TAIL = String.raw`</script>
         body.appendChild(el("p", "none", "No statement of goals yet"));
       } else {
         if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
-        body.appendChild(el("p", "statement", g.statement));
+        body.appendChild(statementRows(g.statement, g.status));
       }
       card.appendChild(body);
       return card;
+    }
+    // The statement as rows, one per stored line, each indented 1.5em per level of two spaces. A
+    // labelled line puts its label in a cell of its own, so a wrapped line returns to the text's left
+    // edge; a connector line is one text cell; any other line is printed as written.
+    function statementRows(statement, status) {
+      var wrap = el("div", "statement");
+      statement.split("\n").forEach(function (line) {
+        var row = el("div", "row");
+        var indent = /^ */.exec(line)[0].length;
+        row.style.marginLeft = (indent / 2) * 1.5 + "em";
+        var m = /^( *)(Goal[^:\n]*?)(, (?:any one|both|all) of)?:\s?(.*)$/.exec(line);
+        var trimmed = line.trim();
+        if (m) {
+          row.appendChild(el("span", "label", m[2] + (m[3] || "") + ":"));
+          row.appendChild(el("span", "text", m[4]));
+        } else if (trimmed === "or alternatively," || trimmed === "and") {
+          row.appendChild(el("span", status !== "inferred" ? "text connector" : "text", trimmed));
+        } else {
+          row.appendChild(el("span", "text", line));
+        }
+        wrap.appendChild(row);
+      });
+      return wrap;
     }
     board.appendChild(goalsCard(data.goals));
 
