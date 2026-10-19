@@ -20,7 +20,6 @@
         "invoice-tracking",
         "localize",
         "matter-status-tracking",
-        "plugin-fix",
         "practice-data",
         "probanda-setup",
         "proof-read",
@@ -183,6 +182,7 @@
       ],
       "skills": [
         "adversarial-triage",
+        "fix-this",
         "suggestion-triage",
         "view-suggestions"
       ],

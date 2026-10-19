@@ -1,4 +1,4 @@
-# /plugin-fix fan-out mode
+# /fix-this fan-out mode
 
 Read this after steps 1 to 3 of `SKILL.md` when rule 3 selects fan-out mode. The hard rules in `SKILL.md` still apply, rule 8 in particular: the block is run in a VS Code Claude Code session, which launches one subagent per spec, all on `main` in the shared checkout.
 
