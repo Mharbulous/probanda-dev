@@ -1,4 +1,4 @@
-// build-stamp: d93a496e4232
+// build-stamp: 44d47116bf7b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107659,6 +107659,7 @@ var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 function mailToolDefinitions() {
   const errors = " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), `mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
+  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
   const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
   const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
   const bodyOptions = {
@@ -107823,6 +107824,46 @@ function mailToolDefinitions() {
           folder: { type: "string", description: "Default: the Drafts folder." }
         },
         required: ["eml_path"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "mail__create_folder",
+      description: "Create a folder: `name`, inside `parent` when given (an exact folder name from mail__list_folders), else at the top level. Returns {created, path}. Refuses a missing parent (`mail_not_found`) and a folder that already exists (`mail_folder_exists`)." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The new folder's own name, without its parent's path." },
+          parent: { type: "string", description: "Exact folder name from mail__list_folders. Default: the top level." }
+        },
+        required: ["name"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false }
+    },
+    {
+      name: "mail__rename_folder",
+      description: "Rename a folder, or move it under another folder: `folder` and `new_name` are full folder paths as mail__list_folders shows them. Its messages and subfolders go with it. Returns {renamed, from, to}. Refuses INBOX and the special-use folders, such as Sent, Drafts, Trash, Junk and Archive (`mail_protected_folder`), a missing folder (`mail_not_found`) and a `new_name` already taken (`mail_folder_exists`)." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder, new_name: { type: "string" } },
+        required: ["folder", "new_name"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "mail__move_messages",
+      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses the server's MOVE, or on a server without it a copy followed by the removal of exactly the copied UIDs (UIDPLUS); a server with neither is refused (`mail_move_unsupported`) and nothing changes. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, method, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder: { type: "string", description: "Exact folder name from mail__list_folders." },
+          uids: { type: "array", items: { type: "integer", minimum: 1 }, minItems: 1, maxItems: 500 },
+          destination: { type: "string", description: "Exact folder name from mail__list_folders." }
+        },
+        required: ["folder", "uids", "destination"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true }
@@ -120612,6 +120653,12 @@ function callMailTool(context, name2, args) {
       return findThreadMessages(run, args);
     case "mail__save_draft":
       return saveDraft(run, args);
+    case "mail__create_folder":
+      return createFolder(run, args);
+    case "mail__rename_folder":
+      return renameFolder(run, args);
+    case "mail__move_messages":
+      return moveMessages(run, args);
     default:
       throw new ValidationError(`Unknown tool "${name2}"`);
   }
@@ -121001,6 +121048,126 @@ async function saveDraft(run, args) {
     if (!appended) throw new DataServerError(`the server did not accept the draft into "${folder}"`, "mail_error");
     return { saved: true, folder: appended.destination || folder, uid: appended.uid, messageId: parts.headers.get("message-id") };
   });
+}
+var MOVE_MAX = 500;
+function findFolder(list2, path) {
+  const inbox = path.toUpperCase() === "INBOX";
+  return list2.find((f3) => f3.path === path || inbox && f3.path.toUpperCase() === "INBOX");
+}
+var folderMissing = (path) => new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");
+var folderExists = (path) => new DataServerError(`a folder named "${path}" already exists`, "mail_folder_exists");
+function folderName(label, value) {
+  const name2 = String(value ?? "").trim();
+  if (!name2 || !PRINTABLE.test(name2)) throw new ValidationError(`${label} must be a folder name of printable characters`);
+  return name2;
+}
+function createFolder(run, args) {
+  const name2 = folderName("mail__create_folder.name", args.name);
+  const parent = args.parent;
+  return run(`creating the folder "${name2}"`, async (client) => {
+    const list2 = await client.list();
+    const under = parent === void 0 ? void 0 : findFolder(list2, parent);
+    if (parent !== void 0 && !under) throw folderMissing(parent);
+    const delimiter = under?.delimiter ?? list2.find((f3) => f3.delimiter)?.delimiter;
+    if (delimiter && name2.includes(delimiter)) {
+      throw new ValidationError(`mail__create_folder.name may not hold "${delimiter}"; pass parent to create a subfolder`);
+    }
+    const path = under ? `${under.path}${delimiter ?? "/"}${name2}` : name2;
+    if (findFolder(list2, path)) throw folderExists(path);
+    const created = await client.mailboxCreate(path);
+    return { created: true, path: created.path || path };
+  });
+}
+function renameFolder(run, args) {
+  const folder = folderName("mail__rename_folder.folder", args.folder);
+  const newName = folderName("mail__rename_folder.new_name", args.new_name);
+  return run(`renaming the folder "${folder}"`, async (client) => {
+    const list2 = await client.list();
+    const entry = findFolder(list2, folder);
+    if (!entry) throw folderMissing(folder);
+    if (entry.path.toUpperCase() === "INBOX" || entry.specialUse) {
+      throw new DataServerError(
+        `"${entry.path}" is the inbox or a special-use folder (${entry.specialUse ?? "\\Inbox"}), so it is never renamed`,
+        "mail_protected_folder"
+      );
+    }
+    if (findFolder(list2, newName)) throw folderExists(newName);
+    const renamed = await client.mailboxRename(entry.path, newName);
+    return { renamed: true, from: entry.path, to: renamed.newPath || newName };
+  });
+}
+function moveMessages(run, args) {
+  const folder = folderName("mail__move_messages.folder", args.folder);
+  const destination = folderName("mail__move_messages.destination", args.destination);
+  const uids = args.uids;
+  if (!Array.isArray(uids) || uids.length === 0 || uids.length > MOVE_MAX || uids.some((u3) => !Number.isInteger(u3) || u3 < 1)) {
+    throw new ValidationError(`mail__move_messages.uids must be a list of 1 to ${MOVE_MAX} message UIDs from a list or search of folder`);
+  }
+  const wanted = [...new Set(uids)].sort((a3, b3) => a3 - b3);
+  return run(`moving messages from "${folder}" to "${destination}"`, async (client) => {
+    const list2 = await client.list();
+    const ends = [findFolder(list2, folder), findFolder(list2, destination)];
+    for (const [i3, path] of [folder, destination].entries()) {
+      if (!ends[i3]) throw folderMissing(path);
+      if (ends[i3]?.flags?.has("\\Noselect")) {
+        throw new DataServerError(`"${path}" holds only folders, not messages`, "mail_not_selectable");
+      }
+    }
+    const [source, target] = [ends[0].path, ends[1].path];
+    if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
+    const canMove = client.capabilities.has("MOVE");
+    if (!canMove && !client.capabilities.has("UIDPLUS")) {
+      throw new DataServerError(
+        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking the removal of other messages; nothing was changed. Move them in the practitioner's mail program instead.",
+        "mail_move_unsupported"
+      );
+    }
+    await client.mailboxOpen(source, { readOnly: false });
+    const present = new Set(await client.search({ uid: wanted.join(",") }, { uid: true }) || []);
+    const existing = wanted.filter((u3) => present.has(u3));
+    const notFound2 = wanted.filter((u3) => !present.has(u3));
+    if (existing.length === 0) {
+      throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
+    }
+    const range = existing.join(",");
+    let result;
+    if (canMove) {
+      result = await client.messageMove(range, target, { uid: true });
+      if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
+    } else {
+      result = await copyThenRemove(client, range, source, target);
+    }
+    const left = new Set(await client.search({ uid: range }, { uid: true }) || []);
+    const map = result.uidMap;
+    return {
+      folder: source,
+      destination: target,
+      method: canMove ? "MOVE" : "COPY + UID EXPUNGE",
+      moved: existing.filter((u3) => !left.has(u3)).map((u3) => map?.has(u3) ? { uid: u3, newUid: map.get(u3) } : { uid: u3 }),
+      notFound: notFound2,
+      notMoved: existing.filter((u3) => left.has(u3))
+    };
+  });
+}
+async function copyThenRemove(client, range, source, target) {
+  const copy2 = await client.messageCopy(range, target, { uid: true });
+  if (!copy2) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was moved`, "mail_error");
+  const confirmed = [...copy2.uidMap?.keys() ?? []];
+  if (confirmed.length === 0) {
+    throw new DataServerError(
+      `the server copied the messages to "${target}" but did not say which, so the originals were left in "${source}"; "${target}" may now hold copies`,
+      "mail_error"
+    );
+  }
+  if (!client.capabilities.has("UIDPLUS")) throw new DataServerError("the server does not offer UIDPLUS; nothing was removed", "mail_move_unsupported");
+  const removed = await client.messageDelete(confirmed.join(","), { uid: true });
+  if (!removed) {
+    throw new DataServerError(
+      `the messages were copied to "${target}" but the originals could not be removed from "${source}", so each is now in both folders`,
+      "mail_error"
+    );
+  }
+  return copy2;
 }
 
 // node_modules/ical.js/dist/ical.js
