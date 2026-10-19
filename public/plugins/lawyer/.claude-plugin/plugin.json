@@ -2,7 +2,7 @@
   "name": "lawyer",
   "displayName": "Lawyer",
   "version": "0.0.1",
-  "description": "Skills for any lawyer: restate a request before acting, and summarize a session. Requires nothing.",
+  "description": "The core plugin, with skills for any lawyer: proof-read legal writing, restate a request before acting, and summarize a session. Requires nothing. Every other Probanda plugin requires it.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"

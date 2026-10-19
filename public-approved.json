@@ -1,18 +1,17 @@
 {
-  ".claude-plugin/marketplace.json": "e4fe565f90e36dec795dd9899a277f7e97d023888dbcfde4dd6bb4115c265e8b",
-  "CHANGELOG.md": "57d55b98841d521eb52dc94ee453e027158eedbc57a4ffb1edb5b27482da7a40",
-  "README.md": "aa3cef019bb9832df060a84a7a821ffd6085848c728b9c7eab71bc516e0837ca",
-  "plugins/lawyer/.claude-plugin/plugin.json": "06897c147a97795285dd496d1578107c4b58460c5efce0cce0b88769d4a963c2",
+  ".claude-plugin/marketplace.json": "39c05b6d6ef8e1965c0c968b4055ab694e991eb0fe989bbee6bda0889cd50578",
+  "CHANGELOG.md": "828a7b370d37f243fb34402f2c2a4d8fec36d27389ca75f650ef11de0d44f3c0",
+  "README.md": "dc6dbcc46a4f8cb5fd0f431e20a1e7a9d859fb6a096128eeeaa1059e8bf2b972",
+  "plugins/lawyer/.claude-plugin/plugin.json": "825ed969cc1d54b4178bc97950c099d9a95ab1f248abad5f27d37d21ddfb16c9",
   "plugins/lawyer/skills/TLDR/SKILL.md": "d8d5585b33bd1faa0d0d0d9ec0114b9b0de914587e49ab8a3195869722c57440",
   "plugins/lawyer/skills/dyu/SKILL.md": "d7ffb8926dbdfe037696a369c7a923a3bc4ff3c4f3def04f824ea8aac191d122",
   "plugins/lawyer/skills/dyu/hooks/trailing-dyu.py": "8a49848f45ed30184cb98b34b7499f0a4f0166c87896d14990126fae43206cc1",
-  "plugins/lawyer/.claude-plugin/plugin.json": "8dadb63ff594437f97ea744f379f422e0188d1a71caa9f22ad24f0945c374e41",
   "plugins/lawyer/skills/proof-read/SKILL.md": "d2b9dc1126ade47c8fc32d901d3dce4be9674036becc0ad3470a22c4025cfa3f",
   "plugins/lawyer/skills/proof-read/references/trial-lawyer-style.md": "85f723ee650f3d1d5a09885d92461a007e8d6fdee8c23845dbcab6121b0b77bc",
-  "plugins/litigator/.claude-plugin/plugin.json": "c98eb56e360019c8de6a8575640a006d302e704e5b7d655fb2219d90ad6cd677",
+  "plugins/litigator/.claude-plugin/plugin.json": "cccda30a1736251edf407d46d05ad56442384cfa67eccf01a70d391b14f48e60",
   "plugins/litigator/skills/litigation-fact-extractor/SKILL.md": "9df7eb5b48f1698f76cd8391f9ca00f99571fda08013302647dc86b6b827d446",
   "plugins/litigator/skills/litigation-fact-extractor/agents/extract.md": "50ef521ae2adce95e50fd29f9eb82d7bdcaceb28b7acca6ee5ebe89af7f90e69",
-  "plugins/researcher/.claude-plugin/plugin.json": "0831b4486198244c6309b48d75d8b3428ebb0a58a4b8a6c8e78eaf20679b741b",
+  "plugins/researcher/.claude-plugin/plugin.json": "c3ec017ec376f76960e2b01640685e630363eabcfa8bef0d14c03244abd4cada",
   "plugins/researcher/skills/legal-citation/SKILL.md": "67ffd228803d8fc2de83e56f8f6108614c67f27f106f059d8a202597cb9d5a9d",
-  "plugins/solicitor/.claude-plugin/plugin.json": "6d149a9fe690115edc3585e3c5b612c3bc53cf3c76c63d5bc0727d490fe9c998"
+  "plugins/solicitor/.claude-plugin/plugin.json": "0bbd9bf8a0cfefbd5eb691b3b093ace7a4d8f05e7009a256382b9163a50e9f01"
 }

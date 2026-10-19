@@ -1,5 +1,11 @@
 # Changelog
 
+## Repository renamed Probanda-app/Legal; legal folded into lawyer
+
+- The repository is now `Probanda-app/Legal`. The old address redirects to it.
+- The legal plugin is folded into lawyer, which is now the core plugin and takes over proof-read. Install lawyer first. researcher, litigator and solicitor now require lawyer instead of legal.
+- README install commands and each plugin's homepage and repository links use the new name.
+
 ## Probanda_Legal marketplace, researcher and lawyer plugins
 
 - The marketplace is now `Probanda_Legal`. Install each plugin as `<plugin>@Probanda_Legal`.
