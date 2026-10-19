@@ -121,9 +121,33 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   **Gate after session 3 (2026-10-19): passes, nothing cut.** Session 3's subagents cost $12.2–13.4 after correcting truncated calls (the ledger says $9.85), against its $18 estimate, and its orchestrator's copied transcript $3.58 on Sonnet. Taking the high end, measured spend is now $61.6. Unmeasured: session 1's $8 as above, the part of session 3's orchestrator before its transcript's compaction, and its 87 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $13 for sessions 4–5 and about $33 of the shared row. Projected total: about $116.
 
   **Gate after session 4 (2026-10-19): passes, nothing cut.** Session 4's subagents cost $4.96 ($4.95 for the 14 E4 runs and $0.002 for the read check), and its orchestrator $1.30 on Sonnet, with its transcript copied whole this time: $6.26 against the $7 estimate. Measured spend is now $67.9. Unmeasured: session 1's $8 as above, and session 4's 13 Opus scorers in Claude Code, inside the shared row. Remaining estimates are $6 for session 5 and about $27 of the shared row. Projected total: about $109.
+
+  **Gate after session 5 (2026-10-19): passes, nothing cut, and no run session remains.** Session 5's subagents cost $3.75–4.10, and the copied part of its orchestrator $1.05 on Sonnet: $4.80–5.15 against the $6 estimate. Taking the high end, measured spend is now $73.1. Unmeasured: session 1's $8 as above, and session 5's orchestrator before its compaction, inside the shared row. About $26 of the shared row remains. Projected total: about $107 of $150.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
+
+  **Session 5 results (run 2026-10-19, map #100 ticket #117, $3.75–4.10 of subagents).** A reader (`lawyer:extract-facts`) built the naming evidence from the first 1, 2 or 5 pages, then `file-manager:housekeeping-namer` on the same model named the file, both at medium effort, 1 run per cell. Each cell's input was cut to its pages: a page-subset PDF, or a .docx or .msg rendering cut to that share of its characters (the renderings have no page breaks). A cell whose cut equals a smaller cell's was not run: a 2-page document's 5-page cell is its 2-page run. Every reader read only its own cut, and every namer got its reader's evidence unchanged, both checked against the transcripts. One run is invalid: the orchestrator gave E2R-sonnetp2-D066-1 a wrong path, so D066 is left out of that cell. Names are scored as in E5, and the session 1 rows are E5's.
+
+  | Reader and namer | Pages | Cost per document (reader + namer) | Date | Code | Author or recipient | re/encl/srv | All four | Folder |
+  |---|---|---|---|---|---|---|---|---|
+  | Haiku | 1 | $0.0084 ($0.0019 + $0.0065) | 10 | 11 | 8 | 10 | 8 | 6 of 9 |
+  | Haiku | 2 | $0.0095 | 9 | 9 | 6 | 8 | 3 | 7 of 9 |
+  | Haiku | 5 | $0.0091 | 10 | 8 | 4 | 6 | 2 | 6 of 9 |
+  | Sonnet | 1 | $0.098 ($0.020 + $0.078) | 10 | 11 | 9 | 9 | 9 | 7 of 9 |
+  | Sonnet | 2 (11 documents) | $0.100 | 10 | 11 | 10 | 9 | 8 | 7 of 8 |
+  | Sonnet | 5 | $0.109 | 11 | 11 | 8 | 9 | 6 | 7 of 9 |
+  | Session 1, E5-A: Opus, all pages, same context | all | $0.36 | 11 | 12 | 9 | 9 | 7 | 7 of 9 |
+  | Session 1, E5-B: Haiku, first 80 lines or page 1 | 1 | $0.009 | 10 | 10 | 8 | 7 | 5 | 7 of 9 |
+  | Session 1, E5-C: Haiku, from the whole-document extraction | all | $0.008 | 10 | 9 | 5 | 7 | 3 | 7 of 9 |
+
+  - **Page 1 is enough, and more pages make names worse.** Right on all four components: Haiku 8, 3 and 2 of 12 at 1, 2 and 5 pages, and Sonnet 9, 8 and 6. With more pages the reader names something inside the document instead of the document itself: the enclosed pleading instead of the fax cover (D044, Haiku at 5 pages), the sender and type of a quoted email (D024, Haiku at 2 and 5), or an enclosure with a wrong date (D058, 2 and 5 pages). Session 1 fits: E5-C's whole-document evidence got 3 of 12, and E5-B's "first 80 lines" was more than half of some renderings.
+  - **Sonnet buys one document of 12 at about 12 times the cost.** At page 1 Sonnet got 9 of 12 and 7 folders of 9, against Haiku's 8 and 6, for $0.098 against $0.0084. Haiku's extra misses are D027 and D037, where it took the firm's own lawyer as the author or recipient. The namer is about 80% of each document's cost on both models, mostly for reading the naming convention and its references.
+  - **Haiku at page 1 matches the Opus shared context at 1/40 of the cost:** 8 of 12 on all four against E5-A's 7, and 6 folders against 7. Its 8 against E5-B's 5 with the same models comes from the shorter cut, or from run-to-run spread, which one run per cell cannot separate.
+  - **No cell fixes these.** D066 (photographs of text messages, 7 scanned pages) got no usable name in any valid cell, except a partial one from Sonnet at 5 pages. The three drafts' key folder is `0. DRAFT`, which the namer is never offered. The free-text subject matched exactly on 1–2 documents of 12 in every cell, as in session 1.
+  - **Settled names (D032, D051, page 1 only):** both models gave the same marks. D032 was right on everything but its author or recipient, and D051 on all four but its subject, with no folder proposed.
+  - **Cost.** The ledger gives $3.69 for the 136 runs. The 17 completion notices that survived are all Sonnet namers, and 15 of them match the record exactly. They add $0.015, and the visible output of 59 flagged calls adds $0.05, for $3.75. If every flagged call also lost thinking as large as the one noticed miss (1,513 tokens), the total is about $4.10. The orchestrator's context was compacted before its last message, and its copied main transcript holds only the 9 calls after that ($1.05 on Sonnet).
+  - **Caveats.** One run per cell, on 12 keyed documents and 2 settled ones. Ten key names were drafted by an Opus delegate, not by Brahm (see the key's README).
 - **E3. Ingest pages per subagent, by format (Q2–Q5, Q15) ★.** Opus at medium effort with the real extractor.
   - (a) One document per subagent across every size bucket gives cost per page against size.
   - (b) Small documents batched into one subagent at 5, 10, 20 and 40 total pages, against one document per subagent. This tests your "about 20 pages" result.
