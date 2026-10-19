@@ -334,6 +334,24 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
 
   **Session 3 results, compact JSON (run 2026-10-19, ticket #115).** `lawyer:extract-facts` on Opus medium, one run on each of the 10 small keyed documents, told to keep the contract's content but write one line of minified JSON with short keys (`f`, `s`, `l` …), no null or empty fields and no repeated quotes. All 10 replies used the short keys. Cost was $2.20 against $2.28–2.29 for session 1's E3a on the same documents (rep 1 and the mean of 3), and recall 0.79 against 0.77–0.79. Compact output saves about 4%, inside the run-to-run spread, because most output is the facts' own sentences and thinking, not keys or whitespace. It is not worth a contract change.
 
+  **Full-JSON returns against write-to-file returns, priced from the ledgers (2026-10-19, map #100 ticket #147, no new runs).** The orchestrator arm was not run (see the plan within $150), so this prices it from what sessions 1–5 recorded.
+  - **No test orchestrator received an extractor's JSON.** Every background extractor's completion notice says its reply is in the output file and "is not repeated here", and no orchestrator read those files into its context (session 5 checked them with a script). So the measured orchestrator costs are already the file route. The full-JSON route is priced from the replies' sizes.
+  - **Reply size.** From the handback of each `lawyer:extract-facts` run on Opus medium over whole documents (session 1's E3a and session 2's ladder, 34 documents, repeats averaged), at 2.57 characters a token (the median over 128 Opus extractor replies whose last call held the handback): mean 6.1k tokens, median 4.0k, range 0.5k (D010) to 41.2k (D044). That is about 420 tokens a page overall, but it follows facts, not pages: 14–65 a page on the research memos, 1.0k–2.0k on dense short documents.
+  - **Turns.** A reply received for one document is re-read from cache on every later orchestrator call in the session. With c calls per document and r calls after the reply within its own document, document k of 30 is re-read (30 − k)·c + r times, an average of (435c + 30r) / 30. Measured: c = 1.5, r = 1 from session 4, the only orchestrator transcript copied whole (22 calls for 15 extractor runs), giving 22.8 re-reads. Assumed, not measured: c = 5, r = 2 for a real /ingest, from `ingest-extract.md`'s steps per document (gate query, page-1 read, dispatch, one `matter_data__execute`, report), giving 74.5.
+  - **Price.** A full reply costs its 1-hour cache write once, then a cache read per re-read (E0). The file route's ~50-token summary costs the same per token. At the mean reply:
+
+    | Orchestrator | Turns | Full JSON, per document | Full JSON, 30 documents | File + summary, 30 documents |
+    |---|---|---|---|---|
+    | Sonnet | measured, 22.8 re-reads | $0.038 ($0.024 write + $0.014 reads) | $1.14 | $0.01 |
+    | Sonnet | assumed, 74.5 | $0.070 ($0.024 + $0.045) | $2.09 | $0.02 |
+    | Opus | measured, 22.8 | $0.076 ($0.049 + $0.028) | $2.29 | $0.02 |
+    | Opus | assumed, 74.5 | $0.139 ($0.049 + $0.091) | $4.18 | $0.03 |
+
+  - **Against extraction.** Extraction averaged $0.279 a document over the same 34 documents, so carrying full replies adds 14–50% on top of it. Cost scales with reply size: D044's reply alone costs 6.8 times the mean.
+  - **Context.** Thirty mean replies put about 182k tokens into the orchestrator's context, before its own prompt and SQL. On a long ingest that can force a compaction, which the file route avoids.
+  - **What the file route needs for facts.** The extractor writes the same output tokens either way, so the extractor's cost does not change. But the orchestrator today writes every fact into one `matter_data__execute` script by hand. Writing the reply's content again as SQL costs at least its own size in output, $0.061 a document on Sonnet and $0.122 on Opus ($1.82 and $3.65 for 30), and that script is then re-read like the reply. If the orchestrator reads the file back to write that SQL, the saving is lost. The file route saves both costs only with a tool that loads rows from the file, as `matter_data__ingest_authority` does for `lawyer:extract-caselaw`'s `RESULT_PATH`.
+  - **Caveats.** Sizes come from one model's replies (Opus medium) on 34 documents. The real /ingest turn count is an estimate. The SQL figure assumes the script is no larger than the reply.
+
 **Order:** E0, then E1, then the answer key, then E2–E8. E3 and E5 are the core. If the budget runs short, E4, E7 and E8 can be cut back to fewer cells.
 
 **Rough cost:** about 350–450 subagent runs. The estimate is $60–150 in all, dominated by Opus reads of long PDFs in E3 and E7. E0 and E1 give real figures to re-estimate from before the expensive runs. The re-estimate after E1 is about $280 (under E1).
