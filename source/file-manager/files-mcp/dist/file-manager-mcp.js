@@ -1,4 +1,4 @@
-// build-stamp: 6d6393e9cd78
+// build-stamp: 4e96505d530d
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15693,8 +15693,8 @@ import {
   appendFileSync,
   existsSync as existsSync5,
   lstatSync,
-  mkdirSync,
-  readdirSync as readdirSync4,
+  mkdirSync as mkdirSync2,
+  readdirSync as readdirSync5,
   realpathSync as realpathSync2,
   renameSync,
   statSync as statSync3
@@ -15702,7 +15702,7 @@ import {
 import { win32 as pathWin323 } from "node:path";
 
 // src/files/matter-root.ts
-import { existsSync as existsSync4, readdirSync as readdirSync3, readFileSync as readFileSync2, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync4, readdirSync as readdirSync4, readFileSync as readFileSync2, statSync as statSync2 } from "node:fs";
 import { basename as basename2, dirname as dirname2, isAbsolute, join as join5, normalize, resolve as resolve2, win32 as pathWin322 } from "node:path";
 
 // src/python-driver.ts
@@ -15805,17 +15805,19 @@ function pythonTimeoutMs(env, defaultMs, variable) {
 }
 
 // src/repo-root.ts
-import { existsSync as existsSync3, readFileSync, readdirSync as readdirSync2, statSync } from "node:fs";
+import { existsSync as existsSync3, readFileSync, readdirSync as readdirSync3, statSync } from "node:fs";
 import { homedir as homedir2 } from "node:os";
 import { basename, dirname, join as join4, resolve, win32 as pathWin32 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/config-path.ts
-import { existsSync as existsSync2 } from "node:fs";
+import { copyFileSync, existsSync as existsSync2, mkdirSync, readdirSync as readdirSync2 } from "node:fs";
 import { homedir } from "node:os";
 import { join as join3 } from "node:path";
 var CONFIG_FILE = "probanda.json";
 var LEGACY_CONFIG_FILE = "coclerk.json";
+var CONFIG_FOLDER = "Probanda";
+var LEGACY_CONFIG_FOLDER = "Coclerk";
 function override(env) {
   const named = env.COCLERK_CONFIG_PATH;
   if (!named) return void 0;
@@ -15826,15 +15828,35 @@ function override(env) {
   }
   return named;
 }
-function liveFolder(env) {
-  return join3(env.APPDATA || join3(homedir(), "AppData", "Roaming"), "Coclerk");
+function roaming(env) {
+  return env.APPDATA || join3(homedir(), "AppData", "Roaming");
+}
+function migrate(env) {
+  const folder = join3(roaming(env), CONFIG_FOLDER);
+  const target = join3(folder, CONFIG_FILE);
+  if (existsSync2(target)) return;
+  const legacyFolder = join3(roaming(env), LEGACY_CONFIG_FOLDER);
+  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file2) => join3(legacyFolder, file2)).find((path) => existsSync2(path));
+  if (!source) return;
+  try {
+    mkdirSync(folder, { recursive: true });
+    for (const entry of readdirSync2(legacyFolder, { withFileTypes: true })) {
+      if (!entry.isFile() || entry.name === CONFIG_FILE || entry.name === LEGACY_CONFIG_FILE) continue;
+      const to = join3(folder, entry.name);
+      if (!existsSync2(to)) copyFileSync(join3(legacyFolder, entry.name), to);
+    }
+    copyFileSync(source, target);
+  } catch (err) {
+    throw new ValidationError(
+      `Could not copy the settings in ${legacyFolder} to ${folder}: ${err.message}. Nothing in ${legacyFolder} was changed.`
+    );
+  }
 }
 function configPath(env) {
   const named = override(env);
   if (named) return named;
-  const current = join3(liveFolder(env), CONFIG_FILE);
-  const legacy = join3(liveFolder(env), LEGACY_CONFIG_FILE);
-  return existsSync2(current) || !existsSync2(legacy) ? current : legacy;
+  migrate(env);
+  return join3(roaming(env), CONFIG_FOLDER, CONFIG_FILE);
 }
 
 // src/repo-root.ts
@@ -15919,7 +15941,7 @@ function conventionalCandidates(env) {
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
   if (!dir) return [];
-  return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  return readdirSync3(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 }
 function pluginManifest(installRoot) {
   try {
@@ -15967,7 +15989,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
 }
 function childDirs(dir) {
   try {
-    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join4(dir, entry.name));
+    return readdirSync3(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join4(dir, entry.name));
   } catch {
     return [];
   }
@@ -16681,8 +16703,8 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
     }
   }
   if (dryRun) return { would_move_from: target, would_move_to: dest };
-  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync4(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync(pathWin323.dirname(dest), { recursive: true });
+  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync5(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
+  mkdirSync2(pathWin323.dirname(dest), { recursive: true });
   try {
     renameSync(target, dest);
   } catch (err) {
@@ -16719,7 +16741,7 @@ function stamp(d) {
 }
 
 // src/file_ops/move.ts
-import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync3, openSync as openSync3, readdirSync as readdirSync7, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
+import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
 import { win32 as pathWin328 } from "node:path";
 
 // src/housekeeping/proposal.ts
@@ -17003,7 +17025,7 @@ var Checker = class {
 };
 
 // src/housekeeping/resolve.ts
-import { readdirSync as readdirSync6, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
+import { readdirSync as readdirSync7, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
 import { win32 as pathWin327 } from "node:path";
 
 // src/practice/matter-data-root.ts
@@ -17090,7 +17112,7 @@ function runNameGate(groups, env = process.env) {
 
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync9, fsyncSync, mkdirSync as mkdirSync2, openSync as openSync2, readdirSync as readdirSync5, readFileSync as readFileSync5, realpathSync as realpathSync4, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
+import { closeSync as closeSync2, existsSync as existsSync9, fsyncSync, mkdirSync as mkdirSync3, openSync as openSync2, readdirSync as readdirSync6, readFileSync as readFileSync5, realpathSync as realpathSync4, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
 import { win32 as pathWin326 } from "node:path";
 
 // src/submission/render-job.ts
@@ -17176,7 +17198,7 @@ function createRun(matter, now = /* @__PURE__ */ new Date()) {
     const runId = mintRunId(now);
     const dir = pathWin326.join(matter.housekeeping, runId);
     if (existsSync9(dir)) continue;
-    mkdirSync2(dir, { recursive: true });
+    mkdirSync3(dir, { recursive: true });
     return { runId, dir: confineRunDir(matter, runId) };
   }
 }
@@ -17204,7 +17226,7 @@ function runFilePath(runDir, fileName) {
 }
 function listRuns(matter) {
   if (!isDirectory2(matter.housekeeping)) return [];
-  return readdirSync5(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
+  return readdirSync6(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
 }
 function newerRun(matter, runId) {
   const runs = listRuns(matter);
@@ -17558,7 +17580,7 @@ function depluralize(name) {
   return name.toLowerCase().replace(/s$/, "");
 }
 function childDirs2(dir) {
-  return readdirSync6(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  return readdirSync7(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
 }
 function folderEntry(proposal, rel) {
   let best;
@@ -17625,7 +17647,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   if (destRel === "") throw new DataServerError(`destination must be inside a matter folder, not the matter root: ${destination}`, "protected");
   const destSegments = destRel.split(pathWin328.sep);
   if (superseded) {
-    const drafts = readdirSync7(root, { withFileTypes: true }).filter((e) => (e.isDirectory() || e.isSymbolicLink()) && isDraftFolder(e.name)).map((e) => e.name);
+    const drafts = readdirSync8(root, { withFileTypes: true }).filter((e) => (e.isDirectory() || e.isSymbolicLink()) && isDraftFolder(e.name)).map((e) => e.name);
     if (drafts.length !== 1) {
       throw new DataServerError(
         `superseded moves into the matter's one 0. DRAFT folder's Superseded folder; the matter has ${drafts.length} 0. DRAFT folders`,
@@ -17673,7 +17695,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   if (statSync7(src).dev !== statSync7(existingAncestor).dev) {
     throw new DataServerError(`cannot move across devices; nothing was moved: ${src} -> ${dest}`, "cross_device");
   }
-  for (const dir of missing) mkdirSync3(dir);
+  for (const dir of missing) mkdirSync4(dir);
   const claim = !sameFile(src, dest);
   if (claim) {
     try {
@@ -17880,7 +17902,7 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
 }
 
 // src/housekeeping/preflight.ts
-import { readdirSync as readdirSync8 } from "node:fs";
+import { readdirSync as readdirSync9 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 function preflight(matterRoot, includeTemplate = false, env = process.env) {
   const pointerless = typeof matterRoot === "string" && pathWin3210.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
@@ -17897,13 +17919,13 @@ function halfCommits(matterRoot, env) {
   const dir = caseDataFolder(matterRoot, env);
   const found = isDirectory2(dir);
   return {
-    half_commit: found ? readdirSync8(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3210.join(dir, name)) : [],
+    half_commit: found ? readdirSync9(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3210.join(dir, name)) : [],
     case_data_found: found
   };
 }
 function folderTree(root, rel) {
   const out = [];
-  const entries = readdirSync8(pathWin3210.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  const entries = readdirSync9(pathWin3210.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
   for (const name of entries) {
     const child = rel ? `${rel}\\${name}` : name;
     out.push(child, ...folderTree(root, child));

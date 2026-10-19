@@ -79,8 +79,9 @@ PNG_DEFAULT = '<Default Extension="png" ContentType="image/png"/>'
 
 def config_path():
     """The settings file the MCP runtime reads (mcp/src/config-path.ts): the file
-    COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming
-    probanda.json when it exists, else the legacy coclerk.json."""
+    COCLERK_CONFIG_PATH names when set, which must exist, else the first that
+    exists of Probanda\\probanda.json and the legacy Coclerk\\probanda.json and
+    Coclerk\\coclerk.json under Roaming."""
     override = os.environ.get("COCLERK_CONFIG_PATH")
     if override:
         if not os.path.isfile(override):
@@ -89,9 +90,10 @@ def config_path():
         return override
     app_data = os.environ.get("APPDATA") or os.path.join(
         os.path.expanduser("~"), "AppData", "Roaming")
-    current = os.path.join(app_data, "Coclerk", "probanda.json")
-    legacy = os.path.join(app_data, "Coclerk", "coclerk.json")
-    return current if os.path.isfile(current) or not os.path.isfile(legacy) else legacy
+    candidates = [os.path.join(app_data, "Probanda", "probanda.json"),
+                  os.path.join(app_data, "Coclerk", "probanda.json"),
+                  os.path.join(app_data, "Coclerk", "coclerk.json")]
+    return next((path for path in candidates if os.path.isfile(path)), candidates[0])
 
 
 def load_json(path, what):

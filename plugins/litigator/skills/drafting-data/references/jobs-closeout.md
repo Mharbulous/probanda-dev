@@ -288,7 +288,17 @@ SELECT id, filing_id, status FROM tickets WHERE filing_id IN (7, 8) AND deleted_
 
 `changes` 0 means a `wip` job appeared, the target is retired or in another proceeding, or nothing qualified: re-run the read-first and report which. No revision bump: the job tables are exempt (`jobs-common.md`). After a move that landed, re-render both boards under `draft_dir`.
 
-**Merging two boards** is two acts: this move, then closing the Job Board with no Writing (§9a's close) or retiring the Writing (`/draft` `retire-filing.md`). Say so in one line, and ask for the second separately: the move never closes or retires anything.
+**Emptying a board** is two acts: this move, then closing the Job Board with no Writing (§9a's close) or retiring the Writing (`/draft` `retire-filing.md`). Say so in one line, and ask for the second separately: the move never closes or retires anything. When the practitioner asks to merge two boards, that is §10d, which keeps both boards' Writings and jobs where they are.
+
+## 10d. Merge two Job Boards
+
+**When.** The practitioner asks to merge two boards. Received, never offered. A merge joins two boards whose goals overlap or cohere onto one page (`docs/ADRs/0010-job-boards-organized-by-goals.md`): the survivor's page draws every section of both, each with its own jobs, Completion Criteria card and Writings, and one set of view pages spans the board's Writings. No job, loose thread or Writing row is written. Boards in different proceedings may merge, as may a Job Board with no Writing and a pre-filing proceeding's board.
+
+**Ask first.** Read both boards' statements of goals (`drafting_forms__board_card`, lane `goals`) and show them side by side, then ask whether to merge the two boards. Only a bare yes is consent; the practitioner-words gate refuses the call otherwise.
+
+**The write.** `drafting_data__merge_job_boards` `{db_path, boards: [{filing_id | proceeding_id}, {filing_id | proceeding_id}], confirmed: true, session_token}`. It picks the survivor (a Writing's board over a Job Board with no Writing over a pre-filing board, then the lower id) and appends the absorbed board's statement of goals, with its own status, to the survivor's `merged` list, which `drafting_data__set_board_goal` writes by `merged_index`. A board already merged into another refuses `board_merged`: name its survivor. Then re-render under `draft_dir`: the absorbed board's pages move to `TRASH`.
+
+**Splitting** a merged board is specified in the ADR and not yet built: say so and stop.
 
 ## 13. Clearing the retired Work Board keys
 

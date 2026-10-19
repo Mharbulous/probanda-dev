@@ -519,7 +519,8 @@ def _case_data_root():
         candidates = [override]
     else:
         roaming = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
-        candidates = [os.path.join(roaming, "Coclerk", name) for name in ("probanda.json", "coclerk.json")]
+        candidates = [os.path.join(roaming, "Probanda", "probanda.json")] + [
+            os.path.join(roaming, "Coclerk", name) for name in ("probanda.json", "coclerk.json")]
     for candidate in candidates:
         try:
             with open(candidate, encoding="utf-8") as fh:

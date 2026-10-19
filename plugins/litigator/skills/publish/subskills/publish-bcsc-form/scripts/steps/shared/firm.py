@@ -14,8 +14,9 @@ from pathlib import Path
 
 def config_path() -> Path:
     """Locate the settings file the MCP runtime reads (mcp/src/config-path.ts): the
-    file COCLERK_CONFIG_PATH names when set, which must exist, else the Roaming
-    probanda.json when it exists, else the legacy coclerk.json."""
+    file COCLERK_CONFIG_PATH names when set, which must exist, else the first that
+    exists of Probanda\\probanda.json and the legacy Coclerk\\probanda.json and
+    Coclerk\\coclerk.json under Roaming."""
     override = os.environ.get('COCLERK_CONFIG_PATH')
     if override:
         if not Path(override).is_file():
@@ -23,10 +24,12 @@ def config_path() -> Path:
                                'Create it, or unset the variable to read the live probanda.json.')
         return Path(override)
     app_data = os.environ.get('APPDATA') or Path.home() / 'AppData' / 'Roaming'
-    folder = Path(app_data) / 'Coclerk'
-    current = folder / 'probanda.json'
-    legacy = folder / 'coclerk.json'
-    return current if current.is_file() or not legacy.is_file() else legacy
+    candidates = [
+        Path(app_data) / 'Probanda' / 'probanda.json',
+        Path(app_data) / 'Coclerk' / 'probanda.json',
+        Path(app_data) / 'Coclerk' / 'coclerk.json',
+    ]
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def firm_context_fields() -> dict[str, str]:

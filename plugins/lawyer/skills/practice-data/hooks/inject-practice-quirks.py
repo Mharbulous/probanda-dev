@@ -4,7 +4,8 @@
 Hook event: SessionStart (every source, so the notes return after a compaction).
 The notes are the optional `practice_quirks` key of the per-user probanda.json,
 resolved as mcp/src/config-path.ts resolves it: COCLERK_CONFIG_PATH, else
-%APPDATA%\\Coclerk\\probanda.json, else the legacy %APPDATA%\\Coclerk\\coclerk.json.
+%APPDATA%\\Probanda\\probanda.json, else the legacy %APPDATA%\\Coclerk\\probanda.json
+or %APPDATA%\\Coclerk\\coclerk.json.
 Set only through practice_data__upsert_firm_profile
 after the practitioner approves (practice-data/SKILL.md, "Practice quirks").
 
@@ -42,10 +43,12 @@ def config_path() -> Path:
     if override:
         return Path(override)
     appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    folder = Path(appdata) / "Coclerk"
-    current = folder / "probanda.json"
-    legacy = folder / "coclerk.json"
-    return current if current.is_file() or not legacy.is_file() else legacy
+    candidates = [
+        Path(appdata) / "Probanda" / "probanda.json",
+        Path(appdata) / "Coclerk" / "probanda.json",
+        Path(appdata) / "Coclerk" / "coclerk.json",
+    ]
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def context() -> str | None:

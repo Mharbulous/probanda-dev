@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Refuse a job's wording that is not the practitioner's own words or a set pattern (#784).
 
-Hook event: PreToolUse on drafting_data__execute and drafting_data__set_board_goal. A job is created only on the practitioner's
+Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal and
+drafting_data__merge_job_boards (a merge passes only when the last practitioner turn is a bare yes). A job is created only on the practitioner's
 explicit request or from a pattern they set up in advance, and the gate reads every creation of
 one (jobs-create.md §3, "Who may create a job", lists each path and its route). It checks every
 tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ... SELECT,
@@ -244,6 +245,7 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "yes typed as that turn. One approval admits one write. Its UPDATE writes the same literal as "
                     "new_text, and 'current' writes old_text unchanged.")
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Job Board's statement of goals
+MERGE_TOOL = "drafting_data__merge_job_boards"  # two Job Boards joined on the practitioner's yes
 GOAL_FIELD = "drafting_data__set_board_goal.statement"
 MOVE_ENTITY = "filing_facts"  # a fact move (paragraph-revision.md §6): the ordinals, no wording
 MOVE_FIELD = "paragraph_revisions.old_text/new_text"
@@ -998,11 +1000,33 @@ def board_goal(payload):
                   "Until then it is not confirmed: record it as inferred if the practitioner declined.")
 
 
+def merge_boards(payload):
+    """A merge of two Job Boards (docs/ADRs/0010): the practitioner's last turn is a bare yes, given
+    after the session showed both boards' statements of goals and asked whether they cohere."""
+    path = payload.get("transcript_path") or ""
+    if not path:
+        return refuse("the hook input names no transcript_path, so there is no record of the "
+                      "practitioner confirming the merge.")
+    try:
+        last_raw = read_transcript(path)[6]
+    except OSError as exc:
+        return refuse(f"cannot read the session transcript at {path}: {exc}")
+    if approval(last_raw):
+        return 0
+    return refuse("a merge of two Job Boards needs the practitioner's confirmation that their goals overlap "
+                  "or cohere, and their last turn is not a bare yes.\n"
+                  f"  last turn: {last_raw[:120] or '(none)'}\n"
+                  "Show both boards' statements of goals side by side, ask whether to merge them, and call "
+                  "the tool only after the practitioner's next turn is a bare yes.")
+
+
 def main():
     start = time.monotonic()
     payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     if (payload.get("tool_name") or "").endswith(GOAL_TOOL):
         return board_goal(payload)
+    if (payload.get("tool_name") or "").endswith(MERGE_TOOL):
+        return merge_boards(payload)
     script = (payload.get("tool_input") or {}).get("sql_script") or ""
     try:
         revisions, stmts = revision_writes(script)

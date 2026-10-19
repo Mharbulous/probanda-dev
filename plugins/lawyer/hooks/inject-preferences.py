@@ -5,8 +5,8 @@ Hook event: SessionStart (every source, so the preferences return after a compac
 A preference is a standing instruction to one named skill, saved with preferences__write
 in <case_data_root>\\_practice\\preferences\\<person>.json. `case_data_root` and `person`
 come from the per-user probanda.json, resolved as mcp/src/config-path.ts resolves it:
-COCLERK_CONFIG_PATH, else %APPDATA%\\Coclerk\\probanda.json, else the legacy
-%APPDATA%\\Coclerk\\coclerk.json. Modelled on inject-practice-quirks.py.
+COCLERK_CONFIG_PATH, else %APPDATA%\\Probanda\\probanda.json, else the legacy
+%APPDATA%\\Coclerk\\probanda.json or %APPDATA%\\Coclerk\\coclerk.json. Modelled on inject-practice-quirks.py.
 
 In Cowork the hook runs in the sandbox VM, where probanda.json and the case data folder
 are out of reach: the hook then tells the session to read the preferences with the tool.
@@ -37,10 +37,12 @@ def config_path() -> Path:
     if override:
         return Path(override)
     appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    folder = Path(appdata) / "Coclerk"
-    current = folder / "probanda.json"
-    legacy = folder / "coclerk.json"
-    return current if current.is_file() or not legacy.is_file() else legacy
+    candidates = [
+        Path(appdata) / "Probanda" / "probanda.json",
+        Path(appdata) / "Coclerk" / "probanda.json",
+        Path(appdata) / "Coclerk" / "coclerk.json",
+    ]
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def context() -> str | None:
