@@ -70,6 +70,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   ```
 
   `token_ledger.py` reads that `transcripts` folder as a root. It does not yet count a fork's run, and it adds a resumed run's calls to the original run's row.
+
+  **Getting files to subagents (found 2026-10-19, session 1).** A connected folder is no longer staged into the sandbox: the orchestrator reaches it only through a shell on the user's computer, and a subagent's Read cannot see it ("File does not exist"). This held for the whole 330 MB test folder and for a 12 MB one. A file attached to the chat is placed under `/mnt/user-data/uploads/`, where subagents can read it, so a run sheet that subagents read from ships its files as one attached zip, which the orchestrator unpacks in its sandbox. Results and transcripts are still written back to the connected folder. Real `/ingest` in Cowork would meet the same gap. A Cowork subagent returns its reply through a `SubagentHandback` tool call, not as text. In session 1 the copy step took the orchestrator's transcript before its last turns, so its cost is understated.
 - **E1. Fixed cost and caching (Q8) ★.**
   - Measure each agent type's empty-task baseline on Haiku, Sonnet and Opus.
   - Compare 5 identical subagents started in one turn with 1 started first and 4 more started after it finishes.
@@ -111,6 +113,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   | all | Fixed cost ~$5, Opus scorer for about 150 keyed runs ~$20, 5 Sonnet orchestrators ~$20 | | | ~$45 |
 
   **Budget gate.** After each session, ledger spend plus the remaining estimate is checked against $150. If it would exceed the ceiling, cut in this order: E8 compact JSON, then the ladder's 1–5-page cells, then E7's Haiku-high and Opus-low cells. Sessions 1 and 2 are never cut.
+
+  **Gate after session 1 (2026-10-19): passes, nothing cut.** Measured spend is $31.3: E0–E1 $9.6, session 1's subagents $20.84, and its orchestrator's partial transcript $0.91. Unmeasured, estimated at about $8: the rest of that orchestrator, two setup attempts that stopped before any measurement, and the 12 Opus scorers, which ran in Claude Code. Remaining estimates are $60 for sessions 2–5 and about $37 of the shared row. Projected total: about $136.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
@@ -119,6 +123,43 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - (b) Small documents batched into one subagent at 5, 10, 20 and 40 total pages, against one document per subagent. This tests your "about 20 pages" result.
   - (c) Large documents read in one subagent, in 20-page reads against 5-page reads, against splitting into chunk subagents.
   - Measure: cost per page, and cost per correct fact on keyed documents.
+
+  **Session 1 results, E3(a) and E3(b) (run 2026-10-19, map #100 ticket #113, about $21 of subagents).** All runs used `lawyer:extract-facts` on Opus 5.5 at medium effort, the agent the key was built with. Facts were marked found, wrong or missing against the key by one Opus scorer per document. Recall is gold facts found over gold facts. Every run read its whole document, and the scorers marked 1 fact wrong and 0 extra claims unsupported in all 59 runs. Brahm's 10% spot-check of the marks is not done yet. A sample of 6 "found" marks on D044 was checked against the run's text, and all held.
+
+  E3(a), one document per extractor (3 repeats; 2 for D058 and D044):
+
+  | Doc | Pages | Gold | Recall, mean (range) | Cost per run | Cost per page | Cost per correct fact |
+  |---|---|---|---|---|---|---|
+  | D009 | 2 | 13 | 0.72 (0.69–0.77) | $0.106 | $0.053 | $0.011 |
+  | D027 | 2 | 16 | 0.60 (0.38–0.75) | $0.097 | $0.048 | $0.010 |
+  | D037 | 2 | 7 | 1.00 (1.00–1.00) | $0.115 | $0.058 | $0.016 |
+  | D055 | 2 | 5 | 0.93 (0.80–1.00) | $0.088 | $0.044 | $0.019 |
+  | D028 | 6 | 43 | 0.64 (0.60–0.65) | $0.188 | $0.031 | $0.007 |
+  | D066 | 7 | 28 | 0.80 (0.71–0.86) | $0.194 | $0.028 | $0.009 |
+  | D048 | 8 | 45 | 0.89 (0.89–0.89) | $0.402 | $0.050 | $0.010 |
+  | D017 | 9 | 64 | 0.97 (0.95–0.98) | $0.314 | $0.035 | $0.005 |
+  | D004 | 11 | 64 | 0.96 (0.95–0.97) | $0.480 | $0.044 | $0.008 |
+  | D024 | 11 | 60 | 0.37 (0.32–0.42) | $0.309 | $0.028 | $0.014 |
+  | D058 | 29 | 92 | 0.63 (0.57–0.70) | $0.595 | $0.021 | $0.010 |
+  | D044 | 54 | 161 | 0.94 (0.93–0.96) | $1.550 | $0.029 | $0.010 |
+
+  - **In all:** $11.17 for 34 runs, recall 0.79 (1,219 of 1,541), $0.0092 per correct fact.
+  - **Cost per page** is $0.02–0.06, at or below E1's midpoint of $0.045. Even a 2-page document costs about $0.09–0.12.
+  - **Output dominates.** Output tokens, thinking included, are 39–89% of each run's cost, mostly 60–80%. Page reads are the smaller part, so extracting fewer, shorter facts would save more than reading fewer pages per extractor.
+  - **Low recall is per document, not per size.** D024 (an email chain with an attached appointment, 0.37) and D027 (0.38–0.75) are the weak ones, so Q17's spread is widest on short emails. Their keys may hold more facts than an Opus-medium pass ever extracts, which E7 will show.
+
+  E3(b), small documents batched into one extractor (1 run each), against the E3(a) means of the same documents:
+
+  | Batch | Documents | Pages | Batch cost | Single-document cost | Recall, batch / single | Cost per correct fact, batch / single |
+  |---|---|---|---|---|---|---|
+  | B20a | D037, D048, D055, D066 | 19 | $0.765 | $0.798 | 0.86 / 0.87 | $0.0105 / $0.0108 |
+  | B20b | D009, D017, D027, D028 | 19 | $0.799 | $0.705 | 0.76 / 0.80 | $0.0078 / $0.0065 |
+  | B20c | D004, D024 | 22 | $0.689 | $0.789 | 0.69 / 0.68 | $0.0080 / $0.0094 |
+  | B40a | D009, D017, D027, D028, D037, D048, D055, D066 | 38 | $1.433 | $1.503 | 0.78 / 0.83 | $0.0083 / $0.0082 |
+  | B40b | D004, D017, D024, D048 | 39 | $1.160 | $1.504 | 0.70 / 0.80 | $0.0071 / $0.0081 |
+
+  - **About 20 pages:** cost within −13% to +13% of one document per extractor, recall within 4 points. No gain either way.
+  - **About 40 pages:** cost 5% and 23% lower, and recall 5 and 10 points lower. The loss sits in particular documents: D028 fell from about 27 to 16 facts found, D048 from 40 to 33 and D004 from 62 to 53. So batching to 40 pages saves money only by finding fewer facts, and cost per correct fact barely moves.
 - **E4. Input format (Q11, Q16).**
   - OCR PDF read natively, against its extracted text.
   - Scanned PDF at the default resolution, against 150 dpi and 100 dpi page images.
@@ -130,12 +171,36 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - (B) Opus extracts, and a separate Haiku namer reads page 1;
   - (C) Opus extracts, and a Haiku namer works only from the extractor's JSON, reading no pages. This is close to what /housekeeping does today for already-ingested files.
   - Measure: total cost and name accuracy per document, by size and format. That shows where the crossover lies.
+
+  **Session 1 results (run 2026-10-19, ticket #113), on the 12 keyed documents, 1 run each.** Every design shares the E3(a) rep-1 Opus extraction, so only its naming cost is counted here. In A, the extractor was resumed by SendMessage within 5 minutes, read a 22k-token naming pack (the namer's procedure and every reference it fetches, all folder notes included) and named the file. In B, `lawyer:extract-facts` on Haiku read page 1 (or a rendering's first 80 lines) for naming evidence, then `file-manager:housekeeping-namer` on Haiku named it. In C, the namer on Haiku named it from the Opus extractor's `naming_evidence`.
+
+  | Design | Naming cost per document | Date | Code | Author or recipient | re/encl/srv | All four | Folder |
+  |---|---|---|---|---|---|---|---|
+  | A, same context | $0.36 ($0.17–0.97) | 11 | 12 | 9 | 9 | 7 | 7 of 9 |
+  | B, Haiku from page 1 | $0.009 | 10 | 10 | 8 | 7 | 5 | 7 of 9 |
+  | C, Haiku from the extractor's evidence | $0.008 | 10 | 9 | 5 | 7 | 3 | 7 of 9 |
+
+  - **How names were scored.** Each component is matched exactly against the key (`score.py names`). The free-text subject almost never matches exactly (2 whole names of 36 were exact), so it is left out above. The folder count leaves out D009, D017 and D004, whose key folder is `0. DRAFT`, which the namer is never offered.
+  - **A is about 40 times the cost of B or C** and gets 2 to 4 more documents of 12 right on all four structured components. Its cost is the naming pack, read at Opus prices. D044's resume ($0.97) rewrote its 170k-token history, because its cache had lapsed.
+  - **B beats C at the same price.** C's evidence comes from a whole-document read, yet C's author or recipient is right on only 5 documents of 12. B fails where page 1 is not enough: D066's page-1 read gave no usable evidence, so B proposed no name.
+  - **Caveats.** One run per design, 12 documents, and matter context written for the test rather than taken from the case database.
 - **E6. Recycling the fixed cost (Q6, Q7)**, only for what E0 found available. One primed extractor gets a second document:
   - by `SendMessage` within 5 minutes and after 5 minutes;
   - by a fork of a primed parent;
   - by rewind, if it exists.
 
   Compare each against a fresh subagent. Measure: cost, and whether accuracy drops as context grows.
+
+  **Session 1 results (run 2026-10-19, ticket #113): resuming within 5 minutes saves nothing worth having.** Three E3(a) rep-2 extractors, each just finished on a 2-page document, were resumed by SendMessage with a second 2-page document. Each is compared with the 3 fresh E3(a) runs of that document.
+
+  | Second document | Resumed: cost, recall | Fresh: mean cost, mean recall (range) |
+  |---|---|---|
+  | D027 (after D037) | $0.092, 0.69 | $0.097, 0.60 (0.38–0.75) |
+  | D009 (after D055) | $0.112, 0.69 | $0.106, 0.72 (0.69–0.77) |
+  | D037 (after D009) | $0.098, 0.71 | $0.115, 1.00 (1.00–1.00) |
+
+  - **Cost:** −$0.017 to +$0.006 per document. The history is read from cache, but each run's cost is mostly output, which a resume does not change.
+  - **Accuracy:** within the fresh range twice, and below it once. D037 lost 2 of its 7 facts, where all 3 fresh runs found every one. With 3 pairs, this is a warning, not a measurement.
 - **E7. Model and effort for ingest (Q13, Q9).** On the keyed documents: Haiku, Sonnet and Opus, each at low, medium and high effort. Measure cost per correct fact and the error rate.
 - **E8. Output and orchestrator (Q12, Q14).**
   - The output and thinking share comes from every run's ledger rows.
