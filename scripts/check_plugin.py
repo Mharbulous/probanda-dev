@@ -1271,8 +1271,17 @@ def check_shipped_tree_purity(repo, plugin):
     return not hits, "; ".join(hits) if hits else summary
 
 
+def agents_name_mcp_tool(folder):
+    """Whether any agent file in folder names an MCP tool, read as text rather than
+    parsed, so a broken parser still fails agent_bridged_grant_violations."""
+    return any("mcp__" in Path(p).read_text(encoding="utf-8") for p in glob.glob(os.path.join(folder, "*.md")))
+
+
 def check_agent_bridged_grants(repo, plugin):
-    bridge_hits = agent_bridged_grant_violations(agents_dir(repo, plugin))
+    folder = agents_dir(repo, plugin)
+    if not agents_name_mcp_tool(folder):
+        raise NotApplicable(f"no agent of {plugin['name']} names an MCP tool")
+    bridge_hits = agent_bridged_grant_violations(folder)
     return not bridge_hits, "; ".join(bridge_hits)
 
 

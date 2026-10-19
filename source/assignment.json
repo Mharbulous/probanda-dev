@@ -5,7 +5,6 @@
     "lawyer": {
       "requires": [],
       "skills": [
-        "adversarial-triage",
         "ar-follow-up",
         "bill-client",
         "calendar-reminders",
@@ -31,14 +30,12 @@
         "safe-file-deletion",
         "show-me",
         "suggestion",
-        "suggestion-triage",
         "task-prioritization",
         "TLDR",
         "verify-bc-lawyer",
         "wip-tracker"
       ],
       "agents": [
-        "black-hat",
         "delivery-checker",
         "docket-clerk",
         "extract-affidavit",
@@ -48,12 +45,9 @@
         "extract-sought-orders",
         "localize-helper",
         "migration-runner",
-        "suggestion-oracle",
-        "suggestion-planner",
         "verify-caselaw",
         "verify-edges",
-        "verify-source",
-        "white-hat"
+        "verify-source"
       ],
       "hooks": {
         "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
@@ -181,6 +175,24 @@
       "servers": [
         "timecamp"
       ]
+    },
+    "developer": {
+      "requires": [
+        "lawyer"
+      ],
+      "skills": [
+        "adversarial-triage",
+        "suggestion-triage",
+        "view-suggestions"
+      ],
+      "agents": [
+        "black-hat",
+        "suggestion-oracle",
+        "suggestion-planner",
+        "white-hat"
+      ],
+      "hooks": {},
+      "servers": []
     }
   }
 }

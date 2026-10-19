@@ -42,6 +42,12 @@
       "source": "./plugins/timekeeper",
       "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
       "description": "Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries. Billing stays in lawyer. Requires lawyer. Install lawyer first, then timekeeper."
+    },
+    {
+      "name": "developer",
+      "source": "./plugins/developer",
+      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "description": "Maintainer-only, never public. Tools for developing Probanda: viewing and triaging the Suggestion Box, run from the probanda-dev checkout. Requires lawyer. Install lawyer first, then developer."
     }
   ]
 }

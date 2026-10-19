@@ -14,7 +14,7 @@ NOTE = (
     "your skill list (for example /lawyer:plugin-fix). Never tell the practitioner that "
     "a Probanda skill they name does not exist because it is not in your list: tell them "
     "to type it as /<plugin>:<name>, where <plugin> is the Probanda plugin that ships it "
-    "(lawyer, researcher, litigator, solicitor, file-manager or timekeeper). A change the practitioner "
+    "(lawyer, researcher, litigator, solicitor, file-manager, timekeeper or developer). A change the practitioner "
     "wants to the plugin goes to /lawyer:suggestion, which posts it only when the "
     "researcher plugin is installed; never edit the installed plugin. Also invoke "
     "/lawyer:suggestion, at most once a session, after a task the practitioner accepted "

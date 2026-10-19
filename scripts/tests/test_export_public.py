@@ -32,7 +32,7 @@ PUBLIC = {
                     "## An older entry here\n\n- old.\n",
     **{f"plugins/{name}/.claude-plugin/plugin.json": json.dumps({"name": name, "version": "1"})
        for name in export_public.PUBLIC_PLUGINS},
-    "plugins/practice/skills/x/SKILL.md": "A skill.\n",
+    "plugins/lawyer/skills/x/SKILL.md": "A skill.\n",
 }
 # In the repo, outside public/: never exported.
 PRIVATE = {
@@ -104,20 +104,20 @@ class ExportTest(unittest.TestCase):
 
     def test_file_added_after_approval_refuses(self):
         self.repo_with(PUBLIC)
-        self.put("public/plugins/practice/skills/y/SKILL.md", "Another skill.\n")
+        self.put("public/plugins/lawyer/skills/y/SKILL.md", "Another skill.\n")
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
-        self.assertIn("not approved, added: plugins/practice/skills/y/SKILL.md", out)
+        self.assertIn("not approved, added: plugins/lawyer/skills/y/SKILL.md", out)
 
     def test_file_removed_after_approval_refuses(self):
         self.repo_with(PUBLIC)
-        (self.repo / "public/plugins/practice/skills/x/SKILL.md").unlink()
+        (self.repo / "public/plugins/lawyer/skills/x/SKILL.md").unlink()
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)
-        self.assertIn("not approved, removed: plugins/practice/skills/x/SKILL.md", out)
+        self.assertIn("not approved, removed: plugins/lawyer/skills/x/SKILL.md", out)
 
     def test_approved_trade_secret_still_refuses(self):
-        public = {**PUBLIC, "plugins/practice/skills/x/ref.md": f"{DDL}\n"}
+        public = {**PUBLIC, "plugins/lawyer/skills/x/ref.md": f"{DDL}\n"}
         self.repo_with(public)
         code, out, _ = self.run_export(self.target)
         self.assertEqual(code, 1)

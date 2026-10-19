@@ -1,11 +1,12 @@
-// The maintainer's side of the Suggestion Box, for /adversarial-triage
-// (.claude/skills/adversarial-triage/SKILL.md). Run from Probanda's development
-// machine.
+// The maintainer's side of the Suggestion Box, for /suggestion-triage,
+// /adversarial-triage and /view-suggestions (.claude/skills/<name>/SKILL.md). Run
+// from Probanda's development machine.
 //
-//   node triage.mjs list
+//   node triage.mjs list [--all]
 //   node triage.mjs set-status <suggestion_id> <approved|"approved in part"|rejected> [--issue <n>]
 //
-// `list` prints the suggestions still `new`, oldest first, as JSON. `set-status`
+// `list` prints the suggestions still `new`, oldest first, as JSON; `list --all`
+// prints every suggestion, whatever its status, oldest first. `set-status`
 // records a triage outcome once; the function refuses a second call on the
 // same row. The secret key comes from the environment variable POOL_SECRET_KEY,
 // set by the person running this in their own terminal. This script prints no
@@ -14,7 +15,7 @@
 const BASE = "https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/";
 const key = process.env.POOL_SECRET_KEY;
 if (!key) throw new Error("set POOL_SECRET_KEY first");
-const USAGE = 'usage: node triage.mjs list | set-status <suggestion_id> <status> [--issue <n>]';
+const USAGE = 'usage: node triage.mjs list [--all] | set-status <suggestion_id> <status> [--issue <n>]';
 
 async function call(fn, body) {
   const res = await fetch(BASE + fn, {
@@ -32,7 +33,8 @@ async function call(fn, body) {
 
 const [command, ...args] = process.argv.slice(2);
 if (command === "list") {
-  const { suggestions } = await call("suggestion-list", { status: "new" });
+  if (args.length > 1 || (args.length && args[0] !== "--all")) throw new Error(USAGE);
+  const { suggestions } = await call("suggestion-list", args.length ? {} : { status: "new" });
   console.log(JSON.stringify(suggestions, null, 1));
 } else if (command === "set-status") {
   const [id, status, flag, issue] = args;

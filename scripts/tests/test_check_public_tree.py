@@ -70,7 +70,7 @@ class TreeProblemsTest(unittest.TestCase):
     def test_clean_files_pass(self):
         self.assertEqual(self.messages({"README.md": "# Probanda\n\nThe facts are stored on your machine.\n",
                                         "LICENSE": "terms\n",
-                                        "plugins/probanda/hooks/guard.py": "path = tool_input['file_path']\n"}), [])
+                                        "plugins/lawyer/hooks/guard.py": "path = tool_input['file_path']\n"}), [])
 
     def test_table_name_in_prose_is_reported(self):
         self.assertEqual(self.messages({"a.md": "x\nEach link is a row in evidence_links.\n"}),
@@ -122,7 +122,7 @@ class TreeProblemsTest(unittest.TestCase):
         self.assertEqual(self.messages({"a.js": PRIVATE[".claude/skills/data/node_modules/lib/index.js"]}), [])
 
     def test_shared_manifest_lines_may_repeat(self):
-        self.assertEqual(self.messages({"plugins/probanda/.claude-plugin/plugin.json":
+        self.assertEqual(self.messages({"plugins/lawyer/.claude-plugin/plugin.json":
                                         '{\n  "name": "probanda",\n'
                                         '  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n'}), [])
 
@@ -140,6 +140,24 @@ class TreeProblemsTest(unittest.TestCase):
     def test_publish_scan_problems_are_reported(self):
         self.assert_reports({"a.md": f"{CREATE} t (id)\n"}, "schema DDL")
         self.assert_reports({"plugins/probanda/.claude-plugin/plugin.json": '{"name": "other"}'}, "pinned list")
+
+    def test_plugin_folder_outside_the_public_plugins_is_reported(self):
+        self.assert_reports({"plugins/developer/skills/x/SKILL.md": "x\n"}, "not a public plugin")
+
+    def test_marketplace_entry_outside_the_public_plugins_is_reported(self):
+        marketplace = json.dumps({"name": "Probanda_Legal", "plugins": [
+            {"name": "lawyer", "source": "./plugins/lawyer"}, {"name": "developer", "source": "./plugins/developer"}]})
+        self.assert_reports({".claude-plugin/marketplace.json": marketplace}, "lists a plugin that is not public: developer")
+
+    def test_developer_skill_or_agent_under_a_public_plugin_is_reported(self):
+        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
+        (self.repo / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": {
+            "probanda": spec, "developer": {**spec, "skills": ["view-suggestions"], "agents": ["black-hat"]}}}),
+            encoding="utf-8")
+        (self.repo / "source" / "developer").mkdir()
+        self.assert_reports({"plugins/lawyer/skills/view-suggestions/SKILL.md": "x\n"}, "developer-only, never public")
+        self.assert_reports({"plugins/lawyer/agents/black-hat.md": "x\n"}, "developer-only, never public")
+        self.assertEqual(self.messages({"plugins/lawyer/skills/other/SKILL.md": "x\n"}), [])
 
     def test_missing_private_folder_stops_the_check(self):
         (self.repo / "cloud" / "pool" / "schema.sql").unlink()
@@ -165,7 +183,7 @@ class TreeProblemsTest(unittest.TestCase):
         self.assertIn("source/research/ is missing", str(stopped.exception.code))
         (self.repo / "source" / "research").mkdir()
         self.assert_reports({"a.md": "See practice_anchors.\n"}, "practice_anchors")
-        self.assertEqual(self.messages({"plugins/practice/.claude-plugin/plugin.json":
+        self.assertEqual(self.messages({"plugins/lawyer/.claude-plugin/plugin.json":
                                         '{\n  "name": "practice",\n'
                                         '  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n'}), [])
 
@@ -183,8 +201,8 @@ class TreeProblemsTest(unittest.TestCase):
 
     def test_formats_pass_at_write_time_only(self):
         cases = {"c.md": b"one\r\ntwo\r\n",
-                 "plugins/a/hooks/run.sh": "#!/bin/sh\necho ok",
-                 "plugins/a/icon.svg": "<svg/>",
+                 "plugins/lawyer/hooks/run.sh": "#!/bin/sh\necho ok",
+                 "plugins/lawyer/icon.svg": "<svg/>",
                  "CHANGELOG.md": "## Short"}
         for rel, data in cases.items():
             self.assertEqual(self.hook_messages({rel: data}), [], rel)

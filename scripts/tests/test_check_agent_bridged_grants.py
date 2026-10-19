@@ -73,8 +73,10 @@ class RealAgentsTest(unittest.TestCase):
     def test_every_plugin_mcp_grant_has_its_bridged_twin_and_nothing_more(self):
         for plugin in check_plugin.built_plugins(check_plugin.REPO).values():
             if check_plugin.agent_names(check_plugin.REPO, plugin):
+                agents_dir = check_plugin.source_path(check_plugin.REPO, plugin, "agents")
+                if not check_plugin.agents_name_mcp_tool(agents_dir):
+                    continue  # the developer agents use only Read, Glob and Grep
                 with self.subTest(plugin=plugin["name"]):
-                    agents_dir = check_plugin.source_path(check_plugin.REPO, plugin, "agents")
                     self.assertEqual(check_plugin.agent_bridged_grant_violations(agents_dir), [])
 
 

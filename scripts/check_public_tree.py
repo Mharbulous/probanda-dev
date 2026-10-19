@@ -17,6 +17,10 @@ Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
     a file that is a copy of a private source file, a long line repeated from
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
+The tree is also checked for a plugin it may not ship: a plugins/<name>/ folder or a
+marketplace entry outside export_public.PUBLIC_PLUGINS, and any skill or agent that
+source/assignment.json gives the developer plugin, which is never public.
+
 Do not restrict generic names (SQL built-ins, column names any schema uses, legal terms of
 art) or lines of a standard licence such as MIT, anywhere: neither reveals Probanda's
 schema or anyone's data. --hook also lets through CRLF endings, a file type off the
@@ -49,6 +53,10 @@ APPROVED = "public-approved.json"
 # Each publication adds a top `## <subject>` entry with `- ` bullets. The entry is the
 # public commit message, so a subject made only of these words says nothing.
 CHANGELOG = "CHANGELOG.md"
+MARKETPLACE = ".claude-plugin/marketplace.json"
+# The maintainer-only plugin. It ships only in this repo's experimental marketplace, so
+# none of its skills or agents may appear under public/, in any plugin.
+DEVELOPER = "developer"
 GENERIC_WORDS = frozenset(("publish", "published", "update", "updates", "updated", "sync", "change", "changes",
                            "misc", "release", "from", "the", "probanda", "development", "repository", "repo"))
 # Where the fingerprints are read from, beside the source folder of every plugin the
@@ -259,11 +267,39 @@ def commit_message(text):
     return f"{subject}\n\n{body}\n"
 
 
+def plugin_problems(repo, files):
+    """[(path, line, message)] for a plugin public/ may not ship: a folder or marketplace
+    entry outside export_public.PUBLIC_PLUGINS, or a skill or agent of the developer plugin."""
+    public = load_script("export_public").PUBLIC_PLUGINS
+    developer = load_script("plugin_layout").plugins(repo).get(DEVELOPER) or {}
+    skills, agents = set(developer.get("skills") or ()), set(developer.get("agents") or ())
+    found = []
+    for rel, data in files.items():
+        parts = rel.split("/")
+        if parts[0] == "plugins" and len(parts) > 2:
+            if parts[1] not in public:
+                found.append((rel, 1, f"plugins/{parts[1]}/ is not a public plugin"))
+            if len(parts) > 3 and ((parts[2] == "skills" and parts[3] in skills)
+                                   or (parts[2] == "agents" and parts[3].removesuffix(".md") in agents)):
+                found.append((rel, 1, f"{parts[3]} belongs to the {DEVELOPER} plugin: developer-only, never public"))
+        if rel == MARKETPLACE:
+            try:
+                entries = json.loads(text_of(data) or "").get("plugins") or []
+            except (ValueError, AttributeError):
+                continue  # check_publishable reports invalid JSON
+            for entry in entries:
+                name = entry.get("name") if isinstance(entry, dict) else None
+                if name not in public:
+                    found.append((rel, 1, f"lists a plugin that is not public: {name}"))
+    return found
+
+
 def problems_in(repo, files, hook=False):
     """Every problem in files. At write time (hook) only what could be a Trade Secret or
     User Data counts: the format checks wait for the full-tree check."""
     found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
                           load_script("check_plugin").matter_codes, formats=not hook)
+    found += plugin_problems(repo, files)
     if CHANGELOG in files and not hook:
         found += [(CHANGELOG, 1, message) for message in release_problems(text_of(files[CHANGELOG]) or "")]
     return found

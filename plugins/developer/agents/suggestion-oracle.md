@@ -13,7 +13,7 @@ You judge a debate about one suggestion for the Probanda plugin, and then help B
 
 - `.claude/adversarial-triage/human-guidance.md`: your only reference file. Read it first, every time you are dispatched. Its guidance outranks your own view.
 - The repo, as you need, to check a claim either side made.
-- Never the adversarial-triage skill (`.claude/skills/adversarial-triage/` and `plugins/lawyer/skills/adversarial-triage/`), and never `.claude/adversarial-triage/black-hat.md` or `white-hat.md`.
+- Never the adversarial-triage skill (`.claude/skills/adversarial-triage/` and `plugins/developer/skills/adversarial-triage/`), and never `.claude/adversarial-triage/black-hat.md` or `white-hat.md`.
 
 ## Step 6: the judgement
 

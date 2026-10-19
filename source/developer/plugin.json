@@ -1,0 +1,15 @@
+{
+  "name": "developer",
+  "displayName": "Developer",
+  "version": "0.1.0",
+  "description": "Maintainer-only Probanda plugin for developing Probanda: viewing and triaging the Suggestion Box. It is never public, and its skills run only in a Claude Code session opened in the probanda-dev checkout. Requires the lawyer plugin: install lawyer first.",
+  "author": {
+    "name": "Probanda Legal",
+    "url": "https://github.com/Probanda-app"
+  },
+  "homepage": "https://github.com/Probanda-app/Legal",
+  "repository": "https://github.com/Probanda-app/Legal",
+  "dependencies": [
+    "lawyer"
+  ]
+}

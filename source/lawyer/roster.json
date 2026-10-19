@@ -1,5 +1,4 @@
 {
-  "adversarial-triage": [],
   "ar-follow-up": [],
   "bill-client": [],
   "calendar-reminders": [
@@ -32,7 +31,6 @@
     "scripts"
   ],
   "suggestion": [],
-  "suggestion-triage": [],
   "task-prioritization": [],
   "verify-bc-lawyer": [
     "scripts"

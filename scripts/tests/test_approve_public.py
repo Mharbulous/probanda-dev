@@ -26,7 +26,7 @@ FIRST_ENTRY = "## First release of the practice plugin\n\n- practice 0.1.0: one 
 PUBLIC = {
     "CHANGELOG.md": CHANGELOG + FIRST_ENTRY,
     "README.md": "# Probanda\n\nAn early release.\n",
-    "plugins/practice/skills/x/SKILL.md": "A skill.\n",
+    "plugins/lawyer/skills/x/SKILL.md": "A skill.\n",
 }
 
 
@@ -84,9 +84,9 @@ class ApproveTest(unittest.TestCase):
         self.assertNotIn("a first few skills", out)
 
     def test_an_added_file_is_shown_in_full(self):
-        self.put("public/plugins/practice/skills/y/SKILL.md", "Another skill.\nSecond line.\n")
+        self.put("public/plugins/lawyer/skills/y/SKILL.md", "Another skill.\nSecond line.\n")
         _, out = self.run_approve(False)
-        self.assertIn("added: plugins/practice/skills/y/SKILL.md", out)
+        self.assertIn("added: plugins/lawyer/skills/y/SKILL.md", out)
         self.assertIn("+Another skill.", out)
         self.assertIn("+Second line.", out)
 
