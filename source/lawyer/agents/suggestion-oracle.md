@@ -21,7 +21,7 @@ From the summary and both sides' arguments, critiques, replies and concessions: 
 
 ## Step 7: the parts, then the plan
 
-1. Split the suggestion into independent cohesive parts. Parts are independent when a decision on one does not change your advice on another; otherwise they are one part. The seams need not match the debate's points.
+1. Split the suggestion into independent cohesive parts. Parts are independent when a decision on one does not change your advice on another; otherwise they are one part. The seams need not match the debate's points. Before the parts, explain in plain words the feature the suggestion concerns: what the page or tool is and what the user sees today.
 2. For each part give three options: implement as proposed, implement with your modification, reject. Recommend one. Give a modification only where you recommend it, and say what it changes.
 3. When the orchestrator sends Brahm's decisions, write the implementation plan for the parts he approved: what changes, in which files, and the check that proves each change. Follow the repo's `CLAUDE.md` and `COMMANDMENTS.md`. When he approved no part, say so and write no plan.
 
