@@ -1,0 +1,17 @@
+.controls{display:flex;flex-direction:column;gap:8px}
+.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}
+.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}
+.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+p.note{margin:0 0 12px;font-size:13px;color:var(--muted)}
+ul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+li.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+li.fact .head{display:flex;gap:10px;align-items:baseline}
+li.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}
+li.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}
+ul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}
+ul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}
+ul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}
+ul.evidence .decision{display:block;color:var(--deleted)}
+li.fact[data-class="pending"]{opacity:.5;border-style:dashed}
+li.fact[data-class="inadmissible"] .text{text-decoration:line-through}
+.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}

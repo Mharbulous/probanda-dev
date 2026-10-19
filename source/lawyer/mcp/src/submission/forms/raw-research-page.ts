@@ -2,8 +2,8 @@
 // `Raw Research - Job Board <id>.html` per live Writing, written by the view-page registry
 // (../view-pages.ts), listing every proposition of law the drafting database records for the
 // filing's proceeding, each with its statements of law: citation, pinpoint, excerpt, verification
-// and note-up status, and the submissions it is linked to. The registry's shell writes the page,
-// its header, its marker and the data line; this file gives the data, the stylesheet and the script.
+// and note-up status, and the submissions it is linked to. The page itself is the template set in
+// src/templates/view-pages/ (map #125); the registry adds the data line, and this file gives the data.
 //
 // A human interface generated from the database (ADR 0033): no session reads, greps, parses or
 // screenshots it. Sessions read propositions through /drafting-data and the mockups.
@@ -21,6 +21,13 @@
 // database until a session records one (spec §9.1: no). It adds no wording, summary or rating to a
 // proposition. The citation line is the mockups' own (lawStatementCitationLine), so the two never drift.
 
+import { composeTemplate } from "../../compose-template.js";
+import boardCss from "../../templates/work-board/board.css.js";
+import rawResearchCss from "../../templates/view-pages/raw-research.css.js";
+import rawResearchHtml from "../../templates/view-pages/raw-research.html.js";
+import rawResearchJs from "../../templates/view-pages/raw-research.js.js";
+import sharedJs from "../../templates/view-pages/shared.js.js";
+import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import { submissionDataQuery } from "../backend.js";
 import type { ViewPage } from "../view-pages.js";
 import { lawStatementCitationLine, type LawStatementLine } from "./law-statement-line.js";
@@ -320,170 +327,18 @@ export function buildRawResearchData(dbPath: string, filing: FilingRow): RawRese
   return { counts, groups };
 }
 
-const PAGE_CSS = String.raw`
-.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}
-.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}
-.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);min-width:200px;flex:1 1 200px;max-width:360px}
-.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
-section>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}
-article.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}
-.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}
-.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}
-.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
-.stmt .cite{margin:0}
-.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}
-.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}
-.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}
-.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}
-.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
-[hidden]{display:none!important}
-@media (max-width:600px){main{padding:16px}}
-`;
-
-// Draws window.VIEW_PAGE.data into .board, and the class counts and the filters into the header
-// the shell wrote, under its meta row.
-const PAGE_SCRIPT = String.raw`(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var header = document.querySelector("header");
-  var board = document.querySelector(".board");
-  var KEY = "raw-research-filters";
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  // Counted by statement; a proposition with no statement counts once.
-  var countsRow = el("div", "counts");
-  countsRow.appendChild(el("span", "", "Statements:"));
-  [["In use", data.counts.in_use], ["Undecided", data.counts.undecided], ["Not relevant", data.counts.not_relevant]].forEach(function (pair) {
-    countsRow.appendChild(el("span", "", pair[0] + " " + pair[1]));
-  });
-  header.appendChild(countsRow);
-  function checkbox(text) {
-    var label = el("label");
-    var box = el("input");
-    box.type = "checkbox";
-    label.appendChild(box);
-    label.appendChild(document.createTextNode(" " + text));
-    return { label: label, box: box };
-  }
-  var undecidedBox = checkbox("Show undecided");
-  var notRelevantBox = checkbox("Show not relevant");
-  var search = el("input");
-  search.type = "search";
-  search.placeholder = "Search";
-  search.setAttribute("aria-label", "Search propositions");
-  var filters = el("div", "filters");
-  filters.appendChild(undecidedBox.label);
-  filters.appendChild(notRelevantBox.label);
-  filters.appendChild(search);
-  header.appendChild(filters);
-
-  // Every card and statement keeps its own search text; the filters only toggle hidden.
-  var entries = [];
-  function statementNode(s) {
-    var node = el("div", "stmt " + s.class);
-    var cite = el("p", "cite");
-    if (s.citation_title !== null) cite.appendChild(el("em", "", s.citation_title));
-    cite.appendChild(document.createTextNode(s.citation_rest));
-    node.appendChild(cite);
-    if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));
-    if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" · ")));
-    return node;
-  }
-  function card(p) {
-    var node = el("article", "prop " + p.class);
-    node.appendChild(p.text === null ? el("p", "text none", "No proposition recorded") : el("p", "text", p.text));
-    if (p.killed_on) node.appendChild(el("p", "dead", "Omitted " + p.killed_on));
-    if (p.dead_end) node.appendChild(el("p", "dead", "Dead end: researched, nothing found"));
-    if (p.linked_to.length > 0) node.appendChild(el("p", "linked", "Linked to: " + p.linked_to.join("; ")));
-    var rows = p.statements.map(function (s) {
-      var row = statementNode(s);
-      node.appendChild(row);
-      return { node: row, cls: s.class, text: [s.citation_title || "", s.citation_rest, s.excerpt || ""].join(" ").toLowerCase() };
-    });
-    if (p.statements.length === 0) node.appendChild(el("p", "linked", "No authority recorded"));
-    return { node: node, cls: p.class, text: (p.text || "").toLowerCase(), rows: rows };
-  }
-
-  data.groups.forEach(function (g) {
-    var sec = el("section");
-    var h2 = el("h2", "", g.heading + " ");
-    var count = el("span", "count", "0");
-    h2.appendChild(count);
-    sec.appendChild(h2);
-    if (g.note) sec.appendChild(el("p", "note", g.note));
-    var stack = el("div", "stack");
-    var cards = g.propositions.map(function (p) {
-      var c = card(p);
-      stack.appendChild(c.node);
-      return c;
-    });
-    sec.appendChild(stack);
-    board.appendChild(sec);
-    entries.push({ node: sec, count: count, cards: cards });
-  });
-  var empty = el("p", "empty", data.groups.length === 0 ? "No propositions of law are recorded for this proceeding." : "Nothing to show with these filters.");
-  board.appendChild(empty);
-
-  var showUndecided = undecidedBox.box;
-  var showNotRelevant = notRelevantBox.box;
-  try {
-    var saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-    showUndecided.checked = saved.undecided === true;
-    showNotRelevant.checked = saved.not_relevant === true;
-  } catch (e) {}
-
-  function shown(cls) {
-    return cls === "in_use" || (cls === "undecided" && showUndecided.checked) || (cls === "not_relevant" && showNotRelevant.checked);
-  }
-  function apply() {
-    var q = search.value.trim().toLowerCase();
-    var any = false;
-    entries.forEach(function (sec) {
-      var visible = 0;
-      sec.cards.forEach(function (c) {
-        var cardMatch = q === "" || c.text.indexOf(q) !== -1;
-        var rowsShown = 0;
-        c.rows.forEach(function (r) {
-          var on = shown(r.cls) && (cardMatch || r.text.indexOf(q) !== -1);
-          r.node.hidden = !on;
-          if (on) rowsShown += 1;
-        });
-        var on = c.rows.length === 0 ? shown(c.cls) && cardMatch : rowsShown > 0;
-        c.node.hidden = !on;
-        if (on) visible += 1;
-      });
-      sec.count.textContent = String(visible);
-      sec.node.hidden = visible === 0;
-      if (visible > 0) any = true;
-    });
-    empty.hidden = any;
-  }
-  function save() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ undecided: showUndecided.checked, not_relevant: showNotRelevant.checked }));
-    } catch (e) {}
-  }
-  showUndecided.addEventListener("change", function () { save(); apply(); });
-  showNotRelevant.addEventListener("change", function () { save(); apply(); });
-  search.addEventListener("input", apply);
-  apply();
-})();
-`;
-
+// The page's script (raw-research.js) draws window.VIEW_PAGE.data into .board, and the class counts
+// and the filters into the header the template wrote, under its meta row.
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const RAW_RESEARCH_PAGE: ViewPage = {
   name: "Raw Research",
-  css: PAGE_CSS,
-  script: PAGE_SCRIPT,
+  ...composeTemplate("raw-research.html", {
+    "raw-research.html": rawResearchHtml,
+    "view-head.html": viewHeadHtml,
+    "board.css": boardCss,
+    "raw-research.css": rawResearchCss,
+    "shared.js": sharedJs,
+    "raw-research.js": rawResearchJs,
+  }),
   data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.filing),
 };

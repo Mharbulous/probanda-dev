@@ -1,0 +1,18 @@
+.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}
+.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}
+.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}
+article.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}
+.arg>.text::before{content:"▸";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}
+.arg.open>.text::before{transform:rotate(90deg)}
+.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}
+.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}
+.arg .detail{display:flex;flex-direction:column;gap:6px}
+.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}
+.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}
+.arg ul{margin:0;padding-left:20px}
+.arg li{margin:2px 0;white-space:pre-wrap}
+.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
+.arg .linked{border-top:1px solid var(--line);padding-top:6px}
