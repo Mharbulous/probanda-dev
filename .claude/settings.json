@@ -1,4 +1,7 @@
 {
+  "env": {
+    "COCLERK_HTML_DEV": "1"
+  },
   "permissions": {
     "deny": [
       "Edit(/COMMANDMENTS.md)"

@@ -195,6 +195,13 @@ class GateTest(unittest.TestCase):
                                 text=True, encoding="utf-8", env=env)
         self.assertDenied(result)
 
+    def test_the_message_names_a_settings_file_that_sets_the_exemption(self):
+        result = call("Read", {"file_path": PAGE_PATHS[0]})
+        self.assertIn("this repo's .claude/settings.json sets it", result.stdout)
+        settings = Path(__file__).resolve().parents[3] / "settings.json"
+        env = json.loads(settings.read_text(encoding="utf-8")).get("env", {})
+        self.assertEqual(env.get("COCLERK_HTML_DEV"), "1")
+
     def test_malformed_input_fails_open_loudly(self):
         result = run("not json")
         self.assertEqual(result.returncode, 0)
