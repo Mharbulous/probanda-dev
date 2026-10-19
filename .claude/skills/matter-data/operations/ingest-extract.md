@@ -134,8 +134,9 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    Construct `ANSWERED_FACTS` / `ANSWERED_RELIEF` with caller-local opaque keys
    mapped to the real IDs. An originating pleading receives empty arrays.
 2. **Dispatch the extractor.** Dispatch the read-only `lawyer:extract-facts`
-   agent, whose body mirrors [`../agents/extract-facts.md`](../agents/extract-facts.md).
-   Supply `MATTER_CONTEXT`, `DOCUMENT`,
+   agent, whose body mirrors [`../agents/extract-facts.md`](../agents/extract-facts.md),
+   with `model: "opus"` and `effort: "high"` on the Agent call
+   (`../references/design-decisions.md` #70). Supply `MATTER_CONTEXT`, `DOCUMENT`,
    `ANSWERED_FACTS`, `ANSWERED_RELIEF`, and `OUTPUT: ingest`, which leaves
    `naming_evidence` out of the hand-back because nothing here writes it.
    Under [`ingest-unattended.md`](ingest-unattended.md) supply `OUTPUT: full`
@@ -258,7 +259,7 @@ An affidavit is a compound document: a body source (`parent_source_id IS NULL`) 
 ### Pass 1 — Body
 
 1. Read the first 20 pages of the affidavit's range: `[1, 20]` when no `PAGE_RANGE` was supplied, `[range_start, range_start + 19]` when Path E supplied one. Never exhibit content. For scanned pages, render to PNG at **~150 DPI** into a **temp render directory** (OS temp — never the matter tree) and read the images.
-2. Dispatch the Pass-1 body subagent — the read-only `lawyer:extract-affidavit` agent, whose body mirrors [`../agents/extract-affidavit.md`](../agents/extract-affidavit.md), dispatched with `PASS = 1` and `OUTPUT` as Path A step 2 sets it — passing `PAGE_RANGE` when supplied. Pass it each rendered PNG page by explicit path, never the temp render directory.
+2. Dispatch the Pass-1 body subagent — the read-only `lawyer:extract-affidavit` agent, whose body mirrors [`../agents/extract-affidavit.md`](../agents/extract-affidavit.md), dispatched with `PASS = 1`, `OUTPUT` as Path A step 2 sets it, and `model: "opus"` and `effort: "high"` on the Agent call (`../references/design-decisions.md` #70) — passing `PAGE_RANGE` when supplied. Pass it each rendered PNG page by explicit path, never the temp render directory.
 3. **Register the body source** in `main.sources`. **Standalone affidavit:** `parent_source_id = NULL`, dedup by `(file_hash, parent_source_id IS NULL)` — reuse an existing body with this hash and NULL parent rather than inserting a second one. **Path E evidence child:** `parent_source_id` = the book's `source_id`, dedup by `(parent_source_id, title)`, and record the range in `notes` as above. Either way, set `execution_status` on the body row from the gate's execution-status classification (`draft` / `affirmed` / `filed`). Exhibits inherit nothing — leave exhibit rows NULL; the body carries the jurat. Whether inserted or reused, the body row carries `ingestion_status = 'partial'` — never NULL — when the body transaction commits, so a run interrupted before or between exhibits reads as `partial`; the final status update after Pass 3 (or, for a `.docx` body, the upgrade to `complete` once Pass 1 commits) replaces it.
 4. **Register the deponent as a fact witness.** Upsert `main.witnesses` with `witness_type = 'fact'` and the deponent's name, then upsert `main.proceeding_witnesses` for the affidavit's proceeding. Set `called_by_party_id` only when the filing/calling party is established by the document or live matter data.
 5. **Insert body facts** with `basis_of_knowledge` (`personal` | `information_and_belief`) and `informant` from the subagent. **Privileged informant:** if the informant is privileged, set `informant = NULL` in `main.facts` and record the informant in `privileged.fact_provenance.source_note` (linking the fact to a privileged source), so the privileged identity never lands in main.
@@ -266,11 +267,11 @@ An affidavit is a compound document: a body source (`parent_source_id IS NULL`) 
 
 ### Pass 2 — Boundary scan (conditional)
 
-Only if Pass 1's `exhibit_inventory` lacked exhibit page starts. Dispatch the same `lawyer:extract-affidavit` agent with `PASS = 2` to locate exhibit stamp pages and compute each exhibit's content range (start … the page before the next stamp). For scanned documents, chunk the scan into **~40-page batches** — tiling the affidavit's own `PAGE_RANGE` when one was supplied by Path E, never the whole file. This pass **locates only** — it extracts nothing. Apply the scanned-stamp-page rendering rule and the `ocr_uncertain` → `OCR:`/`verified = 2` write rule from `../shared/bookmark-segmentation.md` §6.
+Only if Pass 1's `exhibit_inventory` lacked exhibit page starts. Dispatch the same `lawyer:extract-affidavit` agent with `PASS = 2`, `model: "opus"` and `effort: "high"` to locate exhibit stamp pages and compute each exhibit's content range (start … the page before the next stamp). For scanned documents, chunk the scan into **~40-page batches** — tiling the affidavit's own `PAGE_RANGE` when one was supplied by Path E, never the whole file. This pass **locates only** — it extracts nothing. Apply the scanned-stamp-page rendering rule and the `ocr_uncertain` → `OCR:`/`verified = 2` write rule from `../shared/bookmark-segmentation.md` §6.
 
 ### Pass 3 — Per exhibit
 
-One `lawyer:extract-affidavit` dispatch per exhibit with `PASS = 3`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**.
+One `lawyer:extract-affidavit` dispatch per exhibit with `PASS = 3`, `model: "opus"` and `effort: "high"`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**.
 
 For each exhibit:
 

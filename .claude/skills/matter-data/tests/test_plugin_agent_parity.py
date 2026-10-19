@@ -7,11 +7,11 @@ templates gets that guarantee at runtime instead of on paper. The one exception 
 `extract-caselaw`, which also holds `Write` for the single scratch file its caller
 names; its template limits it to that file.
 
-The model column is the #558 split: the verifiers are pinned so a weak session model
-cannot produce weak extraction *and* an equally weak check of it, while the extractors
-carry no `model:` line and inherit the session model, per the clean-room spec's R1 §2
-("Omit the model field so subagents inherit the session model") and because
-`operations/extract-facts.md` dispatches them in parallel batches of up to ten.
+The model column started as the #558 split: the verifiers are pinned so a weak session
+model cannot produce weak extraction *and* an equally weak check of it. Design decision
+#70 reverses its extractor half for `extract-facts` and `extract-affidavit`, which are
+pinned to Opus at high effort, the configuration the token-efficiency report chose. The
+other extractors carry no `model:` line and inherit the session model.
 
 Run: python -m unittest discover -s .claude/skills/matter-data/tests
 """
@@ -31,15 +31,18 @@ AGENTS = {
     "verify-source": ("matter-data", "opus"),
     "verify-caselaw": ("matter-data", "opus"),
     "verify-claim": ("verify-law", "opus"),
-    "extract-affidavit": ("matter-data", None),
+    "extract-affidavit": ("matter-data", "opus"),
     "extract-caselaw": ("matter-data", None),
-    "extract-facts": ("matter-data", None),
+    "extract-facts": ("matter-data", "opus"),
     "extract-provision": ("matter-data", None),
     "extract-sought-orders": ("matter-data", None),
 }
 
 # agent name -> its grant, where that is not `Read` alone
 GRANTS = {"extract-caselaw": ["Read", "Write"]}
+
+# agent name -> pinned effort (#70); every other agent carries no effort line
+EFFORTS = {"extract-affidavit": "high", "extract-facts": "high"}
 
 
 def _template(name):
@@ -90,7 +93,16 @@ class PluginAgentParityTests(unittest.TestCase):
                     ),
                 )
 
-    def test_model_pin_matches_the_558_split(self):
+    def test_effort_pin_matches_decision_70(self):
+        for name in sorted(AGENTS):
+            with self.subTest(agent=name):
+                frontmatter, _ = _split(_read(_agent(name)), name)
+                self.assertEqual(
+                    [EFFORTS[name]] if name in EFFORTS else [],
+                    re.findall(r"(?m)^effort: (.*)$", frontmatter),
+                )
+
+    def test_model_pin_matches_the_558_split_and_decision_70(self):
         for name, (_, model) in sorted(AGENTS.items()):
             with self.subTest(agent=name):
                 frontmatter, _ = _split(_read(_agent(name)), name)

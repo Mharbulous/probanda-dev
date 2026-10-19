@@ -1228,6 +1228,10 @@ A party's or counsel's contact details were copied into each matter's `parties` 
 
 No schema change. `references/scripts/list_parties.py` reads every party, read-only, for that check.
 
+## 70. The ingest extractors run on Opus at high effort (2026-10-19)
+
+`extract-facts` and `extract-affidavit` are pinned to Opus at high effort, in their frontmatter and on every dispatch (`model: "opus"`, `effort: "high"`), in all three of `extract-affidavit`'s passes. This reverses the extractor half of #558's split, which had the extractors inherit the session model. The token-efficiency report (`docs/Plans/2026-10-19_token-efficiency-findings.md`, Q9 and Q13) found Opus high the configuration to run, and the pin is exact: a Fable session or one at `max` effort still extracts on Opus high. Both places carry it because Cowork is verified to honour the per-call parameters only. `extract-caselaw`, `extract-provision` and `extract-sought-orders` keep no model line: their models were not measured. A machine's `CLAUDE_CODE_EFFORT_LEVEL` overrides both settings, and that is the user's own override.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.
