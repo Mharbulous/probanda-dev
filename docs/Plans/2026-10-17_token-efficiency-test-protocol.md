@@ -117,6 +117,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   **Gate after session 1 (2026-10-19): passes, nothing cut.** Measured spend is $31.3: E0–E1 $9.6, session 1's subagents $20.84, and its orchestrator's partial transcript $0.91. Unmeasured, estimated at about $8: the rest of that orchestrator, two setup attempts that stopped before any measurement, and the 12 Opus scorers, which ran in Claude Code. Remaining estimates are $60 for sessions 2–5 and about $37 of the shared row. Projected total: about $136.
 
   **Gate after session 2 (2026-10-19): passes, nothing cut.** Session 2's subagents cost $13.33 ($5.05 ladder, $8.28 E3(c), $0.002 read check, and $0.07 added for D064's undercount), against its $29 estimate. Measured spend is now $44.6. Unmeasured: session 1's $8 as above, and session 2's orchestrator (its main transcript was not copied, because Cowork's auto mode blocked the copy) and its 6 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $31 for sessions 3–5 and about $37 of the shared row. Projected total: about $121.
+
+  **Gate after session 3 (2026-10-19): passes, nothing cut.** Session 3's subagents cost $12.2–13.4 after correcting truncated calls (the ledger says $9.85), against its $18 estimate, and its orchestrator's copied transcript $3.58 on Sonnet. Taking the high end, measured spend is now $61.6. Unmeasured: session 1's $8 as above, the part of session 3's orchestrator before its transcript's compaction, and its 87 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $13 for sessions 4–5 and about $33 of the shared row. Projected total: about $116.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
@@ -212,6 +214,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - **For /ingest:** one extractor per document, reading 20 pages at a time, up to at least 54 pages. Splitting a long document across subagents pays only if it buys recall, and here it did not.
 
   **Undercounted calls.** In a few transcripts the last call's `usage` is written before its output finishes: D064 here, and 12 Haiku calls in session 1's E5-B and E5-C runs (about $0.02 in all, so E5-B and E5-C's naming cost of about $0.009 per document is about 20% low). `token_ledger.py` counts what the transcript says, so it reports these low. A check: a call whose content is more than 12 characters per recorded output token.
+
+  In session 3 this hit most Sonnet and Haiku runs (50 of 55, against 2 of 32 on Opus): the last call records 2–24 output tokens, and its thinking is logged as about 60 characters, so even a character count misses the thinking. The ledger put session 3's subagents at $9.85; corrected, they are $12.2–13.4. One source gives the true figure: in the main transcript, each background subagent's completion notice carries `totalTokens`, which equals the last call's input plus its true output. That held exactly on all 8 complete runs that had a notice. Only 22 notices survived, because the copied main transcript starts after an automatic compaction, so a future run sheet should copy the main transcript before the orchestrator's context fills.
 - **E4. Input format (Q11, Q16).**
   - OCR PDF read natively, against its extracted text.
   - Scanned PDF at the default resolution, against 150 dpi and 100 dpi page images.
@@ -254,11 +258,31 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - **Cost:** −$0.017 to +$0.006 per document. The history is read from cache, but each run's cost is mostly output, which a resume does not change.
   - **Accuracy:** within the fresh range twice, and below it once. D037 lost 2 of its 7 facts, where all 3 fresh runs found every one. With 3 pairs, this is a warning, not a measurement.
 - **E7. Model and effort for ingest (Q13, Q9).** On the keyed documents: Haiku, Sonnet and Opus, each at low, medium and high effort. Measure cost per correct fact and the error rate.
+
+  **Session 3 results (run 2026-10-19, map #100 ticket #115).** One run per cell of `lawyer:extract-facts` on the 10 small keyed documents and D058 (437 gold facts), with session 1's inputs unchanged. Opus medium is session 1's E3a, the mean of its repeats on the same 11 documents. One Opus scorer per run marked them as before. Most Sonnet and Haiku runs end with a truncated call (see "Undercounted calls"), so their cost is a range: low counts only the visible output, and high adds thinking at Opus's rate for the same effort.
+
+  | Model, effort | Cost of 11 runs | Recall | Facts wrong | Extra claims unsupported | Cost per correct fact |
+  |---|---|---|---|---|---|
+  | Opus low | $1.85 | 0.52 | 0 | 0 | $0.0081 |
+  | Opus medium (session 1) | $2.89 | 0.74 | 1 in 32 runs | 0 | $0.0089 |
+  | Opus high | $3.74–3.79 | 0.82 | 0 | 0 | $0.0104–0.0106 |
+  | Sonnet low | $1.03–1.04 | 0.55 | 0 | 4 | $0.0043 |
+  | Sonnet medium | $1.34–1.87 | 0.59 | 2 | 0 | $0.0052–0.0072 |
+  | Sonnet high | $1.74–2.27 | 0.67 | 0 | 0 | $0.0059–0.0078 |
+  | Haiku medium | $0.11–0.14 | 0.52 | 1 | 5 | $0.0005–0.0006 |
+  | Haiku high | $0.23–0.24 | 0.58 | 3 | 6 | $0.0009–0.0010 |
+
+  - **Cheapest per correct fact: Haiku, by a factor of 8–15 over Sonnet and Opus.** But it finds only 0.52–0.58 of the facts, and it makes the errors Opus never made at any effort: facts stated wrongly, and extra claims that reverse a party's position (D048: "the Defendants denied that obvious vandalism was merely wear and tear", from both Haiku cells and Sonnet low). Haiku medium returned no facts at all for D037.
+  - **Recall rises with effort on every model, and cost per correct fact rises with it.** Opus low finds 0.52 at $0.0081, Opus high 0.82 at $0.0105. Sonnet high (0.67) costs about 60–80% of Opus medium and finds fewer facts.
+  - **No cell beats Opus medium on both cost per correct fact and recall.** Opus high buys 8 points of recall for about 30% more. So the choice between Opus medium, Opus high and a cheaper model is a recall floor for /ingest, not a cost result.
+  - **Caveats.** One run per cell, and Q17's spread at Opus medium was up to 37 points on one document. The key was built from an Opus-high extraction, so it may favour Opus's choice of which facts to state. Sonnet medium's D055 reply was valid JSON followed by a stray `}`, which an /ingest parser would reject.
 - **E8. Output and orchestrator (Q12, Q14).**
   - The output and thinking share comes from every run's ledger rows.
   - Run the extractor's current JSON against a compact form with short keys, no nulls and no repeated quotes.
   - Run an orchestrator that receives full JSON returns against one that has results written to a file and gets a one-line summary back.
   - Measure: the orchestrator session's own cost per document.
+
+  **Session 3 results, compact JSON (run 2026-10-19, ticket #115).** `lawyer:extract-facts` on Opus medium, one run on each of the 10 small keyed documents, told to keep the contract's content but write one line of minified JSON with short keys (`f`, `s`, `l` …), no null or empty fields and no repeated quotes. All 10 replies used the short keys. Cost was $2.20 against $2.28–2.29 for session 1's E3a on the same documents (rep 1 and the mean of 3), and recall 0.79 against 0.77–0.79. Compact output saves about 4%, inside the run-to-run spread, because most output is the facts' own sentences and thinking, not keys or whitespace. It is not worth a contract change.
 
 **Order:** E0, then E1, then the answer key, then E2–E8. E3 and E5 are the core. If the budget runs short, E4, E7 and E8 can be cut back to fewer cells.
 
