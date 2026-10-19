@@ -112,9 +112,16 @@ export function resolveCaseDataDir(root: string): string {
   return caseDataDir;
 }
 
-/** matter_root -> db_path, read-only. */
+/** matter_root -> db_path, read-only. A missing database whose matter-data folder's parent is also
+ * missing is a pointer written on another device (another Windows profile or drive): it is refused
+ * as unusable and handed to /matter-data, never to drafting_data__migrate. */
 export function resolveDbPath(root: string): string {
-  return join(resolveCaseDataDir(root), SUBMISSION_DB_FILE);
+  const caseDataDir = resolveCaseDataDir(root);
+  const dbPath = join(caseDataDir, SUBMISSION_DB_FILE);
+  if (!existsSync(dbPath) && !existsSync(dirname(caseDataDir))) {
+    throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
+  }
+  return dbPath;
 }
 
 /**

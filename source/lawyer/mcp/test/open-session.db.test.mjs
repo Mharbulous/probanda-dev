@@ -177,9 +177,22 @@ test("refuses when the pointer resolves but no submission database exists there"
   const context = await practiceContext(t, { withMatter: false });
   await assert.rejects(
     callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }),
-    /No submission database found/
+    /No submission database found.*Run drafting_data__migrate/
   );
   assert.equal(existsSync(m.dbPath), false, "open_session never creates a database");
+});
+
+test("refuses a pointer written on another device as unusable, with no migrate hint", async (t) => {
+  const elsewhere = join(tmpdir(), `coclerk-open-session-other-profile-${randomUUID()}`, "0. CASE DATA", "L9999 Test Matter");
+  const m = matterFixture(t, { pointer: { case_data_dir: elsewhere } });
+  const context = await practiceContext(t, { withMatter: false });
+  const before = m.pointerBytes();
+  await assert.rejects(
+    callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }),
+    (err) => err.code === "pointer_unusable" && /\/matter-data/.test(err.message) && !/drafting_data__migrate/.test(err.message)
+  );
+  assert.deepEqual(m.pointerBytes(), before);
+  assert.equal(existsSync(join(elsewhere, "submission.sqlite")), false, "open_session never creates a database");
 });
 
 test("a matter lookup that finds nothing is never fatal", async (t) => {

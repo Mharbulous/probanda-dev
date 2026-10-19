@@ -2249,7 +2249,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. " +
         "probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code " +
         "pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the " +
-        "repair. A database behind the current schema is migrated here, with the same copy-aside backup as " +
+        "repair; so does a pointer whose case_data_dir's parent folder does not exist on this device (one written " +
+        "under another profile or drive). A database behind the current schema is migrated here, with the same copy-aside backup as " +
         "drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated and" +
         "server_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never " +
         "fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/" +
