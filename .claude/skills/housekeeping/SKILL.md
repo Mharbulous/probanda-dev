@@ -159,7 +159,7 @@ Each facet of a naming-evidence block carries a verbatim quote and a pinpoint, o
 
 - A `.pdf`: `kind` `pdf`, the file's own path. The reader reads `pages: "1"`.
 - An image: `kind` `image`, the file's own path.
-- A `.docx`, `.eml` or `.msg`, or an RTF `.doc`: `kind` `rendering`, the head of its rendering. Run `render_document.py <file> <temp_dir> --head-chars 3000` into an OS temp folder (never the matter tree) and pass the `head_path` it prints. 3,000 characters is about one page.
+- A `.docx`, `.eml` or `.msg`, or an RTF `.doc`: `kind` `rendering`, the head of its rendering. Run `render_document.py <file> <temp_dir> --head-chars 900` into an OS temp folder (never the matter tree) and pass the `head_path` it prints. 900 characters stays inside page 1: the token test's renderings held 950 to 2,900 characters a page, and a cut that runs into page 2 names something inside the document.
 - In a bridged session the reader cannot see the matter folder: stage a byte-exact copy of the file, or of the head, into the session first and pass that path, by the Universal rules of `/matter-data`'s ingest-extract operation. Never pass a directory.
 
 A reply that is missing or does not follow the agent's output contract is re-dispatched once. If it fails again, the row gets the signal "The reader returned an unusable report" (`uncertain_name`) and no proposal.
