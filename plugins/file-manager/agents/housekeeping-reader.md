@@ -65,7 +65,7 @@ Facets:
 - `readability`: `clear`, `partial` (some of the page unreadable) or `poor`.
 - `pages_read`: `1 of N` for a PDF of N pages, `image` for an image, `rendering head` for a rendering head.
 
-**Authority facets, only when `in_law_folder` is `true`.** A party name in `caption` or `title` is expected there.
+**Authority facets, only when `in_law_folder` is `true`.** A party name in `caption` or `title` is expected there. An authority's own style of cause goes in `caption`: omit `style_of_cause` and `action_number`, and never record the authority's caption, file number or parties as `other_matter_signals`. They name the decided case, not another matter.
 
 - `caption`: the caption or heading line as printed (the style of cause heading a decision, with its neutral citation where it is printed there; an act's name with its chapter and year).
 - `court`: the deciding or issuing court as printed.
