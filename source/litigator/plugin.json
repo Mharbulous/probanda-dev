@@ -43,6 +43,37 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__(drafting_forms__(open_session|render)|drafting_data__complete_job)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Job Board card gate"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Job Board card gate"
+          }
+        ]
+      }
     ]
   }
 }
