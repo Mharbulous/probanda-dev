@@ -1,6 +1,8 @@
 ---
 name: extract-facts
 description: Reads one litigation document and returns strict JSON separating substantive facts from positions, relief and non-factual source references. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per document, in parallel batches.
+model: opus
+effort: high
 tools:
   - Read
 ---
