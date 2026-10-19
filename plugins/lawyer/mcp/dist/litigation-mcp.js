@@ -1,4 +1,4 @@
-// build-stamp: 2065fd65fb91
+// build-stamp: 684637774997
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77903,7 +77903,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("open_session"),
-      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the repair. A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the matter-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. With status ok it also returns folders, every folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from folders, never from opened.ingest_inputs alone. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
+      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the repair; so does a pointer whose case_data_dir's parent folder does not exist on this device (one written under another profile or drive). A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast open), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, job_board_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and job_board_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. It returns ingest_coverage, read-only: the files in the folders the opened filing's type declares as its ingest inputs not yet in the case database, checked only when that filing has a Ready job; status not_applicable or unavailable means the check did not run. Beside to_ingest, the paths, it returns records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; source_id is the matter-data source behind the verdict, and possible_version_of the source that file may be another version of; each is null when there is none. With status ok it also returns folders, every folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from folders, never from opened.ingest_inputs alone. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings.",
       inputSchema: {
         type: "object",
         properties: {
@@ -80778,7 +80778,12 @@ function resolveCaseDataDir(root) {
   return caseDataDir;
 }
 function resolveDbPath(root) {
-  return join11(resolveCaseDataDir(root), SUBMISSION_DB_FILE);
+  const caseDataDir = resolveCaseDataDir(root);
+  const dbPath = join11(caseDataDir, SUBMISSION_DB_FILE);
+  if (!existsSync9(dbPath) && !existsSync9(dirname4(caseDataDir))) {
+    throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
+  }
+  return dbPath;
 }
 function caseDataRootFromCaseDataDir(dir, env) {
   const parent = dirname4(normalize(dir));
@@ -85354,7 +85359,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "2065fd65fb91";
+var BUILD_STAMP = false ? null : "684637774997";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94995,114 +95000,14 @@ function pageApiTokenValid(token, dbPath, proceedingId, env = process.env) {
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-// src/submission/forms/view-folder-css.ts
-var VIEW_FOLDER_CSS = String.raw`
-.board{gap:0}
-.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}
-.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}
-.tabs [role=tab]:first-child{margin-left:0}
-.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}
-.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}
-.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}
-.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}
-.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}
-.folder section{background:none;padding:0;border-radius:0}
-.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}
-.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
-[hidden]{display:none!important}
-@media (max-width:600px){main{padding:16px}}
-@media (max-width:520px){
-.tabs{padding:0 4px}
-.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}
-.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}
-.folder{padding:12px}
-}
-`;
+// src/templates/view-pages/loose-threads.css.ts
+var loose_threads_css_default = 'header h1{color:#1d5e4a}\nheader h1::after{height:3px;background:#a8691c}\nheader .meta span::before{color:#c49a6c}\n\n@@include(view-folder.css)@@\n\n.folder section>p.note{margin:-6px 0 12px;font-size:12.5px;color:var(--muted)}\narticle.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.idea>.text{font-weight:600;margin:0;white-space:pre-wrap;padding-right:64px;cursor:pointer}\n.idea>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:#1d5e4a;transition:transform .15s}\n.idea[data-open=true]>.text::before{transform:rotate(90deg)}\n.idea>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.idea .tags{white-space:nowrap}\n.idea .tag{display:inline-block;margin-left:6px;padding:0 8px;border:1.5px solid #1d5e4a;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.6;vertical-align:2px}\n.idea .tag.group{background:#fff;border-color:var(--g);color:var(--g)}\n.idea>.body{display:flex;flex-direction:column;gap:4px}\n.idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}\n.idea>.body>p.thought{white-space:pre-wrap}\n.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}\n.idea>button.status:disabled{cursor:default;opacity:.5}\n.idea>.error{margin:0;font-size:12.5px;color:#b3261e}\n.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}\n.api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}\n.switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}\n.switch .label{color:#b9c9c0;transition:color .18s}\n.switch[aria-checked=true] .label{color:#1d5e4a}\n.switch .track{position:relative;width:30px;height:17px;border-radius:999px;background:#b9c9c0;transition:background .18s}\n.switch[aria-checked=true] .track{background:#1d5e4a}\n.switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}\n.switch[aria-checked=true] .knob{transform:translateX(13px)}\n.switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}\n.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle:not([hidden]) + .switch{margin-left:0}\n.chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}\n.chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}\n.chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}\n.chip[aria-pressed=true]::before{content:"\u2713";font-weight:800}\n.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}\n.chip:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.folder section>p.empty{margin:0 0 12px}\n@media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}';
 
-// src/submission/forms/loose-ideas-page.ts
-var GROUP_STYLE = {
-  decision: { label: "Practitioner decisions", colour: "#6E4F8E" },
-  tooling: { label: "Tooling", colour: "#3F6197" },
-  housekeeping: { label: "Housekeeping", colour: "#2F7466" },
-  research: { label: "Research", colour: "#8E6620" },
-  authority: { label: "Authority mismatch", colour: "#984A43" },
-  evidence: { label: "Evidence mismatch", colour: "#85587A" },
-  other: { label: "Miscellaneous", colour: "#636B72" }
-};
-function buildLooseIdeasData(dbPath, filing, env = process.env) {
-  const seeds = inRankOrder(withFromFiling(dbPath, filing.proceeding_id, filing.id, fetchOpenSeeds(dbPath, filing.proceeding_id)));
-  const ideas = seeds.map(
-    (s3) => ({
-      id: s3.id,
-      rank: s3.rank,
-      idea: s3.idea,
-      group: s3.rank === null ? null : s3.rank_group,
-      group_label: s3.rank === null || s3.rank_group === null ? null : GROUP_STYLE[s3.rank_group].label,
-      reason: s3.rank === null ? null : s3.rank_reason,
-      job: s3.rank === null ? null : s3.rank_job,
-      surfaced_by: s3.surfaced_by,
-      origin: seedOrigin(s3),
-      deferred_at: s3.deferred_at
-    })
-  );
-  const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
-  const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
-}
-function looseIdeasMeta(data) {
-  const deferred = data.ideas.filter((i3) => i3.deferred_at !== null).length;
-  const ranked = data.ideas.filter((i3) => i3.deferred_at === null && i3.rank !== null).length;
-  return [
-    ["Threads", String(data.ideas.length)],
-    ["Ranked", String(ranked)],
-    ["Unranked", String(data.ideas.length - ranked - deferred)],
-    ["Deferred", String(deferred)],
-    ["Resolved", String(data.resolved.length)]
-  ];
-}
-var PAGE_CSS = String.raw`
-header h1{color:#1d5e4a}
-header h1::after{height:3px;background:#a8691c}
-header .meta span::before{color:#c49a6c}
-${VIEW_FOLDER_CSS}
-.folder section>p.note{margin:-6px 0 12px;font-size:12.5px;color:var(--muted)}
-article.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.idea>.text{font-weight:600;margin:0;white-space:pre-wrap;padding-right:64px;cursor:pointer}
-.idea>.text::before{content:"▸";display:inline-block;margin-right:6px;color:#1d5e4a;transition:transform .15s}
-.idea[data-open=true]>.text::before{transform:rotate(90deg)}
-.idea>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}
-.idea .tags{white-space:nowrap}
-.idea .tag{display:inline-block;margin-left:6px;padding:0 8px;border:1.5px solid #1d5e4a;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.6;vertical-align:2px}
-.idea .tag.group{background:#fff;border-color:var(--g);color:var(--g)}
-.idea>.body{display:flex;flex-direction:column;gap:4px}
-.idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}
-.idea>.body>p.thought{white-space:pre-wrap}
-.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
-.idea>button.status:disabled{cursor:default;opacity:.5}
-.idea>.error{margin:0;font-size:12.5px;color:#b3261e}
-.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}
-.api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
-.switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}
-.switch .label{color:#b9c9c0;transition:color .18s}
-.switch[aria-checked=true] .label{color:#1d5e4a}
-.switch .track{position:relative;width:30px;height:17px;border-radius:999px;background:#b9c9c0;transition:background .18s}
-.switch[aria-checked=true] .track{background:#1d5e4a}
-.switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
-.switch[aria-checked=true] .knob{transform:translateX(13px)}
-.switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
-.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}
-.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
-.resolved-toggle:not([hidden]) + .switch{margin-left:0}
-.chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
-.chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}
-.chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}
-.chip[aria-pressed=true]::before{content:"✓";font-weight:800}
-.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}
-.chip:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}
-.folder section>p.empty{margin:0 0 12px}
-@media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}
-`;
-var PAGE_SCRIPT = String.raw`(function () {
+// src/templates/view-pages/loose-threads.html.ts
+var loose_threads_html_default = '@@include(view-head.html)@@\n<title>Loose Threads</title>\n<style>\n@@include(board.css)@@\n\n@@include(loose-threads.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Loose Threads</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(loose-threads.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/view-pages/loose-threads.js.ts
+var loose_threads_js_default = `(function () {
   "use strict";
   var view = window.VIEW_PAGE;
   if (!view) return;
@@ -95205,7 +95110,7 @@ var PAGE_SCRIPT = String.raw`(function () {
     node.appendChild(text);
     if (i.job) body.appendChild(el("p", "thought", "Loose thought: " + i.idea));
     if (i.reason) body.appendChild(el("p", "why", i.reason));
-    body.appendChild(el("p", "where", "Loose thread " + i.id + " · " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
+    body.appendChild(el("p", "where", "Loose thread " + i.id + " \xB7 " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
     node.appendChild(body);
     text.addEventListener("click", function () { c.set(!c.open); });
     text.addEventListener("keydown", function (e) {
@@ -95325,13 +95230,13 @@ var PAGE_SCRIPT = String.raw`(function () {
   var showResolved = false;
   var resolvedToggle = null;
   if (data.resolved.length > 0) {
-    resolvedToggle = el("button", "resolved-toggle", "☐ Show/Hide Resolved Threads");
+    resolvedToggle = el("button", "resolved-toggle", "\u2610 Show/Hide Resolved Threads");
     resolvedToggle.type = "button";
     resolvedToggle.setAttribute("role", "checkbox");
     resolvedToggle.setAttribute("aria-checked", "false");
     resolvedToggle.addEventListener("click", function () {
       showResolved = !showResolved;
-      resolvedToggle.textContent = showResolved ? "☑ Show/Hide Resolved Threads" : "☐ Show/Hide Resolved Threads";
+      resolvedToggle.textContent = showResolved ? "\u2611 Show/Hide Resolved Threads" : "\u2610 Show/Hide Resolved Threads";
       resolvedToggle.setAttribute("aria-checked", String(showResolved));
       apply();
     });
@@ -95444,13 +95349,70 @@ var PAGE_SCRIPT = String.raw`(function () {
       header.appendChild(el("p", "api-off", "Buttons need the Claude desktop app running."));
     });
   }
-})();
-`;
+})();`;
+
+// src/templates/view-pages/shared.js.ts
+var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var meta = view.meta;\n  if (meta.filing !== "") document.title = view.name + " \u2014 " + meta.filing;\n  var row = document.querySelector("header .meta");\n  [\n    ["Writing", meta.filing],\n    ["Matter", meta.matter],\n    ["Client", meta.client],\n    ["Rev", String(meta.revision)]\n  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {\n    if (pair[1] === "") return;\n    var span = document.createElement("span");\n    span.textContent = pair[1];\n    span.setAttribute("data-k", pair[0]);\n    row.appendChild(span);\n  });\n})();';
+
+// src/templates/view-pages/view-folder.css.ts
+var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
+
+// src/templates/view-pages/view-head.html.ts
+var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
+
+// src/submission/forms/loose-ideas-page.ts
+var GROUP_STYLE = {
+  decision: { label: "Practitioner decisions", colour: "#6E4F8E" },
+  tooling: { label: "Tooling", colour: "#3F6197" },
+  housekeeping: { label: "Housekeeping", colour: "#2F7466" },
+  research: { label: "Research", colour: "#8E6620" },
+  authority: { label: "Authority mismatch", colour: "#984A43" },
+  evidence: { label: "Evidence mismatch", colour: "#85587A" },
+  other: { label: "Miscellaneous", colour: "#636B72" }
+};
+function buildLooseIdeasData(dbPath, filing, env = process.env) {
+  const seeds = inRankOrder(withFromFiling(dbPath, filing.proceeding_id, filing.id, fetchOpenSeeds(dbPath, filing.proceeding_id)));
+  const ideas = seeds.map(
+    (s3) => ({
+      id: s3.id,
+      rank: s3.rank,
+      idea: s3.idea,
+      group: s3.rank === null ? null : s3.rank_group,
+      group_label: s3.rank === null || s3.rank_group === null ? null : GROUP_STYLE[s3.rank_group].label,
+      reason: s3.rank === null ? null : s3.rank_reason,
+      job: s3.rank === null ? null : s3.rank_job,
+      surfaced_by: s3.surfaced_by,
+      origin: seedOrigin(s3),
+      deferred_at: s3.deferred_at
+    })
+  );
+  const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
+  const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
+  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
+}
+function looseIdeasMeta(data) {
+  const deferred = data.ideas.filter((i3) => i3.deferred_at !== null).length;
+  const ranked = data.ideas.filter((i3) => i3.deferred_at === null && i3.rank !== null).length;
+  return [
+    ["Threads", String(data.ideas.length)],
+    ["Ranked", String(ranked)],
+    ["Unranked", String(data.ideas.length - ranked - deferred)],
+    ["Deferred", String(deferred)],
+    ["Resolved", String(data.resolved.length)]
+  ];
+}
 var LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 var LOOSE_IDEAS_PAGE = {
   name: LOOSE_THREADS_PAGE_NAME,
-  css: PAGE_CSS,
-  script: PAGE_SCRIPT,
+  ...composeTemplate("loose-threads.html", {
+    "loose-threads.html": loose_threads_html_default,
+    "view-head.html": view_head_html_default,
+    "board.css": board_css_default,
+    "loose-threads.css": loose_threads_css_default,
+    "view-folder.css": view_folder_css_default,
+    "shared.js": shared_js_default,
+    "loose-threads.js": loose_threads_js_default
+  }),
   data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.filing),
   metaExtra: looseIdeasMeta
 };
@@ -96406,114 +96368,14 @@ function renderWorkBoardHtml(data) {
 ${TAIL3}`;
 }
 
-// src/submission/forms/arguments-page.ts
-function rows13(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function tableHeld(dbPath, table) {
-  return rows13(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
-}
-function columnHeld2(dbPath, table, column) {
-  return rows13(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
-function buildArgumentsData(dbPath, filing) {
-  const proceedingId = filing.proceeding_id;
-  const submissions = rows13(
-    dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id = ?
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-     GROUP BY s.id
-     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
-              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
-    [filing.id, proceedingId]
-  );
-  const deployments = rows13(
-    dbPath,
-    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
-     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
-     WHERE f.proceeding_id = ?
-     ORDER BY f.id`,
-    [proceedingId]
-  );
-  const facts = rows13(
-    dbPath,
-    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
-     WHERE f.proceeding_id = ? ORDER BY f.id`,
-    [proceedingId]
-  );
-  const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows13(
-    dbPath,
-    `SELECT sl.submission_id, la.proposition, ${killedOn}
-     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE la.proceeding_id = ? ORDER BY la.id`,
-    [proceedingId]
-  );
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows13(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows13(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
-  const links = [
-    ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
-    ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
-  ];
-  const live = new Set(submissions.map((s3) => s3.id));
-  const counterArguments = [
-    ...fetchOpposingPoints(dbPath, proceedingId).map((p3) => ({
-      key: `raised:${p3.id}`,
-      kind: "raised",
-      text: p3.verbatim_words ?? "(no words recorded)",
-      source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
-      linked: []
-    })),
-    ...rows13(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
-      (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
-    )
-  ];
-  const counterByKey = new Map(counterArguments.map((c3) => [c3.key, c3]));
-  for (const l3 of links) {
-    const counter = counterByKey.get(l3.key);
-    if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
-  }
-  const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
-  const items = submissions.map((s3) => {
-    const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
-    const here = deployedOn.some((d3) => d3.filing_id === filing.id);
-    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
-    const where = here ? "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return {
-      id: s3.id,
-      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
-      contention: s3.contention,
-      where,
-      facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
-      law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
-      rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
-    };
-  });
-  return { submissions: items, counter_arguments: counterArguments };
-}
-var PAGE_CSS2 = String.raw`
-${VIEW_FOLDER_CSS}
-.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
-.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
-.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}
-.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}
-.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}
-article.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}
-.arg>.text::before{content:"▸";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}
-.arg.open>.text::before{transform:rotate(90deg)}
-.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}
-.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}
-.arg .detail{display:flex;flex-direction:column;gap:6px}
-.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}
-.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}
-.arg ul{margin:0;padding-left:20px}
-.arg li{margin:2px 0;white-space:pre-wrap}
-.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
-.arg .linked{border-top:1px solid var(--line);padding-top:6px}
-`;
-var PAGE_SCRIPT2 = String.raw`(function () {
+// src/templates/view-pages/arguments.css.ts
+var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
+
+// src/templates/view-pages/arguments.html.ts
+var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/view-pages/arguments.js.ts
+var arguments_js_default = `(function () {
   "use strict";
   var view = window.VIEW_PAGE;
   if (!view) return;
@@ -96706,14 +96568,220 @@ var PAGE_SCRIPT2 = String.raw`(function () {
     });
   });
   apply();
-})();
-`;
+})();`;
+
+// src/submission/forms/arguments-page.ts
+function rows13(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function tableHeld(dbPath, table) {
+  return rows13(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
+}
+function columnHeld2(dbPath, table, column) {
+  return rows13(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
+}
+function buildArgumentsData(dbPath, filing) {
+  const proceedingId = filing.proceeding_id;
+  const submissions = rows13(
+    dbPath,
+    `SELECT s.id, s.contention FROM submissions s
+     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id = ?
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+     GROUP BY s.id
+     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
+              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
+    [filing.id, proceedingId]
+  );
+  const deployments = rows13(
+    dbPath,
+    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
+     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
+     WHERE f.proceeding_id = ?
+     ORDER BY f.id`,
+    [proceedingId]
+  );
+  const facts = rows13(
+    dbPath,
+    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
+     WHERE f.proceeding_id = ? ORDER BY f.id`,
+    [proceedingId]
+  );
+  const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
+  const law = rows13(
+    dbPath,
+    `SELECT sl.submission_id, la.proposition, ${killedOn}
+     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
+     WHERE la.proceeding_id = ? ORDER BY la.id`,
+    [proceedingId]
+  );
+  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows13(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
+  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows13(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
+  const links = [
+    ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
+    ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
+  ];
+  const live = new Set(submissions.map((s3) => s3.id));
+  const counterArguments = [
+    ...fetchOpposingPoints(dbPath, proceedingId).map((p3) => ({
+      key: `raised:${p3.id}`,
+      kind: "raised",
+      text: p3.verbatim_words ?? "(no words recorded)",
+      source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
+      linked: []
+    })),
+    ...rows13(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
+      (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
+    )
+  ];
+  const counterByKey = new Map(counterArguments.map((c3) => [c3.key, c3]));
+  for (const l3 of links) {
+    const counter = counterByKey.get(l3.key);
+    if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
+  }
+  const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
+  const items = submissions.map((s3) => {
+    const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
+    const here = deployedOn.some((d3) => d3.filing_id === filing.id);
+    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
+    const where = here ? "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
+    return {
+      id: s3.id,
+      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
+      contention: s3.contention,
+      where,
+      facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
+      law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
+      rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
+    };
+  });
+  return { submissions: items, counter_arguments: counterArguments };
+}
 var ARGUMENTS_PAGE = {
   name: "Arguments",
-  css: PAGE_CSS2,
-  script: PAGE_SCRIPT2,
+  ...composeTemplate("arguments.html", {
+    "arguments.html": arguments_html_default,
+    "view-head.html": view_head_html_default,
+    "board.css": board_css_default,
+    "view-folder.css": view_folder_css_default,
+    "arguments.css": arguments_css_default,
+    "shared.js": shared_js_default,
+    "arguments.js": arguments_js_default
+  }),
   data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.filing)
 };
+
+// src/templates/view-pages/provable-facts.css.ts
+var provable_facts_css_default = '.controls{display:flex;flex-direction:column;gap:8px}\n.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}\n.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}\n.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}\np.note{margin:0 0 12px;font-size:13px;color:var(--muted)}\nul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\nli.fact .head{display:flex;gap:10px;align-items:baseline}\nli.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}\nli.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}\nul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}\nul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}\nul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}\nul.evidence .decision{display:block;color:var(--deleted)}\nli.fact[data-class="pending"]{opacity:.5;border-style:dashed}\nli.fact[data-class="inadmissible"] .text{text-decoration:line-through}\n.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}';
+
+// src/templates/view-pages/provable-facts.html.ts
+var provable_facts_html_default = '@@include(view-head.html)@@\n<title>Provable Facts</title>\n<style>\n@@include(board.css)@@\n\n@@include(provable-facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Provable Facts</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(provable-facts.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/view-pages/provable-facts.js.ts
+var provable_facts_js_default = `(function () {
+  "use strict";
+  var view = window.VIEW_PAGE;
+  if (!view) return;
+  var data = view.data;
+  var board = document.querySelector(".board");
+  var KEY = "coclerk.provable-facts.filters";
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  var counts = { provable: 0, pending: 0, inadmissible: 0 };
+  data.facts.forEach(function (f) { counts[f["class"]] += 1; });
+
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+
+  var controls = el("section", "controls");
+  var countRow = el("p", "counts");
+  [
+    ["Provable", counts.provable],
+    ["Not yet in evidence", counts.pending],
+    ["Inadmissible evidence only", counts.inadmissible]
+  ].forEach(function (pair) {
+    var span = el("span", "", String(pair[1]));
+    span.setAttribute("data-k", pair[0]);
+    countRow.appendChild(span);
+  });
+  controls.appendChild(countRow);
+  board.appendChild(controls);
+
+  var list = el("section");
+  var h2 = el("h2", "", "Facts ");
+  h2.appendChild(el("span", "count", String(data.facts.length)));
+  list.appendChild(h2);
+  list.appendChild(el("p", "note", "In the order the Writing states the facts."));
+  var EVIDENCE_NOTES = {
+    never_rendered: "This Writing has not been rendered yet, so no evidence shows as in hand.",
+    changed_since: "The matter's data has changed since this Writing was last rendered, so no evidence shows as in hand until it is rendered again."
+  };
+  if (data.evidence !== "read") list.appendChild(el("p", "note", EVIDENCE_NOTES[data.evidence]));
+  var empty = el("p", "empty", "");
+  var ul = el("ul", "facts");
+
+  var STATES = { in_hand: "in hand", pending: "not yet in hand", inadmissible: "inadmissible" };
+  data.facts.forEach(function (f) {
+    var li = el("li", "fact");
+    li.setAttribute("data-class", f["class"]);
+    var head = el("div", "head");
+    head.appendChild(el("span", "num", f.position + "."));
+    head.appendChild(el("span", "text", f.text));
+    li.appendChild(head);
+    if (f.basis !== null) li.appendChild(el("p", "basis", f.basis));
+    if (f.links.length > 0) {
+      var ev = el("ul", "evidence");
+      f.links.forEach(function (l) {
+        var item = el("li", "", l.cite === null ? l.witness : l.witness + ": " + l.cite);
+        if (l.state !== null) item.appendChild(el("span", "chip", STATES[l.state]));
+        if (l.concern) {
+          var flag = el("span", "flag", "\u2691 admissibility concern");
+          flag.setAttribute("title", l.concern);
+          item.appendChild(flag);
+        }
+        if (l.decided_on !== null) item.appendChild(el("span", "decision", "Recorded inadmissible on " + l.decided_on + (l.decision ? ": " + l.decision : "")));
+        ev.appendChild(item);
+      });
+      li.appendChild(ev);
+    }
+    ul.appendChild(li);
+  });
+  list.appendChild(ul);
+  list.appendChild(empty);
+  board.appendChild(list);
+
+  function apply() {
+    var shown = counts.provable + (board.classList.contains("show-pending") ? counts.pending : 0) + (board.classList.contains("show-inadmissible") ? counts.inadmissible : 0);
+    empty.textContent = data.facts.length === 0 ? "This Writing uses no facts." : "No fact to show. Tick a box above to show the others.";
+    empty.hidden = shown > 0;
+  }
+
+  [
+    ["pending", "Show facts not yet in evidence"],
+    ["inadmissible", "Show facts with only inadmissible evidence"]
+  ].forEach(function (pair) {
+    var label = el("label");
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = saved[pair[0]] === true;
+    board.classList.toggle("show-" + pair[0], box.checked);
+    box.addEventListener("change", function () {
+      board.classList.toggle("show-" + pair[0], box.checked);
+      saved[pair[0]] = box.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* the page works without it */ }
+      apply();
+    });
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(pair[1]));
+    controls.appendChild(label);
+  });
+  apply();
+})();`;
 
 // src/submission/forms/provable-facts-page.ts
 function rows14(dbPath, sql, params = []) {
@@ -96808,132 +96876,27 @@ function provableFactsData(ctx) {
     })
   };
 }
-var CSS = String.raw`
-.controls{display:flex;flex-direction:column;gap:8px}
-.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}
-.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}
-.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
-p.note{margin:0 0 12px;font-size:13px;color:var(--muted)}
-ul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-li.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-li.fact .head{display:flex;gap:10px;align-items:baseline}
-li.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}
-li.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}
-ul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}
-ul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}
-ul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}
-ul.evidence .decision{display:block;color:var(--deleted)}
-li.fact[data-class="pending"]{opacity:.5;border-style:dashed}
-li.fact[data-class="inadmissible"] .text{text-decoration:line-through}
-.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}
-`;
-var SCRIPT = String.raw`(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var board = document.querySelector(".board");
-  var KEY = "coclerk.provable-facts.filters";
+var PROVABLE_FACTS = {
+  name: "Provable Facts",
+  ...composeTemplate("provable-facts.html", {
+    "provable-facts.html": provable_facts_html_default,
+    "view-head.html": view_head_html_default,
+    "board.css": board_css_default,
+    "provable-facts.css": provable_facts_css_default,
+    "shared.js": shared_js_default,
+    "provable-facts.js": provable_facts_js_default
+  }),
+  data: provableFactsData
+};
 
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
+// src/templates/view-pages/raw-research.css.ts
+var raw_research_css_default = ".filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\n.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}";
 
-  var counts = { provable: 0, pending: 0, inadmissible: 0 };
-  data.facts.forEach(function (f) { counts[f["class"]] += 1; });
+// src/templates/view-pages/raw-research.html.ts
+var raw_research_html_default = '@@include(view-head.html)@@\n<title>Raw Research</title>\n<style>\n@@include(board.css)@@\n\n@@include(raw-research.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Raw Research</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(raw-research.js)@@\n</script>\n</body>\n</html>\n';
 
-  var saved = {};
-  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
-
-  var controls = el("section", "controls");
-  var countRow = el("p", "counts");
-  [
-    ["Provable", counts.provable],
-    ["Not yet in evidence", counts.pending],
-    ["Inadmissible evidence only", counts.inadmissible]
-  ].forEach(function (pair) {
-    var span = el("span", "", String(pair[1]));
-    span.setAttribute("data-k", pair[0]);
-    countRow.appendChild(span);
-  });
-  controls.appendChild(countRow);
-  board.appendChild(controls);
-
-  var list = el("section");
-  var h2 = el("h2", "", "Facts ");
-  h2.appendChild(el("span", "count", String(data.facts.length)));
-  list.appendChild(h2);
-  list.appendChild(el("p", "note", "In the order the Writing states the facts."));
-  var EVIDENCE_NOTES = {
-    never_rendered: "This Writing has not been rendered yet, so no evidence shows as in hand.",
-    changed_since: "The matter's data has changed since this Writing was last rendered, so no evidence shows as in hand until it is rendered again."
-  };
-  if (data.evidence !== "read") list.appendChild(el("p", "note", EVIDENCE_NOTES[data.evidence]));
-  var empty = el("p", "empty", "");
-  var ul = el("ul", "facts");
-
-  var STATES = { in_hand: "in hand", pending: "not yet in hand", inadmissible: "inadmissible" };
-  data.facts.forEach(function (f) {
-    var li = el("li", "fact");
-    li.setAttribute("data-class", f["class"]);
-    var head = el("div", "head");
-    head.appendChild(el("span", "num", f.position + "."));
-    head.appendChild(el("span", "text", f.text));
-    li.appendChild(head);
-    if (f.basis !== null) li.appendChild(el("p", "basis", f.basis));
-    if (f.links.length > 0) {
-      var ev = el("ul", "evidence");
-      f.links.forEach(function (l) {
-        var item = el("li", "", l.cite === null ? l.witness : l.witness + ": " + l.cite);
-        if (l.state !== null) item.appendChild(el("span", "chip", STATES[l.state]));
-        if (l.concern) {
-          var flag = el("span", "flag", "⚑ admissibility concern");
-          flag.setAttribute("title", l.concern);
-          item.appendChild(flag);
-        }
-        if (l.decided_on !== null) item.appendChild(el("span", "decision", "Recorded inadmissible on " + l.decided_on + (l.decision ? ": " + l.decision : "")));
-        ev.appendChild(item);
-      });
-      li.appendChild(ev);
-    }
-    ul.appendChild(li);
-  });
-  list.appendChild(ul);
-  list.appendChild(empty);
-  board.appendChild(list);
-
-  function apply() {
-    var shown = counts.provable + (board.classList.contains("show-pending") ? counts.pending : 0) + (board.classList.contains("show-inadmissible") ? counts.inadmissible : 0);
-    empty.textContent = data.facts.length === 0 ? "This Writing uses no facts." : "No fact to show. Tick a box above to show the others.";
-    empty.hidden = shown > 0;
-  }
-
-  [
-    ["pending", "Show facts not yet in evidence"],
-    ["inadmissible", "Show facts with only inadmissible evidence"]
-  ].forEach(function (pair) {
-    var label = el("label");
-    var box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = saved[pair[0]] === true;
-    board.classList.toggle("show-" + pair[0], box.checked);
-    box.addEventListener("change", function () {
-      board.classList.toggle("show-" + pair[0], box.checked);
-      saved[pair[0]] = box.checked;
-      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* the page works without it */ }
-      apply();
-    });
-    label.appendChild(box);
-    label.appendChild(document.createTextNode(pair[1]));
-    controls.appendChild(label);
-  });
-  apply();
-})();
-`;
-var PROVABLE_FACTS = { name: "Provable Facts", css: CSS, script: SCRIPT, data: provableFactsData };
+// src/templates/view-pages/raw-research.js.ts
+var raw_research_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var data = view.data;\n  var header = document.querySelector("header");\n  var board = document.querySelector(".board");\n  var KEY = "raw-research-filters";\n\n  function el(tag, cls, text) {\n    var node = document.createElement(tag);\n    if (cls) node.className = cls;\n    if (text !== undefined) node.textContent = text;\n    return node;\n  }\n\n  // Counted by statement; a proposition with no statement counts once.\n  var countsRow = el("div", "counts");\n  countsRow.appendChild(el("span", "", "Statements:"));\n  [["In use", data.counts.in_use], ["Undecided", data.counts.undecided], ["Not relevant", data.counts.not_relevant]].forEach(function (pair) {\n    countsRow.appendChild(el("span", "", pair[0] + " " + pair[1]));\n  });\n  header.appendChild(countsRow);\n  function checkbox(text) {\n    var label = el("label");\n    var box = el("input");\n    box.type = "checkbox";\n    label.appendChild(box);\n    label.appendChild(document.createTextNode(" " + text));\n    return { label: label, box: box };\n  }\n  var undecidedBox = checkbox("Show undecided");\n  var notRelevantBox = checkbox("Show not relevant");\n  var search = el("input");\n  search.type = "search";\n  search.placeholder = "Search";\n  search.setAttribute("aria-label", "Search propositions");\n  var filters = el("div", "filters");\n  filters.appendChild(undecidedBox.label);\n  filters.appendChild(notRelevantBox.label);\n  filters.appendChild(search);\n  header.appendChild(filters);\n\n  // Every card and statement keeps its own search text; the filters only toggle hidden.\n  var entries = [];\n  function statementNode(s) {\n    var node = el("div", "stmt " + s.class);\n    var cite = el("p", "cite");\n    if (s.citation_title !== null) cite.appendChild(el("em", "", s.citation_title));\n    cite.appendChild(document.createTextNode(s.citation_rest));\n    node.appendChild(cite);\n    if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));\n    if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" \xB7 ")));\n    return node;\n  }\n  function card(p) {\n    var node = el("article", "prop " + p.class);\n    node.appendChild(p.text === null ? el("p", "text none", "No proposition recorded") : el("p", "text", p.text));\n    if (p.killed_on) node.appendChild(el("p", "dead", "Omitted " + p.killed_on));\n    if (p.dead_end) node.appendChild(el("p", "dead", "Dead end: researched, nothing found"));\n    if (p.linked_to.length > 0) node.appendChild(el("p", "linked", "Linked to: " + p.linked_to.join("; ")));\n    var rows = p.statements.map(function (s) {\n      var row = statementNode(s);\n      node.appendChild(row);\n      return { node: row, cls: s.class, text: [s.citation_title || "", s.citation_rest, s.excerpt || ""].join(" ").toLowerCase() };\n    });\n    if (p.statements.length === 0) node.appendChild(el("p", "linked", "No authority recorded"));\n    return { node: node, cls: p.class, text: (p.text || "").toLowerCase(), rows: rows };\n  }\n\n  data.groups.forEach(function (g) {\n    var sec = el("section");\n    var h2 = el("h2", "", g.heading + " ");\n    var count = el("span", "count", "0");\n    h2.appendChild(count);\n    sec.appendChild(h2);\n    if (g.note) sec.appendChild(el("p", "note", g.note));\n    var stack = el("div", "stack");\n    var cards = g.propositions.map(function (p) {\n      var c = card(p);\n      stack.appendChild(c.node);\n      return c;\n    });\n    sec.appendChild(stack);\n    board.appendChild(sec);\n    entries.push({ node: sec, count: count, cards: cards });\n  });\n  var empty = el("p", "empty", data.groups.length === 0 ? "No propositions of law are recorded for this proceeding." : "Nothing to show with these filters.");\n  board.appendChild(empty);\n\n  var showUndecided = undecidedBox.box;\n  var showNotRelevant = notRelevantBox.box;\n  try {\n    var saved = JSON.parse(localStorage.getItem(KEY) || "{}");\n    showUndecided.checked = saved.undecided === true;\n    showNotRelevant.checked = saved.not_relevant === true;\n  } catch (e) {}\n\n  function shown(cls) {\n    return cls === "in_use" || (cls === "undecided" && showUndecided.checked) || (cls === "not_relevant" && showNotRelevant.checked);\n  }\n  function apply() {\n    var q = search.value.trim().toLowerCase();\n    var any = false;\n    entries.forEach(function (sec) {\n      var visible = 0;\n      sec.cards.forEach(function (c) {\n        var cardMatch = q === "" || c.text.indexOf(q) !== -1;\n        var rowsShown = 0;\n        c.rows.forEach(function (r) {\n          var on = shown(r.cls) && (cardMatch || r.text.indexOf(q) !== -1);\n          r.node.hidden = !on;\n          if (on) rowsShown += 1;\n        });\n        var on = c.rows.length === 0 ? shown(c.cls) && cardMatch : rowsShown > 0;\n        c.node.hidden = !on;\n        if (on) visible += 1;\n      });\n      sec.count.textContent = String(visible);\n      sec.node.hidden = visible === 0;\n      if (visible > 0) any = true;\n    });\n    empty.hidden = any;\n  }\n  function save() {\n    try {\n      localStorage.setItem(KEY, JSON.stringify({ undecided: showUndecided.checked, not_relevant: showNotRelevant.checked }));\n    } catch (e) {}\n  }\n  showUndecided.addEventListener("change", function () { save(); apply(); });\n  showNotRelevant.addEventListener("change", function () { save(); apply(); });\n  search.addEventListener("input", apply);\n  apply();\n})();';
 
 // src/submission/forms/raw-research-page.ts
 function rawResearchClass(row2) {
@@ -97115,172 +97078,18 @@ function buildRawResearchData(dbPath, filing) {
   push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
   return { counts: counts2, groups };
 }
-var PAGE_CSS3 = String.raw`
-.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}
-.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}
-.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);min-width:200px;flex:1 1 200px;max-width:360px}
-.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
-section>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}
-article.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}
-.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}
-.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}
-.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
-.stmt .cite{margin:0}
-.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}
-.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}
-.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}
-.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}
-.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
-[hidden]{display:none!important}
-@media (max-width:600px){main{padding:16px}}
-`;
-var PAGE_SCRIPT3 = String.raw`(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var header = document.querySelector("header");
-  var board = document.querySelector(".board");
-  var KEY = "raw-research-filters";
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  // Counted by statement; a proposition with no statement counts once.
-  var countsRow = el("div", "counts");
-  countsRow.appendChild(el("span", "", "Statements:"));
-  [["In use", data.counts.in_use], ["Undecided", data.counts.undecided], ["Not relevant", data.counts.not_relevant]].forEach(function (pair) {
-    countsRow.appendChild(el("span", "", pair[0] + " " + pair[1]));
-  });
-  header.appendChild(countsRow);
-  function checkbox(text) {
-    var label = el("label");
-    var box = el("input");
-    box.type = "checkbox";
-    label.appendChild(box);
-    label.appendChild(document.createTextNode(" " + text));
-    return { label: label, box: box };
-  }
-  var undecidedBox = checkbox("Show undecided");
-  var notRelevantBox = checkbox("Show not relevant");
-  var search = el("input");
-  search.type = "search";
-  search.placeholder = "Search";
-  search.setAttribute("aria-label", "Search propositions");
-  var filters = el("div", "filters");
-  filters.appendChild(undecidedBox.label);
-  filters.appendChild(notRelevantBox.label);
-  filters.appendChild(search);
-  header.appendChild(filters);
-
-  // Every card and statement keeps its own search text; the filters only toggle hidden.
-  var entries = [];
-  function statementNode(s) {
-    var node = el("div", "stmt " + s.class);
-    var cite = el("p", "cite");
-    if (s.citation_title !== null) cite.appendChild(el("em", "", s.citation_title));
-    cite.appendChild(document.createTextNode(s.citation_rest));
-    node.appendChild(cite);
-    if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));
-    if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" · ")));
-    return node;
-  }
-  function card(p) {
-    var node = el("article", "prop " + p.class);
-    node.appendChild(p.text === null ? el("p", "text none", "No proposition recorded") : el("p", "text", p.text));
-    if (p.killed_on) node.appendChild(el("p", "dead", "Omitted " + p.killed_on));
-    if (p.dead_end) node.appendChild(el("p", "dead", "Dead end: researched, nothing found"));
-    if (p.linked_to.length > 0) node.appendChild(el("p", "linked", "Linked to: " + p.linked_to.join("; ")));
-    var rows = p.statements.map(function (s) {
-      var row = statementNode(s);
-      node.appendChild(row);
-      return { node: row, cls: s.class, text: [s.citation_title || "", s.citation_rest, s.excerpt || ""].join(" ").toLowerCase() };
-    });
-    if (p.statements.length === 0) node.appendChild(el("p", "linked", "No authority recorded"));
-    return { node: node, cls: p.class, text: (p.text || "").toLowerCase(), rows: rows };
-  }
-
-  data.groups.forEach(function (g) {
-    var sec = el("section");
-    var h2 = el("h2", "", g.heading + " ");
-    var count = el("span", "count", "0");
-    h2.appendChild(count);
-    sec.appendChild(h2);
-    if (g.note) sec.appendChild(el("p", "note", g.note));
-    var stack = el("div", "stack");
-    var cards = g.propositions.map(function (p) {
-      var c = card(p);
-      stack.appendChild(c.node);
-      return c;
-    });
-    sec.appendChild(stack);
-    board.appendChild(sec);
-    entries.push({ node: sec, count: count, cards: cards });
-  });
-  var empty = el("p", "empty", data.groups.length === 0 ? "No propositions of law are recorded for this proceeding." : "Nothing to show with these filters.");
-  board.appendChild(empty);
-
-  var showUndecided = undecidedBox.box;
-  var showNotRelevant = notRelevantBox.box;
-  try {
-    var saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-    showUndecided.checked = saved.undecided === true;
-    showNotRelevant.checked = saved.not_relevant === true;
-  } catch (e) {}
-
-  function shown(cls) {
-    return cls === "in_use" || (cls === "undecided" && showUndecided.checked) || (cls === "not_relevant" && showNotRelevant.checked);
-  }
-  function apply() {
-    var q = search.value.trim().toLowerCase();
-    var any = false;
-    entries.forEach(function (sec) {
-      var visible = 0;
-      sec.cards.forEach(function (c) {
-        var cardMatch = q === "" || c.text.indexOf(q) !== -1;
-        var rowsShown = 0;
-        c.rows.forEach(function (r) {
-          var on = shown(r.cls) && (cardMatch || r.text.indexOf(q) !== -1);
-          r.node.hidden = !on;
-          if (on) rowsShown += 1;
-        });
-        var on = c.rows.length === 0 ? shown(c.cls) && cardMatch : rowsShown > 0;
-        c.node.hidden = !on;
-        if (on) visible += 1;
-      });
-      sec.count.textContent = String(visible);
-      sec.node.hidden = visible === 0;
-      if (visible > 0) any = true;
-    });
-    empty.hidden = any;
-  }
-  function save() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ undecided: showUndecided.checked, not_relevant: showNotRelevant.checked }));
-    } catch (e) {}
-  }
-  showUndecided.addEventListener("change", function () { save(); apply(); });
-  showNotRelevant.addEventListener("change", function () { save(); apply(); });
-  search.addEventListener("input", apply);
-  apply();
-})();
-`;
 var RAW_RESEARCH_PAGE = {
   name: "Raw Research",
-  css: PAGE_CSS3,
-  script: PAGE_SCRIPT3,
+  ...composeTemplate("raw-research.html", {
+    "raw-research.html": raw_research_html_default,
+    "view-head.html": view_head_html_default,
+    "board.css": board_css_default,
+    "raw-research.css": raw_research_css_default,
+    "shared.js": shared_js_default,
+    "raw-research.js": raw_research_js_default
+  }),
   data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.filing)
 };
-
-// src/submission/forms/board-template.ts
-var BOARD_CSS = `${board_css_default}
-`;
 
 // src/submission/view-pages.ts
 var VIEW_PAGE_MARKER = "data-view-page";
@@ -97299,61 +97108,11 @@ function escapeRegExp(text5) {
 function isViewPageFile(fileName) {
   return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)} - Job Board \\d+\\.html$`, "i").test(fileName));
 }
-function escapeHtml(text5) {
-  return text5.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-var SHARED_SCRIPT = String.raw`(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var meta = view.meta;
-  if (meta.filing !== "") document.title = view.name + " — " + meta.filing;
-  var row = document.querySelector("header .meta");
-  [
-    ["Writing", meta.filing],
-    ["Matter", meta.matter],
-    ["Client", meta.client],
-    ["Rev", String(meta.revision)]
-  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {
-    if (pair[1] === "") return;
-    var span = document.createElement("span");
-    span.textContent = pair[1];
-    span.setAttribute("data-k", pair[0]);
-    row.appendChild(span);
-  });
-})();
-`;
 function renderViewPageHtml(page, meta2, data) {
-  const name = escapeHtml(page.name);
   const extra = page.metaExtra ? page.metaExtra(data) : void 0;
   const line = JSON.stringify({ name: page.name, meta: meta2, extra, data }).replace(/</g, "\\u003c");
-  return `<!doctype html>
-<html lang="en" ${VIEW_PAGE_MARKER}>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${name}</title>
-<style>
-${BOARD_CSS}${page.css}</style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>${name}</h1>
-    <div class="meta"></div>
-  </header>
-  <div class="board"></div>
-</main>
-<script>
-window.VIEW_PAGE = ${line};
-</script>
-<script>
-${SHARED_SCRIPT}</script>
-<script>
-${page.script}</script>
-</body>
-</html>
-`;
+  return `${page.head}window.VIEW_PAGE = ${line};
+${page.tail}`;
 }
 
 // src/submission/matter-pages.ts
@@ -102742,7 +102501,7 @@ function readRtf(rtf) {
     if (!text6 || st3.skip) return;
     if (fromHtml) {
       if (st3.htmlRtf && !st3.htmlTag) return;
-      html += st3.htmlTag ? text6 : escapeHtml2(text6);
+      html += st3.htmlTag ? text6 : escapeHtml(text6);
       return;
     }
     runs.push({ text: text6, colour: colourOf() ?? "" });
@@ -102935,7 +102694,7 @@ function readRtf(rtf) {
 function hex(n3) {
   return Math.max(0, Math.min(255, n3)).toString(16).padStart(2, "0");
 }
-function escapeHtml2(text5) {
+function escapeHtml(text5) {
   return text5.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function textDecoder(codepage) {
