@@ -1,4 +1,4 @@
-// build-stamp: 2bd0ecb29f5b
+// build-stamp: 2065fd65fb91
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -85354,7 +85354,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "2bd0ecb29f5b";
+var BUILD_STAMP = false ? null : "2065fd65fb91";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94667,56 +94667,14 @@ function courtFileAffidavits(dbPath, filingId, matterRoot) {
   });
 }
 
-// src/submission/forms/board-template.ts
-var BOARD_CSS = `${board_css_default}
-`;
+// src/templates/matter-board/matter-board.css.ts
+var matter_board_css_default = "ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.todo .description{font-weight:500}\nli.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.todo .line{margin:0;font-size:13px;color:var(--muted)}\narticle.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}\n.name{font-weight:600}\n.line .name{font-weight:500}\n.mockups,.jobs{color:var(--muted)}\ndetails.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}\ndetails.retired>summary{cursor:pointer;padding:12px 14px}\ndetails.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}\nheader .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}\nheader .job[hidden]{display:none}\nheader .job.stalled{color:var(--accent)}\nheader .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}\n@keyframes job-spin{to{transform:rotate(360deg)}}";
 
-// src/submission/forms/matter-board-shell.ts
-var MATTER_BOARD_FILE = "Litigation Strategy.html";
-var MATTER_BOARD_MARKER = "data-matter-board-shell";
-var MATTER_CSS = String.raw`
-ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-li.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
-li.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
-li.todo .description{font-weight:500}
-li.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}
-li.todo .line{margin:0;font-size:13px;color:var(--muted)}
-article.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}
-.name{font-weight:600}
-.line .name{font-weight:500}
-.mockups,.jobs{color:var(--muted)}
-details.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}
-details.retired>summary{cursor:pointer;padding:12px 14px}
-details.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}
-header .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}
-header .job[hidden]{display:none}
-header .job.stalled{color:var(--accent)}
-header .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}
-@keyframes job-spin{to{transform:rotate(360deg)}}
-`;
-var HEAD2 = String.raw`<!doctype html>
-<html lang="en" ${MATTER_BOARD_MARKER}>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Litigation Strategy</title>
-<style>
-${BOARD_CSS}${MATTER_CSS}</style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>Litigation Strategy</h1>
-    <div class="meta"></div>
-    <p class="job" hidden></p>
-  </header>
-  <div class="board"></div>
-</main>
-<script>
-`;
-var TAIL2 = String.raw`</script>
-<script>
-(function () {
+// src/templates/matter-board/matter-board.html.ts
+var matter_board_html_default = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Litigation Strategy</title>\n<style>\n@@include(board.css)@@\n\n@@include(matter-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Litigation Strategy</h1>\n    <div class="meta"></div>\n    <p class="job" hidden></p>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(matter-board.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/matter-board/matter-board.js.ts
+var matter_board_js_default = `(function () {
   "use strict";
   var data = window.MATTER_BOARD;
   var header = document.querySelector("header");
@@ -94732,7 +94690,7 @@ var TAIL2 = String.raw`</script>
   if (!data) return;
 
   var meta = data.meta;
-  if (meta.matter !== "") document.title = "Litigation Strategy — " + meta.matter;
+  if (meta.matter !== "") document.title = "Litigation Strategy \u2014 " + meta.matter;
   var metaRow = header.querySelector(".meta");
   [
     ["Matter", meta.matter],
@@ -94755,11 +94713,11 @@ var TAIL2 = String.raw`</script>
     return n === 0 ? "No jobs in progress" : n === 1 ? "1 job in progress" : n + " jobs in progress";
   }
 
-  // One line (ADR 0021 D3): name · lifecycle state · mockup status · jobs in progress. The same
+  // One line (ADR 0021 D3): name \xB7 lifecycle state \xB7 mockup status \xB7 jobs in progress. The same
   // line is drawn under a to-do that points at the filing or proceeding (D5).
   function fill(node, parts) {
     parts.forEach(function (part, i) {
-      if (i > 0) node.appendChild(document.createTextNode(" · "));
+      if (i > 0) node.appendChild(document.createTextNode(" \xB7 "));
       node.appendChild(el("span", part[0], part[1]));
     });
     return node;
@@ -94810,7 +94768,7 @@ var TAIL2 = String.raw`</script>
     card.setAttribute("data-filing-id", String(f.filing_id));
     card.appendChild(el("summary", "", f.title));
     // A Job Board with no Writing is closed, never retired, and prints no reason.
-    card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " — " + f.retirement_reason.replace(/_/g, " ") : "")));
+    card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " \u2014 " + f.retirement_reason.replace(/_/g, " ") : "")));
     return card;
   }
 
@@ -94845,11 +94803,11 @@ var TAIL2 = String.raw`</script>
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
 
   // Live status from the background render job (#589). See the file header for the rules.
-  var STALLED = "Rendering may have stalled — re-open the session to retry";
+  var STALLED = "Rendering may have stalled \u2014 re-open the session to retry";
   var job = header.querySelector(".job");
   var boardMs = (function (m) {
     return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
-  })(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(meta.rendered));
+  })(/^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})/.exec(meta.rendered));
   var tag = null;
 
   function showJob(text, stalled) {
@@ -94873,7 +94831,7 @@ var TAIL2 = String.raw`</script>
       var finished = s.done.length + s.failed.length;
       var total = finished + s.queued.length + (s.current === null ? 0 : 1);
       if (Date.now() - Date.parse(s.updated_at) > s.stall_after_ms) showJob(STALLED, true);
-      else showJob("Rendering mockups — " + finished + " of " + total, false);
+      else showJob("Rendering mockups \u2014 " + finished + " of " + total, false);
       setTimeout(poll, 2000);
     } else if (s.state === "aborted") {
       showJob(STALLED, true);
@@ -94895,11 +94853,17 @@ var TAIL2 = String.raw`</script>
     document.body.appendChild(tag);
   }
   poll();
-})();
-</script>
-</body>
-</html>
-`;
+})();`;
+
+// src/submission/forms/matter-board-shell.ts
+var MATTER_BOARD_FILE = "Litigation Strategy.html";
+var MATTER_BOARD_MARKER = "data-matter-board-shell";
+var { head: HEAD2, tail: TAIL2 } = composeTemplate("matter-board.html", {
+  "matter-board.html": matter_board_html_default,
+  "board.css": board_css_default,
+  "matter-board.css": matter_board_css_default,
+  "matter-board.js": matter_board_js_default
+});
 function renderMatterBoardHtml(data) {
   return `${HEAD2}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
 ${TAIL2}`;
@@ -97314,6 +97278,10 @@ var RAW_RESEARCH_PAGE = {
   data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.filing)
 };
 
+// src/submission/forms/board-template.ts
+var BOARD_CSS = `${board_css_default}
+`;
+
 // src/submission/view-pages.ts
 var VIEW_PAGE_MARKER = "data-view-page";
 var VIEW_PAGES = [
@@ -97413,19 +97381,22 @@ function refuseForeignMatterPages(draftDir, dbPath) {
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
   const live = proceedings.flatMap(({ proceeding, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding, filing })));
   const preFiling = proceedings.filter(({ filings }) => filings.length === 0).map(({ proceeding }) => proceeding);
-  refuseForeignPages(draftDir, pageTargets(live, preFiling).map((t3) => t3.file), viewTargets(live));
+  refuseForeignPages(draftDir, guardTargets(pageTargets(live, preFiling).map((t3) => t3.file), viewTargets(live)));
 }
 function pagePathFor(pages, section2) {
   const { filing_id, proceeding_id } = section2;
   return pages.job_board_paths.find((p3) => filing_id !== null ? p3.filing_id === filing_id : p3.filing_id === null && p3.proceeding_id === proceeding_id)?.path;
 }
-function refuseForeignPages(draftDir, names, views) {
-  const targets = [
-    [join28(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
-    ...names.map((name) => [join28(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
-    ...views.map((v3) => [join28(draftDir, v3.file), VIEW_PAGE_MARKER, v3.page.name])
+function guardTargets(names, views) {
+  return [
+    { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
+    ...names.map((name) => ({ name, marker: JOB_BOARD_MARKER, page: "Job Board" })),
+    ...views.map((v3) => ({ name: v3.file, marker: VIEW_PAGE_MARKER, page: v3.page.name }))
   ];
-  for (const [file, marker, page] of targets) {
+}
+function refuseForeignPages(draftDir, targets) {
+  for (const { name, marker, page } of targets) {
+    const file = join28(draftDir, name);
     if (existsSync27(file) && !readFileSync23(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page}'s marker, so this renderer did not write it`);
     }
@@ -97465,74 +97436,79 @@ function sweepOldPages(draftDir, names) {
   }
   return { ...moved.length > 0 ? { moved_to_trash: moved } : {}, ...skipped.length > 0 ? { trash_skipped: skipped } : {} };
 }
+function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse = {}) {
+  const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
+  const preFiling = fetchPreFilingProceedings(dbPath);
+  const live = ranked.filter((r3) => !r3.filing.retired_on);
+  const targets = pageTargets(live, preFiling);
+  const names = targets.map((t3) => t3.file);
+  const views = viewTargets(live);
+  const meta2 = {
+    revision,
+    matter: client.matterNo ?? "",
+    client: client.clientName ?? ranked[0]?.proceeding.matter_reference ?? preFiling[0]?.matter_reference ?? "",
+    rendered: now
+  };
+  const own = reuse.section;
+  const { only } = reuse;
+  const liveWritten = only === void 0 ? live : live.filter((r3) => r3.filing.id === only);
+  const preFilingWritten = only === void 0 ? preFiling : [];
+  const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+  const viewsWritten = only === void 0 ? views : views.filter((v3) => v3.filing.id === only);
+  const sections = [
+    ...liveWritten.map((r3) => {
+      const manifest = isJobOnlyBoard(r3.filing) ? null : readManifest(mockupDir(dbPath, r3.filing.id));
+      return {
+        proceeding: r3.proceeding,
+        section: own?.meta.filing_id === r3.filing.id ? own : filingBoardData(dbPath, r3.filing, r3.proceeding, client, now, revision, dates, manifest),
+        writings: (manifest?.files ?? []).map((f3) => f3.label ?? { short: stem(f3.file_name), long: stem(f3.file_name) }),
+        views: views.filter((v3) => v3.filing.id === r3.filing.id).map((v3) => ({ name: v3.page.name, file: v3.file }))
+      };
+    }),
+    ...preFilingWritten.map((p3) => ({
+      proceeding: p3,
+      section: own !== void 0 && own.meta.filing_id === null && own.meta.proceeding_id === p3.id ? own : buildPreFilingBoardData(dbPath, p3, { revision, matter: meta2.matter, client: client.clientName ?? p3.matter_reference, rendered: now }),
+      writings: [],
+      views: []
+    }))
+  ];
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos));
+  const jobBoards = sections.map(
+    ({ proceeding, section: section2, writings, views: pageViews }) => renderWorkBoardHtml({
+      meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
+      sections: [section2],
+      dates: pageDates(dates, [section2]),
+      writings,
+      views: pageViews,
+      attached: attachedDrafts(draftDir, section2),
+      court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname12(draftDir)).filter((a3) => a3.mismatch !== null)
+    })
+  );
+  const viewPages = viewsWritten.map(
+    (v3) => renderViewPageHtml(
+      v3.page,
+      { filing: v3.filing.title, matter: meta2.matter, client: meta2.client, revision, rendered: now },
+      v3.page.data({ dbPath, filing: v3.filing, proceeding: v3.proceeding, now, revision })
+    )
+  );
+  const html = [matterBoard, ...jobBoards, ...viewPages];
+  return {
+    pages: guardTargets(targetsWritten.map((t3) => t3.file), viewsWritten).map((t3, i3) => ({ ...t3, html: html[i3] })),
+    keep: [...names, ...views.map((v3) => v3.file)],
+    paths: {
+      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join28(draftDir, t3.file) })),
+      matter_board_path: join28(draftDir, MATTER_BOARD_FILE),
+      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join28(draftDir, v3.file) }))
+    }
+  };
+}
 function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates, timings, reuse = {}) {
   return timed(timings, "matter_pages", () => {
-    const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
-    const preFiling = fetchPreFilingProceedings(dbPath);
-    const live = ranked.filter((r3) => !r3.filing.retired_on);
-    const targets = pageTargets(live, preFiling);
-    const names = targets.map((t3) => t3.file);
-    const views = viewTargets(live);
-    const meta2 = {
-      revision,
-      matter: client.matterNo ?? "",
-      client: client.clientName ?? ranked[0]?.proceeding.matter_reference ?? preFiling[0]?.matter_reference ?? "",
-      rendered: now
-    };
-    const own = reuse.section;
-    const { only } = reuse;
-    const liveWritten = only === void 0 ? live : live.filter((r3) => r3.filing.id === only);
-    const preFilingWritten = only === void 0 ? preFiling : [];
-    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
-    const viewsWritten = only === void 0 ? views : views.filter((v3) => v3.filing.id === only);
-    refuseForeignPages(draftDir, targetsWritten.map((t3) => t3.file), viewsWritten);
-    const pages = [
-      ...liveWritten.map((r3) => {
-        const manifest = isJobOnlyBoard(r3.filing) ? null : readManifest(mockupDir(dbPath, r3.filing.id));
-        return {
-          proceeding: r3.proceeding,
-          section: own?.meta.filing_id === r3.filing.id ? own : filingBoardData(dbPath, r3.filing, r3.proceeding, client, now, revision, dates, manifest),
-          writings: (manifest?.files ?? []).map((f3) => f3.label ?? { short: stem(f3.file_name), long: stem(f3.file_name) }),
-          views: views.filter((v3) => v3.filing.id === r3.filing.id).map((v3) => ({ name: v3.page.name, file: v3.file }))
-        };
-      }),
-      ...preFilingWritten.map((p3) => ({
-        proceeding: p3,
-        section: own !== void 0 && own.meta.filing_id === null && own.meta.proceeding_id === p3.id ? own : buildPreFilingBoardData(dbPath, p3, { revision, matter: meta2.matter, client: client.clientName ?? p3.matter_reference, rendered: now }),
-        writings: [],
-        views: []
-      }))
-    ];
-    const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos));
-    const jobBoards = pages.map(
-      ({ proceeding, section: section2, writings, views: pageViews }) => renderWorkBoardHtml({
-        meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
-        sections: [section2],
-        dates: pageDates(dates, [section2]),
-        writings,
-        views: pageViews,
-        attached: attachedDrafts(draftDir, section2),
-        court_file: section2.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section2.meta.filing_id, dirname12(draftDir)).filter((a3) => a3.mismatch !== null)
-      })
-    );
-    const viewPages = viewsWritten.map(
-      (v3) => renderViewPageHtml(
-        v3.page,
-        { filing: v3.filing.title, matter: meta2.matter, client: meta2.client, revision, rendered: now },
-        v3.page.data({ dbPath, filing: v3.filing, proceeding: v3.proceeding, now, revision })
-      )
-    );
-    const swept = only === void 0 ? sweepOldPages(draftDir, [...names, ...views.map((v3) => v3.file)]) : {};
-    const matterBoardPath = join28(draftDir, MATTER_BOARD_FILE);
-    writePage(matterBoardPath, matterBoard);
-    targetsWritten.forEach((t3, i3) => writePage(join28(draftDir, t3.file), jobBoards[i3]));
-    viewsWritten.forEach((v3, i3) => writePage(join28(draftDir, v3.file), viewPages[i3]));
-    return {
-      job_board_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join28(draftDir, t3.file) })),
-      matter_board_path: matterBoardPath,
-      view_page_paths: views.map((v3) => ({ name: v3.page.name, filing_id: v3.filing.id, path: join28(draftDir, v3.file) })),
-      ...swept
-    };
+    const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);
+    refuseForeignPages(draftDir, pages);
+    const swept = reuse.only === void 0 ? sweepOldPages(draftDir, keep) : {};
+    for (const p3 of pages) writePage(join28(draftDir, p3.name), p3.html);
+    return { ...paths, ...swept };
   });
 }
 var MAX_SESSIONS = 20;

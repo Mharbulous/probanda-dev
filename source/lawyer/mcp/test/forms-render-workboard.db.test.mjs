@@ -2063,14 +2063,16 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
 
 // Visible text is what a string literal or the page's HTML carries, never an identifier or a comment:
 // ids, classes and data keys keep their internal names (design §2).
-// The Litigation Strategy (the To Do List until 2026-10-08, the Matter Board until #871) names jobs in progress, so it is scanned too.
+// The Litigation Strategy (the To Do List until 2026-10-08, the Matter Board until #871) names jobs in progress, so it is scanned too:
+// its page is the template set in src/templates/matter-board/ (map #125).
 test("the Job Board's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
   const pages = [
-    ["workboard-shell.ts", (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Job Board")],
-    ["matter-board-shell.ts", (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
+    [["submission/forms/workboard-shell.ts"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Job Board")],
+    [["templates/matter-board/matter-board.html", "templates/matter-board/matter-board.js"], (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
   ];
-  for (const [file, sawOwnStrings] of pages) {
-    const source = readFileSync(new URL(`../src/submission/forms/${file}`, import.meta.url), "utf-8");
+  for (const [files, sawOwnStrings] of pages) {
+    const file = files.join(", ");
+    const source = files.map((f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf-8")).join("\n");
     const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     const literals = [...code.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map((m) => m[1]);
     const htmlText = [...code.matchAll(/>([^<>\n]+)</g)].map((m) => m[1]);
