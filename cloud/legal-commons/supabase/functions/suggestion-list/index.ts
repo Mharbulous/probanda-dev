@@ -20,7 +20,7 @@ serve(async (_key, body) => {
   }
   try {
     const rows = await sql`select suggestion_id, title, body, source, plugin_version, skill, status,
-        issue_number, created_at, triaged_at
+        issue_number, created_at, triaged_at, items, previews
       from suggestions.suggestion
       where ${status === undefined} or status = ${status ?? ""}
       order by created_at, suggestion_id`;
