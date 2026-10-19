@@ -272,7 +272,7 @@ Only if Pass 1's `exhibit_inventory` lacked exhibit page starts. Dispatch the sa
 
 ### Pass 3 — Per exhibit
 
-One `lawyer:extract-affidavit` dispatch per exhibit with `PASS = 3`, `model: "opus"` and `effort: "high"`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**.
+One `lawyer:extract-affidavit` dispatch per exhibit with `PASS = 3`, `model: "opus"` and `effort: "high"`, **in parallel batches of ≤10**. Each subagent reads **only its assigned page range**. Each exhibit gets a fresh extractor, never a resumed one (SendMessage) and never a fork (`../references/design-decisions.md` #70).
 
 For each exhibit:
 

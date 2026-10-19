@@ -1234,6 +1234,8 @@ No schema change. `references/scripts/list_parties.py` reads every party, read-o
 
 **One document per extractor.** A dispatch carries one document, and a long document is never split across extractors (`operations/ingest-extract.md`, Universal rules). The report's E3 tried both rejected designs: small documents batched to about 40 pages cost 5–23% less only by finding 5–10 points fewer facts, and chunk extractors on a 54-page document cost twice as much for recall inside the single extractor's range. The rule is written down so that no later edit brings either back.
 
+**A fresh extractor per document, in back-to-back waves.** Each document, and each exhibit on Pass 3, gets a fresh extractor, never one resumed by SendMessage and never a fork. The report's E6 found a resume saved −$0.017 to +$0.006 a document, because a run's cost is mostly output, and once lost 2 of 7 facts. A fork reads the parent's whole context, about 150k tokens against an extractor's 9k. The parallel batches of up to 10 stay: each is one wave, and the next starts as soon as the previous one has returned. A running sibling keeps the shared prefix cached (E1), so nothing waits or pings to keep the cache warm. A lapsed cache costs about $0.035 per agent type on Opus.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

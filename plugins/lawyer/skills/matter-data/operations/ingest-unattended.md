@@ -73,7 +73,7 @@ A file whose `path` begins with `2. SOLICITOR CLIENT` (case-insensitive) takes P
 
 ## Step 4 — Read in parallel, write in order
 
-- **Reads run in parallel, in batches of up to 10 extractor dispatches.** Path C's per-pass and per-exhibit dispatches, and Path E's per-child ones, count toward the batch like any other.
+- **Reads run in parallel, in batches of up to 10 extractor dispatches.** Path C's per-pass and per-exhibit dispatches, and Path E's per-child ones, count toward the batch like any other. Each document gets a fresh extractor, never a resumed one (SendMessage) and never a fork (`../references/design-decisions.md` #70).
 - **Writes run one at a time, in list order.** No file's transaction commits before the transactions of every earlier file in the list. Within one document, `ingest-extract.md`'s transaction structure is unchanged: Path C commits the body, then one call per exhibit.
 - **Every `file_path` written is the file's stored form** (conventions §2.4): on `main.sources` (an affidavit's exhibits and a book's children included), on `privileged.privileged_sources`, and on `law.authorities` (a book of authorities' rows carry the book's).
 - A stop or a failure on one file never halts the list. Continue with the next file.
