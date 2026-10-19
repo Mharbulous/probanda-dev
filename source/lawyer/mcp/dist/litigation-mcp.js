@@ -1,4 +1,4 @@
-// build-stamp: 684637774997
+// build-stamp: 995ab0b86a0e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -85359,7 +85359,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "684637774997";
+var BUILD_STAMP = false ? null : "995ab0b86a0e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94952,6 +94952,1254 @@ function buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos) {
   };
 }
 
+// src/templates/job-board/job-board.css.ts
+var job_board_css_default = `/* The Goal card (Goal card design \xA72.9): reversed colours, so it reads apart from every lane in
+   either theme -- ink and paper swap roles, and the dark theme's tokens swap them back. Its only
+   control is the native expand and collapse; the marker is drawn here so it sits beside the
+   sentence rather than on a line of its own. */
+.goal{background:var(--ink);color:var(--paper);border-radius:12px;padding:16px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.goal>.head{display:block;list-style:none}
+details.goal>summary{cursor:pointer}
+details.goal>summary::-webkit-details-marker{display:none}
+details.goal>summary:focus-visible{outline:2px solid var(--pill-bg);outline-offset:4px}
+.goal .sentence{display:inline;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+/* The Writing's lifecycle state, a pill beside the sentence in the criterion state's own style. */
+.goal .head .lifecycle{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
+details.goal .sentence::before{content:"\\25B8\\00A0" / ""}
+details.goal[open] .sentence::before{content:"\\25BE\\00A0" / ""}
+.goal .text{display:block;margin-top:4px;font-size:13.5px}
+.goal ul.criteria{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:1px solid currentColor;display:flex;flex-direction:column;gap:12px}
+.goal .criterion .line{margin:0;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+.goal .criterion .line .ctext{flex:1 1 14ch;font-weight:500;overflow-wrap:anywhere}
+.goal .criterion .line .state{margin-left:auto;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
+.goal .criterion[data-state="unmet"] .state{background:var(--pill-bg);border-color:var(--pill-bg);color:var(--pill-ink)}
+.goal .criterion[data-state="pending"] .state{border-style:dashed}
+.goal ul.items{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.goal ul.items li{overflow-wrap:anywhere}
+.goal details.items{margin-top:4px;font-size:13px}
+.goal details.items>summary{cursor:pointer;width:fit-content}
+details.ticket>summary .subtitle{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)}
+.body .reason{font-size:13px;color:var(--muted)}
+/* The header rows under the title, each in the meta row's own label-and-value style: the matter and
+   client; the proceeding's venue, registry, court file number and style of proceeding, joined by
+   dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
+   Writing's row and the matter's row, plain text with no control, each date as stored and its flag
+   after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
+   and on its criterion row. The margin under the header is this page's own: board-template.ts
+   still has the 28px margin it copied. */
+header{margin-bottom:16px}
+/* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
+header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
+header .meta.proceeding{gap:4px 6px}
+header .meta .flag{margin-left:6px;color:var(--accent)}
+header .meta .flag::before,header .meta .note::before{content:none}
+header .meta span:not([data-k])::before{content:none}
+/* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
+   and collapse. Its body renders the statement's syntax as rows, a label cell beside a text cell, and
+   prints an unrecognised line as written; an inferred one is italic under its caption, and a board
+   with none says so in a muted line. */
+.goals .head .label{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
+.goals .goals-body{margin-top:14px;padding-top:12px;border-top:1px solid currentColor;font-size:13.5px}
+.goals .statement{margin:0;overflow-wrap:anywhere}
+.goals .row{display:flex;gap:0 8px;align-items:baseline}
+.goals .row .label{flex:0 0 auto;white-space:nowrap}
+.goals .row .text{flex:1 1 0;margin-top:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.goals .row .connector{font-style:italic}
+.goals[data-status="inferred"] .statement{font-style:italic}
+.goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
+.goals .none{margin:0;opacity:.75}
+.goal .deadline{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-top:6px;font-size:13.5px}
+.goal .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.goal .dflag{font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
+/* The filing's Writings, one page-shaped thumbnail each, in one row that never wraps and scrolls
+   sideways inside itself. Every thumbnail is the same fixed size; its short label clamps to four
+   lines with an ellipsis. The fuller description is read out from a visually hidden span and, on
+   hover, shown in one tooltip in the Goal card's own colours, outside the strip, which would clip it.
+   A Writing's tile is no control. After the Writings, each of the filing's view pages has a tile of
+   the same size, dashed and badged "view", that is no control either: a link would resolve against a
+   previewed card's web origin, so a session presents the view page on request. */
+.writings{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;list-style:none;margin:0;padding:4px 2px 8px;align-items:flex-start}
+.writing{position:relative;flex:0 0 88px;box-sizing:border-box;aspect-ratio:8.5/11;background:var(--card);border:1px solid var(--frame);border-radius:3px;padding:8px 6px;text-align:center;font-size:13px;line-height:1.3;overflow:hidden}
+.writing .label{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
+.writing .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.writing.view{border-style:dashed}
+.writing.view .badge{display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px;color:var(--accent)}
+.tip{position:fixed;z-index:10;pointer-events:none;max-width:32ch;background:var(--ink);color:var(--paper);font-family:var(--sans-heading);font-weight:600;font-size:13px;line-height:1.3;padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
+.tip[hidden]{display:none}
+@media print{.tip{display:none}}`;
+
+// src/templates/job-board/job-board.html.ts
+var job_board_html_default = '<!doctype html>\n<html lang="en" data-workboard-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Job Board</title>\n<style>\n@@include(workboard.css)@@\n</style>\n<style>\n@@include(job-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Job Board</h1>\n    <div class="meta"></div>\n  </header>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(job-board.js)@@\n</script>\n<script>\n@@include(workboard.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/job-board/job-board.js.ts
+var job_board_js_default = `(function () {
+  "use strict";
+  var data = window.WORKBOARD;
+  var main = document.querySelector("main");
+  var header = document.querySelector("header");
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function stamp(value) {
+    return value.replace("T", " ");
+  }
+  // A local minute stamp as a count of minutes, for differences only; null when it is not one.
+  function minutesOf(value) {
+    var m = /^(\\d{4})-(\\d{2})-(\\d{2})[T ](\\d{2}):(\\d{2})/.exec(value);
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
+  }
+  // How long before the page's Rendered minute a stamp is, then the stamp itself.
+  function ago(value) {
+    var now = minutesOf(data.meta.rendered);
+    var then = minutesOf(value);
+    if (now === null || then === null) return stamp(value);
+    var e = Math.max(0, now - then);
+    var d = Math.floor(e / 1440), h = Math.floor((e % 1440) / 60), m = e % 60;
+    var text = d > 0 ? d + " d " + h + " h" : h > 0 ? h + " h " + m + " min" : m + " min";
+    return text + " ago (" + stamp(value) + ")";
+  }
+
+  if (!data) return;
+
+  var meta = data.meta;
+  if (meta.matter !== "") document.title = "Job Board \u2014 " + meta.matter;
+
+  // One header span: its text, and its label in data-k when it has one. A blank value draws nothing.
+  function metaSpan(row, label, value) {
+    if (!value) return;
+    var span = el("span", "", value);
+    if (label) span.setAttribute("data-k", label);
+    row.appendChild(span);
+  }
+  // A row of dates, each as stored with no day count, its label in data-k and its flag after it.
+  function dateRow(cls, list) {
+    var row = el("div", cls);
+    list.forEach(function (d) {
+      var span = el("span", "", d.date);
+      span.setAttribute("data-k", d.label);
+      if (d.flag) span.appendChild(el("span", "flag", d.flag));
+      row.appendChild(span);
+    });
+    return row;
+  }
+
+  // The matter and the client, the client's number in brackets when it has one.
+  var metaRow = header.querySelector(".meta");
+  metaSpan(metaRow, "Matter", meta.matter);
+  metaSpan(metaRow, "Client", meta.client ? meta.client + (meta.client_no ? " (" + meta.client_no + ")" : "") : "");
+
+  // A section's lifecycle state, with its date when it has one.
+  function stateText(smeta) {
+    return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
+  }
+
+  // The page's one section names the page: "Job Board <id>", the id the file name's, then the
+  // heading's gold rule, then the Writing's title on its own line.
+  var first = data.sections[0];
+  if (first) {
+    var h1 = header.querySelector("h1");
+    if (first.meta.filing_id === null) {
+      h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
+    } else {
+      h1.textContent = "Job Board " + first.meta.filing_id;
+      if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
+    }
+  }
+
+  // The section's proceeding: its venue (the forum's last segment), registry, court file number and
+  // style of proceeding, a dot between each two drawn, only the file number labelled. A page with no
+  // Goal card shows the section's state here, as a chip. No row when there is nothing to draw.
+  var venueRow = el("div", "meta proceeding");
+  function proceedingPart(label, value) {
+    if (!value) return;
+    if (venueRow.children.length > 0) venueRow.appendChild(document.createTextNode(" \xB7 "));
+    metaSpan(venueRow, label, value);
+  }
+  proceedingPart("", (meta.forum || "").split("/").pop());
+  proceedingPart("", meta.registry ? meta.registry + " Registry" : "");
+  proceedingPart("Court File No.", meta.file_number || "");
+  proceedingPart("", meta.style_of_cause || "");
+  if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
+  if (venueRow.children.length > 0) header.appendChild(venueRow);
+
+  // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
+  // filing on this page with each deadline no Goal card carries, absent when there is none; then the
+  // matter's row, holding the other anchors the same way. A note says why none were read, or that
+  // the matter has none; when every date is this Writing's, the matter's row is not drawn.
+  var pageDates = data.dates;
+  if (pageDates) {
+    var writing = pageDates.writing || [];
+    if (writing.length > 0) header.appendChild(dateRow("meta writing", writing));
+    if (pageDates.note !== undefined) {
+      var noteRow = el("div", "meta dates");
+      noteRow.appendChild(el("span", "note", pageDates.note));
+      header.appendChild(noteRow);
+    } else if (pageDates.header.length > 0) {
+      header.appendChild(dateRow("meta dates", pageDates.header));
+    } else if (writing.length === 0) {
+      var noneRow = el("div", "meta dates");
+      noneRow.appendChild(el("span", "note", "No date is recorded for this matter."));
+      header.appendChild(noneRow);
+    }
+  }
+
+  // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
+  // filing's board always drew them.
+  data.sections.forEach(function (section) {
+    var smeta = section.meta;
+    if (smeta.ready_to_retire) {
+      main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " \u2014 ready to retire"));
+    }
+    var board = el("div", "board");
+    if (smeta.filing_id !== null) board.setAttribute("data-filing-id", String(smeta.filing_id));
+    board.setAttribute("data-proceeding-id", String(smeta.proceeding_id));
+    main.appendChild(board);
+    // This filing's deadline criteria's dates, by criterion id, joined to its Goal card here.
+    var when = pageDates && smeta.filing_id !== null ? pageDates.criteria[String(smeta.filing_id)] || {} : {};
+    drawSection(section, board, when, data.writings || [], data.views || [], data.attached || [], data.court_file || []);
+  });
+
+  function drawSection(data, board, when, writings, views, attached, courtFile) {
+    function link(id) {
+      var a = el("a", "", "Job #" + id);
+      a.href = "#ticket-" + id;
+      return a;
+    }
+    // An edge outside this proceeding has no card to link to: named in plain text, never dropped.
+    function ticketRef(edge) {
+      return edge.status === null ? "Job #" + edge.id + " (not in this proceeding)" : link(edge.id);
+    }
+    function row(dl, term, parts, mono) {
+      dl.appendChild(el("dt", "", term));
+      var dd = el("dd", mono ? "mono" : "");
+      [].concat(parts).forEach(function (part) {
+        dd.appendChild(typeof part === "string" ? document.createTextNode(part) : part);
+      });
+      dl.appendChild(dd);
+    }
+    function pct(done, total) {
+      var raw = (done / total * 100).toFixed(1);
+      return (raw.slice(-2) === ".0" ? raw.slice(0, -2) : raw) + "%";
+    }
+
+    var CHIPS = {
+      ready: ["ready", "Ready"],
+      wip: ["wip", "In Progress"],
+      bring_forward: ["bring-forward", "Bring Forward"],
+      waiting: ["waiting", "Blocked"],
+      superseded: ["superseded", "Superseded"],
+      completed: ["done", "Completed"],
+      rejected: ["rejected", "Shelved"]
+    };
+
+    // Panels list by job number so a job is easy to find. The summary a session reads keeps queue
+    // order (priority, then id), which is the Dispatch rule; filter() returns a copy, so data.tickets
+    // is never reordered.
+    function byId(a, b) { return a.id - b.id; }
+
+    function ticketCard(t) {
+      var card = el("details", "ticket");
+      card.setAttribute("name", "board");
+      card.id = "ticket-" + t.id;
+      card.setAttribute("data-kind", t.kind);
+      card.setAttribute("data-priority", String(t.priority));
+      card.setAttribute("data-status", t.category);
+
+      var summary = el("summary");
+      summary.appendChild(el("span", "ref", "Job #" + t.id));
+      summary.appendChild(el("span", "title", t.title));
+      // Finished on the server (Goal card design \xA74.7), drawn as given.
+      if (t.subtitle) summary.appendChild(el("span", "subtitle", t.subtitle));
+      // An unattended run's lock, finished on the server (Goal card design \xA75.4) and drawn as given.
+      if (t.lock_note) summary.appendChild(el("span", "subtitle", t.lock_note));
+      // Idle past the firm's threshold, finished on the server and drawn as given.
+      if (t.idle_flag) summary.appendChild(el("span", "subtitle", t.idle_flag));
+      // The job's start date as a plain date: never a deadline, and never a day count.
+      if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
+      var progress = el("span", "progress");
+      progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
+      // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
+      if (t.steps.length > 0) {
+        var done = t.steps.filter(function (s) { return s.done_at !== null; }).length;
+        var bar = el("span", "bar");
+        bar.style.setProperty("--pct", pct(done, t.steps.length));
+        bar.appendChild(el("i"));
+        progress.appendChild(bar);
+        progress.appendChild(document.createTextNode(done + "/" + t.steps.length));
+      }
+      summary.appendChild(progress);
+      card.appendChild(summary);
+
+      var body = el("div", "body");
+      // Why the ticket is superseded, finished on the server (Goal card design \xA74.7) and drawn as given.
+      if (t.superseded_reason) body.appendChild(el("p", "reason", t.superseded_reason));
+      if (t.steps.length > 0) {
+        var ol = el("ol", "steps");
+        var nextMarked = false;
+        t.steps.forEach(function (s) {
+          var cls = "";
+          if (s.done_at !== null) {
+            cls = "done";
+          } else if (!nextMarked) {
+            cls = "next";
+            nextMarked = true;
+          }
+          ol.appendChild(el("li", cls, s.text));
+        });
+        body.appendChild(ol);
+      }
+      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
+      // under a heading of their own and outside the step count.
+      if (t.sources.length > 0) {
+        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
+        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
+        var sources = el("ol", "steps");
+        t.sources.forEach(function (s) {
+          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
+          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
+        });
+        body.appendChild(sources);
+      }
+
+      var dl = el("dl");
+      // Progress is recorded progress only, so it agrees with the idle flag; Session active is the
+      // holder's end-of-turn stamp (jobs-run.md \xA76a), which is not progress; Taken is the lock.
+      if (t.category === "wip") {
+        row(dl, "Progress", t.last_activity_at === null ? "(none recorded)" : ago(t.last_activity_at), true);
+        if (t.active_at) row(dl, "Session active", ago(t.active_at), true);
+        row(dl, "Taken", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
+      }
+      if (t.category === "completed" && t.completed_at) row(dl, "Completed", stamp(t.completed_at), true);
+      row(dl, "Priority", String(t.priority), true);
+      // A job superseded by another job, a stale gate job included (#907), says so only here.
+      if (t.category === "superseded" && t.superseded_by) row(dl, "Superseded by", ticketRef(t.superseded_by));
+      // Each blocker says why by its own status: a superseded or shelved one needs a fresh outline.
+      if (t.category === "waiting") {
+        t.blocked_by.filter(function (b) { return b.status !== "completed"; }).forEach(function (b) {
+          if (b.status === "superseded" || b.rejected) row(dl, "Blocked by", [ticketRef(b), " \u2014 superseded, needs a fresh outline"]);
+          else row(dl, "Blocked by", t.circular ? [ticketRef(b), " \u2014 circular, needs a fresh outline"] : ticketRef(b));
+        });
+      }
+      t.conflicts.forEach(function (p) {
+        row(dl, "Either/or", p.status === "wip" ? [ticketRef(p), " \u2014 in progress"] : ticketRef(p));
+      });
+      body.appendChild(dl);
+      card.appendChild(body);
+      return card;
+    }
+
+    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
+    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
+    function restoreLink(instruction) {
+      var restore = el("a", "", "Restore");
+      restore.href = "#";
+      // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
+      function showInstruction() { restore.textContent = instruction; }
+      restore.addEventListener("click", function (event) {
+        event.preventDefault();
+        if (!navigator.clipboard || !navigator.clipboard.writeText) { showInstruction(); return; }
+        navigator.clipboard.writeText(instruction).then(function () {
+          restore.textContent = "Copied";
+          setTimeout(function () { restore.textContent = "Restore"; }, 1500);
+        }, showInstruction);
+      });
+      return restore;
+    }
+
+    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
+    // colon; the stylesheet keeps them.
+    function deletedLine(d) {
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
+      line.appendChild(document.createTextNode(" *DELETED* "));
+      line.appendChild(restoreLink("restore job #" + d.id));
+      return line;
+    }
+
+    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
+    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
+    function discardedSeedLine(s) {
+      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
+      var line = el("p", "deleted");
+      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
+      line.appendChild(document.createTextNode(" *DISCARDED* "));
+      line.appendChild(restoreLink("restore loose thread #" + s.id));
+      return line;
+    }
+
+    function seedCard(s) {
+      var card = el("details", "seed");
+      card.setAttribute("name", "board");
+      card.id = "seed-" + s.id;
+      var summary = el("summary");
+      summary.appendChild(el("span", "title", s.idea));
+      if (s.from_filing !== null) summary.appendChild(el("span", "subtitle", "from " + s.from_filing));
+      card.appendChild(summary);
+      var body = el("div", "body");
+      var dl = el("dl");
+      row(dl, "Surfaced by", s.surfaced_by);
+      // A sibling filing's job has no card on this board, so it is named, not linked.
+      if (s.origin_ticket_id !== null) row(dl, "From", s.from_filing === null ? link(s.origin_ticket_id) : "Job #" + s.origin_ticket_id + " on " + s.from_filing);
+      row(dl, "Created", stamp(s.created), true);
+      body.appendChild(dl);
+      card.appendChild(body);
+      return card;
+    }
+
+    // A draft that is not a Writing, attached to this board (ADR 0042): a client letter's folder or a
+    // reply's file, drawn as plain text with no link (shared/html-pages.md, "Cards only, no link"). A
+    // client letter's counsel's-review status is its review draft's first line, read at this write and
+    // drawn as given; a path with nothing at it, or one that could not be read, says so, never dropped.
+    var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply" };
+    var ATTACHED_CUE = "To open, move or detach an attached draft, tell a session.";
+    function attachedCard(a) {
+      var card = el("details", "seed attachment");
+      card.setAttribute("name", "board");
+      card.id = "attachment-" + a.id;
+      var summary = el("summary");
+      summary.appendChild(el("span", "title", a.name));
+      var status = "";
+      if (a.state === "missing") status = "Missing: nothing is at this path";
+      else if (a.state === "outside") status = "Not in the draft folder";
+      else if (a.state === "unreadable") status = "Unreadable: " + (a.error || "error");
+      else if (a.kind === "client_letter") {
+        status = a.review.length === 0 ? "No review draft found"
+          : a.review.length === 1 ? "Counsel's review: " + a.review[0].status
+          : "Counsel's review: " + a.review.length + " review drafts";
+      }
+      summary.appendChild(el("span", "subtitle", ATTACHED_KINDS[a.kind] + (status ? " \xB7 " + status : "")));
+      card.appendChild(summary);
+      var body = el("div", "body");
+      var dl = el("dl");
+      row(dl, "Path", a.path, true);
+      row(dl, "Attached", a.attached_on, true);
+      if (a.proceeding_wide) row(dl, "Board", "No Writing: shown on this proceeding's first live Writing's board until it is moved to a Writing");
+      a.review.forEach(function (r) { row(dl, "Review draft", r.file + " \u2014 " + r.status); });
+      body.appendChild(dl);
+      card.appendChild(body);
+      return card;
+    }
+
+    // A relied-on affidavit whose court-file name disagrees with drafting data: one card each, drawn as
+    // plain text with no link. The server sends the finished text; the shell derives nothing.
+    var COURT_FILE_CUE = "To record the court file's date in the drafting data, tell a session.";
+    function courtFileCard(a) {
+      var card = el("details", "seed court-file");
+      card.setAttribute("name", "board");
+      card.id = "court-file-" + a.document_id;
+      var summary = el("summary");
+      summary.appendChild(el("span", "title", a.label));
+      summary.appendChild(el("span", "subtitle", a.mismatch));
+      card.appendChild(summary);
+      var body = el("div", "body");
+      var dl = el("dl");
+      if (a.court_file) row(dl, "Court file", a.court_file.file_name, true);
+      row(dl, "Drafting data", a.recorded.made_on ? "made " + a.recorded.made_on : "unsworn");
+      body.appendChild(dl);
+      card.appendChild(body);
+      return card;
+    }
+
+    // Proposals (design \xA713). The shell draws the lane the server assigned and derives none of its
+    // own (local-only design \xA75): it reads the lane, never a marker, a ticket or a rejection. The
+    // Shelved lane is read-only, so no line carries a checkbox, a red X, a Go button or any other control.
+    // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
+    var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
+
+    // The card header's work name: the title without its trailing ": " + label. Derived rather than
+    // listed, because one work name carries a colon of its own.
+    function workName(p) {
+      var tail = ": " + p.label;
+      return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
+    }
+    // A witnesses-keyed count is displayed beside the item, never inside it (design \xA78).
+    function itemCount(p) {
+      return p.count === undefined ? "" : " \u2014 " + p.count;
+    }
+    // Text, then glyph, left-aligned, with any status pinned right. Only the text truncates in CSS:
+    // the glyph sits in a span of its own that never shrinks, so a clipped line keeps the glyph that
+    // names its work. The tooltip on the row carries the whole line, glyph included.
+    function proposalLine(p, text) {
+      var li = el("li");
+      var label = el("span", "line");
+      label.appendChild(el("span", "text", text + itemCount(p)));
+      // The space belongs to the glyph so the row still reads as one sentence when it is copied or
+      // read out; the stylesheet keeps it rather than collapsing it away.
+      label.appendChild(el("span", "glyph", " " + p.marker));
+      li.title = label.textContent;
+      li.appendChild(label);
+      // \xA77: a Proposal held by a ticket on another filing stays visible and inert, so no work
+      // disappears silently. One held by a ticket on this board's own filing is not drawn at all.
+      if (p.lane === "held") li.appendChild(el("span", "status", "already a job on " + p.holder.ticketed_on));
+      return li;
+    }
+    function proposalCard(items) {
+      var card = el("div", "proposal");
+      if (items.length > 1) {
+        var markers = [];
+        items.forEach(function (p) { if (markers.indexOf(p.marker) < 0) markers.push(p.marker); });
+        card.appendChild(el("p", "head", workName(items[0]) + " " + markers.join(" ") + " \u2014 " + items.length));
+      }
+      var lines = el("ul", "lines");
+      // A card of one collapses to that item's own line, whose title already reads work name plus item.
+      items.forEach(function (p) { lines.appendChild(proposalLine(p, items.length === 1 ? p.title : p.item)); });
+      card.appendChild(lines);
+      return card;
+    }
+    // Grouped by slug in server order, which is card order. The two primary-authority markers already
+    // share one slug on the server, so they land on one card with no special case here. No glyph is
+    // written into this code: every one on the board comes from the render's own inventory.
+    function proposalCards(drawn) {
+      var order = [];
+      var bySlug = Object.create(null);
+      data.proposals.forEach(function (p) {
+        if (!drawn(p)) return;
+        if (bySlug[p.slug] === undefined) {
+          bySlug[p.slug] = [];
+          order.push(p.slug);
+        }
+        bySlug[p.slug].push(p);
+      });
+      return order.map(function (slug) { return proposalCard(bySlug[slug]); });
+    }
+
+    // Every section always renders, with a count -- an empty one is itself the answer to
+    // "is anything ready to assign?" The count is the cards' unless given: Completed counts only
+    // its completed jobs, never the deleted lines drawn among them.
+    function section(id, heading, emptyText, cards, cue, count) {
+      var sec = el("section");
+      sec.id = id;
+      var h2 = el("h2", "", heading + " ");
+      h2.appendChild(el("span", "count", String(count === undefined ? cards.length : count)));
+      sec.appendChild(h2);
+      if (cards.length === 0) {
+        sec.appendChild(el("p", "empty", emptyText));
+      } else {
+        var stack = el("div", "stack");
+        cards.forEach(function (c) { stack.appendChild(c); });
+        sec.appendChild(stack);
+      }
+      if (cue !== undefined) sec.appendChild(el("p", "cue", cue));
+      board.appendChild(sec);
+    }
+
+    // The Goal card (Goal card design \xA72.9), above the first lane. The server sends the sentence, the
+    // card string and every criterion finished, so the shell derives none of them. A pre-filing board
+    // sends no goal and gets no card (\xA72.1). With no criteria (a retired filing, a kind with no stock
+    // list) there is nothing to expand, so the card is not expandable.
+    var STATES = { met: "Met", unmet: "Unmet", pending: "Pending" };
+    // A deadline criterion's date as stored, then its review flag (ADR 0013, second 2026-10-04
+    // amendment). The section's data carries no date; the page's dates are joined here.
+    function deadlineDate(node, c) {
+      var d = when[c.id];
+      if (!d) return;
+      node.appendChild(el("span", "date", d.date));
+      if (d.flag) node.appendChild(el("span", "dflag", d.flag));
+    }
+    // A criterion's fold-out label. Markers print only where work is open, so the board counts the
+    // unmet items and never a total. A row with nothing outstanding holds informational lines.
+    function itemsLabel(c) {
+      if (c.source !== "inventory" && c.outstanding === 0) {
+        return "Show " + c.items.length + (c.items.length === 1 ? " note" : " notes");
+      }
+      var label = c.outstanding + (c.outstanding === 1 ? " item is unmet" : " items are unmet");
+      if (c.source !== "inventory") return label;
+      // Relies on inventoryCriterion listing the open items first, then the shelved, then the suppressed.
+      var suppressed = c.replaces ? c.replaces.filter(function (r) { return r !== null; }).length : 0;
+      var shelved = c.items.length - c.outstanding - suppressed;
+      if (shelved > 0) label += ", " + shelved + " shelved";
+      return suppressed > 0 ? label + ", " + suppressed + " suppressed" : label;
+    }
+    function goalCard(goal, criteria) {
+      var expands = criteria.length > 0;
+      var card = el(expands ? "details" : "div", "goal");
+      card.id = "goal";
+      card.setAttribute("data-state", goal.state);
+      var head = el(expands ? "summary" : "div", "head");
+      head.appendChild(el("span", "sentence", goal.sentence));
+      // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "lifecycle", stateText(data.meta)));
+      if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
+      // An unmet deadline stays in the head, so it shows whether the card is open or closed.
+      criteria.forEach(function (c) {
+        if (c.source !== "practice" || c.state !== "unmet") return;
+        var line = el("span", "deadline");
+        line.appendChild(el("span", "", c.text));
+        deadlineDate(line, c);
+        head.appendChild(line);
+      });
+      card.appendChild(head);
+      if (!expands) return card;
+      var list = el("ul", "criteria");
+      criteria.forEach(function (c) {
+        var li = el("li", "criterion");
+        li.setAttribute("data-criterion", c.id);
+        li.setAttribute("data-state", c.state);
+        var line = el("p", "line");
+        line.appendChild(el("span", "ctext", c.text));
+        if (c.source === "practice") deadlineDate(line, c);
+        // No count on a criterion with nothing outstanding -- "Met \u2014 0" is noise.
+        line.appendChild(el("span", "state", STATES[c.state] + (c.outstanding > 0 ? " \u2014 " + c.outstanding : "")));
+        li.appendChild(line);
+        if (c.items.length > 0) {
+          // Closed until clicked, so a long list never buries the criterion lines. Printing opens it.
+          var more = el("details", "items");
+          more.appendChild(el("summary", "", itemsLabel(c)));
+          var items = el("ul", "items");
+          c.items.forEach(function (item, i) {
+            var row = el("li", "", item);
+            // A suppressed item's \u{1F92B} shows the marker it replaces on hover (schema v69).
+            if (c.replaces && c.replaces[i]) row.title = "\u{1F92B} replaces " + c.replaces[i] + ": the requirement stands, set aside by you";
+            items.appendChild(row);
+          });
+          more.appendChild(items);
+          li.appendChild(more);
+        }
+        list.appendChild(li);
+      });
+      card.appendChild(list);
+      return card;
+    }
+    // The statement of goals' card, labelled Goal, on every board, at the top of the section above the
+    // Completion Criteria card. Closed, it shows the description; open, the statement as stored. The
+    // server sends both finished, so the shell derives neither. Printing opens it, as it opens every
+    // details.goal.
+    function goalsCard(g) {
+      var card = el("details", "goal goals");
+      card.id = "goals";
+      card.setAttribute("data-status", g.status || "none");
+      var head = el("summary", "head");
+      head.appendChild(el("span", "sentence", g.description));
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(el("span", "label", "Goal"));
+      card.appendChild(head);
+      var body = el("div", "goals-body");
+      if (g.statement === null) {
+        body.appendChild(el("p", "none", "No statement of goals yet"));
+      } else {
+        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
+        body.appendChild(statementRows(g.statement, g.status));
+      }
+      card.appendChild(body);
+      return card;
+    }
+    // The statement as rows, one per stored line, each indented 1.5em per level of two spaces. A
+    // labelled line puts its label in a cell of its own, so a wrapped line returns to the text's left
+    // edge; a connector line is one text cell; any other line is printed as written.
+    function statementRows(statement, status) {
+      var wrap = el("div", "statement");
+      statement.split("\\n").forEach(function (line) {
+        var row = el("div", "row");
+        var indent = /^ */.exec(line)[0].length;
+        row.style.marginLeft = (indent / 2) * 1.5 + "em";
+        var m = /^( *)(Goal[^:\\n]*?)(, (?:any one|both|all) of)?:\\s?(.*)$/.exec(line);
+        var trimmed = line.trim();
+        if (m) {
+          row.appendChild(el("span", "label", m[2] + (m[3] || "") + ":"));
+          row.appendChild(el("span", "text", m[4]));
+        } else if (trimmed === "or alternatively," || trimmed === "and") {
+          row.appendChild(el("span", status !== "inferred" ? "text connector" : "text", trimmed));
+        } else {
+          row.appendChild(el("span", "text", line));
+        }
+        wrap.appendChild(row);
+      });
+      return wrap;
+    }
+    board.appendChild(goalsCard(data.goals));
+
+    if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
+
+    // The filing's Writings, in its last render's document order, between the Goal card and Ready:
+    // each tile shows its short label, and a screen reader reads the fuller one instead. On hover the
+    // fuller one shows in a single tooltip on the body. A Writing's tile is no control. After them,
+    // each of the filing's view pages draws as a tile of the same size, also no control.
+    if (writings.length > 0 || views.length > 0) {
+      var strip = el("ol", "writings");
+      strip.setAttribute("aria-label", "Writings");
+      writings.forEach(function (w) {
+        var li = el("li", "writing");
+        li.setAttribute("data-long", w.long);
+        var label = el("span", "label", w.short);
+        label.setAttribute("aria-hidden", "true");
+        li.appendChild(label);
+        li.appendChild(el("span", "sr", w.long));
+        strip.appendChild(li);
+      });
+      views.forEach(function (v) {
+        var li = el("li", "writing view");
+        var long = v.name + " (view page: ask a session to show it)";
+        li.setAttribute("data-long", long);
+        var badge = el("span", "badge", "view");
+        badge.setAttribute("aria-hidden", "true");
+        li.appendChild(badge);
+        var label = el("span", "label", v.name);
+        label.setAttribute("aria-hidden", "true");
+        li.appendChild(label);
+        li.appendChild(el("span", "sr", long));
+        strip.appendChild(li);
+      });
+      board.appendChild(strip);
+
+      var tip = el("div", "tip");
+      tip.setAttribute("role", "tooltip");
+      tip.hidden = true;
+      document.body.appendChild(tip);
+      strip.addEventListener("mouseover", function (event) {
+        var tile = event.target.closest(".writing");
+        if (!tile) return;
+        tip.textContent = tile.getAttribute("data-long");
+        tip.hidden = false;
+        var r = tile.getBoundingClientRect();
+        var t = tip.getBoundingClientRect();
+        var top = r.bottom + 6 + t.height > window.innerHeight ? r.top - 6 - t.height : r.bottom + 6;
+        var left = Math.max(4, Math.min(r.left, document.documentElement.clientWidth - t.width - 4));
+        tip.style.top = top + "px";
+        tip.style.left = left + "px";
+      });
+      strip.addEventListener("mouseout", function (event) {
+        if (!event.relatedTarget || !event.relatedTarget.closest || !event.relatedTarget.closest(".writing")) tip.hidden = true;
+      });
+      strip.addEventListener("scroll", function () { tip.hidden = true; });
+    }
+
+    function jobSection(category, id, heading, emptyText) {
+      var tickets = data.tickets.filter(function (t) { return t.category === category; });
+      var items = tickets.map(function (t) { return { id: t.id, node: ticketCard(t) }; });
+      // Completed also draws each deleted job's struck line, in job-number order among the cards.
+      if (category === "completed") {
+        items = items.concat(data.deleted.map(function (d) { return { id: d.id, node: deletedLine(d) }; }));
+      }
+      section(id, heading, emptyText, items.sort(byId).map(function (item) { return item.node; }), undefined, tickets.length);
+    }
+    jobSection("ready", "ready", "Ready", "Nothing ready to assign.");
+    jobSection("wip", "in-progress", "In Progress", "Nothing in progress.");
+    jobSection("bring_forward", "bring-forward", "Bring Forward", "Nothing held for a bring-forward date.");
+    jobSection("waiting", "waiting-on", "Blocked", "Nothing blocked.");
+    jobSection("completed", "completed", "Completed", "Nothing completed.");
+    // Shelved holds shelved tickets and the Proposals shelved directly. A Proposal hidden
+    // by a shelved ticket's snapshot row never reaches the board at all, so it gets no line here.
+    section(
+      "rejected-angles",
+      "Shelved",
+      "Nothing shelved.",
+      data.tickets.filter(function (t) { return t.category === "rejected"; }).sort(byId).map(ticketCard)
+        .concat(proposalCards(function (p) { return p.lane === "rejected"; })),
+      PROPOSAL_CUE
+    );
+    jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
+    // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
+    // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
+    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
+    // Either way the count is the open threads'.
+    var threadsPage = views.filter(function (v) { return v.name === "Loose Threads"; })[0];
+    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
+      var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
+      section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
+    } else {
+      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
+    }
+    section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
+    if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
+  }
+})();`;
+
+// src/templates/job-board/workboard.css.ts
+var workboard_css_default = `/* Job Board stylesheet (design doc \xA77, 2026-09-08). System fonts only: no
+   network fetch, so the board reads offline and inside a sandboxed pane. One
+   accent, used three times: the Ready heading, the in-progress chip, links.
+   Palette and heading font evoke the Logica Law brand sheet (2026-09-18)
+   without embedding its logo or its exact typeface -- teal/mint/gold, and a
+   system geometric-sans stack in place of the brand's Sackers/Questrial.
+   Mid Teal, Mint and Bronze (2026-09-19, ticket #691) dress the section
+   panel, the card frame, the count pill and the title's gradient rule. */
+:root{
+  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;
+  --accent:#8A5F1F;--accent-soft:#F7ECD6;--done:#025056;
+  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);
+  --deleted:#A3221B;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
+  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
+  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
+  --deleted:#FF8A80;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
+  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
+  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
+  --deleted:#FF8A80;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+main{padding:28px}
+header{display:flex;flex-direction:column;gap:6px;margin-bottom:28px}
+header h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}
+header h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}
+header .meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
+header .meta span::before{content:attr(data-k) " ";color:var(--line-strong)}
+header .notice{margin:4px 0 0;font-size:13px;color:var(--wip);background:var(--wip-soft);border:1px solid var(--wip);border-radius:6px;padding:8px 12px}
+
+/* One vertical list at every width (practitioner, 2026-09-15): sections stack,
+   and each section's cards stack one per row. No card grid and no width
+   breakpoint, however wide the pane or window. */
+.board{display:flex;flex-direction:column;gap:28px}
+section{background:var(--panel);border-radius:12px;padding:16px 18px}
+section>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}
+#ready>h2{color:var(--accent)}
+section>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}
+section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* Cards. */
+details.ticket,details.seed{background:var(--card);border:2px solid var(--frame);border-radius:10px;overflow:hidden;transition:border-color .15s}
+details.ticket:hover,details.seed:hover{border-color:var(--line-strong)}
+details.ticket[open],details.seed[open]{border-color:var(--ink)}
+details.ticket[data-status="superseded"],details.ticket[data-status="completed"]{opacity:.7}
+details.ticket>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;padding:12px 14px}
+details.seed>summary{list-style:none;cursor:pointer;display:block;padding:12px 14px}
+details.ticket>summary::-webkit-details-marker,details.seed>summary::-webkit-details-marker{display:none}
+details.ticket>summary:focus-visible,details.seed>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ref{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.title{font-weight:500}
+details.seed .title{font-weight:400}
+.progress{grid-column:1/-1;font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
+.bar{width:64px;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pill-bg);width:var(--pct)}
+.chip{font-size:11px;font-weight:500;padding:0 7px;border-radius:999px;white-space:nowrap;border:1px solid var(--muted);color:var(--muted);line-height:1.6}
+.chip.wip{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+.chip.done{background:var(--line);border-color:var(--line);color:var(--muted)}
+.body{border-top:1px solid var(--line);padding:14px 14px 16px;display:flex;flex-direction:column;gap:14px;max-width:72ch}
+.body p{margin:0}
+.body dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}
+.body dt{color:var(--muted)}
+.body dd{margin:0}
+.body dd.mono{font-family:var(--mono);font-size:12px}
+.body a{color:var(--accent)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+ol.steps li{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;font-size:13.5px}
+ol.steps li::before{content:"";width:14px;height:14px;margin-top:3px;border:1.5px solid var(--line-strong);border-radius:3px}
+ol.steps li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+ol.steps li.done::before{border-color:var(--done);background-color:var(--done);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-size:11px;background-repeat:no-repeat;background-position:center}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}}
+:root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
+ol.steps li.next{font-weight:500}
+ol.steps li.next::before{border-color:var(--ink)}
+p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
+
+/* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
+   two spaces after the colon. */
+p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
+p.deleted s{white-space:pre-wrap}
+p.deleted a{color:inherit}
+/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
+   line in ordinary ink, unstruck. */
+p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
+
+/* Proposal cards (design \xA713). Read-only: text, then glyph, with any status pinned right. A long
+   line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
+   whole line. */
+.proposal{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:12px 14px}
+.proposal .head{margin:0 0 6px;font-weight:500}
+.proposal ul.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.proposal ul.lines li{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;font-size:13.5px}
+/* The row's text and glyph stay together and left-aligned: only the text truncates, and the glyph
+   never shrinks, so the ellipsis can never eat it. overflow:hidden is what lets the text shrink
+   past its own content width. */
+.proposal .line{flex:1 1 12ch;display:flex;align-items:baseline;overflow:hidden}
+.proposal .line .text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proposal .line .glyph{flex:0 0 auto;white-space:pre}
+/* Pinned right beside the line where it fits, on its own right-aligned row where it does not --
+   a status long enough to squeeze the line away would leave nothing legible at 268px. */
+.proposal .status{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+section>p.cue{margin:12px 0 0;font-size:12px;color:var(--muted)}
+
+@media (prefers-reduced-motion: reduce){details.ticket,details.seed{transition:none}}
+
+/* Print: the same vertical list on paper, everything open. */
+@media print{
+  section{break-inside:avoid}
+  details.ticket,details.seed,details.goal,.proposal{opacity:1;break-inside:avoid}
+  details.ticket>.body,details.seed>.body,details.goal>ul.criteria,details.items>ul.items{display:flex}
+  .chip,.bar,.bar i,ol.steps li.done::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}`;
+
+// src/templates/job-board/workboard.js.ts
+var workboard_js_default = `(function () {
+  var cards = document.querySelectorAll("details.ticket, details.seed");
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var printing = null;
+  function centre(d) {
+    requestAnimationFrame(function () {
+      d.scrollIntoView({ block: "center", inline: "nearest", behavior: reduce ? "auto" : "smooth" });
+    });
+  }
+  cards.forEach(function (d) {
+    d.addEventListener("toggle", function () {
+      if (!d.open || printing) return;
+      cards.forEach(function (o) { if (o !== d && o.open) o.open = false; });
+      centre(d);
+    });
+  });
+  function openHash() {
+    var t = location.hash && document.querySelector(location.hash);
+    if (t && t.matches("details")) t.open = true;
+  }
+  addEventListener("hashchange", openHash);
+  // CSS cannot show a closed card's body, so printing opens every card and afterprint puts each back.
+  // The shared name attribute lets the browser keep only one card open, so it is lifted meanwhile.
+  addEventListener("beforeprint", function () {
+    printing = Array.prototype.map.call(document.querySelectorAll("details.ticket, details.seed, details.goal, details.items"), function (d) {
+      var was = [d, d.open, d.getAttribute("name")];
+      d.removeAttribute("name");
+      d.open = true;
+      return was;
+    });
+  });
+  addEventListener("afterprint", function () {
+    if (!printing) return;
+    printing.forEach(function (p) { p[0].open = p[1]; });
+    // Names go back only once the open cards are down to their old state, or the browser would close some.
+    printing.forEach(function (p) { if (p[2] !== null) p[0].setAttribute("name", p[2]); });
+    printing = null;
+  });
+  openHash();
+})();`;
+
+// src/submission/forms/workboard-shell.ts
+var { head: HEAD3, tail: TAIL3 } = composeTemplate("job-board.html", {
+  "job-board.html": job_board_html_default,
+  "job-board.css": job_board_css_default,
+  "job-board.js": job_board_js_default,
+  "workboard.css": workboard_css_default,
+  "workboard.js": workboard_js_default
+});
+function renderWorkBoardHtml(data) {
+  return `${HEAD3}window.WORKBOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
+${TAIL3}`;
+}
+
+// src/templates/view-pages/arguments.css.ts
+var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
+
+// src/templates/view-pages/arguments.html.ts
+var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/view-pages/arguments.js.ts
+var arguments_js_default = `(function () {
+  "use strict";
+  var view = window.VIEW_PAGE;
+  if (!view) return;
+  var data = view.data;
+  var board = document.querySelector(".board");
+  var KEY = "arguments-filter";
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function list(items, cls) {
+    var ul = el("ul");
+    items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
+    return ul;
+  }
+
+  var byId = {};
+  data.submissions.forEach(function (a) { byId[a.id] = a; });
+  var counterByKey = {};
+  data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
+  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", raised: "Raised", anticipated: "Anticipated" };
+
+  // A card: its statement, which toggles it and ends in its tag, then its detail.
+  function card(cls, kind, text, n) {
+    var node = el("article", cls);
+    var title = el("p", "text");
+    title.setAttribute("role", "button");
+    title.tabIndex = 0;
+    title.appendChild(el("span", "", text));
+    title.appendChild(el("span", "tag", KIND_LABEL[kind] + " #" + n));
+    node.appendChild(title);
+    var detail = el("div", "detail");
+    node.appendChild(detail);
+    return { node: node, title: title, detail: detail };
+  }
+  function argumentCard(a, i) {
+    var c = card("arg " + a.kind, a.kind, a.contention, i + 1);
+    c.detail.appendChild(el("p", "where", a.where));
+    if (a.law.length > 0) {
+      c.detail.appendChild(el("p", "head", "Law"));
+      c.detail.appendChild(list(a.law.map(function (l) {
+        return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
+      }), function (l) { return l.omitted ? "omitted" : ""; }));
+    } else {
+      c.detail.appendChild(el("p", "none", "No law linked"));
+    }
+    if (a.facts.length > 0) {
+      c.detail.appendChild(el("p", "head", "Facts"));
+      c.detail.appendChild(list(a.facts));
+    } else {
+      c.detail.appendChild(el("p", "none", "No facts linked"));
+    }
+    if (a.rebuts.length > 0) {
+      var linked = el("div", "linked");
+      linked.appendChild(el("p", "label", "Linked to counter-arguments"));
+      linked.appendChild(list(a.rebuts.map(function (k) { return KIND_LABEL[counterByKey[k].kind] + ": " + counterByKey[k].text; })));
+      c.detail.appendChild(linked);
+    }
+    return c;
+  }
+  function counterCard(x, i) {
+    var c = card("arg counter", x.kind, x.text, i + 1);
+    if (x.source) c.detail.appendChild(el("p", "where", x.source));
+    if (x.linked.length > 0) {
+      var linked = el("div", "linked");
+      linked.appendChild(el("p", "label", "Linked arguments"));
+      linked.appendChild(list(x.linked.map(function (id) { return KIND_LABEL[byId[id].kind] + ": " + byId[id].contention; })));
+      c.detail.appendChild(linked);
+    }
+    return c;
+  }
+
+  var tablist = el("div", "tabs");
+  tablist.setAttribute("role", "tablist");
+  tablist.setAttribute("aria-label", "Show");
+  board.appendChild(tablist);
+  var folder = el("div", "folder");
+  folder.id = "arguments-panel";
+  folder.setAttribute("role", "tabpanel");
+  board.appendChild(folder);
+
+  // One section, its picker and its cards. At most one card is open; the picker's selected number
+  // is always the open card's, and none is selected when every card is closed.
+  var sections = {};
+  function section(name, heading, cards) {
+    var sec = el("section");
+    var h2 = el("h2", "", heading);
+    var picker = el("span", "picker");
+    picker.setAttribute("role", "radiogroup");
+    picker.setAttribute("aria-label", heading + ": open card");
+    h2.appendChild(picker);
+    sec.appendChild(h2);
+    var stack = el("div", "stack");
+    sec.appendChild(stack);
+    folder.appendChild(sec);
+    sections[name] = { node: sec, size: cards.length };
+
+    var current = -1;
+    var radios = [];
+    function open(index) {
+      current = index;
+      cards.forEach(function (c, i) {
+        var on = i === index;
+        c.node.classList.toggle("open", on);
+        c.detail.hidden = !on;
+        c.title.setAttribute("aria-expanded", String(on));
+        radios[i].checked = on;
+      });
+    }
+    cards.forEach(function (c, i) {
+      var input = el("input");
+      input.type = "radio";
+      input.name = "pick-" + name;
+      input.id = "pick-" + name + "-" + (i + 1);
+      var label = el("label", "", String(i + 1));
+      label.htmlFor = input.id;
+      picker.appendChild(input);
+      picker.appendChild(label);
+      radios.push(input);
+      input.addEventListener("change", function () { if (input.checked) open(i); });
+      label.addEventListener("click", function (e) {
+        if (input.checked) { e.preventDefault(); open(-1); }
+      });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === " " && input.checked) { e.preventDefault(); open(-1); }
+      });
+      c.title.addEventListener("click", function () { open(current === i ? -1 : i); });
+      c.title.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(current === i ? -1 : i); }
+      });
+      stack.appendChild(c.node);
+    });
+    open(cards.length > 0 ? 0 : -1);
+  }
+  section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
+  section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
+  section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
+  var empty = el("p", "empty", "Nothing recorded under this filter.");
+  folder.appendChild(empty);
+
+  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"]];
+  var tabs = TABS.map(function (t) {
+    var b = el("button", "", t[1]);
+    b.type = "button";
+    b.id = "tab-" + t[0];
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-controls", folder.id);
+    b.setAttribute("data-filter", t[0]);
+    tablist.appendChild(b);
+    return b;
+  });
+
+  var current = "all";
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
+  } catch (e) {}
+  function apply() {
+    var any = false;
+    Object.keys(sections).forEach(function (name) {
+      var on = (current === "all" || current === name) && sections[name].size > 0;
+      sections[name].node.hidden = !on;
+      if (on) any = true;
+    });
+    tabs.forEach(function (b) {
+      var on = b.getAttribute("data-filter") === current;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on) folder.setAttribute("aria-labelledby", b.id);
+    });
+    empty.hidden = any;
+  }
+  function select(b) {
+    current = b.getAttribute("data-filter");
+    try { localStorage.setItem(KEY, current); } catch (e) {}
+    apply();
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener("click", function () { select(b); });
+    b.addEventListener("keydown", function (e) {
+      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (step === 0) return;
+      e.preventDefault();
+      var next = tabs[(i + step + tabs.length) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+  apply();
+})();`;
+
+// src/templates/view-pages/shared.js.ts
+var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var meta = view.meta;\n  if (meta.filing !== "") document.title = view.name + " \u2014 " + meta.filing;\n  var row = document.querySelector("header .meta");\n  [\n    ["Writing", meta.filing],\n    ["Matter", meta.matter],\n    ["Client", meta.client],\n    ["Rev", String(meta.revision)]\n  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {\n    if (pair[1] === "") return;\n    var span = document.createElement("span");\n    span.textContent = pair[1];\n    span.setAttribute("data-k", pair[0]);\n    row.appendChild(span);\n  });\n})();';
+
+// src/templates/view-pages/view-folder.css.ts
+var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
+
+// src/templates/view-pages/view-head.html.ts
+var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
+
+// src/submission/forms/arguments-page.ts
+function rows13(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function tableHeld(dbPath, table) {
+  return rows13(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
+}
+function columnHeld2(dbPath, table, column) {
+  return rows13(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
+}
+function buildArgumentsData(dbPath, filing) {
+  const proceedingId = filing.proceeding_id;
+  const submissions = rows13(
+    dbPath,
+    `SELECT s.id, s.contention FROM submissions s
+     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id = ?
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+     GROUP BY s.id
+     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
+              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
+    [filing.id, proceedingId]
+  );
+  const deployments = rows13(
+    dbPath,
+    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
+     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
+     WHERE f.proceeding_id = ?
+     ORDER BY f.id`,
+    [proceedingId]
+  );
+  const facts = rows13(
+    dbPath,
+    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
+     WHERE f.proceeding_id = ? ORDER BY f.id`,
+    [proceedingId]
+  );
+  const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
+  const law = rows13(
+    dbPath,
+    `SELECT sl.submission_id, la.proposition, ${killedOn}
+     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
+     WHERE la.proceeding_id = ? ORDER BY la.id`,
+    [proceedingId]
+  );
+  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows13(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
+  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows13(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
+  const links = [
+    ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
+    ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
+  ];
+  const live = new Set(submissions.map((s3) => s3.id));
+  const counterArguments = [
+    ...fetchOpposingPoints(dbPath, proceedingId).map((p3) => ({
+      key: `raised:${p3.id}`,
+      kind: "raised",
+      text: p3.verbatim_words ?? "(no words recorded)",
+      source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
+      linked: []
+    })),
+    ...rows13(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
+      (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
+    )
+  ];
+  const counterByKey = new Map(counterArguments.map((c3) => [c3.key, c3]));
+  for (const l3 of links) {
+    const counter = counterByKey.get(l3.key);
+    if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
+  }
+  const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
+  const items = submissions.map((s3) => {
+    const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
+    const here = deployedOn.some((d3) => d3.filing_id === filing.id);
+    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
+    const where = here ? "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
+    return {
+      id: s3.id,
+      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
+      contention: s3.contention,
+      where,
+      facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
+      law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
+      rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
+    };
+  });
+  return { submissions: items, counter_arguments: counterArguments };
+}
+var ARGUMENTS_PAGE = {
+  name: "Arguments",
+  ...composeTemplate("arguments.html", {
+    "arguments.html": arguments_html_default,
+    "view-head.html": view_head_html_default,
+    "board.css": board_css_default,
+    "view-folder.css": view_folder_css_default,
+    "arguments.css": arguments_css_default,
+    "shared.js": shared_js_default,
+    "arguments.js": arguments_js_default
+  }),
+  data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.filing)
+};
+
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
 import { existsSync as existsSync26, linkSync as linkSync2, mkdirSync as mkdirSync10, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
@@ -95351,15 +96599,6 @@ var loose_threads_js_default = `(function () {
   }
 })();`;
 
-// src/templates/view-pages/shared.js.ts
-var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var meta = view.meta;\n  if (meta.filing !== "") document.title = view.name + " \u2014 " + meta.filing;\n  var row = document.querySelector("header .meta");\n  [\n    ["Writing", meta.filing],\n    ["Matter", meta.matter],\n    ["Client", meta.client],\n    ["Rev", String(meta.revision)]\n  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {\n    if (pair[1] === "") return;\n    var span = document.createElement("span");\n    span.textContent = pair[1];\n    span.setAttribute("data-k", pair[0]);\n    row.appendChild(span);\n  });\n})();';
-
-// src/templates/view-pages/view-folder.css.ts
-var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
-
-// src/templates/view-pages/view-head.html.ts
-var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
-
 // src/submission/forms/loose-ideas-page.ts
 var GROUP_STYLE = {
   decision: { label: "Practitioner decisions", colour: "#6E4F8E" },
@@ -95415,1259 +96654,6 @@ var LOOSE_IDEAS_PAGE = {
   }),
   data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.filing),
   metaExtra: looseIdeasMeta
-};
-
-// src/submission/forms/workboard-assets.ts
-var WORKBOARD_CSS = String.raw`/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
-   network fetch, so the board reads offline and inside a sandboxed pane. One
-   accent, used three times: the Ready heading, the in-progress chip, links.
-   Palette and heading font evoke the Logica Law brand sheet (2026-09-18)
-   without embedding its logo or its exact typeface -- teal/mint/gold, and a
-   system geometric-sans stack in place of the brand's Sackers/Questrial.
-   Mid Teal, Mint and Bronze (2026-09-19, ticket #691) dress the section
-   panel, the card frame, the count pill and the title's gradient rule. */
-:root{
-  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;
-  --accent:#8A5F1F;--accent-soft:#F7ECD6;--done:#025056;
-  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);
-  --deleted:#A3221B;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);
-  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
-  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
-  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
-  --deleted:#FF8A80;
-}}
-:root[data-theme="dark"]{
-  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;
-  --accent:#E5B521;--accent-soft:#3A2F14;--done:#D9F0E8;
-  --panel:#163330;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;
-  --deleted:#FF8A80;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
-main{padding:28px}
-header{display:flex;flex-direction:column;gap:6px;margin-bottom:28px}
-header h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}
-header h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}
-header .meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}
-header .meta span::before{content:attr(data-k) " ";color:var(--line-strong)}
-header .notice{margin:4px 0 0;font-size:13px;color:var(--wip);background:var(--wip-soft);border:1px solid var(--wip);border-radius:6px;padding:8px 12px}
-
-/* One vertical list at every width (practitioner, 2026-09-15): sections stack,
-   and each section's cards stack one per row. No card grid and no width
-   breakpoint, however wide the pane or window. */
-.board{display:flex;flex-direction:column;gap:28px}
-section{background:var(--panel);border-radius:12px;padding:16px 18px}
-section>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}
-#ready>h2{color:var(--accent)}
-section>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}
-section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
-.stack{display:flex;flex-direction:column;gap:10px}
-
-/* Cards. */
-details.ticket,details.seed{background:var(--card);border:2px solid var(--frame);border-radius:10px;overflow:hidden;transition:border-color .15s}
-details.ticket:hover,details.seed:hover{border-color:var(--line-strong)}
-details.ticket[open],details.seed[open]{border-color:var(--ink)}
-details.ticket[data-status="superseded"],details.ticket[data-status="completed"]{opacity:.7}
-details.ticket>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:baseline;padding:12px 14px}
-details.seed>summary{list-style:none;cursor:pointer;display:block;padding:12px 14px}
-details.ticket>summary::-webkit-details-marker,details.seed>summary::-webkit-details-marker{display:none}
-details.ticket>summary:focus-visible,details.seed>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.ref{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.title{font-weight:500}
-details.seed .title{font-weight:400}
-.progress{grid-column:1/-1;font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
-.bar{width:64px;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--pill-bg);width:var(--pct)}
-.chip{font-size:11px;font-weight:500;padding:0 7px;border-radius:999px;white-space:nowrap;border:1px solid var(--muted);color:var(--muted);line-height:1.6}
-.chip.wip{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
-.chip.done{background:var(--line);border-color:var(--line);color:var(--muted)}
-.body{border-top:1px solid var(--line);padding:14px 14px 16px;display:flex;flex-direction:column;gap:14px;max-width:72ch}
-.body p{margin:0}
-.body dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}
-.body dt{color:var(--muted)}
-.body dd{margin:0}
-.body dd.mono{font-family:var(--mono);font-size:12px}
-.body a{color:var(--accent)}
-ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
-ol.steps li{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;font-size:13.5px}
-ol.steps li::before{content:"";width:14px;height:14px;margin-top:3px;border:1.5px solid var(--line-strong);border-radius:3px}
-ol.steps li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
-ol.steps li.done::before{border-color:var(--done);background-color:var(--done);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-size:11px;background-repeat:no-repeat;background-position:center}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}}
-:root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
-ol.steps li.next{font-weight:500}
-ol.steps li.next::before{border-color:var(--ink)}
-p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
-
-/* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
-   two spaces after the colon. */
-p.deleted{margin:0;font-size:13.5px;color:var(--deleted)}
-p.deleted s{white-space:pre-wrap}
-p.deleted a{color:inherit}
-/* A discarded loose thread (schema v75) draws as a deleted job does. A suggested one is the same
-   line in ordinary ink, unstruck. */
-p.suggested{margin:0;font-size:13.5px;white-space:pre-wrap}
-
-/* Proposal cards (design §13). Read-only: text, then glyph, with any status pinned right. A long
-   line's text truncates with an ellipsis at a narrow card width, and the row's tooltip carries the
-   whole line. */
-.proposal{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:12px 14px}
-.proposal .head{margin:0 0 6px;font-weight:500}
-.proposal ul.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
-.proposal ul.lines li{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;font-size:13.5px}
-/* The row's text and glyph stay together and left-aligned: only the text truncates, and the glyph
-   never shrinks, so the ellipsis can never eat it. overflow:hidden is what lets the text shrink
-   past its own content width. */
-.proposal .line{flex:1 1 12ch;display:flex;align-items:baseline;overflow:hidden}
-.proposal .line .text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.proposal .line .glyph{flex:0 0 auto;white-space:pre}
-/* Pinned right beside the line where it fits, on its own right-aligned row where it does not --
-   a status long enough to squeeze the line away would leave nothing legible at 268px. */
-.proposal .status{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
-section>p.cue{margin:12px 0 0;font-size:12px;color:var(--muted)}
-
-@media (prefers-reduced-motion: reduce){details.ticket,details.seed{transition:none}}
-
-/* Print: the same vertical list on paper, everything open. */
-@media print{
-  section{break-inside:avoid}
-  details.ticket,details.seed,details.goal,.proposal{opacity:1;break-inside:avoid}
-  details.ticket>.body,details.seed>.body,details.goal>ul.criteria,details.items>ul.items{display:flex}
-  .chip,.bar,.bar i,ol.steps li.done::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
-`;
-var WORKBOARD_JS = String.raw`(function () {
-  var cards = document.querySelectorAll("details.ticket, details.seed");
-  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var printing = null;
-  function centre(d) {
-    requestAnimationFrame(function () {
-      d.scrollIntoView({ block: "center", inline: "nearest", behavior: reduce ? "auto" : "smooth" });
-    });
-  }
-  cards.forEach(function (d) {
-    d.addEventListener("toggle", function () {
-      if (!d.open || printing) return;
-      cards.forEach(function (o) { if (o !== d && o.open) o.open = false; });
-      centre(d);
-    });
-  });
-  function openHash() {
-    var t = location.hash && document.querySelector(location.hash);
-    if (t && t.matches("details")) t.open = true;
-  }
-  addEventListener("hashchange", openHash);
-  // CSS cannot show a closed card's body, so printing opens every card and afterprint puts each back.
-  // The shared name attribute lets the browser keep only one card open, so it is lifted meanwhile.
-  addEventListener("beforeprint", function () {
-    printing = Array.prototype.map.call(document.querySelectorAll("details.ticket, details.seed, details.goal, details.items"), function (d) {
-      var was = [d, d.open, d.getAttribute("name")];
-      d.removeAttribute("name");
-      d.open = true;
-      return was;
-    });
-  });
-  addEventListener("afterprint", function () {
-    if (!printing) return;
-    printing.forEach(function (p) { p[0].open = p[1]; });
-    // Names go back only once the open cards are down to their old state, or the browser would close some.
-    printing.forEach(function (p) { if (p[2] !== null) p[0].setAttribute("name", p[2]); });
-    printing = null;
-  });
-  openHash();
-})();
-`;
-
-// src/submission/forms/workboard-shell.ts
-var HEAD3 = String.raw`<!doctype html>
-<html lang="en" data-workboard-shell>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Job Board</title>
-<style>
-${WORKBOARD_CSS}</style>
-<style>
-/* The Goal card (Goal card design §2.9): reversed colours, so it reads apart from every lane in
-   either theme -- ink and paper swap roles, and the dark theme's tokens swap them back. Its only
-   control is the native expand and collapse; the marker is drawn here so it sits beside the
-   sentence rather than on a line of its own. */
-.goal{background:var(--ink);color:var(--paper);border-radius:12px;padding:16px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.goal>.head{display:block;list-style:none}
-details.goal>summary{cursor:pointer}
-details.goal>summary::-webkit-details-marker{display:none}
-details.goal>summary:focus-visible{outline:2px solid var(--pill-bg);outline-offset:4px}
-.goal .sentence{display:inline;font-family:var(--sans-heading);font-weight:600;font-size:15px;overflow-wrap:anywhere}
-/* The Writing's lifecycle state, a pill beside the sentence in the criterion state's own style. */
-.goal .head .lifecycle{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
-details.goal .sentence::before{content:"\25B8\00A0" / ""}
-details.goal[open] .sentence::before{content:"\25BE\00A0" / ""}
-.goal .text{display:block;margin-top:4px;font-size:13.5px}
-.goal ul.criteria{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:1px solid currentColor;display:flex;flex-direction:column;gap:12px}
-.goal .criterion .line{margin:0;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
-.goal .criterion .line .ctext{flex:1 1 14ch;font-weight:500;overflow-wrap:anywhere}
-.goal .criterion .line .state{margin-left:auto;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
-.goal .criterion[data-state="unmet"] .state{background:var(--pill-bg);border-color:var(--pill-bg);color:var(--pill-ink)}
-.goal .criterion[data-state="pending"] .state{border-style:dashed}
-.goal ul.items{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:2px;font-size:13px}
-.goal ul.items li{overflow-wrap:anywhere}
-.goal details.items{margin-top:4px;font-size:13px}
-.goal details.items>summary{cursor:pointer;width:fit-content}
-details.ticket>summary .subtitle{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
-details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)}
-.body .reason{font-size:13px;color:var(--muted)}
-/* The header rows under the title, each in the meta row's own label-and-value style: the matter and
-   client; the proceeding's venue, registry, court file number and style of proceeding, joined by
-   dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
-   Writing's row and the matter's row, plain text with no control, each date as stored and its flag
-   after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
-   and on its criterion row. The margin under the header is this page's own: board-template.ts
-   still has the 28px margin it copied. */
-header{margin-bottom:16px}
-/* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
-header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
-header .meta.proceeding{gap:4px 6px}
-header .meta .flag{margin-left:6px;color:var(--accent)}
-header .meta .flag::before,header .meta .note::before{content:none}
-header .meta span:not([data-k])::before{content:none}
-/* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
-   and collapse. Its body renders the statement's syntax as rows, a label cell beside a text cell, and
-   prints an unrecognised line as written; an inferred one is italic under its caption, and a board
-   with none says so in a muted line. */
-.goals .head .label{margin-left:4px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px solid currentColor;border-radius:999px;padding:0 7px}
-.goals .goals-body{margin-top:14px;padding-top:12px;border-top:1px solid currentColor;font-size:13.5px}
-.goals .statement{margin:0;overflow-wrap:anywhere}
-.goals .row{display:flex;gap:0 8px;align-items:baseline}
-.goals .row .label{flex:0 0 auto;white-space:nowrap}
-.goals .row .text{flex:1 1 0;margin-top:0;overflow-wrap:anywhere;white-space:pre-wrap}
-.goals .row .connector{font-style:italic}
-.goals[data-status="inferred"] .statement{font-style:italic}
-.goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
-.goals .none{margin:0;opacity:.75}
-.goal .deadline{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-top:6px;font-size:13.5px}
-.goal .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
-.goal .dflag{font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
-/* The filing's Writings, one page-shaped thumbnail each, in one row that never wraps and scrolls
-   sideways inside itself. Every thumbnail is the same fixed size; its short label clamps to four
-   lines with an ellipsis. The fuller description is read out from a visually hidden span and, on
-   hover, shown in one tooltip in the Goal card's own colours, outside the strip, which would clip it.
-   A Writing's tile is no control. After the Writings, each of the filing's view pages has a tile of
-   the same size, dashed and badged "view", that is no control either: a link would resolve against a
-   previewed card's web origin, so a session presents the view page on request. */
-.writings{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;list-style:none;margin:0;padding:4px 2px 8px;align-items:flex-start}
-.writing{position:relative;flex:0 0 88px;box-sizing:border-box;aspect-ratio:8.5/11;background:var(--card);border:1px solid var(--frame);border-radius:3px;padding:8px 6px;text-align:center;font-size:13px;line-height:1.3;overflow:hidden}
-.writing .label{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
-.writing .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.writing.view{border-style:dashed}
-.writing.view .badge{display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px;color:var(--accent)}
-.tip{position:fixed;z-index:10;pointer-events:none;max-width:32ch;background:var(--ink);color:var(--paper);font-family:var(--sans-heading);font-weight:600;font-size:13px;line-height:1.3;padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
-.tip[hidden]{display:none}
-@media print{.tip{display:none}}
-</style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>Job Board</h1>
-    <div class="meta"></div>
-  </header>
-</main>
-<script>
-`;
-var TAIL3 = String.raw`</script>
-<script>
-(function () {
-  "use strict";
-  var data = window.WORKBOARD;
-  var main = document.querySelector("main");
-  var header = document.querySelector("header");
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-  function stamp(value) {
-    return value.replace("T", " ");
-  }
-  // A local minute stamp as a count of minutes, for differences only; null when it is not one.
-  function minutesOf(value) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(value);
-    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
-  }
-  // How long before the page's Rendered minute a stamp is, then the stamp itself.
-  function ago(value) {
-    var now = minutesOf(data.meta.rendered);
-    var then = minutesOf(value);
-    if (now === null || then === null) return stamp(value);
-    var e = Math.max(0, now - then);
-    var d = Math.floor(e / 1440), h = Math.floor((e % 1440) / 60), m = e % 60;
-    var text = d > 0 ? d + " d " + h + " h" : h > 0 ? h + " h " + m + " min" : m + " min";
-    return text + " ago (" + stamp(value) + ")";
-  }
-
-  if (!data) return;
-
-  var meta = data.meta;
-  if (meta.matter !== "") document.title = "Job Board — " + meta.matter;
-
-  // One header span: its text, and its label in data-k when it has one. A blank value draws nothing.
-  function metaSpan(row, label, value) {
-    if (!value) return;
-    var span = el("span", "", value);
-    if (label) span.setAttribute("data-k", label);
-    row.appendChild(span);
-  }
-  // A row of dates, each as stored with no day count, its label in data-k and its flag after it.
-  function dateRow(cls, list) {
-    var row = el("div", cls);
-    list.forEach(function (d) {
-      var span = el("span", "", d.date);
-      span.setAttribute("data-k", d.label);
-      if (d.flag) span.appendChild(el("span", "flag", d.flag));
-      row.appendChild(span);
-    });
-    return row;
-  }
-
-  // The matter and the client, the client's number in brackets when it has one.
-  var metaRow = header.querySelector(".meta");
-  metaSpan(metaRow, "Matter", meta.matter);
-  metaSpan(metaRow, "Client", meta.client ? meta.client + (meta.client_no ? " (" + meta.client_no + ")" : "") : "");
-
-  // A section's lifecycle state, with its date when it has one.
-  function stateText(smeta) {
-    return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
-  }
-
-  // The page's one section names the page: "Job Board <id>", the id the file name's, then the
-  // heading's gold rule, then the Writing's title on its own line.
-  var first = data.sections[0];
-  if (first) {
-    var h1 = header.querySelector("h1");
-    if (first.meta.filing_id === null) {
-      h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
-    } else {
-      h1.textContent = "Job Board " + first.meta.filing_id;
-      if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
-    }
-  }
-
-  // The section's proceeding: its venue (the forum's last segment), registry, court file number and
-  // style of proceeding, a dot between each two drawn, only the file number labelled. A page with no
-  // Goal card shows the section's state here, as a chip. No row when there is nothing to draw.
-  var venueRow = el("div", "meta proceeding");
-  function proceedingPart(label, value) {
-    if (!value) return;
-    if (venueRow.children.length > 0) venueRow.appendChild(document.createTextNode(" · "));
-    metaSpan(venueRow, label, value);
-  }
-  proceedingPart("", (meta.forum || "").split("/").pop());
-  proceedingPart("", meta.registry ? meta.registry + " Registry" : "");
-  proceedingPart("Court File No.", meta.file_number || "");
-  proceedingPart("", meta.style_of_cause || "");
-  if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
-  if (venueRow.children.length > 0) header.appendChild(venueRow);
-
-  // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
-  // filing on this page with each deadline no Goal card carries, absent when there is none; then the
-  // matter's row, holding the other anchors the same way. A note says why none were read, or that
-  // the matter has none; when every date is this Writing's, the matter's row is not drawn.
-  var pageDates = data.dates;
-  if (pageDates) {
-    var writing = pageDates.writing || [];
-    if (writing.length > 0) header.appendChild(dateRow("meta writing", writing));
-    if (pageDates.note !== undefined) {
-      var noteRow = el("div", "meta dates");
-      noteRow.appendChild(el("span", "note", pageDates.note));
-      header.appendChild(noteRow);
-    } else if (pageDates.header.length > 0) {
-      header.appendChild(dateRow("meta dates", pageDates.header));
-    } else if (writing.length === 0) {
-      var noneRow = el("div", "meta dates");
-      noneRow.appendChild(el("span", "note", "No date is recorded for this matter."));
-      header.appendChild(noneRow);
-    }
-  }
-
-  // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
-  // filing's board always drew them.
-  data.sections.forEach(function (section) {
-    var smeta = section.meta;
-    if (smeta.ready_to_retire) {
-      main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
-    }
-    var board = el("div", "board");
-    if (smeta.filing_id !== null) board.setAttribute("data-filing-id", String(smeta.filing_id));
-    board.setAttribute("data-proceeding-id", String(smeta.proceeding_id));
-    main.appendChild(board);
-    // This filing's deadline criteria's dates, by criterion id, joined to its Goal card here.
-    var when = pageDates && smeta.filing_id !== null ? pageDates.criteria[String(smeta.filing_id)] || {} : {};
-    drawSection(section, board, when, data.writings || [], data.views || [], data.attached || [], data.court_file || []);
-  });
-
-  function drawSection(data, board, when, writings, views, attached, courtFile) {
-    function link(id) {
-      var a = el("a", "", "Job #" + id);
-      a.href = "#ticket-" + id;
-      return a;
-    }
-    // An edge outside this proceeding has no card to link to: named in plain text, never dropped.
-    function ticketRef(edge) {
-      return edge.status === null ? "Job #" + edge.id + " (not in this proceeding)" : link(edge.id);
-    }
-    function row(dl, term, parts, mono) {
-      dl.appendChild(el("dt", "", term));
-      var dd = el("dd", mono ? "mono" : "");
-      [].concat(parts).forEach(function (part) {
-        dd.appendChild(typeof part === "string" ? document.createTextNode(part) : part);
-      });
-      dl.appendChild(dd);
-    }
-    function pct(done, total) {
-      var raw = (done / total * 100).toFixed(1);
-      return (raw.slice(-2) === ".0" ? raw.slice(0, -2) : raw) + "%";
-    }
-
-    var CHIPS = {
-      ready: ["ready", "Ready"],
-      wip: ["wip", "In Progress"],
-      bring_forward: ["bring-forward", "Bring Forward"],
-      waiting: ["waiting", "Blocked"],
-      superseded: ["superseded", "Superseded"],
-      completed: ["done", "Completed"],
-      rejected: ["rejected", "Shelved"]
-    };
-
-    // Panels list by job number so a job is easy to find. The summary a session reads keeps queue
-    // order (priority, then id), which is the Dispatch rule; filter() returns a copy, so data.tickets
-    // is never reordered.
-    function byId(a, b) { return a.id - b.id; }
-
-    function ticketCard(t) {
-      var card = el("details", "ticket");
-      card.setAttribute("name", "board");
-      card.id = "ticket-" + t.id;
-      card.setAttribute("data-kind", t.kind);
-      card.setAttribute("data-priority", String(t.priority));
-      card.setAttribute("data-status", t.category);
-
-      var summary = el("summary");
-      summary.appendChild(el("span", "ref", "Job #" + t.id));
-      summary.appendChild(el("span", "title", t.title));
-      // Finished on the server (Goal card design §4.7), drawn as given.
-      if (t.subtitle) summary.appendChild(el("span", "subtitle", t.subtitle));
-      // An unattended run's lock, finished on the server (Goal card design §5.4) and drawn as given.
-      if (t.lock_note) summary.appendChild(el("span", "subtitle", t.lock_note));
-      // Idle past the firm's threshold, finished on the server and drawn as given.
-      if (t.idle_flag) summary.appendChild(el("span", "subtitle", t.idle_flag));
-      // The job's start date as a plain date: never a deadline, and never a day count.
-      if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
-      var progress = el("span", "progress");
-      progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
-      // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
-      if (t.steps.length > 0) {
-        var done = t.steps.filter(function (s) { return s.done_at !== null; }).length;
-        var bar = el("span", "bar");
-        bar.style.setProperty("--pct", pct(done, t.steps.length));
-        bar.appendChild(el("i"));
-        progress.appendChild(bar);
-        progress.appendChild(document.createTextNode(done + "/" + t.steps.length));
-      }
-      summary.appendChild(progress);
-      card.appendChild(summary);
-
-      var body = el("div", "body");
-      // Why the ticket is superseded, finished on the server (Goal card design §4.7) and drawn as given.
-      if (t.superseded_reason) body.appendChild(el("p", "reason", t.superseded_reason));
-      if (t.steps.length > 0) {
-        var ol = el("ol", "steps");
-        var nextMarked = false;
-        t.steps.forEach(function (s) {
-          var cls = "";
-          if (s.done_at !== null) {
-            cls = "done";
-          } else if (!nextMarked) {
-            cls = "next";
-            nextMarked = true;
-          }
-          ol.appendChild(el("li", cls, s.text));
-        });
-        body.appendChild(ol);
-      }
-      // Sources to get: the job's own record beside its steps, never part of its plan, so they sit
-      // under a heading of their own and outside the step count.
-      if (t.sources.length > 0) {
-        var got = t.sources.filter(function (s) { return s.outcome === "got"; }).length;
-        body.appendChild(el("p", "sources-head", "Sources to get: " + got + " of " + t.sources.length + " got"));
-        var sources = el("ol", "steps");
-        t.sources.forEach(function (s) {
-          var missed = s.outcome === "not_retrieved" ? " (not retrieved" + (s.reason ? ": " + s.reason : "") + ")" : "";
-          sources.appendChild(el("li", s.outcome === "got" ? "done" : "", s.kind + ": " + s.label + missed));
-        });
-        body.appendChild(sources);
-      }
-
-      var dl = el("dl");
-      // Progress is recorded progress only, so it agrees with the idle flag; Session active is the
-      // holder's end-of-turn stamp (jobs-run.md §6a), which is not progress; Taken is the lock.
-      if (t.category === "wip") {
-        row(dl, "Progress", t.last_activity_at === null ? "(none recorded)" : ago(t.last_activity_at), true);
-        if (t.active_at) row(dl, "Session active", ago(t.active_at), true);
-        row(dl, "Taken", t.locked_at === null ? "(unknown time)" : stamp(t.locked_at), true);
-      }
-      if (t.category === "completed" && t.completed_at) row(dl, "Completed", stamp(t.completed_at), true);
-      row(dl, "Priority", String(t.priority), true);
-      // A job superseded by another job, a stale gate job included (#907), says so only here.
-      if (t.category === "superseded" && t.superseded_by) row(dl, "Superseded by", ticketRef(t.superseded_by));
-      // Each blocker says why by its own status: a superseded or shelved one needs a fresh outline.
-      if (t.category === "waiting") {
-        t.blocked_by.filter(function (b) { return b.status !== "completed"; }).forEach(function (b) {
-          if (b.status === "superseded" || b.rejected) row(dl, "Blocked by", [ticketRef(b), " — superseded, needs a fresh outline"]);
-          else row(dl, "Blocked by", t.circular ? [ticketRef(b), " — circular, needs a fresh outline"] : ticketRef(b));
-        });
-      }
-      t.conflicts.forEach(function (p) {
-        row(dl, "Either/or", p.status === "wip" ? [ticketRef(p), " — in progress"] : ticketRef(p));
-      });
-      body.appendChild(dl);
-      card.appendChild(body);
-      return card;
-    }
-
-    // A struck line's Restore link. It only copies the instruction for the practitioner to paste into
-    // a session. It writes to no database, file or server (ADR 0015, 2026-10-05 amendment).
-    function restoreLink(instruction) {
-      var restore = el("a", "", "Restore");
-      restore.href = "#";
-      // Where the clipboard is out of reach, the instruction itself is shown, to select and copy by hand.
-      function showInstruction() { restore.textContent = instruction; }
-      restore.addEventListener("click", function (event) {
-        event.preventDefault();
-        if (!navigator.clipboard || !navigator.clipboard.writeText) { showInstruction(); return; }
-        navigator.clipboard.writeText(instruction).then(function () {
-          restore.textContent = "Copied";
-          setTimeout(function () { restore.textContent = "Restore"; }, 1500);
-        }, showInstruction);
-      });
-      return restore;
-    }
-
-    // A deleted job (schema v54): one struck line in Completed, never a card. Two spaces follow the
-    // colon; the stylesheet keeps them.
-    function deletedLine(d) {
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Job #" + d.id + ":  " + d.title));
-      line.appendChild(document.createTextNode(" *DELETED* "));
-      line.appendChild(restoreLink("restore job #" + d.id));
-      return line;
-    }
-
-    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
-    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
-    function discardedSeedLine(s) {
-      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
-      line.appendChild(document.createTextNode(" *DISCARDED* "));
-      line.appendChild(restoreLink("restore loose thread #" + s.id));
-      return line;
-    }
-
-    function seedCard(s) {
-      var card = el("details", "seed");
-      card.setAttribute("name", "board");
-      card.id = "seed-" + s.id;
-      var summary = el("summary");
-      summary.appendChild(el("span", "title", s.idea));
-      if (s.from_filing !== null) summary.appendChild(el("span", "subtitle", "from " + s.from_filing));
-      card.appendChild(summary);
-      var body = el("div", "body");
-      var dl = el("dl");
-      row(dl, "Surfaced by", s.surfaced_by);
-      // A sibling filing's job has no card on this board, so it is named, not linked.
-      if (s.origin_ticket_id !== null) row(dl, "From", s.from_filing === null ? link(s.origin_ticket_id) : "Job #" + s.origin_ticket_id + " on " + s.from_filing);
-      row(dl, "Created", stamp(s.created), true);
-      body.appendChild(dl);
-      card.appendChild(body);
-      return card;
-    }
-
-    // A draft that is not a Writing, attached to this board (ADR 0042): a client letter's folder or a
-    // reply's file, drawn as plain text with no link (shared/html-pages.md, "Cards only, no link"). A
-    // client letter's counsel's-review status is its review draft's first line, read at this write and
-    // drawn as given; a path with nothing at it, or one that could not be read, says so, never dropped.
-    var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply" };
-    var ATTACHED_CUE = "To open, move or detach an attached draft, tell a session.";
-    function attachedCard(a) {
-      var card = el("details", "seed attachment");
-      card.setAttribute("name", "board");
-      card.id = "attachment-" + a.id;
-      var summary = el("summary");
-      summary.appendChild(el("span", "title", a.name));
-      var status = "";
-      if (a.state === "missing") status = "Missing: nothing is at this path";
-      else if (a.state === "outside") status = "Not in the draft folder";
-      else if (a.state === "unreadable") status = "Unreadable: " + (a.error || "error");
-      else if (a.kind === "client_letter") {
-        status = a.review.length === 0 ? "No review draft found"
-          : a.review.length === 1 ? "Counsel's review: " + a.review[0].status
-          : "Counsel's review: " + a.review.length + " review drafts";
-      }
-      summary.appendChild(el("span", "subtitle", ATTACHED_KINDS[a.kind] + (status ? " · " + status : "")));
-      card.appendChild(summary);
-      var body = el("div", "body");
-      var dl = el("dl");
-      row(dl, "Path", a.path, true);
-      row(dl, "Attached", a.attached_on, true);
-      if (a.proceeding_wide) row(dl, "Board", "No Writing: shown on this proceeding's first live Writing's board until it is moved to a Writing");
-      a.review.forEach(function (r) { row(dl, "Review draft", r.file + " — " + r.status); });
-      body.appendChild(dl);
-      card.appendChild(body);
-      return card;
-    }
-
-    // A relied-on affidavit whose court-file name disagrees with drafting data: one card each, drawn as
-    // plain text with no link. The server sends the finished text; the shell derives nothing.
-    var COURT_FILE_CUE = "To record the court file's date in the drafting data, tell a session.";
-    function courtFileCard(a) {
-      var card = el("details", "seed court-file");
-      card.setAttribute("name", "board");
-      card.id = "court-file-" + a.document_id;
-      var summary = el("summary");
-      summary.appendChild(el("span", "title", a.label));
-      summary.appendChild(el("span", "subtitle", a.mismatch));
-      card.appendChild(summary);
-      var body = el("div", "body");
-      var dl = el("dl");
-      if (a.court_file) row(dl, "Court file", a.court_file.file_name, true);
-      row(dl, "Drafting data", a.recorded.made_on ? "made " + a.recorded.made_on : "unsworn");
-      body.appendChild(dl);
-      card.appendChild(body);
-      return card;
-    }
-
-    // Proposals (design §13). The shell draws the lane the server assigned and derives none of its
-    // own (local-only design §5): it reads the lane, never a marker, a ticket or a rejection. The
-    // Shelved lane is read-only, so no line carries a checkbox, a red X, a Go button or any other control.
-    // Approval is by naming a Proposal to a session (ADR 0015: nothing on the board writes back).
-    var PROPOSAL_CUE = "To shelve or restore an item, tell a session. Restore on a deleted job copies the instruction for you to paste.";
-
-    // The card header's work name: the title without its trailing ": " + label. Derived rather than
-    // listed, because one work name carries a colon of its own.
-    function workName(p) {
-      var tail = ": " + p.label;
-      return p.title.slice(-tail.length) === tail ? p.title.slice(0, -tail.length) : p.title;
-    }
-    // A witnesses-keyed count is displayed beside the item, never inside it (design §8).
-    function itemCount(p) {
-      return p.count === undefined ? "" : " — " + p.count;
-    }
-    // Text, then glyph, left-aligned, with any status pinned right. Only the text truncates in CSS:
-    // the glyph sits in a span of its own that never shrinks, so a clipped line keeps the glyph that
-    // names its work. The tooltip on the row carries the whole line, glyph included.
-    function proposalLine(p, text) {
-      var li = el("li");
-      var label = el("span", "line");
-      label.appendChild(el("span", "text", text + itemCount(p)));
-      // The space belongs to the glyph so the row still reads as one sentence when it is copied or
-      // read out; the stylesheet keeps it rather than collapsing it away.
-      label.appendChild(el("span", "glyph", " " + p.marker));
-      li.title = label.textContent;
-      li.appendChild(label);
-      // §7: a Proposal held by a ticket on another filing stays visible and inert, so no work
-      // disappears silently. One held by a ticket on this board's own filing is not drawn at all.
-      if (p.lane === "held") li.appendChild(el("span", "status", "already a job on " + p.holder.ticketed_on));
-      return li;
-    }
-    function proposalCard(items) {
-      var card = el("div", "proposal");
-      if (items.length > 1) {
-        var markers = [];
-        items.forEach(function (p) { if (markers.indexOf(p.marker) < 0) markers.push(p.marker); });
-        card.appendChild(el("p", "head", workName(items[0]) + " " + markers.join(" ") + " — " + items.length));
-      }
-      var lines = el("ul", "lines");
-      // A card of one collapses to that item's own line, whose title already reads work name plus item.
-      items.forEach(function (p) { lines.appendChild(proposalLine(p, items.length === 1 ? p.title : p.item)); });
-      card.appendChild(lines);
-      return card;
-    }
-    // Grouped by slug in server order, which is card order. The two primary-authority markers already
-    // share one slug on the server, so they land on one card with no special case here. No glyph is
-    // written into this code: every one on the board comes from the render's own inventory.
-    function proposalCards(drawn) {
-      var order = [];
-      var bySlug = Object.create(null);
-      data.proposals.forEach(function (p) {
-        if (!drawn(p)) return;
-        if (bySlug[p.slug] === undefined) {
-          bySlug[p.slug] = [];
-          order.push(p.slug);
-        }
-        bySlug[p.slug].push(p);
-      });
-      return order.map(function (slug) { return proposalCard(bySlug[slug]); });
-    }
-
-    // Every section always renders, with a count -- an empty one is itself the answer to
-    // "is anything ready to assign?" The count is the cards' unless given: Completed counts only
-    // its completed jobs, never the deleted lines drawn among them.
-    function section(id, heading, emptyText, cards, cue, count) {
-      var sec = el("section");
-      sec.id = id;
-      var h2 = el("h2", "", heading + " ");
-      h2.appendChild(el("span", "count", String(count === undefined ? cards.length : count)));
-      sec.appendChild(h2);
-      if (cards.length === 0) {
-        sec.appendChild(el("p", "empty", emptyText));
-      } else {
-        var stack = el("div", "stack");
-        cards.forEach(function (c) { stack.appendChild(c); });
-        sec.appendChild(stack);
-      }
-      if (cue !== undefined) sec.appendChild(el("p", "cue", cue));
-      board.appendChild(sec);
-    }
-
-    // The Goal card (Goal card design §2.9), above the first lane. The server sends the sentence, the
-    // card string and every criterion finished, so the shell derives none of them. A pre-filing board
-    // sends no goal and gets no card (§2.1). With no criteria (a retired filing, a kind with no stock
-    // list) there is nothing to expand, so the card is not expandable.
-    var STATES = { met: "Met", unmet: "Unmet", pending: "Pending" };
-    // A deadline criterion's date as stored, then its review flag (ADR 0013, second 2026-10-04
-    // amendment). The section's data carries no date; the page's dates are joined here.
-    function deadlineDate(node, c) {
-      var d = when[c.id];
-      if (!d) return;
-      node.appendChild(el("span", "date", d.date));
-      if (d.flag) node.appendChild(el("span", "dflag", d.flag));
-    }
-    // A criterion's fold-out label. Markers print only where work is open, so the board counts the
-    // unmet items and never a total. A row with nothing outstanding holds informational lines.
-    function itemsLabel(c) {
-      if (c.source !== "inventory" && c.outstanding === 0) {
-        return "Show " + c.items.length + (c.items.length === 1 ? " note" : " notes");
-      }
-      var label = c.outstanding + (c.outstanding === 1 ? " item is unmet" : " items are unmet");
-      if (c.source !== "inventory") return label;
-      // Relies on inventoryCriterion listing the open items first, then the shelved, then the suppressed.
-      var suppressed = c.replaces ? c.replaces.filter(function (r) { return r !== null; }).length : 0;
-      var shelved = c.items.length - c.outstanding - suppressed;
-      if (shelved > 0) label += ", " + shelved + " shelved";
-      return suppressed > 0 ? label + ", " + suppressed + " suppressed" : label;
-    }
-    function goalCard(goal, criteria) {
-      var expands = criteria.length > 0;
-      var card = el(expands ? "details" : "div", "goal");
-      card.id = "goal";
-      card.setAttribute("data-state", goal.state);
-      var head = el(expands ? "summary" : "div", "head");
-      head.appendChild(el("span", "sentence", goal.sentence));
-      // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
-      head.appendChild(document.createTextNode(" "));
-      head.appendChild(el("span", "lifecycle", stateText(data.meta)));
-      if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
-      // An unmet deadline stays in the head, so it shows whether the card is open or closed.
-      criteria.forEach(function (c) {
-        if (c.source !== "practice" || c.state !== "unmet") return;
-        var line = el("span", "deadline");
-        line.appendChild(el("span", "", c.text));
-        deadlineDate(line, c);
-        head.appendChild(line);
-      });
-      card.appendChild(head);
-      if (!expands) return card;
-      var list = el("ul", "criteria");
-      criteria.forEach(function (c) {
-        var li = el("li", "criterion");
-        li.setAttribute("data-criterion", c.id);
-        li.setAttribute("data-state", c.state);
-        var line = el("p", "line");
-        line.appendChild(el("span", "ctext", c.text));
-        if (c.source === "practice") deadlineDate(line, c);
-        // No count on a criterion with nothing outstanding -- "Met — 0" is noise.
-        line.appendChild(el("span", "state", STATES[c.state] + (c.outstanding > 0 ? " — " + c.outstanding : "")));
-        li.appendChild(line);
-        if (c.items.length > 0) {
-          // Closed until clicked, so a long list never buries the criterion lines. Printing opens it.
-          var more = el("details", "items");
-          more.appendChild(el("summary", "", itemsLabel(c)));
-          var items = el("ul", "items");
-          c.items.forEach(function (item, i) {
-            var row = el("li", "", item);
-            // A suppressed item's 🤫 shows the marker it replaces on hover (schema v69).
-            if (c.replaces && c.replaces[i]) row.title = "🤫 replaces " + c.replaces[i] + ": the requirement stands, set aside by you";
-            items.appendChild(row);
-          });
-          more.appendChild(items);
-          li.appendChild(more);
-        }
-        list.appendChild(li);
-      });
-      card.appendChild(list);
-      return card;
-    }
-    // The statement of goals' card, labelled Goal, on every board, at the top of the section above the
-    // Completion Criteria card. Closed, it shows the description; open, the statement as stored. The
-    // server sends both finished, so the shell derives neither. Printing opens it, as it opens every
-    // details.goal.
-    function goalsCard(g) {
-      var card = el("details", "goal goals");
-      card.id = "goals";
-      card.setAttribute("data-status", g.status || "none");
-      var head = el("summary", "head");
-      head.appendChild(el("span", "sentence", g.description));
-      head.appendChild(document.createTextNode(" "));
-      head.appendChild(el("span", "label", "Goal"));
-      card.appendChild(head);
-      var body = el("div", "goals-body");
-      if (g.statement === null) {
-        body.appendChild(el("p", "none", "No statement of goals yet"));
-      } else {
-        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
-        body.appendChild(statementRows(g.statement, g.status));
-      }
-      card.appendChild(body);
-      return card;
-    }
-    // The statement as rows, one per stored line, each indented 1.5em per level of two spaces. A
-    // labelled line puts its label in a cell of its own, so a wrapped line returns to the text's left
-    // edge; a connector line is one text cell; any other line is printed as written.
-    function statementRows(statement, status) {
-      var wrap = el("div", "statement");
-      statement.split("\n").forEach(function (line) {
-        var row = el("div", "row");
-        var indent = /^ */.exec(line)[0].length;
-        row.style.marginLeft = (indent / 2) * 1.5 + "em";
-        var m = /^( *)(Goal[^:\n]*?)(, (?:any one|both|all) of)?:\s?(.*)$/.exec(line);
-        var trimmed = line.trim();
-        if (m) {
-          row.appendChild(el("span", "label", m[2] + (m[3] || "") + ":"));
-          row.appendChild(el("span", "text", m[4]));
-        } else if (trimmed === "or alternatively," || trimmed === "and") {
-          row.appendChild(el("span", status !== "inferred" ? "text connector" : "text", trimmed));
-        } else {
-          row.appendChild(el("span", "text", line));
-        }
-        wrap.appendChild(row);
-      });
-      return wrap;
-    }
-    board.appendChild(goalsCard(data.goals));
-
-    if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
-
-    // The filing's Writings, in its last render's document order, between the Goal card and Ready:
-    // each tile shows its short label, and a screen reader reads the fuller one instead. On hover the
-    // fuller one shows in a single tooltip on the body. A Writing's tile is no control. After them,
-    // each of the filing's view pages draws as a tile of the same size, also no control.
-    if (writings.length > 0 || views.length > 0) {
-      var strip = el("ol", "writings");
-      strip.setAttribute("aria-label", "Writings");
-      writings.forEach(function (w) {
-        var li = el("li", "writing");
-        li.setAttribute("data-long", w.long);
-        var label = el("span", "label", w.short);
-        label.setAttribute("aria-hidden", "true");
-        li.appendChild(label);
-        li.appendChild(el("span", "sr", w.long));
-        strip.appendChild(li);
-      });
-      views.forEach(function (v) {
-        var li = el("li", "writing view");
-        var long = v.name + " (view page: ask a session to show it)";
-        li.setAttribute("data-long", long);
-        var badge = el("span", "badge", "view");
-        badge.setAttribute("aria-hidden", "true");
-        li.appendChild(badge);
-        var label = el("span", "label", v.name);
-        label.setAttribute("aria-hidden", "true");
-        li.appendChild(label);
-        li.appendChild(el("span", "sr", long));
-        strip.appendChild(li);
-      });
-      board.appendChild(strip);
-
-      var tip = el("div", "tip");
-      tip.setAttribute("role", "tooltip");
-      tip.hidden = true;
-      document.body.appendChild(tip);
-      strip.addEventListener("mouseover", function (event) {
-        var tile = event.target.closest(".writing");
-        if (!tile) return;
-        tip.textContent = tile.getAttribute("data-long");
-        tip.hidden = false;
-        var r = tile.getBoundingClientRect();
-        var t = tip.getBoundingClientRect();
-        var top = r.bottom + 6 + t.height > window.innerHeight ? r.top - 6 - t.height : r.bottom + 6;
-        var left = Math.max(4, Math.min(r.left, document.documentElement.clientWidth - t.width - 4));
-        tip.style.top = top + "px";
-        tip.style.left = left + "px";
-      });
-      strip.addEventListener("mouseout", function (event) {
-        if (!event.relatedTarget || !event.relatedTarget.closest || !event.relatedTarget.closest(".writing")) tip.hidden = true;
-      });
-      strip.addEventListener("scroll", function () { tip.hidden = true; });
-    }
-
-    function jobSection(category, id, heading, emptyText) {
-      var tickets = data.tickets.filter(function (t) { return t.category === category; });
-      var items = tickets.map(function (t) { return { id: t.id, node: ticketCard(t) }; });
-      // Completed also draws each deleted job's struck line, in job-number order among the cards.
-      if (category === "completed") {
-        items = items.concat(data.deleted.map(function (d) { return { id: d.id, node: deletedLine(d) }; }));
-      }
-      section(id, heading, emptyText, items.sort(byId).map(function (item) { return item.node; }), undefined, tickets.length);
-    }
-    jobSection("ready", "ready", "Ready", "Nothing ready to assign.");
-    jobSection("wip", "in-progress", "In Progress", "Nothing in progress.");
-    jobSection("bring_forward", "bring-forward", "Bring Forward", "Nothing held for a bring-forward date.");
-    jobSection("waiting", "waiting-on", "Blocked", "Nothing blocked.");
-    jobSection("completed", "completed", "Completed", "Nothing completed.");
-    // Shelved holds shelved tickets and the Proposals shelved directly. A Proposal hidden
-    // by a shelved ticket's snapshot row never reaches the board at all, so it gets no line here.
-    section(
-      "rejected-angles",
-      "Shelved",
-      "Nothing shelved.",
-      data.tickets.filter(function (t) { return t.category === "rejected"; }).sort(byId).map(ticketCard)
-        .concat(proposalCards(function (p) { return p.lane === "rejected"; })),
-      PROPOSAL_CUE
-    );
-    jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
-    // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
-    // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
-    // Either way the count is the open threads'.
-    var threadsPage = views.filter(function (v) { return v.name === ${JSON.stringify(LOOSE_THREADS_PAGE_NAME)}; })[0];
-    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
-      var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
-      section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
-    } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
-    }
-    section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
-    if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
-  }
-})();
-</script>
-<script>
-${WORKBOARD_JS}</script>
-</body>
-</html>
-`;
-function renderWorkBoardHtml(data) {
-  return `${HEAD3}window.WORKBOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
-${TAIL3}`;
-}
-
-// src/templates/view-pages/arguments.css.ts
-var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
-
-// src/templates/view-pages/arguments.html.ts
-var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
-
-// src/templates/view-pages/arguments.js.ts
-var arguments_js_default = `(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var board = document.querySelector(".board");
-  var KEY = "arguments-filter";
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-  function list(items, cls) {
-    var ul = el("ul");
-    items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
-    return ul;
-  }
-
-  var byId = {};
-  data.submissions.forEach(function (a) { byId[a.id] = a; });
-  var counterByKey = {};
-  data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
-  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", raised: "Raised", anticipated: "Anticipated" };
-
-  // A card: its statement, which toggles it and ends in its tag, then its detail.
-  function card(cls, kind, text, n) {
-    var node = el("article", cls);
-    var title = el("p", "text");
-    title.setAttribute("role", "button");
-    title.tabIndex = 0;
-    title.appendChild(el("span", "", text));
-    title.appendChild(el("span", "tag", KIND_LABEL[kind] + " #" + n));
-    node.appendChild(title);
-    var detail = el("div", "detail");
-    node.appendChild(detail);
-    return { node: node, title: title, detail: detail };
-  }
-  function argumentCard(a, i) {
-    var c = card("arg " + a.kind, a.kind, a.contention, i + 1);
-    c.detail.appendChild(el("p", "where", a.where));
-    if (a.law.length > 0) {
-      c.detail.appendChild(el("p", "head", "Law"));
-      c.detail.appendChild(list(a.law.map(function (l) {
-        return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
-      }), function (l) { return l.omitted ? "omitted" : ""; }));
-    } else {
-      c.detail.appendChild(el("p", "none", "No law linked"));
-    }
-    if (a.facts.length > 0) {
-      c.detail.appendChild(el("p", "head", "Facts"));
-      c.detail.appendChild(list(a.facts));
-    } else {
-      c.detail.appendChild(el("p", "none", "No facts linked"));
-    }
-    if (a.rebuts.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked to counter-arguments"));
-      linked.appendChild(list(a.rebuts.map(function (k) { return KIND_LABEL[counterByKey[k].kind] + ": " + counterByKey[k].text; })));
-      c.detail.appendChild(linked);
-    }
-    return c;
-  }
-  function counterCard(x, i) {
-    var c = card("arg counter", x.kind, x.text, i + 1);
-    if (x.source) c.detail.appendChild(el("p", "where", x.source));
-    if (x.linked.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked arguments"));
-      linked.appendChild(list(x.linked.map(function (id) { return KIND_LABEL[byId[id].kind] + ": " + byId[id].contention; })));
-      c.detail.appendChild(linked);
-    }
-    return c;
-  }
-
-  var tablist = el("div", "tabs");
-  tablist.setAttribute("role", "tablist");
-  tablist.setAttribute("aria-label", "Show");
-  board.appendChild(tablist);
-  var folder = el("div", "folder");
-  folder.id = "arguments-panel";
-  folder.setAttribute("role", "tabpanel");
-  board.appendChild(folder);
-
-  // One section, its picker and its cards. At most one card is open; the picker's selected number
-  // is always the open card's, and none is selected when every card is closed.
-  var sections = {};
-  function section(name, heading, cards) {
-    var sec = el("section");
-    var h2 = el("h2", "", heading);
-    var picker = el("span", "picker");
-    picker.setAttribute("role", "radiogroup");
-    picker.setAttribute("aria-label", heading + ": open card");
-    h2.appendChild(picker);
-    sec.appendChild(h2);
-    var stack = el("div", "stack");
-    sec.appendChild(stack);
-    folder.appendChild(sec);
-    sections[name] = { node: sec, size: cards.length };
-
-    var current = -1;
-    var radios = [];
-    function open(index) {
-      current = index;
-      cards.forEach(function (c, i) {
-        var on = i === index;
-        c.node.classList.toggle("open", on);
-        c.detail.hidden = !on;
-        c.title.setAttribute("aria-expanded", String(on));
-        radios[i].checked = on;
-      });
-    }
-    cards.forEach(function (c, i) {
-      var input = el("input");
-      input.type = "radio";
-      input.name = "pick-" + name;
-      input.id = "pick-" + name + "-" + (i + 1);
-      var label = el("label", "", String(i + 1));
-      label.htmlFor = input.id;
-      picker.appendChild(input);
-      picker.appendChild(label);
-      radios.push(input);
-      input.addEventListener("change", function () { if (input.checked) open(i); });
-      label.addEventListener("click", function (e) {
-        if (input.checked) { e.preventDefault(); open(-1); }
-      });
-      input.addEventListener("keydown", function (e) {
-        if (e.key === " " && input.checked) { e.preventDefault(); open(-1); }
-      });
-      c.title.addEventListener("click", function () { open(current === i ? -1 : i); });
-      c.title.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(current === i ? -1 : i); }
-      });
-      stack.appendChild(c.node);
-    });
-    open(cards.length > 0 ? 0 : -1);
-  }
-  section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
-  section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
-  section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
-  var empty = el("p", "empty", "Nothing recorded under this filter.");
-  folder.appendChild(empty);
-
-  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"]];
-  var tabs = TABS.map(function (t) {
-    var b = el("button", "", t[1]);
-    b.type = "button";
-    b.id = "tab-" + t[0];
-    b.setAttribute("role", "tab");
-    b.setAttribute("aria-controls", folder.id);
-    b.setAttribute("data-filter", t[0]);
-    tablist.appendChild(b);
-    return b;
-  });
-
-  var current = "all";
-  try {
-    var saved = localStorage.getItem(KEY);
-    if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
-  } catch (e) {}
-  function apply() {
-    var any = false;
-    Object.keys(sections).forEach(function (name) {
-      var on = (current === "all" || current === name) && sections[name].size > 0;
-      sections[name].node.hidden = !on;
-      if (on) any = true;
-    });
-    tabs.forEach(function (b) {
-      var on = b.getAttribute("data-filter") === current;
-      b.setAttribute("aria-selected", String(on));
-      b.tabIndex = on ? 0 : -1;
-      if (on) folder.setAttribute("aria-labelledby", b.id);
-    });
-    empty.hidden = any;
-  }
-  function select(b) {
-    current = b.getAttribute("data-filter");
-    try { localStorage.setItem(KEY, current); } catch (e) {}
-    apply();
-  }
-  tabs.forEach(function (b, i) {
-    b.addEventListener("click", function () { select(b); });
-    b.addEventListener("keydown", function (e) {
-      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (step === 0) return;
-      e.preventDefault();
-      var next = tabs[(i + step + tabs.length) % tabs.length];
-      select(next);
-      next.focus();
-    });
-  });
-  apply();
-})();`;
-
-// src/submission/forms/arguments-page.ts
-function rows13(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function tableHeld(dbPath, table) {
-  return rows13(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
-}
-function columnHeld2(dbPath, table, column) {
-  return rows13(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
-function buildArgumentsData(dbPath, filing) {
-  const proceedingId = filing.proceeding_id;
-  const submissions = rows13(
-    dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id = ?
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-     GROUP BY s.id
-     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
-              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
-    [filing.id, proceedingId]
-  );
-  const deployments = rows13(
-    dbPath,
-    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
-     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
-     WHERE f.proceeding_id = ?
-     ORDER BY f.id`,
-    [proceedingId]
-  );
-  const facts = rows13(
-    dbPath,
-    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
-     WHERE f.proceeding_id = ? ORDER BY f.id`,
-    [proceedingId]
-  );
-  const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows13(
-    dbPath,
-    `SELECT sl.submission_id, la.proposition, ${killedOn}
-     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE la.proceeding_id = ? ORDER BY la.id`,
-    [proceedingId]
-  );
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows13(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows13(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
-  const links = [
-    ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
-    ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
-  ];
-  const live = new Set(submissions.map((s3) => s3.id));
-  const counterArguments = [
-    ...fetchOpposingPoints(dbPath, proceedingId).map((p3) => ({
-      key: `raised:${p3.id}`,
-      kind: "raised",
-      text: p3.verbatim_words ?? "(no words recorded)",
-      source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
-      linked: []
-    })),
-    ...rows13(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
-      (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
-    )
-  ];
-  const counterByKey = new Map(counterArguments.map((c3) => [c3.key, c3]));
-  for (const l3 of links) {
-    const counter = counterByKey.get(l3.key);
-    if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
-  }
-  const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
-  const items = submissions.map((s3) => {
-    const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
-    const here = deployedOn.some((d3) => d3.filing_id === filing.id);
-    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
-    const where = here ? "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return {
-      id: s3.id,
-      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
-      contention: s3.contention,
-      where,
-      facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
-      law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
-      rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
-    };
-  });
-  return { submissions: items, counter_arguments: counterArguments };
-}
-var ARGUMENTS_PAGE = {
-  name: "Arguments",
-  ...composeTemplate("arguments.html", {
-    "arguments.html": arguments_html_default,
-    "view-head.html": view_head_html_default,
-    "board.css": board_css_default,
-    "view-folder.css": view_folder_css_default,
-    "arguments.css": arguments_css_default,
-    "shared.js": shared_js_default,
-    "arguments.js": arguments_js_default
-  }),
-  data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.filing)
 };
 
 // src/templates/view-pages/provable-facts.css.ts
