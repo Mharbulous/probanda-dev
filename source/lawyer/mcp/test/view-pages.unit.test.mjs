@@ -47,7 +47,7 @@ const PINS = {
   "Provable Facts": "0a2c0c2fea36f3a85bc1e94990aa35ac0091b25185476be57b9fd4a9d275aacf",
   "Raw Research": "2fbcdabaf808ffbb6e5ba5af9cb88dd9b86ac6e16b2e7bd62125a1c60e9c7467",
   Arguments: "d59b25d2ddf076c2b6225eee2eb3b9b3b5400f6e892d058e619e731d6939825f",
-  "Loose Threads": "1d3dd9cc8281fb9f419cd8f061f4bbf8e98220a8d060ef1e275f2e5ffba1768f",
+  "Loose Threads": "e929662fda806198cb12d9164ee6f365027514716793813060eb76aadfc1aee8",
 };
 
 for (const page of VIEW_PAGES) {

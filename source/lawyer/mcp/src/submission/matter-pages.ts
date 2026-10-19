@@ -805,7 +805,7 @@ export function criterionLine(c: GoalCriterion, criteria: readonly GoalCriterion
 
 /** board_summary's Goal line: the statement of goals' description and its status, `none` when none is stored. */
 function goalsHead(section: WorkBoardData): string {
-  const merged = section.goals.merged;
+  const merged = section.goals.merged ?? [];
   return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})${merged.length === 0 ? "" : `, plus ${counted(merged.length, "merged statement")}`}`;
 }
 
@@ -817,7 +817,7 @@ function goalsLines(section: WorkBoardData): string[] {
     `## Goal (${g.status ?? "none"})`,
     g.description,
     ...(g.statement === null ? [] : [g.statement]),
-    ...g.merged.flatMap((m, i) => [`### Merged ${i + 1} (${m.status})`, m.statement]),
+    ...(g.merged ?? []).flatMap((m, i) => [`### Merged ${i + 1} (${m.status})`, m.statement]),
   ];
 }
 

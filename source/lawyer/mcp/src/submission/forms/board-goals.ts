@@ -31,8 +31,8 @@ export interface BoardGoals {
   description: string;
   statement: string | null;
   status: BoardGoalsStatus | null;
-  /** Each absorbed board's statement, in merge order (ADR 0010). Empty on a board never merged into. */
-  merged: { statement: string; status: BoardGoalsStatus }[];
+  /** Each absorbed board's statement, in merge order (ADR 0010). Absent on a board never merged into. */
+  merged?: { statement: string; status: BoardGoalsStatus }[];
 }
 
 /** One absorbed board's statement as a merge stored it: `from` is the goal key it was read from. */
@@ -90,13 +90,9 @@ export function survivorGoalsKey(dbPath: string, board: BoardRef, index: BoardIn
 /** The board's statement of goals, read from its survivor's row, its description defaulting to `fallback`. */
 export function fetchBoardGoals(dbPath: string, board: BoardRef, fallback: string): BoardGoals {
   const stored = readStored(dbPath, survivorGoalsKey(dbPath, board));
-  if (stored === null) return { description: fallback, statement: null, status: null, merged: [] };
-  return {
-    description: stored.description ?? fallback,
-    statement: stored.statement,
-    status: stored.status,
-    merged: (stored.merged ?? []).map((m) => ({ statement: m.statement, status: m.status })),
-  };
+  if (stored === null) return { description: fallback, statement: null, status: null };
+  const merged = (stored.merged ?? []).map((m) => ({ statement: m.statement, status: m.status }));
+  return { description: stored.description ?? fallback, statement: stored.statement, status: stored.status, ...(merged.length > 0 ? { merged } : {}) };
 }
 
 export interface SetBoardGoalArgs {

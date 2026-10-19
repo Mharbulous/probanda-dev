@@ -556,8 +556,11 @@
       var merged = g.merged || [];
       if (g.statement === null && merged.length === 0) {
         body.appendChild(el("p", "none", "No statement of goals yet"));
+      } else if (merged.length === 0) {
+        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
+        body.appendChild(statementRows(g.statement, g.status));
       } else {
-        // The board's own statement, then each merged board's, each with its own status.
+        // A merged board (docs/ADRs/0010): its own statement, then each merged board's, each with its own status.
         [{ statement: g.statement, status: g.status }].concat(merged).forEach(function (s) {
           if (s.statement === null) return;
           var part = el("div", "goals-part");

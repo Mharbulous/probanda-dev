@@ -84,8 +84,8 @@ export interface MatterBoardData {
   /** In proceeding id order. */
   pre_filing: MatterBoardProceeding[];
   /** Each merged Job Board (docs/ADRs/0010): its page's name and the live sections drawn on it, the
-   * survivor's first. Those sections are drawn under it and not in their own lists. Empty when none is merged. */
-  boards: { name: string; filing_ids: number[]; proceeding_ids: number[] }[];
+   * survivor's first. Those sections are drawn under it and not in their own lists. Absent when none is merged. */
+  boards?: { name: string; filing_ids: number[]; proceeding_ids: number[] }[];
 }
 
 const inProgress = (tickets: WorkBoardTicket[]) => tickets.filter((t) => t.category === "wip").length;
@@ -175,18 +175,19 @@ export function buildMatterBoardData(
   const retired = ranked.filter((r) => r.filing.retired_on).map(retiredLine);
   const filings = [...live, ...retired];
   const preFilingLines = preFiling.map((p) => preFilingLine(p, boardFor(p.id)));
+  const merged = mergedBoards(new BoardIndex(dbPath), ranked, preFiling);
   return {
     meta,
     todos: todoLines(todos, filings, preFilingLines),
     ...("note" in todos ? { todos_note: todos.note } : {}),
     filings,
     pre_filing: preFilingLines,
-    boards: mergedBoards(new BoardIndex(dbPath), ranked, preFiling),
+    ...(merged.length > 0 ? { boards: merged } : {}),
   };
 }
 
 /** The merged boards, each with every live section on it, the survivor's first, in the order of their first section. */
-function mergedBoards(index: BoardIndex, ranked: RankedFiling[], preFiling: ProceedingRow[]): MatterBoardData["boards"] {
+function mergedBoards(index: BoardIndex, ranked: RankedFiling[], preFiling: ProceedingRow[]): NonNullable<MatterBoardData["boards"]> {
   const groups = new Map<string, { name: string; members: BoardRef[] }>();
   const refs: BoardRef[] = [
     ...ranked.filter((r) => !r.filing.retired_on).map((r) => ({ filing_id: r.filing.id, proceeding_id: r.proceeding.id })),
