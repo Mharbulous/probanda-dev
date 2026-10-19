@@ -378,6 +378,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
 
 Each finding lists its spread across repeats (Q17). Changing the /ingest and /housekeeping skills is a separate later task, decided from that report.
 
+The report is [2026-10-19_token-efficiency-findings.md](2026-10-19_token-efficiency-findings.md) (map #100 ticket #149).
+
 ## Verification of the build
 - The unit tests for `token_ledger.py` and `score.py` pass.
 - `token_ledger.py` on the existing Cowork transcript (agent `a44883bde9a6174a6`) gives the same token totals as summing its `usage` lines by hand.
