@@ -29,7 +29,9 @@ So this gate refuses:
   `<page name> - filing <id>.html`) (a remote-device-only host stages
   them to show a card; ADR 0033, 2026-10-05 amendments: one Job Board page per
   live Writing and per pre-filing proceeding, named by its id; 2026-10-07: the
-  view pages).
+  view pages), or a preview of one of the current names, `<page name> preview
+  <n>.html` (#139: a re-rendered copy of a board shown as a card, and a page
+  like any other, so every other access to it is refused).
 
 Glob is never refused, and no other HTML file is. Exempt when COCLERK_HTML_DEV=1
 is in the environment: developing or debugging the generator in Claude Code
@@ -53,8 +55,11 @@ STEM = r"(?:job board|litigation strategy|to do list|work board|matter board|wor
 # before 2026-10-08, kept so an old copy not yet moved to TRASH is still refused.
 VIEW_NAMES = ("provable facts", "raw research", "arguments", "loose threads", "loose ideas")
 # A view page: a listed name, then " - job board <id>.html", or " - filing <id>.html", its name
-# before 2026-10-09, kept so an old copy not yet moved to TRASH is still recognised.
-VIEW = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r") - (?:job board|filing) \d+\.html"
+# before 2026-10-09, kept so an old copy not yet moved to TRASH is still recognised. A preview of a
+# page (#139) is the page's stem, then " preview <n>.html"; a board stem already matches STEM, so
+# only a view page's preview needs its own pattern here.
+VIEW_NAME = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r")"
+VIEW = VIEW_NAME + r" - (?:job board|filing) \d+(?: preview \d+)?\.html"
 PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
@@ -62,7 +67,11 @@ SAMPLE_PAGES = ("Job Board.html", "Job Board 1.html", "Job Board - filing 1.html
                 "Work Board.html", "Matter Board.html", "Work_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
                 "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html", "Arguments - Job Board 1.html",
                 "Loose Threads - Job Board 1.html", "Provable Facts - filing 1.html", "Raw Research - filing 1.html",
-                "Arguments - filing 1.html", "Loose Threads - filing 1.html", "Loose Ideas - filing 1.html")
+                "Arguments - filing 1.html", "Loose Threads - filing 1.html", "Loose Ideas - filing 1.html",
+                "Work Board preview 1.html", "Litigation Strategy preview 1.html", "Job Board 1 preview 1.html",
+                "Job Board - proceeding 3 preview 1.html", "Provable Facts - Job Board 1 preview 1.html",
+                "Raw Research - Job Board 1 preview 1.html", "Arguments - Job Board 1 preview 1.html",
+                "Loose Threads - Job Board 1 preview 1.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",
               "NotebookRead": "notebook_path", "NotebookEdit": "notebook_path"}
@@ -71,9 +80,11 @@ DEVICE_TOOL = re.compile(r"mcp__(.+__)?device_.*")
 STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
 # practice-wide Work Board beside practice.db, the
-# id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>") and the
-# listed view pages.
-STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|" + VIEW)
+# id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>"), the
+# listed view pages, and a preview of each current page (#139).
+STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|"
+                       + VIEW_NAME + r" - (?:job board|filing) \d+\.html|"
+                       r"(?:litigation strategy|work board|job board \d+|job board - proceeding \d+|" + VIEW_NAME + r" - job board \d+) preview \d+\.html")
 
 
 def basename(path):

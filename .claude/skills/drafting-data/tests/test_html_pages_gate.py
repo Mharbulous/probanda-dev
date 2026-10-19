@@ -12,8 +12,16 @@ DRAFT = r"<matter>\0. DRAFT"
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.
 STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOARD 1.HTML",
                    "Litigation Strategy.html", "To Do List.html", "Work Board.html"]
+# A preview of each current page (#139), stageable like its page.
+PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Job Board 1 preview 1.html",
+                 "Job Board - proceeding 2 preview 3.html", "Provable Facts - Job Board 1 preview 1.html",
+                 "Raw Research - Job Board 4 preview 2.html", "Arguments - Job Board 1 preview 10.html",
+                 "Loose Threads - Job Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML"]
+STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Job Board.html", "Job Board - SUB Opening.html", "Job Board 1-1.html",
-                     "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html"]
+                     "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html",
+                     "Work Board preview.html", "Job Board preview 1.html", "Job Board 1 preview 1 (2).html",
+                     "Matter Board preview 1.html", "To Do List preview 1.html", "Job Board - filing 1 preview 1.html"]
 
 PAGE_PATHS = [
     DRAFT + r"\Job Board.html",
@@ -34,6 +42,9 @@ PAGE_PATHS = [
     DRAFT + r"\workboard-status.js",
     "/mnt/<matter>/0. DRAFT/Litigation Strategy.html",
     "/mnt/<matter>/0. DRAFT/To Do List.html",
+] + [DRAFT + "\\" + name for name in PREVIEW_NAMES] + [
+    r"<data>\previews\Provable Facts - Job Board 1 preview 1.html",
+    DRAFT + r"\Provable Facts - filing 1 preview 1.html",
 ]
 OTHER_PATHS = [
     DRAFT + r"\approval.html",
@@ -107,6 +118,14 @@ class GateTest(unittest.TestCase):
             Path(plain, "index.html").write_text("<html></html>", encoding="utf-8")
             self.assertAllowed(call("Grep", {"pattern": "x", "path": plain, "glob": "*.html"}))
 
+    def test_grep_reaching_a_view_page_preview_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            Path(folder, "Provable Facts - Job Board 1 preview 1.html").write_text("<html></html>", encoding="utf-8")
+            for glob in ["*.html", "*preview*.html"]:
+                with self.subTest(glob=glob):
+                    self.assertDenied(call("Grep", {"pattern": "x", "path": folder, "glob": glob}))
+            self.assertDenied(call("Grep", {"pattern": "x", "path": folder, "type": "html"}))
+
     def test_grep_whose_glob_names_a_page_is_refused_even_where_the_hook_sees_no_folder(self):
         unseen = "/mnt/<matter>/0. DRAFT"
         for glob in ["Job Board*.html", "litigation strategy.html", "to do list.html", "**/Work_board @rev*.html"]:
@@ -125,6 +144,9 @@ class GateTest(unittest.TestCase):
                 self.assertIn("command text", reason)
         self.assertDenied(call("Bash", {"command": "grep -o 'window.WORKBOARD' '/mnt/x/0. DRAFT/Job Board.html'"}))
         self.assertDenied(call("PowerShell", {"command": 'Get-Content "$d\\workboard-status.js"'}))
+        for name in PREVIEW_NAMES:
+            with self.subTest(name=name):
+                self.assertDenied(call("Bash", {"command": f"cat '/mnt/<matter>/0. DRAFT/{name}'"}))
 
     def test_shell_tools_allow_other_html(self):
         self.assertAllowed(call("Bash", {"command": f'cat "{DRAFT}\\notes.html"'}))
