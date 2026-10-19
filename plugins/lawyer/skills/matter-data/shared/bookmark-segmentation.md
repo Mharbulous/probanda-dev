@@ -56,6 +56,6 @@ Titles arrive already decoded by `extract_outline.py` (UTF-16BE, PDFDocEncoding,
 
 Applies inside Path C, whether dispatched standalone or from a Path E evidence child.
 
-When Pass 1 reports `scanned: true`, Pass 2's boundary batches and each Pass 3 stamp page are read from ~150 DPI renders — the same rule Pass 1 already applies to its own pages — never from an OCR text layer, because a handwritten exhibit letter OCRs unreliably even when the surrounding boilerplate ("This is Exhibit ___ referred to in the affidavit of ___") reads cleanly.
+Pass 1 and Pass 2's boundary batches read the PDF natively, scanned pages included. When Pass 1 reports `scanned: true`, each exhibit letter is read from a ~150 DPI render of its stamp page, never from an OCR text layer, because a handwritten exhibit letter OCRs unreliably even when the surrounding boilerplate ("This is Exhibit ___ referred to in the affidavit of ___") reads cleanly. The main agent renders each stamp page Pass 2 found and dispatches Pass 2 once more with `STAMP_RENDERS`, which reads only those renders and returns each stamp's `letter` and `ocr_uncertain` (`../operations/ingest-extract.md` Path C, Pass 2). Pass 3 skips the stamp page and needs no render.
 
 A letter that still does not reduce to a clean `^[A-Z]{1,2}$` token (the `AA`/`BB` doubling convention included) is returned with `ocr_uncertain: true`. The exhibit source row then gets `notes = 'OCR: exhibit letter read as <x>; probable <y>'` and `verified = 2` — the existing §5 notes-prefix convention (`conventions.md`), no new marker family.

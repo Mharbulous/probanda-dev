@@ -1108,7 +1108,7 @@ Westlaw downloads are RTF with a `.doc` extension, and every case name cited in 
 
 ## 63. No OCR text layer at ingest; exhibit lookup is by exhibit rows (2026-10-05)
 
-Ingest adds no OCR text layer to a scanned PDF, because root `CLAUDE.md` forbids external binaries and packages, and tesseract is one. Scanned pages are read from ~150 DPI renders (Path C of `operations/ingest-extract.md`; `shared/bookmark-segmentation.md`), which already avoid OCR for handwritten stamps it would read unreliably. The question "which affidavit exhibits this document" is answered by `@query_29_exhibits_of_document` over exhibit rows, matched by date or title, not by searching text. Found by `docs/E2E-tests/2026-10-05-1604 draft-e2e-test.md` finding 4.4.
+Ingest adds no OCR text layer to a scanned PDF, because root `CLAUDE.md` forbids external binaries and packages, and tesseract is one. Scanned pages are read natively, and a scanned affidavit's stamp pages from ~150 DPI renders, which avoid OCR for handwritten stamps it would read unreliably (#70). The question "which affidavit exhibits this document" is answered by `@query_29_exhibits_of_document` over exhibit rows, matched by date or title, not by searching text. Found by `docs/E2E-tests/2026-10-05-1604 draft-e2e-test.md` finding 4.4.
 
 ## 64. A second version of a court document supersedes into the operative copy, recorded by notes markers (2026-10-05)
 
@@ -1235,6 +1235,8 @@ No schema change. `references/scripts/list_parties.py` reads every party, read-o
 **One document per extractor.** A dispatch carries one document, and a long document is never split across extractors (`operations/ingest-extract.md`, Universal rules). The report's E3 tried both rejected designs: small documents batched to about 40 pages cost 5–23% less only by finding 5–10 points fewer facts, and chunk extractors on a 54-page document cost twice as much for recall inside the single extractor's range. The rule is written down so that no later edit brings either back.
 
 **A fresh extractor per document, in back-to-back waves.** Each document, and each exhibit on Pass 3, gets a fresh extractor, never one resumed by SendMessage and never a fork. The report's E6 found a resume saved −$0.017 to +$0.006 a document, because a run's cost is mostly output, and once lost 2 of 7 facts. A fork reads the parent's whole context, about 150k tokens against an extractor's 9k. The parallel batches of up to 10 stay: each is one wave, and the next starts as soon as the previous one has returned. A running sibling keeps the shared prefix cached (E1), so nothing waits or pings to keep the cache warm. A lapsed cache costs about $0.035 per agent type on Opus.
+
+**Scanned affidavit pages are read natively.** Path C's Pass 1 and Pass 2's boundary scan read the PDF natively, scanned pages included. The report's E4 found a native read takes a scan at about 100 dpi, for the same recall at 21–51% less cost than ~150 DPI renders. Two things keep ~150 DPI renders. A scanned affidavit's stamp pages are rendered and read by a letter-only Pass 2 dispatch (`STAMP_RENDERS`), because E4 did not measure handwriting and a stamp is one page per exhibit (`shared/bookmark-segmentation.md` §6). `operations/supersede-draft.md`'s page-by-page comparison keeps its renders too, since it was not measured either. Pass 1 still reports `scanned: true`, because the stamp rule keys off it.
 
 ---
 
