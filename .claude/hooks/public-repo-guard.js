@@ -57,7 +57,7 @@ const REPO_WRITE = /\bpush\b|\bremote\s+(?:add|set-url)\b|\bgh\s+(?:repo\s+(?:ed
 if (typeof input.command === "string") {
   const command = input.command;
   if (PUBLIC_REPO.test(command) && REPO_WRITE.test(command)) {
-    ask("This command changes the public repository Probanda-app/Probanda. Approve it only if you want this change made.");
+    ask("This command changes the public repository Probanda-app/Legal. Approve it only if you want this change made.");
   }
   if (/\bgh\b/.test(command) && /publish-public/i.test(command) && /workflow\s+run|dispatches/i.test(command)) {
     ask("This command starts the publish-public workflow, which publishes public/ to the public repository. Publication cannot be reliably undone.");
@@ -67,7 +67,7 @@ if (typeof input.command === "string") {
     const dir = (at && (at[1] || at[2] || at[3])) || data.cwd || ".";
     const remotes = spawnSync("git", ["-C", dir, "remote", "-v"], { encoding: "utf8" });
     if (PUBLIC_REPO.test(String(remotes.stdout || ""))) {
-      ask("This checkout's remote is Probanda-app/Probanda, so this push publishes to the public repository.");
+      ask("This checkout's remote is Probanda-app/Legal, so this push publishes to the public repository.");
     }
   }
   const plain = literalBlanked(command);

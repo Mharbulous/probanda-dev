@@ -66,6 +66,7 @@ const ASK = [
   ['grep "a\\"; cp x public/public-approved.json; echo \\"b" y', "PowerShell"],
   "gh workflow run publish-public",
   "git push https://github.com/Probanda-app/Probanda HEAD:main",
+  "git push https://github.com/Probanda-app/Legal HEAD:main",
 ];
 
 let failed = 0;
