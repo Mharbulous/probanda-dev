@@ -1,5 +1,5 @@
 // The maintainer's side of the Suggestion Box, for /adversarial-triage
-// (.claude/commands/adversarial-triage.md). Run from Probanda's development
+// (.claude/skills/adversarial-triage/SKILL.md). Run from Probanda's development
 // machine.
 //
 //   node triage.mjs list

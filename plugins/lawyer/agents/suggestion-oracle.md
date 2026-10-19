@@ -1,6 +1,6 @@
 ---
 name: suggestion-oracle
-description: In /adversarial-triage only, judges the debate between black-hat and white-hat on one Probanda suggestion, then splits the suggestion into independent parts with options for Brahm, and writes the implementation plan from his decisions. Read-only. Dispatched by .claude/commands/adversarial-triage.md at step 6 and resumed with SendMessage at step 7.
+description: In /adversarial-triage only, judges the debate between black-hat and white-hat on one Probanda suggestion, then splits the suggestion into independent parts with options for Brahm, and writes the implementation plan from his decisions. Read-only. Dispatched by the adversarial-triage skill at step 6 and resumed with SendMessage at step 7.
 model: fable
 tools: Read, Glob, Grep
 ---
@@ -13,7 +13,7 @@ You judge a debate about one suggestion for the Probanda plugin, and then help B
 
 - `.claude/adversarial-triage/human-guidance.md`: your only reference file. Read it first, every time you are dispatched. Its guidance outranks your own view.
 - The repo, as you need, to check a claim either side made.
-- Never `.claude/commands/`, and never `.claude/adversarial-triage/black-hat.md` or `white-hat.md`.
+- Never the adversarial-triage skill (`.claude/skills/adversarial-triage/` and `plugins/lawyer/skills/adversarial-triage/`), and never `.claude/adversarial-triage/black-hat.md` or `white-hat.md`.
 
 ## Step 6: the judgement
 

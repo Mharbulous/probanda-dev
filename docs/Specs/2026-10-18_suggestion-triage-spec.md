@@ -55,13 +55,13 @@ Triage reads suggestions on Probanda's development machine with the project secr
 
 GitHub token leftovers: each of Brahm's machines may still hold `%LOCALAPPDATA%\Coclerk\suggestion-box\credential.json.dpapi` with a GitHub token. Deleting the file on each machine and revoking the token on GitHub are Brahm's steps, recorded in the hand-off spec (#59). No cloud push to GitHub exists or is planned, so no GitHub token lives in the cloud.
 
-### 4.3 `/adversarial-triage` (repo-only command and agents)
+### 4.3 `/adversarial-triage` (maintainer-only skill and agents)
 
-**Where it lives.** Maintainer-only, so in no plugin. A `.claude/skills/` folder must be assigned to a plugin (`check_layering.py` and `check_file_ops.py` stop otherwise), and `.claude/commands/` is where `/release` and `/rule-remodel` live. Files:
+**Where it lives.** Maintainer-only, in the experimental `lawyer` plugin, which installs only on Brahm's machines. It runs only from the probanda-dev checkout and stops elsewhere. Files:
 
-- `.claude/commands/adversarial-triage.md`: the orchestrator's procedure (§4.4).
-- `.claude/agents/black-hat.md`, `.claude/agents/white-hat.md`: `model: opus`, `effort: high`, `tools: Read, Glob, Grep`. The build scripts never touch `.claude/agents/`.
-- `.claude/agents/suggestion-oracle.md`: `model: fable`, `tools: Read, Glob, Grep`.
+- `.claude/skills/adversarial-triage/SKILL.md`: the orchestrator's procedure (§4.4), with `disable-model-invocation: true`.
+- `source/lawyer/agents/black-hat.md`, `source/lawyer/agents/white-hat.md`: `model: opus`, `effort: high`, `tools: Read, Glob, Grep`. Dispatched as `lawyer:black-hat` and `lawyer:white-hat`.
+- `source/lawyer/agents/suggestion-oracle.md`: `model: fable`, `tools: Read, Glob, Grep`. Dispatched as `lawyer:suggestion-oracle`.
 - `.claude/adversarial-triage/black-hat.md`, `.claude/adversarial-triage/white-hat.md`: each hat's own notes file, 3000 characters at most, written only at steps 7 and 8.
 - `.claude/adversarial-triage/human-guidance.md`: the oracle's only reference file, edited by a human only.
 - `scripts/triage_notes.py`, deterministic, with tests beside the repo's other script tests:
@@ -72,7 +72,7 @@ GitHub token leftovers: each of Brahm's machines may still hold `%LOCALAPPDATA%\
 
 **One agent per hat, resumed across steps.** Black-hat and white-hat are each dispatched once in the background at step 2 and resumed with `SendMessage` at steps 3, 4, 5 and 7, so each keeps its own context and sees nothing of the other's except what the orchestrator forwards. The orchestrator relays each reply as its completion notification arrives, so the faster agent's text shows first. The oracle is one agent too, dispatched at step 6 and resumed at step 7. The orchestrator makes every write: the notes files, the cap script, the issue, the status, the commit. No agent writes anything.
 
-**Blinding.** The hats never open `.claude/commands/` or `.claude/adversarial-triage/`, and their definitions say so. Each step's message to a hat carries that step's notes from `triage_notes.py show`. The scoring rules live only in the command file and reach the hats in the step 5 message. The oracle sees `human-guidance.md` and never the hats' notes.
+**Blinding.** The hats never open the adversarial-triage skill (in `.claude/skills/` or `plugins/lawyer/skills/`) or `.claude/adversarial-triage/`, and their definitions say so. Each step's message to a hat carries that step's notes from `triage_notes.py show`. The scoring rules live only in the skill file and reach the hats in the step 5 message. The oracle sees `human-guidance.md` and never the hats' notes.
 
 ### 4.4 Steps
 
@@ -88,6 +88,10 @@ GitHub token leftovers: each of Brahm's machines may still hold `%LOCALAPPDATA%\
 8. Once both notes files are written and capped, commit the two files by pathspec with a message naming the suggestion id, `git pull --ff-only`, push `main`. Then say the triage is done.
 
 Executing the plan issue is outside this skill.
+
+### 4.5 `/suggestion-triage` (the single-pass version)
+
+A cheaper alternative, added on 2026-10-19 after one debate cost about ten times a single planner for a comparable plan. One agent, `lawyer:suggestion-planner` (`model: fable`, `effort: medium`, read-only), decomposes the suggestion, keeps only the parts that beat doing nothing or that remove complexity without making Probanda worse, and returns the issue. Brahm confirms filing, and the orchestrator files it and sets the status as in step 7. The procedure is `.claude/skills/suggestion-triage/SKILL.md`. Both skills stay until more runs show which to keep.
 
 ## 5. Constraints that must still hold
 
@@ -110,7 +114,7 @@ Executing the plan issue is outside this skill.
 3. `suggestion-list` and `suggestion-set-status`, with their `config.toml` entries; deploy.
 4. `cloud/suggestions/tools/triage.mjs`.
 5. The `commons` server sends `plugin_version` and accepts `skill`; rebuild the plugins and release the patch bumps.
-6. `.claude/commands/adversarial-triage.md`, the three agent files, the three notes files.
+6. `.claude/skills/adversarial-triage/SKILL.md`, the three agent files, the three notes files.
 7. `scripts/triage_notes.py` with its tests.
 
 ## 8. Implementation criteria

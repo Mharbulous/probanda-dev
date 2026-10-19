@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-A hat's notes file for /adversarial-triage (.claude/commands/adversarial-triage.md).
+A hat's notes file for /adversarial-triage (.claude/skills/adversarial-triage/SKILL.md).
 
   python scripts/triage_notes.py show <file> <step>
       Prints the advice available at that step: the untagged text plus the
