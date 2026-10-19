@@ -447,18 +447,87 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
       name: suggestionBoxPrefixed("submit"),
       description:
         "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. " +
-        "title and body are the whole post: they must name no person, entity, matter, document or path. " +
-        "source is user for the practitioner's own idea (through /lawyer:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). " +
+        "title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. " +
+        "source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, " +
+        "or llm for a vetted loose thread (through /draft's Suggestion Box). " +
         "skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. " +
+        "items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked " +
+        "origin probanda (Probanda's idea) or lawyer (the person's idea). " +
+        "previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. " +
         "The server adds the researcher plugin's version itself. " +
-        "Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; " +
-        "the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
-      inputSchema: objectSchema([
-        { name: "title", type: "str" },
-        { name: "body", type: "str" },
-        { name: "source", type: "str", enum: ["user", "llm"] },
-        { name: "skill", type: "str" },
-      ], ["title", "body", "source"]),
+        "Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, " +
+        "or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. " +
+        "The refusal names the kind of hit, never the text. Refused when this computer has no key. " +
+        "Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          body: { type: "string" },
+          source: { type: "string", enum: ["user", "llm", "assisted"] },
+          skill: { type: "string" },
+          items: {
+            type: "array",
+            maxItems: 10,
+            items: {
+              type: "object",
+              properties: {
+                pain: { type: "string" },
+                where: { type: "string" },
+                done_test: { type: "string" },
+                constraints: { type: "array", items: { type: "string" } },
+                changes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      change: { type: "string" },
+                      origin: { type: "string", enum: ["probanda", "lawyer"] },
+                    },
+                    required: ["change", "origin"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["pain", "where", "done_test", "constraints", "changes"],
+              additionalProperties: false,
+            },
+          },
+          previews: {
+            type: "array",
+            maxItems: 4,
+            items: {
+              type: "object",
+              properties: {
+                label: { type: "string" },
+                chosen: { type: "boolean" },
+                reason: { type: "string" },
+                html: { type: "string" },
+              },
+              required: ["label", "chosen", "html"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["title", "body", "source"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: suggestionBoxPrefixed("status"),
+      description:
+        "Read the status of suggestions this device submitted, by the suggestion_id values suggestion_box__submit returned (1 to 50). " +
+        "Returns {statuses: [{suggestion_id, status, triaged_at}]} and nothing else of a suggestion; an ID Probanda's Cloud does not hold is omitted. " +
+        "status is new, approved, approved in part or rejected; triaged_at is null until triage. Refused when this computer has no key.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          suggestion_ids: { type: "array", maxItems: 50, items: { type: "string" } },
+        },
+        required: ["suggestion_ids"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true },
     },
   ];
 }

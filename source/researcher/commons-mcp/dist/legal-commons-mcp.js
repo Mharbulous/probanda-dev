@@ -8939,13 +8939,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -9072,7 +9072,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn(shape, payload, ctx);
   };
   let fastpass;
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -9081,7 +9081,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -13674,8 +13674,8 @@ var UrlElicitationRequiredError = class extends McpError {
 };
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
-function isTerminal(status) {
-  return status === "completed" || status === "failed" || status === "cancelled";
+function isTerminal(status2) {
+  return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
 }
 
 // node_modules/zod-to-json-schema/dist/esm/parsers/string.js
@@ -14592,8 +14592,8 @@ var Protocol = class {
         }
         return task;
       },
-      storeTaskResult: async (taskId, status, result) => {
-        await taskStore.storeTaskResult(taskId, status, result, sessionId);
+      storeTaskResult: async (taskId, status2, result) => {
+        await taskStore.storeTaskResult(taskId, status2, result, sessionId);
         const task = await taskStore.getTask(taskId, sessionId);
         if (task) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -14609,15 +14609,15 @@ var Protocol = class {
       getTaskResult: (taskId) => {
         return taskStore.getTaskResult(taskId, sessionId);
       },
-      updateTaskStatus: async (taskId, status, statusMessage) => {
+      updateTaskStatus: async (taskId, status2, statusMessage) => {
         const task = await taskStore.getTask(taskId, sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, `Task "${taskId}" not found - it may have been cleaned up`);
         }
         if (isTerminal(task.status)) {
-          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
+          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status2}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
         }
-        await taskStore.updateTaskStatus(taskId, status, statusMessage, sessionId);
+        await taskStore.updateTaskStatus(taskId, status2, statusMessage, sessionId);
         const updatedTask = await taskStore.getTask(taskId, sessionId);
         if (updatedTask) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -15460,9 +15460,9 @@ var ValidationError = class extends DataServerError {
 };
 var TransportError = class extends DataServerError {
   status;
-  constructor(message, status) {
+  constructor(message, status2) {
     super(message);
-    this.status = status;
+    this.status = status2;
   }
 };
 
@@ -15519,8 +15519,8 @@ async function handle(req, res) {
   page(res, 200, "Connected", `<p>Connected to Probanda's Cloud.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
 }
 var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer read and contribute to the legal commons and send suggestions about the plugin.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>`;
-function page(res, status, title, body) {
-  res.writeHead(status, {
+function page(res, status2, title, body) {
+  res.writeHead(status2, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
     "Cache-Control": "no-store",
@@ -16568,13 +16568,73 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are the whole post: they must name no person, entity, matter, document or path. source is user for the practitioner's own idea (through /lawyer:suggestion) or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. The server adds the researcher plugin's version itself. Refused before any network call when the text holds a personal email address, a user-profile path naming a real user, a matter folder name, or a string over 2,000 characters; the refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id}.",
-      inputSchema: objectSchema([
-        { name: "title", type: "str" },
-        { name: "body", type: "str" },
-        { name: "source", type: "str", enum: ["user", "llm"] },
-        { name: "skill", type: "str" }
-      ], ["title", "body", "source"])
+      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          body: { type: "string" },
+          source: { type: "string", enum: ["user", "llm", "assisted"] },
+          skill: { type: "string" },
+          items: {
+            type: "array",
+            maxItems: 10,
+            items: {
+              type: "object",
+              properties: {
+                pain: { type: "string" },
+                where: { type: "string" },
+                done_test: { type: "string" },
+                constraints: { type: "array", items: { type: "string" } },
+                changes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      change: { type: "string" },
+                      origin: { type: "string", enum: ["probanda", "lawyer"] }
+                    },
+                    required: ["change", "origin"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["pain", "where", "done_test", "constraints", "changes"],
+              additionalProperties: false
+            }
+          },
+          previews: {
+            type: "array",
+            maxItems: 4,
+            items: {
+              type: "object",
+              properties: {
+                label: { type: "string" },
+                chosen: { type: "boolean" },
+                reason: { type: "string" },
+                html: { type: "string" }
+              },
+              required: ["label", "chosen", "html"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["title", "body", "source"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: suggestionBoxPrefixed("status"),
+      description: "Read the status of suggestions this device submitted, by the suggestion_id values suggestion_box__submit returned (1 to 50). Returns {statuses: [{suggestion_id, status, triaged_at}]} and nothing else of a suggestion; an ID Probanda's Cloud does not hold is omitted. status is new, approved, approved in part or rejected; triaged_at is null until triage. Refused when this computer has no key.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          suggestion_ids: { type: "array", maxItems: 50, items: { type: "string" } }
+        },
+        required: ["suggestion_ids"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
     }
   ];
 }
@@ -16764,6 +16824,27 @@ function findRedactionHits(fields) {
   }
   return REDACTION_RULES.filter(([, hits]) => strings2.some((text) => hits(text))).map(([kind]) => kind);
 }
+var MAX_ITEMS_JSON_LENGTH = 5e4;
+var MAX_PREVIEW_HTML_LENGTH = 2e5;
+function leafStrings(value, into) {
+  if (typeof value === "string") into.push(value);
+  else if (Array.isArray(value)) for (const item of value) leafStrings(item, into);
+  else if (value !== null && typeof value === "object") for (const item of Object.values(value)) leafStrings(item, into);
+  return into;
+}
+function findSuggestionHits(fields) {
+  const html = (fields.previews ?? []).map((preview) => preview.html);
+  const strings2 = leafStrings([fields.title, fields.body, fields.items ?? []], []);
+  for (const preview of fields.previews ?? []) {
+    leafStrings(Object.entries(preview).filter(([key]) => key !== "html").map(([, value]) => value), strings2);
+  }
+  const hits = REDACTION_RULES.filter(
+    ([kind, hit]) => strings2.some(hit) || kind !== "too_long" && html.some(hit)
+  ).map(([kind]) => kind);
+  if (fields.items && JSON.stringify(fields.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
+  if (html.some((text) => text.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
+  return hits;
+}
 
 // src/troubleshoot/tools.ts
 function isTroubleshootToolName(name) {
@@ -16888,7 +16969,12 @@ async function configureStatus2(client) {
 // src/suggestion-box/tools.ts
 import { readFileSync } from "node:fs";
 var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves";
-var SOURCES = /* @__PURE__ */ new Set(["user", "llm"]);
+var SOURCES = /* @__PURE__ */ new Set(["user", "llm", "assisted"]);
+var ORIGINS = /* @__PURE__ */ new Set(["probanda", "lawyer"]);
+var MAX_ITEMS = 10;
+var MAX_PREVIEWS = 4;
+var MAX_STATUS_IDS = 50;
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var MANIFEST = new URL("../../.claude-plugin/plugin.json", import.meta.url);
 function pluginVersion() {
   let version2;
@@ -16909,6 +16995,8 @@ function callSuggestionBoxTool(client, name, args) {
   switch (name) {
     case "suggestion_box__submit":
       return submit(client, args);
+    case "suggestion_box__status":
+      return status(client, args);
     default:
       throw new ValidationError(`Unknown suggestion_box tool "${name}"`);
   }
@@ -16920,19 +17008,110 @@ async function submit(client, args) {
   if (!title) throw new ValidationError("submit requires a title");
   if (!body) throw new ValidationError("submit requires a body");
   const source = String(args.source ?? "");
-  if (!SOURCES.has(source)) throw new ValidationError("submit requires source: user or llm");
+  if (!SOURCES.has(source)) throw new ValidationError("submit requires source: user, llm or assisted");
   const skill = args.skill === void 0 ? void 0 : String(args.skill).trim();
   if (skill === "") throw new ValidationError("submit's skill, when given, must name a skill");
-  const hits = findRedactionHits({ title, body });
+  const items = args.items === void 0 ? void 0 : checkItems(args.items);
+  const previews = args.previews === void 0 ? void 0 : checkPreviews(args.previews);
+  const hits = findSuggestionHits({ title, body, items, previews });
   if (hits.length > 0) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
   }
-  const post = { title, body, source, plugin_version: pluginVersion(), ...skill ? { skill } : {} };
+  const post = {
+    title,
+    body,
+    source,
+    plugin_version: pluginVersion(),
+    ...skill ? { skill } : {},
+    ...items ? { items } : {},
+    ...previews ? { previews } : {}
+  };
   const saved = await client.callFunction("suggestion-submit", post);
   if (typeof saved?.suggestion_id !== "string") {
     throw new ValidationError("Probanda's Cloud did not confirm the suggestion, so it may not have been saved");
   }
-  return { suggestion_id: saved.suggestion_id };
+  return {
+    suggestion_id: saved.suggestion_id,
+    items_saved: saved.items_saved === true,
+    previews_saved: saved.previews_saved === true
+  };
+}
+function isObject2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function onlyKeys(label, value, keys) {
+  const extra = Object.keys(value).find((key) => !keys.includes(key));
+  if (extra) throw new ValidationError(`${label} has an unknown field "${extra}"`);
+}
+function nonEmpty(label, value) {
+  if (typeof value !== "string" || !value.trim()) throw new ValidationError(`${label} must be non-empty text`);
+  return value.trim();
+}
+function checkItems(value) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ITEMS) {
+    throw new ValidationError(`submit's items, when given, must be a list of 1 to ${MAX_ITEMS} items`);
+  }
+  return value.map((item, i) => {
+    const label = `items[${i}]`;
+    if (!isObject2(item)) throw new ValidationError(`${label} must be an object`);
+    onlyKeys(label, item, ["pain", "where", "done_test", "constraints", "changes"]);
+    if (!Array.isArray(item.constraints)) throw new ValidationError(`${label}.constraints must be a list`);
+    if (!Array.isArray(item.changes)) throw new ValidationError(`${label}.changes must be a list`);
+    return {
+      pain: nonEmpty(`${label}.pain`, item.pain),
+      where: nonEmpty(`${label}.where`, item.where),
+      done_test: nonEmpty(`${label}.done_test`, item.done_test),
+      constraints: item.constraints.map((c, j) => nonEmpty(`${label}.constraints[${j}]`, c)),
+      changes: item.changes.map((change, j) => {
+        const at = `${label}.changes[${j}]`;
+        if (!isObject2(change)) throw new ValidationError(`${at} must be an object`);
+        onlyKeys(at, change, ["change", "origin"]);
+        if (typeof change.origin !== "string" || !ORIGINS.has(change.origin)) {
+          throw new ValidationError(`${at}.origin must be probanda or lawyer`);
+        }
+        return { change: nonEmpty(`${at}.change`, change.change), origin: change.origin };
+      })
+    };
+  });
+}
+function checkPreviews(value) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_PREVIEWS) {
+    throw new ValidationError(`submit's previews, when given, must be a list of 1 to ${MAX_PREVIEWS} Previews`);
+  }
+  return value.map((preview, i) => {
+    const label = `previews[${i}]`;
+    if (!isObject2(preview)) throw new ValidationError(`${label} must be an object`);
+    onlyKeys(label, preview, ["label", "chosen", "reason", "html"]);
+    if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label}.chosen must be true or false`);
+    if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
+    return {
+      label: nonEmpty(`${label}.label`, preview.label),
+      chosen: preview.chosen,
+      ...preview.reason === void 0 ? {} : { reason: nonEmpty(`${label}.reason`, preview.reason) },
+      html: preview.html
+    };
+  });
+}
+async function status(client, args) {
+  if (!client.hasStaticKey()) throw new ValidationError(NOT_CONFIGURED_HINT2);
+  const ids = args.suggestion_ids;
+  if (!Array.isArray(ids) || ids.length < 1 || ids.length > MAX_STATUS_IDS) {
+    throw new ValidationError(`status requires suggestion_ids: a list of 1 to ${MAX_STATUS_IDS} IDs`);
+  }
+  if (!ids.every((id) => typeof id === "string" && UUID.test(id))) {
+    throw new ValidationError("status's suggestion_ids must each be a suggestion_id that submit returned");
+  }
+  const asked = new Set(ids.map((id) => id.toLowerCase()));
+  const found = await client.callFunction("suggestion-status", { suggestion_ids: [...asked] });
+  if (!Array.isArray(found?.statuses)) {
+    throw new ValidationError("Probanda's Cloud did not return the statuses");
+  }
+  const statuses = found.statuses.filter((row) => isObject2(row) && typeof row.suggestion_id === "string" && asked.has(row.suggestion_id.toLowerCase())).map((row) => ({
+    suggestion_id: row.suggestion_id,
+    status: typeof row.status === "string" ? row.status : null,
+    triaged_at: typeof row.triaged_at === "string" ? row.triaged_at : null
+  }));
+  return { statuses };
 }
 
 // src/dispatch.ts

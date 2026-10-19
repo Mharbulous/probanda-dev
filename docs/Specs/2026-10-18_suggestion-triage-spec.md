@@ -38,7 +38,7 @@ Non-goals: executing the plan issue; the lawyer-account column before #57; a rea
 | `triaged_at timestamptz` | `suggestion-set-status` | |
 | `account_id` | the server, from the key `serve()` looked up, never the body | added only once #57 allows it; until then the row names no one |
 
-Installs stay insert-only: no install reads any suggestion, its own included (#50 decision 4).
+~~Installs stay insert-only: no install reads any suggestion, its own included (#50 decision 4).~~ Brahm reversed #50 decision 4 and §5's first constraint on 2026-10-19: installs may now read the status of suggestions whose IDs they hold. `suggestion-status` takes 1 to 50 IDs and returns only `suggestion_id`, `status` and `triaged_at` for each ID it holds, omitting the rest. It accepts the keys `suggestion-submit` accepts, with no new scope, and logs no request body. The researcher plugin calls it as `suggestion_box__status`. An install still reads no title, body, issue number or any other column.
 
 `suggestion-submit` gains `plugin_version` (required) and `skill` (optional) in its body, with the same shape checks. Once #49's no-scopes design lands, it accepts any live lawyer key, and the `suggestions:write` scope and the `install_key_scopes_check` change in `suggestions.sql` go. Until then it keeps its scope.
 
@@ -95,7 +95,7 @@ A cheaper alternative, added on 2026-10-19 after one debate cost about ten times
 
 ## 5. Constraints that must still hold
 
-- No install ever reads a suggestion. Lawyer keys reach only `suggestion-submit`.
+- No install ever reads a suggestion's content. Lawyer keys reach only `suggestion-submit` and `suggestion-status`, which returns status and triaged_at alone (reversed from "no install ever reads a suggestion" by Brahm on 2026-10-19, see §4.1).
 - The project secret stays on Probanda's development machines and in no plugin file.
 - The GitHub issue and the oracle's plan carry no person, entity, matter or account.
 - Only a human edits `human-guidance.md`. Only steps 7 and 8 edit a hat's notes file. The cap script is the only truncation.

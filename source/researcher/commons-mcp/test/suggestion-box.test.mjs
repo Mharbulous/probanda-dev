@@ -74,7 +74,7 @@ test("submit posts the title, body, source and the manifest's version to suggest
     body: `${SUGGESTION.body}\n`,
     source: "user",
   });
-  assert.deepEqual(result, { suggestion_id: "s-1" });
+  assert.deepEqual(result, { suggestion_id: "s-1", items_saved: false, previews_saved: false });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].method, "POST");
   assert.equal(calls[0].url, `${PROJECT}/functions/v1/suggestion-submit`);
@@ -95,7 +95,7 @@ test("submit refuses a missing or blank required field, or a blank skill, before
   await assert.rejects(() => submit({ title: SUGGESTION.title, body: SUGGESTION.body }), /source is required/);
   await assert.rejects(() => submit({ ...SUGGESTION, title: "   " }), /requires a title/);
   await assert.rejects(() => submit({ ...SUGGESTION, body: " \n " }), /requires a body/);
-  await assert.rejects(() => submit({ ...SUGGESTION, source: "bot" }), /source must be one of: user, llm/);
+  await assert.rejects(() => submit({ ...SUGGESTION, source: "bot" }), /source must be one of: user, llm, assisted/);
   await assert.rejects(() => submit({ ...SUGGESTION, skill: "  " }), /must name a skill/);
   await assert.rejects(() => submit({ ...SUGGESTION, plugin_version: "0.0.1" }), /unknown field/);
   assert.equal(calls.length, 0);
@@ -148,4 +148,104 @@ test("submit reports an error when the cloud refuses or does not confirm the sav
     fakeFetch(t, respond);
     await assert.rejects(() => withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", SUGGESTION), pattern);
   }
+});
+
+
+const ITEM = {
+  pain: "The confirmation step asks twice",
+  where: "the confirmation step of a skill",
+  done_test: "One answer confirms the step",
+  constraints: ["Keep the step itself"],
+  changes: [{ change: "Ask once", origin: "lawyer" }, { change: "Remember the answer for the session", origin: "probanda" }],
+};
+const PREVIEW = { label: "One question", chosen: true, reason: "Shortest", html: "<p>Confirm? Yes | No</p>" };
+
+test("submit accepts source assisted, items and previews, and echoes what the cloud saved", async (t) => {
+  const calls = fakeFetch(t, () => reply(200, { suggestion_id: "s-2", items_saved: true, previews_saved: true }));
+  const args = { ...SUGGESTION, source: "assisted", items: [ITEM], previews: [PREVIEW, { label: "Two questions", chosen: false, html: "<p>Sure?</p>" }] };
+  const result = await withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", args);
+  assert.deepEqual(result, { suggestion_id: "s-2", items_saved: true, previews_saved: true });
+  const sent = JSON.parse(calls[0].body);
+  assert.equal(sent.source, "assisted");
+  assert.deepEqual(sent.items, [ITEM]);
+  assert.deepEqual(sent.previews, args.previews);
+});
+
+test("submit reports items and previews as not saved when the cloud predates them", async (t) => {
+  fakeFetch(t, () => reply(200, { suggestion_id: "s-3" }));
+  const result = await withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", { ...SUGGESTION, items: [ITEM], previews: [PREVIEW] });
+  assert.deepEqual(result, { suggestion_id: "s-3", items_saved: false, previews_saved: false });
+});
+
+test("submit refuses a badly shaped item or preview before any call", async (t) => {
+  const calls = fakeFetch(t);
+  const submit = (args) => withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", { ...SUGGESTION, ...args });
+  await assert.rejects(() => submit({ items: [] }), /list of 1 to 10 items/);
+  await assert.rejects(() => submit({ items: Array(11).fill(ITEM) }), /list of 1 to 10 items/);
+  await assert.rejects(() => submit({ items: [{ ...ITEM, extra: "x" }] }), /unknown field "extra"/);
+  await assert.rejects(() => submit({ items: [{ ...ITEM, done_test: " " }] }), /done_test must be non-empty/);
+  await assert.rejects(() => submit({ items: [{ ...ITEM, changes: [{ change: "x", origin: "someone" }] }] }), /origin must be probanda or lawyer/);
+  await assert.rejects(() => submit({ previews: Array(5).fill(PREVIEW) }), /list of 1 to 4 Previews/);
+  await assert.rejects(() => submit({ previews: [{ ...PREVIEW, chosen: "yes" }] }), /chosen must be true or false/);
+  assert.equal(calls.length, 0);
+});
+
+// [kind, override, text the refusal must not echo]
+const NESTED_REFUSALS = [
+  ["email", { items: [{ ...ITEM, changes: [{ change: "Write to jdoe@example.com", origin: "lawyer" }] }] }, ["jdoe"]],
+  ["matter_folder", { items: [{ ...ITEM, constraints: ["Keep 0. CASE DATA\\Smith v Jones\\notes"] }] }, ["Smith"]],
+  ["too_long", { items: [{ ...ITEM, constraints: ["a".repeat(2001)] }] }, ["a".repeat(50)]],
+  ["items_too_long", { items: Array(10).fill({ ...ITEM, constraints: Array(4).fill("b".repeat(1500)) }) }, ["b".repeat(50)]],
+  ["email", { previews: [{ ...PREVIEW, html: "<p>jdoe@example.com</p>" }] }, ["jdoe"]],
+  ["user_path", { previews: [{ ...PREVIEW, html: `<p>${["C:", "Users", "jdoe", "x"].join("\\")}</p>` }] }, ["jdoe"]],
+  ["too_long", { previews: [{ ...PREVIEW, label: "c".repeat(2001) }] }, ["c".repeat(50)]],
+  ["preview_too_long", { previews: [{ ...PREVIEW, html: "d".repeat(200_001) }] }, ["d".repeat(50)]],
+];
+
+for (const [kind, override, leaks] of NESTED_REFUSALS) {
+  test(`submit refuses ${kind} nested in ${Object.keys(override)[0]} without echoing it or calling out`, async (t) => {
+    const calls = fakeFetch(t);
+    const message = errorMessage(
+      await withManifest.dispatch.dispatchTool(context(withManifest), "suggestion_box__submit", { ...SUGGESTION, ...override })
+    );
+    assert.match(message, /^submit refused: /);
+    assert.ok(message.split(/[:;,] ?/).includes(kind), `message names ${kind}: ${message}`);
+    for (const leak of leaks) assert.ok(!message.includes(leak), `message does not contain "${leak}"`);
+    assert.equal(calls.length, 0);
+  });
+}
+
+test("a Preview's html may run past 2,000 characters up to its own cap", async (t) => {
+  fakeFetch(t, () => reply(200, { suggestion_id: "s-4", items_saved: false, previews_saved: true }));
+  const result = await withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", {
+    ...SUGGESTION, previews: [{ ...PREVIEW, html: "e".repeat(200_000) }],
+  });
+  assert.equal(result.previews_saved, true);
+});
+
+const ID_A = "11111111-1111-4111-8111-111111111111";
+const ID_B = "22222222-2222-4222-8222-222222222222";
+const ID_UNASKED = "33333333-3333-4333-8333-333333333333";
+
+test("status posts the IDs and returns only suggestion_id, status and triaged_at, omitting unknown IDs", async (t) => {
+  const calls = fakeFetch(t, () => reply(200, {
+    statuses: [
+      { suggestion_id: ID_A, status: "approved", triaged_at: "2026-10-19T01:02:03Z", title: "leak", body: "leak", issue_number: 7 },
+      { suggestion_id: ID_UNASKED, status: "new", triaged_at: null },
+    ],
+  }));
+  const result = await withManifest.dispatch.callTool(context(withManifest), "suggestion_box__status", { suggestion_ids: [ID_A, ID_B] });
+  assert.deepEqual(result, { statuses: [{ suggestion_id: ID_A, status: "approved", triaged_at: "2026-10-19T01:02:03Z" }] });
+  assert.equal(calls[0].url, `${PROJECT}/functions/v1/suggestion-status`);
+  assert.deepEqual(JSON.parse(calls[0].body), { suggestion_ids: [ID_A, ID_B] });
+});
+
+test("status refuses bad IDs, too many IDs or no key, before any call", async (t) => {
+  const calls = fakeFetch(t);
+  const status = (args, key) => withManifest.dispatch.callTool(context(withManifest, key), "suggestion_box__status", args);
+  await assert.rejects(() => status({ suggestion_ids: [] }), /list of 1 to 50 IDs/);
+  await assert.rejects(() => status({ suggestion_ids: Array(51).fill(ID_A) }), /list of 1 to 50 IDs/);
+  await assert.rejects(() => status({ suggestion_ids: ["not-an-id"] }), /suggestion_id that submit returned/);
+  await assert.rejects(() => status({ suggestion_ids: [ID_A] }, ""), /has no key on this computer/);
+  assert.equal(calls.length, 0);
 });

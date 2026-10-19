@@ -13,8 +13,9 @@
 --   the maintainer reads and triages (cloud/suggestions/tools/triage.mjs).
 -- - A caller reaches it with the project secret or with an install key that
 --   holds the suggestions:write scope (functions/_shared/caller.ts). Such a key
---   can therefore insert a suggestion and nothing else: it cannot read, update
---   or delete any row, its own included.
+--   can insert a suggestion and, through suggestion-status, read the status
+--   and triaged_at of a suggestion whose ID it holds, and nothing else: it
+--   cannot read any other column, update or delete any row.
 -- - No API role (public, anon, authenticated) has any right on this schema, and
 --   the schema is not exposed through the API.
 --
@@ -48,6 +49,25 @@ alter table suggestions.suggestion add column if not exists triaged_at timestamp
 alter table suggestions.suggestion drop constraint if exists suggestion_status_check;
 alter table suggestions.suggestion add constraint suggestion_status_check
   check (status in ('new', 'approved', 'approved in part', 'rejected'));
+
+-- Structured suggestions (2026-10-19). source 'assisted' is a suggestion
+-- Probanda drafted and the person confirmed. items holds one entry per pain;
+-- previews holds UI Previews built from placeholder data. Both are optional and
+-- screened by the plugin like title and body; title and body stay a complete
+-- summary. suggestion-submit caps items at 50,000 characters of JSON and each
+-- Preview's html at 200,000; the byte checks here leave room for JSON escaping
+-- and multi-byte characters.
+alter table suggestions.suggestion drop constraint if exists suggestion_source_check;
+alter table suggestions.suggestion add constraint suggestion_source_check
+  check (source in ('user', 'llm', 'assisted'));
+alter table suggestions.suggestion add column if not exists items jsonb;
+alter table suggestions.suggestion add column if not exists previews jsonb;
+alter table suggestions.suggestion drop constraint if exists suggestion_items_size_check;
+alter table suggestions.suggestion add constraint suggestion_items_size_check
+  check (items is null or (jsonb_typeof(items) = 'array' and octet_length(items::text) <= 400000));
+alter table suggestions.suggestion drop constraint if exists suggestion_previews_size_check;
+alter table suggestions.suggestion add constraint suggestion_previews_size_check
+  check (previews is null or (jsonb_typeof(previews) = 'array' and octet_length(previews::text) <= 4000000));
 
 revoke all on schema suggestions from public, anon, authenticated;
 revoke all on all tables in schema suggestions from public, anon, authenticated;
