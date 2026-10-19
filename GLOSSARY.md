@@ -34,6 +34,7 @@ terms:
   - Dismissed
   - Doctrine
   - Document
+  - Done-test
   - Doubt
   - Draft
   - Drafting criteria
@@ -77,10 +78,13 @@ terms:
   - Obiter dictum
   - Oral reasons
   - Outlining
+  - Pain point
   - Participant
   - Position
   - Postulate
   - Pre-filing proceeding
+  - Preference
+  - Preview
   - Principle
   - Privileged Source
   - Proceeding
@@ -119,6 +123,7 @@ terms:
   - Stock bundle job
   - Structured Writing
   - Submission
+  - Suggestion
   - Tender (adduce)
   - Test
   - Theorized Fact
@@ -268,6 +273,10 @@ _Avoid_: doctrine for scholarly writing about the law (the civilian sense) — w
 **Document**:
 The evidence-side object a statement of fact or an admission points at — the **Instrument** (the witness's, carrying the words to the forum; or the admission instrument through which an admission is sought), the **Exhibit** a statement tenders, or an admission's response — with its identity (label · date · description), best-copy mark and service date. Not a member of a Writing: those are Drafts / Mockups (the written-argument mockup, the requisition draft). The renderer's `documentType` key for the Writing-member sense is a frozen legacy code name. Exception: the mockup header's "Document …" labels (`Document Type`, `Document Name`, `Document Date`) name the Writing being drafted, not this evidence-side object.
 _Avoid_: document as a Writing member (say mockup or draft); file (the disk artifact, not the thing); paper.
+
+**Done-test**:
+The test, carried by each pain in a **Suggestion**, that tells a maintainer when the change is finished, checkable without asking the sender. On a solved problem it is what the practitioner accepted in the session; on a gap it is the end result they wanted.
+_Avoid_: acceptance criteria, completion criteria (the Job Board card).
 
 **Doubt**:
 A reason to distrust one statement — seated on the statement, never the postulate or proposition. One marker 👃, named per domain: *suspicious* (doubtful facts) on a statement of fact, *dubious* (doubtful legal basis) on a statement of law. Modes: withdrawn, wrong at the source, outweighed, misread, misattributed, out of time.
@@ -450,6 +459,10 @@ Jobs written by rule with no pick are not outlining:
 - intake (`/drafting-data` §3e), which writes never-held Proposals as jobs at each attended Opening.
 _Avoid_: planning (a different, DB-agnostic Coclerk concept elsewhere); charting (also wayfinder's verb).
 
+**Pain point**:
+Friction with Probanda that actually happened in a session and shows in behaviour: a correction, a rejection, a workaround, a repeated instruction, a refusal or abandonment. An irritated tone alone is never one. Pain points are taken from the work, never asked for.
+_Avoid_: complaint (the practitioner's words, which may name no pain); bug (a fault, which goes to troubleshooting).
+
 **Participant**:
 Anyone a matter's documents name in a role: a party, a party's counsel, a witness (an expert is a witness), or a tribunal member. Every party is a participant; not every participant is a party.
 
@@ -464,6 +477,14 @@ _Avoid_: claim (used loosely for either domain); contention (a submission's asse
 **Pre-filing proceeding**:
 A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL). A Writing that needs no forum parts, such as a demand letter, may be created before the forum is chosen, and one that needs forum parts only after. It holds jobs and loose threads, for example the work of choosing the forum, on a Job Board of its own. Its first Writing ends it, with or without a forum: see **Job Board**. Choosing the forum updates the same proceeding. A second forum is a new proceeding, and no job moves between them.
 _Avoid_: pre-litigation matter (the matter exists either way); undecided forum as a stored value (it is NULL, not a sentinel); pre-filing for a proceeding whose only Writing is a demand letter (nothing has gone to a forum, but it has a Writing, so it is not one).
+
+**Preference**:
+One person's saved instruction to a named skill, in generic terms, made when a fix worked for them ("Show the deadline summary before the full list"). It takes effect for that person only, from the moment it is saved, and holds no client content. Stored per person in the firm's `0. CASE DATA` folder.
+_Avoid_: personal memory (the design's working name); memory (Claude's own feature); practice quirk (a device's environment note).
+
+**Preview**:
+What a **Suggestion** shows the practitioner to stand for "done": a before and after in the medium of the pain (a page variant, a redraft, a replayed exchange, a worked case). A page Preview is a deterministic render, never HTML a model wrote. Only Previews rendered from placeholder data may be posted.
+_Avoid_: mockup (reserved for the markdown Draft of a Writing).
 
 **Principle**:
 A statement of law in the words an authority uses. In the pool it is a record holding that prose, kept as stated and matter-free, and linked to each **Authority** that supports it. That link carries the pinpoint: where in the authority the prose is found. Propositions are decomposed from a principle, and each records each principle that states it. One principle may state several propositions, and one proposition may be stated by several principles.
@@ -614,6 +635,10 @@ _Avoid_: bespoke (a rendering path: a Structured Writing may render through the 
 **Submission**:
 One contention with its argument. A Written Argument's *Submissions*, or Form 32 Parts 2 and 3 together, is the Writing's selected submissions. A submission may rest on facts only or on law only (a jurisdiction submission).
 _Avoid_: argument (the support, not the whole).
+
+**Suggestion**:
+Feedback about Probanda that a practitioner expressly submits to its maintainers through the Suggestion Box: a summary plus one item per **Pain point**, each with its **Done-test**, its constraints and changes that are accepted or declined one by one. Stripped of anything that identifies a person, entity or matter. Its source is `user` (their own), `assisted` (drafted by Probanda, confirmed by them) or `llm` (a vetted loose thread).
+_Avoid_: Proposal (a work marker's remaining work); ticket; feature request.
 
 **Tender (adduce)**:
 To **adduce** is to put evidence into the trial record at trial. Two forms: **elicit** — adducing viva voce evidence from a witness; **tender** — entering affidavits or documents into evidence (not only affidavits: some tribunals do not require them). One act, two objects in this plugin: a statement of fact tenders its exhibit; 🕹️ tenders the admission instrument and its response as proof of the admission. Elicited (viva voce) evidence is unmodelled today.
