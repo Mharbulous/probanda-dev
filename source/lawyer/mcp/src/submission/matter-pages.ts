@@ -187,7 +187,7 @@ export function refuseForeignMatterPages(draftDir: string, dbPath: string): void
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
   const live = proceedings.flatMap(({ proceeding, filings }) => filings.filter((f) => !f.retired_on).map((filing) => ({ proceeding, filing })));
   const preFiling = proceedings.filter(({ filings }) => filings.length === 0).map(({ proceeding }) => proceeding);
-  refuseForeignPages(draftDir, pageTargets(live, preFiling).map((t) => t.file), viewTargets(live));
+  refuseForeignPages(draftDir, guardTargets(pageTargets(live, preFiling).map((t) => t.file), viewTargets(live)));
 }
 
 /** The page written for the section with this filing id, or with this proceeding id when the filing
@@ -197,15 +197,26 @@ export function pagePathFor(pages: PagesWritten, section: { filing_id: number | 
   return pages.job_board_paths.find((p) => (filing_id !== null ? p.filing_id === filing_id : p.filing_id === null && p.proceeding_id === proceeding_id))?.path;
 }
 
-/** Refuses, before any page is written, a target -- the Litigation Strategy, a Job Board page named in
- * `names` or a view page in `views` -- that exists without its page's marker. */
-function refuseForeignPages(draftDir: string, names: string[], views: { page: ViewPage; file: string }[]): void {
-  const targets: [string, string, string][] = [
-    [join(draftDir, MATTER_BOARD_FILE), MATTER_BOARD_MARKER, "Litigation Strategy"],
-    ...names.map((name): [string, string, string] => [join(draftDir, name), JOB_BOARD_MARKER, "Job Board"]),
-    ...views.map((v): [string, string, string] => [join(draftDir, v.file), VIEW_PAGE_MARKER, v.page.name]),
+/** A page file at the draft folder's top, with the marker the overwrite guard checks it by and the page's name. */
+interface GuardTarget {
+  name: string;
+  marker: string;
+  page: string;
+}
+
+/** The Litigation Strategy, then the Job Board pages named in `names`, then the view pages in `views`. */
+function guardTargets(names: string[], views: { page: ViewPage; file: string }[]): GuardTarget[] {
+  return [
+    { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
+    ...names.map((name) => ({ name, marker: JOB_BOARD_MARKER, page: "Job Board" })),
+    ...views.map((v) => ({ name: v.file, marker: VIEW_PAGE_MARKER, page: v.page.name })),
   ];
-  for (const [file, marker, page] of targets) {
+}
+
+/** Refuses, before any page is written, a target that exists without its page's marker. */
+function refuseForeignPages(draftDir: string, targets: GuardTarget[]): void {
+  for (const { name, marker, page } of targets) {
+    const file = join(draftDir, name);
     if (existsSync(file) && !readFileSync(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page}'s marker, so this renderer did not write it`);
     }
@@ -265,19 +276,39 @@ function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "m
   return { ...(moved.length > 0 ? { moved_to_trash: moved } : {}), ...(skipped.length > 0 ? { trash_skipped: skipped } : {}) };
 }
 
+/** One built page: its file name at the draft folder's top, its HTML, and the marker and page name
+ * the overwrite guard checks an existing file by. */
+export interface MatterPage {
+  name: string;
+  html: string;
+  marker: string;
+  page: string;
+}
+
+export interface MatterPagesBuilt {
+  /** The pages a write puts at the draft folder's top, in write order: the Litigation Strategy, the
+   * Job Board pages, then the view pages. */
+  pages: MatterPage[];
+  /** Every current Job Board and view page's file name, built by this call or not: what the sweep keeps. */
+  keep: string[];
+  /** Every current page's path, built by this call or not. */
+  paths: Pick<PagesWritten, "job_board_paths" | "matter_board_path" | "view_page_paths">;
+}
+
 /**
- * Writes `<draftDir>\Litigation Strategy.html` and one Job Board page per live filing and per pre-filing
- * proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live filing's
- * view pages (2026-10-07 amendment), from database state.
+ * Builds `<draftDir>\Litigation Strategy.html` and one Job Board page per live filing and per
+ * pre-filing proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live
+ * filing's view pages (2026-10-07 amendment), from database state. Writes nothing: writeMatterPages
+ * guards, sweeps and writes, and a preview renders the same pages without them.
  * `draftDir` is already confined (resolveDraftDir, or the parent of a confined presentation folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
- * `reuse.only` names the one filing whose Job Board page and view pages are built and written, with
- * the Litigation Strategy: the background render job passes the filing it just rendered, and writes
+ * `reuse.only` names the one filing whose Job Board page and view pages are built, with the
+ * Litigation Strategy: the background render job passes the filing it just rendered, and writes
  * every page once after its last, because building them all after every filing costs the square of
  * the filing count.
  */
-export function writeMatterPages(
+export function buildMatterPages(
   dbPath: string,
   draftDir: string,
   client: ClientContext,
@@ -287,83 +318,102 @@ export function writeMatterPages(
   /** The matter's dates, for the Job Board pages' HTML files only: never a section, the state file or
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
+): MatterPagesBuilt {
+  const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
+  const preFiling = fetchPreFilingProceedings(dbPath);
+  const live = ranked.filter((r) => !r.filing.retired_on);
+  const targets = pageTargets(live, preFiling);
+  const names = targets.map((t) => t.file);
+  const views = viewTargets(live);
+  const meta = {
+    revision,
+    matter: client.matterNo ?? "",
+    client: client.clientName ?? ranked[0]?.proceeding.matter_reference ?? preFiling[0]?.matter_reference ?? "",
+    rendered: now,
+  };
+  const own = reuse.section;
+  // What this call builds: every page, or one filing's.
+  const { only } = reuse;
+  const liveWritten = only === undefined ? live : live.filter((r) => r.filing.id === only);
+  const preFilingWritten = only === undefined ? preFiling : [];
+  const targetsWritten = pageTargets(liveWritten, preFilingWritten);
+  const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
+  const sections = [
+    ...liveWritten.map((r) => {
+      // A Job Board with no Writing has no mockup folder, so none is looked up for it.
+      const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
+      return {
+        proceeding: r.proceeding,
+        section: own?.meta.filing_id === r.filing.id ? own : filingBoardData(dbPath, r.filing, r.proceeding, client, now, revision, dates, manifest),
+        writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
+        views: views.filter((v) => v.filing.id === r.filing.id).map((v) => ({ name: v.page.name, file: v.file })),
+      };
+    }),
+    ...preFilingWritten.map((p) => ({
+      proceeding: p,
+      section:
+        own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
+          ? own
+          : buildPreFilingBoardData(dbPath, p, { revision, matter: meta.matter, client: client.clientName ?? p.matter_reference, rendered: now }),
+      writings: [],
+      views: [],
+    })),
+  ];
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
+  const jobBoards = sections.map(({ proceeding, section, writings, views: pageViews }) =>
+    renderWorkBoardHtml({
+      meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
+      sections: [section],
+      dates: pageDates(dates, [section]),
+      writings,
+      views: pageViews,
+      attached: attachedDrafts(draftDir, section),
+      court_file:
+        section.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null),
+    })
+  );
+  const viewPages = viewsWritten.map((v) =>
+    renderViewPageHtml(
+      v.page,
+      { filing: v.filing.title, matter: meta.matter, client: meta.client, revision, rendered: now },
+      v.page.data({ dbPath, filing: v.filing, proceeding: v.proceeding, now, revision })
+    )
+  );
+  const html = [matterBoard, ...jobBoards, ...viewPages];
+  return {
+    pages: guardTargets(targetsWritten.map((t) => t.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
+    keep: [...names, ...views.map((v) => v.file)],
+    paths: {
+      job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
+      matter_board_path: join(draftDir, MATTER_BOARD_FILE),
+      view_page_paths: views.map((v) => ({ name: v.page.name, filing_id: v.filing.id, path: join(draftDir, v.file) })),
+    },
+  };
+}
+
+/**
+ * Writes the pages buildMatterPages builds (its arguments, with the same meaning), after refusing any
+ * target that exists without its page's marker. A call for every page also moves old page files
+ * into the matter's TRASH (D3); one filing's call leaves that to the job's last, full call.
+ */
+export function writeMatterPages(
+  dbPath: string,
+  draftDir: string,
+  client: ClientContext,
+  now: string,
+  revision: number,
+  todos: MatterTodos,
+  dates: MatterDates,
   timings: PhaseTimings,
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
 ): PagesWritten {
   return timed(timings, "matter_pages", () => {
-    const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
-    const preFiling = fetchPreFilingProceedings(dbPath);
-    const live = ranked.filter((r) => !r.filing.retired_on);
-    const targets = pageTargets(live, preFiling);
-    const names = targets.map((t) => t.file);
-    const views = viewTargets(live);
-    const meta = {
-      revision,
-      matter: client.matterNo ?? "",
-      client: client.clientName ?? ranked[0]?.proceeding.matter_reference ?? preFiling[0]?.matter_reference ?? "",
-      rendered: now,
-    };
-    const own = reuse.section;
-    // What this call builds and writes: every page, or one filing's.
-    const { only } = reuse;
-    const liveWritten = only === undefined ? live : live.filter((r) => r.filing.id === only);
-    const preFilingWritten = only === undefined ? preFiling : [];
-    const targetsWritten = pageTargets(liveWritten, preFilingWritten);
-    const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
-    refuseForeignPages(draftDir, targetsWritten.map((t) => t.file), viewsWritten);
-    const pages = [
-      ...liveWritten.map((r) => {
-        // A Job Board with no Writing has no mockup folder, so none is looked up for it.
-        const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
-        return {
-          proceeding: r.proceeding,
-          section: own?.meta.filing_id === r.filing.id ? own : filingBoardData(dbPath, r.filing, r.proceeding, client, now, revision, dates, manifest),
-          writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
-          views: views.filter((v) => v.filing.id === r.filing.id).map((v) => ({ name: v.page.name, file: v.file })),
-        };
-      }),
-      ...preFilingWritten.map((p) => ({
-        proceeding: p,
-        section:
-          own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
-            ? own
-            : buildPreFilingBoardData(dbPath, p, { revision, matter: meta.matter, client: client.clientName ?? p.matter_reference, rendered: now }),
-        writings: [],
-        views: [],
-      })),
-    ];
-    const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
-    const jobBoards = pages.map(({ proceeding, section, writings, views: pageViews }) =>
-      renderWorkBoardHtml({
-        meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
-        sections: [section],
-        dates: pageDates(dates, [section]),
-        writings,
-        views: pageViews,
-        attached: attachedDrafts(draftDir, section),
-        court_file:
-          section.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null),
-      })
-    );
-    const viewPages = viewsWritten.map((v) =>
-      renderViewPageHtml(
-        v.page,
-        { filing: v.filing.title, matter: meta.matter, client: meta.client, revision, rendered: now },
-        v.page.data({ dbPath, filing: v.filing, proceeding: v.proceeding, now, revision })
-      )
-    );
-    // One filing's call leaves the sweep to the job's last, full call.
-    const swept = only === undefined ? sweepOldPages(draftDir, [...names, ...views.map((v) => v.file)]) : {};
-    const matterBoardPath = join(draftDir, MATTER_BOARD_FILE);
-    writePage(matterBoardPath, matterBoard);
-    targetsWritten.forEach((t, i) => writePage(join(draftDir, t.file), jobBoards[i]));
-    viewsWritten.forEach((v, i) => writePage(join(draftDir, v.file), viewPages[i]));
-    return {
-      job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
-      matter_board_path: matterBoardPath,
-      view_page_paths: views.map((v) => ({ name: v.page.name, filing_id: v.filing.id, path: join(draftDir, v.file) })),
-      ...swept,
-    };
+    const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);
+    refuseForeignPages(draftDir, pages);
+    const swept = reuse.only === undefined ? sweepOldPages(draftDir, keep) : {};
+    for (const p of pages) writePage(join(draftDir, p.name), p.html);
+    return { ...paths, ...swept };
   });
 }
 
