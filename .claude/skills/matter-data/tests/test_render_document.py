@@ -53,6 +53,21 @@ class RenderDocxTests(unittest.TestCase):
         text2 = (out2 / "sample.docx.txt").read_bytes()
         self.assertEqual(text1, text2)
 
+    def test_head_chars_writes_the_head_beside_the_rendering(self):
+        out = Path(self.tempdir.name) / "head"
+        rc = render_document.main([str(FIXTURES / "sample.docx"), str(out), "--head-chars", "20"])
+        self.assertEqual(rc, 0)
+        whole = (out / "sample.docx.txt").read_text(encoding="utf-8")
+        self.assertEqual((out / "sample.docx.head.txt").read_text(encoding="utf-8"), whole[:20])
+
+    def test_head_chars_must_be_a_positive_integer(self):
+        out = Path(self.tempdir.name) / "bad"
+        for value in ("0", "-5", "many"):
+            with self.subTest(value=value):
+                rc = render_document.main([str(FIXTURES / "sample.docx"), str(out), "--head-chars", value])
+                self.assertEqual(rc, 2)
+                self.assertFalse(out.exists())
+
 
 class RenderEmlTests(unittest.TestCase):
     def setUp(self):

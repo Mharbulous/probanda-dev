@@ -65,22 +65,6 @@ class IngestUnattendedContractTests(unittest.TestCase):
             self.assertIn(f"`{failure_class}`", log)
         self.assertIn("housekeeping-log.md", UNATTENDED)
 
-    def test_a_malformed_naming_evidence_block_is_a_defect_not_a_failure(self):
-        self.assertIn("`reader returned an unusable report`", UNATTENDED)
-        extract = (OPERATIONS / "ingest-extract.md").read_text(encoding="utf-8")
-        self.assertIn("never aborts a document's transaction", extract)
-
-    def test_only_the_unattended_path_asks_extractors_for_naming_evidence(self):
-        for name in ("extract-facts", "extract-affidavit", "extract-caselaw", "extract-provision"):
-            with self.subTest(agent=name):
-                agent = (CASE_DATA_ROOT / "agents" / (name + ".md")).read_text(encoding="utf-8")
-                self.assertIn("`{{OUTPUT}}`: `full` or `ingest`. Absent means `full`.", agent)
-                self.assertIn("required unless `OUTPUT` is `ingest`", agent)
-        self.assertIn("`OUTPUT: full`", UNATTENDED)
-        for name in ("ingest-extract.md", "extract-facts.md"):
-            with self.subTest(file=name):
-                self.assertIn("`OUTPUT: ingest`", (OPERATIONS / name).read_text(encoding="utf-8"))
-
     def test_the_gate_refuses_the_kinds_unattended_ingest_refuses(self):
         gate = (OPERATIONS / "ingest.md").read_text(encoding="utf-8")
         self.assertIn("a kind ingest cannot read", gate)

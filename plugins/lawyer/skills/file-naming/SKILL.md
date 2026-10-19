@@ -70,9 +70,8 @@ Reached only for a name that failed **gate**. This is `conformance-check.md`'s
 **proposal mode**: assemble date, code, author/recipient, re/encl/srv,
 subject, and amount from whatever signal the caller supplies —
 
-- reading the file's content (a caller like /housekeeping, whose ingest reads
-  open the document and whose `housekeeping-namer` composes the name from the
-  naming evidence those reads return), or
+- reading the file's content (a caller like /housekeeping, where a page-1 read
+  of the document supplies the naming evidence the name is composed from), or
 - already-extracted metadata (a caller like ingest, which never re-reads the
   file).
 

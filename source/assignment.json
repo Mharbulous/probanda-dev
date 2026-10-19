@@ -151,6 +151,7 @@
       ],
       "agents": [
         "housekeeping-namer",
+        "housekeeping-reader",
         "housekeeping-reviewer"
       ],
       "hooks": {},

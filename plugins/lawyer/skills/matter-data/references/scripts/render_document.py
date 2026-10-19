@@ -11,7 +11,7 @@ does in-session on every path (../../operations/ingest.md Step 2).
 
 Output contract:
 
-  python3 render_document.py <input_path> <output_dir>
+  python3 render_document.py <input_path> <output_dir> [--head-chars N]
 
 Writes "<output_dir>/<original_basename>.txt" (the original extension is kept
 in the stem, e.g. "Letter.docx.txt", so same-stem/different-extension inputs
@@ -19,6 +19,10 @@ sharing one output dir never collide). Prints one line of JSON to stdout:
 
   {"format": "docx"|"eml"|"msg"|"rtf", "output_path": "...", "paragraph_count": N,
    "attachments": [{"name": "...", "sha256": "..."}]}
+
+With --head-chars N (a positive integer), it also writes the rendering's first
+N characters to "<output_dir>/<original_basename>.head.txt" ("Letter.docx.head.txt")
+and adds "head_path" to the JSON: a page-1 read of a rendered file.
 
 For an .eml or .msg, each attachments entry also carries "size",
 "content_type" and "path", and the attachment bytes are written to
@@ -604,8 +608,15 @@ def render_rtf(input_path):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    head_chars = None
+    if len(argv) == 4 and argv[2] == "--head-chars":
+        head_chars = int(argv[3]) if argv[3].isdigit() else 0
+        argv = argv[:2]
+        if head_chars < 1:
+            print("--head-chars takes a positive integer", file=sys.stderr)
+            return 2
     if len(argv) != 2:
-        print("usage: render_document.py <input_path> <output_dir>", file=sys.stderr)
+        print("usage: render_document.py <input_path> <output_dir> [--head-chars N]", file=sys.stderr)
         return 2
 
     input_path, output_dir = argv
@@ -632,23 +643,31 @@ def main(argv=None):
 
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"{basename}.txt")
-    tmp_path = output_path + ".tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(text)
-        os.replace(tmp_path, output_path)
-    except OSError as exc:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        print(f"failed to write rendering: {exc}", file=sys.stderr)
-        return 1
+    head_path = os.path.join(output_dir, f"{basename}.head.txt")
+    writes = [(output_path, text)]
+    if head_chars is not None:
+        writes.append((head_path, text[:head_chars]))
+    for path, content in writes:
+        tmp_path = path + ".tmp"
+        try:
+            with open(tmp_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(content)
+            os.replace(tmp_path, path)
+        except OSError as exc:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            print(f"failed to write rendering: {exc}", file=sys.stderr)
+            return 1
 
-    print(json.dumps({
+    result = {
         "format": fmt,
         "output_path": output_path,
         "paragraph_count": paragraph_count,
         "attachments": attachments,
-    }))
+    }
+    if head_chars is not None:
+        result["head_path"] = head_path
+    print(json.dumps(result))
     return 0
 
 

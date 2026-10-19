@@ -29,8 +29,6 @@ Never run two calls on one matter at the same time.
 | `stop` | with `stopped`: `{stop_reason, question, options}`, each option `{value, label}` |
 | `failure` | with `failed`: `{failure_class, reason}` |
 | `notes` | what the file's read reported and nothing wrote: email attachments already registered or of a kind ingest cannot read, each with the first 12 hex characters of its SHA-256 so a caller can aggregate repeats across files without re-rendering (design-decisions #53); Path E segments reported but not ingested; an authority reused by citation, or a suspected duplicate authority reported for [`merge-authorities.md`](merge-authorities.md); proceeding linkage findings; the name check's result (Substitution 1a) |
-| `naming_evidence` | the `naming_evidence` block the file's extractor returned, passed through unchanged. Null for a file no single extractor dispatch read: a Path B document read inline, a Path E book, a bundled book of authorities. The caller builds those files' blocks from its own read |
-| `naming_evidence_defect` | `reader returned an unusable report` when the file's extractor returned no block, or a block that does not follow its agent file's "Naming evidence" section; otherwise null. The caller sends the file to the practitioner (`../../shared/present-files.md`) with that reason. It is a defect to report, never a failure: the document's write goes ahead |
 
 | `outcome` | Means |
 |---|---|
@@ -103,8 +101,6 @@ A file whose `path` begins with `2. SOLICITOR CLIENT` (case-insensitive) takes P
 |---|---|
 | `deterministic` | the file cannot be read this way at all: a render failure (an RTF `.doc` included), data corruption (Step 1) |
 | `extractor` | the reader failed: an extractor unavailable, failing, or returning malformed JSON; a Path A validation abort (an unresolved locator, an invalid key or enum, a position written as a fact) |
-
-Every facts, affidavit Pass 1, case-law and provision extractor dispatch this operation makes supplies `OUTPUT: full`, so the block comes back. A Path E book's and a bundled book of authorities' dispatches are the exception and take `OUTPUT: ingest`, since those files' blocks are null. The `naming_evidence` block is never validated with the extraction and never written: an absent or malformed block sets `naming_evidence_defect` and is not a failure.
 
 A failed file writes what `ingest-extract.md`'s own failure rules write, and nothing more. Never substitute another agent for an unavailable extractor. Then record the failure through [`housekeeping-log.md`](housekeeping-log.md) mode `record` (ingest failures): `file_name` the file's basename, `file_hash`, `folder_type` from the input, `reason` one sentence saying what failed, and `failure_class`. That mode sets whether the next run retries it automatically. Return `failed` with the class and reason.
 

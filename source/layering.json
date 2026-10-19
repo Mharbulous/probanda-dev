@@ -94,7 +94,6 @@
     {"file": ".claude/skills/file-apply/SKILL.md", "target": "publish", "why": "caller", "note": "Names /publish's renumber-affidavit as a caller."},
     {"file": ".claude/skills/file-naming/SKILL.md", "target": "file-apply", "why": "conditional", "note": "Applying an approved rename is /file-apply's. Without file-manager the standalone rename stops and says so."},
     {"file": ".claude/skills/file-naming/SKILL.md", "target": "housekeeping", "why": "caller", "note": "/housekeeping opens this skill for the gate."},
-    {"file": ".claude/skills/file-naming/SKILL.md", "target": "housekeeping-namer", "why": "caller"},
     {"file": ".claude/skills/file-naming/references/conformance-check.md", "target": "housekeeping", "why": "caller"},
     {"file": ".claude/skills/file-naming/references/conformance-check.md", "target": "housekeeping-namer", "why": "caller"},
     {"file": ".claude/skills/file-naming/references/general-conventions.md", "target": "housekeeping", "why": "caller"},

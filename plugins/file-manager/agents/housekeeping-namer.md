@@ -1,7 +1,8 @@
 ---
 name: housekeeping-namer
 description: Composes a proposed file name and filing destination for each file in a batch of about 15, from naming evidence the caller already extracted, and reports every component's status, its flags and 2-4 alternative names as strict JSON. Reads only the naming convention, code registry and folder notes. Never opens a matter file and never renames, moves or writes anything. Dispatched by /housekeeping, one instance per batch, in parallel.
-model: sonnet
+model: haiku
+effort: medium
 tools:
   - mcp__plugin_lawyer_data__skill_source__read
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
@@ -57,7 +58,7 @@ The dispatch carries one JSON object:
       "location": "root | subfolder",
       "containing_folder": "string, verbatim on-disk name, or null for a root file",
       "store": "main | law",
-      "evidence_source": "extractor | stored_row | stored_row_plus_page_1",
+      "evidence_source": "page_1 | twin_record",
       "naming_evidence": { },
       "attachments_present": ["string, each label the caller confirmed is in the file"],
       "notes": ["string, any caller note about the row"]
@@ -67,8 +68,8 @@ The dispatch carries one JSON object:
 ```
 
 - `folders` lists only on-disk filing folders, never folders numbered 0 or 1 and never `TRASH`.
-- `naming_evidence` is the block the extractors emit. Every facet is optional and carries `quote` and `pinpoint`. `filing_stamp` and `signature` come from the caller's page-1 read. For a `stored_row` source, a pinpoint may name a stored-record field (for example `stored:date`), and a component resting on it counts as quoted. `transmission` carries `methods` (the delivery methods in the order the document prints them) with its `quote` and `pinpoint`. It is present only when a page read printed a delivery line, and it says nothing about whether the document was sent.
-- An authority's block (from `extract-caselaw` or `extract-provision`, a `law` row) carries three facets of its own: `decision_date` (with `value` as `YYYY-MM-DD`, `00` for a part not printed), `caption` (the style of cause or heading line as printed, with any neutral citation) and `court`. For a name in the Law folder, `decision_date` is the date source and `caption` the caption source, with `court` identifying the deciding court; `dates[]` never repeats the decision date.
+- `naming_evidence` is the block the `housekeeping-reader` emits from page 1 (`evidence_source` `page_1`), or one the caller built from its own page-1 read for a row no subagent may see. Every facet is optional and carries `quote` and `pinpoint`. For a duplicate (`twin_record`), the block comes from its twin's stored record: a pinpoint may name a stored-record field (for example `stored:date`), and a component resting on it counts as quoted. `transmission` carries `methods` (the delivery methods in the order the document prints them) with its `quote` and `pinpoint`. It is present only when a page read printed a delivery line, and it says nothing about whether the document was sent.
+- An authority's block (a `law` row, read from a Law-folder file) carries three facets of its own: `decision_date` (with `value` as `YYYY-MM-DD`, `00` for a part not printed), `caption` (the style of cause or heading line as printed, with any neutral citation) and `court`. For a name in the Law folder, `decision_date` is the date source and `caption` the caption source, with `court` identifying the deciding court; `dates[]` never repeats the decision date.
 - `attachments_present` is absent when the caller has no inventory to check against.
 
 ## Procedure, per row

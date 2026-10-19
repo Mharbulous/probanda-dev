@@ -25,9 +25,6 @@ return only that pass's JSON object.
   summary. Use it to attribute and contextualize; do not echo party_ids.
 - `{{DOCUMENT}}` — `{ path, date }`; `date` may be `"auto"` — resolve it.
 - `{{PASS}}` — `1`, `2`, or `3`.
-- `{{OUTPUT}}`: `full` or `ingest`. Absent means `full`. With `ingest`, Pass 1
-  omits the `naming_evidence` key entirely and skips its "Naming evidence"
-  step. Every other part of the output contract is unchanged.
 
 ---
 
@@ -59,56 +56,6 @@ Behavior:
 - Inventory every exhibit the body references: its letter, the sworn
   description, and the locator where the body refers to it. Include
   `page_start` / `page_end` only if the body states them.
-- Record the body's naming evidence (below). Pass 2 and Pass 3 emit none.
-
-Naming evidence (Pass 1 only):
-
-`naming_evidence` records what the affidavit shows about its own identity, so
-a caller can name and file it. Build it from the pages you already read; read
-nothing extra for it. It is grammar-free: never compose a file name, a naming
-code, or a folder.
-
-- The `naming_evidence` object is required unless `OUTPUT` is `ingest`. Each facet inside it is either
-  omitted or carries `quote` (verbatim from the document, trimmed to the words
-  that establish the facet) and `pinpoint` (`para. N`, `pN` or `hdr`). Omit a
-  facet the pages you read do not show, and never infer one you cannot quote.
-  Omit an array facet with no entries rather than emitting it empty. A jurat
-  beyond your 20 pages is simply not shown: omit its `sworn` date.
-- `readability` and `pages_read` are always present and carry no quote.
-- Never emit `filing_stamp` or `signature`. The caller takes both from its own
-  page-1 read.
-
-Facets:
-
-- `title`: the affidavit's own title or heading.
-- `dates[]`: each date the body bears, with `kind` (`created`, `signed`,
-  `sworn`, `filed_stamp`, `sent`, `decision`, `other`) and `value` as
-  `YYYY-MM-DD`, using `00` for any part the quote does not state.
-- `author`: the deponent, as the heading or opening words name them.
-- `recipients[]`: each addressee the body names, with `capacity` (`to`, `cc`,
-  `bcc`, `attention`, `other`). An affidavit usually has none.
-- `style_of_cause`: the style of cause as printed.
-- `court_registry`: the court and registry as printed.
-- `action_number`: the court file number as printed.
-- `affidavit_number`: the affidavit's own ordinal as printed (for example
-  "Affidavit #2").
-- `operative_language`: `value` is `serves`, `encloses` or `neither`.
-  `neither` carries `quote` and `pinpoint` as `null`.
-- `attachments_referenced[]`: the exhibit inventory. One entry per
-  `exhibit_inventory` letter, with `label` the letter and `quote` the body's
-  reference to it.
-- `amounts[]`: each money amount the body states as a total, a sum claimed, a
-  sum paid or a figure offered, with `value` as written.
-- `contradictions[]`: two passages of the body that disagree about one of the
-  facets above (for example, the heading names one deponent and the jurat
-  another), with `facet` naming it and `first` and `second` each a
-  `{quote, pinpoint}` pair.
-- `other_matter_signals[]`: a passage naming a style of cause, court file
-  number or party that is not in `MATTER_CONTEXT`.
-- `readability`: `clear`, `partial` (some pages or passages unreadable) or
-  `poor`.
-- `pages_read`: the pages you read, for example `1-20 of 87`, or `rendering`
-  when you read a supplied rendering.
 
 Output (Pass 1):
 
@@ -140,58 +87,12 @@ Output (Pass 1):
   ],
   "body_page_count": 0,
   "total_pages_read": 0,
-  "scanned": false,
-  "naming_evidence": {
-    "title": { "quote": "string", "pinpoint": "locator" },
-    "dates": [
-      {
-        "kind": "created | signed | sworn | filed_stamp | sent | decision | other",
-        "value": "YYYY-MM-DD",
-        "quote": "string",
-        "pinpoint": "locator"
-      }
-    ],
-    "author": { "quote": "string", "pinpoint": "locator" },
-    "recipients": [
-      {
-        "capacity": "to | cc | bcc | attention | other",
-        "quote": "string",
-        "pinpoint": "locator"
-      }
-    ],
-    "style_of_cause": { "quote": "string", "pinpoint": "locator" },
-    "court_registry": { "quote": "string", "pinpoint": "locator" },
-    "action_number": { "quote": "string", "pinpoint": "locator" },
-    "affidavit_number": { "quote": "string", "pinpoint": "locator" },
-    "operative_language": {
-      "value": "serves | encloses | neither",
-      "quote": "string or null",
-      "pinpoint": "locator or null"
-    },
-    "attachments_referenced": [
-      { "label": "string", "quote": "string", "pinpoint": "locator" }
-    ],
-    "amounts": [
-      { "value": "string as written", "quote": "string", "pinpoint": "locator" }
-    ],
-    "contradictions": [
-      {
-        "facet": "string",
-        "first": { "quote": "string", "pinpoint": "locator" },
-        "second": { "quote": "string", "pinpoint": "locator" }
-      }
-    ],
-    "other_matter_signals": [{ "quote": "string", "pinpoint": "locator" }],
-    "readability": "clear | partial | poor",
-    "pages_read": "string"
-  }
+  "scanned": false
 }
 ```
 
 `page_start` / `page_end` are optional — omit them when the body does not state
-the page range. `naming_evidence` is required unless `OUTPUT` is `ingest`, in
-which case it is absent, and its facets follow the
-omission rules above.
+the page range.
 
 ---
 

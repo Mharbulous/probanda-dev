@@ -58,9 +58,6 @@ relief, and non-factual source references.
   with opaque `relief_key`, locator, and description.
 - `{{RENDERING}}`: path to a pre-rendered plain-text version of the document
   (`.docx`/`.eml`/`.msg` only, produced by `render_document.py`); absent for a PDF.
-- `{{OUTPUT}}`: `full` or `ingest`. Absent means `full`. With `ingest`, omit the
-  `naming_evidence` key entirely and skip the "Naming evidence" section. Every
-  other part of the output contract is unchanged.
 
 ## Classification gate
 
@@ -141,64 +138,6 @@ collection unless they are source-reference/procedural metadata or relief.
   value where it undermines the fact.
 - Locator formats: `para. 14`, `para. 14(a)`, `p42-L3-L18`, `p3`, `¶14`, or `hdr`.
 
-## Naming evidence
-
-`naming_evidence` records what the document shows about its own identity, so a
-caller can name and file it. Build it from the read you already did; read
-nothing extra for it. It is grammar-free: never compose a file name, a naming
-code, or a folder.
-
-- The `naming_evidence` object is required unless `OUTPUT` is `ingest`. Each facet inside it is either
-  omitted or carries `quote` (verbatim from the document, trimmed to the words
-  that establish the facet) and `pinpoint` (a locator in the formats above).
-  Omit a facet the pages you read do not show, and never infer one you cannot
-  quote. Omit an array facet with no entries rather than emitting it empty.
-- `readability` and `pages_read` are always present and carry no quote.
-- Never emit `filing_stamp` or `signature`. The caller takes both from its own
-  page-1 read.
-
-Facets:
-
-- `title`: the document's own title or heading.
-- `dates[]`: each date the document bears, with `kind` (`created`, `signed`,
-  `sworn`, `filed_stamp`, `sent`, `decision`, `other`) and `value` as
-  `YYYY-MM-DD`, using `00` for any part the quote does not state.
-- `author`: who wrote, signed off or filed the document, as the document names
-  them.
-- `recipients[]`: each addressee, with `capacity` (`to`, `cc`, `bcc`,
-  `attention`, `other`).
-- `style_of_cause`: the style of cause as printed.
-- `court_registry`: the court and registry as printed.
-- `action_number`: the court file number as printed.
-- `affidavit_number`: the affidavit's own ordinal as printed (for example
-  "Affidavit #2").
-- `operative_language`: `value` is `serves` (the document serves something),
-  `encloses` (it encloses or attaches something) or `neither`. `neither`
-  carries `quote` and `pinpoint` as `null`.
-- `transmission`: a printed line stating how this document was sent to its
-  addressee ("By Email", "Via Fax and Email", "By Courier", "Delivered by
-  hand"). `methods` lists each method in the order the document prints them,
-  left to right on one line and top to bottom across lines, from `email`,
-  `fax`, `courier`, `mail`, `registered_mail`, `hand` and `upload`. Omit it when
-  no such line is printed. An email's own From/To header, a method noted on a
-  cc line, a fax number in the letterhead and an envelope are not transmission
-  lines. It records what the document says about its delivery, never that the
-  document was in fact sent.
-- `attachments_referenced[]`: each exhibit, schedule, enclosure or attachment
-  the document says it includes, with `label` as the document labels it.
-- `amounts[]`: each money amount the document states as a total, a sum claimed,
-  a sum paid or a figure offered, with `value` as written.
-- `contradictions[]`: two passages of this document that disagree about one of
-  the facets above (for example, the heading names one deponent and the jurat
-  another), with `facet` naming it and `first` and `second` each a
-  `{quote, pinpoint}` pair.
-- `other_matter_signals[]`: a passage naming a style of cause, court file
-  number or party that is not in `MATTER_CONTEXT`.
-- `readability`: `clear`, `partial` (some pages or passages unreadable) or
-  `poor`.
-- `pages_read`: the pages you read, for example `1-12 of 12`, or `rendering`
-  when you read a supplied rendering.
-
 ## Output contract
 
 ```json
@@ -269,60 +208,9 @@ Facets:
       "target_locator": "smallest unresolved locator",
       "reason": "not present in ANSWERED_FACTS or ANSWERED_RELIEF"
     }
-  ],
-  "naming_evidence": {
-    "title": { "quote": "string", "pinpoint": "locator" },
-    "dates": [
-      {
-        "kind": "created | signed | sworn | filed_stamp | sent | decision | other",
-        "value": "YYYY-MM-DD",
-        "quote": "string",
-        "pinpoint": "locator"
-      }
-    ],
-    "author": { "quote": "string", "pinpoint": "locator" },
-    "recipients": [
-      {
-        "capacity": "to | cc | bcc | attention | other",
-        "quote": "string",
-        "pinpoint": "locator"
-      }
-    ],
-    "style_of_cause": { "quote": "string", "pinpoint": "locator" },
-    "court_registry": { "quote": "string", "pinpoint": "locator" },
-    "action_number": { "quote": "string", "pinpoint": "locator" },
-    "affidavit_number": { "quote": "string", "pinpoint": "locator" },
-    "operative_language": {
-      "value": "serves | encloses | neither",
-      "quote": "string or null",
-      "pinpoint": "locator or null"
-    },
-    "transmission": {
-      "methods": ["email | fax | courier | mail | registered_mail | hand | upload"],
-      "quote": "string",
-      "pinpoint": "locator"
-    },
-    "attachments_referenced": [
-      { "label": "string", "quote": "string", "pinpoint": "locator" }
-    ],
-    "amounts": [
-      { "value": "string as written", "quote": "string", "pinpoint": "locator" }
-    ],
-    "contradictions": [
-      {
-        "facet": "string",
-        "first": { "quote": "string", "pinpoint": "locator" },
-        "second": { "quote": "string", "pinpoint": "locator" }
-      }
-    ],
-    "other_matter_signals": [{ "quote": "string", "pinpoint": "locator" }],
-    "readability": "clear | partial | poor",
-    "pages_read": "string"
-  }
+  ]
 }
 ```
 
 All six arrays are required, even when empty. `evidence` is either the shown
-object or `null`. `naming_evidence` is required unless `OUTPUT` is `ingest`, in
-which case it is absent, and its facets follow the omission rules in "Naming
-evidence". Output the JSON object only.
+object or `null`. Output the JSON object only.

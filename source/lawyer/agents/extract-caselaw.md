@@ -52,9 +52,6 @@ estoppel"), never with the named parties of this precedent.
   bundled inside a book of authorities. When supplied, read only that range;
   treat its first page as the decision's own first page, and cite pinpoints by
   the decision's own paragraph numbers as usual.
-- `{{OUTPUT}}`: `full` or `ingest`. Absent means `full`. With `ingest`, omit the
-  `naming_evidence` key entirely and skip the "Naming evidence" section. Every
-  other part of the output contract is unchanged.
 - `{{RESULT_PATH}}`: optional; the absolute path of a scratch file outside the
   matter tree. Absent means you write no file and reply with the JSON object.
 - `{{TREATMENT_VOCABULARY}}` — the whole text of `shared/treatment-vocabulary.md`,
@@ -146,43 +143,6 @@ estoppel"), never with the named parties of this precedent.
      source text**; any other paraphrase is an error. Use `null` if the remedy was
      not granted or the order states no operative terms.
 
-## Naming evidence
-
-`naming_evidence` records what the decision shows about its own identity, so a
-caller can name and file it. Build it from the read you already did; read
-nothing extra for it. It is grammar-free: never compose a file name, a naming
-code, a citation form for a file name, or a folder. It quotes the decision's own
-face, so a party name in `caption` or `title` is expected. That is the one place
-one may appear, and nothing in this block feeds a concept.
-
-- The `naming_evidence` object is required unless `OUTPUT` is `ingest`. Each facet inside it is either
-  omitted or carries `quote` (verbatim from the decision, trimmed to the words
-  that establish the facet) and `pinpoint` (`para. N`, `pN` or `hdr`). Omit a
-  facet the pages you read do not show, and never infer one you cannot quote.
-  Omit an array facet with no entries rather than emitting it empty.
-- `readability` and `pages_read` are always present and carry no quote.
-- Emit only the facets listed here.
-
-Facets:
-
-- `title`: the decision's own title line, if it prints one apart from the
-  caption.
-- `caption`: the caption line as printed (the style of cause heading the
-  decision, with its neutral citation where it is printed there).
-- `court`: the deciding court as printed.
-- `decision_date`: the date of the decision as printed, with `value` as
-  `YYYY-MM-DD`, using `00` for any part the quote does not state.
-- `dates[]`: any other date printed in the decision's header block (a hearing
-  date, a date of written submissions), with `kind` `other` and `value` as
-  above. Never repeat `decision_date` here.
-- `action_number`: the court's docket or registry number as printed.
-- `contradictions[]`: two passages that disagree about one of the facets above
-  (for example, two different decision dates), with `facet` naming it and
-  `first` and `second` each a `{quote, pinpoint}` pair.
-- `readability`: `clear`, `partial` (some pages or passages unreadable) or
-  `poor`.
-- `pages_read`: the pages you read, for example `1-34 of 34`.
-
 ## Output contract
 
 ```json
@@ -231,44 +191,13 @@ Facets:
         }
       ]
     }
-  ],
-  "naming_evidence": {
-    "title": { "quote": "string", "pinpoint": "locator" },
-    "caption": { "quote": "string", "pinpoint": "locator" },
-    "court": { "quote": "string", "pinpoint": "locator" },
-    "decision_date": {
-      "value": "YYYY-MM-DD",
-      "quote": "string",
-      "pinpoint": "locator"
-    },
-    "dates": [
-      {
-        "kind": "other",
-        "value": "YYYY-MM-DD",
-        "quote": "string",
-        "pinpoint": "locator"
-      }
-    ],
-    "action_number": { "quote": "string", "pinpoint": "locator" },
-    "contradictions": [
-      {
-        "facet": "string",
-        "first": { "quote": "string", "pinpoint": "locator" },
-        "second": { "quote": "string", "pinpoint": "locator" }
-      }
-    ],
-    "readability": "clear | partial | poor",
-    "pages_read": "string"
-  }
+  ]
 }
 ```
 
 Notes:
 
 - Omit `treats_prior` when the decision treats no prior authority.
-- `naming_evidence` is required unless `OUTPUT` is `ingest`, in which case it is
-absent, and its facets follow the omission rules in
-  "Naming evidence".
 - `authority_finding`, `factual_context`, and `obiter` are case-law–specific —
   they belong on concepts extracted from decisions.
 - `criterion_order` is a 1-based integer giving the order of criteria within a
