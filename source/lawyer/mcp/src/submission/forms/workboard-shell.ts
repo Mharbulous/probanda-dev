@@ -74,7 +74,7 @@ header .meta span:not([data-k])::before{content:none}
 .goals .statement{margin:0;overflow-wrap:anywhere}
 .goals .row{display:flex;gap:0 8px;align-items:baseline}
 .goals .row .label{flex:0 0 auto;white-space:nowrap}
-.goals .row .text{flex:1 1 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.goals .row .text{flex:1 1 0;margin-top:0;overflow-wrap:anywhere;white-space:pre-wrap}
 .goals .row .connector{font-style:italic}
 .goals[data-status="inferred"] .statement{font-style:italic}
 .goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}

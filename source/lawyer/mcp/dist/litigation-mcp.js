@@ -1,4 +1,4 @@
-// build-stamp: 1bf3c945a27a
+// build-stamp: 63b9d6a2ab4d
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -85303,7 +85303,7 @@ function withPartiesDriftLines(markdown, rows21) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join19 } from "node:path";
-var BUILD_STAMP = false ? null : "1bf3c945a27a";
+var BUILD_STAMP = false ? null : "63b9d6a2ab4d";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -95663,7 +95663,7 @@ header .meta span:not([data-k])::before{content:none}
 .goals .statement{margin:0;overflow-wrap:anywhere}
 .goals .row{display:flex;gap:0 8px;align-items:baseline}
 .goals .row .label{flex:0 0 auto;white-space:nowrap}
-.goals .row .text{flex:1 1 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.goals .row .text{flex:1 1 0;margin-top:0;overflow-wrap:anywhere;white-space:pre-wrap}
 .goals .row .connector{font-style:italic}
 .goals[data-status="inferred"] .statement{font-style:italic}
 .goals .caption{margin:0 0 6px;font-family:var(--mono);font-size:11.5px}
