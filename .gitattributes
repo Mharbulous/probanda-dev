@@ -1,5 +1,10 @@
 * text=auto eol=lf
 
+# Board templates: always text and LF, since a CR breaks a page's byte-identity
+# (source/lawyer/mcp/scripts/templates.mjs refuses one).
+source/lawyer/mcp/src/templates/** text eol=lf
+source/lawyer/mcp/src/housekeeping/templates/** text eol=lf
+
 # Binary files: never convert line endings or diff as text.
 *.png binary
 *.jpg binary

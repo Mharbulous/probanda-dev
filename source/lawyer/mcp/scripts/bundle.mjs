@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
+import { generate } from "./templates.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outfile = resolve(root, "dist", "litigation-mcp.js");
@@ -49,6 +50,10 @@ if (!schemaMatch) {
   throw new Error(`no TARGET_SCHEMA_VERSION found in ${engineFile} -- cannot state this bundle's schema ceiling`);
 }
 const submissionSchemaVersion = Number(schemaMatch[1]);
+
+// The board templates' generated modules (scripts/templates.mjs) are gitignored, so write them
+// before bundling: a bundle run alone, without `npm run build`, still finds them.
+generate();
 
 // imapflow's CommonJS dependencies (libmime and others) require Node built-ins when imported,
 // which esbuild's ESM output refuses without a real `require` in scope. The bundles that hold it get one;

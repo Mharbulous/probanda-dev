@@ -8,11 +8,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node scripts/templates.mjs && tsc",
     "bundle": "node scripts/bundle.mjs",
     "test": "npm run build && npm run bundle && node scripts/test.mjs",
     "start": "node dist/litigation-mcp.js",
-    "dev": "tsc --watch"
+    "dev": "node scripts/templates.mjs && tsc --watch"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
