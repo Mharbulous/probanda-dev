@@ -34,16 +34,16 @@ serve(async (_key, body) => {
   const pluginVersion = field(body.plugin_version);
   const skill = field(body.skill);
   if (!title || !text || title.length > MAX_LENGTH || text.length > MAX_LENGTH) {
-    return reply(400, { error: `title and body must each be text of 1 to ${MAX_LENGTH} characters` });
+    return reply(400, { error: `What is this suggestion's title, and what does it say, each in 1 to ${MAX_LENGTH} characters?` });
   }
   if (!SOURCES.has(source)) {
     return reply(400, { error: "Whose words are in this suggestion: the person's own (user), drafted by Probanda and confirmed by the person (assisted), or a vetted loose thread (llm)?" });
   }
   if (!pluginVersion || pluginVersion.length > MAX_TAG) {
-    return reply(400, { error: `plugin_version must be text of 1 to ${MAX_TAG} characters` });
+    return reply(400, { error: `Which plugin version, in 1 to ${MAX_TAG} characters, is this suggestion about?` });
   }
   if (body.skill !== undefined && (!skill || skill.length > MAX_TAG)) {
-    return reply(400, { error: `skill, when given, must be text of 1 to ${MAX_TAG} characters` });
+    return reply(400, { error: `Which skill, named in 1 to ${MAX_TAG} characters, is this suggestion about?` });
   }
   const items = checkItems(body.items);
   if ("question" in items) return reply(400, { error: items.question });
