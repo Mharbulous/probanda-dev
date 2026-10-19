@@ -1,0 +1,80 @@
+---
+description: Cloud only. Implement the open `suggestion` issues one after another, label any that cannot be done in the cloud `cloud-unsuitable`, and push each finished one to main.
+---
+
+# /implement-suggestions
+
+Run by a scheduled cloud routine, unattended. Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). Each issue filed by `/suggestion-triage` is a complete work order with the sections Plan, Scope and Done when, and ends with a `Suggestion <id>` line.
+
+The cloud does not load Brahm's own global rules, so these hold for the whole run:
+
+- Work on `main` and push to `main`. Never open a pull request, never push a `claude/` or other branch, never force-push, never rebase, never rewrite pushed history.
+- Commit by explicit pathspec (`git commit -F <msg file> -- <paths>`), never `git add -A` or `git add .`. The message says what changed and why, and never mentions Claude or Anthropic, with no Co-Authored-By line.
+- Never touch `public/`, `COMMANDMENTS.md`, `approve_public.py`, `public-approved.json` or the `publish-public` workflow.
+- Never edit the Suggestion Box (`cloud/suggestions/tools/triage.mjs`).
+
+## GitHub calls
+
+`gh issue` and `gh pr` are refused in the cloud. Use REST with `curl` through the sandbox proxy, as `docs/agents/issue-tracker.md` ("Cloud sandbox route") describes: `https://api.github.com/repos/Mharbulous/probanda-dev/...`. The proxy carries the credential, so never look up, echo or pass a token. Every write needs `-H Content-Type:application/json`. Take "now" from `date -u`.
+
+## 1. Preflight
+
+- `git remote get-url origin` names `Mharbulous/probanda-dev`. Otherwise stop.
+- `git config core.filemode false`. The build sets file modes that differ on Linux, and those changes must never be committed.
+- `git fetch origin`, then `git checkout -B main origin/main`. Check: `git status` is clean.
+
+## 2. Pick
+
+`GET /issues?labels=suggestion&state=open&sort=created&direction=asc&per_page=100`. Drop entries with a `pull_request` field, issues labelled `cloud-unsuitable`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the oldest left.
+
+Stop and go to step 8 when none is left or three issues have been handled this run.
+
+## 3. Claim
+
+Claim the issue by `docs/agents/issue-tracker.md` **Claim** steps 1 to 4, over the cloud route. Record the claim id. A refused or `blocked` claim: go back to step 2.
+
+## 4. Cloud gate
+
+Read the issue's Plan, Scope and Done when in full. The issue is unsuitable for the cloud when any plan step or Done-when check needs one of these:
+
+- a test suite that runs only on Windows (`.github/workflows/data-mcp-tests.yml`, `.github/workflows/skills-python-tests.yml` as a whole), or behaviour that depends on Windows paths (`path.win32`, `LOCALAPPDATA`, drive letters);
+- a browser;
+- the practitioner's data, matter folders or installed plugin copies;
+- a secret the sandbox lacks (`POOL_SECRET_KEY`, DPAPI stores, any credential);
+- `public/` approval or publication;
+- a minor or 1.0 version under the version rule in `CLAUDE.md`, or a schema migration;
+- a change to `COMMANDMENTS.md`;
+- a decision or check by a person.
+
+A single narrow test file named in Done when (for example one `pytest` file) is not a Windows-only suite: try it.
+
+When the issue is unsuitable, mark it (step 7, "Mark unsuitable") and go back to step 2.
+
+## 5. Implement
+
+- Follow the Plan inside the Scope. Change nothing outside the Scope.
+- Install only what the checks need: `npm ci` in `source/lawyer/mcp` for a Node build or test, `pip install` of the packages a named Python test imports.
+- Run every Done-when check, then `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py` and `python scripts/check_publishable.py --new-since origin/main`. A check that fails and cannot be fixed inside the Scope: step 7, "Mark unsuitable", quoting its output.
+- Commit the source change by pathspec. Do not push yet.
+- Release by `.claude/commands/release.md` steps 2 to 7. A plugin it classes as minor: discard this issue's unpushed commits (`git reset --hard origin/main`, which touches only this run's local commits) and step 7, "Mark unsuitable", naming the minor change. Release's step 7 pushes.
+
+## 6. Land
+
+- Push: `git pull --ff-only`, then `git push origin HEAD:main`. If `main` moved on, merge `origin/main` (`git merge --no-edit origin/main`), re-run the step 5 checks, then push. A merge conflict you cannot resolve keeping both sides' intent: `git merge --abort`, discard the local commits as above, and step 7, "Mark unsuitable".
+- Check: `git rev-parse HEAD` equals `git rev-parse origin/main` after a fresh `git fetch`.
+- Comment on the issue: the commit SHA, each check run and its result, and anything in the Plan not done.
+- Close it: `PATCH /issues/<n>` with `{"state":"closed"}`.
+- Delete your claim comment (`docs/agents/issue-tracker.md` **Release**, delete only).
+- Go back to step 2.
+
+## 7. Mark unsuitable
+
+- Discard every uncommitted change (`git checkout -- .` and `git clean -fd` on paths this issue touched). Nothing that failed is ever pushed.
+- Create the label once if `GET /labels/cloud-unsuitable` returns 404: `POST /labels` with `{"name":"cloud-unsuitable","color":"B60205","description":"The cloud implementer could not do this issue; remove the label to retry"}`.
+- `POST /issues/<n>/labels` with `{"labels":["cloud-unsuitable"]}`.
+- Comment one line naming which gate item or check failed, with the failing output quoted when there is one.
+- Release the claim by `docs/agents/issue-tracker.md` **Release**.
+
+## 8. Report
+
+End with a short report: each issue implemented with its SHA, each issue marked `cloud-unsuitable` with its reason, and each issue skipped as claimed or blocked.
