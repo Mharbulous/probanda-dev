@@ -13,7 +13,7 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 
 import { loadCloudKey } from "../../cloud-key.js";
-import { CONFIG_FILE, configPath, configWritePaths, LEGACY_CONFIG_FILE } from "../../config-path.js";
+import { CONFIG_FILE, CONFIG_FOLDER, configPath, configWritePaths, LEGACY_CONFIG_FILE, LEGACY_CONFIG_FOLDER } from "../../config-path.js";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { caseDataRootFromMatterRoot } from "../../files/matter-root.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
@@ -73,7 +73,8 @@ function redirectedCopies(env: NodeJS.ProcessEnv): string[] {
     return [];
   }
   return names
-    .flatMap((name) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join(packages, name, "LocalCache", "Roaming", "Coclerk", file)))
+    .flatMap((name) => [CONFIG_FOLDER, LEGACY_CONFIG_FOLDER].flatMap((folder) =>
+      [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join(packages, name, "LocalCache", "Roaming", folder, file))))
     .filter(isFile);
 }
 

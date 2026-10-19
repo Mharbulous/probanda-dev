@@ -72,6 +72,7 @@ terms:
   - Matter reference
   - Matter role
   - Matter row key
+  - Merge (Job Boards)
   - Mockup
   - Non-billable entry
   - Note up
@@ -116,6 +117,7 @@ terms:
   - Shelve
   - Source
   - Source Citation
+  - Split (Job Boards)
   - Stage
   - Standalone Job Board
   - Statement of fact
@@ -360,7 +362,7 @@ One unit of session work for `/draft`, shown on the Job Board as a job card — 
 _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfinder tickets, and for database identifiers); task (collides with software usage — the design's own deliberate choice); assignment (it implies a transfer of responsibility); to-do (a practice-registry row, see **To-do**).
 
 **Job Board**:
-The per-Writing page (`Job Board <id>.html` at the top of the draft folder) rendering this Writing's **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceeding's loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Job Board of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Job Board** is a Job Board with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Job Board pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
+The page (`Job Board <id>.html` at the top of the draft folder) that tracks the work toward one statement of goals. Every Writing linked to it serves those goals as a whole. A board starts with at most one Writing and gains more only by a **Merge (Job Boards)**. It renders its Writings' **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceedings' loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Job Board of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Job Board** is a Job Board with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Job Board pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
 _Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
 
 **Lawyer account**:
@@ -396,7 +398,7 @@ _Avoid_: limitation (reserved for limitation periods and the Limitation Act).
 
 **Litigation Strategy**:
 One page for a matter, `Litigation Strategy.html` at the top of its `0. DRAFT` folder, which `/draft` presents when the practitioner asks for it. The matter's open **To-dos** lead it, each with its BF date as a plain date and, when it points to a Writing, that Writing's line beneath it. Below them each Writing, and each **pre-filing proceeding**, is one line: name, lifecycle state, mockup status and jobs in progress. Each open **Standalone Job Board** is one line under "Job Boards", and a closed one is listed with the retired Writings as "Closed <date>". Each Writing's own jobs, steps and Proposals stay on its Job Board. A folder holding the older `Matter Board.html` or `To Do List.html` has it retired once `Litigation Strategy.html` is written there. Internal names are unchanged: `matter_board_path`, `render-matter-board.ts`, `matter-board-shell.ts` and the page's data key.
-_Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; Job Board (one Writing's page); dashboard.
+_Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; Job Board (one board's page); dashboard.
 
 **Loose thread**:
 Two senses, told apart by where each appears:
@@ -425,6 +427,10 @@ _Avoid_: party (matter-data's record of a role in a proceeding); participant.
 **Matter row key**:
 Not a practitioner-facing identifier at all: the practice database's internal generated primary key on a matter row, carried as a `matter_id` foreign-key column on its dependent tables. It is never displayed. The storage name `matter_id` is also used, unrelatedly, as the key under which case data and application state store the *matter reference* — those names are load-bearing in schema, JSON, and Python and are deliberately not being changed. Read `matter_id` as the name of a column, never as "the ID we show".
 _Avoid_: writing "matter ID" in any prose a practitioner reads, for any of the three senses.
+
+**Merge (Job Boards)**:
+The practitioner's act that joins one Job Board into another after confirming that their goals overlap or cohere. The survivor takes every Writing, job and loose thread of both and keeps every goal of both. A board with a Writing survives over one without, otherwise the older one.
+_Avoid_: combine; consolidate.
 
 **Mockup**:
 A Draft in markdown format — the word is reserved exclusively for markdown. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.
@@ -604,6 +610,10 @@ A computed reference of the form `<file_path>#<locator>`, used to pinpoint where
 A court decision, an enactment or a file that a job's work has named and is about to retrieve or read, recorded on the job before the work that gets it. It is open until it is closed as got or as not retrieved. It is the job's own record beside its **Steps** and never one of them: the steps are the practitioner's plan, and a source to get is found by the work. Its label is a citation, an instrument or a file name, never what an authority holds. Not a **Source**: that is the matter's own evidentiary record. Internal name: the `ticket_sources` table.
 _Avoid_: discovered item; sub-step; download (it also covers legislation and files to read); source (alone).
 
+**Split (Job Boards)**:
+The practitioner's act that divides a Job Board with more than one goal, by naming the goals on each side. Each Writing, with the facts, law and arguments it uses, goes to the side whose goals it serves. A Writing is never divided, so goals it serves together stay on one board. Which goals a Writing serves is worked out only at a split.
+_Avoid_: unmerge.
+
 **Stage**:
 One of the outlining sessions in which `/prepare` is re-run: opening the bundle, after the gate job completes, and after responses arrive.
 _Avoid_: phase; step (a job's unit).
@@ -617,7 +627,7 @@ One witness's account supporting a postulate: the witness, the **Instrument** ca
 _Avoid_: evidence use (schema legacy); excerpt (the words, not the link); testimony (a statement of fact with no exhibit — the witness's own words alone).
 
 **Statement of goals**:
-What the practitioner is trying to achieve on one Job Board, written as self-contained goals, one per board. It is confirmed when the practitioner approved its wording, inferred when the session wrote it after the practitioner declined, or declined with nothing inferred yet. It shows in its own card at the top of every Job Board, labelled Goal, above the **Completion criteria**: closed, the card shows a short description, such as "Default Judgment Requisition Drafting"; open, it shows the statement as stored, an inferred one in italics with the caption "Inferred, not confirmed". A session reads it only as `board_summary`'s `Goal:` line and `drafting_forms__board_card`'s `goals` lane. Nothing relies on an inferred one as confirmed. Internal names: the `db_meta` key `board_goal:<filing or proceeding>:<id>`, the tool `drafting_data__set_board_goal`, and the page data key `goals` (never `goal`, which is the Completion criteria card's).
+What the practitioner is trying to achieve on one Job Board, written as a list of self-contained goals, one list per board. Each goal is confirmed, inferred or declined on its own: confirmed when the practitioner approved its wording, inferred when the session wrote it after the practitioner declined, or declined with nothing inferred yet. It shows in its own card at the top of every Job Board, labelled Goal, above the **Completion criteria**: closed, the card shows a short description, such as "Default Judgment Requisition Drafting"; open, it shows the statement as stored, an inferred one in italics with the caption "Inferred, not confirmed". A session reads it only as `board_summary`'s `Goal:` line and `drafting_forms__board_card`'s `goals` lane. Nothing relies on an inferred one as confirmed. Internal names: the `db_meta` key `board_goal:<filing or proceeding>:<id>`, the tool `drafting_data__set_board_goal`, and the page data key `goals` (never `goal`, which is the Completion criteria card's).
 _Avoid_: Goal card (the Completion criteria card's code name); objective; Goal (alone, except as the card's label).
 
 **Step**:
@@ -694,7 +704,7 @@ _Avoid_: verified as a synonym for "proven" or "true" anywhere in prose.
 
 **Work Board**:
 The practice-wide page (`Work Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board`, in the deadline lane (`shared/html-pages.md`, The Work Board). Its internal name is `practice_board`.
-_Avoid_: Job Board (one Writing's page); `Work_board` (the Job Board's internal document type); Litigation Strategy (one matter's page).
+_Avoid_: Job Board (one board's page); `Work_board` (the Job Board's internal document type); Litigation Strategy (one matter's page).
 
 **Work marker**:
 One emoji from a closed set, printed on a Mockup where a predicate over the database is true (an open jurisdictional-basis slot, an excerpt with no pinpoint, a fact with no witness…), each naming the work that finishes it. The compressed to-do list of a Writing. Deferred work counts (a reserved row awaits its deployment decision); only ⬜ means nothing started; an emoji that names no work is not a marker. Three types: **work** (we act), **event** (they or the world acted — reports that outcome and renders as prefix of the work it routed; several events may route the same work), **hold** (our posture — renders only in Held in reserve). Rules, tables and mis-readings: `.claude/skills/drafting-data/references/work-markers.md` (SSOT).

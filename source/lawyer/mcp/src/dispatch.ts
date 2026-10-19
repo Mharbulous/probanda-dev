@@ -25,6 +25,7 @@ import { submissionDataQuery, submissionDataExecute } from "./submission/backend
 import { submissionDataMigrate } from "./submission/migrate.js";
 import { submissionDataCreateWriting, type CreateWritingArgs } from "./submission/forms/layout-snapshot.js";
 import { submissionDataCreateJobBoard, type CreateJobBoardArgs } from "./submission/forms/create-job-board.js";
+import { submissionDataMergeJobBoards, type MergeJobBoardsArgs } from "./submission/forms/merge-job-boards.js";
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
@@ -234,6 +235,10 @@ export async function callTool(
 
   if (name === "drafting_data__create_job_board") {
     return submissionDataCreateJobBoard(args as unknown as CreateJobBoardArgs);
+  }
+
+  if (name === "drafting_data__merge_job_boards") {
+    return submissionDataMergeJobBoards(args as unknown as MergeJobBoardsArgs);
   }
 
   if (name === "drafting_data__record_sent") {

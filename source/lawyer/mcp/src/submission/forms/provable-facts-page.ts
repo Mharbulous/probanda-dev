@@ -161,7 +161,22 @@ function citeOf(s: StatementRow): string | null {
   return line === null ? null : line.replace(/^> /, "");
 }
 
+/** The page's data: each of the board's Writings in turn, the survivor's first, each in its own
+ * order, a fact two Writings use listed once where it first occurs (ADR 0010). Drafting facts carry no
+ * date. The evidence note is the first Writing's that was not read. */
 export function provableFactsData(ctx: ViewPageContext): ProvableFactsData {
+  const parts = ctx.writings.map((w) => provableFactsFor({ ...ctx, filing: w.filing, proceeding: w.proceeding }));
+  const seen = new Set<number>();
+  const facts: PageFact[] = [];
+  for (const { id, ...f } of parts.flatMap((p) => p.facts)) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    facts.push({ ...f, position: facts.length + 1 });
+  }
+  return { evidence: parts.find((p) => p.evidence !== "read")?.evidence ?? "read", facts };
+}
+
+function provableFactsFor(ctx: Omit<ViewPageContext, "writings">): { evidence: ProvableFactsData["evidence"]; facts: (PageFact & { id: number })[] } {
   const { dbPath, filing, proceeding, now, revision } = ctx;
   const manifest = readManifest(mockupDir(dbPath, filing.id));
   // The inventory's silence on a link counts only when its render saw the link as it stands now.
@@ -175,7 +190,7 @@ export function provableFactsData(ctx: ViewPageContext): ProvableFactsData {
 
   return {
     evidence: manifest === null ? "never_rendered" : inventory === null ? "changed_since" : "read",
-    facts: facts.map((f, i): PageFact => {
+    facts: facts.map((f, i): PageFact & { id: number } => {
       const onRecord = f.court_record !== null;
       const guarded = onRecord || admitted.has(f.id);
       const links = statements.filter((s) => s.fact_id === f.id);
@@ -201,7 +216,7 @@ export function provableFactsData(ctx: ViewPageContext): ProvableFactsData {
         : pageLinks.length > 0 && pageLinks.every((l) => l.state === "inadmissible")
           ? "inadmissible"
           : "pending";
-      return { position: i + 1, text: f.postulate, class: cls, basis, links: pageLinks };
+      return { id: f.id, position: i + 1, text: f.postulate, class: cls, basis, links: pageLinks };
     }),
   };
 }

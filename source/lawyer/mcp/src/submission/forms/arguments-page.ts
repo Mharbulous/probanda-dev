@@ -80,17 +80,29 @@ function columnHeld(dbPath: string, table: string, column: string): boolean {
 }
 
 /** The page's data for one filing, from the drafting database alone. */
-export function buildArgumentsData(dbPath: string, filing: FilingRow): ArgumentsData {
-  const proceedingId = filing.proceeding_id;
+export function buildArgumentsData(dbPath: string, filing: FilingRow | FilingRow[]): ArgumentsData {
+  // A merged board's page (ADR 0010): each proceeding's arguments read against the board's Writings in it.
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const out: ArgumentsData = { submissions: [], counter_arguments: [] };
+  for (const proceedingId of [...new Set(filings.map((f) => f.proceeding_id))]) {
+    const part = argumentsFor(dbPath, proceedingId, filings.filter((f) => f.proceeding_id === proceedingId).map((f) => f.id), filings.length > 1);
+    out.submissions.push(...part.submissions);
+    out.counter_arguments.push(...part.counter_arguments);
+  }
+  return out;
+}
+
+function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merged: boolean): ArgumentsData {
+  const inIds = `(${ids.map(() => "?").join(", ")})`;
   const submissions = rows<{ id: number; contention: string }>(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
-     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id = ?
+     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
      WHERE s.proceeding_id = ? AND s.killed_on IS NULL
      GROUP BY s.id
      ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
-    [filing.id, proceedingId]
+    [...ids, proceedingId]
   );
   const deployments = rows<{ submission_id: number; filing_id: number; title: string; retired_on: string | null }>(
     dbPath,
@@ -148,9 +160,10 @@ export function buildArgumentsData(dbPath: string, filing: FilingRow): Arguments
 
   const items = submissions.map((s): PageSubmission => {
     const deployedOn = deployments.filter((d) => d.submission_id === s.id);
-    const here = deployedOn.some((d) => d.filing_id === filing.id);
+    const here = deployedOn.filter((d) => ids.includes(d.filing_id));
     const elsewhere = deployedOn.map((d) => (d.retired_on === null ? d.title : `${d.title} (retired)`)).join("; ");
-    const where = here ? "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
+    const where =
+      here.length > 0 ? (merged ? `On this board: ${here.map((d) => d.title).join("; ")}` : "On this Writing") : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
     return {
       id: s.id,
       kind: deployedOn.length > 0 ? "submission" : "rebuttal",
@@ -185,5 +198,5 @@ export const ARGUMENTS_PAGE: ViewPage = {
     "shared.js": sharedJs,
     "arguments.js": argumentsJs,
   }),
-  data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.filing),
+  data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
 };

@@ -11,7 +11,9 @@ DRAFT = r"<matter>\0. DRAFT"
 
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.
 STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOARD 1.HTML",
-                   "Litigation Strategy.html", "To Do List.html", "Work Board.html"]
+                   "Litigation Strategy.html", "To Do List.html", "Work Board.html",
+                   # A merged pre-filing board's view page (docs/ADRs/0010).
+                   "Provable Facts - Job Board - proceeding 3.html"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Job Board 1 preview 1.html",
                  "Job Board - proceeding 2 preview 3.html", "Provable Facts - Job Board 1 preview 1.html",

@@ -61,6 +61,8 @@ const GROUP_STYLE: Readonly<Record<RankGroup, { label: string; colour: string }>
 
 export interface LooseIdea {
   id: number;
+  /** A page spanning several proceedings only: the thread's proceeding, whose token its button posts. */
+  proceeding_id?: number;
   /** Null while unranked. */
   rank: number | null;
   idea: string;
@@ -86,6 +88,8 @@ export interface LooseIdeasApi {
   db_path: string;
   proceeding_id: number;
   token: string;
+  /** A page spanning several proceedings only: each proceeding's token, by its id. */
+  tokens?: Record<string, string>;
 }
 
 export interface LooseIdeasData {
@@ -102,10 +106,21 @@ export interface LooseIdeasData {
 
 /** The page's data for one filing, from the drafting database, with the listener's port and this
  * page's token read from this device's probanda.json and page-api.secret. */
-export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: NodeJS.ProcessEnv = process.env): LooseIdeasData {
-  const seeds = inRankOrder(withFromFiling(dbPath, filing.proceeding_id, filing.id, fetchOpenSeeds(dbPath, filing.proceeding_id)));
+export function buildLooseIdeasData(dbPath: string, filing: Pick<FilingRow, "id" | "proceeding_id"> | Pick<FilingRow, "id" | "proceeding_id">[], env: NodeJS.ProcessEnv = process.env): LooseIdeasData {
+  // A merged board's page (ADR 0010): every proceeding on the board, each thread posting its own proceeding's token.
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const proceedings = [...new Set(filings.map((f) => f.proceeding_id))];
+  const merged = proceedings.length > 1;
+  const seeds = inRankOrder(
+    proceedings.flatMap((p) => {
+      const own = filings.filter((f) => f.proceeding_id === p).map((f) => f.id);
+      // A thread captured on one of the board's own Writings names no other filing.
+      return withFromFiling(dbPath, p, own[0], fetchOpenSeeds(dbPath, p)).map((s) => ({ ...s, from_filing: s.filing_id !== null && own.includes(s.filing_id) ? null : s.from_filing, proceeding_id: p }));
+    })
+  );
   const ideas = seeds.map(
     (s): LooseIdea => ({
+      ...(merged ? { proceeding_id: s.proceeding_id } : {}),
       id: s.id,
       rank: s.rank,
       idea: s.idea,
@@ -121,8 +136,16 @@ export function buildLooseIdeasData(dbPath: string, filing: FilingRow, env: Node
   const groups = (Object.keys(GROUP_STYLE) as RankGroup[])
     .map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i) => i.group === key).length }))
     .filter((g) => g.count > 0);
-  const api = { port: pageApiPort(env), db_path: dbPath, proceeding_id: filing.proceeding_id, token: pageApiToken(dbPath, filing.proceeding_id, env) };
-  return { groups, ideas, resolved: fetchResolvedSeeds(dbPath, filing.proceeding_id), api };
+  const first = proceedings[0];
+  const api: LooseIdeasApi = {
+    port: pageApiPort(env),
+    db_path: dbPath,
+    proceeding_id: first,
+    token: pageApiToken(dbPath, first, env),
+    ...(merged ? { tokens: Object.fromEntries(proceedings.map((p) => [String(p), pageApiToken(dbPath, p, env)])) } : {}),
+  };
+  const resolved = proceedings.flatMap((p) => fetchResolvedSeeds(dbPath, p));
+  return { groups, ideas, resolved: merged ? resolved.sort((a, b) => (a.at === b.at ? a.id - b.id : a.at < b.at ? 1 : -1)) : resolved, api };
 }
 
 /** The header's counts: every open loose thread, the ranked, the unranked and the deferred (which
@@ -172,6 +195,6 @@ export const LOOSE_IDEAS_PAGE: ViewPage = {
     "shared.js": sharedJs,
     "loose-threads.js": looseThreadsJs,
   }),
-  data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.filing),
+  data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
   metaExtra: looseIdeasMeta,
 };

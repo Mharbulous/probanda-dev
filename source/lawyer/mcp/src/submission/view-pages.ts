@@ -26,11 +26,14 @@ import { RAW_RESEARCH_PAGE } from "./forms/raw-research-page.js";
  * server's own view page by it. */
 export const VIEW_PAGE_MARKER = "data-view-page";
 
-/** What a view page's data reader is given: one live filing, read from the database at each write. */
+/** What a view page's data reader is given: one board's live Writings, read from the database at
+ * each write. `filing` and `proceeding` are the first of `writings`, the survivor's when it is live. */
 export interface ViewPageContext {
   dbPath: string;
   filing: FilingRow;
   proceeding: ProceedingRow;
+  /** Every live Writing on the board (ADR 0010), the survivor's first: one, unless boards were merged. */
+  writings: { filing: FilingRow; proceeding: ProceedingRow }[];
   /** The write's one clock reading, the page's Rendered stamp. */
   now: string;
   /** The database's revision the write read, the page's Rev. */
@@ -66,18 +69,19 @@ export interface ViewPagePath {
   path: string;
 }
 
-/** A view page's file name for one filing. */
-export function viewPageFile(page: ViewPage, filingId: number): string {
-  return `${page.name} - Job Board ${filingId}.html`;
+/** A view page's file name for one board, by its survivor's id: a filing's, or a pre-filing
+ * proceeding's that holds a Writing through a merge (ADR 0010). */
+export function viewPageFile(page: ViewPage, board: { filing_id: number | null; proceeding_id: number }): string {
+  return board.filing_id === null ? `${page.name} - Job Board - proceeding ${board.proceeding_id}.html` : `${page.name} - Job Board ${board.filing_id}.html`;
 }
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Whether a file name is a registered view page's, for any filing, case aside. */
+/** Whether a file name is a registered view page's, for any board, case aside. */
 export function isViewPageFile(fileName: string): boolean {
-  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)} - Job Board \\d+\\.html$`, "i").test(fileName));
+  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)} - Job Board (?:- proceeding )?\\d+\\.html$`, "i").test(fileName));
 }
 
 /** The header every view page prints: the page, the filing, the matter, the revision and the render stamp. */

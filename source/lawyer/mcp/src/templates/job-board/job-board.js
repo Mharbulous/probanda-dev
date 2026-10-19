@@ -65,8 +65,12 @@
 
   // The page's one section names the page: "Job Board <id>", the id the file name's, then the
   // heading's gold rule, then the Writing's title on its own line.
+  // A merged board's page (docs/ADRs/0010) is named by its survivor and titles each section instead.
   var first = data.sections[0];
-  if (first) {
+  var merged = !!data.board;
+  if (merged) {
+    header.querySelector("h1").textContent = data.board.filing_id === null ? "Job Board: Proceeding " + data.board.proceeding_id : "Job Board " + data.board.filing_id;
+  } else if (first) {
     var h1 = header.querySelector("h1");
     if (first.meta.filing_id === null) {
       h1.textContent = "Job Board: Proceeding " + first.meta.proceeding_id;
@@ -115,8 +119,11 @@
 
   // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
   // filing's board always drew them.
-  data.sections.forEach(function (section) {
+  data.sections.forEach(function (section, i) {
     var smeta = section.meta;
+    if (merged) {
+      main.appendChild(el("h2", "writing-title", smeta.filing_id === null ? "Proceeding " + smeta.proceeding_id : "Job Board " + smeta.filing_id + ": " + smeta.filing));
+    }
     if (smeta.ready_to_retire) {
       main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
     }
@@ -126,10 +133,11 @@
     main.appendChild(board);
     // This filing's deadline criteria's dates, by criterion id, joined to its Goal card here.
     var when = pageDates && smeta.filing_id !== null ? pageDates.criteria[String(smeta.filing_id)] || {} : {};
-    drawSection(section, board, when, data.writings || [], data.views || [], data.attached || [], data.court_file || []);
+    // The board's Goal card, Writings strip and page-wide lanes draw once, with the first section.
+    drawSection(section, board, when, i === 0 ? data.writings || [] : [], i === 0 ? data.views || [] : [], i === 0 ? data.attached || [] : [], i === 0 ? data.court_file || [] : [], i === 0);
   });
 
-  function drawSection(data, board, when, writings, views, attached, courtFile) {
+  function drawSection(data, board, when, writings, views, attached, courtFile, firstSection) {
     function link(id) {
       var a = el("a", "", "Job #" + id);
       a.href = "#ticket-" + id;
@@ -545,11 +553,19 @@
       head.appendChild(el("span", "label", "Goal"));
       card.appendChild(head);
       var body = el("div", "goals-body");
-      if (g.statement === null) {
+      var merged = g.merged || [];
+      if (g.statement === null && merged.length === 0) {
         body.appendChild(el("p", "none", "No statement of goals yet"));
       } else {
-        if (g.status === "inferred") body.appendChild(el("p", "caption", "Inferred, not confirmed"));
-        body.appendChild(statementRows(g.statement, g.status));
+        // The board's own statement, then each merged board's, each with its own status.
+        [{ statement: g.statement, status: g.status }].concat(merged).forEach(function (s) {
+          if (s.statement === null) return;
+          var part = el("div", "goals-part");
+          part.setAttribute("data-status", s.status);
+          if (s.status === "inferred") part.appendChild(el("p", "caption", "Inferred, not confirmed"));
+          part.appendChild(statementRows(s.statement, s.status));
+          body.appendChild(part);
+        });
       }
       card.appendChild(body);
       return card;
@@ -577,7 +593,7 @@
       });
       return wrap;
     }
-    board.appendChild(goalsCard(data.goals));
+    if (firstSection) board.appendChild(goalsCard(data.goals));
 
     if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
 
@@ -663,7 +679,7 @@
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
     // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
     // Either way the count is the open threads'.
-    var threadsPage = views.filter(function (v) { return v.name === "Loose Threads"; })[0];
+    var threadsPage = (window.WORKBOARD.views || []).filter(function (v) { return v.name === "Loose Threads"; })[0];
     if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);

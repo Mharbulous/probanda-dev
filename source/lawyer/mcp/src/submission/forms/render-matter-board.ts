@@ -15,6 +15,7 @@
 // date alone.
 
 import type { MatterTodos } from "../matter-todos.js";
+import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./board-members.js";
 import { LIFECYCLE_LABELS, type Lifecycle, type LifecycleState } from "./lifecycle.js";
 import { isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./query.js";
 import { buildProceedingBoard, jobBoardLabel, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
@@ -82,6 +83,9 @@ export interface MatterBoardData {
   filings: MatterBoardFiling[];
   /** In proceeding id order. */
   pre_filing: MatterBoardProceeding[];
+  /** Each merged Job Board (docs/ADRs/0010): its page's name and the live sections drawn on it, the
+   * survivor's first. Those sections are drawn under it and not in their own lists. Empty when none is merged. */
+  boards: { name: string; filing_ids: number[]; proceeding_ids: number[] }[];
 }
 
 const inProgress = (tickets: WorkBoardTicket[]) => tickets.filter((t) => t.category === "wip").length;
@@ -177,5 +181,29 @@ export function buildMatterBoardData(
     ...("note" in todos ? { todos_note: todos.note } : {}),
     filings,
     pre_filing: preFilingLines,
+    boards: mergedBoards(new BoardIndex(dbPath), ranked, preFiling),
   };
+}
+
+/** The merged boards, each with every live section on it, the survivor's first, in the order of their first section. */
+function mergedBoards(index: BoardIndex, ranked: RankedFiling[], preFiling: ProceedingRow[]): MatterBoardData["boards"] {
+  const groups = new Map<string, { name: string; members: BoardRef[] }>();
+  const refs: BoardRef[] = [
+    ...ranked.filter((r) => !r.filing.retired_on).map((r) => ({ filing_id: r.filing.id, proceeding_id: r.proceeding.id })),
+    ...preFiling.map((p) => ({ filing_id: null, proceeding_id: p.id })),
+  ];
+  for (const ref of refs) {
+    const board = index.survivorOf(ref);
+    const group = groups.get(boardKey(board)) ?? { name: board.filing_id === null ? `Job Board: Proceeding ${board.proceeding_id}` : `Job Board ${board.filing_id}`, members: [] };
+    if (sameBoard(ref, board)) group.members.unshift(ref);
+    else group.members.push(ref);
+    groups.set(boardKey(board), group);
+  }
+  return [...groups.values()]
+    .filter((g) => g.members.length > 1)
+    .map((g) => ({
+      name: g.name,
+      filing_ids: g.members.filter((m) => m.filing_id !== null).map((m) => m.filing_id as number),
+      proceeding_ids: g.members.filter((m) => m.filing_id === null).map((m) => m.proceeding_id),
+    }));
 }

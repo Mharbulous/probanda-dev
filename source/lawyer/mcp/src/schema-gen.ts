@@ -1559,6 +1559,42 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("merge_job_boards"),
+      description:
+        "Merge two Job Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
+        "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side " +
+        "and ask whether to merge them; call this only after their next turn is a bare yes, and pass confirmed: true. " +
+        "boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and " +
+        "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
+        "a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. " +
+        "The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and " +
+        "Writings, and one set of view pages across all its Writings, named by the survivor's id; the absorbed board's " +
+        "pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the " +
+        "survivor's, and boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. " +
+        "Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per " +
+        "absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: " +
+        "invalid_boards, invalid_board, not_confirmed, invalid_session_token, not_found, board_retired, " +
+        "proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed " +
+        "(each {filing_id, proceeding_id}), goals (the survivor's count of statements) and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          boards: {
+            type: "array",
+            minItems: 2,
+            maxItems: 2,
+            items: { type: "object", properties: { filing_id: { type: "number" }, proceeding_id: { type: "number" } }, additionalProperties: false },
+          },
+          confirmed: { type: "boolean" },
+          session_token: { type: "string" },
+        },
+        required: ["db_path", "boards", "confirmed", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("record_sent"),
       description:
         "Record a general Writing as sent (the Sent write): the one door for a general Writing's Sent date. Only an active " +
@@ -1833,9 +1869,13 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON " +
         "{description, statement, status, approved_at, session_token, updated_at}, approved_at set only for " +
         "confirmed. The write replaces the board's row and removes the rows of boards that no longer exist " +
-        "(stale_keys_removed). It moves no revision. Re-render to show it. Refusals write nothing: invalid_board, " +
+        "(stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_job_boards) " +
+        "also holds each absorbed board's statement, with its own status, under `merged`: merged_index (1-based, as " +
+        "board_card lists them) writes that one, confirmed or inferred, and the board's own statement is kept; " +
+        "without it the board's own is written and the merged ones kept. A board merged into another is refused " +
+        "(board_merged): set the goal on its survivor. Refusals write nothing: invalid_board, " +
         "invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, " +
-        "proceeding_has_writing. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
+        "proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
         "status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
       inputSchema: {
         type: "object",
@@ -1847,6 +1887,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           statement: { type: ["string", "null"] },
           status: { type: "string", enum: ["confirmed", "inferred", "declined"] },
           session_token: { type: "string" },
+          merged_index: { type: "number" },
         },
         required: ["db_path", "status", "session_token"],
         additionalProperties: false,
@@ -2016,7 +2057,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top " +
         "of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from " +
         "practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 " +
-        "amendments), never more than one Writing on a page: `Job Board <id>.html` per live Writing and " +
+        "amendments), a merged board's page holding every section merged into it (drafting_data__merge_job_boards): " +
+        "`Job Board <id>.html` per live Writing and " +
         "`Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; " +
         "a job with no filing_id is on every Writing's " +
         "page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, " +
@@ -2200,7 +2242,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the " +
         "matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per " +
         "proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no " +
-        "Writing, never more than one Writing on a page (ADR 0033, 2026-10-05 amendments): `Job Board " +
+        "Writing, a merged board's page holding every section merged into it (ADR 0033, 2026-10-05 amendments; " +
+        "drafting_data__merge_job_boards): `Job Board " +
         "<id>.html` and `Job Board - proceeding <id>.html`, named by id so a retitle never moves a page; a job with " +
         "no filing_id is on every Writing's " +
         "page in its proceeding. job_board_paths lists them, [{filing_id, proceeding_id, path}] in page order, " +

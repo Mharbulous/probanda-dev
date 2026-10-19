@@ -41,7 +41,10 @@
     fetch(base + "/seeds/" + c.idea.id + (c.deferred ? "/undefer" : "/defer"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token })
+      // A page spanning several proceedings posts the thread's own proceeding and its token.
+      body: JSON.stringify(c.idea.proceeding_id === undefined
+        ? { db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token }
+        : { db_path: api.db_path, proceeding_id: c.idea.proceeding_id, token: api.tokens[String(c.idea.proceeding_id)] })
     }).then(function (res) {
       return res.json().then(function (body) { return { ok: res.ok, body: body }; }, function () { return { ok: false, body: { error: "The listener answered " + res.status + "." } }; });
     }).then(function (reply) {

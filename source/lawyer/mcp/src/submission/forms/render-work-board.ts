@@ -439,6 +439,9 @@ export interface MatterJobBoardData {
     file_number: string;
     style_of_cause: string;
   };
+  /** A merged board's page only (docs/ADRs/0010): the survivor whose id names the page, which may be
+   * retired and then has no section of its own. Absent on a page holding one board. */
+  board?: { filing_id: number | null; proceeding_id: number };
   sections: WorkBoardData[];
   /** The matter's dates (ADR 0013, 2026-10-04 amendments): drawn on the page, in no section. */
   dates: PageDates;

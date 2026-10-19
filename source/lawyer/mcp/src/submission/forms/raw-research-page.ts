@@ -182,8 +182,22 @@ const CLASS_RANK: Record<RawResearchClass, number> = { in_use: 0, undecided: 1, 
  * one of its statements, this Writing's own text citing it, the proceeding's other submissions not
  * killed, an order not on this filing, else Not linked.
  */
-export function buildRawResearchData(dbPath: string, filing: FilingRow): RawResearchData {
-  const proceedingId = filing.proceeding_id;
+export function buildRawResearchData(dbPath: string, filing: FilingRow | FilingRow[]): RawResearchData {
+  // A merged board's page (ADR 0010): each proceeding's propositions read against the board's Writings in it.
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const counts: Record<RawResearchClass, number> = { in_use: 0, undecided: 0, not_relevant: 0 };
+  const groups: RawResearchGroup[] = [];
+  for (const proceedingId of [...new Set(filings.map((f) => f.proceeding_id))]) {
+    const part = rawResearchFor(dbPath, proceedingId, filings.filter((f) => f.proceeding_id === proceedingId).map((f) => f.id), filings.length > 1);
+    for (const k of Object.keys(counts) as RawResearchClass[]) counts[k] += part.counts[k];
+    groups.push(...part.groups);
+  }
+  return { counts, groups };
+}
+
+function rawResearchFor(dbPath: string, proceedingId: number, ids: number[], merged: boolean): RawResearchData {
+  const inIds = `(${ids.map(() => "?").join(", ")})`;
+  const here = merged ? "this board's Writings" : "this Writing";
   const propositions = rows<PropositionRow>(
     dbPath,
     `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
@@ -202,29 +216,29 @@ export function buildRawResearchData(dbPath: string, filing: FilingRow): RawRese
     dbPath,
     `SELECT s.id, s.contention
      FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
-     WHERE fs.filing_id = ? AND s.killed_on IS NULL
+     WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
-    [filing.id]
+    ids
   );
   const elsewhere = rows<SubmissionRow>(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-       AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id = ?)
+       AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
      ORDER BY s.ordinal, s.id`,
-    [proceedingId, filing.id]
+    [proceedingId, ...ids]
   );
   // An order's requires edge names a proposition, or a jurisdictional citation by its statement
   // (excerpt_id, a statement with no proposition), or both.
   const required = rows<{ law_assertion_id: number | null; excerpt_id: number | null; on_filing: number }>(
     dbPath,
     `SELECT r.law_assertion_id, r.excerpt_id,
-            EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id = ?) AS on_filing
+            EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
      FROM order_sought_requires r JOIN order_sought o ON o.id = r.order_sought_id
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
-    [filing.id, proceedingId]
+    [...ids, proceedingId]
   );
-  const citedHere = new Set(rows<{ statement_id: number }>(dbPath, "SELECT statement_id FROM filing_law WHERE filing_id = ?", [filing.id]).map((r) => r.statement_id));
+  const citedHere = new Set(rows<{ statement_id: number }>(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r) => r.statement_id));
 
   // In use on this filing: a link to a submission on it (killed ones are not in onFiling), an
   // order on it requiring the proposition or citing the statement, or this Writing's text citing it.
@@ -315,13 +329,13 @@ export function buildRawResearchData(dbPath: string, filing: FilingRow): RawRese
   for (const s of onFiling) {
     if (seen.has(s.id)) continue;
     seen.add(s.id);
-    push(s.contention, "Submission on this Writing", take(linkedTo(s.id)));
+    push(s.contention, `Submission on ${here}`, take(linkedTo(s.id)));
   }
-  push("Required by an order sought", "Order on this Writing", orderGroup(required.filter((r) => r.on_filing === 1)));
+  push("Required by an order sought", `Order on ${here}`, orderGroup(required.filter((r) => r.on_filing === 1)));
   const cited = statements.filter((s) => citedHere.has(s.statement_id));
-  push("Cited in this Writing's text", null, [...take(present(cited.map((s) => s.law_assertion_id))), ...takeLoose(cited.map((s) => s.statement_id))]);
-  for (const s of elsewhere) push(s.contention, "Submission not on this Writing", take(linkedTo(s.id)));
-  push("Required by an order sought", "Order not on this Writing", orderGroup(required.filter((r) => r.on_filing !== 1)));
+  push(merged ? "Cited in the text of this board's Writings" : "Cited in this Writing's text", null, [...take(present(cited.map((s) => s.law_assertion_id))), ...takeLoose(cited.map((s) => s.statement_id))]);
+  for (const s of elsewhere) push(s.contention, `Submission not on ${here}`, take(linkedTo(s.id)));
+  push("Required by an order sought", `Order not on ${here}`, orderGroup(required.filter((r) => r.on_filing !== 1)));
   push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
 
   return { counts, groups };
@@ -340,5 +354,5 @@ export const RAW_RESEARCH_PAGE: ViewPage = {
     "shared.js": sharedJs,
     "raw-research.js": rawResearchJs,
   }),
-  data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.filing),
+  data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
 };

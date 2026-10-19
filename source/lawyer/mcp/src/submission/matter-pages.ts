@@ -1,6 +1,6 @@
 // The matter's pages (#1365, ADR 0033's 2026-10-05 amendment), at the top of its 0. DRAFT folder:
-// one Litigation Strategy.html, and one Job Board page per board section, so no page ever holds more than one
-// filing. Each page is named by its database id, which a retitle never changes: a live Writing's is
+// one Litigation Strategy.html, and one Job Board page per board: a board's own section, or, on a
+// merged board (docs/ADRs/0010), every section merged into it, the survivor's first. Each page is named by its database id, which a retitle never changes: a live Writing's is
 // `Job Board <id>.html`, a pre-filing proceeding's `Job Board - proceeding <id>.html`. Every
 // page is a human interface generated from the databases, and no session reads one: a session reads a
 // section through a render's board_summary.
@@ -36,6 +36,8 @@ import { buildStampStatus } from "../build-stamp.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { fileOpsTrash, type TrashResult } from "../file_ops/trash.js";
 import { attachedDrafts } from "./board-attachments.js";
+import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./forms/board-members.js";
+import type { WritingLabel } from "./forms/writing-label.js";
 import { courtFileAffidavits, type CourtFileAffidavit } from "./court-file-affidavits.js";
 import {
   buildContext,
@@ -150,34 +152,73 @@ export function jobBoardFile(proceeding: ProceedingRow, filing: FilingRow | null
   return filing === null ? `Job Board - proceeding ${proceeding.id}.html` : `Job Board ${filing.id}.html`;
 }
 
+/** One board section's page: the section's own ids, and the file of the page it is drawn on. */
 interface PageTarget {
   filing_id: number | null;
   proceeding_id: number;
   file: string;
 }
 
-/** One page per live filing, in the order given, then one per pre-filing proceeding. */
-function pageTargets(live: { proceeding: ProceedingRow; filing: FilingRow }[], preFiling: ProceedingRow[]): PageTarget[] {
-  return [
-    ...live.map(({ proceeding, filing }) => ({ filing_id: filing.id, proceeding_id: proceeding.id, file: jobBoardFile(proceeding, filing) })),
-    ...preFiling.map((p) => ({ filing_id: null, proceeding_id: p.id, file: jobBoardFile(p, null) })),
-  ];
+/** A board section: a live filing's, or a pre-filing proceeding's (filing null). */
+interface Member {
+  proceeding: ProceedingRow;
+  filing: FilingRow | null;
 }
 
-/** A live filing's copy of one registered view page. */
+/** One page: its survivor board and every section drawn on it, the survivor's own first (ADR 0010). */
+interface PageGroup {
+  board: BoardRef;
+  file: string;
+  members: Member[];
+}
+
+/** A board's page name by its survivor's id. */
+function boardFile(board: BoardRef): string {
+  return board.filing_id === null ? `Job Board - proceeding ${board.proceeding_id}.html` : `Job Board ${board.filing_id}.html`;
+}
+
+/** The live filings, then the pre-filing proceedings, grouped by the board each is drawn on: one
+ * page per survivor, in the order its first section comes, the survivor's own section first. A
+ * survivor that is retired keeps its page while any section on it is live. */
+function pageGroups(index: BoardIndex, live: { proceeding: ProceedingRow; filing: FilingRow }[], preFiling: ProceedingRow[]): PageGroup[] {
+  const groups = new Map<string, PageGroup>();
+  for (const m of [...live.map((l): Member => l), ...preFiling.map((p): Member => ({ proceeding: p, filing: null }))]) {
+    const ref = { filing_id: m.filing?.id ?? null, proceeding_id: m.proceeding.id };
+    const board = index.survivorOf(ref);
+    const key = boardKey(board);
+    const group = groups.get(key) ?? { board, file: boardFile(board), members: [] };
+    if (sameBoard(ref, board)) group.members.unshift(m);
+    else group.members.push(m);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+
+/** Each section's page, in page order. */
+function pageTargets(groups: PageGroup[]): PageTarget[] {
+  return groups.flatMap((g) => g.members.map((m) => ({ filing_id: m.filing?.id ?? null, proceeding_id: m.proceeding.id, file: g.file })));
+}
+
+/** A board's Writings, those of its sections that are live Writings: a Job Board with no Writing and a pre-filing proceeding have none. */
+function writingsOf(group: PageGroup): { proceeding: ProceedingRow; filing: FilingRow }[] {
+  return group.members.filter((m): m is { proceeding: ProceedingRow; filing: FilingRow } => m.filing !== null && !isJobOnlyBoard(m.filing));
+}
+
+/** A board's copy of one registered view page, across its Writings. */
 interface ViewTarget {
   page: ViewPage;
-  filing: FilingRow;
-  proceeding: ProceedingRow;
+  group: PageGroup;
+  writings: { proceeding: ProceedingRow; filing: FilingRow }[];
   file: string;
 }
 
-/** Every registered view page for each live filing, in the order given (ADR 0033, 2026-10-07 amendment).
- * A Job Board with no Writing has none. */
-function viewTargets(live: { proceeding: ProceedingRow; filing: FilingRow }[]): ViewTarget[] {
-  return live
-    .filter(({ filing }) => !isJobOnlyBoard(filing))
-    .flatMap(({ proceeding, filing }) => VIEW_PAGES.map((page) => ({ page, filing, proceeding, file: viewPageFile(page, filing.id) })));
+/** Every registered view page for each board holding a Writing, in page order (ADR 0033, 2026-10-07
+ * amendment; ADR 0010): one set per board, named by its survivor's id. */
+function viewTargets(groups: PageGroup[]): ViewTarget[] {
+  return groups
+    .map((group) => ({ group, writings: writingsOf(group) }))
+    .filter(({ writings }) => writings.length > 0)
+    .flatMap(({ group, writings }) => VIEW_PAGES.map((page) => ({ page, group, writings, file: viewPageFile(page, group.board) })));
 }
 
 /** Refuses a page target that exists without its page's marker, every page's name read from the
@@ -187,7 +228,8 @@ export function refuseForeignMatterPages(draftDir: string, dbPath: string): void
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
   const live = proceedings.flatMap(({ proceeding, filings }) => filings.filter((f) => !f.retired_on).map((filing) => ({ proceeding, filing })));
   const preFiling = proceedings.filter(({ filings }) => filings.length === 0).map(({ proceeding }) => proceeding);
-  refuseForeignPages(draftDir, guardTargets(pageTargets(live, preFiling).map((t) => t.file), viewTargets(live)));
+  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling);
+  refuseForeignPages(draftDir, guardTargets(groups.map((g) => g.file), viewTargets(groups)));
 }
 
 /** The page written for the section with this filing id, or with this proceeding id when the filing
@@ -323,9 +365,10 @@ export function buildMatterPages(
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
   const live = ranked.filter((r) => !r.filing.retired_on);
-  const targets = pageTargets(live, preFiling);
-  const names = targets.map((t) => t.file);
-  const views = viewTargets(live);
+  const index = new BoardIndex(dbPath);
+  const groups = pageGroups(index, live, preFiling);
+  const targets = pageTargets(groups);
+  const views = viewTargets(groups);
   const meta = {
     revision,
     matter: client.matterNo ?? "",
@@ -333,63 +376,86 @@ export function buildMatterPages(
     rendered: now,
   };
   const own = reuse.section;
-  // What this call builds: every page, or one filing's.
+  // What this call builds: every page, or the page holding one filing.
   const { only } = reuse;
-  const liveWritten = only === undefined ? live : live.filter((r) => r.filing.id === only);
-  const preFilingWritten = only === undefined ? preFiling : [];
-  const targetsWritten = pageTargets(liveWritten, preFilingWritten);
-  const viewsWritten = only === undefined ? views : views.filter((v) => v.filing.id === only);
-  const sections = [
-    ...liveWritten.map((r) => {
-      // A Job Board with no Writing has no mockup folder, so none is looked up for it.
-      const manifest = isJobOnlyBoard(r.filing) ? null : readManifest(mockupDir(dbPath, r.filing.id));
+  const groupsWritten = only === undefined ? groups : groups.filter((g) => g.members.some((m) => m.filing?.id === only));
+  const viewsWritten = views.filter((v) => groupsWritten.includes(v.group));
+  const sectionOf = (m: Member): { section: WorkBoardData; writings: WritingLabel[] } => {
+    if (m.filing === null) {
+      const p = m.proceeding;
       return {
-        proceeding: r.proceeding,
-        section: own?.meta.filing_id === r.filing.id ? own : filingBoardData(dbPath, r.filing, r.proceeding, client, now, revision, dates, manifest),
-        writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
-        views: views.filter((v) => v.filing.id === r.filing.id).map((v) => ({ name: v.page.name, file: v.file })),
+        section:
+          own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
+            ? own
+            : buildPreFilingBoardData(dbPath, p, { revision, matter: meta.matter, client: client.clientName ?? p.matter_reference, rendered: now }),
+        writings: [],
       };
-    }),
-    ...preFilingWritten.map((p) => ({
-      proceeding: p,
-      section:
-        own !== undefined && own.meta.filing_id === null && own.meta.proceeding_id === p.id
-          ? own
-          : buildPreFilingBoardData(dbPath, p, { revision, matter: meta.matter, client: client.clientName ?? p.matter_reference, rendered: now }),
-      writings: [],
-      views: [],
-    })),
-  ];
+    }
+    // A Job Board with no Writing has no mockup folder, so none is looked up for it.
+    const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(mockupDir(dbPath, m.filing.id));
+    return {
+      section: own?.meta.filing_id === m.filing.id ? own : filingBoardData(dbPath, m.filing, m.proceeding, client, now, revision, dates, manifest),
+      writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
+    };
+  };
   const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
-  const jobBoards = sections.map(({ proceeding, section, writings, views: pageViews }) =>
-    renderWorkBoardHtml({
+  const jobBoards = groupsWritten.map((group) => {
+    const built = group.members.map(sectionOf);
+    const sections = distinctRows(built.map((b) => b.section));
+    const { proceeding, filing } = group.members[0];
+    // A page that is not its one section's own: merged, or named by a retired survivor.
+    const named = group.members.length > 1 || !sameBoard(group.board, { filing_id: filing?.id ?? null, proceeding_id: proceeding.id });
+    return renderWorkBoardHtml({
       meta: { ...meta, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
-      sections: [section],
-      dates: pageDates(dates, [section]),
-      writings,
-      views: pageViews,
-      attached: attachedDrafts(draftDir, section),
-      court_file:
-        section.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, section.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null),
-    })
-  );
-  const viewPages = viewsWritten.map((v) =>
-    renderViewPageHtml(
+      ...(named ? { board: group.board } : {}),
+      sections,
+      dates: pageDates(dates, sections),
+      writings: built.flatMap((b) => b.writings),
+      views: views.filter((v) => v.group === group).map((v) => ({ name: v.page.name, file: v.file })),
+      attached: sections.flatMap((s) => attachedDrafts(draftDir, s)),
+      court_file: sections.flatMap((s) =>
+        s.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null)
+      ),
+    });
+  });
+  const viewPages = viewsWritten.map((v) => {
+    const [first] = v.writings;
+    return renderViewPageHtml(
       v.page,
-      { filing: v.filing.title, matter: meta.matter, client: meta.client, revision, rendered: now },
-      v.page.data({ dbPath, filing: v.filing, proceeding: v.proceeding, now, revision })
-    )
-  );
+      { filing: v.writings.map((w) => w.filing.title).join("; "), matter: meta.matter, client: meta.client, revision, rendered: now },
+      v.page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
+    );
+  });
   const html = [matterBoard, ...jobBoards, ...viewPages];
   return {
-    pages: guardTargets(targetsWritten.map((t) => t.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
-    keep: [...names, ...views.map((v) => v.file)],
+    pages: guardTargets(groupsWritten.map((g) => g.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
+    keep: [...groups.map((g) => g.file), ...views.map((v) => v.file)],
     paths: {
       job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: join(draftDir, MATTER_BOARD_FILE),
-      view_page_paths: views.map((v) => ({ name: v.page.name, filing_id: v.filing.id, path: join(draftDir, v.file) })),
+      view_page_paths: views.flatMap((v) => v.writings.map((w) => ({ name: v.page.name, filing_id: w.filing.id, path: join(draftDir, v.file) }))),
     },
   };
+}
+
+/** A merged page's sections with each job, deleted job and loose thread drawn once, in the first
+ * section that has it: a proceeding-wide row is in every section of its proceeding. */
+function distinctRows(sections: WorkBoardData[]): WorkBoardData[] {
+  if (sections.length < 2) return sections;
+  const seen = { tickets: new Set<number>(), seeds: new Set<number>(), deleted: new Set<number>(), discarded: new Set<number>() };
+  const fresh = <T extends { id: number }>(rows: T[], ids: Set<number>): T[] =>
+    rows.filter((r) => {
+      if (ids.has(r.id)) return false;
+      ids.add(r.id);
+      return true;
+    });
+  return sections.map((s) => ({
+    ...s,
+    tickets: fresh(s.tickets, seen.tickets),
+    seeds: fresh(s.seeds, seen.seeds),
+    deleted: fresh(s.deleted, seen.deleted),
+    discardedSeeds: fresh(s.discardedSeeds, seen.discarded),
+  }));
 }
 
 /**
@@ -739,13 +805,20 @@ export function criterionLine(c: GoalCriterion, criteria: readonly GoalCriterion
 
 /** board_summary's Goal line: the statement of goals' description and its status, `none` when none is stored. */
 function goalsHead(section: WorkBoardData): string {
-  return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})`;
+  const merged = section.goals.merged;
+  return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})${merged.length === 0 ? "" : `, plus ${counted(merged.length, "merged statement")}`}`;
 }
 
-/** board_card's goals lane: `## Goal (<status>)`, the description, then the statement verbatim when there is one. */
+/** board_card's goals lane: `## Goal (<status>)`, the description, then the statement verbatim when
+ * there is one, then each merged board's under `### Merged <n> (<status>)`, n being its merged_index. */
 function goalsLines(section: WorkBoardData): string[] {
   const g = section.goals;
-  return [`## Goal (${g.status ?? "none"})`, g.description, ...(g.statement === null ? [] : [g.statement])];
+  return [
+    `## Goal (${g.status ?? "none"})`,
+    g.description,
+    ...(g.statement === null ? [] : [g.statement]),
+    ...g.merged.flatMap((m, i) => [`### Merged ${i + 1} (${m.status})`, m.statement]),
+  ];
 }
 
 /** board_card's criteria lane: the head line and one line per criterion in board order, with items. */

@@ -4,7 +4,8 @@
 Hook event: PreToolUse. The plugin's Job Board, Litigation Strategy and view pages (and
 the older page names a render may still find) are human interfaces generated
 from the plugin's databases (`shared/html-pages.md`). A view page is named
-`<page name> - Job Board <id>.html` (ADR 0033, 2026-10-07 amendment; before
+`<page name> - Job Board <id>.html`, or `<page name> - Job Board - proceeding <id>.html` on a
+merged pre-filing board (docs/ADRs/0010) (ADR 0033, 2026-10-07 amendment; before
 2026-10-09 `<page name> - filing <id>.html`, still recognised until the next
 page write trashes it), and only a page name listed in VIEW_NAMES counts, so
 each new view page adds its name there. An agent never views, reads,
@@ -59,7 +60,7 @@ VIEW_NAMES = ("provable facts", "raw research", "arguments", "loose threads", "l
 # page (#139) is the page's stem, then " preview <n>.html"; a board stem already matches STEM, so
 # only a view page's preview needs its own pattern here.
 VIEW_NAME = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r")"
-VIEW = VIEW_NAME + r" - (?:job board|filing) \d+(?: preview \d+)?\.html"
+VIEW = VIEW_NAME + r" - (?:job board(?: - proceeding)?|filing) \d+(?: preview \d+)?\.html"
 PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
@@ -71,7 +72,7 @@ SAMPLE_PAGES = ("Job Board.html", "Job Board 1.html", "Job Board - filing 1.html
                 "Work Board preview 1.html", "Litigation Strategy preview 1.html", "Job Board 1 preview 1.html",
                 "Job Board - proceeding 3 preview 1.html", "Provable Facts - Job Board 1 preview 1.html",
                 "Raw Research - Job Board 1 preview 1.html", "Arguments - Job Board 1 preview 1.html",
-                "Loose Threads - Job Board 1 preview 1.html")
+                "Loose Threads - Job Board 1 preview 1.html", "Provable Facts - Job Board - proceeding 3.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",
               "NotebookRead": "notebook_path", "NotebookEdit": "notebook_path"}
@@ -83,8 +84,8 @@ STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>"), the
 # listed view pages, and a preview of each current page (#139).
 STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|"
-                       + VIEW_NAME + r" - (?:job board|filing) \d+\.html|"
-                       r"(?:litigation strategy|work board|job board \d+|job board - proceeding \d+|" + VIEW_NAME + r" - job board \d+) preview \d+\.html")
+                       + VIEW_NAME + r" - (?:job board(?: - proceeding)?|filing) \d+\.html|"
+                       r"(?:litigation strategy|work board|job board \d+|job board - proceeding \d+|" + VIEW_NAME + r" - job board(?: - proceeding)? \d+) preview \d+\.html")
 
 
 def basename(path):
