@@ -91,7 +91,7 @@ Executing the plan issue is outside this skill.
 
 ### 4.5 `/suggestion-triage` (the single-pass version)
 
-A cheaper alternative, added on 2026-10-19 after one debate cost about ten times a single planner for a comparable plan. One agent, `lawyer:suggestion-planner` (`model: fable`, `effort: medium`, read-only), decomposes the suggestion, keeps only the parts that beat doing nothing or that remove complexity without making Probanda worse, and returns the issue. Brahm confirms filing, and the orchestrator files it and sets the status as in step 7. The procedure is `.claude/skills/suggestion-triage/SKILL.md`. Both skills stay until more runs show which to keep.
+A cheaper alternative, added on 2026-10-19 after one debate cost about ten times a single planner for a comparable plan. One agent, `developer:suggestion-planner` (`model: fable`, `effort: medium`, read-only), decomposes the suggestion, keeps only the parts that beat doing nothing or that remove complexity without making Probanda worse, and returns the issue. Brahm picks one of four outcomes (approve as proposed, approve as adjusted, dismiss, something else), and the orchestrator files it and sets the status as in step 7. The procedure is `.claude/skills/suggestion-triage/SKILL.md`. Both skills stay until more runs show which to keep.
 
 ## 5. Constraints that must still hold
 
