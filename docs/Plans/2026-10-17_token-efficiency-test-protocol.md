@@ -115,6 +115,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   **Budget gate.** After each session, ledger spend plus the remaining estimate is checked against $150. If it would exceed the ceiling, cut in this order: E8 compact JSON, then the ladder's 1–5-page cells, then E7's Haiku-high and Opus-low cells. Sessions 1 and 2 are never cut.
 
   **Gate after session 1 (2026-10-19): passes, nothing cut.** Measured spend is $31.3: E0–E1 $9.6, session 1's subagents $20.84, and its orchestrator's partial transcript $0.91. Unmeasured, estimated at about $8: the rest of that orchestrator, two setup attempts that stopped before any measurement, and the 12 Opus scorers, which ran in Claude Code. Remaining estimates are $60 for sessions 2–5 and about $37 of the shared row. Projected total: about $136.
+
+  **Gate after session 2 (2026-10-19): passes, nothing cut.** Session 2's subagents cost $13.33 ($5.05 ladder, $8.28 E3(c), $0.002 read check, and $0.07 added for D064's undercount), against its $29 estimate. Measured spend is now $44.6. Unmeasured: session 1's $8 as above, and session 2's orchestrator (its main transcript was not copied, because Cowork's auto mode blocked the copy) and its 6 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $31 for sessions 3–5 and about $37 of the shared row. Projected total: about $121.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
@@ -160,6 +162,56 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
 
   - **About 20 pages:** cost within −13% to +13% of one document per extractor, recall within 4 points. No gain either way.
   - **About 40 pages:** cost 5% and 23% lower, and recall 5 and 10 points lower. The loss sits in particular documents: D028 fell from about 27 to 16 facts found, D048 from 40 to 33 and D004 from 62 to 53. So batching to 40 pages saves money only by finding fewer facts, and cost per correct fact barely moves.
+
+  **Session 2 results, the E3(a) ladder (run 2026-10-19, map #100 ticket #114, $5.05 of subagents).** One run of `lawyer:extract-facts` on Opus 5.5 at medium effort per document. In each format × size cell the document is the median unkeyed one by pages, the shorter of two. Each got only its matter's folder name as context. .docx and .msg went in as `render_document.py` renderings, and a .msg as its body without attachments, since its pages were counted from the body. All 22 runs read their whole document. Four are not litigation documents of the kind /ingest extracts facts from: D010 and D014 are Westlaw research memos, D005 an AI research memo and D041 a judgment.
+
+  | Doc | Format | Pages | Facts | Cost | Cost per page | Output share |
+  |---|---|---|---|---|---|---|
+  | D002 | .docx | 1 | 7 | $0.106 | $0.106 | 46% |
+  | D007 | .docx | 3 | 26 | $0.120 | $0.040 | 79% |
+  | D018 | .docx | 7 | 31 | $0.196 | $0.028 | 80% |
+  | D005 | .docx | 14 | 3 | $0.123 | $0.009 | 28% |
+  | D010 | .docx | 29 | 0 | $0.158 | $0.005 | 12% |
+  | D014 | .docx | 43 | 0 | $0.241 | $0.006 | 13% |
+  | D020 | .msg | 1 | 0 | $0.042 | $0.042 | 48% |
+  | D026 | .msg | 2 | 4 | $0.078 | $0.039 | 64% |
+  | D029 | .msg | 6 | 23 | $0.169 | $0.028 | 67% |
+  | D022 | .msg | 16 | 34 | $0.336 | $0.021 | 49% |
+  | D032 | OCR PDF | 1 | 1 | $0.045 | $0.045 | 42% |
+  | D038 | OCR PDF | 2 | 4 | $0.140 | $0.070 | 77% |
+  | D046 | OCR PDF | 6 | 33 | $0.260 | $0.043 | 70% |
+  | D035 | OCR PDF | 12 | 39 | $0.284 | $0.024 | 66% |
+  | D041 | OCR PDF | 29 | 18 | $0.327 | $0.011 | 36% |
+  | D043 | OCR PDF | 58 | 23 | $0.619 | $0.011 | 35% |
+  | D050 | Scanned PDF | 1 | 3 | $0.059 | $0.059 | 53% |
+  | D057 | Scanned PDF | 2 | 8 | $0.094 | $0.047 | 65% |
+  | D064 | Scanned PDF | 9 | 17 | $0.160* | $0.018* | about 44%* |
+  | D052 | Scanned PDF | 15 | 56 | $0.566 | $0.038 | 80% |
+  | D059 | Scanned PDF | 33 | 24 | $0.353 | $0.011 | 33% |
+  | D063 | Scanned PDF | 57 | 39 | $0.569 | $0.010 | 32% |
+
+  \* D064's final call is logged with 10 output tokens for about 10.6k characters of reply and thinking, so its row is corrected by about $0.068, at 3.1 characters a token. See "Undercounted calls" below.
+
+  - **Cost follows facts, not pages.** A least-squares fit over the 22 runs gives cost ≈ $0.02–0.04 per run + about $0.005 (text renderings) or $0.006 (PDFs) per page + about $0.005–0.006 per fact extracted, worst error $0.11. Reading a page costs about as much as writing one fact.
+  - **Cost per page falls with size in this sample** ($0.04–0.11 at 1 page, $0.005–0.011 at 21–80 pages), but mostly because the long documents here (memos, a judgment, leases, a bundle of records) give few facts per page. A dense long document costs more: D044 is $0.029 a page, and D052 (15 pages, 56 facts) $0.038.
+  - **Format matters little once facts are counted.** A rendered .docx or .msg page costs about $0.005, a PDF page about $0.006, scanned or OCR alike. The floor for a 1-page document is $0.04–0.11.
+
+  **Session 2 results, E3(c) (run 2026-10-19, ticket #114, $8.28 of subagents).** D044 (54 pages, OCR) and D058 (29 pages, scanned), 1 run per arm, `lawyer:extract-facts` on Opus 5.5 at medium effort. The 20-page arm is the extractor's own default, so it repeats E3(a). The 5-page arm read the same document in 11 and 6 reads. The chunk arm split each document into even chunks of up to 20 pages, one extractor per chunk (1–18, 19–36 and 37–54; 1–15 and 16–29), and its facts were joined before scoring. Every run read exactly its planned pages. One Opus scorer per run marked them as in session 1. No claim was marked unsupported.
+
+  | Doc | Arm | Cost | Recall | Cost per correct fact | Session 1, 20-page reads: mean cost, recall (range) |
+  |---|---|---|---|---|---|
+  | D044 | 20-page reads | $1.609 | 0.89 | $0.0112 | $1.550, 0.94 (0.93–0.96) |
+  | D044 | 5-page reads | $1.686 | 0.91 | $0.0115 | |
+  | D044 | 3 chunk extractors | $3.227 | 0.93 | $0.0217 | |
+  | D058 | 20-page reads | $0.499 | 0.61 | $0.0089 | $0.595, 0.63 (0.57–0.70) |
+  | D058 | 5-page reads | $0.548 | 0.57 | $0.0105 | |
+  | D058 | 2 chunk extractors | $0.711 | 0.71 | $0.0109 | |
+
+  - **Read size makes no difference.** 5-page reads cost 5–10% more than 20-page reads, and recall stayed within session 1's spread.
+  - **Chunk extractors cost more and gain little.** D044's chunks cost twice as much, for recall inside the single extractor's range. Each chunk writes its own long output (294 facts across three chunks, against 131), much of it repeated. D058's chunks cost 1.4 times as much, for recall 0.71, just above the single extractor's best of 0.70 in three runs. With one run per arm, that gain is not a measurement.
+  - **For /ingest:** one extractor per document, reading 20 pages at a time, up to at least 54 pages. Splitting a long document across subagents pays only if it buys recall, and here it did not.
+
+  **Undercounted calls.** In a few transcripts the last call's `usage` is written before its output finishes: D064 here, and 12 Haiku calls in session 1's E5-B and E5-C runs (about $0.02 in all, so E5-B and E5-C's naming cost of about $0.009 per document is about 20% low). `token_ledger.py` counts what the transcript says, so it reports these low. A check: a call whose content is more than 12 characters per recorded output token.
 - **E4. Input format (Q11, Q16).**
   - OCR PDF read natively, against its extracted text.
   - Scanned PDF at the default resolution, against 150 dpi and 100 dpi page images.
