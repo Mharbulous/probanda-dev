@@ -11,6 +11,8 @@ Preconditions: the session's working directory is the probanda-dev checkout (`gi
 
 You relay. You read no source and give no opinion on the suggestion. Nothing you file or send names a person, entity, matter or account.
 
+**The suggestion** means its title and body and, when the row has them, its `items` verbatim and its previews' labels, `chosen` flags and reasons. Each change in `items` is at least one part. A preview's `html` goes to Brahm as a file card, never to an agent.
+
 ## Steps
 
 1. **Pick.** Run `node cloud/suggestions/tools/triage.mjs list`. Take the oldest row unless Brahm named a `suggestion_id`. If none is `new`, say so and stop.

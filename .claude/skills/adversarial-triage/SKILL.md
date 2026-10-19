@@ -10,6 +10,8 @@ Maintainer-only. It ships in the experimental `lawyer` plugin, which installs on
 
 Preconditions: the session's working directory is the probanda-dev checkout (`git remote get-url origin` names `Mharbulous/probanda-dev`; otherwise say this skill runs only there, and stop), `POOL_SECRET_KEY` is set in the environment (`node cloud/suggestions/tools/triage.mjs list` prints `set POOL_SECRET_KEY first` when it is not: tell Brahm and stop), and `env -u GH_TOKEN gh auth status` succeeds.
 
+**The suggestion** means its title and body and, when the row has them, its `items` verbatim and its previews' labels, `chosen` flags and reasons. Each change in `items` is at least one part. A preview's `html` goes to Brahm as a file card, never to an agent.
+
 ## Rules for the orchestrator (you)
 
 - You make every write: the notes files, the cap, the issue, the status, the commit. No agent writes anything.

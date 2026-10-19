@@ -23,7 +23,7 @@ Return exactly this, and nothing else:
 1. A first line: `Verdict: all`, `Verdict: some` or `Verdict: none`, saying whether you kept every part, some parts or no part.
 2. A line `Title: <issue title>`.
 3. The issue body in Markdown, with these sections:
-   - **Suggestion**: its title and body, verbatim.
+   - **Suggestion**: its title and body, verbatim, and its `items` verbatim when it has them.
    - **Parts**: one line per discrete part, each marked kept or dropped, with a one-line reason measured against doing nothing.
    - **Plan** (only when a part is kept): what changes, in which files and functions, the tests to add or change (prefer a check that runs without a browser, and say if one only runs with one), the rebuild and release steps, and whether the release is a patch or a minor one under the version rule in `CLAUDE.md`, naming the file that shows which.
    - **Scope**: the files a session may change, and what is out of bounds.
