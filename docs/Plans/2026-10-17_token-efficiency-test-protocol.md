@@ -119,6 +119,8 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   **Gate after session 2 (2026-10-19): passes, nothing cut.** Session 2's subagents cost $13.33 ($5.05 ladder, $8.28 E3(c), $0.002 read check, and $0.07 added for D064's undercount), against its $29 estimate. Measured spend is now $44.6. Unmeasured: session 1's $8 as above, and session 2's orchestrator (its main transcript was not copied, because Cowork's auto mode blocked the copy) and its 6 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $31 for sessions 3–5 and about $37 of the shared row. Projected total: about $121.
 
   **Gate after session 3 (2026-10-19): passes, nothing cut.** Session 3's subagents cost $12.2–13.4 after correcting truncated calls (the ledger says $9.85), against its $18 estimate, and its orchestrator's copied transcript $3.58 on Sonnet. Taking the high end, measured spend is now $61.6. Unmeasured: session 1's $8 as above, the part of session 3's orchestrator before its transcript's compaction, and its 87 Opus scorers in Claude Code, both inside the shared row. Remaining estimates are $13 for sessions 4–5 and about $33 of the shared row. Projected total: about $116.
+
+  **Gate after session 4 (2026-10-19): passes, nothing cut.** Session 4's subagents cost $4.96 ($4.95 for the 14 E4 runs and $0.002 for the read check), and its orchestrator $1.30 on Sonnet, with its transcript copied whole this time: $6.26 against the $7 estimate. Measured spend is now $67.9. Unmeasured: session 1's $8 as above, and session 4's 13 Opus scorers in Claude Code, inside the shared row. Remaining estimates are $6 for session 5 and about $27 of the shared row. Projected total: about $109.
 - **E2. Housekeeping pages needed and model (Q10, Q9).**
   - A naming subagent (general-purpose, with the housekeeping naming instructions) reads 1, 2, 5 or all pages, on Haiku and on Sonnet, over the whole corpus.
   - Measure: name and folder accuracy against cost.
@@ -222,6 +224,30 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - `.msg` whole, against the same message with quoted history stripped.
   - Attachments read in the same subagent, against a separate one.
   - Measure: cost per correct fact.
+
+  **Session 4 results (run 2026-10-19, map #100 ticket #116, $4.96 of subagents).** One run per cell of `lawyer:extract-facts` on Opus 5.5 at medium effort, with session 1's matter context. No original PDF was shipped, so each run read only its variant, and every run read the whole of it. One Opus scorer per run marked facts as in session 1. Each row is compared with session 1's native E3(a) runs of the same document (mean, and recall range over 2–3 repeats). "New input" is input plus cache writes: what the run paid to read, before the shared cached prefix.
+
+  | Doc | Arm | Cost | New input | Recall | Cost per correct fact | Native: cost, new input, recall (range), cost per correct fact |
+  |---|---|---|---|---|---|---|
+  | D037 | text layer | $0.123 | 11.7k | 0.71 | $0.0246 | $0.115, 11.2k, 1.00 (1.00–1.00), $0.0164 |
+  | D048 | text layer + 6 page images | $0.438 | 21.9k | 0.87 | $0.0112 | $0.402, 15.7k, 0.89 (0.89–0.89), $0.0100 |
+  | D044 | text layer + 13 page images | $1.616 | 69.3k | 0.91 | $0.0110 | $1.550, 71.7k, 0.94 (0.93–0.96), $0.0102 |
+  | D055 | 150 dpi | $0.112 | 9.1k | 1.00 | $0.0225 | $0.088, 6.0k, 0.93 (0.80–1.00), $0.0188 |
+  | D055 | 100 dpi | $0.081 | 6.1k | 0.60 | $0.0271 | |
+  | D066 | 150 dpi | $0.235 | 21.1k | 0.79 | $0.0107 | $0.194, 13.9k, 0.80 (0.71–0.86), $0.0087 |
+  | D066 | 100 dpi | $0.200 | 16.1k | 0.86 | $0.0083 | |
+  | D058 | 150 dpi | $0.898 | 86.8k | 0.58 | $0.0169 | $0.595, 40.2k, 0.63 (0.57–0.70), $0.0103 |
+  | D058 | 100 dpi | $0.682 | 42.7k | 0.63 | $0.0118 | |
+  | D027 | quoted history stripped | $0.060 | 4.0k | 0.19 (0.75 of facts left in the input) | $0.0200 | $0.097, 4.9k, 0.60 (0.38–0.75), $0.0100 |
+  | D028 | quoted history stripped | $0.063 | 4.0k | 0.05 (0.50) | $0.0313 | $0.188, 11.1k, 0.64 (0.60–0.65), $0.0069 |
+  | D024 | quoted history stripped, attachment kept | $0.126 | 7.5k | 0.05 (0.50) | $0.0419 | $0.309, 21.5k, 0.37 (0.32–0.42), $0.0138 |
+  | D024 | attachment in a separate extractor | $0.319 | 24.8k | 0.33 | $0.0160 | |
+
+  - **OCR PDFs: read them natively.** The text layer saved no input on D037 or D044, because a native read of a text page costs little more than its text. On D048 it cost more, because only 2 of its 8 pages have a text layer (and 13 of D044's 54), and the rest went in as 150-dpi images. Recall was at or below native's range on all three, and D037's garbled text layer produced its one wrong fact, which 3 native runs never made. A PDF flagged as OCR can still lack text on most pages, so a text-layer-first design must also handle images.
+  - **Scanned PDFs: native already reads at about 100 dpi.** The 100-dpi images took the same new input as native (6.1k against 6.0k, 16.1k against 13.9k, 42.7k against 40.2k), and 150 dpi took 1.3–2.0 times as much (about 1,500 more tokens a page on D058) and cost 21–51% more than native, with no gain in recall. Pre-rendering pages buys nothing. D055 at 100 dpi found 3 of 5 facts, but one of its two misses is a fax number the 150-dpi run's scorer accepted and its own marked wrong, which is scorer spread on a 5-fact key.
+  - **Stripping quoted history cuts cost 38–66% and loses most facts.** The key was built from the whole email, and 12 of D027's 16 gold facts, 39 of D028's 43 and 54 of D024's 60 lie only in the quoted messages. Even on the facts left in the input, recall was 0.50–0.75, against native's 0.37–0.64 on the whole thread. So stripping pays only if each quoted message is also ingested as its own document, and then the saving is avoiding the same message's facts twice. Whether /ingest can rely on that is a design question for the spec, not a cost result.
+  - **Attachments: no difference.** D024's email and its attached PDF in two extractors cost 3% more than in one, with recall 0.33, inside the single extractor's range. D024 is the only keyed email with a real attachment, so this is one run on one document.
+  - **Undercounted calls.** 3 of the 14 Opus runs (D058 at both resolutions, D066 at 100 dpi) end with a short handback logged at 16 output tokens. No completion notice survived for them, and each adds at most $0.007, so they are left as recorded.
 - **E5. Shared context (Q1).** On the same documents, three designs:
   - (A) one Opus subagent extracts, then names, in the same context;
   - (B) Opus extracts, and a separate Haiku namer reads page 1;
