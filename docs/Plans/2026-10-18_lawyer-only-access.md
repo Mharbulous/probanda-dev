@@ -134,7 +134,7 @@ From [The Suggestion Box in Probanda's Cloud, and any GitHub mirror](https://git
 - Installs are insert-only through `suggestion-submit`. No install reads any suggestion, its own included.
 - The row gains `plugin_version` (required, filled by the `commons` server from the researcher `plugin.json`, never the model), `skill`, `status` (`new`, `approved`, `approved in part`, `rejected`), `issue_number` and `triaged_at`.
 - `account_id` may be added now: it is an opaque Probanda-created id and needs no further amendment ([57](https://github.com/Mharbulous/probanda-dev/issues/57)). It serves only the per-account write cap, and the link is cut when the account's User Data is deleted ([58](https://github.com/Mharbulous/probanda-dev/issues/58)).
-- Triage runs on Probanda's development machine with the project secret, through `/suggestion-triage` and the maintainer script `cloud/suggestions/tools/triage.mjs`, and files a probanda-dev issue labelled `suggestion` that carries no person, entity, matter or account.
+- Triage runs on Probanda's development machine with the project secret, through `/adversarial-triage` and the maintainer script `cloud/suggestions/tools/triage.mjs`, and files a probanda-dev issue labelled `suggestion` that carries no person, entity, matter or account.
 - No GitHub mirror, and no GitHub token in the cloud.
 
 ## 6. Metering, caps, alerts and the fingerprint

@@ -1,5 +1,5 @@
 // suggestion-list: the maintainer's read of the Suggestion Box
-// (cloud/suggestions/suggestions.sql), for /suggestion-triage through
+// (cloud/suggestions/suggestions.sql), for /adversarial-triage through
 // cloud/suggestions/tools/triage.mjs. Project secret only: no install key may
 // call it, so no install ever reads a suggestion.
 //

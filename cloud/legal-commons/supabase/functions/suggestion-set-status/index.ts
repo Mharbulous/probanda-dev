@@ -1,5 +1,5 @@
 // suggestion-set-status: records the outcome of triaging one suggestion
-// (cloud/suggestions/suggestions.sql), for /suggestion-triage through
+// (cloud/suggestions/suggestions.sql), for /adversarial-triage through
 // cloud/suggestions/tools/triage.mjs. Project secret only.
 //
 // Request:  { "suggestion_id": uuid, "status": "approved" | "approved in part" | "rejected",

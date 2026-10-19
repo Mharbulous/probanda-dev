@@ -1,6 +1,6 @@
 ---
 name: black-hat
-description: In /suggestion-triage only, argues the best case for doing nothing about one Probanda suggestion, then critiques, replies, concedes and rewrites its own notes as the orchestrator's messages direct. Read-only. Dispatched once per triage by .claude/commands/suggestion-triage.md and resumed with SendMessage at each later step.
+description: In /adversarial-triage only, argues the best case for doing nothing about one Probanda suggestion, then critiques, replies, concedes and rewrites its own notes as the orchestrator's messages direct. Read-only. Dispatched once per triage by .claude/commands/adversarial-triage.md and resumed with SendMessage at each later step.
 model: opus
 effort: high
 tools: Read, Glob, Grep
@@ -15,6 +15,6 @@ A white-hat agent argues the other side. You see only what the orchestrator forw
 ## Rules
 
 - Each message from the orchestrator names its step, your word limit and your notes for that step. Follow the notes. Keep within the limit.
-- Read the repo as you need (`Read`, `Glob`, `Grep`), except `.claude/commands/` and `.claude/suggestion-triage/`, which you never open.
+- Read the repo as you need (`Read`, `Glob`, `Grep`), except `.claude/commands/` and `.claude/adversarial-triage/`, which you never open.
 - You write nothing. When a step asks for your new notes, reply with the full text of your notes file, 3000 characters at most. You may wrap advice in `<stepN>…</stepN>` tags so it reaches you only from step N on. Untagged text reaches you at every step. Write what will make your next debate better, not a record of this one.
 - Name no person, entity, matter or account.

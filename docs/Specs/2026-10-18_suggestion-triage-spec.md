@@ -1,7 +1,7 @@
-# Spec: The Suggestion Box in Probanda's Cloud, and /suggestion-triage
+# Spec: The Suggestion Box in Probanda's Cloud, and /adversarial-triage
 
 Status: decided, 2026-10-18, by Brahm in the grilling session for ticket #51 on map #46 ("Lawyer-only access to Probanda's shared services").
-Plugin: `researcher` (the `commons` server's `suggestion_box__submit`), plus the cloud project `nbzkuhgiqscjkypedqff` and repo-only maintainer files. No plugin ships `/suggestion-triage`.
+Plugin: `researcher` (the `commons` server's `suggestion_box__submit`), plus the cloud project `nbzkuhgiqscjkypedqff` and repo-only maintainer files. No plugin ships `/adversarial-triage`.
 Related: #50 (the server-side gateway), #57 (the COMMANDMENTS 3 amendment), #49 (keys with no scopes), #59 (the hand-off spec), and `2026-10-15_suggestion-skill-to-practice-plugin-spec.md`.
 
 ---
@@ -19,7 +19,7 @@ Ticket #51 asks how the Suggestion Box moves from the private GitHub repo to Pro
 
 ## 3. Goal and non-goals
 
-Goal: each suggestion row records the plugin version, the skill and a triage status, and Probanda triages new suggestions with `/suggestion-triage`, a maintainer-only debate that ends in a GitHub issue holding an implementation plan.
+Goal: each suggestion row records the plugin version, the skill and a triage status, and Probanda triages new suggestions with `/adversarial-triage`, a maintainer-only debate that ends in a GitHub issue holding an implementation plan.
 
 Non-goals: executing the plan issue; the lawyer-account column before #57; a read-back of one's own suggestions; any mirror of suggestions to GitHub other than the plan issue that triage files.
 
@@ -55,15 +55,15 @@ Triage reads suggestions on Probanda's development machine with the project secr
 
 GitHub token leftovers: each of Brahm's machines may still hold `%LOCALAPPDATA%\Coclerk\suggestion-box\credential.json.dpapi` with a GitHub token. Deleting the file on each machine and revoking the token on GitHub are Brahm's steps, recorded in the hand-off spec (#59). No cloud push to GitHub exists or is planned, so no GitHub token lives in the cloud.
 
-### 4.3 `/suggestion-triage` (repo-only command and agents)
+### 4.3 `/adversarial-triage` (repo-only command and agents)
 
 **Where it lives.** Maintainer-only, so in no plugin. A `.claude/skills/` folder must be assigned to a plugin (`check_layering.py` and `check_file_ops.py` stop otherwise), and `.claude/commands/` is where `/release` and `/rule-remodel` live. Files:
 
-- `.claude/commands/suggestion-triage.md`: the orchestrator's procedure (§4.4).
+- `.claude/commands/adversarial-triage.md`: the orchestrator's procedure (§4.4).
 - `.claude/agents/black-hat.md`, `.claude/agents/white-hat.md`: `model: opus`, `effort: high`, `tools: Read, Glob, Grep`. The build scripts never touch `.claude/agents/`.
 - `.claude/agents/suggestion-oracle.md`: `model: fable`, `tools: Read, Glob, Grep`.
-- `.claude/suggestion-triage/black-hat.md`, `.claude/suggestion-triage/white-hat.md`: each hat's own notes file, 3000 characters at most, written only at steps 7 and 8.
-- `.claude/suggestion-triage/human-guidance.md`: the oracle's only reference file, edited by a human only.
+- `.claude/adversarial-triage/black-hat.md`, `.claude/adversarial-triage/white-hat.md`: each hat's own notes file, 3000 characters at most, written only at steps 7 and 8.
+- `.claude/adversarial-triage/human-guidance.md`: the oracle's only reference file, edited by a human only.
 - `scripts/triage_notes.py`, deterministic, with tests beside the repo's other script tests:
   - `show <file> <step>` prints the advice available at a step: untagged text plus every `<stepN>…</stepN>` block with N ≤ step, so advice is cumulative and arrives just in time.
   - `cap <file>`: if the file's length without the phrase `[characters in excess of 3000 have been truncated in accordance with the skill rules]` is 3000 or less, remove the phrase if present. Otherwise truncate to 3000 characters and append the phrase. Tags count toward the 3000.
@@ -72,7 +72,7 @@ GitHub token leftovers: each of Brahm's machines may still hold `%LOCALAPPDATA%\
 
 **One agent per hat, resumed across steps.** Black-hat and white-hat are each dispatched once in the background at step 2 and resumed with `SendMessage` at steps 3, 4, 5 and 7, so each keeps its own context and sees nothing of the other's except what the orchestrator forwards. The orchestrator relays each reply as its completion notification arrives, so the faster agent's text shows first. The oracle is one agent too, dispatched at step 6 and resumed at step 7. The orchestrator makes every write: the notes files, the cap script, the issue, the status, the commit. No agent writes anything.
 
-**Blinding.** The hats never open `.claude/commands/` or `.claude/suggestion-triage/`, and their definitions say so. Each step's message to a hat carries that step's notes from `triage_notes.py show`. The scoring rules live only in the command file and reach the hats in the step 5 message. The oracle sees `human-guidance.md` and never the hats' notes.
+**Blinding.** The hats never open `.claude/commands/` or `.claude/adversarial-triage/`, and their definitions say so. Each step's message to a hat carries that step's notes from `triage_notes.py show`. The scoring rules live only in the command file and reach the hats in the step 5 message. The oracle sees `human-guidance.md` and never the hats' notes.
 
 ### 4.4 Steps
 
@@ -110,14 +110,14 @@ Executing the plan issue is outside this skill.
 3. `suggestion-list` and `suggestion-set-status`, with their `config.toml` entries; deploy.
 4. `cloud/suggestions/tools/triage.mjs`.
 5. The `commons` server sends `plugin_version` and accepts `skill`; rebuild the plugins and release the patch bumps.
-6. `.claude/commands/suggestion-triage.md`, the three agent files, the three notes files.
+6. `.claude/commands/adversarial-triage.md`, the three agent files, the three notes files.
 7. `scripts/triage_notes.py` with its tests.
 
 ## 8. Implementation criteria
 
 1. `triage_notes.py` tests pass: the cap at exactly 3000, phrase removal under the cap, `show` for untagged text, and a `<step3>` block shown at step 3 and not at step 2.
 2. With `POOL_SECRET_KEY` set, a synthetic suggestion (no client data) submitted through `suggestion-submit` shows in `triage.mjs list` with `status: new`. `set-status` to `rejected` succeeds once and refuses a second call. `suggestion-list` with a lawyer key or no key gets 401.
-3. One full `/suggestion-triage` run on that synthetic suggestion over Remote Control: each hat's text appears as it arrives, the issue exists with label `suggestion`, the row's status and `issue_number` are set, and the notes files are committed and within the cap.
+3. One full `/adversarial-triage` run on that synthetic suggestion over Remote Control: each hat's text appears as it arrives, the issue exists with label `suggestion`, the row's status and `issue_number` are set, and the notes files are committed and within the cap.
 4. `python scripts/check_publishable.py --new-since origin/main`, `python scripts/check_plugin.py` and `python scripts/build_plugin.py --check` pass.
 
 ## 9. Open questions
