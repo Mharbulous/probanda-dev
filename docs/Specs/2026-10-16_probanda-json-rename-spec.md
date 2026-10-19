@@ -91,7 +91,7 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 
 ## 10. Verify against HEAD before building
 
-- Every code path that opens either file: `matter-root.ts` (`validateMatterRoot`, `resolveCaseDataDir`), `practice/matter-data-root.ts` (`configPath`, `resolveCaseDataRoot`), `case/backend.ts` (`read_pointer`), the Python scripts under `.claude/skills/*/references/scripts/`, and the hooks.
+- Every code path that opens either file: `matter-root.ts` (`validateMatterRoot`, `resolveCaseDataDir`), `practice/case-data-root.ts` (`configPath`, `resolveCaseDataRoot`), `case/backend.ts` (`read_pointer`), the Python scripts under `.claude/skills/*/references/scripts/`, and the hooks.
 - Skill text that names the file: run a grep and list it.
 
 ## 11. Verification against HEAD (b14334e, 2026-10-16)
@@ -103,7 +103,7 @@ Every code path that opens either file, confirmed by reading each file at HEAD. 
 | Code path | Function | Opens | Verified |
 |---|---|---|---|
 | `source/legal/mcp/src/config-path.ts` | `configPath` | constructs the path (sole TS constructor); `COCLERK_CONFIG_PATH` override existence-checked | yes |
-| `source/legal/mcp/src/practice/matter-data-root.ts` | `resolveCaseDataRoot` | reads, via `configPath` | yes |
+| `source/legal/mcp/src/practice/case-data-root.ts` | `resolveCaseDataRoot` | reads, via `configPath` | yes |
 | `source/legal/mcp/src/tools/practice/config.ts` | `config_status` reads; `config_set_root` writes (temp + rename); `redirectedCopies` scans `Packages\*\LocalCache\Roaming\Coclerk\coclerk.json` (report-only) | read + write | yes |
 | `source/legal/mcp/src/tools/practice/firm-profile.ts` | `readConfig`/`readFirmProfile` read; `upsert_firm_profile` writes | read + write | yes |
 | `source/legal/mcp/src/repo-root.ts` | `readConfigRepoRoot` | reads, via `configPath` | yes |
@@ -112,9 +112,9 @@ Every code path that opens either file, confirmed by reading each file at HEAD. 
 | `.claude/skills/publish/subskills/publish-bcsc-form/scripts/steps/shared/firm.py` | own duplicate of the path rule | read | yes |
 | `.claude/skills/publish/scripts/render_letterhead.py` | own duplicate of the path rule (lines 81-91) | read | yes |
 | `.claude/skills/practice-data/hooks/inject-practice-quirks.py` | own duplicate of the path rule | read | yes |
-| `.claude/skills/matter-data/references/scripts/check_pointers.py` | `_inspect_config` reads a `--config` path the caller supplies (no construction) | read | yes |
+| `.claude/skills/case-data/references/scripts/check_pointers.py` | `_inspect_config` reads a `--config` path the caller supplies (no construction) | read | yes |
 
-The spec's §10 names `configPath` under `practice/matter-data-root.ts`; at HEAD it lives in `src/config-path.ts` and `matter-data-root.ts` imports it.
+The spec's §10 names `configPath` under `practice/case-data-root.ts`; at HEAD it lives in `src/config-path.ts` and `case-data-root.ts` imports it.
 
 ### Matter pointer (`<matter_root>\coclerk.json`)
 
@@ -125,20 +125,20 @@ The spec's §10 names `configPath` under `practice/matter-data-root.ts`; at HEAD
 | `source/legal/mcp/src/housekeeping/preflight.ts` | pointerless check, existsSync | read | yes |
 | `source/legal/mcp/src/file_ops/trash.ts` | `MARKER`: ancestor search for the matter root, and protected-name check | read | yes |
 | `source/legal/mcp/src/file_ops/move.ts` | protected-name check (`srcSegments[0]`) | name check only | yes |
-| `.claude/skills/matter-data/references/scripts/resolve_paths.py` | `resolve_pointer` reads (root, then legacy) and writes back | read + write | yes |
-| `.claude/skills/matter-data/references/scripts/resolve_pointer.py` | CLI over `resolve_paths` (no direct open) | — | yes |
-| `.claude/skills/matter-data/references/scripts/check_pointers.py` | globs `*/coclerk.json`, reads each | read | yes |
-| `.claude/skills/matter-data/references/scripts/migrate_engine.py` | `read_pointer_bytes` reads; `make_backup` writes the backup copy (line 617); `restore` reads the backup and writes `pointer_path` (line 1062) | read + write | yes |
+| `.claude/skills/case-data/references/scripts/resolve_paths.py` | `resolve_pointer` reads (root, then legacy) and writes back | read + write | yes |
+| `.claude/skills/case-data/references/scripts/resolve_pointer.py` | CLI over `resolve_paths` (no direct open) | — | yes |
+| `.claude/skills/case-data/references/scripts/check_pointers.py` | globs `*/coclerk.json`, reads each | read | yes |
+| `.claude/skills/case-data/references/scripts/migrate_engine.py` | `read_pointer_bytes` reads; `make_backup` writes the backup copy (line 617); `restore` reads the backup and writes `pointer_path` (line 1062) | read + write | yes |
 | `.claude/skills/publish/subskills/publish-bcsc-form/scripts/steps/shared/paths.py` | reads the pointer (lines 229-271) | read | yes |
 | `.claude/skills/legal-memo-extractor/scripts/extract_memo_index.py` | `standard_output_dir` reads the pointer | read | yes |
 | `.claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py` | the delete hook's matter marker — owned by the sibling spec (`2026-10-16_delete-hook-home-and-matter-folders-spec.md`), which is teaching it both names | read | sibling |
 
 The spec's §10 says "the Python scripts under `.claude/skills/*/references/scripts/`"; at HEAD the pointer-opening Python also lives under `.claude/skills/publish/**/scripts/` and `.claude/skills/legal-memo-extractor/scripts/`, listed above.
 
-Skill text with executable file-name behaviour (not just prose): `matter-data/operations/initialize.md` (native Read/Write of the pointer, steps 1/4), `matter-data/shared/conventions.md` §2.1-§2.3 (pointer form and resolution contract), `matter-data/operations/pointer-health.md` (runs check_pointers), `probanda-setup/SKILL.md` (creates the device file via `config_set_root`).
+Skill text with executable file-name behaviour (not just prose): `case-data/operations/initialize.md` (native Read/Write of the pointer, steps 1/4), `case-data/shared/conventions.md` §2.1-§2.3 (pointer form and resolution contract), `case-data/operations/pointer-health.md` (runs check_pointers), `probanda-setup/SKILL.md` (creates the device file via `config_set_root`).
 
 ### Skill text that names the file (grep, `.claude/skills/**/*.md`, HEAD)
 
-assemble (4 SUBSKILL.md), build-timeline (SKILL.md + 3 reference files), calculate/references/bill-of-costs-workspace.md, matter-data (SKILL.md, shared/conventions.md, references/scripts.md, 24 operations/*.md), draft/references (4), drafting-data/SKILL.md, executive-assistant/SKILL.md, file-review-prep/SKILL.md, file-sorting/profiles/litigation-matter/profile.md, housekeeping/SKILL.md, invoice-tracking/SKILL.md, legal-memo-extractor/SKILL.md, matter-status-tracking/SKILL.md, polish-substance/SKILL.md, practice-data/SKILL.md, probanda-setup/SKILL.md, probanda-troubleshooting/SKILL.md, publish (8 SUBSKILL.md + 3 references), reflect/SKILL.md, retainer-tracking (SKILL.md, protocols/FirstImport.md), safe-file-deletion/SKILL.md (sibling's), shared (html-pages.md, knowledge-tree.md, legal-research.md, live-issue-test.md, workspace-output-rule.md), timecamping (SKILL.md, reference/SyncoPaidCaptures.md), timecamping-data/SKILL.md, time-pipeline-data/SKILL.md, time-sorting (SKILL.md, protocols/FirstSetup.md).
+assemble (4 SUBSKILL.md), build-timeline (SKILL.md + 3 reference files), calculate/references/bill-of-costs-workspace.md, case-data (SKILL.md, shared/conventions.md, references/scripts.md, 24 operations/*.md), draft/references (4), drafting-data/SKILL.md, executive-assistant/SKILL.md, file-review-prep/SKILL.md, file-sorting/profiles/litigation-matter/profile.md, housekeeping/SKILL.md, invoice-tracking/SKILL.md, legal-memo-extractor/SKILL.md, matter-status-tracking/SKILL.md, polish-substance/SKILL.md, practice-data/SKILL.md, probanda-setup/SKILL.md, probanda-troubleshooting/SKILL.md, publish (8 SUBSKILL.md + 3 references), reflect/SKILL.md, retainer-tracking (SKILL.md, protocols/FirstImport.md), safe-file-deletion/SKILL.md (sibling's), shared (html-pages.md, knowledge-tree.md, legal-research.md, live-issue-test.md, workspace-output-rule.md), timecamping (SKILL.md, reference/SyncoPaidCaptures.md), timecamping-data/SKILL.md, time-pipeline-data/SKILL.md, time-sorting (SKILL.md, protocols/FirstSetup.md).
 
 Also: `source/legal/mcp/src/schema-gen.ts` tool descriptions, comments in 20 further `mcp/src` files (no opens), and the `mcp/test/` and skill `tests/` fixtures (out of this spec's scope: no test changes).

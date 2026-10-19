@@ -126,9 +126,9 @@ Searched: every tree in the verification table above, excluding `plugins/` (buil
 | `assemble/subskills/assemble-bcca-book/SUBSKILL.md` | 167 | c | cite |
 | `assemble/subskills/assemble-affidavit/SUBSKILL.md` | 104 | c | cite |
 | `assemble/subskills/assemble-affidavit/references/assembly.md` | 163 | c | cite |
-| `matter-data/operations/supersede-draft.md` | 304 | c | cite (`../../shared/present-files.md`) |
-| `matter-data/operations/ingest-unattended.md` | 33 | c | cite (`../../shared/present-files.md`) |
-| `matter-data/operations/ingest-verify.md`, `ingest-extract.md`, `verify-law.md`; `verify-law/SKILL.md` | `device_stage_files` for a subagent's read | d | none |
+| `case-data/operations/supersede-draft.md` | 304 | c | cite (`../../shared/present-files.md`) |
+| `case-data/operations/ingest-unattended.md` | 33 | c | cite (`../../shared/present-files.md`) |
+| `case-data/operations/ingest-verify.md`, `ingest-extract.md`, `verify-law.md`; `verify-law/SKILL.md` | `device_stage_files` for a subagent's read | d | none |
 | `shared/legal-research.md` | 383, 400 | c | cite |
 | `shared/legal-research.md` | 111 (`device_stage_files` for the agent's read) | d | none |
 | `legal-research/SKILL.md` | 101 | c | cite |

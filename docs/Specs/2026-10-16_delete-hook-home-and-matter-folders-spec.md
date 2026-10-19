@@ -17,7 +17,7 @@ Brahm also wants the hook to know which folders on the device are client matter 
   - with `HOME` unset (`env -u HOME`): deny;
   - with `HOME` set: allow (no output, exit 0).
 - Cause: `expand_vars` (hook lines 350-365), `home_value`: `return os.environ.get(name, m.group(0))`. When `HOME` is unset, the `$HOME` text is kept, and `rm_targets` returns None for any target containing `$` (around line 600).
-- Practice data holds no record of matter folders. `matter` items carry `matt_num`, `file_number`, `description` and the trust fields (`source/legal/mcp/src/tools/practice/writes.ts`, `upsert_client_matter`). `practice_data__contact_checks` has to find a matter's matter-data folder by matching folder names, because nothing records it.
+- Practice data holds no record of matter folders. `matter` items carry `matt_num`, `file_number`, `description` and the trust fields (`source/legal/mcp/src/tools/practice/writes.ts`, `upsert_client_matter`). `practice_data__contact_checks` has to find a matter's case-data folder by matching folder names, because nothing records it.
 - Where things live:
   - `practice.db` is `<case_data_root>\_practice\practice.db` (`source/legal/mcp/src/practice/backend.ts`, `resolvePracticeDbPath`). It is not in Roaming.
   - Roaming holds the device settings file `AppData\Roaming\Coclerk\coclerk.json`, which names `case_data_root`.
@@ -46,7 +46,7 @@ Non-goals:
 **4.2 A record of matter folders.** Practice data gains a local record of each matter's folder on this device. **UNVERIFIED**, needs design:
 
 - *What is stored.* The folder path relative to the litigation library. Because `practice.db` sits in a synced folder that several devices may share, an absolute path from one device would be wrong on another. The library is the parent of `case_data_root` (`backend.ts` `case_data_root`: `0. CASE DATA` is a sibling of the matter folders).
-- *Who writes it.* Whoever creates the matter's pointer file (matter-data initialize), and the matter-opening step in `practice-data`.
+- *Who writes it.* Whoever creates the matter's pointer file (case-data initialize), and the matter-opening step in `practice-data`.
 - *Where it lives.* A data field on the `matter` item, so the cloud sees only its HMAC (Commandment 3) and no new local table is added (Commandment 5).
 
 **4.3 The hook's double check.** A location is in a matter folder when either holds:
@@ -93,7 +93,7 @@ Note: step 2's regression test conflicts with this scope rule. The orchestrator 
 ## 9. Open questions
 
 1. Should a matter-folder hit only add protection (Option 1), or should the hook protect only matter folders (Option 3, which needs Commandment 7 amended)?
-2. Folder record: relative to the litigation library, as in §4.2? And should matter-data initialize write it, or only the matter-opening step?
+2. Folder record: relative to the litigation library, as in §4.2? And should case-data initialize write it, or only the matter-opening step?
 
 ## 10. Verify against HEAD before building
 

@@ -1058,7 +1058,7 @@ def main():
         _run_validate(parse_form33, args.path)
     elif args.command == "init":
         _emit(cmd_init(args.user_request, args.matter_path,
-                       args.case_data_folder, args.writing_folder,
+                       args.matter_data_folder, args.writing_folder,
                        args.out_name, args.edits_reviewed))
     elif args.command == "classify":
         _emit(cmd_classify(args.session_id, args.result_json))

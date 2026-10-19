@@ -1,7 +1,7 @@
 # Spec: Per-principle treatment and the treatment vocabulary
 
 Status: proposed, 2026-10-15. Written in a matter session; implementation is handed to Claude Code.
-Plugins: `practice` (matter-data) and `research` (legal-commons). Paths below were read in the repo on 2026-10-15 unless marked **UNVERIFIED**.
+Plugins: `practice` (case-data) and `research` (legal-commons). Paths below were read in the repo on 2026-10-15 unless marked **UNVERIFIED**.
 
 > **For coding agents: read this before touching any treatment, relationship or citator code.** Probanda deliberately departs from how Westlaw, Lexis, CanLII, JustCite, the ICLR and Shepard's record case treatment. If you assume the industry norm you will build the wrong thing. Section 4 lists every departure.
 
@@ -11,9 +11,9 @@ Plugins: `practice` (matter-data) and `research` (legal-commons). Paths below we
 
 Case data's concept–authority link carries a `relationship` label from a fixed list of six: `establishes`, `refines`, `applies`, `distinguishes`, `affirms` and `answered`. The legal-commons pool's matching `principle_authority.relationship` column is bare text with no list at all.
 
-Of the six local labels, only `answered` is defined anywhere (matter-data design decision 48). The other five appear only as words in a list:
-- `matter-data/references/schema.sql`;
-- `matter-data/references/scripts/ingest_authority.py`, whose list omits `answered`;
+Of the six local labels, only `answered` is defined anywhere (case-data design decision 48). The other five appear only as words in a list:
+- `case-data/references/schema.sql`;
+- `case-data/references/scripts/ingest_authority.py`, whose list omits `answered`;
 - the extractor and verifier agent prompts.
 
 The prompts' only gloss is "how this authority relates to the concept".
@@ -24,9 +24,9 @@ Defining the labels raised a further point. Publisher citators record treatment 
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 
-- **Local matter-data link.** `concept_authorities.relationship` is limited to the six values above. Separately, `concept_authorities.treatment` takes `affirmed`, `reversed`, `varied`, `distinguished` and `overruled`. Source: `matter-data/references/schema.sql`.
-- **No definitions.** `matter-data/agents/extract-caselaw.md` gives the only gloss: "authority role: how this authority relates to the concept (establishes / refines / applies / distinguishes / affirms)".
-- **The verifier is locked out.** `matter-data/agents/verify-edges.md` says "A case that merely applies a settled test does not `establish` it. You cannot change `relationship` — if it is wrong, say so in `ambiguous`".
+- **Local case-data link.** `concept_authorities.relationship` is limited to the six values above. Separately, `concept_authorities.treatment` takes `affirmed`, `reversed`, `varied`, `distinguished` and `overruled`. Source: `case-data/references/schema.sql`.
+- **No definitions.** `case-data/agents/extract-caselaw.md` gives the only gloss: "authority role: how this authority relates to the concept (establishes / refines / applies / distinguishes / affirms)".
+- **The verifier is locked out.** `case-data/agents/verify-edges.md` says "A case that merely applies a settled test does not `establish` it. You cannot change `relationship` — if it is wrong, say so in `ambiguous`".
 - **The pool's two vocabularies.**
   - `TREATMENT_VALUES` (present tense): `affirms`, `reverses`, `varies`, `distinguishes`, `overrules`, `follows`, `declines_to_follow`, `not_considered`.
   - `EDGE_TREATMENT_VALUES` (past tense): `affirmed`, `reversed`, `varied`, `distinguished`, `overruled`.
@@ -88,7 +88,7 @@ These two axes are noted in section 7 and not adopted.
 7. **Currency never rewrites principle text (existing D6, unchanged).** A narrowed or superseding statement of a principle is pushed as a variant, and the displaced authority gets a treatment edge.
 8. **`answered` is not a treatment.**
    - It records that the other side cited this authority against this concept and our filing answered it.
-   - It is written only on a practitioner tie, verified by that tie, and never pushed to the pool (matter-data design decision 48).
+   - It is written only on a practitioner tie, verified by that tie, and never pushed to the pool (case-data design decision 48).
    - It stays outside the vocabulary below.
 9. **`not_considered` is not the opposite of `considers`.**
    - It is the existing oral-reasons note: the court did not consider an authority it was referred to.
@@ -188,7 +188,7 @@ A publisher's case-level treatment says nothing about *which* principle it conce
 
 1. **One vocabulary, one source of definitions.**
    - Section 5's terms and definitions are held in one place, which every writer and reader cites.
-   - The writers and readers are: matter-data's extractors and verifiers, the pool's push and amend tools, the `record_treatment` tool, and any citator import.
+   - The writers and readers are: case-data's extractors and verifiers, the pool's push and amend tools, the `record_treatment` tool, and any citator import.
    - The verifier prompt gains the definitions and may *flag* a mismatch. Whether it may also *correct* a relationship is out of scope here.
 2. **Principle–authority links** (`concept_authorities.relationship` locally; `principle_authority.relationship` in the pool) take any section 5 value except `affirms`, `varies` and `reverses`, which are history of a whole decision.
 3. **Authority–authority treatment edges** (`legal_commons.treatment`) take the section 5.1 values. They gain a principle scope so that one pair of cases can carry different treatments on different principles (Q3). An edge with no principle scope means the whole decision.
@@ -200,8 +200,8 @@ A publisher's case-level treatment says nothing about *which* principle it conce
    - `answered` rows are untouched.
 6. **Discoverability for future agents.** The implementation adds:
    - (a) a GLOSSARY.md entry **Treatment** that states the per-principle rule and lists, under *Avoid*, "overturns", `affirms` for endorsement, and treating `considers` and `not_considered` as opposites;
-   - (b) a pointer to this spec in `.claude/skills/legal-commons/SKILL.md` § Currency and in matter-data's legal-knowledge reference;
-   - (c) a comment at `TREATMENT_VALUES` in `tools.ts` and at the matter-data relationship list naming this spec.
+   - (b) a pointer to this spec in `.claude/skills/legal-commons/SKILL.md` § Currency and in case-data's legal-knowledge reference;
+   - (c) a comment at `TREATMENT_VALUES` in `tools.ts` and at the case-data relationship list naming this spec.
 
 ## 7. Open questions
 
@@ -219,7 +219,7 @@ A publisher's case-level treatment says nothing about *which* principle it conce
 - **Q4. Where do the vocabulary and its definitions live?**
   - Commandments 4 and 5 and Exception 2 bear on this. The candidates are: in Probanda's Cloud, with local stores holding the value as Cross Data; or in shipped prompts and a local CHECK, which deepens the legacy exception.
   - Resolve this before code.
-  - **Decided 2026-10-15: one shipped file as Cross Data under Exception 1. The local store keeps a subset until matter-data is converted. See `docs/ADRs/0006-treatment-vocabulary-in-one-shipped-file.md`.**
+  - **Decided 2026-10-15: one shipped file as Cross Data under Exception 1. The local store keeps a subset until case-data is converted. See `docs/ADRs/0006-treatment-vocabulary-in-one-shipped-file.md`.**
 - **Q5. Which treatments stamp `edge_treatment`?** That is, which ones change what a principle link now stands on (section 6, item 4).
   - **Decided 2026-10-15: the five existing stamps plus `superseded_by_statute` and `abrogated`. See `docs/ADRs/0008-edge-treatment-stamps.md`.**
 - **Q6. Not adopted, noted for completeness:**
@@ -256,13 +256,13 @@ Not retrieved:
 ## 9. Implementation criteria
 
 - [ ] Every value any treatment or relationship column accepts has exactly one definition, from section 5, and every writer and reader points to it.
-  - Met for every writer and reader, and for the pool. Open for the local store: its CHECK still accepts the undefined `refines` and `affirms`, which no path now writes, until matter-data is converted (ADR 0006).
+  - Met for every writer and reader, and for the pool. Open for the local store: its CHECK still accepts the undefined `refines` and `affirms`, which no path now writes, until case-data is converted (ADR 0006).
 - [x] No code path accepts "overturns", or writes `affirms`, `varies` or `reverses` on a principle–authority link.
 - [x] No automated path writes `considers` until Q1 is recorded as decided. (Q1 decided: ADR 0004.)
-- [ ] matter-data's relationship list, `ingest_authority.py`, the agent prompts and the pool tool layer list the same values.
-  - Open: the local store holds only `establishes`, `applies` and `distinguishes` until matter-data is converted. Other values are held back and reported (ADR 0006).
+- [ ] Case-data's relationship list, `ingest_authority.py`, the agent prompts and the pool tool layer list the same values.
+  - Open: the local store holds only `establishes`, `applies` and `distinguishes` until case-data is converted. Other values are held back and reported (ADR 0006).
 - [ ] Existing relationship rows are flagged for review, none is remapped, and no `verified` value rises.
-  - None is remapped and no `verified` value rises. Bulk flagging waits for matter-data's conversion, because it needs a data hop in `migrations.sql` (ADR 0006). Until then, verify-edges flags `refines` and `affirms` edges as `wrong_relationship` when it verifies them.
-- [x] `answered` behaves exactly as matter-data design decision 48 says.
+  - None is remapped and no `verified` value rises. Bulk flagging waits for case-data's conversion, because it needs a data hop in `migrations.sql` (ADR 0006). Until then, verify-edges flags `refines` and `affirms` edges as `wrong_relationship` when it verifies them.
+- [x] `answered` behaves exactly as case-data design decision 48 says.
 - [x] Q3, Q4 and Q5 each have a recorded decision before any schema change.
 - [x] GLOSSARY.md, the legal-commons skill and both code sites point to this spec (section 6, item 6).

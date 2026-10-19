@@ -16,7 +16,7 @@ Brahm: legal research does not need the full session context, and the practition
 - `research/skills/shared/legal-research.md`, spawn template: "Memo template: CREAC / IRAC / CRAC   (IRAC or CRAC only when the practitioner expressly asked)" and "File stem: YYYY-MM-DD ML re <two to six keywords from the question>".
 - Tool `research_filing__save_answer` exists (saves the answer under the matter's `6. LAW`); its header format is **UNVERIFIED**.
 - `draft` SKILL.md: "A saved research answer is presented as a file card, and its relay never restates the finding."
-- Earlier spec `2026-10-06_research-results-to-board-spec.md` records a CREAC return with "Step 5 offers" (9 items) and matter-data flags relayed in chat: mechanics reaching the practitioner.
+- Earlier spec `2026-10-06_research-results-to-board-spec.md` records a CREAC return with "Step 5 offers" (9 items) and case-data flags relayed in chat: mechanics reaching the practitioner.
 
 ## 3. Goal and non-goals
 
@@ -26,7 +26,7 @@ Goal: (a) the main session sees only the memo's file card and a one-line status,
 
 1. **Delegation.** Because a subagent cannot spawn agents, keep the gate's dispatches in the main session but make each return compact: agents write their outputs to files and return only status lines; the main session relays nothing but status and the final card. Alternative: a background orchestrator (§6 option 2).
 2. **Memo format.** One template file (e.g. `research/skills/shared/research-memo-template.md`) defining the YAML keys and the CRAC/IRAC/CREAC section skeletons. The research-agent writes the memo to the file stem path in `6. LAW`; `save_answer` (or its replacement) writes the YAML header.
-3. **Confidence summary and follow-up offers.** The confidence gate stays; its summary goes into the memo (a short "Confidence" line in the header or an appendix) and the chat relay is one line pointing to the card. Follow-up offers and matter-data flags go to an appendix or the job board, not the memo body.
+3. **Confidence summary and follow-up offers.** The confidence gate stays; its summary goes into the memo (a short "Confidence" line in the header or an appendix) and the chat relay is one line pointing to the card. Follow-up offers and case-data flags go to an appendix or the job board, not the memo body.
 4. Change the spawn template's default to CRAC (pending §9 Q1).
 
 ## 5. Constraints that must still hold

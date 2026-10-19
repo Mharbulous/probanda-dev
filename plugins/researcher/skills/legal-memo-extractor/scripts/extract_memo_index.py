@@ -806,12 +806,12 @@ def main(argv=None):
                   "parent of --input-dir). Pass --matter-root or --output.",
                   file=sys.stderr)
             return 2
-        if not args.case_data_folder:
+        if not args.matter_data_folder:
             print("Pass --matter-data-folder (the folder probanda.json's case_data_dir "
                   "names) or --output.", file=sys.stderr)
             return 2
         try:
-            out_dir = standard_output_dir(matter, args.case_data_folder)
+            out_dir = standard_output_dir(matter, args.matter_data_folder)
         except (FileNotFoundError, ValueError) as exc:
             print(exc, file=sys.stderr)
             return 2

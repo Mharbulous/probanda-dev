@@ -54,7 +54,7 @@ function fixture(version) {
 }
 
 function liveDerivedFixture({
-  stored = "C:\\Users\\DeletedProfile\\matter-data",
+  stored = "C:\\Users\\DeletedProfile\\case-data",
   createDatabase = true,
   matterFolder = "T9999 Scratch Matter",
   databaseFolder = matterFolder,

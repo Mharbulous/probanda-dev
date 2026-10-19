@@ -69,7 +69,7 @@ The data server has no tool-subset switch (`index.ts:33-48`, no argv or env sele
 
 Use one wording pattern: "If `<tool>` is not available in this session, the `file-admin` plugin is not enabled: stop, tell the practitioner that this step moves or trashes a file and needs `file-admin`, and do nothing else. Never fall back to shell `mv`/`rm` or the Write tool."
 
-- `matter-data/operations/supersede-draft.md:270`: step 2 (`file_ops__move`), and step 3 that depends on it.
+- `case-data/operations/supersede-draft.md:270`: step 2 (`file_ops__move`), and step 3 that depends on it.
 - `safe-file-deletion/SKILL.md:10,36-47`: remove the shell `mkdir -p` + `mv` fallback (:37, :47) and replace it with the stop branch. Fix the stale `plugins/litigation/...` text at :11. The skill stays in `practice`.
 - `safe-file-deletion/hooks/redirect-delete-to-trash.py:32,741,801`: the deny message names the file-admin tool and says that without file-admin the deletion is refused. The hook stays in `practice/plugin.json:14-28`, unchanged otherwise.
 - `bill-client/SKILL.md:44`: the `/housekeeping` signpost says it needs `file-admin`.
@@ -78,7 +78,7 @@ Use one wording pattern: "If `<tool>` is not available in this session, the `fil
   - `draft/references/substance-and-revise.md:42`
   - `publish/subskills/renumber-affidavit/SUBSKILL.md:18,87` (apply, now `/file-apply`) and `:93-97` (trash)
 - `shared/workspace-output-rule.md:14`.
-- Mentions only, reworded as conditional where they name a moved skill: `matter-data/SKILL.md:69,72`, `matter-data/operations/housekeeping-log.md:5`, `ingest-extract.md:70`, `show-me/SKILL.md:28`. `research/legal-memo-extractor/SKILL.md:97` is already a signpost. Rule it.
+- Mentions only, reworded as conditional where they name a moved skill: `case-data/SKILL.md:69,72`, `case-data/operations/housekeeping-log.md:5`, `ingest-extract.md:70`, `show-me/SKILL.md:28`. `research/legal-memo-extractor/SKILL.md:97` is already a signpost. Rule it.
 
 ### Docs
 
