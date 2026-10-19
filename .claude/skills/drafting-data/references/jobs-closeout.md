@@ -1,4 +1,4 @@
-Read when: the practitioner retires a Writing, closes a job as superseded, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
+Read when: the practitioner retires a Writing, closes a job as superseded, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job, or moves jobs to another board; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 9a. Supersession on retirement
@@ -229,6 +229,66 @@ SELECT status, rejected_at, deleted_at, bf_on FROM tickets WHERE id = 42;
 ```
 
 `changes` 1 with `bf_on` as written means it landed. `changes` 0 means the guard matched nothing and the row says why: a status other than `queued`, `rejected_at` or `deleted_at` stamped, or, on a clear, no date to clear. A date that is not a `YYYY-MM-DD` is refused by the CHECK. Report which it was and stop. No revision bump. After a write that landed, re-render.
+
+## 10c. Move jobs to another board (bookkeeping)
+
+**When.** The practitioner asks to move one job, several, or every job of one board to another board of the matter, or to merge two boards. Received, never offered. Like a shelving, the move is bookkeeping: permitted in every session, never counting as outlining, and never a licence to edit a job's title, intent or steps. It is the one write that changes a job's `filing_id` (`jobs-create.md` §3a).
+
+**The target.** Name it from `filing-checklists.md` §14's "The matter's boards" read. The source and the target share a `proceeding_id`, because no job moves between proceedings (`jobs-integrity.md` §11), and the target is live (`retired_on IS NULL`). It may be a Writing or a Job Board with no Writing. Proceeding scope (`filing_id` NULL) is a target only when the source is a Writing's board, because a proceeding-scoped job never shows on a Job Board with no Writing (`jobs-integrity.md` §11). Every guard below is the script's own: nothing in the schema refuses a move.
+
+**What moves.** Every `queued` job on the source with `deleted_at` NULL, shelved ones included, and, on a whole-board move, the source's open loose threads, so a Job Board with no Writing's own threads follow its jobs. A job holding a `note-up` key, or a key on one of the Writing's own rows (`filings`, `filing_facts`, `filing_submissions` or `filing_orders`, `jobs-create.md` §3, "`filing_id` on a job outlined from a Proposal"), stays: §3k's one-note-up-job-per-Writing guard reads `filing_id`, and those keys name the source Writing. `completed`, `superseded` and deleted (§10a) jobs stay too. Edges stay as they are: a `ticket_blocks` or `ticket_conflicts` edge still joins two jobs of one proceeding, which is all `jobs-integrity.md` §11 asks.
+
+**Read first — a `wip` job on the source refuses the move**, as it refuses §9a's close, and the jobs that stay are named in one line. Here the source is board `7`:
+
+```sql
+SELECT id, title, locked_by, locked_at FROM tickets WHERE filing_id = 7 AND status = 'wip';
+SELECT DISTINCT t.id, t.title, p.proposal_key FROM tickets t JOIN ticket_proposals p ON p.ticket_id = t.id
+  WHERE t.filing_id = 7 AND t.status = 'queued' AND t.deleted_at IS NULL
+    AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
+      OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*');
+```
+
+A row from the first read: stop, write nothing, and report the job and its holder. Rows from the second: those jobs stay on the source, to be closed by §9b or left; name them in one line.
+
+**Move every job of a board**, one `execute` script, here from board `7` to board `8`. Every statement carries the same `wip` guard and the target's live, same-proceeding guard:
+
+```sql
+UPDATE tickets SET filing_id = 8
+  WHERE filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM ticket_proposals p WHERE p.ticket_id = tickets.id
+      AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
+        OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*'))
+    AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = tickets.proceeding_id AND f.retired_on IS NULL)
+    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
+UPDATE seeds SET filing_id = 8
+  WHERE filing_id = 7 AND charted_into IS NULL AND discarded_at IS NULL AND suggested_at IS NULL
+    AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = seeds.proceeding_id AND f.retired_on IS NULL)
+    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
+```
+
+To proceeding scope, from a Writing's board only, each statement sets `filing_id = NULL` and drops the target's `EXISTS` clause.
+
+**Move one job**, or several named by id, with the same guards on each id, here job `42`:
+
+```sql
+UPDATE tickets SET filing_id = 8
+  WHERE id = 42 AND filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM ticket_proposals p WHERE p.ticket_id = tickets.id
+      AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
+        OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*'))
+    AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = tickets.proceeding_id AND f.retired_on IS NULL)
+    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
+```
+
+Then run the confirm-read:
+
+```sql
+SELECT id, filing_id, status FROM tickets WHERE filing_id IN (7, 8) AND deleted_at IS NULL ORDER BY id;
+```
+
+`changes` 0 means a `wip` job appeared, the target is retired or in another proceeding, or nothing qualified: re-run the read-first and report which. No revision bump: the job tables are exempt (`jobs-common.md`). After a move that landed, re-render both boards under `draft_dir`.
+
+**Merging two boards** is two acts: this move, then closing the Job Board with no Writing (§9a's close) or retiring the Writing (`/draft` `retire-filing.md`). Say so in one line, and ask for the second separately: the move never closes or retires anything.
 
 ## 13. Clearing the retired Work Board keys
 

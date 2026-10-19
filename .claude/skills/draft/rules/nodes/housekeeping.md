@@ -1,4 +1,4 @@
-<!-- node id=draft/housekeeping title="Bookkeeping" parents=draft/session,draft/job/work when="A shelve, restore, delete, suppression or another session's release is applied as bookkeeping, then the position resumes." -->
+<!-- node id=draft/housekeeping title="Bookkeeping" parents=draft/session,draft/job/work when="A shelve, restore, delete, move, suppression or another session's release is applied as bookkeeping, then the position resumes." -->
 
 <!-- rule id=draft.shelve.intro provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
 **Shelve and restore.** Shelving sets an angle aside until it is restored; restoring undoes that. Both arrive as chat requests, and the board carries no control that writes: its Restore link on a deleted job only copies `restore job #N` for the practitioner to paste into a session. Both are bookkeeping: permitted in every session, never counting as outlining, and never a licence to edit a job's title, intent or steps along the way. The scripts and their guards are `/drafting-data`'s, in `/drafting-data` §10a.
@@ -30,5 +30,8 @@
 <!-- rule id=draft.shelve.delete provenance="2026-10-14: delete of an in-progress job, plugin fix" -->
 - **Delete:** a typed "delete job #N", for one job or several, is applied at once with no confirmation, through one `drafting_data__delete_job` call (`/drafting-data` §10a). It deletes a Ready or shelved job, and the session's own in-progress job. A job in progress in another session comes back `held_elsewhere`, and nothing is written: say in one line that it is in progress in another session and was not deleted. Ask no decision form about it, and never say a delete clears a lock. The take-over form's *Return it to Ready* (`references/take-over.md`) stays available if the practitioner asks for it. After the session's own job is deleted, the session holds no job, as after a release. Delete is received, never offered.
 
+<!-- rule id=draft.shelve.move provenance="2026-10-19: suggestion 2f6418b7, move jobs to another board" -->
+- **Move:** a typed "move job #N to Job Board M", for one job or several, or "merge Job Board A into Job Board B", is applied at once with no confirmation by `/drafting-data` `jobs-closeout.md` §10c, the target matched against the matter's boards as `/drafting-data` `filing-checklists.md` §14's read names them. A board's jobs that do not move (a `note-up` job, one keyed on the Writing's own rows) are named in one line, and a job in progress on the source refuses the move: report it and its holder. A merge is the move and then a close or retirement of the emptied board, which is asked for separately. After it lands, re-render both boards. Move is received, never offered.
+
 <!-- rule id=draft.shelve.after provenance="rules-DAG 6.3 substitute, 2026-10-10: pilot acceptance tests 2 and 3, contextual-rule-injection spec 16" -->
-- **After applying** a shelve, restore, delete or release, re-render per section 11 so the board shows it.
+- **After applying** a shelve, restore, delete, move or release, re-render per section 11 so the board shows it.

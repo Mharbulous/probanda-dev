@@ -209,7 +209,7 @@ INSERT INTO ticket_blocks (blocker_id, blocked_id)
     AND EXISTS (SELECT 1 FROM tickets WHERE id = 11 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL);
 ```
 
-**What never changes, whatever the practitioner says:** `proceeding_id`, `filing_id`, `kind`, `created` and `billing_anchor`. Accepted cost: a job outlined afresh away from the work its Proposal named still hides that Proposal while it is queued. The marker itself still shows on the mockup, so the work is not lost.
+**What never changes, whatever the practitioner says:** `proceeding_id`, `kind`, `created` and `billing_anchor`. `filing_id` changes only by `jobs-closeout.md` §10c's move, never in an outline afresh. Accepted cost: a job outlined afresh away from the work its Proposal named still hides that Proposal while it is queued. The marker itself still shows on the mockup, so the work is not lost.
 
 **The job's `ticket_proposals` rows change in two ways only** (the 2026-09-21 design §4.6 and §4.8). **Refresh `item`** on each key the job keeps whose item now reads differently, so a reworded item is not reported each time the job is assigned. It runs only after the practitioner has been shown the old and new text and has confirmed; without that confirmation the old `item` is the evidence the column exists to keep, and it is left alone. The new text is the key's current item as the job's card (`drafting_forms__board_card` with `jobs`) prints it now, the quoted text in that key's `(now: <glyph> "<current item>")` on the job's `keys:` line, unquoted and without any count, on §3's terms:
 

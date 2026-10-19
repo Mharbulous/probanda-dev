@@ -83,6 +83,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Close as superseded | The practitioner says to close a job whose `keys:` line on its card (`drafting_forms__board_card` with `jobs`) reads `(now: dead)` throughout, or picks "close it as superseded" | `references/jobs-closeout.md` §9b |
 | Shelve or restore | The practitioner asks to shelve or restore a Proposal or a job, or to delete a mistaken job (`drafting_data__delete_job`) or restore a deleted one, or a render reports lapsed shelvings | `references/jobs-closeout.md` §10a |
 | Bring forward or clear | The practitioner says to hold a job until a date they name, to change that date, or to clear it; never offered | `references/jobs-closeout.md` §10b |
+| Move to another board / merge boards | The practitioner asks to move one or more jobs, or every job of a board, to another board of the same proceeding, or to merge two boards; never offered | `references/jobs-closeout.md` §10c |
 | Clear retired Work Board keys | `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url` | `references/jobs-closeout.md` §13 |
 | Gate job check | §9's confirm-read reads `completed`, `/draft` step 9 runs the gate, or the practitioner asks to re-run a stale gate | `references/jobs-gate.md` §14 |
 | Pre-send gate job | `drafting_data__record_sent` refuses `held`, or a `Pre-send gate` job shows on a Writing | `references/jobs-gate.md` §14a |
