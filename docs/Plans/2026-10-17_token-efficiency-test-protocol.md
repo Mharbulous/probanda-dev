@@ -326,6 +326,19 @@ Each cell runs on 3 documents. Starred cells (★) run 3 times each, for Q17.
   - **Recall rises with effort on every model, and cost per correct fact rises with it.** Opus low finds 0.52 at $0.0081, Opus high 0.82 at $0.0105. Sonnet high (0.67) costs about 60–80% of Opus medium and finds fewer facts.
   - **No cell beats Opus medium on both cost per correct fact and recall.** Opus high buys 8 points of recall for about 30% more. So the choice between Opus medium, Opus high and a cheaper model is a recall floor for /ingest, not a cost result.
   - **Caveats.** One run per cell, and Q17's spread at Opus medium was up to 37 points on one document. The key was built from an Opus-high extraction, so it may favour Opus's choice of which facts to state. Sonnet medium's D055 reply was valid JSON followed by a stray `}`, which an /ingest parser would reject.
+
+  **Scorer agreement check (run 2026-10-19, ticket #148): the Opus marks hold, and both gaps stand.** A Fable 5.1 scorer re-marked 15 already-scored runs, blind to the original marks and to the cell: rep 1 of Opus medium (session 1), and Opus high and Sonnet high (session 3), each on D024, D027, D028, D048 and D058. These five documents were chosen because they are where the cells differ, rather than at random. They hold 256 of the 437 gold facts. The scorer got the same comparison files, with the run tag replaced by a neutral id.
+
+  | Cell | Gold marks agreeing | Recall, Opus scorer | Recall, Fable scorer |
+  |---|---|---|---|
+  | Opus medium (rep 1) | 252 of 256 (98.4%) | 0.613 | 0.613 |
+  | Opus high | 252 of 256 (98.4%) | 0.723 | 0.738 |
+  | Sonnet high | 255 of 256 (99.6%) | 0.504 | 0.508 |
+  | All | 759 of 768 (98.8%) | | |
+
+  - **Disagreements: 9, with no pattern against a cell.** Fable marked 6 facts found that Opus had marked missing (4 in Opus high, on D024 and D058), 2 missing that Opus had marked found (Opus medium), and Opus medium's one "wrong" fact as found. Neither scorer marked any extra claim unsupported.
+  - **Gaps on these five documents.** Opus high over Opus medium: +0.110 under Opus, +0.125 under Fable. Opus medium over Sonnet high: +0.109 under Opus, +0.105 under Fable. Putting Fable's marks in place of Opus's for these runs moves the full-cell recalls to Opus high 0.83, Sonnet high 0.67 and Opus medium 0.74 (unchanged), so the 0.74 against 0.82 and 0.74 against 0.67 comparisons stand.
+  - **Cost: $19.7 at API rates, against $3–5 approved.** Almost all of it ($18.6) was cache writes: each scorer ran as a `general-purpose` agent that loaded about 94K tokens of tool definitions to mark one file of about 5K tokens. A scorer agent holding only Read would cost under $1 for the same 15 runs.
 - **E8. Output and orchestrator (Q12, Q14).**
   - The output and thinking share comes from every run's ledger rows.
   - Run the extractor's current JSON against a compact form with short keys, no nulls and no repeated quotes.
