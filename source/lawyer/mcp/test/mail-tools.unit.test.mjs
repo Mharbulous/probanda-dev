@@ -3,6 +3,7 @@
 // folder is a temp one, so no test can write into the real credential file.
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -235,6 +236,7 @@ test("with no credential every mail tool but the two configure tools refuses mai
     mail__search_emails: {},
     mail__get_email: { uid: 1 },
     mail__download_attachment: { uid: 1, index: 0, save_dir: dir },
+    mail__save_message: { uid: 1, save_dir: dir },
     mail__find_email_by_message_id: { message_id: "<x@example.test>" },
     mail__find_thread_messages: { uid: 1 },
     mail__save_draft: { eml_path: eml },
@@ -371,6 +373,35 @@ test("download_attachment writes the part under save_dir, never overwrites, and 
 
   const missing = await errorOf(context(fakeClient(script())), "mail__download_attachment", { uid: 9, index: 0, save_dir: join(dir, "no-such-folder") });
   assert.match(missing.message, /save_dir must be the absolute path of an existing folder/);
+});
+
+test("save_message writes the message's stored bytes, reports their sha256, never overwrites, and refuses a missing save_dir", async (t) => {
+  const dir = tempDir(t, "coclerk-mail-save-");
+  const source = Buffer.from(EML, "latin1");
+  const script = () => ({
+    fetchOne: () => ({ uid: 9, source, envelope: { messageId: "<m9@example.test>", subject: "Re: Smith/Jones: costs" } }),
+  });
+  const first = fakeClient(script());
+  const one = await callTool(context(first), "mail__save_message", { uid: 9, save_dir: dir });
+  assert.equal(one.path, join(dir, "Re_ Smith_Jones_ costs.eml"));
+  assert.equal(one.filename, "Re_ Smith_Jones_ costs.eml");
+  assert.ok(readFileSync(one.path).equals(source), "the saved file is the stored message, byte for byte");
+  assert.equal(one.size, source.length);
+  assert.equal(one.sha256, createHash("sha256").update(readFileSync(one.path)).digest("hex"));
+  assert.equal(one.messageId, "<m9@example.test>");
+  assert.deepEqual(first.calls.find((c) => c.name === "mailboxOpen").args, ["INBOX", { readOnly: true }]);
+
+  const two = await callTool(context(fakeClient(script())), "mail__save_message", { uid: 9, save_dir: dir });
+  assert.equal(two.filename, "Re_ Smith_Jones_ costs (1).eml");
+  assert.ok(readFileSync(one.path).equals(source), "the first copy is untouched");
+
+  const unnamed = fakeClient({ fetchOne: () => ({ uid: 4, source, envelope: {} }) });
+  assert.equal((await callTool(context(unnamed), "mail__save_message", { uid: 4, save_dir: dir })).filename, "message-4.eml");
+
+  const gone = await errorOf(context(fakeClient()), "mail__save_message", { uid: 5, save_dir: dir });
+  assert.equal(gone.code, "mail_not_found");
+  const missing = await errorOf(context(fakeClient(script())), "mail__save_message", { uid: 9, save_dir: join(dir, "no-such-folder") });
+  assert.match(missing.message, /mail__save_message\.save_dir must be the absolute path of an existing folder/);
 });
 
 const FOLDERS = [
@@ -536,7 +567,7 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes 
   for (const t of buildContactsCalendarsEmailToolDefinitions()) assert.doesNotMatch(t.name, /delete|expunge|purge/i);
 });
 
-test("the contacts-calendars-email server lists the fourteen mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
+test("the contacts-calendars-email server lists the fifteen mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
   const mail = buildContactsCalendarsEmailToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
   assert.deepEqual(mail, [
     "mail__configure_credential",
@@ -552,6 +583,7 @@ test("the contacts-calendars-email server lists the fourteen mail tools and the 
     "mail__move_messages",
     "mail__rename_folder",
     "mail__save_draft",
+    "mail__save_message",
     "mail__search_emails",
   ]);
   for (const name of ["mail__create_folder", "mail__rename_folder", "mail__move_messages"]) {
@@ -567,7 +599,7 @@ test("the contacts-calendars-email server lists the fourteen mail tools and the 
     "contacts__search",
   ]);
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 19);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 20);
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

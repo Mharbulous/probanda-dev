@@ -631,7 +631,10 @@ export function caseDataFolder(matterRoot: string, env: NodeJS.ProcessEnv = proc
  * skill tree this server ships with, install-first (design-decisions.md #52). A missing file
  * fails here, before the lock or any staging; an empty one fails in do_execute, also before. */
 function caseDataTriggersSql(env: NodeJS.ProcessEnv): string {
-  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, { subject: "the matter-data trigger layer" });
+  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, {
+    subject: "the matter-data trigger layer",
+    plugin: "lawyer",
+  });
   const path = join(shipped.root, "matter-data", "references", "triggers.sql");
   if (!existsSync(path)) {
     throw new DataServerError(

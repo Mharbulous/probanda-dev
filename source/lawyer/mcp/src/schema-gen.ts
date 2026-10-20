@@ -3241,6 +3241,28 @@ export function mailToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: false },
     },
     {
+      name: "mail__save_message",
+      description:
+        "Save one message as the server stores it, byte for byte, as a .eml file in a folder the caller names, so its " +
+        "hash matches any other exact copy and nothing (inline images, headers) is lost to a rebuild from fields. " +
+        "`save_dir` must be the absolute path of an existing folder; the file is named from the subject " +
+        "(`message-<uid>.eml` when there is none) and never overwrites (a taken name gets \" (1)\", \" (2)\" and so on). " +
+        "Returns {saved, path, filename, size, sha256, messageId}. Fails `mail_not_found` when the UID is not in the " +
+        "folder. Writes only that one new file; the mailbox is opened read-only, so nothing is marked read." +
+        errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          save_dir: { type: "string" },
+        },
+        required: ["uid", "save_dir"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false },
+    },
+    {
       name: "mail__find_email_by_message_id",
       description:
         "Find where a message is now from its Message-ID (angle brackets optional), across every selectable folder: " +

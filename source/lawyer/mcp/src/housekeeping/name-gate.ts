@@ -51,6 +51,7 @@ export function fileNamingSkillDir(env: NodeJS.ProcessEnv = process.env, install
   const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
     code: "repo_root_missing",
     subject: "the file-naming name gate",
+    plugin: "lawyer",
     installRoot,
   });
   const dir = pathWin32.join(shipped.root, "file-naming");

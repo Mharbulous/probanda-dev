@@ -12,7 +12,7 @@ Two doctrines hold throughout:
 
 ## 1. Tools and the matter folder
 
-Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_forms__open_session`, `drafting_forms__render`, `drafting_data__query`, `drafting_data__execute` and the file-card tool in one ToolSearch, with the host prefix variants as SKILL.md section 6 loads them. The matter folder comes by section 6's **Matter folder** rule, and is never searched for. Pass that absolute path as `matter_root` on every call.
+Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_forms__draft_harness`, `drafting_forms__open_session`, `drafting_forms__render`, `drafting_data__query`, `drafting_data__execute` and the file-card tool in one ToolSearch, with the host prefix variants as SKILL.md section 6 loads them. The matter folder comes by section 6's **Matter folder** rule, and is never searched for. Pass that absolute path as `matter_root` on every call.
 
 ## 2. Find the message
 
@@ -68,7 +68,11 @@ Run it on the latest saved version when the practitioner asks for a final check 
 
 ## 6. Export
 
-When the practitioner asks for the Word copy, or says the reply is final:
+**The email.** When the practitioner asks to email the reply, or says it is final, write it as one unsent `.eml` by `shared/email.md`, the one route for any outgoing email: `drafting_forms__draft_harness` step `write_email`, loaded by ToolSearch with the host prefix variants.
+1. **Pass** `matter_root`; `to`, the message's sender as `read_message` returned it, which the practitioner confirms in one line, never a guessed address; `subject`, `Re: ` and the message's subject; `body`, the latest saved version's text with no closing and no name, because the signature supplies them; `output_name`, the reply's stem; no attachments.
+2. **Present the `.eml`** by `shared/email.md`'s Present rule: it opens in the mail program addressed, signed and From the firm address, ready to send. Each refusal is quoted in one line, as that file says.
+
+**The Word copy.** When the practitioner asks for one:
 1. **Run `reply_draft` step `export_docx`** on the latest saved `.md`.
 2. **Present the `.docx` and the `.md` as file cards (`shared/present-files.md`).** Say in one line that the `.docx` is for pasting into Outlook.
 3. **Taken names.** A taken name gets the next ` vN`, reported as `versioned_from`.

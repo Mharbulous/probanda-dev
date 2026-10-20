@@ -1,11 +1,13 @@
 // The mail__* tools of the lawyer plugin's data server (docs/Plans/2026-10-15_imap-mail.md,
-// step 4): IMAP reads, save_draft, which only appends to a folder, and three
+// step 4): IMAP reads, save_message and download_attachment, which write a read
+// message or part to a local folder, save_draft, which only appends to a folder, and three
 // organizing writes: create_folder, rename_folder and move_messages. No tool
 // sends, deletes a message or a folder, flags or marks read. Every read opens its
 // folder read-only. Tool definitions live in schema-gen.ts.
 
+import { createHash } from "node:crypto";
 import { readFileSync, statSync, writeFileSync } from "node:fs";
-import { extname, join, win32 as pathWin32 } from "node:path";
+import { basename, extname, join, win32 as pathWin32 } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { parseMime } from "../correspondence/eml.js";
@@ -76,6 +78,8 @@ export function callMailTool(context: MailContext, name: string, args: Args): Pr
       return getEmail(run, args);
     case "mail__download_attachment":
       return downloadAttachment(run, args);
+    case "mail__save_message":
+      return saveMessage(run, args);
     case "mail__find_email_by_message_id":
       return findByMessageId(run, args);
     case "mail__find_thread_messages":
@@ -408,10 +412,10 @@ function pickAttachment(list: AttachmentEntry[], filename: string | undefined, i
 }
 
 // A file name that is safe on Windows: no folder part and no reserved character.
-function safeName(name: string | undefined, index: number): string {
+function safeName(name: string | undefined, fallback: string): string {
   const base = (name ?? "").split(/[\\/]/).pop() ?? "";
   const clean = base.replace(/[<>:"|?*\x00-\x1F]/g, "_").replace(/[. ]+$/, "").trim();
-  return clean || `attachment-${index}`;
+  return clean || fallback;
 }
 
 // Writes `bytes` under `dir` without overwriting: "name (1).ext" and so on. The
@@ -430,12 +434,8 @@ function writeFree(dir: string, name: string, bytes: Buffer): string {
   }
 }
 
-async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
-  const folder = folderArg(args);
-  const uid = intArg("mail__download_attachment.uid", args.uid, undefined, 1);
-  const index = args.index === undefined ? undefined : intArg("mail__download_attachment.index", args.index, undefined, 0);
-  const filename = args.filename as string | undefined;
-  if (index === undefined && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
+// The absolute path of an existing folder, or a refusal naming the tool.
+function saveDirArg(tool: string, args: Args): string {
   const saveDir = args.save_dir as string;
   let isDir = false;
   try {
@@ -443,7 +443,17 @@ async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
   } catch {
     isDir = false;
   }
-  if (!isDir) throw new ValidationError("mail__download_attachment.save_dir must be the absolute path of an existing folder");
+  if (!isDir) throw new ValidationError(`${tool}.save_dir must be the absolute path of an existing folder`);
+  return saveDir;
+}
+
+async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
+  const folder = folderArg(args);
+  const uid = intArg("mail__download_attachment.uid", args.uid, undefined, 1);
+  const index = args.index === undefined ? undefined : intArg("mail__download_attachment.index", args.index, undefined, 0);
+  const filename = args.filename as string | undefined;
+  if (index === undefined && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
+  const saveDir = saveDirArg("mail__download_attachment", args);
 
   const { entry, bytes } = await run(`downloading an attachment of message ${uid} in "${folder}"`, async (client) => {
     await client.mailboxOpen(folder, { readOnly: true });
@@ -456,7 +466,7 @@ async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
     return { entry, bytes: Buffer.concat(chunks) };
   });
 
-  const name = safeName(entry.filename, entry.index);
+  const name = safeName(entry.filename, `attachment-${entry.index}`);
   const path = writeFree(saveDir, name, bytes);
   const result: Record<string, unknown> = {
     saved: true,
@@ -476,6 +486,32 @@ async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
     }
   }
   return result;
+}
+
+// Saves the message exactly as the server stores it, so its hash matches any other
+// byte-for-byte copy and no inline image or header is lost to a rebuild.
+async function saveMessage(run: Run, args: Args): Promise<unknown> {
+  const folder = folderArg(args);
+  const uid = intArg("mail__save_message.uid", args.uid, undefined, 1);
+  const saveDir = saveDirArg("mail__save_message", args);
+
+  const { source, messageId, subject } = await run(`saving message ${uid} in "${folder}"`, async (client) => {
+    await client.mailboxOpen(folder, { readOnly: true });
+    const m = await client.fetchOne(String(uid), { uid: true, source: true, envelope: true }, { uid: true });
+    if (!m || !m.source) throw notFound(uid, folder);
+    return { source: m.source, messageId: m.envelope?.messageId, subject: m.envelope?.subject };
+  });
+
+  const stem = safeName(subject?.replace(/[\\/]/g, "_").slice(0, 120), `message-${uid}`);
+  const path = writeFree(saveDir, `${stem}.eml`, source);
+  return {
+    saved: true,
+    path,
+    filename: basename(path),
+    size: source.length,
+    sha256: createHash("sha256").update(source).digest("hex"),
+    messageId,
+  };
 }
 
 // --- finding messages ---------------------------------------------------------------

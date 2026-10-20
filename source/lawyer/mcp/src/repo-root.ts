@@ -206,6 +206,8 @@ export interface ShippedRootRequest {
   code?: RepoRootCode;
   /** Named in that failure message. Default "the skills tree". */
   subject?: string;
+  /** The plugin source/assignment.json gives the skill the path starts with; the failure message names it. */
+  plugin?: string;
   /** Test seam only: the install root. Defaults to two levels above this module's dir. */
   installRoot?: string;
 }
@@ -390,7 +392,7 @@ export function resolveShippedRoot(
     return { root: join(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
-    throw new DataServerError(`${err.message}\n\n${rosterLine(installRoot, segment)}`, code);
+    throw new DataServerError(`${err.message}\n\n${rosterLine(installRoot, segment, request.plugin)}`, code);
   }
 }
 
@@ -402,7 +404,7 @@ function isDirectory(dir: string): boolean {
   }
 }
 
-function rosterLine(installRoot: string, segment: string): string {
+function rosterLine(installRoot: string, segment: string, plugin?: string): string {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length === 0) {
     return `This plugin bundles no skill source (${join(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
@@ -415,8 +417,10 @@ function rosterLine(installRoot: string, segment: string): string {
     (siblings.length
       ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. `
       : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") +
-    `The plugin that holds ${folder} is not installed on this PC's copy of the plugins ` +
-    "(in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it."
+    (plugin
+      ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.`
+      : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins ` +
+        "(in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.")
   );
 }
 
@@ -460,11 +464,19 @@ export function submissionDataMigrateScriptsDir(env?: NodeJS.ProcessEnv, install
   return migrateScriptsDir("drafting-data", env, installRoot);
 }
 
+/** The plugin source/assignment.json gives each skill that owns a migrate_engine.py. */
+const MIGRATE_SKILL_PLUGIN: Record<string, string> = {
+  "matter-data": "lawyer",
+  "timecamping-data": "timekeeper",
+  "drafting-data": "litigator",
+};
+
 /** `<skill>/references/scripts/`, install-first. Keeps the `repo_root_missing` code these resolvers always threw. */
 function migrateScriptsDir(skill: string, env: NodeJS.ProcessEnv | undefined, installRoot: string | undefined): string {
   const shipped = resolveShippedRoot(`${skill}/references/scripts/migrate_engine.py`, env ?? process.env, {
     code: "repo_root_missing",
     subject: `the ${skill} maintenance scripts`,
+    plugin: MIGRATE_SKILL_PLUGIN[skill],
     installRoot,
   });
   const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
@@ -491,8 +503,8 @@ function missingMessage(subject: string, env: NodeJS.ProcessEnv, tried: string[]
     }`,
     ...tried.map((t, i) => `  ${i + 2}. ${t}`),
     "",
-    "Practitioner: install the plugin named below if it is missing, then fully restart the app. If this error",
-    "comes back, run /lawyer:suggestion naming it.",
+    "Practitioner: check for updates to the Probanda plugins in the desktop app, then fully restart the app.",
+    "If this error comes back, run /lawyer:suggestion naming it.",
     "Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a \"repo_root\" key to",
     `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
     "  then fully restart the app.",

@@ -67,6 +67,25 @@ ENTRY_POINT_REGISTRY = (
     },
 )
 
+# Skills-tree paths the data runtime resolves at call time (resolveShippedRoot). A
+# rename on either side breaks every write that needs the file, and only on an
+# installed copy. Each entry pins the `literal` that names the path in `source`, a
+# path inside the source folder of `server`, and the `path` some built plugin must
+# ship under skills/. An entry is checked in the plugin that ships that server.
+SHIPPED_PATH_REGISTRY = (
+    {"path": "matter-data/references/triggers.sql", "literal": '"matter-data/references/triggers.sql"',
+     "source": "src/case/backend.ts", "server": "data"},
+    {"path": "file-naming/scripts/name_gate.py", "literal": '"file-naming/scripts/name_gate.py"',
+     "source": "src/housekeeping/name-gate.ts", "server": "data"},
+    # migrateScriptsDir builds `${skill}/references/scripts/migrate_engine.py` from these names.
+    {"path": "matter-data/references/scripts/migrate_engine.py", "literal": 'migrateScriptsDir("matter-data"',
+     "source": "src/repo-root.ts", "server": "data"},
+    {"path": "timecamping-data/references/scripts/migrate_engine.py",
+     "literal": 'migrateScriptsDir("timecamping-data"', "source": "src/repo-root.ts", "server": "data"},
+    {"path": "drafting-data/references/scripts/migrate_engine.py", "literal": 'migrateScriptsDir("drafting-data"',
+     "source": "src/repo-root.ts", "server": "data"},
+)
+
 # Cowork treats "claude" as a reserved word in installed skill names and silently
 # renames on install. Segment match only, so prose is never scanned.
 RESERVED_NAME = re.compile(r"(?:^|[-_.])claude(?:[-_.]|$)", re.IGNORECASE)
@@ -1138,6 +1157,22 @@ def check_entry_point_registry(repo, plugin):
     return not ep_hits, "; ".join(ep_hits)
 
 
+def check_shipped_path_registry(repo, plugin):
+    entries = [e for e in SHIPPED_PATH_REGISTRY if e["server"] in plugin["servers"]]
+    if not entries:
+        raise NotApplicable(f"{plugin['name']} ships no server that resolves a pinned skills-tree path")
+    hits = []
+    for entry in entries:
+        source = server_path(repo, plugin, entry["server"], *entry["source"].split("/"))
+        with open(source, encoding="utf-8") as f:
+            text = f.read()
+        if entry["literal"] not in text:
+            hits.append(f"{entry['source']} no longer holds {entry['literal']}")
+        if not glob.glob(os.path.join(repo, "plugins", "*", "skills", *entry["path"].split("/"))):
+            hits.append(f"no built plugin ships skills/{entry['path']}")
+    return not hits, "; ".join(hits)
+
+
 def bundle_purity_hits(server, text):
     """The purity tokens one server's bundle text carries (see PURITY_SERVERS)."""
     lowered = text.lower()
@@ -1366,6 +1401,8 @@ CHECKS = (
      check_reference_resolution),
     ("entry-point-registry: pinned Python entry-point symbols exist and match their consumers' imports",
      check_entry_point_registry),
+    ("shipped-path-registry: every skills-tree path the data server resolves is named in its source and "
+     "ships in a built plugin", check_shipped_path_registry),
     ("bundle-purity: no canlii or files dist bundle carries 'supabase' or 'legal_commons__'; the data "
      "bundle carries no 'legal_commons__', no '/rest/v1/' and no 'functions/v1/' path but items-write, "
      "items-sync and items-seed", check_bundle_purity),

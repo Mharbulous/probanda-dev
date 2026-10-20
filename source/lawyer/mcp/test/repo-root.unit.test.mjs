@@ -251,6 +251,7 @@ test("the three surfaces keep their own error codes, and the message names both 
       assert.match(err.message, /COCLERK_REPO_ROOT/);
       assert.match(err.message, /repo_root/);
       assert.match(err.message, /probanda\.json/);
+      assert.doesNotMatch(err.message, /named below/, "the message names no plugin, so it promises none");
     }
   }
 });

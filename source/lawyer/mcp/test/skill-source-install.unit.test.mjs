@@ -130,6 +130,23 @@ test("a non-bundled folder with no checkout is skills_root_missing naming the in
   assert.match(err.message, /The plugin that holds "devtool" is not installed on this PC's copy/);
 });
 
+test("a missing root whose request names its plugin says which plugin ships the folder", (t) => {
+  const inst = installFixture(t);
+  const err = errorOf(() =>
+    resolveShippedRoot("devtool/references/triggers.sql", NO_CHECKOUT, { plugin: "lawyer", installRoot: inst.root }),
+  );
+  assert.equal(err.code, "skills_root_missing");
+  assert.match(err.message, /The "lawyer" plugin ships "devtool"\. Install it, or update it, in the desktop app/);
+  assert.doesNotMatch(err.message, /named below/);
+});
+
+test("a missing root with no plugin named promises no name", (t) => {
+  const inst = installFixture(t);
+  const err = errorOf(() => resolveShippedRoot("devtool/SKILL.md", NO_CHECKOUT, { installRoot: inst.root }));
+  assert.doesNotMatch(err.message, /named below/);
+  assert.match(err.message, /Check for updates in the desktop app/);
+});
+
 test("a non-bundled folder is read from the checkout when one resolves", (t) => {
   const inst = installFixture(t);
   const co = checkoutFixture(t);
