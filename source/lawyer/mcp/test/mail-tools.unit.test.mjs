@@ -321,6 +321,20 @@ test("the sign-in page saves nothing on a refused sign-in, saves on a good one, 
   assert.equal(JSON.stringify(status).includes(FAKE_PASSWORD), false);
 });
 
+test("the sign-in page hints at the Apple ID exactly when an iCloud host has a username outside icloud.com, me.com and mac.com", async () => {
+  const hint = /iCloud Mail signs in with your Apple ID/;
+  const pageFor = async (host, username) => {
+    const started = await callTool(context(fakeClient(), null), "mail__configure_credential", { host, username });
+    return (await fetch(started.url)).text();
+  };
+  assert.match(await pageFor("imap.mail.me.com", "name@example.com"), hint);
+  assert.match(await pageFor("IMAP.mail.me.com", "name"), hint);
+  for (const username of ["name@icloud.com", "name@me.com", "Name@Mac.com"]) {
+    assert.doesNotMatch(await pageFor("imap.mail.me.com", username), hint, username);
+  }
+  assert.doesNotMatch(await pageFor("imap.example.test", "name@example.com"), hint);
+});
+
 test("save_draft appends the .eml to Drafts with \\Draft and \\Seen and writes nothing else", async (t) => {
   const dir = tempDir(t, "coclerk-mail-draft-");
   const eml = join(dir, "draft.eml");

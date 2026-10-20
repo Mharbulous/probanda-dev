@@ -48,6 +48,18 @@ const SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an
 
 const SENT_TO = "Your password will be sent to: ";
 
+// A hint only: the page never blocks or rewrites the username.
+const APPLE_ID_HINT =
+  "iCloud Mail signs in with your Apple ID (an @icloud.com, @me.com or @mac.com address), even when you send from " +
+  "your own domain. If the username above is not your Apple ID, return to Claude and set it up again with the Apple ID.";
+
+/** True when the host is iCloud Mail and the username is not an Apple ID address. */
+export function needsAppleIdHint(fields: Pick<CredentialFields, "host" | "username">): boolean {
+  if (fields.host.trim().toLowerCase() !== "imap.mail.me.com") return false;
+  const domain = fields.username.trim().toLowerCase().split("@")[1] ?? "";
+  return !["icloud.com", "me.com", "mac.com"].includes(domain);
+}
+
 // What the save does (saveCredential in tools.ts). Each line must stay true to that code.
 const FLOW =
   "<h2>What happens when you click Sign in and save</h2><ol>" +
@@ -145,6 +157,7 @@ function form(fields: CredentialFields): string {
     row("Time zone", fields.timezone) +
     row("Contacts server", fields.carddavUrl) +
     "</dl>" +
+    (needsAppleIdHint(fields) ? "<p>" + APPLE_ID_HINT + "</p>" : "") +
     "<p>" + SENT_TO + escape(recipients(fields)) + "</p>" +
     '<form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + "</label>" +
     "<button type=\"submit\">Sign in and save</button></form>" +

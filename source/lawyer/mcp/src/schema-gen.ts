@@ -3074,7 +3074,8 @@ export function mailToolDefinitions(): ToolDefinition[] {
         "calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as " +
         "America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from " +
         "the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, " +
-        "https://contacts.icloud.com, and the Apple ID as `dav_username`. Run again without `dav_username`, " +
+        "https://contacts.icloud.com, and the Apple ID (an @icloud.com, @me.com or @mac.com address) as `username` and " +
+        "`dav_username`, even for a custom-domain address, which goes in `from_address`. Run again without `dav_username`, " +
         "`caldav_url`, `carddav_url` or `timezone` and the saved value of each is kept; give an empty string to clear one. " +
         "Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, " +
         "host, username, next}: send the practitioner the `url`, a page on this computer where they type the password " +
