@@ -1575,7 +1575,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Merge two Job Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
         "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side " +
-        "and ask whether to merge them; call this only after their next turn is a bare yes, and pass confirmed: true. " +
+        "and ask whether to merge them, saying that each Writing stays a separate filing with its own documents and " +
+        "numbering and that only the Job Board page, view pages and goals combine; call this only after their next " +
+        "turn is a bare yes, and pass confirmed: true. " +
         "boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and " +
         "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
         "a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. " +

@@ -1,4 +1,4 @@
-// build-stamp: 3174125488e0
+// build-stamp: ab65f6e90402
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77651,7 +77651,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("merge_job_boards"),
-      description: "Merge two Job Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side and ask whether to merge them; call this only after their next turn is a bare yes, and pass confirmed: true. boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and Writings, and one set of view pages across all its Writings, named by the survivor's id; the absorbed board's pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the survivor's, and boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: invalid_boards, invalid_board, not_confirmed, invalid_session_token, not_found, board_retired, proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed (each {filing_id, proceeding_id}), goals (the survivor's count of statements) and a note.",
+      description: "Merge two Job Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side and ask whether to merge them, saying that each Writing stays a separate filing with its own documents and numbering and that only the Job Board page, view pages and goals combine; call this only after their next turn is a bare yes, and pass confirmed: true. boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and Writings, and one set of view pages across all its Writings, named by the survivor's id; the absorbed board's pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the survivor's, and boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: invalid_boards, invalid_board, not_confirmed, invalid_session_token, not_found, board_retired, proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed (each {filing_id, proceeding_id}), goals (the survivor's count of statements) and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -85494,7 +85494,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "3174125488e0";
+var BUILD_STAMP = false ? null : "ab65f6e90402";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
