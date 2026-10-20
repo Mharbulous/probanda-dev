@@ -67,3 +67,15 @@ None.
 ## 10. Verify against HEAD before building
 
 Re-read practice-data §Mail and page.ts at HEAD. Locate where the `mail__configure_credential` description text is defined (**UNVERIFIED**). Confirm that troubleshooter.md has no existing iCloud entry.
+
+### Verification at HEAD `80b3139d` (2026-10-20)
+
+| Claim | Result | Where |
+|---|---|---|
+| practice-data §Mail says to ask for host, port and username rather than guessing | Confirmed, now line 213 | `.claude/skills/practice-data/SKILL.md` |
+| SECRET_HINT names an app-specific password and gives no username hint | Confirmed, line 47 | `source/lawyer/mcp/src/mail/page.ts` |
+| The page has no host-based hint | Confirmed: `form()` shows the fields, SECRET_HINT and the flow only | `source/lawyer/mcp/src/mail/page.ts` lines 139-155 |
+| Where the `mail__configure_credential` description is defined | `schema-gen.ts` lines 3071-3077 ("the Apple ID as `dav_username`"). `mail/imap.ts` mentions me.com elsewhere, not in this description | `source/lawyer/mcp/src/schema-gen.ts` |
+| `mail_auth` is the code for a refused IMAP sign-in | Confirmed, and its message already says "Check the username and the app-specific password" | `source/lawyer/mcp/src/mail/imap.ts` line 143 |
+| troubleshooter.md has no iCloud entry | Confirmed: no match for iCloud, me.com or mail_auth, and the file has no shipped-checks section yet | `source/researcher/agents/troubleshooter.md` |
+| An existing test serves and fetches the sign-in page | Confirmed, the sign-in page test | `source/lawyer/mcp/test/mail-tools.unit.test.mjs` line 280 |
