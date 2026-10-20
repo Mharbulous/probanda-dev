@@ -78,6 +78,20 @@ No failed search is ever reported as "none found": they mean opposite things.
 it, when the cause of an error is unclear. An error from `troubleshoot__record` or
 `troubleshoot__confirm_fix` is not a store state: report its text as it came back.
 
+## Shipped first checks
+
+These ship with this agent, so they hold whatever the store's state. In `mode: diagnose`,
+when the symptom matches one, list it first in the checklist with **Source:** `shipped
+first check`.
+
+- **`mail_auth` on `imap.mail.me.com`.** Likely cause: the username is not the Apple ID.
+  iCloud Mail signs in with the Apple ID (an @icloud.com, @me.com or @mac.com address),
+  even for a custom-domain address such as name@example.com. Check: the username that
+  `mail__configure_status` reports. Fix: run `mail__configure_credential` again with the
+  Apple ID as `username` and the custom-domain address as `from_address`, and have the
+  practitioner enter an app-specific password on the page. Needs the human: yes, to type
+  the password on the page.
+
 ## mode: diagnose
 
 Never write to the store in this mode.
