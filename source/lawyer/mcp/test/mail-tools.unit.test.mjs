@@ -82,8 +82,6 @@ function fakeClient(script = {}) {
     async mailboxCreate(path) { record("mailboxCreate", path); return { path, created: true }; },
     async mailboxRename(path, newPath) { record("mailboxRename", path, newPath); return { path, newPath }; },
     async messageMove(range, destination, options) { record("messageMove", range, destination, options); return false; },
-    async messageCopy(range, destination, options) { record("messageCopy", range, destination, options); return false; },
-    async messageDelete(range, options) { record("messageDelete", range, options); return false; },
   };
   return Object.assign(client, script.methods ?? {});
 }
@@ -384,9 +382,9 @@ const FOLDERS = [
   { path: "Group", delimiter: "/", flags: new Set(["\\Noselect"]) },
 ];
 
-// A source folder holding `uids`, on a server with `caps`. The move and the
-// UID-scoped removal take messages out of it; search reports what is still there.
-function mailboxClient(uids, caps, overrides = {}) {
+// A source folder holding `uids`, on a server with `caps`. The move takes
+// messages out of it; search reports what is still there.
+function mailboxClient(uids, caps) {
   const box = new Set(uids);
   const pick = (range) => String(range).split(",").map(Number).filter((u) => box.has(u));
   const client = fakeClient({ folders: FOLDERS, capabilities: new Map(caps.map((c) => [c, true])) });
@@ -399,16 +397,7 @@ function mailboxClient(uids, caps, overrides = {}) {
       for (const u of moved) box.delete(u);
       return { destination, uidMap: new Map(moved.map((u) => [u, u + 100])) };
     },
-    async messageCopy(range, destination, options) {
-      client.calls.push({ name: "messageCopy", args: [range, destination, options] });
-      return { destination, uidMap: new Map(pick(range).map((u) => [u, u + 100])) };
-    },
-    async messageDelete(range, options) {
-      client.calls.push({ name: "messageDelete", args: [range, options] });
-      for (const u of pick(range)) box.delete(u);
-      return true;
-    },
-  }, overrides);
+  });
 }
 
 const writableOpens = (client) => client.calls.filter((c) => c.name === "mailboxOpen" && c.args[1].readOnly === false);
@@ -420,50 +409,23 @@ test("move_messages with MOVE takes only the named UIDs out of the folder and re
   assert.deepEqual(result, {
     folder: "INBOX",
     destination: "Deleted Items",
-    method: "MOVE",
     moved: [{ uid: 2, newUid: 102 }, { uid: 4, newUid: 104 }],
     notFound: [9],
     notMoved: [],
   });
   assert.deepEqual(client.calls.find((c) => c.name === "messageMove").args, ["2,4", "Deleted Items", { uid: true }]);
   assert.equal(writableOpens(client).length, 1);
-  assert.equal(client.names().includes("messageDelete"), false);
-  assert.equal(client.names().includes("messageCopy"), false);
 });
 
-test("move_messages without MOVE copies, then removes exactly the copied UIDs by UID", async () => {
-  const client = mailboxClient([1, 2, 3, 4, 5], ["UIDPLUS"]);
-  const result = await callTool(context(client), "mail__move_messages", { folder: "INBOX", uids: [3, 5], destination: "Clients/Example" });
-  assert.deepEqual([...client.box].sort(), [1, 2, 4]);
-  assert.equal(result.method, "COPY + UID EXPUNGE");
-  assert.deepEqual(result.moved, [{ uid: 3, newUid: 103 }, { uid: 5, newUid: 105 }]);
-  const deletes = client.calls.filter((c) => c.name === "messageDelete");
-  assert.equal(deletes.length, 1);
-  assert.deepEqual(deletes[0].args, ["3,5", { uid: true }]);
-  assert.equal(client.names().includes("messageMove"), false);
-});
-
-test("move_messages refuses a server with neither MOVE nor UIDPLUS before changing anything", async () => {
-  const client = mailboxClient([1, 2], []);
-  const error = await errorOf(context(client), "mail__move_messages", { folder: "INBOX", uids: [1], destination: "Clients" });
-  assert.equal(error.code, "mail_move_unsupported");
-  assert.deepEqual(client.box, new Set([1, 2]));
-  assert.equal(writableOpens(client).length, 0);
-  for (const name of ["messageMove", "messageCopy", "messageDelete"]) assert.equal(client.names().includes(name), false, name);
-});
-
-test("move_messages removes nothing when the server does not confirm which UIDs it copied", async () => {
-  const client = mailboxClient([1, 2], ["UIDPLUS"], {
-    async messageCopy(range, destination, options) {
-      client.calls.push({ name: "messageCopy", args: [range, destination, options] });
-      return { destination };
-    },
-  });
-  const error = await errorOf(context(client), "mail__move_messages", { folder: "INBOX", uids: [1, 2], destination: "Clients" });
-  assert.equal(error.code, "mail_error");
-  assert.match(error.message, /originals were left in "INBOX"/);
-  assert.deepEqual(client.box, new Set([1, 2]));
-  assert.equal(client.names().includes("messageDelete"), false);
+test("move_messages refuses a server without MOVE before changing anything, even one with UIDPLUS", async () => {
+  for (const caps of [["UIDPLUS"], []]) {
+    const client = mailboxClient([1, 2], caps);
+    const error = await errorOf(context(client), "mail__move_messages", { folder: "INBOX", uids: [1], destination: "Clients" });
+    assert.equal(error.code, "mail_move_unsupported", JSON.stringify(caps));
+    assert.deepEqual(client.box, new Set([1, 2]));
+    assert.equal(writableOpens(client).length, 0);
+    assert.equal(client.names().includes("messageMove"), false);
+  }
 });
 
 test("move_messages refuses a missing or folder-only destination, the same folder, and bad UIDs, before any write", async () => {
@@ -527,9 +489,9 @@ test("rename_folder renames an ordinary folder and refuses INBOX, a special-use 
   }
 });
 
-test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes a folder, flags, removes mail without a UID scope, opens a folder writable outside the move, or puts the password in a message", () => {
-  const forbidden = ["mailboxDelete", "messageFlagsAdd", "messageFlagsRemove", "messageFlagsSet"];
-  const once = ["messageMove", "messageCopy", "mailboxCreate", "mailboxRename", "messageDelete"];
+test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes a folder or a message, copies or flags mail, expunges, opens a folder writable outside the move, or puts the password in a message", () => {
+  const forbidden = ["mailboxDelete", "messageDelete", "messageCopy", "messageFlagsAdd", "messageFlagsRemove", "messageFlagsSet"];
+  const once = ["messageMove", "mailboxCreate", "mailboxRename"];
   const calls = Object.fromEntries(once.map((n) => [n, []]));
   let writable = 0;
   const mailFiles = readdirSync(MAIL_SRC).filter((f) => f.endsWith(".ts"));
@@ -545,9 +507,7 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes 
   for (const file of files) {
     const text = readFileSync(file, "utf-8");
     for (const name of forbidden) assert.equal(text.includes(name), false, `${file} names ${name}`);
-    for (const m of text.matchAll(/expunge/gi)) {
-      assert.equal(text.slice(m.index - 4, m.index).toUpperCase(), "UID ", `${file}: an expunge without a UID scope`);
-    }
+    assert.equal(/expunge/i.test(text), false, `${file} names expunge`);
     for (const name of once) for (const m of text.matchAll(new RegExp(`\\.${name}\\(`, "g"))) calls[name].push({ file, index: m.index, text });
     for (const m of text.matchAll(/mailboxOpen\(([^)]*)\)/g)) {
       if (m[1].includes("options:")) continue; // the ImapClientLike declaration
@@ -569,11 +529,10 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes 
     assert.equal(calls[name].length, 1, `${name} is called ${calls[name].length} times`);
     assert.ok(calls[name][0].file.endsWith("tools.ts"), `${name} is called outside tools.ts`);
   }
-  // The one removal is UID-scoped and follows its own UIDPLUS check.
-  const del = calls.messageDelete[0];
-  assert.match(del.text.slice(del.index).split("\n")[0], /^\.messageDelete\(.*, \{ uid: true \}\);$/);
-  const fn = del.text.slice(del.text.lastIndexOf("function ", del.index), del.index);
-  assert.match(fn, /capabilities\.has\("UIDPLUS"\)/);
+  // The one move follows its own MOVE check, so imapflow never falls back to copy and remove.
+  const move = calls.messageMove[0];
+  const fn = move.text.slice(move.text.lastIndexOf("function ", move.index), move.index);
+  assert.match(fn, /if \(!client\.capabilities\.has\("MOVE"\)\)/);
   for (const t of buildContactsCalendarsEmailToolDefinitions()) assert.doesNotMatch(t.name, /delete|expunge|purge/i);
 });
 

@@ -31,7 +31,6 @@ import {
   runImap,
   sentFolder,
   withImap,
-  type CopyResult,
   type FolderEntry,
   type ImapClientFactory,
   type ImapClientLike,
@@ -622,11 +621,9 @@ function renameFolder(run: Run, args: Args): Promise<unknown> {
   });
 }
 
-// Moves only the named UIDs. imapflow's messageMove, on a server without MOVE,
-// copies and then removes with an unscoped command that would also remove every
-// other message marked deleted in the folder, and does so even when the copy
-// failed. So the route is chosen here: MOVE, else copyThenRemove on a UIDPLUS
-// server, else a refusal before anything changes.
+// Moves only the named UIDs, and only by the server's MOVE. imapflow's
+// messageMove, on a server without MOVE, copies and then permanently removes the
+// originals, so a server without MOVE is refused before anything changes.
 function moveMessages(run: Run, args: Args): Promise<unknown> {
   const folder = folderName("mail__move_messages.folder", args.folder);
   const destination = folderName("mail__move_messages.destination", args.destination);
@@ -646,11 +643,10 @@ function moveMessages(run: Run, args: Args): Promise<unknown> {
     }
     const [source, target] = [ends[0]!.path, ends[1]!.path];
     if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
-    const canMove = client.capabilities.has("MOVE");
-    if (!canMove && !client.capabilities.has("UIDPLUS")) {
+    if (!client.capabilities.has("MOVE")) {
       throw new DataServerError(
-        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking the removal of " +
-          "other messages; nothing was changed. Move them in the practitioner's mail program instead.",
+        "this mail server does not offer MOVE, so messages cannot be moved without deleting the originals; " +
+          "nothing was changed. Move them in the practitioner's mail program instead.",
         "mail_move_unsupported"
       );
     }
@@ -662,47 +658,16 @@ function moveMessages(run: Run, args: Args): Promise<unknown> {
       throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
     }
     const range = existing.join(",");
-    let result: CopyResult | false;
-    if (canMove) {
-      result = await client.messageMove(range, target, { uid: true });
-      if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
-    } else {
-      result = await copyThenRemove(client, range, source, target);
-    }
+    const result = await client.messageMove(range, target, { uid: true });
+    if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
     const left = new Set((await client.search({ uid: range }, { uid: true })) || []);
     const map = result.uidMap;
     return {
       folder: source,
       destination: target,
-      method: canMove ? "MOVE" : "COPY + UID EXPUNGE",
       moved: existing.filter((u) => !left.has(u)).map((u) => (map?.has(u) ? { uid: u, newUid: map.get(u) } : { uid: u })),
       notFound,
       notMoved: existing.filter((u) => left.has(u)),
     };
   });
-}
-
-// Copies, then removes from the source only the UIDs the server confirms it
-// copied. With UIDPLUS, messageDelete with uid: true is a UID-scoped removal of
-// exactly those UIDs.
-async function copyThenRemove(client: ImapClientLike, range: string, source: string, target: string): Promise<CopyResult> {
-  const copy = await client.messageCopy(range, target, { uid: true });
-  if (!copy) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was moved`, "mail_error");
-  const confirmed = [...(copy.uidMap?.keys() ?? [])];
-  if (confirmed.length === 0) {
-    throw new DataServerError(
-      `the server copied the messages to "${target}" but did not say which, so the originals were left in "${source}"; ` +
-        `"${target}" may now hold copies`,
-      "mail_error"
-    );
-  }
-  if (!client.capabilities.has("UIDPLUS")) throw new DataServerError("the server does not offer UIDPLUS; nothing was removed", "mail_move_unsupported");
-  const removed = await client.messageDelete(confirmed.join(","), { uid: true });
-  if (!removed) {
-    throw new DataServerError(
-      `the messages were copied to "${target}" but the originals could not be removed from "${source}", so each is now in both folders`,
-      "mail_error"
-    );
-  }
-  return copy;
 }
