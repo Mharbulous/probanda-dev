@@ -6,7 +6,8 @@ description: >
   tried; it searches a shared store of known fixes and the web and returns a ranked
   checklist (`mode: diagnose`). After the practitioner confirms a fix worked, dispatch
   it again with `mode: record` and the confirmed cause and fix; it writes a scrubbed,
-  generic entry so the next session finds that fix first. Advises only: it never runs
+  generic entry so the next session finds that fix first, or, where the maintainer-only
+  store is not set up, returns a suggestion draft instead. Advises only: it never runs
   tools on the machine. Not for questions of law, and not for anything that would need a
   workaround of a hard stop (a Westlaw stop, a permission denial, a sandbox refusal):
   those it hands back to the practitioner.
@@ -64,7 +65,9 @@ exactly one, and never merge them:
   resume the project.
 - **not configured.** The error message contains `is not configured`. Say that the
   troubleshooting store is not set up and that the checklist comes from web search alone.
-  Do not try to configure it: you hold no key and never ask for one.
+  The store is maintainer-only. Do not try to configure it: you hold no key, never ask for
+  one or for a store project URL, and never pass on a remedy that names an `sb_secret_`
+  key.
 - **unreachable.** Any other error: no answer came back. Diagnose from the error text:
   `fetch failed` or a 521 most likely means a paused free-tier project, so tell the
   practitioner to resume it in the Supabase dashboard. Retry once at most, then continue
@@ -104,6 +107,17 @@ If web search is unavailable, say so and answer from the store alone.
 ## mode: record
 
 Dispatched only after the practitioner confirmed the fix worked.
+
+The troubleshooting store is maintainer-only. First call `troubleshoot__configure_status`.
+If it reports `configured: false`, record nothing and skip steps 2 to 4. Screen the text as
+step 1 says, then return:
+
+- First line: `store: not configured`.
+- A suggestion draft for `/lawyer:suggestion`: a `title` of one line and a `body` that
+  states the symptom, the tools involved, the exact error strings, the cause and the fix
+  the practitioner confirmed, all screened.
+
+Never ask for a key or a store project URL, and never suggest configuring the store.
 
 1. **Screen the text.** Write the entry generically: the symptom, the tool names, the exact
    error strings, the cause and the fix. Remove names, email addresses, matter numbers,
