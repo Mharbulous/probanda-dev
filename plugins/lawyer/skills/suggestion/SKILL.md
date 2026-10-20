@@ -26,7 +26,7 @@ The installed plugin is a read-only synced copy. Never look for, clone or edit i
 ## 1. Before starting
 
 - **Outcome check.** When `suggestion_log__read` lists any suggestion whose `last_status` differs from `last_shown_status`, or `new` was last seen, call `suggestion_box__status` with those ids. For each status that changed, say one line ("Your suggestion about the deadline summary was approved."), then record it with `suggestion_log__write({op: "seen", suggestion_id, status})`. If the status tool is not in the tool list, or the call fails, skip this silently: an older researcher plugin lacks the tool, and the cloud may not answer yet.
-- **Posting needs the researcher plugin.** `suggestion_box__submit` is served by it. If it is absent, Path A's preference still works: say in one line that sending a suggestion needs the researcher plugin, and offer only the preference. If `legal_commons__configure_status` does not report `configured: true`, say in one line that the Suggestion Box needs Probanda's key set once through `legal_commons__configure_credential`, and offer only the preference.
+- **Posting needs the researcher plugin.** `suggestion_box__submit` is served by it. If it is absent, Path A's preference still works: say in one line that sending a suggestion needs the researcher plugin, and offer only the preference. If `legal_commons__configure_status` does not report `configured: true`, say in one line that the Suggestion Box needs Probanda's key set once through `legal_commons__configure_credential`, and that a practitioner with no key asks Probanda for one through `key_request__submit`, and offer only the preference.
 
 ## 2. Extract the pains
 

@@ -48,7 +48,8 @@ permitted to make statements of law.
    as `canlii: no_key`, the pool's as `commons: missing_credential`, and each preflight
    issue as its `row`. With every row ok, say nothing. Otherwise tell the practitioner
    in one line what this run will be capped on and each fix: the issue's `caps` and
-   `fix`, and for CanLII or the pool their own `configure_credential` step. An install
+   `fix`, and for CanLII or the pool their own `configure_credential` step (for the pool
+   with no key, `key_request__submit`). An install
    command such as `pip install pypdf` is the practitioner's to run, never yours. Then
    go straight on: nothing waits on a fix, and Westlaw is not delayed. A preflight call
    that itself fails goes in that line as its row's error, never a stop. Carry the rows

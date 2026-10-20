@@ -6,7 +6,8 @@ description: >
   tried; it searches a shared store of known fixes and the web and returns a ranked
   checklist (`mode: diagnose`). After the practitioner confirms a fix worked, dispatch
   it again with `mode: record` and the confirmed cause and fix; it writes a scrubbed,
-  generic entry so the next session finds that fix first. Advises only: it never runs
+  generic entry so the next session finds that fix first, or, where the maintainer-only
+  store is not set up, returns a suggestion draft instead. Advises only: it never runs
   tools on the machine. Not for questions of law, and not for anything that would need a
   workaround of a hard stop (a Westlaw stop, a permission denial, a sandbox refusal):
   those it hands back to the practitioner.
@@ -64,7 +65,9 @@ exactly one, and never merge them:
   resume the project.
 - **not configured.** The error message contains `is not configured`. Say that the
   troubleshooting store is not set up and that the checklist comes from web search alone.
-  Do not try to configure it: you hold no key and never ask for one.
+  The store is maintainer-only. Do not try to configure it: you hold no key, never ask for
+  one or for a store project URL, and never pass on a remedy that names an `sb_secret_`
+  key.
 - **unreachable.** Any other error: no answer came back. Diagnose from the error text:
   `fetch failed` or a 521 most likely means a paused free-tier project, so tell the
   practitioner to resume it in the Supabase dashboard. Retry once at most, then continue
@@ -74,6 +77,20 @@ No failed search is ever reported as "none found": they mean opposite things.
 `troubleshoot__configure_status` reports whether a credential is held, without exposing
 it, when the cause of an error is unclear. An error from `troubleshoot__record` or
 `troubleshoot__confirm_fix` is not a store state: report its text as it came back.
+
+## Shipped first checks
+
+These ship with this agent, so they hold whatever the store's state. In `mode: diagnose`,
+when the symptom matches one, list it first in the checklist with **Source:** `shipped
+first check`.
+
+- **`mail_auth` on `imap.mail.me.com`.** Likely cause: the username is not the Apple ID.
+  iCloud Mail signs in with the Apple ID (an @icloud.com, @me.com or @mac.com address),
+  even for a custom-domain address such as name@example.com. Check: the username that
+  `mail__configure_status` reports. Fix: run `mail__configure_credential` again with the
+  Apple ID as `username` and the custom-domain address as `from_address`, and have the
+  practitioner enter an app-specific password on the page. Needs the human: yes, to type
+  the password on the page.
 
 ## mode: diagnose
 
@@ -104,6 +121,17 @@ If web search is unavailable, say so and answer from the store alone.
 ## mode: record
 
 Dispatched only after the practitioner confirmed the fix worked.
+
+The troubleshooting store is maintainer-only. First call `troubleshoot__configure_status`.
+If it reports `configured: false`, record nothing and skip steps 2 to 4. Screen the text as
+step 1 says, then return:
+
+- First line: `store: not configured`.
+- A suggestion draft for `/lawyer:suggestion`: a `title` of one line and a `body` that
+  states the symptom, the tools involved, the exact error strings, the cause and the fix
+  the practitioner confirmed, all screened.
+
+Never ask for a key or a store project URL, and never suggest configuring the store.
 
 1. **Screen the text.** Write the entry generically: the symptom, the tool names, the exact
    error strings, the cause and the fix. Remove names, email addresses, matter numbers,

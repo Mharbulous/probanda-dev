@@ -62,6 +62,6 @@ Follow `references/folder-layout.md`. It compares one of the practitioner's matt
 
 1. Call `practice_data__matter_lookup` with any matter reference. An empty result is fine on a new install. A path-resolution error is not, and means step 3 did not take.
 2. Call `practice_data__config_status` again and confirm `exists: true` and `practice_db_exists: true`.
-3. If `cloud_credential` is `missing`, tell the practitioner that every practice write will fail until Probanda's Cloud credential is set, and that the failing write names the tool that sets it.
+3. If `cloud_credential` is `missing`, tell the practitioner that every practice write will fail until Probanda's Cloud credential is set, and that the failing write names the tool that sets it. If they have no key, and the researcher plugin is installed, call `key_request__submit` and send them the link it returns, so they can ask Probanda for one. Without the researcher plugin, say that asking for a key needs it.
 4. Tell the practitioner which `keys_missing` remain. Each is left to the skill that needs it (practice-data's Configuration).
 5. Return to the task that was interrupted.
