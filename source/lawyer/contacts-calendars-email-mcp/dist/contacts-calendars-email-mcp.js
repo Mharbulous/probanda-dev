@@ -1,4 +1,4 @@
-// build-stamp: 44d47116bf7b
+// build-stamp: c5c95657b7b6
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107855,7 +107855,7 @@ function mailToolDefinitions() {
     },
     {
       name: "mail__move_messages",
-      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses the server's MOVE, or on a server without it a copy followed by the removal of exactly the copied UIDs (UIDPLUS); a server with neither is refused (`mail_move_unsupported`) and nothing changes. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, method, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works." + organizes + errors,
+      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards." + organizes + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -121115,10 +121115,9 @@ function moveMessages(run, args) {
     }
     const [source, target] = [ends[0].path, ends[1].path];
     if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
-    const canMove = client.capabilities.has("MOVE");
-    if (!canMove && !client.capabilities.has("UIDPLUS")) {
+    if (!client.capabilities.has("MOVE")) {
       throw new DataServerError(
-        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking the removal of other messages; nothing was changed. Move them in the practitioner's mail program instead.",
+        "this mail server does not offer MOVE, so messages cannot be moved without deleting the originals; nothing was changed. Move them in the practitioner's mail program instead.",
         "mail_move_unsupported"
       );
     }
@@ -121130,44 +121129,18 @@ function moveMessages(run, args) {
       throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
     }
     const range = existing.join(",");
-    let result;
-    if (canMove) {
-      result = await client.messageMove(range, target, { uid: true });
-      if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
-    } else {
-      result = await copyThenRemove(client, range, source, target);
-    }
+    const result = await client.messageMove(range, target, { uid: true });
+    if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
     const left = new Set(await client.search({ uid: range }, { uid: true }) || []);
     const map = result.uidMap;
     return {
       folder: source,
       destination: target,
-      method: canMove ? "MOVE" : "COPY + UID EXPUNGE",
       moved: existing.filter((u3) => !left.has(u3)).map((u3) => map?.has(u3) ? { uid: u3, newUid: map.get(u3) } : { uid: u3 }),
       notFound: notFound2,
       notMoved: existing.filter((u3) => left.has(u3))
     };
   });
-}
-async function copyThenRemove(client, range, source, target) {
-  const copy2 = await client.messageCopy(range, target, { uid: true });
-  if (!copy2) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was moved`, "mail_error");
-  const confirmed = [...copy2.uidMap?.keys() ?? []];
-  if (confirmed.length === 0) {
-    throw new DataServerError(
-      `the server copied the messages to "${target}" but did not say which, so the originals were left in "${source}"; "${target}" may now hold copies`,
-      "mail_error"
-    );
-  }
-  if (!client.capabilities.has("UIDPLUS")) throw new DataServerError("the server does not offer UIDPLUS; nothing was removed", "mail_move_unsupported");
-  const removed = await client.messageDelete(confirmed.join(","), { uid: true });
-  if (!removed) {
-    throw new DataServerError(
-      `the messages were copied to "${target}" but the originals could not be removed from "${source}", so each is now in both folders`,
-      "mail_error"
-    );
-  }
-  return copy2;
 }
 
 // node_modules/ical.js/dist/ical.js
