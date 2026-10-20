@@ -7,11 +7,13 @@
 // it with key-request-status, by the request token only their computer holds.
 //
 // Request:  { "full_name": text, "jurisdiction": "BC", "year_of_call": integer,
-//             "call_date"?: "YYYY-MM-DD", "firm_name": text, "token_hash": hex SHA-256 }
+//             "call_date"?: "YYYY-MM-DD", "firm_name": text, "email": text,
+//             "phone"?: text, "token_hash": hex SHA-256 }
 // Reply:    { "request_id": uuid }
 //
 // It holds only what verifying that a person is a practising lawyer requires
-// (COMMANDMENTS.md, Commandment 3; shape.ts). At most MAX_PER_DAY requests are
+// (COMMANDMENTS.md, Commandment 3), plus the email and phone Brahm uses to
+// contact the applicant (shape.ts). At most MAX_PER_DAY requests are
 // queued in a day, so a flood cannot bury the queue. Nothing here logs a
 // request body; a fault logs its SQLSTATE only.
 
@@ -30,8 +32,9 @@ serveOpen(async (body) => {
       where created_at > now() - interval '1 day'`;
     if (queued >= MAX_PER_DAY) return reply(429, { error: "Can this request wait until tomorrow?" });
     const [row] = await sql`insert into access.key_request
-        (token_hash, full_name, jurisdiction, year_of_call, call_date, firm_name)
-      values (${r.token_hash}, ${r.full_name}, ${r.jurisdiction}, ${r.year_of_call}, ${r.call_date}, ${r.firm_name})
+        (token_hash, full_name, jurisdiction, year_of_call, call_date, firm_name, email, phone)
+      values (${r.token_hash}, ${r.full_name}, ${r.jurisdiction}, ${r.year_of_call}, ${r.call_date}, ${r.firm_name},
+        ${r.email}, ${r.phone})
       on conflict (token_hash) do nothing
       returning request_id`;
     if (!row) return reply(409, { error: "Was this request already sent? Ask for a new link to send another." });

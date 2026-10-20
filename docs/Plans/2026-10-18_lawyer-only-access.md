@@ -36,7 +36,7 @@ The directory facts these rules rest on are in `docs/Research/2026-10-15_lsbc-me
 ### 2.1 The application
 
 - Taken on a local page on `127.0.0.1` served by the plugin. There is no public Probanda website for applying ([49](https://github.com/Mharbulous/probanda-dev/issues/49) decision 1).
-- Fields: full name, jurisdiction (BC only), year of call (full call date optional), and firm name as the directory shows it ("Primary location"). There is no email field ([57](https://github.com/Mharbulous/probanda-dev/issues/57)).
+- Fields: full name, jurisdiction (BC only), year of call (full call date optional), and firm name as the directory shows it ("Primary location"), plus a required email and an optional phone for contacting the applicant about the application (Brahm, 2026-10-20). The typed email is never where a one-time link or key is sent, and proves nothing: proof still goes only to an address from a public source (section 2.3).
 - The privacy notice (section 8.5) is shown before submission. Submitting is consent.
 
 ### 2.2 The match (automated, one lookup per application)

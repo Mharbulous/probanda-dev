@@ -15,7 +15,10 @@ const schemaGen = await import("../build/schema-gen.js");
 
 // Not a real project.
 const PROJECT = "https://example-project.example";
-const CALL = { full_name: "Jane Example", year_of_call: "2011", call_date: "2011-05-20", firm_name: "Example Law LLP" };
+const CALL = {
+  full_name: "Jane Example", year_of_call: "2011", call_date: "2011-05-20", firm_name: "Example Law LLP",
+  email: "jane@example.com", phone: "+1 604 555 0100",
+};
 // Matter and client details a careless page or caller might add. None may reach the cloud.
 const SMUGGLED = { matter: "MATTER-SENTINEL-2207", client: "CLIENT-SENTINEL-Smith", notes: "Re: CLIENT-SENTINEL-Smith v Jones" };
 
@@ -73,10 +76,11 @@ test("submit is refused on a computer that already holds a key", async () => {
   await assert.rejects(() => index.callTool(context(client(true)), "key_request__submit", {}), /already holds Probanda's key/);
 });
 
-test("the page asks only for what verifying a practising lawyer requires", async () => {
+test("the page asks only for what verifying a practising lawyer requires, plus a contact email and phone", async () => {
   const html = await (await fetch(await openPage())).text();
   const names = [...html.matchAll(/<(?:input|select|textarea)\b[^>]*\bname="([^"]+)"/g)].map((m) => m[1]).sort();
-  assert.deepEqual(names, ["call_date", "firm_name", "full_name", "year_of_call"]);
+  assert.deepEqual(names, ["call_date", "email", "firm_name", "full_name", "phone", "year_of_call"]);
+  assert.match(html, /never to the one you type here/);
 });
 
 test("a request carries no matter or client data and no key, and its status is checked by token alone", async (t) => {
@@ -91,10 +95,11 @@ test("a request carries no matter or client data and no key, and its status is c
   const [sent] = calls;
   assert.equal(sent.url, `${PROJECT}/functions/v1/key-request-submit`);
   assert.deepEqual(Object.keys(sent.headers).map((h) => h.toLowerCase()), ["content-type"], "no apikey or Authorization header");
-  assert.deepEqual(Object.keys(sent.body).sort(), ["call_date", "firm_name", "full_name", "jurisdiction", "token_hash", "year_of_call"]);
+  assert.deepEqual(Object.keys(sent.body).sort(),
+    ["call_date", "email", "firm_name", "full_name", "jurisdiction", "phone", "token_hash", "year_of_call"]);
   assert.deepEqual(sent.body, {
     full_name: "Jane Example", jurisdiction: "BC", year_of_call: 2011, call_date: "2011-05-20",
-    firm_name: "Example Law LLP", token_hash: sent.body.token_hash,
+    firm_name: "Example Law LLP", email: "jane@example.com", phone: "+1 604 555 0100", token_hash: sent.body.token_hash,
   });
   const text = JSON.stringify(sent.body);
   assert.ok(!text.includes("SENTINEL"), "the request omits every matter and client field the form was sent");
@@ -123,6 +128,21 @@ test("a request with an impossible year of call is not sent", async (t) => {
   const res = await fetch(await openPage(), { method: "POST", body: new URLSearchParams({ ...CALL, year_of_call: "20111" }) });
   assert.match(await res.text(), /Not sent: type your year of call as four digits/);
   assert.equal(calls.length, 0);
+});
+
+test("a request with no email is not sent, and one with no phone omits it", async (t) => {
+  const calls = fakeCloud(t, () => [200, { request_id: "0b7e2b1c-1111-4222-8333-944445555666" }]);
+  const { email, ...noEmail } = CALL;
+  const refused = await fetch(await openPage(), { method: "POST", body: new URLSearchParams(noEmail) });
+  assert.match(await refused.text(), /Not sent: type the email address Probanda can contact you at/);
+  assert.equal(calls.length, 0);
+
+  const { phone, ...noPhone } = CALL;
+  const res = await fetch(await openPage(), { method: "POST", body: new URLSearchParams(noPhone) });
+  assert.match(await res.text(), /Request sent/);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].body.email, email);
+  assert.ok(!("phone" in calls[0].body), `the optional phone (${phone}) is left out when blank`);
 });
 
 test("the cloud's guiding question is shown on the page and nothing is saved", async (t) => {

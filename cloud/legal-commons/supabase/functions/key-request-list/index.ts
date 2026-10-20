@@ -20,7 +20,7 @@ serve(async (_key, body) => {
   }
   try {
     const rows = await sql`select request_id, full_name, jurisdiction, year_of_call, call_date, firm_name,
-        status, created_at, decided_at
+        email, phone, status, created_at, decided_at
       from access.key_request
       where ${status === undefined} or status = ${status ?? ""}
       order by created_at, request_id`;

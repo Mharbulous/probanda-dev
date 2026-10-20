@@ -232,6 +232,8 @@ Never ask for the key in chat, and never echo it back into the transcript.
 A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send
 the practitioner the link it returns. On that page they type only what verifying a
 practising lawyer requires (full name, year of call, an optional call date and firm
-name), never in chat. Probanda verifies them and sends the key to them directly. Call
+name) and an email and optional phone for contact, never in chat. Probanda verifies
+them and sends the key to the email address their firm's website or the directory
+lists for them. Call
 `key_request__status` to report where the request stands; when it reports `issued`,
 call `legal_commons__configure_credential` so they can paste the key they received.

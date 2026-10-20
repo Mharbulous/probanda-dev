@@ -11,8 +11,9 @@ import type { LegalCommonsClient } from "../legal-commons/client.js";
 // Runtime logic for the key_request namespace: a practitioner with no key asks
 // Probanda for one. key_request__submit serves a page on this computer where
 // the practitioner types what verifying a practising lawyer requires (COMMANDMENTS.md,
-// Commandment 3; docs/Plans/2026-10-18_lawyer-only-access.md section 2.1), so
-// those details never pass through the chat. The page sends them, and nothing
+// Commandment 3; docs/Plans/2026-10-18_lawyer-only-access.md section 2.1) and an
+// email and optional phone Brahm uses only to contact them, so those details
+// never pass through the chat. The key itself is never sent to the typed email. The page sends them, and nothing
 // else, to the key-request-submit Edge Function with no key, because the
 // practitioner has none yet. Brahm lists the queue (/view-key-requests in the
 // developer plugin), mints the key and delivers it out of band, and the
@@ -26,9 +27,11 @@ import type { LegalCommonsClient } from "../legal-commons/client.js";
 // a successful send spends it. Tool definitions live in schema-gen.ts.
 
 /** The only fields a request carries, besides the jurisdiction and the token's hash. */
-export const REQUEST_FIELDS = ["full_name", "year_of_call", "call_date", "firm_name"] as const;
+export const REQUEST_FIELDS = ["full_name", "year_of_call", "call_date", "firm_name", "email", "phone"] as const;
 
 const MAX_NAME = 200;
+const MAX_EMAIL = 254;
+const MAX_PHONE = 40;
 const TITLE = "Ask Probanda for a key";
 
 interface SavedRequest {
@@ -145,12 +148,22 @@ export function requestBody(form: URLSearchParams, tokenHash: string, thisYear =
   if (callDate && (!/^\d{4}-\d{2}-\d{2}$/.test(callDate) || callDate.slice(0, 4) !== yearText)) {
     throw new ValidationError("the call date must fall in your year of call");
   }
+  const email = (form.get("email") ?? "").trim();
+  const phone = (form.get("phone") ?? "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > MAX_EMAIL) {
+    throw new ValidationError("type the email address Probanda can contact you at");
+  }
+  if (phone && (!/^[0-9+().\- ]+$/.test(phone) || phone.length > MAX_PHONE)) {
+    throw new ValidationError(`type your phone number in digits, spaces and + ( ) - only, up to ${MAX_PHONE} characters`);
+  }
   return {
     full_name: fullName,
     jurisdiction: "BC",
     year_of_call: year,
     ...(callDate ? { call_date: callDate } : {}),
     firm_name: firmName,
+    email,
+    ...(phone ? { phone } : {}),
     token_hash: tokenHash,
   };
 }
@@ -207,7 +220,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   }
   page(res, 200, "Request sent",
     "<p>Your request is with Probanda. Probanda checks your details against the Law Society of British Columbia's directory and, " +
-    "once it has verified you, sends you your key directly.</p>" + kept +
+    "once it has verified you, sends your key to the email address your firm's website or the directory lists for you.</p>" + kept +
     "<p>You can close this tab and return to Claude. Ask Claude at any time where your request stands. " +
     "When your key arrives, ask Claude to set Probanda's key, and paste it on the page Claude gives you, never in chat.</p>");
 }
@@ -221,6 +234,9 @@ const FORM =
   '<label>Year of call<br><input name="year_of_call" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label>' +
   '<label>Call date (optional)<br><input type="date" name="call_date"></label>' +
   '<label>Firm name, as the directory shows it under "Primary location"<br><input name="firm_name" maxlength="200" autocomplete="organization" required></label>' +
+  '<label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label>' +
+  '<label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label>' +
   '<button type="submit">Send request</button></form>' +
   '<p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia\'s public directory ' +
-  "that you are a practising lawyer. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>";
+  "that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, " +
+  "never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>";
