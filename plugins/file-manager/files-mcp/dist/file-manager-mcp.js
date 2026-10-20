@@ -1,4 +1,4 @@
-// build-stamp: 4e96505d530d
+// build-stamp: a228528b4e4a
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16037,7 +16037,7 @@ function resolveShippedRoot(relPath, env = process.env, request = {}) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}
 
-${rosterLine(installRoot, segment)}`, code);
+${rosterLine(installRoot, segment, request.plugin)}`, code);
   }
 }
 function isDirectory(dir) {
@@ -16047,14 +16047,14 @@ function isDirectory(dir) {
     return false;
   }
 }
-function rosterLine(installRoot, segment) {
+function rosterLine(installRoot, segment, plugin) {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length === 0) {
     return `This plugin bundles no skill source (${join4(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
 }
 function missingMessage(subject, env, tried) {
   const cfg = configPath(env);
@@ -16065,8 +16065,8 @@ function missingMessage(subject, env, tried) {
     `  1. COCLERK_REPO_ROOT environment variable -- ${env.COCLERK_REPO_ROOT === "" ? "set but empty" : "not set"}`,
     ...tried.map((t, i) => `  ${i + 2}. ${t}`),
     "",
-    "Practitioner: install the plugin named below if it is missing, then fully restart the app. If this error",
-    "comes back, run /lawyer:suggestion naming it.",
+    "Practitioner: check for updates to the Probanda plugins in the desktop app, then fully restart the app.",
+    "If this error comes back, run /lawyer:suggestion naming it.",
     'Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a "repo_root" key to',
     `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
     "  then fully restart the app."
@@ -17081,6 +17081,7 @@ function fileNamingSkillDir(env = process.env, installRoot) {
   const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
     code: "repo_root_missing",
     subject: "the file-naming name gate",
+    plugin: "lawyer",
     installRoot
   });
   const dir = pathWin325.join(shipped.root, "file-naming");

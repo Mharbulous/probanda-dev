@@ -1,4 +1,4 @@
-// build-stamp: 9cfaad3bcdf4
+// build-stamp: 3174125488e0
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -78804,7 +78804,7 @@ function resolveShippedRoot(relPath, env = process.env, request2 = {}) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}
 
-${rosterLine(installRoot, segment)}`, code);
+${rosterLine(installRoot, segment, request2.plugin)}`, code);
   }
 }
 function isDirectory(dir) {
@@ -78814,14 +78814,14 @@ function isDirectory(dir) {
     return false;
   }
 }
-function rosterLine(installRoot, segment) {
+function rosterLine(installRoot, segment, plugin) {
   const bundled = bundledSkillFolders(installRoot);
   if (bundled.length === 0) {
     return `This plugin bundles no skill source (${join8(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`;
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("matter-data", env, installRoot);
@@ -78832,10 +78832,16 @@ function timecampingDataMigrateScriptsDir(env, installRoot) {
 function submissionDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("drafting-data", env, installRoot);
 }
+var MIGRATE_SKILL_PLUGIN = {
+  "matter-data": "lawyer",
+  "timecamping-data": "timekeeper",
+  "drafting-data": "litigator"
+};
 function migrateScriptsDir(skill, env, installRoot) {
   const shipped = resolveShippedRoot(`${skill}/references/scripts/migrate_engine.py`, env ?? process.env, {
     code: "repo_root_missing",
     subject: `the ${skill} maintenance scripts`,
+    plugin: MIGRATE_SKILL_PLUGIN[skill],
     installRoot
   });
   const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
@@ -78856,8 +78862,8 @@ function missingMessage(subject, env, tried) {
     `  1. COCLERK_REPO_ROOT environment variable -- ${env.COCLERK_REPO_ROOT === "" ? "set but empty" : "not set"}`,
     ...tried.map((t3, i3) => `  ${i3 + 2}. ${t3}`),
     "",
-    "Practitioner: install the plugin named below if it is missing, then fully restart the app. If this error",
-    "comes back, run /lawyer:suggestion naming it.",
+    "Practitioner: check for updates to the Probanda plugins in the desktop app, then fully restart the app.",
+    "If this error comes back, run /lawyer:suggestion naming it.",
     'Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a "repo_root" key to',
     `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
     "  then fully restart the app."
@@ -79551,7 +79557,10 @@ function caseDataFolder(matterRoot, env = process.env) {
   return runHelper({ op: "locate", matter_root: matterRoot }, env).case_data_dir;
 }
 function caseDataTriggersSql(env) {
-  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, { subject: "the matter-data trigger layer" });
+  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, {
+    subject: "the matter-data trigger layer",
+    plugin: "lawyer"
+  });
   const path = join9(shipped.root, "matter-data", "references", "triggers.sql");
   if (!existsSync6(path)) {
     throw new DataServerError(
@@ -85485,7 +85494,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "9cfaad3bcdf4";
+var BUILD_STAMP = false ? null : "3174125488e0";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };

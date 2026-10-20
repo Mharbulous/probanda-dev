@@ -1,4 +1,4 @@
-// build-stamp: c5c95657b7b6
+// build-stamp: 09f76e740e01
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107788,6 +107788,21 @@ function mailToolDefinitions() {
       annotations: { destructiveHint: false }
     },
     {
+      name: "mail__save_message",
+      description: 'Save one message as the server stores it, byte for byte, as a .eml file in a folder the caller names, so its hash matches any other exact copy and nothing (inline images, headers) is lost to a rebuild from fields. `save_dir` must be the absolute path of an existing folder; the file is named from the subject (`message-<uid>.eml` when there is none) and never overwrites (a taken name gets " (1)", " (2)" and so on). Returns {saved, path, filename, size, sha256, messageId}. Fails `mail_not_found` when the UID is not in the folder. Writes only that one new file; the mailbox is opened read-only, so nothing is marked read.' + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          save_dir: { type: "string" }
+        },
+        required: ["uid", "save_dir"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false }
+    },
+    {
       name: "mail__find_email_by_message_id",
       description: "Find where a message is now from its Message-ID (angle brackets optional), across every selectable folder: {found: [messages]}, each in mail__search_emails' message shape. A mailbox with many folders can exceed the 30 s limit." + readOnly + errors,
       inputSchema: {
@@ -107997,8 +108012,9 @@ function isPlainObject3(value) {
 }
 
 // src/mail/tools.ts
+import { createHash as createHash2 } from "node:crypto";
 import { readFileSync as readFileSync2, statSync, writeFileSync } from "node:fs";
-import { extname, join as join3, win32 as pathWin32 } from "node:path";
+import { basename, extname, join as join3, win32 as pathWin32 } from "node:path";
 
 // src/correspondence/eml.ts
 function splitHead(raw) {
@@ -120647,6 +120663,8 @@ function callMailTool(context, name2, args) {
       return getEmail(run, args);
     case "mail__download_attachment":
       return downloadAttachment(run, args);
+    case "mail__save_message":
+      return saveMessage(run, args);
     case "mail__find_email_by_message_id":
       return findByMessageId(run, args);
     case "mail__find_thread_messages":
@@ -120914,10 +120932,10 @@ function pickAttachment(list2, filename, index) {
   const have = list2.map((a3) => `[${a3.index}] ${a3.filename ?? "(no name)"}`).join(", ") || "no attachments";
   throw new DataServerError(`attachment not found; this email has: ${have}`, "mail_not_found");
 }
-function safeName(name2, index) {
+function safeName(name2, fallback) {
   const base = (name2 ?? "").split(/[\\/]/).pop() ?? "";
   const clean = base.replace(/[<>:"|?*\x00-\x1F]/g, "_").replace(/[. ]+$/, "").trim();
-  return clean || `attachment-${index}`;
+  return clean || fallback;
 }
 function writeFree(dir, name2, bytes) {
   const ext = extname(name2);
@@ -120932,12 +120950,7 @@ function writeFree(dir, name2, bytes) {
     }
   }
 }
-async function downloadAttachment(run, args) {
-  const folder = folderArg(args);
-  const uid = intArg("mail__download_attachment.uid", args.uid, void 0, 1);
-  const index = args.index === void 0 ? void 0 : intArg("mail__download_attachment.index", args.index, void 0, 0);
-  const filename = args.filename;
-  if (index === void 0 && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
+function saveDirArg(tool, args) {
   const saveDir = args.save_dir;
   let isDir = false;
   try {
@@ -120945,7 +120958,16 @@ async function downloadAttachment(run, args) {
   } catch {
     isDir = false;
   }
-  if (!isDir) throw new ValidationError("mail__download_attachment.save_dir must be the absolute path of an existing folder");
+  if (!isDir) throw new ValidationError(`${tool}.save_dir must be the absolute path of an existing folder`);
+  return saveDir;
+}
+async function downloadAttachment(run, args) {
+  const folder = folderArg(args);
+  const uid = intArg("mail__download_attachment.uid", args.uid, void 0, 1);
+  const index = args.index === void 0 ? void 0 : intArg("mail__download_attachment.index", args.index, void 0, 0);
+  const filename = args.filename;
+  if (index === void 0 && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
+  const saveDir = saveDirArg("mail__download_attachment", args);
   const { entry, bytes } = await run(`downloading an attachment of message ${uid} in "${folder}"`, async (client) => {
     await client.mailboxOpen(folder, { readOnly: true });
     const m3 = await client.fetchOne(String(uid), { uid: true, bodyStructure: true }, { uid: true });
@@ -120956,7 +120978,7 @@ async function downloadAttachment(run, args) {
     for await (const chunk of content) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     return { entry: entry2, bytes: Buffer.concat(chunks) };
   });
-  const name2 = safeName(entry.filename, entry.index);
+  const name2 = safeName(entry.filename, `attachment-${entry.index}`);
   const path = writeFree(saveDir, name2, bytes);
   const result = {
     saved: true,
@@ -120976,6 +120998,27 @@ async function downloadAttachment(run, args) {
     }
   }
   return result;
+}
+async function saveMessage(run, args) {
+  const folder = folderArg(args);
+  const uid = intArg("mail__save_message.uid", args.uid, void 0, 1);
+  const saveDir = saveDirArg("mail__save_message", args);
+  const { source, messageId, subject } = await run(`saving message ${uid} in "${folder}"`, async (client) => {
+    await client.mailboxOpen(folder, { readOnly: true });
+    const m3 = await client.fetchOne(String(uid), { uid: true, source: true, envelope: true }, { uid: true });
+    if (!m3 || !m3.source) throw notFound(uid, folder);
+    return { source: m3.source, messageId: m3.envelope?.messageId, subject: m3.envelope?.subject };
+  });
+  const stem = safeName(subject?.replace(/[\\/]/g, "_").slice(0, 120), `message-${uid}`);
+  const path = writeFree(saveDir, `${stem}.eml`, source);
+  return {
+    saved: true,
+    path,
+    filename: basename(path),
+    size: source.length,
+    sha256: createHash2("sha256").update(source).digest("hex"),
+    messageId
+  };
 }
 function findByMessageId(run, args) {
   const id2 = stripBrackets(String(args.message_id));
