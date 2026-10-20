@@ -19,6 +19,6 @@ export async function loadCloudKey(env: NodeJS.ProcessEnv = process.env): Promis
   return {
     configured: false,
     supabaseUrl,
-    reason: `${reason}; set it with the commons server's configure_credential tool`,
+    reason: `${reason}; set it with the commons server's configure_credential tool, or ask Probanda for a key with its key_request__submit tool`,
   };
 }

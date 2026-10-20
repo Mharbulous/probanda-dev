@@ -41,3 +41,19 @@ verify_jwt = false
 
 [functions.suggestion-status]
 verify_jwt = false
+
+# The key-request queue's four (key-request-*). submit and status take no key
+# at all (serveOpen in functions/_shared/caller.ts), because the practitioner
+# asking for a key has none; list and set-status take the project secret only.
+
+[functions.key-request-submit]
+verify_jwt = false
+
+[functions.key-request-status]
+verify_jwt = false
+
+[functions.key-request-list]
+verify_jwt = false
+
+[functions.key-request-set-status]
+verify_jwt = false

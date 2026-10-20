@@ -185,6 +185,7 @@
         "adversarial-triage",
         "fix-this",
         "suggestion-triage",
+        "view-key-requests",
         "view-suggestions"
       ],
       "agents": [

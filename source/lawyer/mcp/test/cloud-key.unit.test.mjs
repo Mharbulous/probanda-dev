@@ -40,5 +40,5 @@ test("no env key and no credential file: not configured, naming the tool that se
   assert.equal(result.configured, false);
   assert.equal(result.supabaseUrl, BAKED_URL);
   assert.equal("staticKey" in result, false);
-  assert.match(result.reason, /no credential is configured.*commons server.s configure_credential tool/);
+  assert.match(result.reason, /no credential is configured.*commons server.s configure_credential tool, or ask Probanda for a key with its key_request__submit tool/);
 });

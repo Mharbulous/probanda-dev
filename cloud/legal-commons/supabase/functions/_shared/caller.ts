@@ -69,6 +69,27 @@ export interface ServeOptions {
 }
 
 /**
+ * The frame of a function any caller may reach with no key: POST only and a JSON
+ * object body. Only key-request-submit and key-request-status use it, because
+ * a practitioner who asks for a key has none yet.
+ */
+export function serveOpen(work: (body: Record<string, unknown>) => Promise<Response>): void {
+  Deno.serve(async (req) => {
+    if (req.method !== "POST") return reply(405, { error: "POST only" });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return reply(400, { error: "the request body is not JSON" });
+    }
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return reply(400, { error: "the request body is not a JSON object" });
+    }
+    return await work(body as Record<string, unknown>);
+  });
+}
+
+/**
  * The frame every function shares: POST only, the caller checked before the body
  * is read, then the function's own work. `key` is the key the caller sent.
  */

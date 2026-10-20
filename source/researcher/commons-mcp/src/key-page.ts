@@ -76,9 +76,10 @@ const FORM =
   '<form method="post"><label>Probanda\'s Cloud key<br>' +
   '<input type="password" name="secret" autocomplete="off" required autofocus></label>' +
   '<button type="submit">Check and save</button></form>' +
-  '<p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';
+  '<p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>' +
+  "<p class=\"note\">No key yet? Return to Claude and ask to request Probanda's key.</p>";
 
-function page(res: ServerResponse, status: number, title: string, body: string): void {
+export function page(res: ServerResponse, status: number, title: string, body: string): void {
   res.writeHead(status, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
@@ -99,11 +100,11 @@ const STYLE =
   "button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}" +
   "@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
 
-function escape(text: string): string {
+export function escape(text: string): string {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+export function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;

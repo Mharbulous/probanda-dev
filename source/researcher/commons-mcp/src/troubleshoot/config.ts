@@ -16,10 +16,11 @@ interface PersistedCredential {
   staticKey: string;
 }
 
+// The store is maintainer-only (Brahm, 2026-10-20): a practitioner is never
+// asked for its key or URL, and a confirmed fix becomes a /lawyer:suggestion draft.
 const NOT_CONFIGURED_HINT =
-  "the troubleshooting store is not configured: call troubleshoot__configure_credential once with " +
-  "the store project's URL and its sb_secret_ key, or set TROUBLESHOOT_SUPABASE_URL and " +
-  "TROUBLESHOOT_SUPABASE_KEY in the runtime environment (Claude Code CLI / dev).";
+  "the troubleshooting store is not configured on this computer. It is maintainer-only: never ask the " +
+  "practitioner for its key or URL. Draft a confirmed fix as a suggestion through /lawyer:suggestion instead.";
 
 export function credentialPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(defaultStateDir(env, "troubleshoot"), "credential.json.dpapi");

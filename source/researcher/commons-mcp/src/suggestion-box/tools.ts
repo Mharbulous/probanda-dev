@@ -14,7 +14,8 @@ import { findSuggestionHits } from "../troubleshoot/redact.js";
 
 const NOT_CONFIGURED_HINT =
   "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once " +
-  "and have the practitioner paste the key Probanda gave them on the page it serves";
+  "and have the practitioner paste the key Probanda gave them on the page it serves, or, if they have none, " +
+  "call key_request__submit so they can ask Probanda for one";
 
 const SOURCES = new Set(["user", "llm", "assisted"]);
 const ORIGINS = new Set(["probanda", "lawyer"]);

@@ -136,10 +136,10 @@ export class LegalCommonsClient {
     if (!this.config.staticKey) {
       throw new ValidationError(
         (this.config.notConfiguredHint ??
-          "legal-commons is not configured: call legal_commons__configure_credential once with the " +
-          "Supabase service_role / sb_secret_ key (Cowork does not inject LEGAL_COMMONS_SUPABASE_KEY " +
-          "from userConfig into this process — see plugins/legal-commons/docs/ADR-002-key-delivery.md), " +
-          "or set LEGAL_COMMONS_SUPABASE_KEY directly in the runtime environment (Claude Code CLI / dev).") +
+          "legal-commons is not configured: this computer has no Probanda key. If the practitioner has one, " +
+          "call legal_commons__configure_credential and have them paste it on the page it serves; if not, " +
+          "call key_request__submit so they can ask Probanda for one. A developer may instead set " +
+          "LEGAL_COMMONS_SUPABASE_KEY in the runtime environment (Claude Code CLI).") +
         // A stored-but-unreadable credential is a different problem with a
         // different fix than never having configured one; say which it is.
         (this.config.credentialError
