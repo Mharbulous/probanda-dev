@@ -68,3 +68,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Re-read the §2 sites at HEAD. Find where `legal_commons__configure_credential` and `troubleshoot__configure_credential` are implemented (**UNVERIFIED**: source/researcher MCP server). Check whether probanda-cloud already has a key-request endpoint.
+
+## 11. Verification against HEAD (80b3139d, 2026-10-20)
+
+| Spec claim | At HEAD | Result |
+|---|---|---|
+| `.claude/skills/legal-commons/SKILL.md` §Configuration names no route to obtain a key | Lines 209-230 (heading at 209). "the key Probanda gave this machine" at 211, `legal_commons__configure_credential` at 216 and 229. No request route. | Confirmed |
+| `.claude/skills/suggestion/SKILL.md` line 25 | Line 25, the quoted text verbatim | Confirmed |
+| `.claude/skills/draft/references/suggestion-box.md` line 9 | Line 9, the quoted text verbatim | Confirmed |
+| `.claude/skills/probanda-troubleshooting/SKILL.md` step 5 (line 16) skips recording when the store is unconfigured | Line 16, "skip this dispatch and say in one line that the fix cannot be saved" | Confirmed |
+| `.claude/skills/probanda-setup/SKILL.md` step 3 says every practice write fails until the credential is set | It is Step 7, item 3 (line 61), not step 3. It says the failing write names the tool that sets it, and names no request route. | Confirmed, location corrected |
+| Where `legal_commons__configure_credential` is implemented (**UNVERIFIED** in §4) | `source/researcher/commons-mcp/src/legal-commons/tools.ts` (`configureCredential`), page in `src/key-page.ts`, credential file via `source/mcp-shared/commons-key.js` | Confirmed: researcher `commons` server |
+| Where `troubleshoot__configure_credential` is implemented | `source/researcher/commons-mcp/src/troubleshoot/tools.ts` and `src/troubleshoot/config.ts`, whose `NOT_CONFIGURED_HINT` is the "sb_secret_ key" remedy quoted in §2 | Confirmed |
+| Whether probanda-cloud already has a key-request endpoint | `cloud/legal-commons/supabase/functions/` holds commons-*, items-* and suggestion-* only. Every function goes through `_shared/caller.ts` `serve()`, which refuses a caller with no key. | No endpoint exists |
+| Other sites that tell the practitioner Probanda's key is missing (§8 criterion 1) | `.claude/skills/practice-data/SKILL.md` line 92; `.claude/skills/legal-research/SKILL.md` line 47; `source/lawyer/mcp/src/cloud-key.ts` line 22; `source/researcher/commons-mcp/src/suggestion-box/tools.ts` `NOT_CONFIGURED_HINT`; `source/researcher/commons-mcp/src/legal-commons/client.ts` default hint | Not in §2; in scope under §8 criterion 1 |
+| Related design | `docs/Plans/2026-10-18_lawyer-only-access.md` §2.1 fixes the application's fields (full name, jurisdiction BC, year of call, optional call date, firm name as the directory shows it, no email) and §3.8 retires the troubleshooting store's own credential | The request route uses §2.1's fields. That plan stays the source for the full account flow. |
