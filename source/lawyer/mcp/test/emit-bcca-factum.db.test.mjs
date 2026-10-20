@@ -131,7 +131,7 @@ test("names the missing cover-critical or required field", async () => {
   }
 });
 
-// #842: an overruled authority's statements ride the brief-only cap -- Counsel Brief only, never
+// #842: an overruled authority's statements ride the brief-only cap -- never
 // a venue mockup and never a filed face. Two sites on this face: printedLaw, which decides what
 // Part 3 quotes, and fetchCitedStatements, which feeds the Appendix: List of Authorities, the
 // Book of Authorities and the Enactments appendix. Without the second, the factum would name an

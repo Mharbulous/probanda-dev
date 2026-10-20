@@ -269,7 +269,7 @@ export function fetchReviewState(dbPath: string, proceedingId: number): ReviewSt
 
 /** 🧐 for one object on one forum line: the predicate over the line's other glyphs (design §3), recorded
  * on the object with `changed` when an earlier approval exists. Returns "🧐" or "". A caller with no
- * review state (the Counsel Brief) gets "" and records nothing. */
+ * review state (the reserve inventory) gets "" and records nothing. */
 export function reviewMarkerFor(
   review: ReviewState | undefined,
   inv: MarkerInventory | undefined,
@@ -559,9 +559,8 @@ export interface RenderedParagraphs {
  * (purpose='impeachment') or a law statement resting on a 'lead', killed
  * (`authorities.killed_on` set) or overruled (`authorities.treatment='overruled'`) authority
  * never rides into a deployed document -- all are simply excluded here. They are not routed
- * anywhere by this function; the Counsel Brief surfaces them independently from its own
- * whole-pool query (render-companions.ts), since it is the only surface any of them may ever
- * render on.
+ * anywhere by this function; the reserve inventory (render-companions.ts) records their
+ * Proposals from its own whole-pool walk, and no page prints them.
  *
  * renderedLawAssertions (ticket 2026-09-01, one paragraph per assertion, deduped; cross-
  * references settled 2026-09-01): a law assertion is a first-class numbered paragraph, so a
@@ -579,10 +578,10 @@ export interface RenderedParagraphs {
  * its own facts part -- otherwise a submission's own `rests_on` link is its own fact paragraph
  * regardless of reuse elsewhere.
  *
- * opts (build: Counsel Brief authority citations) -- every field defaults to the behaviour every
+ * opts -- every field defaults to the behaviour every
  * venue renderer already had, so the four existing call sites are unchanged and their goldens stay
- * byte-identical. Only the Counsel Brief passes any of them:
- *   paragraphPrefix        labels paragraphs "R1." instead of "1." (its Held-in-reserve section,
+ * byte-identical. Only recordReserveInventory passes paragraphPrefix, includeLeadStatements or scrutinyLive:
+ *   paragraphPrefix        labels paragraphs "R1." instead of "1." (its held-in-reserve walk,
  *                          whose submissions appear in no venue document and so have no number to
  *                          borrow). Applied to cross-references too, which is only sound because
  *                          the caller gives a prefixed section its OWN renderedLawAssertions Map
@@ -592,21 +591,21 @@ export interface RenderedParagraphs {
  *                          set, schema v16) or an overruled one (`treatment='overruled'`,
  *                          #842) -- all three ride the identical cap. Printing only: the
  *                          proposition's own markers are unaffected by this flag, so a lead-only
- *                          assertion shows the same 🔬 (#502) on both surfaces, with the excerpt
- *                          stacked beneath it only here.
+ *                          assertion records the same 🔬 (#502) in both walks, with the excerpt's
+ *                          own statement lines added only here.
  *   inventory              the render context's Proposal inventory (forms/proposal-inventory.ts),
  *                          which every caller passes as `ctx.inventory`. Optional only so the
  *                          shape stays one object; a caller that omits it records nothing. The
  *                          recording sits beside pushStatementLines, where the source row and the
  *                          glyph string the site just computed are both still in hand -- never a
  *                          second predicate pass, never a markdown scan (design §8).
- *   review                 passed by every forum caller as `ctx.review`; the Counsel Brief omits
- *                          it, which is what keeps 🧐 off the brief.
+ *   review                 passed by every forum caller as `ctx.review`; the reserve inventory omits
+ *                          it, so it records no 🧐.
  *   scrutinyLive           false for a law assertion that no submission or order deployed on a
  *                          live Writing relies on (spec R6, schema v47): its statement lines then
  *                          raise no 🔬. Read per statement, so a statement shared with a
  *                          live-deployed submission keeps 🔬 on every line it prints on. Only the
- *                          Counsel Brief passes it; every other caller renders a deployed
+ *                          reserve inventory passes it; every other caller renders a deployed
  *                          submission, whose assertions are all relied on (the default).
  *   noFactsNeededOn        submissions.no_facts_needed_on (schema v48), passed by every caller from
  *                          its row: counsel's recorded decision that the contention needs no stated
@@ -771,7 +770,7 @@ export function renderSubmissionParagraphs(
     // live 🥉. `verifiedCounted` is that set's non-lead half, and since #842 it is also what
     // renders: a statement on a killed OR an overruled authority rides the brief-only cap exactly
     // as a lead one does (#370 item 4; schema v16; work-markers.md §1 "Overruled binds every row
-    // of 1a"), so all three appear in the Counsel Brief alone and an authority the court has
+    // of 1a"), so all three print on no face and an authority the court has
     // rejected is never quoted to a forum. A failed statement (schema v46) is blind to the
     // proposition's markers on the same ground as an overruled one: the research lawyer found it
     // does not support the proposition, so a proposition holding nothing else reads 📖 again.
@@ -796,7 +795,7 @@ export function renderSubmissionParagraphs(
     // "Overruled binds every row of 1a", #1200). Where no counted statement is left it prefixes the
     // 📖 it reopened (Types, ⛔→🏛️⊕📖), as the order's line carries ⛔ 🏛️. Where one survives it
     // renders beside 🧐, the review confirming the overruling, since the overruled statement itself
-    // prints only in the Counsel Brief; once approved, the bare ⛔ names the routing decision left.
+    // prints on no face; once approved, the bare ⛔ names the routing decision left.
     // 🚧 keeps owning the line alone, since "researched, nothing found" has already answered the
     // reopen.
     const overruled = live.some((s) => s.treatment === "overruled") ? treatmentMarker("overruled") : "";
@@ -814,16 +813,16 @@ export function renderSubmissionParagraphs(
     const propositionReview = reviewMarkerFor(opts.review, inv, doctrinal, "law_assertions", la.lawAssertionId, la.proposition);
     const propositionLine = printMarkerSets([dedupeLineMarkers([doctrinal, propositionReview])]);
     // #1202: while ⛔ prints, a plain-text tag names each overruled authority once, so counsel can
-    // confirm the overruling without opening the Counsel Brief, which prints the overruled
-    // statements themselves and so carries no tag (includeLeadStatements is its mode). It sits
+    // confirm the overruling, since no face prints the overruled statements themselves. The
+    // reserve inventory's walk (includeLeadStatements) carries no tag. It sits
     // immediately before ⛔, the anchor the filed-face strip matches on (filed-face.ts), and is
     // joined here rather than through dedupeLineMarkers, which would split it into words.
     const overruledMarkerPrinted = overruled !== "" && doctrinal.startsWith(overruled); // false when 🚧 owns the line
     const overruledTag = overruledMarkerPrinted && !opts.includeLeadStatements ? ` ${overruledAuthorityTag(live)}` : "";
     // A live statement the research lawyer failed (schema v46) tags the line with its finding,
     // whether or not another statement still supports it, so the line never reads clean while a
-    // decision is owed. Like the overruled tag it is left out of the Counsel Brief, which prints
-    // the failed statement and its tag itself. It precedes the overruled tag, which must stay
+    // decision is owed. Like the overruled tag it is left out of the reserve inventory's walk,
+    // which includes the failed statement itself. It precedes the overruled tag, which must stay
     // immediately before ⛔; filed-face.ts strips both.
     const failedTag = opts.includeLeadStatements ? "" : scrutinyFailedTag(live);
     para += 1;
@@ -846,7 +845,7 @@ export function renderSubmissionParagraphs(
 
 /** `(overruled: <title>, <citation>; ...)` over a proposition's live statements whose authority is
  * overruled: each authority once, in first-statement order, the citation omitted when none is
- * recorded (the Counsel Brief's Killed authorities format). Whitespace runs collapse to one space
+ * recorded. Whitespace runs collapse to one space
  * so the tag stays on one line for the filed-face strip. */
 function overruledAuthorityTag(live: LawAssertionRow[]): string {
   const names = new Map<number | null, string>();
@@ -861,13 +860,13 @@ function overruledAuthorityTag(live: LawAssertionRow[]): string {
 /**
  * Records the paragraph number a venue renderer is about to assign to one submission's contention
  * (always startPara + 1 -- renderSubmissionParagraphs increments before it prints). Called
- * immediately before each renderSubmissionParagraphs call so the Counsel Brief can reproduce this
+ * immediately before each renderSubmissionParagraphs call so the reserve inventory can reproduce this
  * document's numbering instead of re-deriving four different base-offset conventions.
  *
  * First-write-wins, and forms.ts's documentsForFiling renders the venue face before the Written
  * Arguments companion, so a submission carried by both documents keeps the venue face's number --
  * the ticket's requirement (filing_submissions.document='form'). A submission the Written
- * Arguments skips as crossed out never reaches here and so has no entry, which is how the brief
+ * Arguments skips as crossed out never reaches here and so has no entry, which is how the reserve inventory
  * tells "struck" from "numbered".
  */
 export function recordParagraph(ctx: RenderContext, submissionId: number, document: PointerDocument, startPara: number): void {
@@ -931,7 +930,7 @@ export function fetchOrdersSought(dbPath: string, filingId: number, document: Po
 }
 
 /** order_sought_requires edges for a set of orders, grouped by order id (schema v10, #380). Shared by
- * fetchOrdersSought (venue faces) and the Counsel Brief's proceeding-wide orders list. */
+ * fetchOrdersSought (venue faces) and the reserve inventory's proceeding-wide orders. */
 export function fetchJurisdictionEdges(dbPath: string, orderIds: number[]): Map<number, JurisdictionRequiresEdge[]> {
   const edgesByOrder = new Map<number, JurisdictionRequiresEdge[]>();
   if (orderIds.length === 0) return edgesByOrder;
@@ -1065,10 +1064,10 @@ export interface RenderContext {
   /**
    * submission_id -> the paragraph number and source document a venue renderer actually assigned
    * to that submission's contention. Written first-write-wins by every renderSubmissionParagraphs
-   * call site; read only by renderCounselBrief, which reproduces the venue numbering rather than
+   * call site; read only by recordReserveInventory, which reproduces the venue numbering rather than
    * re-deriving it (each venue document has its own base offset -- NoA Part 3 restarts at 1, the
    * Application Response continues from Part 4's fact count, the BCCA response book runs one
-   * counter across the whole document, Written Arguments starts at 1). The brief must therefore
+   * counter across the whole document, Written Arguments starts at 1). That walk must therefore
    * stay LAST in forms.ts's documentsForFiling, after every renderer that fills this. Required,
    * not optional, so a future RenderContext construction site cannot silently forget it.
    * Per-filing: buildContext creates a fresh Map for each render.
@@ -1093,7 +1092,7 @@ export interface RenderContext {
   /**
    * Every reviewed object's current snapshot and latest approval (fetchReviewState; the
    * /drafting-data reference review.md). Read by the forum emit sites through reviewMarkerFor,
-   * which prints 🧐 final review; the Counsel Brief never reads it. Required, not optional, so
+   * which prints 🧐 final review; the reserve inventory never reads it. Required, not optional, so
    * a future RenderContext construction site cannot forget it.
    */
   review: ReviewState;

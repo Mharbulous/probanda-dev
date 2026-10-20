@@ -310,10 +310,8 @@ test("filed-mode render refuses when a deployed statement of law has no authorit
 });
 
 // Schema v16 (practitioner + Fable review, 2026-09-06): a killed submission or authority must
-// never reach a filed face, and must never disappear from the database -- it surfaces instead in
-// the Counsel Brief's own "Killed submissions"/"Killed authorities" sections, distinct from
-// "Held in reserve" (still a live candidate) and never as a delete.
-test("killed submission and killed authority: absent from the filed face, present and dated in the Counsel Brief, never deleted", async () => {
+// never reach a filed face, and must never disappear from the database -- never a delete.
+test("killed submission and killed authority: absent from the filed face, never deleted", async () => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-filed-face-killed-"));
   const dbPath = join(dir, "submission.sqlite");
   try {
@@ -366,13 +364,6 @@ test("killed submission and killed authority: absent from the filed face, presen
     assert.doesNotMatch(filedWA, /killed authority excerpt text/, "a killed authority's excerpt must never reach a filed face");
     assert.doesNotMatch(filedWA, /Killed Authority v\. Nobody|2020 BCSC 1/, "a killed authority's citation must never reach a filed face");
     assert.doesNotMatch(filedWA, /A killed submission/, "a killed submission must never reach a filed face");
-
-    const mockup = submissionFormsRender(dbPath, 1, {}, "mockup");
-    const brief = mockup.documents.find((d) => d.document_type === "Counsel_brief").markdown;
-    assert.match(brief, /## Killed submissions/);
-    assert.match(brief, /A killed submission, already considered and rejected\. \(killed 2026-09-06\)/);
-    assert.match(brief, /## Killed authorities/);
-    assert.match(brief, /Killed Authority v\. Nobody, 2020 BCSC 1 \(killed 2026-09-06\)/);
 
     // Never deleted: both rows are still in the database, exactly so a later research or drafting
     // pass can recognize they were already considered rather than re-proposing them.

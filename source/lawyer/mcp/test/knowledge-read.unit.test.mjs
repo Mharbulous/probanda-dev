@@ -132,7 +132,7 @@ test("the layout validator fails hard on every broken rule, naming file, field a
     [{ ...TYPE_BLOCK, goal_criteria: ["gate"] }, "goal_criteria[0]", /universal/],
     [{ ...TYPE_BLOCK, goal_criteria: ["tickets"] }, "goal_criteria[0]", /must be one of/],
     [{ ...TYPE_BLOCK, goal_criteria: ["page-count"] }, "goal_criteria[0]", /must be one of/],
-    [{ ...TYPE_BLOCK, companions: ["counsel-brief"] }, "companions[0]", /must be one of written-arguments/],
+    [{ ...TYPE_BLOCK, companions: ["evidence-index"] }, "companions[0]", /must be one of written-arguments/],
     [{ ...TYPE_BLOCK, page_limit: 0 }, "page_limit", /positive integer/],
     [{ ...TYPE_BLOCK, letterhead: true }, "letterhead", /general types only/],
     [{ ...general([part]), letterhead: true, signer: "party" }, "signer", /letterhead render requires a roster lawyer/],

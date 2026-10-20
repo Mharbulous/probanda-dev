@@ -115,8 +115,8 @@ import {
 import { ASSOCIATE_JUDGE_UNDETERMINED_LINE } from "./forms/render-notice-of-application.js";
 import { renderForm32FiledFace } from "./forms/render-form32-filed-face.js";
 import { TEMPLATE_NOT_CHOSEN, UNRECOGNIZED_TEMPLATE_KEY } from "./forms/render-requisition.js";
-import { renderCounselBrief, renderWrittenArguments } from "./forms/render-companions.js";
-import { buildPreFilingBoardData, buildWorkBoardData, NEVER_DELIVERED_DOCS, UNATTENDED_TOKEN_PREFIX, WORKBOARD_DATA_FILE, type WorkBoardData } from "./forms/render-work-board.js";
+import { recordReserveInventory, renderWrittenArguments } from "./forms/render-companions.js";
+import { buildPreFilingBoardData, buildWorkBoardData, RESERVE_INVENTORY_DOC, UNATTENDED_TOKEN_PREFIX, WORKBOARD_DATA_FILE, type WorkBoardData } from "./forms/render-work-board.js";
 import { renderBccaBookFiledFace } from "./forms/emit-bcca-book.js";
 import { renderBccaFactumFiledFace } from "./forms/emit-bcca-factum.js";
 import { renderForm33FiledFace } from "./forms/render-form33-filed-face.js";
@@ -154,10 +154,6 @@ interface DocumentOutput {
   markdown: string;
   /** The Job Board Writings strip's short label and `title` text; stored in the manifest. */
   label: WritingLabel;
-  /** True for the Counsel Brief (#370, #380, privileged). Filtered out of renderMode:'filed' entirely in
-   * submissionFormsRender below -- absent, not stripped. Still written to disk in mockup mode
-   * (mockups live outside every Cowork sandbox mount, #324). */
-  neverDelivered?: boolean;
   /** A general Writing only: the parts it printed with no content, which the filed render refuses on. */
   unwritten?: string[];
   /** A general Writing only: the clause lines it tagged `[currency: ...]`, which the filed render refuses on. */
@@ -420,7 +416,7 @@ export function buildContext(
     clientNo: client.clientNo ?? "",
     matterNo: client.matterNo ?? "",
     matterDescription: client.matterDescription ?? "",
-    // Fresh per filing: every renderSubmissionParagraphs call site fills it, renderCounselBrief
+    // Fresh per filing: every renderSubmissionParagraphs call site fills it, recordReserveInventory
     // reads it back. See the field's own doc comment on RenderContext.
     paragraphLedger: new Map(),
     // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
@@ -470,8 +466,7 @@ function stampFor(
 
 /** One document's render, timed as `render <fileName>`. Every inventory entry the render records is
  * stamped with this document's documentType (Goal card design §2.2), so a criterion reads "goes to
- * the forum" off NEVER_DELIVERED_DOCS by that documentType -- the one list every neverDelivered tag
- * is derived from (withDelivery), never a second list. */
+ * the forum" off NEVER_DELIVERED_DOCS by that documentType. */
 function renderDocument(
   ctx: RenderContext,
   timings: PhaseTimings,
@@ -484,11 +479,6 @@ function renderDocument(
   const markdown = timed(timings, `render ${fileName}`, render);
   stampDoc(ctx.inventory, from, documentType);
   return { documentType, fileName, markdown, label };
-}
-
-/** The document, tagged neverDelivered off its own documentType from NEVER_DELIVERED_DOCS. */
-function withDelivery(doc: DocumentOutput): DocumentOutput {
-  return { ...doc, neverDelivered: NEVER_DELIVERED_DOCS.has(doc.documentType) };
 }
 
 /** The Writing's stored layout, or null for a row with none (a seeded test row; every real database
@@ -571,14 +561,14 @@ function venueDocumentsForFiling(
 /** #370/#380: Written Arguments renders as a true companion (document='written_argument') for
  * every type that declares `written-arguments` among its `companions` (shared/declared-layout.md
  * section 6); a type whose venue document is itself the written argument (VanIAC's submissions
- * package, the BCCA response book and factum) declares none. Counsel Brief is universal and always appended, tagged
- * neverDelivered so submissionFormsRender drops it from renderMode:'filed' entirely. The Job
+ * package, the BCCA response book and factum) declares none. The reserve inventory is then
+ * recorded for every filing, with no document. The Job
  * Board is no document of the filing's (#1365): the render builds its section from this render's
  * inventory, after these documents, and the filing's own Job Board page carries it. */
 function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, general: StoredLayout | null, cited: CitedState[]): DocumentOutput[] {
-  // ORDER IS LOAD-BEARING: renderCounselBrief reads ctx.paragraphLedger, which the venue
-  // renderers and the Written Arguments companion fill as they number their own paragraphs. The
-  // brief must stay after both, and the venue face must stay first (first-write-wins gives it
+  // ORDER IS LOAD-BEARING: recordReserveInventory reads ctx.paragraphLedger, which the venue
+  // renderers and the Written Arguments companion fill as they number their own paragraphs. It
+  // must stay after both, and the venue face must stay first (first-write-wins gives it
   // priority for a submission carried by both documents). Evaluation here is eager and strictly
   // ordered, so this holds -- but nothing else enforces it.
   const { docs, companions } = venueDocumentsForFiling(ctx, timings, general, cited);
@@ -587,7 +577,9 @@ function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, general: 
   if (companions.includes("written-arguments")) {
     docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));
   }
-  docs.push(withDelivery(renderDocument(ctx, timings, "Counsel_brief", "Counsel Brief.md", () => renderCounselBrief(ctx))));
+  const from = ctx.inventory.length;
+  recordReserveInventory(ctx);
+  stampDoc(ctx.inventory, from, RESERVE_INVENTORY_DOC);
   return docs;
 }
 
@@ -651,7 +643,7 @@ export interface RenderResult {
    * whose work is over. */
   filing_retired?: boolean;
   /** True only on a Job Board with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
-   * board and nothing else, so no mockup, manifest, Counsel Brief or presentation copy is written.
+   * board and nothing else, so no mockup, manifest or presentation copy is written.
    * `documents` carries the Job Board alone, with its board_summary. A closed one also carries
    * filing_retired and a note. */
   job_board_only?: true;
@@ -1258,9 +1250,7 @@ export function submissionFormsRender(
   if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };
 
   if (renderMode === "filed") {
-    // Counsel Brief is genuinely absent here, not merely stripped -- "never
-    // delivered" is structural (#370), not a filed-face transform concern.
-    const deliverable = built.filter((doc) => !doc.neverDelivered);
+    const deliverable = built; // every built document goes to the forum
 
     // Filing gate (ticket 2026-08-31, decision 5): refuse rather than deliver a document
     // containing CITATION_MISSING -- mirrors the bundle_outdated refusal shape below.
@@ -1415,7 +1405,7 @@ export function submissionFormsRender(
   // criterion counts, named in a mockup-only line at the head of the venue document. It runs before
   // the manifest write, so the pre-send hold reads the entries back. The filed render returned above.
   const untracked = timed(timings, "citation_scan", () =>
-    scanUntrackedCitations(dbPath, ctx.proceeding.id, built.filter((doc) => !NEVER_DELIVERED_DOCS.has(doc.documentType)), ctx.inventory)
+    scanUntrackedCitations(dbPath, ctx.proceeding.id, built, ctx.inventory)
   );
   if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
 

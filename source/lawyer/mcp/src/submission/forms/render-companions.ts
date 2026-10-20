@@ -1,29 +1,21 @@
-// Universal companion documents (#370, #380, build ticket #384): Written
-// Arguments and the Counsel Brief, rendering for every filing kind. For a
+// The Written Arguments companion (#370, #380, build ticket #384), rendering
+// for every filing kind that declares it, and the reserve inventory. For a
 // VanIAC submissions_package filing the Written Arguments IS the venue
 // document (its pointer rows read document='form' -- #380's resolution:
 // "for a VanIAC submissions package that face is the submissions document
 // itself"; #370 item 5); for the three BCSC kinds it is a true companion,
-// reading document='written_argument'. The Counsel Brief is privileged,
-// never delivered (forms.ts filters it out of renderMode:'filed' by its
-// neverDelivered tag), and is the sole surface for reserved (🂡),
-// impeachment (🤥), adverse (🚩, #390/#401), and lead-authority material
-// (#370 item 4, the brief-only cap) -- lead statements actually render there
-// as of the Counsel Brief authority-citations build, which also turned its
-// submission list into full numbered argument bodies carrying the venue
-// document's own paragraph numbers.
+// reading document='written_argument'. The reserve inventory prints nothing:
+// it records the Proposals of reserved orders, held-in-reserve submissions
+// and lead-authority material (#370 item 4, the brief-only cap), which no
+// venue face prints.
 
 import { DataServerError } from "../../errors.js";
 import { submissionDataQuery } from "../backend.js";
 import { BLANK_UNDERLINE, frontmatterHeader, styleOfProceedingCaption, type CaptionParty, type FrontmatterFields } from "./components.js";
 import {
-  adverseFactMarker,
-  anticipatedPointMarker,
   dedupeLineMarkers,
-  impeachmentMarker,
   printMarkerSets,
   rebuttalMarker,
-  reservedMarker,
   unservedPetitumMarker,
   type JurisdictionRequiresEdge,
 } from "./markers.js";
@@ -51,9 +43,8 @@ import {
 } from "./render-vaniac-submissions.js";
 import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
-import { fetchFilingRhetoricPlacements, fetchProceedingRhetoric, fetchRhetoric, interleave, renderRhetoricLine, rhetoricPrintable } from "./render-rhetoric.js";
-import { deriveLifecycle, LIFECYCLE_LABELS } from "./lifecycle.js";
-import { captionHeadingFor, fetchHearingDate, JOB_BOARD_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, rhetoricHeld, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
+import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
+import { captionHeadingFor, JOB_BOARD_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -108,9 +99,9 @@ function frontmatterFor(ctx: RenderContext, documentType: string): string {
  * body), crossed-out submissions below the numbered paragraphs referencing
  * the order they support (#380's Rendering rule), a relief/orders block, and
  * a mockup-only Opposing points section. No trailing Held-in-reserve --
- * reserved material (deployed by no document of this filing) is Counsel-
- * Brief-only and never reaches this document's own queries at all
- * (fetchSubmissions/fetchOrdersSought already filter to `documentKey`).
+ * reserved material (deployed by no document of this filing) never reaches
+ * this document's own queries at all (fetchSubmissions/fetchOrdersSought
+ * already filter to `documentKey`); recordReserveInventory records its Proposals.
  */
 export function renderWrittenArguments(ctx: RenderContext, documentKey: PointerDocument): string {
   const venue = writtenArgumentsVenue(ctx.proceeding);
@@ -328,49 +319,30 @@ function fetchProceedingOrders(dbPath: string, proceedingId: number): PoolOrderR
   return orders.map((o) => ({ ...o, hasServedBy: o.has_served_by === 1, requires: edgesByOrder.get(o.id) ?? [] }));
 }
 
-/** #959: order/submission/rhetorical paragraph id -> "<title> (<state>)" of each OTHER filing of
- * the proceeding that deploys it, on either document or, for a Form 8's alternatives, by placement
- * (#996). An item listed here and not deployed on this filing is not held in reserve (no 🂡, no
- * ladder, no Proposals): the Counsel Brief lists it marker-free instead. Retired and live filings
- * alike -- the state label is what tells counsel which. No appeal deadline on this path, so a
- * state never reads appeal_expired. A database held below v71 deploys no rhetorical paragraph. */
-function fetchOtherFilingDeployments(
-  dbPath: string,
-  proceedingId: number,
-  filingId: number,
-  today: string
-): { orders: Map<number, string[]>; submissions: Map<number, string[]>; rhetoric: Map<number, string[]> } {
+/** #959: the order and submission ids each OTHER filing of the proceeding deploys, on either
+ * document or, for a Form 8's alternatives, by placement (#996). An item here and not deployed on
+ * this filing is not held in reserve, so it records no ladder and no Proposals. Retired and live
+ * filings alike. */
+function fetchOtherFilingDeployments(dbPath: string, proceedingId: number, filingId: number): { orders: Set<number>; submissions: Set<number> } {
   const filings = rows<{ id: number; kind: string; title: string; filed_on: string | null; decided_on: string | null; entered_on: string | null; retired_on: string | null; needs_forum_parts: 0 | 1 }>(
     dbPath,
-    // A Job Board with no Writing deploys nothing and is no filing to name here.
+    // A Job Board with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
     [proceedingId, filingId, JOB_BOARD_KIND]
   );
-  const orders = new Map<number, string[]>();
-  const submissions = new Map<number, string[]>();
-  const rhetoric = new Map<number, string[]>();
-  const held = rhetoricHeld(dbPath);
-  const add = (map: Map<number, string[]>, id: number, label: string) => {
-    const labels = map.get(id) ?? [];
-    if (!labels.includes(label)) labels.push(label);
-    map.set(id, labels);
-  };
+  const orders = new Set<number>();
+  const submissions = new Set<number>();
   for (const f of filings) {
-    const label = `${f.title} (${LIFECYCLE_LABELS[deriveLifecycle(f, fetchHearingDate(dbPath, f.id), today).state]})`;
     for (const r of rows<{ order_sought_id: number }>(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f.id])) {
-      add(orders, r.order_sought_id, label);
+      orders.add(r.order_sought_id);
     }
     // #996: a sibling Form 8 deploys its alternatives by placement, as the own filing does (#960).
-    for (const id of fetchPlacedAlternativeIds(dbPath, f)) add(orders, id, label);
+    for (const id of fetchPlacedAlternativeIds(dbPath, f)) orders.add(id);
     for (const r of rows<{ submission_id: number }>(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f.id])) {
-      add(submissions, r.submission_id, label);
-    }
-    if (!held) continue;
-    for (const r of rows<{ rhetorical_paragraph_id: number }>(dbPath, `SELECT rhetorical_paragraph_id FROM filing_rhetoric WHERE filing_id = ?`, [f.id])) {
-      add(rhetoric, r.rhetorical_paragraph_id, label);
+      submissions.add(r.submission_id);
     }
   }
-  return { orders, submissions, rhetoric };
+  return { orders, submissions };
 }
 
 /** Spec R6 (schema v47): the law assertions some live Writing of the proceeding relies on, through
@@ -405,12 +377,10 @@ interface PoolSubmissionRow {
   served_order_wordings: string; // query.ts servedOrderWordingsColumn, read by 📚's ordinary-costs test
 }
 
-/** Ordered by the practitioner's own `ordinal`, not by id: the Held-in-reserve section's R1/R2
- * labels are the practitioner's reading order, and a reserved submission has no filing ordinal to
- * fall back on. The deployed section re-sorts by assigned paragraph number anyway. Excludes
- * killed submissions (schema v16) -- those render in their own "Killed submissions" section
- * below, never mixed into Held in reserve (a killed item is reserved by construction, but the
- * two sections answer different questions: still a live candidate, vs. already rejected). */
+/** Ordered by the practitioner's own `ordinal`, not by id: the held-in-reserve R1/R2 numbering is
+ * the practitioner's reading order, and a reserved submission has no filing ordinal to fall back
+ * on. The numbered groups re-sort by assigned paragraph number anyway. Excludes killed submissions
+ * (schema v16): a killed item is rejected, not held. */
 function fetchProceedingSubmissions(dbPath: string, proceedingId: number): PoolSubmissionRow[] {
   return rows<PoolSubmissionRow>(
     dbPath,
@@ -419,47 +389,9 @@ function fetchProceedingSubmissions(dbPath: string, proceedingId: number): PoolS
   );
 }
 
-interface KilledSubmissionRow {
-  id: number;
-  contention: string;
-  killed_on: string;
-}
-
-/** Killed submissions (schema v16): kept intact so a later drafting session never re-proposes
- * the same contention -- listed here, plain text, never numbered (the decision is already made,
- * not work; work-markers.md rule 5). */
-function fetchKilledSubmissions(dbPath: string, proceedingId: number): KilledSubmissionRow[] {
-  return rows<KilledSubmissionRow>(
-    dbPath,
-    `SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id`,
-    [proceedingId]
-  );
-}
-
-interface KilledAuthorityRow {
-  id: number;
-  style_of_cause_or_title: string;
-  citation: string | null;
-  killed_on: string;
-}
-
-/** Killed authorities (schema v16): the case/statute itself was reviewed and rejected. Its
- * statements_of_law rows stay in the database (the breadcrumb a later research sweep must not
- * re-run) and ride the same brief-only cap as verification='lead' -- excluded from every deployed
- * face and from 📖/🥉/🥈, printed only where they still support a rendered submission's argument
- * body above. This listing is the proceeding-wide inventory: every killed authority, whether or
- * not any submission currently requires it. */
-function fetchKilledAuthorities(dbPath: string, proceedingId: number): KilledAuthorityRow[] {
-  return rows<KilledAuthorityRow>(
-    dbPath,
-    `SELECT id, style_of_cause_or_title, citation, killed_on FROM authorities WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id`,
-    [proceedingId]
-  );
-}
-
 /** Every (submission, order) service edge in the proceeding, for the struck cascade below --
  * the same one-hop rule renderWrittenArguments applies (#380's Rendering rule): a submission
- * renders struck when it serves >=1 order and every order it serves is crossed out. */
+ * is struck when it serves >=1 order and every order it serves is crossed out. */
 function fetchStruckSubmissionIds(dbPath: string, proceedingId: number): Set<number> {
   const served = rows<{ submission_id: number; crossed_out_on: string | null }>(
     dbPath,
@@ -477,84 +409,31 @@ function fetchStruckSubmissionIds(dbPath: string, proceedingId: number): Set<num
   return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
 }
 
-interface PoolStatementRow {
-  id: number;
-  fact_id: number;
-  postulate: string;
-  excerpt: string | null;
-  purpose: string | null;
-}
-
-function fetchProceedingStatements(dbPath: string, proceedingId: number): PoolStatementRow[] {
-  return rows<PoolStatementRow>(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, f.postulate, sof.excerpt, sof.purpose
-     FROM statements_of_fact sof JOIN facts f ON f.id = sof.fact_id
-     WHERE sof.proceeding_id = ? ORDER BY sof.id`,
-    [proceedingId]
-  );
-}
-
-interface PoolFactRow {
-  id: number;
-  postulate: string;
-  adverse: number | null;
-}
-
-function fetchProceedingFacts(dbPath: string, proceedingId: number): PoolFactRow[] {
-  return rows<PoolFactRow>(dbPath, `SELECT id, postulate, adverse FROM facts WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-
-interface AnticipatedPointRow {
-  id: number;
-  point: string;
-}
-
-/** anticipated_points (schema v11, #390/#401): the practitioner's own prediction of a point the
- * other side may run, not yet raised -- proceeding-scoped, no edges, never deployed. */
-function fetchAnticipatedPoints(dbPath: string, proceedingId: number): AnticipatedPointRow[] {
-  return rows<AnticipatedPointRow>(dbPath, `SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-
 /**
- * Counsel Brief: the whole proceeding pool -- every order sought, every
- * submission, every fact statement -- annotated with this filing's own
- * deployment (deployed by neither document of this filing nor by any other
- * filing => 🂡, derived, never stored; deployed only on another filing =>
- * listed marker-free under "used on other filings", #959) and, on
- * statements, impeachment status (🤥, independent of
- * deployment since v10). Never delivered: forms.ts tags this document
- * `neverDelivered` and drops it entirely from renderMode:'filed' output --
- * not stripped, absent.
+ * Records the Proposals of the proceeding pool that no venue face prints, and writes nothing:
+ * reserved orders (the 🏛️ ladder and 🦵), held-in-reserve submission bodies (🧾, 📚, the rungs, 📌
+ * and 👤), and lead, failed, killed and overruled statements of law (`includeLeadStatements`),
+ * with their 🔬, 📇 and 🏅. An order or submission deployed only on another filing records
+ * nothing here (#959). The entries are what the Job Board's Proposals, job eligibility, dead_key,
+ * board_card and note_up_due read; forms.ts tags them with a never-delivered doc, so they reach no
+ * completion criterion.
  *
- * Submissions render as full argument bodies, not one inventory line each (build: Counsel Brief
- * authority citations, superseding the "compact annotated inventory" this section used to be):
- * counsel doing a wording or strategy pass needs the authority behind each contention without
- * cross-checking the venue document, and for a RESERVED submission there is no venue document to
- * cross-check -- its authority was rendered nowhere at all. A deployed submission carries the same
- * paragraph number here that it carries on the face that deployed it, read back from
- * ctx.paragraphLedger and never re-derived, so the two can be read side by side. Lead-authority
- * statements, filtered out of every deployed document by the brief-only cap, render here and only
- * here.
- *
- * Killed submissions/authorities (schema v16) get their own trailing sections, plain lines with
- * the kill date, never numbered and never mixed into Held in reserve -- a killed item is reserved
- * by construction, but "still a live candidate" and "already reviewed and rejected" are different
- * facts a reader needs told apart.
+ * The bodies are walked exactly as a printed surface would number them, so each entry's key and
+ * item match what a render recorded before this surface stopped printing: a deployed submission
+ * at the paragraph number its own face gave it (read back from ctx.paragraphLedger, never
+ * re-derived), grouped by that face, and a held one under its own R numbering. The markdown the
+ * walk builds is discarded.
  */
-export function renderCounselBrief(ctx: RenderContext): string {
+export function recordReserveInventory(ctx: RenderContext): void {
   const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
   const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
   // #960: a Form 8 alternative has no pointer row -- its primary's placement deploys it.
   const deployedOrders = new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
   const deployedSubmissions = new Set([...formIds.submissionIds, ...waIds.submissionIds]);
 
-  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, ctx.rendered.slice(0, 10));
-  const pooledOrders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id);
-  const orders = pooledOrders.filter((o) => deployedOrders.has(o.id) || !elsewhere.orders.has(o.id));
-  const ordersElsewhere = pooledOrders.filter((o) => !deployedOrders.has(o.id) && elsewhere.orders.has(o.id));
+  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
+  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o) => deployedOrders.has(o.id) || !elsewhere.orders.has(o.id));
   const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
-  const statements = fetchProceedingStatements(ctx.dbPath, ctx.proceeding.id);
 
   // Argument bodies, proceeding-wide rather than filing-scoped: a reserved submission is exactly
   // the one this filing's pointer tables do not reach, and it needs its facts and law here.
@@ -563,7 +442,7 @@ export function renderCounselBrief(ctx: RenderContext): string {
   const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
   const factIds = [...new Set(factRows.map((f) => f.fact_id))];
   const statementRows = fetchFactStatements(ctx.dbPath, factIds);
-  // Not optional: without the admission annotations the brief's fact lines would carry different
+  // Not optional: without the admission annotations the fact lines would record different
   // 👤/spent-rung glyphs from the identical lines on the venue face.
   const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
     ctx.dbPath,
@@ -573,20 +452,8 @@ export function renderCounselBrief(ctx: RenderContext): string {
   );
   const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
 
-  // "Ex. N" is proceeding-scoped since #712 (position in the proceeding's ordered run of rounds),
-  // so a document keeps one number for the proceeding's life. The superseded comment here read
-  // "Ex. N is definitionally filing-scoped ... do not fix it by numbering exhibits
-  // proceeding-wide, which would make Ex. 3 name two different documents" (c2d64ca, 2026-09-04).
-  // That warning was against changing THIS surface alone: a proceeding-wide Brief beside a
-  // filing-scoped Evidence Index really would make "Ex. 3" name two documents in one rendered
-  // set, which exhibitNumbersFromOrderedIds' own contract forbids. Every VanIAC surface moved
-  // together, so the hazard it named is closed rather than ignored (practitioner confirmed, #712).
-  // Consequence: a reserved submission citing a document outside the filing now carries a real
-  // number here instead of falling back to its label. That is a mockup -- the Counsel Brief has no
-  // filed face -- and the filed Evidence Index renders from this filing's filing_documents rows, of
-  // which a reserved submission is not one, so a number here cannot reach the forum.
-  // labelMap is still seeded from the proceeding-wide statement rows: a label missing from both
-  // maps degrades silently to a bare pinpoint, or to no citation line.
+  // "Ex. N" is proceeding-scoped since #712, so a reserved submission citing a document outside the
+  // filing still finds its number. labelMap is seeded from the proceeding-wide statement rows.
   const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
   const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d) => d.document_id));
   const referencedDocIds = new Set<number>(exhibitDocs.map((d) => d.document_id));
@@ -599,13 +466,7 @@ export function renderCounselBrief(ctx: RenderContext): string {
   const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
   const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
 
-  function renderBody(
-    s: PoolSubmissionRow,
-    startPara: number,
-    renderedLawAssertions: Map<number, number>,
-    paragraphPrefix: string,
-    extraFirstParagraphMarker: string
-  ) {
+  function recordBody(s: PoolSubmissionRow, startPara: number, renderedLawAssertions: Map<number, number>, paragraphPrefix: string) {
     return renderSubmissionParagraphs(
       s.id,
       s.contention,
@@ -615,74 +476,37 @@ export function renderCounselBrief(ctx: RenderContext): string {
       exhibitMap,
       labelMap,
       copyMarkers,
-      extraFirstParagraphMarker,
+      "",
       renderedLawAssertions,
-      // Site 21: the Counsel Brief is the only surface where lead statements print, so the
-      // statement-line 🔬 and its 📇 come only from here (design §4). A statement whose law
-      // assertion nothing on a live Writing relies on raises no 🔬 (spec R6, schema v47). The test
-      // is per statement, not per submission: a lead under a reserved submission keeps 🔬 while
-      // another live-deployed submission or order requires the same proposition.
+      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
+      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
+      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
+      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
+      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
       { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id: number) => reliedOn.has(id), noFactsNeededOn: s.no_facts_needed_on, noLawNeededOn: s.no_law_needed_on, servedOrderWordings: s.served_order_wordings }
     );
   }
 
-  const lines: string[] = [];
-  lines.push(frontmatterFor(ctx, "Counsel_brief"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
-  lines.push("");
-  lines.push("*Privileged and confidential — counsel's eyes only. Never delivered.*");
-  lines.push("");
-
-  lines.push("## Orders sought");
-  lines.push("");
+  // Site 22: a reserved order that is not crossed out is on no venue face, so its ladder and 🦵 are
+  // recorded only here. A reserved order is deployed on no live Writing, so its edges raise no 🔬
+  // (spec R6, schema v47). Keys as site 20.
   for (const o of orders) {
-    const struck = o.crossed_out_on !== null;
-    const wording = struck ? `~~${o.wording}~~` : o.wording;
-    const reserved = reservedMarker(deployedOrders.has(o.id));
-    // §4 "Reserve orthogonal": 🂡 co-occurs with any marker and both render. A reserved order appears on no
-    // venue face, so this is the only line its jurisdictional ladder and 🦵 can be seen on. A deployed order
-    // already carries them on the face that deploys it, and a crossed-out order carries none there either.
-    // Site 22: recorded only inside the reserved-and-not-struck branch, which is when the ladder
-    // and 🦵 actually print. Keys as site 20.
-    let marker = reserved;
-    if (reserved && !struck) {
-      // A reserved order is deployed on no live Writing, so its edges raise no 🔬 (spec R6, schema
-      // v47). One deployed only on another filing is listed below with no ladder at all.
-      const jurMarker = recordJurisdictionLadder(ctx.inventory, o.id, o.wording, o.requires, false);
-      const petitum = unservedPetitumMarker(o.hasServedBy);
-      recordGlyphs(ctx.inventory, petitum, ["🦵"], { table: "order_sought", id: o.id, item: o.wording });
-      marker = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, reserved])]);
-    }
-    lines.push(`- ${wording}${marker ? ` ${marker}` : ""} <!-- order_sought_id ${o.id} -->`);
-  }
-  lines.push("");
-
-  if (ordersElsewhere.length > 0) {
-    lines.push("## Orders used on other filings");
-    lines.push("");
-    for (const o of ordersElsewhere) {
-      const wording = o.crossed_out_on !== null ? `~~${o.wording}~~` : o.wording;
-      lines.push(`- ${wording} — ${elsewhere.orders.get(o.id)?.join("; ")} <!-- order_sought_id ${o.id} -->`);
-    }
-    lines.push("");
+    if (deployedOrders.has(o.id) || o.crossed_out_on !== null) continue;
+    recordJurisdictionLadder(ctx.inventory, o.id, o.wording, o.requires, false);
+    recordGlyphs(ctx.inventory, unservedPetitumMarker(o.hasServedBy), ["🦵"], { table: "order_sought", id: o.id, item: o.wording });
   }
 
   // Three buckets, by whether a face of this filing actually numbered the submission:
   //   numbered -- a venue renderer assigned it a paragraph; reproduce that number exactly
-  //   struck   -- every order it serves is crossed out, so the Written Arguments skipped it
-  //   held     -- everything else: reserved (🂡), or deployed onto a face that renders no
-  //               submissions at all (the requisition kinds), which is deployed and so gets no 🂡
+  //   struck   -- every order it serves is crossed out: recorded nowhere
+  //   held     -- everything else: reserved, or deployed onto a face that renders no submissions
+  //               at all (the requisition kinds)
+  // #959: a submission deployed only on another filing is not held, and records nothing here.
   const numbered = submissions.filter((s) => ctx.paragraphLedger.has(s.id));
-  const struck = submissions.filter((s) => !ctx.paragraphLedger.has(s.id) && struckIds.has(s.id));
-  const unnumbered = submissions.filter((s) => !ctx.paragraphLedger.has(s.id) && !struckIds.has(s.id));
-  // #959: deployed only on another filing -- one line under its own heading, no body, so none of
-  // its glyphs reach this filing's Proposals.
-  const isElsewhere = (s: PoolSubmissionRow) => !deployedSubmissions.has(s.id) && elsewhere.submissions.has(s.id);
-  const held = unnumbered.filter((s) => !isElsewhere(s));
-  const submissionsElsewhere = unnumbered.filter(isElsewhere);
+  const held = submissions.filter(
+    (s) => !ctx.paragraphLedger.has(s.id) && !struckIds.has(s.id) && (deployedSubmissions.has(s.id) || !elsewhere.submissions.has(s.id))
+  );
 
-  lines.push("## Submissions");
-  lines.push("");
   // Grouped by source document, each group with its OWN renderedLawAssertions Map, mirroring the
   // "one Map per rendered document" invariant every venue renderer keeps. Without the split, a
   // submission on the form and one on the Written Arguments would both claim paragraph 1 (each
@@ -692,142 +516,17 @@ export function renderCounselBrief(ctx: RenderContext): string {
     const group = numbered
       .filter((s) => ctx.paragraphLedger.get(s.id)?.document === documentKey)
       .sort((a, b) => (ctx.paragraphLedger.get(a.id)?.para ?? 0) - (ctx.paragraphLedger.get(b.id)?.para ?? 0));
-    if (group.length === 0) continue;
-    lines.push(
-      documentKey === "form"
-        ? "*Paragraph numbers as in this filing's venue document (mockup).*"
-        : "*Paragraph numbers as in the Written Arguments (mockup).*"
-    );
     const renderedLawAssertions = new Map<number, number>();
     for (const s of group) {
       const entry = ctx.paragraphLedger.get(s.id);
       if (entry === undefined) continue;
-      lines.push(...renderBody(s, entry.para - 1, renderedLawAssertions, "", "").lines);
-      lines.push("");
+      recordBody(s, entry.para - 1, renderedLawAssertions, "");
     }
   }
 
-  // Same one-hop cascade the Written Arguments applies (#380's Rendering rule) -- unnumbered
-  // there, so unnumbered here.
-  for (const s of struck) {
-    lines.push(`~~${s.contention}~~ (crossed out — every order it serves is crossed out) <!-- submission_id ${s.id} -->`);
-  }
-  if (struck.length > 0) lines.push("");
-
-  if (held.length > 0) {
-    lines.push("## Held in reserve");
-    lines.push("");
-    lines.push("*Numbered independently (R1, R2, …): these appear on no face of this filing, so there is no paragraph number to share.*");
-    // Its own Map: a law assertion shared with a deployed submission re-renders in full under an R
-    // number rather than pointing back across two different numbering spaces.
-    const renderedLawAssertions = new Map<number, number>();
-    let r = 0;
-    for (const s of held) {
-      // 🂡 only where it is genuinely reserved. A submission deployed onto a face that renders no
-      // submissions (requisition kinds) lands in this section too, and must not be marked reserved.
-      const result = renderBody(s, r, renderedLawAssertions, "R", reservedMarker(deployedSubmissions.has(s.id)));
-      lines.push(...result.lines);
-      lines.push("");
-      r = result.nextPara;
-    }
-  }
-
-  if (submissionsElsewhere.length > 0) {
-    lines.push("## Submissions used on other filings");
-    lines.push("");
-    for (const s of submissionsElsewhere) {
-      lines.push(`- ${s.contention} — ${elsewhere.submissions.get(s.id)?.join("; ")} <!-- submission_id ${s.id} -->`);
-    }
-    lines.push("");
-  }
-
-  const killedSubmissions = fetchKilledSubmissions(ctx.dbPath, ctx.proceeding.id);
-  if (killedSubmissions.length > 0) {
-    lines.push("## Killed submissions");
-    lines.push("");
-    for (const s of killedSubmissions) {
-      lines.push(`- ${s.contention} (killed ${s.killed_on}) <!-- submission_id ${s.id} -->`);
-    }
-    lines.push("");
-  }
-
-  // Every rhetorical paragraph of the proceeding (schema v71), with where this filing prints it.
-  // Reserve works as a submission's does (#959): placed on no filing at all is 🂡, placed only on
-  // another filing is listed marker-free with that filing. A placement in a part this kind has no
-  // host for prints nowhere, and the note says so. No 🧐 here: review is on the forum lines.
-  const rhetoricRows = fetchProceedingRhetoric(ctx.dbPath, ctx.proceeding.id);
-  if (rhetoricRows.length > 0) {
-    const placements = fetchFilingRhetoricPlacements(ctx.dbPath, ctx.filing.id);
-    lines.push("## Rhetorical paragraphs");
-    lines.push("");
-    for (const rp of rhetoricRows) {
-      const here = placements.filter((p) => p.rhetorical_paragraph_id === rp.id);
-      const trace = `<!-- rhetorical_paragraph_id ${rp.id} -->`;
-      if (here.length > 0) {
-        const printed = here.map((p) => {
-          const kindLabel = p.document === "written_argument" ? "the Written Arguments" : ctx.filing.kind;
-          const notPrinted = rhetoricPrintable(ctx.filing.kind, p.document, p.part) ? "" : ` (not printed: ${kindLabel} has no ${p.part} part)`;
-          return `${p.document}, ${p.part}${notPrinted}`;
-        });
-        lines.push(`- ${rp.wording} — printed on ${printed.join("; ")} ${trace}`);
-      } else if (elsewhere.rhetoric.has(rp.id)) {
-        lines.push(`- ${rp.wording} — ${elsewhere.rhetoric.get(rp.id)?.join("; ")} ${trace}`);
-      } else {
-        lines.push(`- ${rp.wording} ${reservedMarker(false)} ${trace}`);
-      }
-    }
-    lines.push("");
-  }
-
-  const killedAuthorities = fetchKilledAuthorities(ctx.dbPath, ctx.proceeding.id);
-  if (killedAuthorities.length > 0) {
-    lines.push("## Killed authorities");
-    lines.push("");
-    for (const a of killedAuthorities) {
-      const citation = a.citation ? `, ${a.citation}` : "";
-      lines.push(`- ${a.style_of_cause_or_title}${citation} (killed ${a.killed_on}) <!-- authority_id ${a.id} -->`);
-    }
-    lines.push("");
-  }
-
-  const impeachment = statements.filter((s) => s.purpose === "impeachment");
-  if (impeachment.length > 0) {
-    lines.push("## Impeachment material");
-    lines.push("");
-    for (const s of impeachment) {
-      const content = s.excerpt ? `"${s.excerpt}" (re: ${s.postulate})` : s.postulate;
-      lines.push(`- ${content} ${impeachmentMarker(s.purpose)} <!-- statement_of_fact_id ${s.id} -->`);
-    }
-    lines.push("");
-  }
-
-  // 🚩 adverse (#390/#401): two independent predicates, two distinct groups -- a fact recorded as
-  // true but harmful to our own side (facts.adverse=1), and the practitioner's own prediction of a
-  // point the other side may run (anticipated_points, existence alone the predicate). Neither reads
-  // deployment state; an adverse fact can also appear above as 🂡-marked or not, independently.
-  const facts = fetchProceedingFacts(ctx.dbPath, ctx.proceeding.id);
-  const adverseFacts = facts.filter((f) => adverseFactMarker(f.adverse) !== "");
-  if (adverseFacts.length > 0) {
-    lines.push("## Adverse facts");
-    lines.push("");
-    for (const f of adverseFacts) {
-      lines.push(`- ${f.postulate} ${adverseFactMarker(f.adverse)} <!-- fact_id ${f.id} -->`);
-    }
-    lines.push("");
-  }
-
-  // Named "Anticipated points", not "...adverse submissions" -- terms-and-symbols.md's decision log:
-  // deliberately not named anticipated_submission (collides with the defined meaning of
-  // *submission*, always our own side); this section sits directly under Submissions above.
-  const anticipatedPoints = fetchAnticipatedPoints(ctx.dbPath, ctx.proceeding.id);
-  if (anticipatedPoints.length > 0) {
-    lines.push("## Anticipated points");
-    lines.push("");
-    for (const p of anticipatedPoints) {
-      lines.push(`- ${p.point} ${anticipatedPointMarker()} <!-- anticipated_point_id ${p.id} -->`);
-    }
-    lines.push("");
-  }
-
-  return lines.join("\n").trimEnd() + "\n";
+  // Its own Map: a law assertion shared with a deployed submission is walked in full under an R
+  // number rather than pointing back across two different numbering spaces.
+  const renderedLawAssertions = new Map<number, number>();
+  let r = 0;
+  for (const s of held) r = recordBody(s, r, renderedLawAssertions, "R").nextPara;
 }

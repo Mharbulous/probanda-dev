@@ -171,14 +171,12 @@ test("an authority's note-up note prints last on its statements' citation lines,
     );
     const note = " (note-up: CanLII: noted up (2021 BCSC 11: 3 citing decisions; 3 read); no qualification)";
     const mockup = submissionFormsRender(f.dbPath, 1, CLIENT);
-    for (const type of ["Written_arguments", "Counsel_brief"]) {
+    for (const type of ["Written_arguments"]) {
       const md = doc(mockup, type).markdown;
       const settled = traced(md, "<!-- statement_of_law_id 1 -->");
       assert.ok(settled.before.endsWith(`*Settled Authority v. S*, 2021 BCSC 11, para 11${TAG}${note}`), `${type}: ${settled.before}`);
       assert.doesNotMatch(traced(md, "<!-- law_assertion_id 1 -->").line, /note-up/, `${type}: no tag on the proposition line`);
     }
-    // Authority 3's note is NULL: its lead statement prints in the Counsel Brief alone, with no tag.
-    assert.doesNotMatch(traced(doc(mockup, "Counsel_brief").markdown, "<!-- statement_of_law_id 3 -->").before, /note-up/, "a NULL note prints no tag");
     const filed = doc(submissionFormsRender(f.dbPath, 1, CLIENT, "filed"), "Written_arguments").markdown;
     assert.ok(filed.includes("*Settled Authority v. S*, 2021 BCSC 11, para 11"), "expected the citation on the filed face");
     assert.doesNotMatch(filed, /note-up|noted up|settled by counsel/, "expected neither tag on the filed face");
@@ -187,26 +185,14 @@ test("an authority's note-up note prints last on its statements' citation lines,
   }
 });
 
-test("the Counsel Brief tags the settled line, and a statement deployed on no live Writing raises no 🔬", async () => {
+test("a statement deployed on no live Writing raises no 🔬", async () => {
   const f = fixture();
   try {
     await seeded(f);
     const mockup = submissionFormsRender(f.dbPath, 1, CLIENT);
-    const brief = doc(mockup, "Counsel_brief").markdown;
     const writtenArgument = doc(mockup, "Written_arguments").markdown;
 
-    const settled = traced(brief, "<!-- statement_of_law_id 1 -->");
-    assert.ok(settled.before.endsWith(TAG), settled.before);
-    assert.doesNotMatch(settled.line, /🔬|👃/, settled.line);
-
-    // R6: the reserved submission's lead statement and the reserved order raise no 🔬.
-    assert.doesNotMatch(traced(brief, "<!-- statement_of_law_id 4 -->").line, /🔬/, "expected no 🔬 on a reserved submission's lead");
-    const reservedOrder = traced(brief, "<!-- order_sought_id 2 -->").line;
-    assert.match(reservedOrder, /🂡/, "expected the order to read as held in reserve");
-    assert.doesNotMatch(reservedOrder, /🔬/, "expected no 🔬 on a reserved order's lead basis");
-
-    // The deployed controls keep theirs.
-    assert.match(traced(brief, "<!-- statement_of_law_id 3 -->").line, /🔬/, "expected 🔬 on the deployed submission's lead");
+    // The deployed order's control keeps its 🔬.
     assert.match(traced(writtenArgument, "<!-- relief_item b -->").line, /🔬/, "expected 🔬 on the deployed order's lead basis");
 
     const { manifest, recorded, proposed } = keysOf(mockup);
@@ -277,11 +263,6 @@ test("a reserved submission's lead keeps 🔬 while a live-deployed submission s
       await seeded(f);
       await submissionDataExecute(f.dbPath, c.sql);
       const mockup = submissionFormsRender(f.dbPath, 1, CLIENT);
-      const statementLines = doc(mockup, "Counsel_brief").markdown.split("\n").filter((l) => l.includes("<!-- statement_of_law_id 4 -->"));
-      assert.ok(statementLines.length > 0, `${c.name}: expected statement 4 on the brief`);
-      for (const line of statementLines) {
-        assert.equal(/🔬/.test(line), c.scrutiny, `${c.name}: ${line}`);
-      }
       const { recorded, proposed } = keysOf(mockup);
       assert.equal(recorded.has("scrutinize:statements_of_law:4"), c.scrutiny, `${c.name}: recorded`);
       assert.equal(proposed.has("scrutinize:statements_of_law:4"), c.scrutiny, `${c.name}: proposed`);
@@ -304,9 +285,6 @@ test("re-linking a reserved submission derives 🔬 again, and an excerpt edit o
 
     await submissionDataExecute(f.dbPath, "UPDATE statements_of_law SET excerpt = 'A passage counsel confirmed, re-captured.' WHERE id = 1;");
     const reopened = submissionFormsRender(f.dbPath, 1, CLIENT);
-    const line = traced(doc(reopened, "Counsel_brief").markdown, "<!-- statement_of_law_id 1 -->");
-    assert.match(line.line, /🔬/, "expected 🔬 once the pair moved off its snapshot");
-    assert.equal(line.before.includes("settled by counsel"), false, "expected the settled tag gone with the settled state");
     const { recorded, proposed } = keysOf(reopened);
     assert.ok(recorded.has("scrutinize:statements_of_law:1"), "expected the reopened statement to propose 🔬");
     assert.ok(proposed.has("scrutinize:statements_of_law:1"), "expected the reopened statement on the board");

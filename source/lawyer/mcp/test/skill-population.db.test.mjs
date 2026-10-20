@@ -201,8 +201,8 @@ test("VanIAC submissions package renders clean from checklist-only population", 
     );
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Whitlock", clientNo: "5501", matterNo: "L5501" });
-    // Written Arguments (venue) + Evidence Index + Witness Statement + Counsel Brief (#384) + the Job Board's entry (ADR 0009; #1365: its summary, no file).
-    assert.equal(result.documents.length, 5);
+    // Written Arguments (venue) + Evidence Index + Witness Statement + the Job Board's entry (ADR 0009; #1365: its summary, no file).
+    assert.equal(result.documents.length, 4);
     const baseDir = dirname(result.documents[0].path);
 
     const wa = findFile(baseDir, "Written Arguments.md");
@@ -210,7 +210,6 @@ test("VanIAC submissions package renders clean from checklist-only population", 
     assertRendersClean("Written Arguments", wa);
     assertRendersClean("Witness Statement", findFile(baseDir, "Witness Statement - D. Okafor.md"));
     assertRendersClean("Evidence Index", findFile(baseDir, "Evidence Index.md"));
-    assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));
     assertRendersClean("Job Board", boardPage(f, { clientName: "Whitlock", clientNo: "5501", matterNo: "L5501" }));
   } finally {
     f.cleanup();
@@ -303,8 +302,8 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
     );
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Fenwick", clientNo: "5502", matterNo: "L5502" });
-    // NoA + Written Arguments companion + Counsel Brief (#384) + the Job Board's entry (ADR 0009; #1365: its summary, no file).
-    assert.equal(result.documents.length, 4);
+    // NoA + Written Arguments companion + the Job Board's entry (ADR 0009; #1365: its summary, no file).
+    assert.equal(result.documents.length, 3);
     const baseDir = dirname(result.documents[0].path);
     const noa = findFile(baseDir, "Notice of Application.md");
     // 🧵 is expected pre-elicitation noise (file header) -- assert it fires,
@@ -322,7 +321,6 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
     assert.ok(noa.includes("will be heard on 2026-10-14 at 10:00 am."), "hearing_details.proposed_hearing should be filled, not the hearing placeholder text");
     const wa = findFile(baseDir, "Written Arguments.md");
     assertRendersClean("Written Arguments companion", wa);
-    assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));
     assertRendersClean("Job Board", boardPage(f, { clientName: "Fenwick", clientNo: "5502", matterNo: "L5502" }));
   } finally {
     f.cleanup();
@@ -366,7 +364,7 @@ test("BCSC default-judgment requisition and Form 8 render clean from checklist-o
       -- pointed to by the Written Arguments companion, not the form itself
       -- (deployed via document='written_argument' below) -- deploying it
       -- there, not on the form, both satisfies order_sought_served_by's FK
-      -- and keeps the Counsel Brief clean (deployed, so no 🂡).
+      -- and keeps it out of the reserve (deployed, so no 🂡).
       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Damages and costs are owed on the default.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'written_argument', 1);
       INSERT INTO order_sought_served_by (order_sought_id, submission_id) VALUES (1, 1), (2, 1);
@@ -376,8 +374,8 @@ test("BCSC default-judgment requisition and Form 8 render clean from checklist-o
     );
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Harrow", clientNo: "5503", matterNo: "L5503" });
-    // Requisition + Form 8 + Written Arguments companion + Counsel Brief (#384) + the Job Board's entry (ADR 0009; #1365: its summary, no file).
-    assert.equal(result.documents.length, 5);
+    // Requisition + Form 8 + Written Arguments companion + the Job Board's entry (ADR 0009; #1365: its summary, no file).
+    assert.equal(result.documents.length, 4);
     const baseDir = dirname(result.documents[0].path);
     assertRendersClean("Form 17 Draft Requisition", findFile(baseDir, "Form 17 Draft Requisition.md"));
     // Unlike the NoA, the requisition renderers don't wire 🧵 -- a
@@ -391,7 +389,6 @@ test("BCSC default-judgment requisition and Form 8 render clean from checklist-o
     const wa = findFile(baseDir, "Written Arguments.md");
     assert.ok(wa.includes("🧾"), "factual-basis-needed should fire on a contention with no submission_facts row -- its absence would be a silent regression, not a clean render");
     assertRendersClean("Written Arguments companion", wa);
-    assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));
     assertRendersClean("Job Board", boardPage(f, { clientName: "Harrow", clientNo: "5503", matterNo: "L5503" }));
   } finally {
     f.cleanup();
@@ -434,8 +431,8 @@ test("BCSC consent-order requisition and consent order render clean from checkli
     );
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Castellan", clientNo: "5504", matterNo: "L5504" });
-    // Requisition + Consent Order + Written Arguments companion + Counsel Brief (#384) + the Job Board's entry (ADR 0009; #1365: its summary, no file).
-    assert.equal(result.documents.length, 5);
+    // Requisition + Consent Order + Written Arguments companion + the Job Board's entry (ADR 0009; #1365: its summary, no file).
+    assert.equal(result.documents.length, 4);
     const baseDir = dirname(result.documents[0].path);
     assertRendersClean("Requisition for Consent Order", findFile(baseDir, "Requisition for Consent Order.md"));
     const consentOrder = findFile(baseDir, "Consent Order.md");
@@ -444,7 +441,6 @@ test("BCSC consent-order requisition and consent order render clean from checkli
     const wa = findFile(baseDir, "Written Arguments.md");
     assert.ok(wa.includes("🧾"), "factual-basis-needed should fire on a contention with no submission_facts row -- its absence would be a silent regression, not a clean render");
     assertRendersClean("Written Arguments companion", wa);
-    assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));
     assertRendersClean("Job Board", boardPage(f, { clientName: "Castellan", clientNo: "5504", matterNo: "L5504" }));
   } finally {
     f.cleanup();
@@ -511,8 +507,8 @@ test("BCSC Application Response renders clean from checklist-only population (is
     );
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Marchetti", clientNo: "5505", matterNo: "L5505" });
-    // Application Response + Written Arguments companion + Counsel Brief (#384) + the Job Board's entry (ADR 0009; #1365: its summary, no file).
-    assert.equal(result.documents.length, 4);
+    // Application Response + Written Arguments companion + the Job Board's entry (ADR 0009; #1365: its summary, no file).
+    assert.equal(result.documents.length, 3);
     const baseDir = dirname(result.documents[0].path);
     const ar = findFile(baseDir, "Application Response.md");
     // 🧵 is expected pre-elicitation noise (file header) -- assert it fires,
@@ -529,7 +525,6 @@ test("BCSC Application Response renders clean from checklist-only population (is
     assert.ok(!ar.includes("Positions not yet taken"), "every opposing order was positioned -- no unpositioned-orders listing expected");
     const wa = findFile(baseDir, "Written Arguments.md");
     assertRendersClean("Written Arguments companion", wa);
-    assertRendersClean("Counsel Brief", findFile(baseDir, "Counsel Brief.md"));
     assertRendersClean("Job Board", boardPage(f, { clientName: "Marchetti", clientNo: "5505", matterNo: "L5505" }));
   } finally {
     f.cleanup();

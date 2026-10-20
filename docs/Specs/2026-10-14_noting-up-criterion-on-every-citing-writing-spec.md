@@ -71,7 +71,7 @@ Scope: edit source only (skill text, mcp/src, docs). Out of scope, because `/rep
 ## 9. Open questions
 
 1. Do existing drafting Writings get the criteria by an automatic re-snapshot, or only on the practitioner's instruction? Recommended: the practitioner's instruction, per the re-snapshot rule.
-2. Which documents does the scan read: filed face only, or also Written Arguments and Counsel Brief? Recommended: every document that is filed or sent.
+2. Which documents does the scan read: filed face only, or also Written Arguments and the never-delivered brief? Recommended: every document that is filed or sent.
 
 ## 10. Verify against HEAD before building
 

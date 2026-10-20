@@ -7,8 +7,8 @@
 //
 // Every link is optional and advisory. The label `(rhetorical)` and the two tells are plain text,
 // never glyphs (work-markers rule 5): they print on the mockup only, filed-face.ts strips them,
-// they never refuse a render and they never hold 🧐 back. The links feed nothing but the tells and
-// the Counsel Brief: no rhetorical paragraph reads or clears ↩️, 🧾 or 📚.
+// they never refuse a render and they never hold 🧐 back. The links feed nothing but the tells: no
+// rhetorical paragraph reads or clears ↩️, 🧾 or 📚.
 //
 // A database held below v71 has none of these tables, so every read here returns nothing there.
 
@@ -145,44 +145,4 @@ export function renderRhetoricFiled(row: RhetoricRow, n: number, prefix: string,
     if (cite !== null) lines.push(`${citePrefix}${cite}`);
   }
   return lines;
-}
-
-/** The parts each kind's venue document hosts. Any other kind is a general Writing, whose
- * legal-basis and orders-sought projections host the submissions and orders parts. */
-const FORM_PARTS: Readonly<Record<string, readonly RhetoricPart[]>> = {
-  notice_of_application: ["facts", "submissions", "orders"],
-  application_response: ["facts", "submissions"],
-  requisition_default_judgment: [],
-  requisition_consent: [],
-  submissions_package: ["submissions", "orders"],
-  bcca_stay_response: ["facts", "submissions", "orders"],
-  bcca_factum: ["facts", "submissions", "orders"],
-};
-const GENERAL_FORM_PARTS: readonly RhetoricPart[] = ["submissions", "orders"];
-
-/** The kinds whose venue document is itself the written argument, so they render no Written
- * Arguments companion. */
-const NO_WRITTEN_ARGUMENT_COMPANION = new Set(["submissions_package", "bcca_stay_response", "bcca_factum"]);
-const WRITTEN_ARGUMENT_PARTS: readonly RhetoricPart[] = ["submissions", "orders"];
-
-/** Whether a placement on this kind's document prints anywhere. */
-export function rhetoricPrintable(kind: string, document: PointerDocument, part: RhetoricPart): boolean {
-  if (document === "written_argument") return !NO_WRITTEN_ARGUMENT_COMPANION.has(kind) && WRITTEN_ARGUMENT_PARTS.includes(part);
-  return (FORM_PARTS[kind] ?? GENERAL_FORM_PARTS).includes(part);
-}
-
-/** Every rhetorical paragraph of the proceeding, by id. */
-export function fetchProceedingRhetoric(dbPath: string, proceedingId: number): { id: number; wording: string }[] {
-  if (!rhetoricHeld(dbPath)) return [];
-  return rows<{ id: number; wording: string }>(dbPath, `SELECT id, wording FROM rhetorical_paragraphs WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-
-/** Every placement on one filing. */
-export function fetchFilingRhetoricPlacements(dbPath: string, filingId: number): { rhetorical_paragraph_id: number; document: PointerDocument; part: RhetoricPart }[] {
-  if (!rhetoricHeld(dbPath)) return [];
-  return rows<{ rhetorical_paragraph_id: number; document: PointerDocument; part: RhetoricPart }>(
-    dbPath,
-    `SELECT rhetorical_paragraph_id, document, part FROM filing_rhetoric WHERE filing_id = ? ORDER BY document, part, ordinal, id`,
-    [filingId]
-  );
 }

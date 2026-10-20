@@ -4,7 +4,7 @@
 // from the served Notice of Application) are positioned on via
 // filing_positions (consented/opposed/no_position); Parts 4-6 reuse the
 // existing facts/submissions/documents pointer chains #372 left untouched.
-// Companions (Written Arguments, Counsel Brief) render generically via
+// The Written Arguments companion renders generically via
 // forms.ts's documentsForFiling wrapper -- nothing here builds them.
 
 import { submissionDataQuery } from "../backend.js";

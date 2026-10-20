@@ -127,7 +127,7 @@ test("a matter held at v42 by a counsel offer opens, lists and renders a general
 test("a submission-backed Writing on a matter held at v42 renders its statement line with no settled tag", async (t) => {
   const m = await heldMatter(t);
   const mockup = submissionFormsRender(m.dbPath, 1, CLIENT);
-  for (const type of ["Written_arguments", "Counsel_brief"]) {
+  for (const type of ["Written_arguments"]) {
     const md = doc(mockup, type).markdown;
     assert.ok(md.includes("<!-- statement_of_law_id 2 -->"), `expected statement 2 on the ${type}`);
     assert.doesNotMatch(md, /settled by counsel/, type);

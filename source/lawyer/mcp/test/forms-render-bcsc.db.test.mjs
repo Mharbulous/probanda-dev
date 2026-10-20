@@ -1,4 +1,4 @@
-// Golden-fixture tests for the submission form renderers (build ticket #297): BCSC forms: the Counsel Brief, Form 32 Notice of Application (including hearing withholding), the default-judgment and consent-order requisitions.
+// Golden-fixture tests for the submission form renderers (build ticket #297): BCSC forms: Form 32 Notice of Application (including hearing withholding), the default-judgment and consent-order requisitions.
 // Split out of the former forms-render.test.mjs; shared seeds live in fixtures/forms-render-seeds.mjs,
 // which also documents regenerating the golden fixtures.
 
@@ -13,60 +13,6 @@ const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-sca
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitForm32, submissionFormsEmitForm33 } = await import("../build/submission/forms.js");
 const { MOCKUP_ONLY_TAG } = await import("../build/submission/forms/markers.js");
-
-// Counsel Brief authority-citations build. A BCSC filing renders TWO faces that number
-// submissions independently -- the venue form and the Written Arguments companion -- so the brief
-// must group by source document and give the venue face priority for a submission carried by
-// both. Without the grouping, two submissions would each claim paragraph 1 in one document.
-test("the Counsel Brief groups submissions by the face that numbered them, venue face first", async () => {
-  const f = seededDbFixture();
-  try {
-    await freshSubmissionDb(f.dbPath);
-    await seedBcscDefaultJudgment(f.dbPath);
-    await submissionDataExecute(
-      f.dbPath,
-      `
-      INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge)
-        VALUES (1, '2026-09-01', '9:45 am', 45, 1);
-      UPDATE filings SET kind = 'notice_of_application', subkind = NULL, title = 'Notice of Application' WHERE id = 1;
-
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
-        VALUES
-          (1, 1, 'Carried by both faces of this filing.', 1),
-          (2, 1, 'Argued in the Written Arguments only.', 2),
-          (3, 1, 'Drafted but deployed nowhere.', 3);
-
-      -- Submission 1 sits on both faces, and the Written Arguments deliberately argues it SECOND
-      -- so the two faces give it different numbers: Part 3 of the form numbers it 1, the Written
-      -- Arguments numbers it 2. The brief must show the form's 1.
-      INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal)
-        VALUES (1, 1, 'form', 1), (1, 2, 'written_argument', 1), (1, 1, 'written_argument', 2);
-      `.trim()
-    );
-
-    const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ledger", clientNo: "1", matterNo: "L1" });
-    const brief = result.documents.find((d) => d.document_type === "Counsel_brief").markdown;
-    const noa = result.documents.find((d) => d.document_type === "Notice_of_application").markdown;
-    const wa = result.documents.find((d) => d.document_type === "Written_arguments").markdown;
-
-    const lineFor = (doc, id) => doc.split("\n").find((l) => l.includes(`<!-- submission_id ${id} -->`));
-    assert.match(lineFor(noa, 1), /^1\. /, "expected the form's Part 3 to number submission 1 as 1");
-    assert.match(lineFor(wa, 1), /^2\. /, "expected the Written Arguments to number submission 1 as 2");
-    assert.match(lineFor(brief, 1), /^1\. /, "expected the brief to take the venue face's number, not the companion's");
-    assert.match(lineFor(brief, 2), /^1\. /, "expected the Written Arguments group to keep its own numbering, restarting at 1");
-
-    assert.match(brief, /\*Paragraph numbers as in this filing's venue document \(mockup\)\.\*/);
-    assert.match(brief, /\*Paragraph numbers as in the Written Arguments \(mockup\)\.\*/);
-    assert.equal(
-      brief.split("<!-- submission_id 1 -->").length - 1,
-      1,
-      "expected a submission on both faces to render once in the brief, not once per face"
-    );
-    assert.match(lineFor(brief, 3), /^R1\. .*🂡/, "expected the undeployed submission R-numbered and marked reserved");
-  } finally {
-    f.cleanup();
-  }
-});
 
 test("renders BCSC Form 32 notice of application", async () => {
   const f = seededDbFixture();
@@ -844,8 +790,8 @@ test("renders the default-judgment requisition and Form 8", async () => {
 // surface. alternative_to is placement, not a state cascade: terms-and-symbols.md's Cascade paragraph
 // runs orders -> submissions -> facts/law assertions and has no alternative_to leg, so each row
 // renders by its own state. Brahm's call 2026-09-22 on #832, on Fable's recommendation. #960: its
-// primary's placement deploys it, so the Counsel Brief lists it deployed -- no 🂡, no 🦵 -- struck or live.
-test("a Form 8 alternative renders by its own crossed-out state, not its primary's, and reads deployed in the Counsel Brief", async () => {
+// primary's placement deploys it -- no 🂡, no 🦵 -- struck or live.
+test("a Form 8 alternative renders by its own crossed-out state, not its primary's", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -883,15 +829,6 @@ test("a Form 8 alternative renders by its own crossed-out state, not its primary
       mockup,
       /THIS COURT FURTHER ORDERS that, in the alternative, the defendant\(s\) Corbin Vasey interest under the Court Order Interest Act/,
       "expected no live operative sentence for the crossed-out alternative"
-    );
-
-    const brief = submissionFormsRender(f.dbPath, 1, { clientName: "Halloway", clientNo: "3120", matterNo: "L9002" })
-      .documents.find((d) => d.file_name === "Counsel Brief.md").markdown;
-    assert.match(brief, /^- costs in a fixed amount <!-- order_sought_id 3 -->$/m, "expected the live placed alternative to read deployed, with no marker");
-    assert.match(
-      brief,
-      /^- ~~interest under the Court Order Interest Act~~ <!-- order_sought_id 5 -->$/m,
-      "expected the struck placed alternative to read deployed, with no marker"
     );
 
     const filed = submissionFormsRender(f.dbPath, 1, { clientName: "Halloway", clientNo: "3120", matterNo: "L9002" }, "filed");

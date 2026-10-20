@@ -22,7 +22,7 @@
 import type { ProposalSlug } from "./proposal-inventory.js";
 
 /** work-markers.md types: work (table 1a) is ours to do, event (1b) is what happened, hold (1c) is
- * a posture shown in the Counsel Brief. */
+ * a posture no page prints. */
 export type SymbolGroup = "work" | "event" | "hold";
 
 export interface SymbolRow {
@@ -258,7 +258,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "co-renders (∨) with 📍. Doctrinal, jurisdictional and prose-cited alike. Co-renders (∨) with 📜 📍 📇 🏅 " +
       "on the statement line and with 🥉 ⊕ 🥈 ⊕ 🏅 on the proposition line. The lead statement itself stays " +
       "under the brief-only cap, except a prose-cited one, which prints on its mockup-only line, since the " +
-      "Counsel Brief lists no prose-cited statement and the block reaches no sent face; the proposition-line 🔬 " +
+      "block reaches no sent face; the proposition-line 🔬 " +
       "renders on every mockup so no line reads falsely clean (rule 6); never on a filed face",
     history:
       "`authorities.verification` → `statements_of_law.verification` shipped v25 (#774, design #502; an " +
@@ -510,11 +510,11 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "(#832) — never on the face of a requisition form (Form 8 Default Judgment, Consent Order): a requisition " +
       "files no argument, so no submission is owed to its orders and there is no work to name (rule 1; #960). " +
       "The same order still carries 🦵 on the filing's Written Arguments companion where it is deployed there, " +
-      "and on its Counsel Brief line while reserved — an alternative placed under a form-deployed primary on " +
+      "and is recorded as a Proposal while reserved, though no page prints it — an alternative placed under a form-deployed primary on " +
       "the Form 8 is deployed by that placement, not reserved, so it carries neither 🂡 nor 🦵 there (#960)",
     history:
-      "v10 (`served_by` junction, #380); render shipped — NoA Part 1, Written Arguments, Counsel Brief reserved " +
-      "orders; requisition faces excepted #960",
+      "v10 (`served_by` junction, #380); render shipped — NoA Part 1, Written Arguments; reserved " +
+      "orders recorded only; requisition faces excepted #960",
   },
   {
     glyph: "🧵", name: "loose thread", group: "work",
@@ -537,10 +537,10 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "the first numbered paragraph belonging to the submission — its own contention line, restored as the " +
       "argument's opening numbered paragraph by ticket 2026-09-01 (WA *Submissions*; Form 32 Part 3; Form 33 " +
       "Part 5; the BCCA stay response book's Part 2 written argument at its *Part 3: Analysis*; BCCA factum " +
-      "Part 3; Counsel Brief, deployed and held-in-reserve alike — a reserved submission appears in no venue " +
-      "document, so the brief is the only surface on which its missing factual basis can be seen; a killed " +
-      "submission is never in that section — it renders no contention paragraph at all, only a plain unnumbered " +
-      "line under *Killed submissions* (§4); never delivered, so never a filed face). A submission with no " +
+      "Part 3); a held-in-reserve submission appears in no venue " +
+      "document, so its 🧾 is recorded as a Proposal and printed nowhere; a killed " +
+      "submission renders no contention paragraph at all " +
+      "(§4). A submission with no " +
       "linked facts and no linked law still renders that contention paragraph, numbered like any other and " +
       "carrying 🧾 — it never disappears and never degrades to an unnumbered marker-only line — but the marker " +
       "itself never reaches a filed face. Contention-level, above 👤 (which proves each fact); not 📖's twin — " +
@@ -567,7 +567,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "counts, as 🧾 reads `submission_facts`: a proposition with no authority yet is 📖's work on the " +
       "proposition's own line, not 📚's. Renders at 🧾's one site, the submission's contention line, so on " +
       "🧾's surfaces (WA *Submissions*; Form 32 Part 3; Form 33 Part 5; the BCCA stay response book's *Part 3: " +
-      "Analysis*; BCCA factum Part 3; Counsel Brief, deployed and held-in-reserve alike); a killed submission's " +
+      "Analysis*; BCCA factum Part 3; a held-in-reserve submission is recorded, not printed); a killed submission's " +
       "line carries none (§1 → Killed). It renders for the human on every mockup and is withheld from the " +
       "filed face, as every marker is. Unlike 🧾 it stays in the line's marker set on the " +
       "Form 32 Part 3 and Form 33 Part 5 mockups and never moves onto the supporting-fact-paragraphs comment: " +
@@ -626,7 +626,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "⛔ names the routing work (Types), and the `(killed <date>)` tag keeps the clean line from being read as " +
       "finished (§4 (ii), rule 6). Content filled by an unattended run carries it like any other unapproved " +
       "content. Documents that are sent only (a Filing, or a Writing that is sent, an internal memo included) — " +
-      "the Counsel Brief is never sent and carries none. Renders for the human on every mockup of such a " +
+      "the reserve inventory records none. Renders for the human on every mockup of such a " +
       "document; never on a filed or sent face",
     history:
       "`review_approvals` v27 (#868 — append-only, revision-exempt); marker admitted #861 as 📋 *counsel's " +
@@ -789,7 +789,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
     history: "v69",
   },
 
-  // Table 1c, holds: printed in the Counsel Brief only.
+  // Table 1c, holds: printed on no page.
   {
     glyph: "🂡", name: "held in reserve", group: "hold",
     meaning: "drafted and deliberately held: no document of the filing deploys it, and for an order, submission or rhetorical paragraph no document of any filing of the proceeding",
@@ -798,11 +798,11 @@ export const SYMBOLS: readonly SymbolRow[] = [
     condition:
       "🂡 **reserved** — derived, never stored: a pool item deployed by no document of the filing — for an " +
       "order, submission or rhetorical paragraph (v71), of any filing of the proceeding (#959: one deployed only on another filing is " +
-      "listed marker-free under *used on other filings*, not reserved) — drafted, deliberately held; " +
-      "deploy-or-abandon deferred → practitioner (later); renders only in the Counsel Brief. When the " +
+      "not reserved) — drafted, deliberately held; " +
+      "deploy-or-abandon deferred → practitioner (later); printed on no page. When the " +
       "practitioner abandons, the decision lands as *killed* (`killed_on` on the submission or authority, " +
-      "schema v16) — not a marker (rule 5, as crossed out; §4); the Counsel Brief's *Killed* sections are its " +
-      "rendering, and a killed item never shows 🂡 — nothing is deferred any more; a reserved rhetorical " +
+      "schema v16) — not a marker (rule 5, as crossed out; §4), kept in the database; " +
+      "a killed item never shows 🂡 — nothing is deferred any more; a reserved rhetorical " +
       "paragraph is abandoned by deleting its placements, links and row (v71), never killed.",
     history: "",
   },
@@ -812,7 +812,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
     work: "decide later whether to deploy or abandon it",
     actor: "practitioner",
     condition:
-      "🤥 **impeachment** — statement-level: `purpose='impeachment'`; Counsel Brief only, alongside lead and " +
+      "🤥 **impeachment** — statement-level: `purpose='impeachment'`; printed on no page, like lead and " +
       "failed statements of law (`statement.verification` `'lead'` ⊕ `'failed'`, the brief-only cap). No longer " +
       "🂡's subset by storage; same hold posture.",
     history: "",
@@ -827,7 +827,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "predicted point is actually raised, record it as their point to answer and remove the prediction; no link is kept.",
     condition:
       "🚩 **adverse** — disclosure judgment (candour) and rebuttal preparation deferred → practitioner, at " +
-      "application review; Counsel Brief only, never delivered — the pipeline never decides whether disclosure " +
+      "application review; printed on no page — the pipeline never decides whether disclosure " +
       "is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` " +
       "(assertion level) ⊕ an `anticipated_points` row existing (the practitioner's own prediction of a point " +
       "the other side may run, not yet raised). Orthogonal to 🂡, not a subset of it like 🤥 — reads no " +
@@ -907,9 +907,6 @@ export const PLACEMENTS: readonly PlacementRow[] = [
   },
   { glyph: "🧩", documents: ["Witness_statement"], text: "as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it" },
   { glyph: "🧩", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" },
-  { glyph: "🂡", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" },
-  { glyph: "🤥", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" },
-  { glyph: "🚩", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" },
 ];
 
 /** Glyphs longest first, so a sequence that begins with a shorter glyph's code points is matched

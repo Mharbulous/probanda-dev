@@ -48,9 +48,9 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { REGISTERED_FILLERS } = await import("../build/submission/forms/filler-registry.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-// forms.ts tags these two neverDelivered and filters them out of renderMode:'filed' entirely --
-// absent, not stripped. Neither may ever appear in a filed render of any kind.
-const NEVER_DELIVERED = ["Counsel_brief", "Work_board"];
+// The Job Board is no document of a filed render -- absent, not stripped. It may never appear in a
+// filed render of any kind.
+const NEVER_DELIVERED = ["Work_board"];
 
 /**
  * Every filing kind, the delivered document_type values its filed render produces, and the filed
@@ -210,7 +210,7 @@ for (const c of DECLARED) {
       for (const documentType of NEVER_DELIVERED) {
         assert.ok(
           !result.documents.some((d) => d.document_type === documentType),
-          `${documentType} reached a filed render of ${caseLabel(c)} -- it is neverDelivered and must be absent, not stripped`
+          `${documentType} reached a filed render of ${caseLabel(c)} -- it is never delivered and must be absent, not stripped`
         );
       }
     } finally {

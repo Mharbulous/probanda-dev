@@ -4,8 +4,8 @@
 // reaches -- the VanIAC package covers the shared submission body, the witness statements, the
 // evidence index and the companions; the BCSC default judgment covers the requisition checklist.
 //
-// Expected keys were read off the rendered goldens (written-argument.md, counsel-brief.md,
-// evidence-index.md, witness-statement-unlinked-facts.md) and confirmed against a run.
+// Expected keys were read off the rendered goldens (written-argument.md, the former
+// brief's golden, evidence-index.md, witness-statement-unlinked-facts.md) and confirmed against a run.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

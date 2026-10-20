@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## What the review catches
 
-A draft can quote accurately and still state a source more strongly than the source goes, or less strongly: a client's own account softened, or its stronger words on a point dropped while a milder qualifier is kept. The overstatement review checks both directions. It reads the mockup's filed face, and the counsel brief for reserved material that the form does not show, and checks every assertion about:
+A draft can quote accurately and still state a source more strongly than the source goes, or less strongly: a client's own account softened, or its stronger words on a point dropped while a milder qualifier is kept. The overstatement review checks both directions. It reads the mockup's filed face, and, through `/drafting-data`, the submissions held in reserve that the form does not show (the Arguments page lists them for the practitioner as Held in reserve), and checks every assertion about:
 
 - what a document, an order or a court said, decided or directed;
 - a date or deadline;

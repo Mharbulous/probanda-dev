@@ -1,6 +1,6 @@
 // A Job Board with no Writing: a `filings` row of the reserved kind `task-board`, written only by
 // drafting_data__create_job_board on a proceeding that already has a Writing. It has a Job Board page
-// and jobs, and never a mockup, a Counsel Brief, a view page, completion criteria or Proposals. Its
+// and jobs, and never a mockup, a view page, completion criteria or Proposals. Its
 // place in open_session's default opening is in open-session.db.test.mjs, and in the background render
 // job's queue in render-job.e2e.test.mjs.
 
@@ -142,7 +142,7 @@ test("without draft_dir the render returns the board alone and writes nothing", 
   assert.equal(result.filing_retired, undefined);
   assert.equal(result.session_token, "tok-1");
   assert.equal(result.rendered_at, PINNED);
-  assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"], "no mockup and no Counsel Brief");
+  assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"], "no mockup");
   const board = boardOf(result);
   assert.match(board.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Paper originals \(none\)\nState: Open$/);
   assert.equal(board.pages_written, false);

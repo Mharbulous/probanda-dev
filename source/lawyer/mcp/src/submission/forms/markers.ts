@@ -122,7 +122,7 @@ function jurisdictionEdgeMarker(row: JurisdictionRequiresEdge, deployed: boolean
   if (row.authority_killed_on !== null) return jurisdictionSlotMarker("needed");
   // A failed statement (schema v46: the research lawyer found it does not support the order)
   // fills no basis either, so the edge contributes 🏛️ alone, as a killed one does. Its 👃 and
-  // its finding print on the statement's own line in the Counsel Brief; the decision is counsel's.
+  // its finding are recorded on the statement, which no venue face prints; the decision is counsel's.
   if (row.verification === "failed") return jurisdictionSlotMarker("needed");
   // An overruled authority's own statement lines render no work marker either (#828). ⛔ is an
   // event, and work-markers.md's ⛔ row gives the work it routes as "research-lawyer replaces;
@@ -201,8 +201,8 @@ export function doctrinalSlotMarker(assertion: { dead_end: number; countedStatem
 
 /** 🔬 scrutinize, statement-line instance (#502, work-markers.md row 🔬): this statement of law
  * rests on an unverified lead whose authority is not killed -- confirm the excerpt supports the
- * proposition and is the court's own reasoning. The lead statement itself still prints only in the
- * Counsel Brief (the brief-only cap is unchanged); this marker is what it carries there.
+ * proposition and is the court's own reasoning. The lead statement itself prints on no venue face
+ * (the brief-only cap is unchanged); this marker is recorded on it as a Proposal.
  *
  * As with jurisdictionBasisFilled, the `authorityKilledOn` guard is now unreachable-as-non-null:
  * since #796 both callers return early on a killed row, so nothing killed reaches here. Kept so
@@ -530,7 +530,7 @@ export const ALL_MARKER_GLYPHS: readonly string[] = [
   "🏆", // not best copy
   "🤥", // reserved for impeachment
   "🂡", // reserved
-  "🚩", // adverse (Counsel-Brief-only hold)
+  "🚩", // adverse (hold, printed on no page)
   "🦵", // unserved petitum
   "🧵", // loose thread
   "🧾", // factual basis needed
@@ -702,38 +702,6 @@ export function notBestCopyMarkers(documents: readonly DocumentCopyRow[]): Map<n
   return result;
 }
 
-/** 🂡 held-in-reserve (schema v10, #380 -- disposition retired, deployment derived): fires on an
- * order or submission pointed to by no document of the filing, nor by any other filing of the
- * proceeding (#959). No fact line calls it. Renders only in the Counsel Brief. */
-export function reservedMarker(deployed: boolean): string {
-  return deployed ? "" : "🂡";
-}
-
-/** 🤥 reserved-for-impeachment (schema v10, #380 -- work-markers.md line 64: "no longer 🂡's
- * subset by storage"). Reads statements_of_fact.purpose alone, independent of deployment -- an
- * impeachment statement never rides into any deployed document regardless of whether its parent
- * fact/submission is otherwise deployed (#370 item 4, the brief-only cap). Counsel Brief only. */
-export function impeachmentMarker(purpose: string | null): string {
-  return purpose === "impeachment" ? "🤥" : "";
-}
-
-/** 🚩 adverse -- fact half (schema v11, #390/#401; work-markers.md §1c): fires on a fact recorded
- * as true but harmful to our own side (facts.adverse=1). Reads no deployment state at all (§4
- * "Adverse orthogonal") -- a deployed, even disclosed, fact can still carry 🚩. Counsel Brief only;
- * the pipeline never decides whether disclosure is required (routes through /legal-research). */
-export function adverseFactMarker(adverse: number | null): string {
-  return adverse === 1 ? "🚩" : "";
-}
-
-/** 🚩 adverse -- anticipated-point half (schema v11, #390/#401): fires on every anticipated_points
- * row -- existence alone is the predicate, the practitioner's own prediction of a point the other
- * side may run, not yet raised. Outside the deployment axis entirely -- must never be read into
- * reservedMarker's "deployed by no document" predicate, which would otherwise fire 🂡 vacuously on
- * every row (work-markers.md §1c). Counsel Brief only. */
-export function anticipatedPointMarker(): string {
-  return "🚩";
-}
-
 /** 🦵 unserved petitum (schema v10, #380): an order_sought row with no order_sought_served_by
  * row -- no submission serves this order. Renders on the order's own line. */
 export function unservedPetitumMarker(hasServedBy: boolean): string {
@@ -767,10 +735,8 @@ export function looseThreadMarker(deployedByForm: boolean, deployedByWrittenArgu
  * never inferred (terms-and-symbols.md decision log).
  * Contention-level, one level above 👤 (which proves each fact); not 📖's twin -- the law-side
  * mirror (submission_law ∅) is 📚, below. Renders on the contention's own
- * line (WA Submissions; NoA Part 3; AR Part 5; and, since the Counsel Brief authority-citations
- * build, the Counsel Brief -- deployed and held-in-reserve alike, since a reserved submission
- * appears in no venue document and the brief is the only surface its missing factual basis can be
- * seen on; SSOT §1a amended with practitioner + Fable approval). Never on a filed face. */
+ * line (WA Submissions; NoA Part 3; AR Part 5). A held-in-reserve submission appears in no venue
+ * document, so its 🧾 is recorded as a Proposal and printed nowhere. Never on a filed face. */
 export function factualBasisMarker(hasSubmissionFacts: boolean): string {
   return hasSubmissionFacts ? "" : "🧾";
 }

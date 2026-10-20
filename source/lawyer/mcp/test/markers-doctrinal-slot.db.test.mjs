@@ -82,7 +82,7 @@ INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id
     (3, 1, 4, 3, 'para 2', 'A statement resting on a killed authority.', 'primary', 'verified'),
     -- Every withheld rung at once on an overruled authority: excerpt ∅ (📜), pinpoint ∅ (📍),
     -- source ∅ (🏅), verification 'lead' (🔬). Lead, so it rides the brief-only cap and this
-    -- statement's own line prints in the Counsel Brief alone -- which is where #828 is asserted.
+    -- statement's own line prints on no face.
     (5, 1, 5, 4, NULL, NULL, NULL, 'lead'),
     -- #830. Statement 6 is verified and rated primary on the same overruled authority: every
     -- reason the old read set had to call proposition 6 finished. Statements 7 and 8 put an
@@ -174,36 +174,6 @@ test("📖 and 🔬 split the doctrinal slot by whether a non-killed statement e
   }
 });
 
-// #828: an overruled authority's own statement lines render no work marker. ⛔ is an event, and
-// work-markers.md's ⛔ row gives the work it routes as "research-lawyer replaces; basis reopens
-// (⛔→🏛️⊕📖)", so the whole 📜 📍 🔬 🏅 ladder is withheld on rule 1 (a marker names remaining
-// work) -- the same ground as the killed rule, differing only in who rejected the authority.
-// The jurisdictional half is pinned by markers-jurisdiction.unit.test.mjs; this is the doctrinal
-// half, which the unit tests cannot reach because lawStatementMarkers is module-local.
-test("#828: an overruled authority's statement line withholds 📜 📍 🔬 🏅 and keeps ⛔", async () => {
-  const f = fixture();
-  try {
-    await freshSubmissionDb(f.dbPath);
-    writePartiesOfRecord(dirname(f.dbPath), CLAIMANT_CASE_DATA);
-    await submissionDataExecute(f.dbPath, SEED);
-
-    const result = submissionFormsRender(f.dbPath, 1, { clientName: "Slot", clientNo: "9001", matterNo: "L9001" });
-    // A lead statement rides the brief-only cap, so its own line prints in the Counsel Brief only.
-    const brief = result.documents.find((d) => d.document_type === "Counsel_brief").markdown;
-    const line = brief.split("\n").find((l) => l.includes("<!-- statement_of_law_id 5 -->"));
-    assert.ok(line, "expected the overruled authority's statement to render its own line");
-
-    assert.match(line, /⛔/, "expected ⛔ -- the event that routes the replacement still renders");
-    assert.doesNotMatch(line, /📜/, "expected 📜 withheld -- nobody is asked to excerpt an authority that is not good law");
-    assert.doesNotMatch(line, /📍/, "expected 📍 withheld on an overruled authority");
-    assert.doesNotMatch(line, /🔬/, "expected 🔬 withheld -- scrutinizing a lead that is already not good law is not work owed");
-    assert.doesNotMatch(line, /🏅/, "expected 🏅 withheld -- rating an overruled authority's source is not work owed");
-    assert.doesNotMatch(line, /📇/, "expected no 📇 -- note up is spent, which is how the treatment is known");
-  } finally {
-    f.cleanup();
-  }
-});
-
 // #830: the proposition's own line reads ACROSS statements, so it is a different surface from the
 // statement's own line #828 settled. An overruled authority's statements count toward nothing read
 // across statements, exactly as a killed authority's do not (work-markers.md §1 "Overruled binds
@@ -254,12 +224,12 @@ test("#830: an overruled authority's statements drop out of the proposition's re
 // record says is not good law, indistinguishable from a sound one. An overruled authority's
 // statements now ride the brief-only cap exactly as a killed authority's do (work-markers.md
 // section 4 "Killed"; overruled differs only in who did the rejecting, #828's own ground):
-// Counsel Brief only, where the statement's own line still carries the marker that says so.
+// printed on no face.
 //
-// Proposition 7 is the load-bearing case. It keeps a counted statement, so the overruled one
-// prints only in the Counsel Brief; the venue mockup's tell is the ⛔ on the proposition's own
-// line (#1200), as a killed authority's statements and a lead are likewise brief-only.
-test("#842: an overruled authority's statements ride the brief-only cap, printing in the Counsel Brief alone", async () => {
+// Proposition 7 is the case that matters most. It keeps a counted statement, so the overruled one
+// prints nowhere; the venue mockup's tell is the ⛔ on the proposition's own line (#1200), as a
+// killed authority's statements and a lead likewise print nowhere.
+test("#842: an overruled authority's statements ride the brief-only cap, printing on no face", async () => {
   const f = fixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -274,7 +244,6 @@ test("#842: an overruled authority's statements ride the brief-only cap, printin
 
     const mockup = submissionFormsRender(f.dbPath, 1, client);
     const writtenArgument = mockup.documents.find((d) => d.document_type === "Written_arguments").markdown;
-    const brief = mockup.documents.find((d) => d.document_type === "Counsel_brief").markdown;
     const filed = submissionFormsRender(f.dbPath, 1, client, "filed")
       .documents.find((d) => d.document_type === "Written_arguments").markdown;
 
@@ -295,14 +264,6 @@ test("#842: an overruled authority's statements ride the brief-only cap, printin
 
     // (iii) Parity with the killed axis, which is the whole ground of the decision.
     assert.equal(writtenArgument.includes(KILLED), false, "expected a killed authority's statement off the venue mockup, as before");
-
-    // (iv) The human keeps a surface. The Counsel Brief lifts the cap, and the statement's own
-    // line carries the treatment event -- the flag a killed statement gets as plain text.
-    assert.ok(brief.includes(OVERRULED_SOLE), "expected the Counsel Brief to print what the venue faces withhold");
-    assert.ok(brief.includes(OVERRULED_BESIDE_LIVE), "expected the brief to print the dropped statement of proposition 7 too");
-    const briefLine = brief.split("\n").find((l) => l.includes("<!-- statement_of_law_id 6 -->"));
-    assert.ok(briefLine, "expected statement 6 to render its own line in the Counsel Brief");
-    assert.match(briefLine, /\u26d4/, "expected the treatment event on that line -- without it the brief reads as sound support (rule 6)");
   } finally {
     f.cleanup();
   }
@@ -312,11 +273,11 @@ test("#842: an overruled authority's statements ride the brief-only cap, printin
 // finding in doubt. The statement counts toward nothing read across statements, as an overruled
 // authority's does not, so a proposition left with nothing else reads 📖 again rather than 🔬 (the
 // scrutiny is done), while a sibling statement still supports its own proposition. The failed
-// statement rides the brief-only cap: its line, with 👃 and its finding, prints in the Counsel Brief
-// alone, and no 🔬 is proposed for it again. The proposition line and the order line never read
+// statement rides the brief-only cap: its line prints on no face, and no 🔬 is proposed for it
+// again. The proposition line and the order line never read
 // clean while counsel's decision is owed, and the filed face carries neither the excerpt nor the
 // finding.
-test("v46: a failed statement reopens 📖, keeps 👃 and its finding in the Counsel Brief, and reaches no filed face", async () => {
+test("v46: a failed statement reopens 📖, tags its finding, and reaches no filed face", async () => {
   const f = fixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -332,7 +293,6 @@ test("v46: a failed statement reopens 📖, keeps 👃 and its finding in the Co
     const mockup = submissionFormsRender(f.dbPath, 1, client);
     const writtenArgumentDoc = mockup.documents.find((d) => d.document_type === "Written_arguments");
     const writtenArgument = writtenArgumentDoc.markdown;
-    const brief = mockup.documents.find((d) => d.document_type === "Counsel_brief").markdown;
     const traced = (md, trace) => {
       const lines = md.split("\n");
       const i = lines.findIndex((l) => l.includes(trace));
@@ -352,14 +312,6 @@ test("v46: a failed statement reopens 📖, keeps 👃 and its finding in the Co
     assert.ok(beside.includes(` (scrutiny failed: ${FINDING_9})`), beside);
     assert.ok(writtenArgument.includes(VERIFIED_9), "expected the verified sibling to print");
     assert.equal(writtenArgument.includes(FAILED_8), false, "expected the failed excerpt off the venue mockup -- it rides the brief-only cap");
-
-    // (iii) The Counsel Brief prints the failed statement: 👃 and no 🔬 on its marker line, the
-    // finding on its citation line just above.
-    const statement = traced(brief, "<!-- statement_of_law_id 9 -->");
-    assert.ok(brief.includes(FAILED_8), "expected the Counsel Brief to print the failed excerpt");
-    assert.match(statement.line, /👃/, "expected 👃 -- the finding is the statement's doubt");
-    assert.doesNotMatch(statement.line, /🔬/, "expected no 🔬 on a failed statement");
-    assert.ok(statement.before.endsWith(` (scrutiny failed: ${FINDING_8})`), statement.before);
 
     // (iv) An order whose filled basis rests on a failed statement reads bare 🏛️.
     const order = traced(writtenArgument, "<!-- relief_item b -->").line;

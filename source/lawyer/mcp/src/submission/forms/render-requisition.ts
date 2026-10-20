@@ -51,8 +51,8 @@ function fetchAlternatives(dbPath: string, chosenId: number): AlternativeRow[] {
 
 /** #960: the orders a Form 8 deploys by placement rather than by pointer row -- every alternative,
  * struck or live, chained under a form-deployed primary (renderForm8DefaultJudgment renders each
- * one). Empty for every other filing kind, since no other renderer reads alternative_to. The Counsel
- * Brief unions this into its deployed set, so a placed alternative reads deployed there, not 🂡. */
+ * one). Empty for every other filing kind, since no other renderer reads alternative_to. The reserve
+ * inventory unions this into its deployed set, so a placed alternative counts as deployed, not reserved. */
 export function fetchPlacedAlternativeIds(dbPath: string, filing: { id: number; kind: string }): number[] {
   if (filing.kind !== "requisition_default_judgment") return [];
   return rows<{ id: number }>(

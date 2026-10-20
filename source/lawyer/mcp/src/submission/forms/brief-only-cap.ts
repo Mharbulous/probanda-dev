@@ -1,7 +1,7 @@
 // The brief-only cap, named once (#855). A statement of law that does not count as support ('lead',
 // or 'failed' since schema v46: the research lawyer's negative return), resting on a killed
 // authority (`authorities.killed_on` set, schema v16) or on an overruled one
-// (`authorities.treatment = 'overruled'`, #842) renders for the human in the Counsel Brief and is
+// (`authorities.treatment = 'overruled'`, #842) prints on no venue face and is
 // withheld from the forum. What the cap means is settled by #842 and #850 (work-markers.md §4,
 // terms-and-symbols.md -> Rendering); this module only names it.
 //

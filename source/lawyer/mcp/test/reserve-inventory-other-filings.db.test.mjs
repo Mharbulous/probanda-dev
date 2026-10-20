@@ -1,16 +1,17 @@
 // #959: an order or submission deployed only on ANOTHER filing of the proceeding (retired or live)
-// is not held in reserve on the filing being rendered. The Counsel Brief lists it marker-free under
-// its own heading, naming the deploying filing and its state, and it raises no Proposals. Only an
-// item deployed on no filing of the proceeding keeps 🂡.
+// is not held in reserve on the filing being rendered, and it raises no Proposals. Only an item
+// deployed on no filing of the proceeding keeps its reserve Proposals.
 
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import { seededDbFixture, seedBcscDefaultJudgment, boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-test("an order or submission deployed only on another filing is listed, not held in reserve", async () => {
+test("an order or submission deployed only on another filing raises no reserve Proposals", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -34,20 +35,12 @@ test("an order or submission deployed only on another filing is listed, not held
     );
 
     const result = submissionFormsRender(f.dbPath, 2, { clientName: "Ledger", clientNo: "1", matterNo: "L1" });
-    const brief = result.documents.find((d) => d.document_type === "Counsel_brief").markdown;
 
-    assert.match(
-      brief,
-      /## Orders used on other filings\n\n- damages to be assessed — Default Judgment Requisition \(Retired\) <!-- order_sought_id 1 -->\n- costs to be assessed — Default Judgment Requisition \(Retired\) <!-- order_sought_id 2 -->\n- costs in a fixed amount — Default Judgment Requisition \(Retired\) <!-- order_sought_id 3 -->\n- an order on a live filing — Second Application \(Drafting\) <!-- order_sought_id 5 -->\n/
-    );
-    assert.equal(brief.split("<!-- order_sought_id 3 -->").length - 1, 1, "a placed alternative is listed once, not also held in reserve");
-    assert.match(brief, /^- an order deployed nowhere .*🂡 <!-- order_sought_id 4 -->$/m, "an order deployed nowhere is still reserved");
-    assert.match(
-      brief,
-      /## Submissions used on other filings\n\n- Argued on the retired filing\. — Default Judgment Requisition \(Retired\) <!-- submission_id 1 -->\n/
-    );
-    assert.equal(brief.split("<!-- submission_id 1 -->").length - 1, 1, "no argument body for a submission deployed elsewhere");
-    assert.match(brief, /^R1\. Drafted but deployed nowhere\..*🂡 <!-- submission_id 2 -->$/m, "a submission deployed nowhere is still reserved");
+    // The reserve inventory writes no document: no Counsel Brief file, entry or timing.
+    const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
+    assert.ok(!existsSync(join(dirname(advocacy.path), "Counsel Brief.md")), "no Counsel Brief.md is written");
+    assert.ok(!result.documents.some((d) => d.document_type === "Counsel_brief"), "no Counsel_brief document is returned");
+    assert.ok(!result.timings.some((t) => /Counsel Brief/.test(t.phase)), `no Counsel Brief timing: ${result.timings.map((t) => t.phase).join(", ")}`);
 
     const keys = boardDataOf(f.dbPath, 2).proposals.map((p) => p.key);
     assert.ok(!keys.some((k) => /:order_sought:(1|2|3|5)$/.test(k)), `no Proposal for orders deployed elsewhere: ${keys.join(", ")}`);
@@ -83,14 +76,7 @@ test("#996: an alternative placed on a live sibling Form 8 is used there; other 
       `.trim()
     );
 
-    const result = submissionFormsRender(f.dbPath, 2, { clientName: "Ledger", clientNo: "1", matterNo: "L1" });
-    const brief = result.documents.find((d) => d.document_type === "Counsel_brief").markdown;
-
-    assert.match(brief, /^- costs in a fixed amount — Default Judgment Requisition \(Drafting\) <!-- order_sought_id 3 -->$/m);
-    assert.equal(brief.split("<!-- order_sought_id 3 -->").length - 1, 1, "a placed alternative is listed once, not also held in reserve");
-    for (const id of [6, 8, 10]) {
-      assert.match(brief, new RegExp(`^.*🂡 <!-- order_sought_id ${id} -->$`, "m"), `order ${id} is still reserved`);
-    }
+    submissionFormsRender(f.dbPath, 2, { clientName: "Ledger", clientNo: "1", matterNo: "L1" });
 
     const keys = boardDataOf(f.dbPath, 2).proposals.map((p) => p.key);
     assert.ok(!keys.some((k) => /:order_sought:3$/.test(k)), `no Proposal for the placed alternative: ${keys.join(", ")}`);

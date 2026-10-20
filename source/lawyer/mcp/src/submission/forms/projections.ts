@@ -387,7 +387,7 @@ export function currencyWithheldClauses(
  * The Writing's selected clauses (shared/declared-layout.md section 4), in `filing_clauses` order,
  * each printing its `wording_override` when set, else the clause's wording, numbered as a slot's
  * paragraphs are. Each line carries clauseMarkers, then 🧐; a clause citing a killed authority's
- * statement carries the plain-text `(killed <date>)` tag the Counsel Brief prints on such a
+ * statement carries the plain-text `(killed <date>)` tag a statement line prints on such a
  * citation. An implied clause the currency rule withholds carries `[currency: <result or
  * "unchecked">]` in the same slot, the result being the instrument's own while it is not `current`,
  * else the cited provision's preceded by its pinpoint (`[currency: Rule 8-1 amendment-unchecked]`),

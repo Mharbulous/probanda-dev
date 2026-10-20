@@ -42,7 +42,7 @@ async function letter(t) {
 async function retitledLetter(t) {
   const { g, id } = await letter(t);
   const dir = folderOf(render(g.dbPath, id));
-  assert.deepEqual(topLevelMd(dir), ["Counsel Brief.md", "Letter to opposing counsel.md"]);
+  assert.deepEqual(topLevelMd(dir), ["Letter to opposing counsel.md"]);
   g.f.local(LETTER_FILE, knowledgeFile(null, { ...UNCITED_LETTER, title: "Letter re costs" }));
   await resnapshotWriting(g.dbPath, id, { jurisdiction: JURISDICTION, seams: g.seams });
   return { g, id, dir };
@@ -56,7 +56,7 @@ test("a re-snapshot after the type title changed archives the old-title file, an
   writeFileSync(join(dir, "archive", "Older copy.md"), "an earlier archive", "utf-8");
 
   render(g.dbPath, id);
-  assert.deepEqual(topLevelMd(dir), ["Counsel Brief.md", "Letter re costs.md", "My notes.md"]);
+  assert.deepEqual(topLevelMd(dir), ["Letter re costs.md", "My notes.md"]);
   const moved = archived(dir).filter((name) => name.startsWith("General_writing @rev"));
   assert.equal(moved.length, 1);
   assert.match(moved[0], new RegExp(`^General_writing @rev${previous} .+\\.md$`));
@@ -70,7 +70,7 @@ test("a listed file already gone is skipped", async (t) => {
   unlinkSync(join(dir, "Letter to opposing counsel.md"));
 
   render(g.dbPath, id);
-  assert.deepEqual(topLevelMd(dir), ["Counsel Brief.md", "Letter re costs.md"]);
+  assert.deepEqual(topLevelMd(dir), ["Letter re costs.md"]);
   assert.deepEqual(archived(dir).filter((name) => name.startsWith("General_writing @rev")), []);
 });
 

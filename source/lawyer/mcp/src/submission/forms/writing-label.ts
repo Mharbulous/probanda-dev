@@ -4,7 +4,7 @@
 //
 // The codes are copied from the firm's file-naming code registry
 // (.claude/skills/file-naming/references/code-registry.md) because the runtime reads no skill
-// file. The four with no registry entry (RB, WA, INDEX, BRIEF) are chosen here.
+// file. The three with no registry entry (RB, WA, INDEX) are chosen here.
 
 import type { AffidavitRow } from "./render-bcsc-affidavit.js";
 
@@ -23,7 +23,6 @@ const DOCUMENT_CODES: Record<string, { code: string; name: string }> = {
   Response_book: { code: "RB", name: "Response Book" },
   Written_arguments: { code: "WA", name: "Written Arguments" },
   Evidence_index: { code: "INDEX", name: "Evidence Index" },
-  Counsel_brief: { code: "BRIEF", name: "Counsel Brief" },
 };
 
 const ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];

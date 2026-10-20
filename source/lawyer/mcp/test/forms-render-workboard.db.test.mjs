@@ -20,7 +20,7 @@ const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js"
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");
-const { buildWorkBoardData, INELIGIBLE_REASONS } = await import("../build/submission/forms/render-work-board.js");
+const { buildWorkBoardData, INELIGIBLE_REASONS, RESERVE_INVENTORY_DOC } = await import("../build/submission/forms/render-work-board.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");
 const { GLYPH_SLUGS } = await import("../build/submission/forms/proposal-inventory.js");
 const { WORKBOARD_CSS, WORKBOARD_JS } = await import("../build/submission/forms/workboard-assets.js");
@@ -709,7 +709,9 @@ async function snapshotFromShipped(dbPath, filingId, typeFile) {
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = ?", [JSON.stringify(stored), filingId]);
 }
 
-test("every inventory entry names the rendered document that emitted it", async () => {
+// The reserve inventory's entries carry a never-delivered doc tag of their own, which no rendered
+// document carries (render-work-board.ts RESERVE_INVENTORY_DOC).
+test("every inventory entry names the rendered document that emitted it, or the reserve inventory", async () => {
   for (const seed of [seedVaniacProceeding, seedNoticeOfApplication]) {
     const f = seededDbFixture();
     try {
@@ -722,7 +724,7 @@ test("every inventory entry names the rendered document that emitted it", async 
       assert.ok(inventory.length > 0, `${seed.name}: expected the render to record entries`);
       for (const e of inventory) {
         assert.ok(typeof e.doc === "string" && e.doc !== "", `${seed.name}: expected a document on ${JSON.stringify(e)}`);
-        assert.ok(rendered.has(e.doc), `${seed.name}: ${e.doc} is not a document this render produced`);
+        assert.ok(rendered.has(e.doc) || e.doc === RESERVE_INVENTORY_DOC, `${seed.name}: ${e.doc} is not a document this render produced`);
       }
       assert.ok(new Set(inventory.map((e) => e.doc)).size > 1, `${seed.name}: expected entries from more than one document`);
     } finally {
@@ -1050,7 +1052,7 @@ test("goal: an Excerpts criterion is unmet when its only entry is a proposition 
   try {
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath);
-    // The only statement is an unverified lead, so its own line prints in the Counsel Brief alone and
+    // The only statement is an unverified lead, so only the reserve inventory records its own line and
     // the form's proposition line rolls it up to 🔬.
     await submissionDataExecute(
       f.dbPath,
@@ -1073,7 +1075,7 @@ test("goal: an Excerpts criterion is unmet when its only entry is a proposition 
         [false, "law_assertions", "Counsel_brief"],
         [true, "statements_of_law", "Counsel_brief"],
       ],
-      "the statement line's 🔬 prints in the Counsel Brief only"
+      "the statement line's 🔬 is recorded by the reserve inventory only"
     );
 
     const data = boardDataOf(f.dbPath, 1, ASHBOURNE);
@@ -1184,12 +1186,12 @@ test("goal: a statement printing 📜 📍 counts once, at its current rung, and
   }
 });
 
-test("goal: a marker printed only in the Counsel Brief leaves its criterion met while its Proposal still derives", async () => {
+test("goal: a marker recorded only by the reserve inventory leaves its criterion met while its Proposal still derives", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath);
-    // Deployed on no document, so the submission and its proposition's 📖 print in the brief alone.
+    // Deployed on no document, so only the reserve inventory records the submission and its proposition's 📖.
     await submissionDataExecute(
       f.dbPath,
       `INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'a proposition argued only in reserve', 0);
@@ -1201,10 +1203,10 @@ test("goal: a marker printed only in the Counsel Brief leaves its criterion met 
     assert.deepEqual(
       inventoryOf(result).filter((e) => e.marker === "📖").map((e) => e.doc),
       ["Counsel_brief"],
-      "📖 prints in the Counsel Brief and nowhere else"
+      "📖 is recorded by the reserve inventory and nowhere else"
     );
     const data = boardDataOf(f.dbPath, 1, ASHBOURNE);
-    assert.equal(criterionOf(data, "primary-authority").state, "met", "a Counsel Brief entry never reaches a criterion");
+    assert.equal(criterionOf(data, "primary-authority").state, "met", "a reserve inventory entry never reaches a criterion");
     assert.deepEqual(laneOf(data, "doctrinal-basis:law_assertions:1"), { key: "doctrinal-basis:law_assertions:1", marker: "📖", lane: "proposed", holder: null });
   } finally {
     f.cleanup();
@@ -2335,7 +2337,7 @@ test("final review: a proposition with an overruled statement reads ⛔🧐 unti
   }
 });
 
-test("the proposition line names each overruled authority once, and the filed face and Counsel Brief never show the tag (#1202)", async () => {
+test("the proposition line names each overruled authority once, and the filed face never shows the tag (#1202)", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -2365,7 +2367,6 @@ test("the proposition line names each overruled authority once, and the filed fa
     await submissionDataExecute(f.dbPath, "UPDATE authorities SET style_of_cause_or_title = 'Re Smith (A Bankrupt)' WHERE id = 2;");
     assert.ok(proposition().endsWith("Jones v. Brown) ⛔ <!-- law_assertion_id 1 -->"), "a change to the tag's text re-raises no 🧐");
 
-    assert.ok(!markdownOf(mockup(), "Counsel_brief").includes("(overruled:"), "the Counsel Brief prints the overruled statements themselves");
     const filed = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "filed");
     assert.ok(filed.documents.length > 0, `expected the filed render to deliver: ${filed.note ?? ""}`);
     assertFiledFaceDocumentsClean(filed.documents);
@@ -2386,7 +2387,7 @@ test("the proposition line names each overruled authority once, and the filed fa
   }
 });
 
-test("final review: 🧐 never reaches a filed face or the Counsel Brief", async () => {
+test("final review: 🧐 never reaches a filed face or the reserve inventory", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -2401,9 +2402,8 @@ test("final review: 🧐 never reaches a filed face or the Counsel Brief", async
 
     const mockup = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
     assert.ok(markdownOf(mockup, "Notice_of_application").includes("🧐"), "the mockup carries it");
-    assert.ok(!markdownOf(mockup, "Counsel_brief").includes("🧐"), "the Counsel Brief carries none");
     assert.ok(
-      !inventoryOf(mockup).some((e) => e.marker === "🧐" && (e.doc === "Counsel_brief" || e.doc === "Work_board")),
+      !inventoryOf(mockup).some((e) => e.marker === "🧐" && (e.doc === RESERVE_INVENTORY_DOC || e.doc === "Work_board")),
       "no 🧐 entry names a never-delivered document"
     );
   } finally {

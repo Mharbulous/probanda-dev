@@ -289,8 +289,8 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   // Renders inline, in filing order, as an unnumbered strikethrough line --
   // no glyph (work-markers.md rule 5: strikethrough alone is the rendering).
   // Reserved (deployed by no document) orders never reach this query at all
-  // (fetchOrdersSought already filters to document='form'); they render only
-  // in the Counsel Brief.
+  // (fetchOrdersSought already filters to document='form'); their Proposals are
+  // recorded by the reserve inventory (render-companions.ts).
   // A rhetorical paragraph placed in the orders part takes the next order number, as the filed
   // face's `orders` list numbers it (render-form32-filed-face.ts).
   for (const entry of interleave(relief, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (r) => r.filing_ordinal)) {
@@ -310,8 +310,8 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     // Sites 10 / 10' / 10'': this one line merges three keyed rows. The ladder's own glyphs are
     // recorded per edge inside recordJurisdictionLadder (the order, its statement, its authority);
     // 🦵 keys on the order and 🧵 on the venue form's own pointer row. The item is always the base
-    // `wording`, never fo.wording_override -- the override is per filing and the Counsel Brief
-    // prints the base, so one key would otherwise carry two items.
+    // `wording`, never fo.wording_override -- the override is per filing and the reserve inventory
+    // records the base, so one key would otherwise carry two items.
     const jurMarker = recordJurisdictionLadder(ctx.inventory, r.id, r.wording, r.requires);
     const petitum = unservedPetitumMarker(r.hasServedBy);
     const looseThread = looseThreadMarker(true, waIds.orderIds.has(r.id));
@@ -438,7 +438,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     // impeachment fact statement or a lead-authority law statement
     // belonging to a submission never renders on the Notice of Application
     // at all -- renderSubmissionParagraphs excludes them from the inline body
-    // (brief-only cap, #370 item 4); they surface only in the Counsel Brief.
+    // (brief-only cap, #370 item 4); only the reserve inventory records them.
     // 🧵 loose-thread rides the contention paragraph, alongside 🧾 -- both handled internally.
     recordParagraph(ctx, s.id, "form", submissionNum);
     // Site 12: 🧵 rides the contention line but keys on the venue form's own pointer row, so it is
@@ -509,7 +509,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   // (deployed by no document of this filing) never reach this form's own
   // queries at all -- unlike the VanIAC written argument, a court form has
   // no mechanism for showing the practitioner material withheld from the
-  // forum; that surface is the Counsel Brief. See filed-face.ts's
+  // forum. See filed-face.ts's
   // STRUCK_LINE_RE for the matching filed-face guarantee that a crossed-out
   // order never survives into the filed face.
 

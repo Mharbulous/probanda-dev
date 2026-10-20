@@ -395,7 +395,7 @@ test("refuses a filing that isn't a notice_of_application", async () => {
   }
 });
 
-// #842: an overruled authority's statements ride the brief-only cap -- Counsel Brief only, never
+// #842: an overruled authority's statements ride the brief-only cap -- never
 // a venue mockup and never a filed face. Before #842 this emitter printed the excerpt and the
 // citation of a case the record says is not good law, indistinguishable from a sound one, because
 // the filed face carries no marker to say otherwise. Authority 2 is overruled but NOT killed:

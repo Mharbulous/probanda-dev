@@ -273,10 +273,10 @@ export function recordLawStatementGlyphs(inv: MarkerInventory, glyphs: string, r
 
 /**
  * The three jurisdictional-ladder emit sites in one place (Notice of Application Part 1, the
- * Written Arguments relief block, the Counsel Brief's "Orders sought"): records per edge, then
+ * Written Arguments relief block, and the reserve inventory's reserved orders): records per edge, then
  * returns the deduped string the site prints. The predicate still runs exactly once per rendered
  * line -- jurisdictionEdgeMarkers is the per-edge half of jurisdictionLadderMarker, not a second
- * pass over it. `deployed` is false only for the Counsel Brief's reserved order, deployed on no live
+ * pass over it. `deployed` is false only for the reserve inventory's reserved order, deployed on no live
  * Writing (spec R6, schema v47), whose edges then raise no 🔬.
  */
 export function recordJurisdictionLadder(

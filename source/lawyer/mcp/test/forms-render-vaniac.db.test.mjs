@@ -19,9 +19,9 @@ const { currentSchemaVersion } = await import("../build/submission/migrate.js");
 // Ticket 2026-09-01: a submission's body opens with its own contention
 // paragraph, followed by several standalone numbered paragraphs (one per
 // postulate/proposition it rests on or requires). The contention sentence
-// also prints elsewhere in the document (the Counsel Brief's submission
-// inventory, a struck-submission summary line, and the "Opposing points"
-// section's "— answered by:" label, all deliberately unchanged), so a raw
+// also prints elsewhere in the document (a struck-submission summary line,
+// and the "Opposing points" section's "— answered by:" label, both
+// deliberately unchanged), so a raw
 // contention-substring search can match the wrong section entirely. Delimit
 // by the submission's own `<!-- submission_id N -->` trace comment instead
 // (appended once, to the contention paragraph): start at that line, end at
@@ -50,8 +50,8 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
     assert.equal(result.filing_id, 1);
     assert.equal(result.revision, 1);
-    // Written Arguments (venue) + 4 witness statements + evidence index + Counsel Brief (#384) + Job Board (ADR 0009).
-    assert.equal(result.documents.length, 8);
+    // Written Arguments (venue) + 4 witness statements + evidence index + Job Board (ADR 0009).
+    assert.equal(result.documents.length, 7);
 
     const baseDir = dirname(result.documents[0].path);
     const writtenArgument = replaceStamp(findFile(baseDir, "Written Arguments.md"));
@@ -130,10 +130,10 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     // #380/#384: "Held in reserve" is retired from the Written Arguments --
     // the impeachment statement (purpose='impeachment', was disposition=
     // 'reserved') is excluded from the inline body entirely (asserted
-    // above) and surfaces only in the Counsel Brief, checked below.
+    // above) and prints on no face.
     assert.doesNotMatch(writtenArgument, /## Held in reserve/, "expected no Held-in-reserve trailing section on the Written Arguments");
     // #401: fact 1 is marked adverse and fully rendered here (deployed, so no 🂡) -- 🚩 must never
-    // leak onto the Written Arguments regardless, matching 🂡/🤥's Counsel-Brief-only posture.
+    // leak onto the Written Arguments regardless: no page prints 🂡, 🤥 or 🚩.
     assert.doesNotMatch(writtenArgument, /🚩/, "expected no adverse marker leaked onto the Written Arguments");
 
     // Issue #348, re-shaped by #380 onto order_sought_requires: order 1 is
@@ -143,97 +143,12 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     const reliefLine = writtenArgument.split("\n").find((l) => l.includes("<!-- relief_item a -->"));
     assert.ok(reliefLine, "expected relief 1's order line to render");
     assert.match(reliefLine, /⚠️/, "expected the distinguishable-treatment marker on the jurisdictional basis");
-    // Control for the killed-authority assertions on the Counsel Brief below: this edge is the
-    // same shape on a LIVE authority and its statement is unrated, so 🏅 does render here.
+    // This edge is the same shape as order 3's killed-authority edge, but on a LIVE authority and
+    // its statement is unrated, so 🏅 does render here.
     assert.match(reliefLine, /🏅/, "expected the unrated marker on a live authority's jurisdictional statement");
 
     assertMatchesGolden("written-argument", writtenArgument);
     assertMatchesGolden("witness-statement", replaceStamp(findFile(baseDir, "Witness Statement - A. Renwick.md")));
-
-    // #370 item 4 / #380: the brief-only cap -- material excluded from every
-    // deployed document surfaces only in the Counsel Brief, never delivered.
-    const counselBrief = replaceStamp(findFile(baseDir, "Counsel Brief.md"));
-    assert.match(counselBrief, /a reserved account not yet deployed/, "expected the impeachment statement to surface in the Counsel Brief");
-    assert.match(counselBrief, /A reserved fallback argument, held for reply.*🂡/, "expected the undeployed submission marked reserved in the Counsel Brief");
-    assert.match(counselBrief, /a reserved fallback order.*🂡/, "expected the undeployed order marked reserved in the Counsel Brief");
-    // Design §4 (#796): a killed item's own lines render no marker of any type. Order 3's only
-    // requires edge is 'filled' against a killed authority, so that edge contributes exactly 🏛️
-    // -- the power to make the order is still owed -- and nothing else: no 🏅 (a rejected
-    // authority is owed no rating) and no 📇, though the authority is not noted up. The
-    // live-authority control is the relief line asserted above.
-    const killedBasisOrderLine = counselBrief.split("\n").find((l) => l.includes("<!-- order_sought_id 3 -->"));
-    assert.ok(killedBasisOrderLine, "expected the killed-authority order's own line in the Counsel Brief");
-    assert.match(killedBasisOrderLine, /🏛️/, "expected 🏛️ on an order whose only 'filled' edge rests on a killed authority");
-    assert.doesNotMatch(killedBasisOrderLine, /🏅|📇|📜|📍|🔬/, "expected every marker withheld from the killed authority's own edge");
-    // #401: fact 1 is deployed (see above) yet still surfaces here under its own group, proving 🚩
-    // reads no deployment state.
-    // Scoped to the ## Adverse facts section: since the Counsel Brief authority-citations build,
-    // fact 1 ALSO appears earlier as a numbered fact paragraph inside deployed submission 2's
-    // argument body, where it correctly carries no 🚩 (🚩 is a Counsel-Brief-only hold on the
-    // fact's own inventory line, not on an argument paragraph). An unscoped find takes that one.
-    const fact1BriefLine = counselBrief
-      .slice(counselBrief.indexOf("## Adverse facts"))
-      .split("\n")
-      .find((l) => l.includes("<!-- fact_id 1 -->"));
-    assert.ok(fact1BriefLine, "expected the adverse fact's own line in the Counsel Brief");
-    assert.match(fact1BriefLine, /🚩/, "expected the adverse marker on the fact's own line");
-    const anticipatedLine = counselBrief.split("\n").find((l) => l.includes("<!-- anticipated_point_id 1 -->"));
-    assert.ok(anticipatedLine, "expected the anticipated point's own line in the Counsel Brief");
-    assert.match(anticipatedLine, /🚩/, "expected the adverse marker on the anticipated point's own line");
-    assert.match(counselBrief, /## Adverse facts/, "expected the Adverse facts group heading");
-    assert.match(counselBrief, /## Anticipated points/, "expected the Anticipated points group heading");
-
-    // Counsel Brief authority-citations build. Three contracts:
-    // (1) a deployed submission carries the SAME paragraph number in the brief as on the face
-    //     that deployed it, so the two documents can be read side by side;
-    // (2) the brief-only cap actually delivers -- a lead-authority statement renders here and
-    //     nowhere else, beside a proposition marked 🔬 rather than 📖 (#502);
-    // (3) a reserved submission gets its own R-numbered body, authority included, in a trailing
-    //     Held-in-reserve section -- the only place its authority is ever rendered.
-    for (const submissionId of [1, 2]) {
-      const briefLine = counselBrief.split("\n").find((l) => l.includes(`<!-- submission_id ${submissionId} -->`));
-      const venueLine = writtenArgument.split("\n").find((l) => l.includes(`<!-- submission_id ${submissionId} -->`));
-      // 🧐 (final review) prints on the forum line only, never on the Counsel Brief (#912).
-      assert.equal(briefLine, venueLine.replace(" 🧐", ""), `expected submission ${submissionId} to render identically in both documents`);
-    }
-    assert.match(
-      counselBrief,
-      /An unverified lead, held back from every delivered document\./,
-      "expected the lead-authority excerpt in the Counsel Brief -- its only permitted surface"
-    );
-    assert.doesNotMatch(writtenArgument, /An unverified lead/, "expected the lead-authority excerpt withheld from the Written Arguments");
-    const leadAssertionLine = counselBrief.split("\n").find((l) => l.includes("<!-- law_assertion_id 3 -->"));
-    assert.match(leadAssertionLine, /🔬/, "expected the lead-only proposition to ask for scrutiny (#502)");
-    assert.doesNotMatch(leadAssertionLine, /📖/, "expected 📖 withheld -- a lead is in hand, so there is a statement to scrutinize");
-    assert.match(leadAssertionLine, /🥈/, "expected the source rung to read the lead statements when no verified statement exists");
-
-    // Design §4 (#796): a killed authority's statement prints here only, and its own line renders
-    // no marker of any type -- the whole line is the trace comment. The plain-text
-    // "(killed <date>)" tag on its citation line is what keeps the silenced line from reading
-    // like sound supporting authority.
-    const killedStmtLine = counselBrief.split("\n").find((l) => l.includes("<!-- statement_of_law_id 5 -->"));
-    assert.ok(killedStmtLine, "expected the killed authority's statement in the Counsel Brief");
-    assert.equal(killedStmtLine.trim(), "<!-- statement_of_law_id 5 -->", "a killed item's own line renders no marker of any type");
-    assert.match(
-      counselBrief,
-      /> \*Killed Authority v\. Y\*, 2018 BCSC 9 \(killed 2026-09-01\)/,
-      "expected the plain-text killed tag on the statement's citation line"
-    );
-    assert.doesNotMatch(writtenArgument, /statement_of_law_id 5/, "the brief-only cap keeps it off the venue face");
-    assert.match(counselBrief, /## Killed authorities\n\n- Killed Authority v\. Y, 2018 BCSC 9 \(killed 2026-09-01\)/);
-    // Phase C defect 3 (#777): 🂡 co-occurs with the order's own markers, both render (§4), fused
-    // as the order's one set.
-    assert.match(counselBrief, /^- a reserved fallback order 🏛️🦵🂡 <!-- order_sought_id 2 -->$/m);
-    assert.match(counselBrief, /^- payment of \$150,000 <!-- order_sought_id 1 -->$/m, "a deployed order's markers stay on the face that deploys it");
-
-    assert.match(counselBrief, /## Held in reserve/, "expected the Held in reserve section heading");
-    assert.match(
-      counselBrief,
-      /^R1\. A reserved fallback argument, held for reply\..*🂡 <!-- submission_id 3 -->$/m,
-      "expected the reserved submission R-numbered, still marked 🂡"
-    );
-
-    assertMatchesGolden("counsel-brief", counselBrief);
 
     // Build #329/#320: the fact-side ladder, three more witness statements.
     const jRenwick = replaceStamp(findFile(baseDir, "Witness Statement - J. Renwick.md"));
@@ -335,14 +250,12 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "filed");
     assert.equal(result.filing_id, 1);
     // Written Arguments (venue) + 4 witness statements + evidence index --
-    // the Counsel Brief and Job Board are both neverDelivered and
-    // genuinely absent here, not merely stripped (#370, #384; ADR 0009).
+    // the Job Board is genuinely absent here, not merely stripped (ADR 0009).
     assert.equal(result.documents.length, 6);
 
     // No disk write at all in filed mode -- not even the mockups root.
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups")), false, "expected render_mode 'filed' to write nothing to disk");
 
-    assert.ok(!result.documents.some((d) => d.document_type === "Counsel_brief"), "expected the Counsel Brief genuinely absent from filed-mode output, not merely stripped");
     assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Job Board genuinely absent from filed-mode output, not merely stripped");
 
     assertFiledFaceDocumentsClean(result.documents);
@@ -538,7 +451,7 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
     };
 
     const decided = render("mockup");
-    for (const type of ["Written_arguments", "Counsel_brief"]) {
+    for (const type of ["Written_arguments"]) {
       const line = contentionLine(decided, type);
       assert.match(line, /^1\. The tribunal has jurisdiction\. \(no stated fact needed, per counsel 2026-10-04\)/, `${type}: ${line}`);
       assert.doesNotMatch(line, /🧾/, `${type}: ${line}`);
@@ -592,7 +505,7 @@ test("a submission with a recorded no-facts-needed decision and a linked fact pr
       `.trim()
     );
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Law", clientNo: "9999", matterNo: "L9999" });
-    for (const type of ["Written_arguments", "Counsel_brief"]) {
+    for (const type of ["Written_arguments"]) {
       const line = result.documents.find((d) => d.document_type === type).markdown.split("\n").find((l) => l.includes("<!-- submission_id 1 -->"));
       assert.match(line, /^1\. The tribunal has jurisdiction\./, `${type}: ${line}`);
       assert.doesNotMatch(line, /no stated fact needed|🧾/, `${type}: ${line}`);
@@ -645,7 +558,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
 
     // Neither submission links a proposition: 📚 on each contention line, and no 🧐 beside it.
     const bare = render("mockup");
-    for (const type of ["Written_arguments", "Counsel_brief"]) {
+    for (const type of ["Written_arguments"]) {
       assert.match(contentionLine(bare, type, 1), /^1\. The respondent received the notice\. 📚 <!-- submission_id 1 -->$/, type);
       assert.match(contentionLine(bare, type, 2), /^\d+\. The notice was delivered on time\. 📚 <!-- submission_id 2 -->$/, type);
     }
@@ -665,7 +578,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
                               no_law_needed_contention = contention WHERE id = 2;`
     );
     const decided = render("mockup");
-    for (const type of ["Written_arguments", "Counsel_brief"]) {
+    for (const type of ["Written_arguments"]) {
       const line = contentionLine(decided, type, 2);
       assert.match(line, /^\d+\. The notice was delivered on time\. \(no stated law needed, per counsel 2026-10-06\)/, `${type}: ${line}`);
       assert.doesNotMatch(line, /📚/, `${type}: ${line}`);
@@ -808,12 +721,12 @@ test("bootstrap lists a seeded matter's filings and reports the schema version, 
 
     // Once the filing is rendered, bootstrap reports its files -- still without rendering them.
     const rendered = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
-    assert.equal(rendered.documents.length, 8);
+    assert.equal(rendered.documents.length, 7);
 
     const after = submissionFormsBootstrap(f.dbPath, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
-    // Written Arguments (venue) + 4 witness statements + evidence index + Counsel Brief (#384); the Job
+    // Written Arguments (venue) + 4 witness statements + evidence index; the Job
     // Board is no file of the filing's since #1365.
-    assert.equal(after.filings[0].paths.length, 7);
+    assert.equal(after.filings[0].paths.length, 6);
     for (const p of after.filings[0].paths) assert.ok(existsSync(p), `expected ${p} to exist`);
     assert.equal(after.filings[0].render_state, "fresh");
   } finally {
@@ -840,10 +753,10 @@ test("render returns each document's markdown, byte-identical to the file it wro
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
 
-    // Written Arguments (venue) + 4 witness statements + evidence index + Counsel Brief (#384), then the
+    // Written Arguments (venue) + 4 witness statements + evidence index, then the
     // Job Board's entry (#1365), with no file of the filing's, no page without a draft folder, and no
     // summary unless the board is named in documents.
-    assert.equal(result.documents.length, 8);
+    assert.equal(result.documents.length, 7);
     for (const doc of result.documents) {
       assert.ok(doc.document_type, "expected every returned document to name its type");
       if (doc.document_type === "Work_board") {

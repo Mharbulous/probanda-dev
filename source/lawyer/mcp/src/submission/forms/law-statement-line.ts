@@ -89,10 +89,8 @@ function quotingTag(row: Pick<LawStatementLine, "excerpt_speaker">): string {
  * deleted as dead code. */
 export function lawStatementCitationLine(row: LawStatementLine): string | null {
   // A killed authority's statement now renders no marker at all (design §4), so without this
-  // tag its line in the Counsel Brief would read like sound supporting authority -- the only
-  // tell would be the "Killed authorities" section further down. Plain text, not a glyph, so
-  // the no-marker rule holds and no status label is reintroduced. Same shape as the "Killed
-  // authorities" and "Killed submissions" sections print (render-companions.ts).
+  // tag its line would read like sound supporting authority. Plain text, not a glyph, so
+  // the no-marker rule holds and no status label is reintroduced.
   // A failed statement (schema v46) takes the same footing: without its tag the line would show
   // 👃 with no word of what the research lawyer found. The line rides the brief-only cap, so it
   // reaches no filed face and needs no strip. A settled statement (schema v47) carries its own tag,

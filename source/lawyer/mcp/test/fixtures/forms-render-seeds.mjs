@@ -61,7 +61,7 @@ export async function seedVaniacProceeding(dbPath) {
 
     -- disposition retired (schema v10, #380): submission 3 stays a pool row
     -- with no filing_submissions pointer at all (below) -- deployed by
-    -- nothing, so it renders only in the Counsel Brief (derived 🂡).
+    -- nothing, so it renders nowhere (derived 🂡); the reserve inventory records it.
     INSERT INTO submissions (id, proceeding_id, contention, ordinal)
       VALUES
         (1, 1, 'The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.', 1),
@@ -101,11 +101,10 @@ export async function seedVaniacProceeding(dbPath) {
     INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, verification)
       VALUES (3, 1, NULL, 1, 'para 8', 'the Tribunal has the power to grant this relief under s. 24 of the Arbitration Act', 'verified');
 
-    -- The brief-only cap, exercised end to end (Counsel Brief authority-citations build):
+    -- The brief-only cap, exercised end to end:
     -- assertion 3 -- required by DEPLOYED submission 2 -- is supported only by statement 4, whose
     -- verification is 'lead'. Every delivered document must still show the proposition with no
-    -- excerpt; the Counsel Brief must show that same line WITH the lead excerpt stacked beneath
-    -- it. Since #502 the proposition itself reads 🔬 (a lead is in hand to scrutinize), not 📖,
+    -- excerpt, and the reserve inventory records the lead statement's own line. Since #502 the proposition itself reads 🔬 (a lead is in hand to scrutinize), not 📖,
     -- and source='secondary' now DOES fire 🥈: with no verified statement the source rung falls
     -- back to the leads, so the line reads 🔬 🥈.
     INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, verification)
@@ -137,7 +136,7 @@ export async function seedVaniacProceeding(dbPath) {
 
     -- order 2 ('a reserved fallback order') stays a pool row with no
     -- filing_orders pointer at all (below) -- deployed by nothing, derived 🂡,
-    -- Counsel Brief only (schema v10, #380 -- disposition retired). Order 3 is a pool row on the
+    -- printed nowhere (schema v10, #380 -- disposition retired). Order 3 is a pool row on the
     -- same footing, carrying the killed-authority basis edge above.
     INSERT INTO order_sought (id, proceeding_id, wording, amount)
       VALUES
@@ -153,7 +152,7 @@ export async function seedVaniacProceeding(dbPath) {
     -- VanIAC's own venue document is document='form' (#380's resolution --
     -- "for a VanIAC submissions package that face is the submissions
     -- document itself"); submission 3 and order 2 (both undeployed here) stay
-    -- reserved -- Counsel Brief only.
+    -- reserved -- printed nowhere.
     INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);
     INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1);
 
@@ -688,7 +687,7 @@ export async function seedProposalCases(dbPath) {
     `
     -- Two more authorities, treatment NULL so every statement of them prints 📇 (the note-up
     -- rung). Both are attached to deployed submission 1 through submission_law below, so they
-    -- print on the Written Arguments and the Counsel Brief alike.
+    -- print on the Written Arguments.
     INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight)
       VALUES
         (5, 1, 'Excerpt Pending v. Zephyr Holdings', '2022 BCSC 44', 'case', 'binding'),

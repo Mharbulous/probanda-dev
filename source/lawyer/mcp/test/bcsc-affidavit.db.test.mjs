@@ -125,7 +125,7 @@ test("an unknown document name lists each available type once, and a shared type
     assert.throws(
       () => submissionFormsRender(f.dbPath, 1, CLIENT, "mockup", ["list-names"]),
       (err) => {
-        assert.match(err.message, /\(available: Notice_of_application, Affidavit, Written_arguments, Counsel_brief, Work_board\)$/);
+        assert.match(err.message, /\(available: Notice_of_application, Affidavit, Written_arguments, Work_board\)$/);
         return true;
       }
     );

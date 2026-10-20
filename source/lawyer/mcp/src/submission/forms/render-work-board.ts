@@ -3,8 +3,8 @@
 // into ready / in progress / blocked / completed / shelved / superseded, plus
 // loose threads not yet outlined -- as one JSON object. workboard-shell.ts inlines it as the one section of
 // that filing's self-contained Job Board page, and matter-pages.ts prints the same object
-// as the render response's board_summary, which is what a session orients from. Never an advocacy document (forms.ts tags it
-// neverDelivered, dropped from renderMode:'filed' entirely, same as the Counsel Brief). The board
+// as the render response's board_summary, which is what a session orients from. Never an advocacy document, and never part of
+// renderMode:'filed'. The board
 // now prints marker glyphs, in its Shelved lane and board_card's proposed lane only (design §13). It holds
 // no predicate of its own: every glyph comes from the render's inventory.
 //
@@ -446,7 +446,7 @@ export interface MatterJobBoardData {
   /** The matter's dates (ADR 0013, 2026-10-04 amendments): drawn on the page, in no section. */
   dates: PageDates;
   /** Each live Writing's label from the last render's manifest, in that render's document order
-   * (venue document, companions, Counsel Brief): `short` is drawn on the tile, `long` is its
+   * (venue document, then companions): `short` is drawn on the tile, `long` is its
    * `title`; a manifest entry with no label gives the file name for both. Drawn on the page, in no
    * section; empty on a pre-filing page, on a never-rendered filing, and on one whose manifest
    * predates the inventory field. */
@@ -1091,9 +1091,14 @@ export function holdsBeforeSend(filing: FilingRow): boolean {
   return filing.needs_forum_parts === 0 || (filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general");
 }
 
-/** The documents that never go to the forum (design §2.2), by documentType: the one list. forms.ts
- * derives each document's neverDelivered tag from it, and the Goal card filters the inventory by it. */
-export const NEVER_DELIVERED_DOCS: ReadonlySet<string> = new Set(["Counsel_brief", "Work_board"]);
+/** The doc tag forms.ts stamps on the reserve inventory's entries (recordReserveInventory), which no
+ * document prints. Kept as the retired brief's documentType because render manifests already
+ * on disk carry it, and an older copy of the plugin reading a newer manifest filters by this name. */
+export const RESERVE_INVENTORY_DOC = "Counsel_brief";
+
+/** The inventory tags that never go to the forum (design §2.2): the one list. The Goal card filters
+ * the inventory by it. */
+export const NEVER_DELIVERED_DOCS: ReadonlySet<string> = new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
 
 /** Whether one inventory entry is work the `evidence` criterion counts, on a document that goes to
  * the forum: the Provable Facts page reads it per statement of fact (provable-facts-page.ts). */

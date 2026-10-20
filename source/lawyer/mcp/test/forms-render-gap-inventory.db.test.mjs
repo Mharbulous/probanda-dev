@@ -16,7 +16,7 @@ const { updateCaseData, writePartiesOfRecord } = await import("./helpers/matter-
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-const NEVER_DELIVERED = new Set(["Counsel_brief", "Work_board"]);
+const NEVER_DELIVERED = new Set(["Work_board"]);
 
 /** Renders filing 1 and returns its 🧩 entries (from the saved manifest) and the venue documents
  * whose saved mockup prints a 🧩. The file, not the returned markdown: the returned copy withholds

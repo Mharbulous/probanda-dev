@@ -41,9 +41,9 @@ const GAP_LINE_RE = /^🧩 _+ <!-- .* -->[ \t]*\n?/gm;
 // BCCA response book emits "Positions not yet taken" as #### (it sits inside "### Part 2:
 // Issues"), not the ## every other kind uses.
 // "Held in reserve" retired (#380/#384): reserved material is derived, never
-// queried onto a form/Written-Arguments document at all -- it renders only in
-// the Counsel Brief, which never reaches this transform (see the neverDelivered
-// filter in forms.ts). No renderer emits this heading any more.
+// queried onto a form/Written-Arguments document at all -- it prints on no
+// face (forms.ts records its Proposals only, with no document).
+// No renderer emits this heading any more.
 const MOCKUP_ONLY_HEADINGS = [
   "Source trace",
   "Facts attributed to this witness, not yet in this statement",
@@ -138,10 +138,8 @@ const MESSAGE_LINE_RES: RegExp[] = [
 // id-trace comment doesn't save it from this match.
 //
 // 🂡 (held-in-reserve), 🤥 (impeachment), and 🚩 (adverse, #390/#401) need no
-// matching strip here: all three are Counsel-Brief-only glyphs, and the
-// Counsel Brief never reaches this transform (forms.ts filters it out of
-// renderMode:"filed" entirely -- "never delivered" is structural, not a
-// strip). They stay in ALL_MARKER_GLYPHS as belt-and-suspenders.
+// matching strip here: no renderer prints any of the three
+// (#370). They stay in ALL_MARKER_GLYPHS as belt-and-suspenders.
 //
 // Residual risk, accepted (mirrors the glyph-in-verbatim-excerpt risk noted
 // below): a tilde-wrapped span inside a verbatim-quoted excerpt of someone

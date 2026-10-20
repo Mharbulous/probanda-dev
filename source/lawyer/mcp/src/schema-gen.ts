@@ -1551,8 +1551,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. " +
         "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one " +
         "with none keeps its own Job Board, which already holds jobs with no Writing, and the call is refused with " +
-        "no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, a Counsel " +
-        "Brief, a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
+        "no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, " +
+        "a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
         "job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no " +
         "filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write " +
         "nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so " +
@@ -2109,7 +2109,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "session_token and draft_dir, and refuses a proceeding that has a filing. " +
         "A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: " +
         "job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with " +
-        "no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own " +
+        "no mockup or presentation copy written; draft_dir rewrites the matter's pages, its own " +
         "`Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
         "refused with job_board_only. " +
         "Every response also carries timings: per-phase durations in ms, for profiling only.",
