@@ -542,9 +542,9 @@ export function keyRequestToolDefinitions(): ToolDefinition[] {
       name: "key_request__submit",
       description:
         "For a computer with no Probanda key (legal_commons__configure_status reports configured: false): returns a link to a page on this computer where the practitioner " +
-        "asks Probanda for a key. They type there only what verifying a practising lawyer requires: full name, year of call, an optional call date and firm name, " +
-        "for British Columbia. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. " +
-        "Probanda verifies the person and sends the key to them directly; they then paste it on legal_commons__configure_credential's page. " +
+        "asks Probanda for a key. They type there what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name, " +
+        "for British Columbia) and an email and optional phone for contact. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. " +
+        "Probanda verifies the person and sends the key to the email address their firm's website or the directory lists, never the typed one; they then paste it on legal_commons__configure_credential's page. " +
         "Send the link, and when the practitioner says it is sent, call key_request__status. Refused when this computer already holds a key.",
       inputSchema: objectSchema([], []),
     },

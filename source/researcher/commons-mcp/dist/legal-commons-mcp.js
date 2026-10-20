@@ -2082,9 +2082,9 @@ var require_json_schema_traverse = __commonJS({
       cb = opts.cb || cb;
       var pre = typeof cb == "function" ? cb : cb.pre || function() {
       };
-      var post = cb.post || function() {
+      var post2 = cb.post || function() {
       };
-      _traverse(opts, pre, post, schema, "", schema);
+      _traverse(opts, pre, post2, schema, "", schema);
     };
     traverse.keywords = {
       additionalItems: true,
@@ -2130,7 +2130,7 @@ var require_json_schema_traverse = __commonJS({
       maxProperties: true,
       minProperties: true
     };
-    function _traverse(opts, pre, post, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
+    function _traverse(opts, pre, post2, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
       if (schema && typeof schema == "object" && !Array.isArray(schema)) {
         pre(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
         for (var key in schema) {
@@ -2138,18 +2138,18 @@ var require_json_schema_traverse = __commonJS({
           if (Array.isArray(sch)) {
             if (key in traverse.arrayKeywords) {
               for (var i = 0; i < sch.length; i++)
-                _traverse(opts, pre, post, sch[i], jsonPtr + "/" + key + "/" + i, rootSchema, jsonPtr, key, schema, i);
+                _traverse(opts, pre, post2, sch[i], jsonPtr + "/" + key + "/" + i, rootSchema, jsonPtr, key, schema, i);
             }
           } else if (key in traverse.propsKeywords) {
             if (sch && typeof sch == "object") {
               for (var prop in sch)
-                _traverse(opts, pre, post, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
+                _traverse(opts, pre, post2, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
             }
           } else if (key in traverse.keywords || opts.allKeys && !(key in traverse.skipKeywords)) {
-            _traverse(opts, pre, post, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
+            _traverse(opts, pre, post2, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
           }
         }
-        post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
+        post2(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       }
     }
     function escapeJsonPtr(str) {
@@ -4476,11 +4476,11 @@ var require_core = __commonJS({
     }
     function addRule(keyword, definition, dataType) {
       var _a3;
-      const post = definition === null || definition === void 0 ? void 0 : definition.post;
-      if (dataType && post)
+      const post2 = definition === null || definition === void 0 ? void 0 : definition.post;
+      if (dataType && post2)
         throw new Error('keyword with "post" flag cannot have "type"');
       const { RULES } = this;
-      let ruleGroup = post ? RULES.post : RULES.rules.find(({ type: t }) => t === dataType);
+      let ruleGroup = post2 ? RULES.post : RULES.rules.find(({ type: t }) => t === dataType);
       if (!ruleGroup) {
         ruleGroup = { type: dataType, rules: [] };
         RULES.rules.push(ruleGroup);
@@ -13674,8 +13674,8 @@ var UrlElicitationRequiredError = class extends McpError {
 };
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
-function isTerminal(status2) {
-  return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
+function isTerminal(status3) {
+  return status3 === "completed" || status3 === "failed" || status3 === "cancelled";
 }
 
 // node_modules/zod-to-json-schema/dist/esm/parsers/string.js
@@ -14592,8 +14592,8 @@ var Protocol = class {
         }
         return task;
       },
-      storeTaskResult: async (taskId, status2, result) => {
-        await taskStore.storeTaskResult(taskId, status2, result, sessionId);
+      storeTaskResult: async (taskId, status3, result) => {
+        await taskStore.storeTaskResult(taskId, status3, result, sessionId);
         const task = await taskStore.getTask(taskId, sessionId);
         if (task) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -14609,15 +14609,15 @@ var Protocol = class {
       getTaskResult: (taskId) => {
         return taskStore.getTaskResult(taskId, sessionId);
       },
-      updateTaskStatus: async (taskId, status2, statusMessage) => {
+      updateTaskStatus: async (taskId, status3, statusMessage) => {
         const task = await taskStore.getTask(taskId, sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, `Task "${taskId}" not found - it may have been cleaned up`);
         }
         if (isTerminal(task.status)) {
-          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status2}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
+          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status3}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
         }
-        await taskStore.updateTaskStatus(taskId, status2, statusMessage, sessionId);
+        await taskStore.updateTaskStatus(taskId, status3, statusMessage, sessionId);
         const updatedTask = await taskStore.getTask(taskId, sessionId);
         if (updatedTask) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -15460,9 +15460,9 @@ var ValidationError = class extends DataServerError {
 };
 var TransportError = class extends DataServerError {
   status;
-  constructor(message, status2) {
+  constructor(message, status3) {
     super(message);
-    this.status = status2;
+    this.status = status3;
   }
 };
 
@@ -15518,9 +15518,9 @@ async function handle(req, res) {
   const saved = outcome.persisted ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>" : `<p class="error">It works for this session only and could not be saved: ${escape2(outcome.warning ?? "")}</p>`;
   page(res, 200, "Connected", `<p>Connected to Probanda's Cloud.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
 }
-var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer read and contribute to the legal commons and send suggestions about the plugin.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>`;
-function page(res, status2, title, body) {
-  res.writeHead(status2, {
+var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer read and contribute to the legal commons and send suggestions about the plugin.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p><p class="note">No key yet? Return to Claude and ask to request Probanda's key.</p>`;
+function page(res, status3, title, body) {
+  res.writeHead(status3, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
     "Cache-Control": "no-store",
@@ -16489,7 +16489,7 @@ function legalCommonsToolDefinitions() {
     },
     {
       name: legalCommonsPrefixed("configure_credential"),
-      description: "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them (the same key serves legal_commons__* and suggestion_box__submit). The key is typed on that page, never in chat and never as a tool argument. Send the link, and when the practitioner says it is done, call legal_commons__configure_status. The page checks the key against the pool before saving it; it is persisted host-side, encrypted at rest, and never logged or echoed back.",
+      description: "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them (the same key serves legal_commons__* and suggestion_box__submit). The key is typed on that page, never in chat and never as a tool argument. Send the link, and when the practitioner says it is done, call legal_commons__configure_status. A practitioner who has no key asks Probanda for one with key_request__submit. The page checks the key against the pool before saving it; it is persisted host-side, encrypted at rest, and never logged or echoed back.",
       inputSchema: objectSchema([], []),
       annotations: { destructiveHint: true }
     },
@@ -16546,7 +16546,7 @@ function troubleshootToolDefinitions() {
     },
     {
       name: troubleshootPrefixed("configure_credential"),
-      description: "One-time setup: store the troubleshooting store's Supabase project URL and its sb_secret_ key. The store is a separate project from the legal-commons pool, so the pool's URL or key is refused. The pair is checked against the store before it is saved, persisted host-side encrypted at rest, and never logged or echoed back." + STORE_CONTENT_RULE,
+      description: "Maintainer-only one-time setup: store the troubleshooting store's Supabase project URL and its sb_secret_ key. Never ask a practitioner for either: on their computer a confirmed fix goes to /lawyer:suggestion instead. The store is a separate project from the legal-commons pool, so the pool's URL or key is refused. The pair is checked against the store before it is saved, persisted host-side encrypted at rest, and never logged or echoed back." + STORE_CONTENT_RULE,
       inputSchema: objectSchema([
         { name: "project_url", type: "str" },
         { name: "static_key", type: "str" }
@@ -16568,7 +16568,7 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores. title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
+      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores (a practitioner with none asks for one with key_request__submit). title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
       inputSchema: {
         type: "object",
         properties: {
@@ -16638,11 +16638,27 @@ function suggestionBoxToolDefinitions() {
     }
   ];
 }
+function keyRequestToolDefinitions() {
+  return [
+    {
+      name: "key_request__submit",
+      description: "For a computer with no Probanda key (legal_commons__configure_status reports configured: false): returns a link to a page on this computer where the practitioner asks Probanda for a key. They type there what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name, for British Columbia) and an email and optional phone for contact. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. Probanda verifies the person and sends the key to the email address their firm's website or the directory lists, never the typed one; they then paste it on legal_commons__configure_credential's page. Send the link, and when the practitioner says it is sent, call key_request__status. Refused when this computer already holds a key.",
+      inputSchema: objectSchema([], [])
+    },
+    {
+      name: "key_request__status",
+      description: "Report where this computer's request for Probanda's key stands: {requested, request_id, status, requested_at, decided_at, next}. status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail.",
+      inputSchema: objectSchema([], []),
+      annotations: { readOnlyHint: true }
+    }
+  ];
+}
 function buildToolDefinitions() {
   return [
     ...legalCommonsToolDefinitions(),
     ...troubleshootToolDefinitions(),
-    ...suggestionBoxToolDefinitions()
+    ...suggestionBoxToolDefinitions(),
+    ...keyRequestToolDefinitions()
   ];
 }
 
@@ -16702,7 +16718,7 @@ function isPlainObject4(value) {
 
 // src/troubleshoot/config.ts
 import { join as join4 } from "node:path";
-var NOT_CONFIGURED_HINT = "the troubleshooting store is not configured: call troubleshoot__configure_credential once with the store project's URL and its sb_secret_ key, or set TROUBLESHOOT_SUPABASE_URL and TROUBLESHOOT_SUPABASE_KEY in the runtime environment (Claude Code CLI / dev).";
+var NOT_CONFIGURED_HINT = "the troubleshooting store is not configured on this computer. It is maintainer-only: never ask the practitioner for its key or URL. Draft a confirmed fix as a suggestion through /lawyer:suggestion instead.";
 function credentialPath2(env = process.env) {
   return join4(defaultStateDir(env, "troubleshoot"), "credential.json.dpapi");
 }
@@ -16968,7 +16984,7 @@ async function configureStatus2(client) {
 
 // src/suggestion-box/tools.ts
 import { readFileSync } from "node:fs";
-var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves";
+var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves, or, if they have none, call key_request__submit so they can ask Probanda for one";
 var SOURCES = /* @__PURE__ */ new Set(["user", "llm", "assisted"]);
 var ORIGINS = /* @__PURE__ */ new Set(["probanda", "lawyer"]);
 var MAX_ITEMS = 10;
@@ -17017,7 +17033,7 @@ async function submit(client, args) {
   if (hits.length > 0) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
   }
-  const post = {
+  const post2 = {
     title,
     body,
     source,
@@ -17026,7 +17042,7 @@ async function submit(client, args) {
     ...items ? { items } : {},
     ...previews ? { previews } : {}
   };
-  const saved = await client.callFunction("suggestion-submit", post);
+  const saved = await client.callFunction("suggestion-submit", post2);
   if (typeof saved?.suggestion_id !== "string") {
     throw new ValidationError("Probanda's Cloud did not confirm the suggestion, so it may not have been saved");
   }
@@ -17114,6 +17130,178 @@ async function status(client, args) {
   return { statuses };
 }
 
+// src/key-request/tools.ts
+import { createHash as createHash2, randomBytes as randomBytes2 } from "node:crypto";
+import { createServer as createServer2 } from "node:http";
+import { join as join5 } from "node:path";
+var MAX_NAME = 200;
+var MAX_EMAIL = 254;
+var MAX_PHONE = 40;
+var TITLE2 = "Ask Probanda for a key";
+var pending2;
+var listening2;
+var sent;
+function requestPath(env = process.env) {
+  return join5(defaultStateDir(env), "key-request.json.dpapi");
+}
+function isKeyRequestToolName(name) {
+  return name.startsWith("key_request__");
+}
+function callKeyRequestTool(client, name) {
+  switch (name) {
+    case "key_request__submit":
+      return submit2(client);
+    case "key_request__status":
+      return status2(client);
+    default:
+      throw new ValidationError(`Unknown key_request tool "${name}"`);
+  }
+}
+async function submit2(client) {
+  if (client.hasStaticKey()) {
+    throw new ValidationError("this computer already holds Probanda's key (legal_commons__configure_status reports it), so no request is needed");
+  }
+  const link = randomBytes2(24).toString("hex");
+  pending2 = { link, client };
+  listening2 ??= listen2();
+  return {
+    status: "awaiting_details",
+    url: `http://127.0.0.1:${await listening2}/key-request/${link}`,
+    next: "Send the practitioner this link and ask them to type their details on that page, never in chat. When they say it is sent, call key_request__status. The link works only on this computer, until a new link is made or the server restarts."
+  };
+}
+async function status2(client) {
+  const saved = sent ?? await readProtectedJson(requestPath(), null);
+  if (!saved?.request_token) {
+    return {
+      requested: false,
+      next: "No request for Probanda's key was sent from this computer. Call key_request__submit to send one."
+    };
+  }
+  const reply = await post(client, "key-request-status", { request_token: saved.request_token }, "return the request's status");
+  const state = typeof reply.status === "string" ? reply.status : "unknown";
+  return {
+    requested: true,
+    request_id: saved.request_id,
+    status: state,
+    requested_at: typeof reply.requested_at === "string" ? reply.requested_at : saved.requested_at,
+    decided_at: typeof reply.decided_at === "string" ? reply.decided_at : null,
+    next: NEXT[state] ?? "Report the status to the practitioner as it is."
+  };
+}
+var NEXT = {
+  pending: "Probanda has not decided this request yet. Check again later.",
+  issued: "Probanda has issued this computer's key and sends it to the practitioner directly. When they have it, call legal_commons__configure_credential and have them paste it on the page it serves, never in chat.",
+  declined: "Probanda could not verify the details sent. The practitioner can check them against their own entry in the Law Society of British Columbia's directory and send a new request with key_request__submit."
+};
+async function post(client, fn, body, what) {
+  const res = await fetch(`${client.projectUrl().replace(/\/$/, "")}/functions/v1/${fn}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  let reply = {};
+  try {
+    reply = text ? JSON.parse(text) : {};
+  } catch {
+  }
+  if (!res.ok) {
+    const error2 = typeof reply.error === "string" ? reply.error : res.statusText;
+    throw new ValidationError(`Probanda's Cloud did not ${what} (${res.status}): ${error2}`);
+  }
+  return reply;
+}
+function requestBody(form, tokenHash, thisYear = (/* @__PURE__ */ new Date()).getFullYear()) {
+  const fullName = (form.get("full_name") ?? "").trim();
+  const firmName = (form.get("firm_name") ?? "").trim();
+  const yearText = (form.get("year_of_call") ?? "").trim();
+  const callDate = (form.get("call_date") ?? "").trim();
+  if (!fullName || !firmName || fullName.length > MAX_NAME || firmName.length > MAX_NAME) {
+    throw new ValidationError(`type your full name and your firm's name as the directory shows them, each in 1 to ${MAX_NAME} characters`);
+  }
+  const year = Number(yearText);
+  if (!/^\d{4}$/.test(yearText) || year < 1900 || year > thisYear) {
+    throw new ValidationError("type your year of call as four digits");
+  }
+  if (callDate && (!/^\d{4}-\d{2}-\d{2}$/.test(callDate) || callDate.slice(0, 4) !== yearText)) {
+    throw new ValidationError("the call date must fall in your year of call");
+  }
+  const email2 = (form.get("email") ?? "").trim();
+  const phone = (form.get("phone") ?? "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email2) || email2.length > MAX_EMAIL) {
+    throw new ValidationError("type the email address Probanda can contact you at");
+  }
+  if (phone && (!/^[0-9+().\- ]+$/.test(phone) || phone.length > MAX_PHONE)) {
+    throw new ValidationError(`type your phone number in digits, spaces and + ( ) - only, up to ${MAX_PHONE} characters`);
+  }
+  return {
+    full_name: fullName,
+    jurisdiction: "BC",
+    year_of_call: year,
+    ...callDate ? { call_date: callDate } : {},
+    firm_name: firmName,
+    email: email2,
+    ...phone ? { phone } : {},
+    token_hash: tokenHash
+  };
+}
+function listen2() {
+  const server = createServer2((req, res) => {
+    handle2(req, res).catch(() => {
+      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      else res.destroy();
+    });
+  });
+  server.on("connection", (socket) => socket.unref());
+  return new Promise((resolve, reject) => {
+    server.once("error", (err) => {
+      listening2 = void 0;
+      reject(err);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      server.unref();
+      resolve(server.address().port);
+    });
+  });
+}
+async function handle2(req, res) {
+  const m = /^\/key-request\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const current = pending2;
+  if (!m || !current || m[1] !== current.link) {
+    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
+  }
+  if (req.method === "GET") return page(res, 200, TITLE2, FORM2);
+  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  const token = randomBytes2(24).toString("hex");
+  let reply;
+  try {
+    const body = requestBody(new URLSearchParams(await readBody(req)), createHash2("sha256").update(token).digest("hex"));
+    reply = await post(current.client, "key-request-submit", body, "save the request");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return page(res, 200, TITLE2, `<p class="error">Not sent: ${escape2(message)}</p>${FORM2}`);
+  }
+  if (pending2 === current) pending2 = void 0;
+  if (typeof reply.request_id !== "string") {
+    return page(res, 200, TITLE2, `<p class="error">Probanda's Cloud did not confirm the request, so it may not have been saved. Return to Claude and ask for a new link.</p>`);
+  }
+  sent = { request_id: reply.request_id, request_token: token, requested_at: (/* @__PURE__ */ new Date()).toISOString() };
+  let kept = "";
+  try {
+    await writeProtectedJson(requestPath(), sent);
+  } catch (err) {
+    kept = `<p class="error">This computer could not save the request's reference, so its status can be checked only until Claude restarts: ${escape2(err instanceof Error ? err.message : String(err))}</p>`;
+  }
+  page(
+    res,
+    200,
+    "Request sent",
+    "<p>Your request is with Probanda. Probanda checks your details against the Law Society of British Columbia's directory and, once it has verified you, sends your key to the email address your firm's website or the directory lists for you.</p>" + kept + "<p>You can close this tab and return to Claude. Ask Claude at any time where your request stands. When your key arrives, ask Claude to set Probanda's key, and paste it on the page Claude gives you, never in chat.</p>"
+  );
+}
+var FORM2 = `<p>Probanda's key lets this computer use Probanda's shared services: the legal commons, the Suggestion Box and the saving of practice records. Probanda gives one to each practising lawyer it has verified.</p><form method="post"><label>Full name, as the Law Society's directory shows it<br><input name="full_name" maxlength="200" autocomplete="name" required autofocus></label><p>Jurisdiction: British Columbia</p><label>Year of call<br><input name="year_of_call" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><label>Call date (optional)<br><input type="date" name="call_date"></label><label>Firm name, as the directory shows it under "Primary location"<br><input name="firm_name" maxlength="200" autocomplete="organization" required></label><label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label><button type="submit">Send request</button></form><p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia's public directory that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>`;
+
 // src/dispatch.ts
 var definitions;
 async function dispatchTool(context, name, rawArgs) {
@@ -17137,6 +17325,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (isSuggestionBoxToolName(name)) {
     return callSuggestionBoxTool(context.legalCommons, name, args);
+  }
+  if (isKeyRequestToolName(name)) {
+    return callKeyRequestTool(context.legalCommons, name);
   }
   throw new ValidationError(`Unknown tool "${name}"`);
 }
@@ -17255,7 +17446,7 @@ var LegalCommonsClient = class {
   async request(method, path, body, extraHeaders) {
     if (!this.config.staticKey) {
       throw new ValidationError(
-        (this.config.notConfiguredHint ?? "legal-commons is not configured: call legal_commons__configure_credential once with the Supabase service_role / sb_secret_ key (Cowork does not inject LEGAL_COMMONS_SUPABASE_KEY from userConfig into this process \u2014 see plugins/legal-commons/docs/ADR-002-key-delivery.md), or set LEGAL_COMMONS_SUPABASE_KEY directly in the runtime environment (Claude Code CLI / dev).") + // A stored-but-unreadable credential is a different problem with a
+        (this.config.notConfiguredHint ?? "legal-commons is not configured: this computer has no Probanda key. If the practitioner has one, call legal_commons__configure_credential and have them paste it on the page it serves; if not, call key_request__submit so they can ask Probanda for one. A developer may instead set LEGAL_COMMONS_SUPABASE_KEY in the runtime environment (Claude Code CLI).") + // A stored-but-unreadable credential is a different problem with a
         // different fix than never having configured one; say which it is.
         (this.config.credentialError ? ` A stored credential was found but could not be read (${this.config.credentialError}) \u2014 reconfiguring will replace it.` : "")
       );

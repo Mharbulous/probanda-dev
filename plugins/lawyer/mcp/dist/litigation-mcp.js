@@ -1,4 +1,4 @@
-// build-stamp: ab65f6e90402
+// build-stamp: ba2cf46616df
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75040,7 +75040,7 @@ async function loadCloudKey(env = process.env) {
   return {
     configured: false,
     supabaseUrl,
-    reason: `${reason}; set it with the commons server's configure_credential tool`
+    reason: `${reason}; set it with the commons server's configure_credential tool, or ask Probanda for a key with its key_request__submit tool`
   };
 }
 
@@ -85494,7 +85494,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "ab65f6e90402";
+var BUILD_STAMP = false ? null : "ba2cf46616df";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
