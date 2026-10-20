@@ -147,6 +147,17 @@ class ExemptTests(HookTestCase):
             with self.subTest(command=command):
                 self.assertDenied(self.call("Bash", command))
 
+    def test_rm_subcommand_after_a_quoted_word_is_not_a_shell_rm(self):
+        # A closing quote is not a command start: `git -C "<repo>" rm` is git's rm.
+        r = self.repo.as_posix()
+        for command in ('git -C "' + r + '" rm "' + r + '/x.md"', "git -C '" + r + "' rm x.md"):
+            with self.subTest(command=command):
+                self.assertAllowedSilently(self.call("Bash", command, cwd=self.repo))
+        for command in ('"rm" ../matter/x.md', "'rm' ../matter/x.md", '""rm ../matter/x.md',
+                        'git -C "' + self.m + '" rm "' + self.m + '/0. DRAFT/x.md"'):
+            with self.subTest(command=command):
+                self.assertDenied(self.call("Bash", command, cwd=self.repo))
+
     def test_empty_rmdir_is_allowed_unchanged(self):
         self.assertAllowedSilently(self.call("Bash", 'rmdir "' + self.m + '/0. DRAFT/empty"'))
 

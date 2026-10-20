@@ -800,7 +800,10 @@ def rm_targets(command, cwd):
     targets = []
     for text, bare in shell_segments(command):
         spelled = spelled_command(text)
-        if RM_RE.search(bare) or spelled in REWRITE_COMMANDS:
+        # Quote marks dropped first: a closing quote is no command start, so
+        # `git -C "<repo>" rm x` is git's rm. A quoted rm the shell runs
+        # (`"rm" x`, `""rm x`) is still caught, by `spelled`.
+        if RM_RE.search(re.sub(r"[\"']", "", bare)) or spelled in REWRITE_COMMANDS:
             words = split_simple_command(REDIRECT_RE.sub("", text).strip())
             if not words or words[0][0] not in REWRITE_COMMANDS or cwd is None:
                 return None
