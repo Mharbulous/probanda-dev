@@ -10,10 +10,10 @@ import type { LegalCommonsClient } from "../legal-commons/client.js";
 
 // Runtime logic for the key_request namespace: a practitioner with no key asks
 // Probanda for one. key_request__submit serves a page on this computer where
-// the practitioner types what verifying a practising lawyer requires (COMMANDMENTS.md,
-// Commandment 3; docs/Plans/2026-10-18_lawyer-only-access.md section 2.1) and an
-// email and optional phone Brahm uses only to contact them, so those details
-// never pass through the chat. The key itself is never sent to the typed email. The page sends them, and nothing
+// the practitioner types what verifying a practising lawyer requires
+// (docs/Plans/2026-10-18_lawyer-only-access.md section 2.1) and an email and
+// optional phone Brahm uses only to contact them, all Account Information
+// (COMMANDMENTS.md, Commandment 2), so those details never pass through the chat. The key itself is never sent to the typed email. The page sends them, and nothing
 // else, to the key-request-submit Edge Function with no key, because the
 // practitioner has none yet. Brahm lists the queue (/view-key-requests in the
 // developer plugin), mints the key and delivers it out of band, and the

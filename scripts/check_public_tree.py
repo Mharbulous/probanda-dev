@@ -7,7 +7,7 @@ Usage:
                                                would leave in public/ (hook JSON on stdin)
 
 public/ is the only source of the public repository, so it holds no Trade
-Secret and no User Data (COMMANDMENTS.md). Each file is checked two ways:
+Secret and no Client Information (COMMANDMENTS.md). Each file is checked two ways:
 
   - check_publishable.file_problems: schema DDL, forbidden file types, paths
     from a maintainer's machine, and the pinned names.
@@ -296,7 +296,7 @@ def plugin_problems(repo, files):
 
 def problems_in(repo, files, hook=False):
     """Every problem in files. At write time (hook) only what could be a Trade Secret or
-    User Data counts: the format checks wait for the full-tree check."""
+    Client Information counts: the format checks wait for the full-tree check."""
     found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
                           load_script("check_plugin").matter_codes, formats=not hook)
     found += plugin_problems(repo, files)

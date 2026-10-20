@@ -7,7 +7,7 @@
 //
 // The suggestion log keeps the IDs of suggestions this device posted, and the last status shown
 // for each, in `suggestions.local.json` beside probanda.json. It stays on the device and never goes
-// under 0. CASE DATA: a suggestion ID is Cross Data, which only Probanda and this user may see.
+// under 0. CASE DATA: a suggestion ID is Account Information, which only Probanda and this user may see.
 //
 // Every write is under a lock file beside its target and by temp file plus rename.
 

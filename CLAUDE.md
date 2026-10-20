@@ -19,7 +19,7 @@ The version rule:
 - `Mharbulous/probanda-dev` is this repository. It is private, and all development happens here. It stays private: its history holds schema files. It is where new and refactored skills, agents and tools are tried out. Its seven plugins install only on the maintainer's own machines, so a change here reaches no user, and a skill may ship in a plugin here while still experimental, including a maintainer-only one. Users get a change only after it moves into `public/` and is approved and published. `developer` is never public: `python scripts/check_public_tree.py` fails on any `public/plugins/` folder or public marketplace entry outside the public plugins, and on any skill or agent that `source/assignment.json` gives `developer`.
 - `Probanda-app/Legal` is the public repository that users install from. claude.ai labels each plugin "from <repo name>", so the repo name is what users see.
 
-`public/` is the Public Folder: the only source of the public repository, so it never holds a Trade Secret or User Data. A skill lives under `public/plugins/<plugin>/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. Each publication adds a top entry to `public/CHANGELOG.md`, a `## ` heading of 10 to 72 characters followed by `- ` bullets naming what it improves or adds. It is approved with the files, and the workflow uses it as the public commit message. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
+`public/` is the Public Folder: the only source of the public repository, so it holds only Shared Information (Commandment 2). A skill lives under `public/plugins/<plugin>/skills/` or under `.claude/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. Each publication adds a top entry to `public/CHANGELOG.md`, a `## ` heading of 10 to 72 characters followed by `- ` bullets naming what it improves or adds. It is approved with the files, and the workflow uses it as the public commit message. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
 
 ## The move from CoClerk
 
@@ -48,7 +48,7 @@ Cowork runs plugins in a sandboxed Linux VM.
 
 ## Never commit
 
-- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in the built folders under `plugins/`, so the publish-readiness check fails by design until each legacy store is converted and leaves the list in Exception 2 of COMMANDMENTS.md. No change may add any.
+- SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in the built folders under `plugins/`, so the publish-readiness check fails by design until each legacy store is converted and leaves the list in the Exception of COMMANDMENTS.md. No change may add any.
 - Databases.
 - Built `.plugin` archives.
 - Handovers or E2E reports.

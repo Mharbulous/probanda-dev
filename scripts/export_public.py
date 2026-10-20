@@ -11,7 +11,7 @@ The export is one-way: this repo is developed in, and the public repo is only
 ever written from here. What ships is public/, file for file, and nothing
 else in this repo. Before anything is written:
 
-  - every file passes check_public_tree (no Trade Secret, no User Data), and
+  - every file passes check_public_tree (no Trade Secret, no Client Information), and
   - every file matches public-approved.json, the list a person approved with
     approve_public.py. A file that is new, changed or removed since stops it.
 

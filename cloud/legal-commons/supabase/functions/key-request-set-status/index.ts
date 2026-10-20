@@ -2,7 +2,7 @@
 // (access.key_request), once, after Brahm has minted and delivered the key or
 // decided not to. Project secret only. The details the practitioner typed are
 // cleared in the same statement: they were held only to verify and contact the
-// person (COMMANDMENTS.md, Commandment 3), and that is done.
+// person (Account Information, COMMANDMENTS.md, Commandment 2), and that is done.
 //
 // Request:  { "request_id": uuid, "status": "issued" | "declined" }
 // Reply:    { "saved": true } or 409 when the request is not pending

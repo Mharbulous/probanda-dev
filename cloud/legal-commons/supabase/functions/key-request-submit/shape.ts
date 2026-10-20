@@ -1,8 +1,9 @@
 // The shape of a request for Probanda's key, for key-request-submit. It imports
 // nothing, so it runs under Node as well as Deno. It keeps only what verifying
-// that a person is a practising lawyer requires (COMMANDMENTS.md, Commandment 3;
-// docs/Plans/2026-10-18_lawyer-only-access.md section 2.1), plus an email and an
-// optional phone Brahm uses only to contact the applicant (never to deliver the
+// that a person is a practising lawyer requires
+// (docs/Plans/2026-10-18_lawyer-only-access.md section 2.1), plus an email and an
+// optional phone Brahm uses only to contact the applicant, all Account
+// Information (COMMANDMENTS.md, Commandment 2) (never to deliver the
 // key, which goes to the publicly listed address), and returns the row to save,
 // or a guiding question about the request when it would not be saved
 // (Commandment 6).

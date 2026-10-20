@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-check_public_tree: each kind of Trade Secret or User Data planted in public/ is reported.
+check_public_tree: each kind of Trade Secret or Client Information planted in public/ is reported.
 
 Run: python -m pytest -q scripts/tests/test_check_public_tree.py
 """

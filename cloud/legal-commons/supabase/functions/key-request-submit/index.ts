@@ -11,9 +11,9 @@
 //             "phone"?: text, "token_hash": hex SHA-256 }
 // Reply:    { "request_id": uuid }
 //
-// It holds only what verifying that a person is a practising lawyer requires
-// (COMMANDMENTS.md, Commandment 3), plus the email and phone Brahm uses to
-// contact the applicant (shape.ts). At most MAX_PER_DAY requests are
+// It holds only what verifying that a person is a practising lawyer requires,
+// plus the email and phone Brahm uses to contact the applicant: Account
+// Information (COMMANDMENTS.md, Commandment 2; shape.ts). At most MAX_PER_DAY requests are
 // queued in a day, so a flood cannot bury the queue. Nothing here logs a
 // request body; a fault logs its SQLSTATE only.
 

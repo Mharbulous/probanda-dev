@@ -128,7 +128,7 @@ decision.
 `reversed`, `varied`, `distinguished`, `overruled`, `superseded_by_statute`,
 `abrogated` (ADR 0008).
 
-**Local matter-data store, until matter-data leaves Exception 2** (ADR 0006): its
+**Local matter-data store, until matter-data leaves the commandments' Exception** (ADR 0006): its
 CHECKs hold only part of the vocabulary.
 - A new link's `relationship` is written only as `establishes`, `applies` or
   `distinguishes`. An extracted link whose correct value is any other
