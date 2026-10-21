@@ -6,7 +6,8 @@
 // stamps `retired_on` inside it, never a delete (Commandment 7).
 //
 // The suggestion log keeps the IDs of suggestions this device posted, and the last status shown
-// for each, in `suggestions.local.json` beside probanda.json. It stays on the device and never goes
+// for each, in `suggestions.local.json` beside probanda.json. It also holds suggestions drafted
+// while the device had no Probanda key, until they are posted or the person drops them. It stays on the device and never goes
 // under 0. CASE DATA: a suggestion ID is Account Information, which only Probanda and this user may see.
 //
 // Every write is under a lock file beside its target and by temp file plus rename.
@@ -41,6 +42,13 @@ export interface SuggestionLogEntry {
   posted_on: string;
   last_status: string;
   last_shown_status: string | null;
+}
+
+/** A suggestion drafted while this device had no Probanda key, kept to be shown again and posted once it has one. */
+export interface HeldSuggestion {
+  held_id: string;
+  held_on: string;
+  draft: Record<string, unknown>;
 }
 
 /** Test seam: the install root whose plugin.json gives `plugin_version`. */
@@ -165,44 +173,80 @@ export function suggestionLogPath(env: NodeJS.ProcessEnv): string {
   return join(dirname(configPath(env)), "suggestions.local.json");
 }
 
-function readLog(file: string): SuggestionLogEntry[] {
-  if (!existsSync(file)) return [];
-  const suggestions = readJson(file).suggestions;
+interface SuggestionLog {
+  suggestions: SuggestionLogEntry[];
+  held: HeldSuggestion[];
+}
+
+function readLog(file: string): SuggestionLog {
+  if (!existsSync(file)) return { suggestions: [], held: [] };
+  const { suggestions, held = [] } = readJson(file);
   if (!Array.isArray(suggestions)) throw new DataServerError(`${file} has no "suggestions" list`, "invalid_file");
-  return suggestions as SuggestionLogEntry[];
+  if (!Array.isArray(held)) throw new DataServerError(`${file} has a "held" entry that is not a list`, "invalid_file");
+  return { suggestions: suggestions as SuggestionLogEntry[], held: held as HeldSuggestion[] };
+}
+
+function writeLog(file: string, log: SuggestionLog): void {
+  writeTextAtomic(file, `${JSON.stringify(log, null, 2)}\n`);
 }
 
 export function suggestionLogRead(env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
-  return { suggestions: readLog(suggestionLogPath(env)) };
+  return { ...readLog(suggestionLogPath(env)) };
 }
 
 export async function suggestionLogWrite(args: Args, env: NodeJS.ProcessEnv = process.env): Promise<Record<string, unknown>> {
   const file = suggestionLogPath(env);
-  const suggestionId = text(args.suggestion_id, "suggestion_id");
   if (args.op === "add") {
+    const suggestionId = text(args.suggestion_id, "suggestion_id");
     const title = text(args.title, "title");
     return withFileLock(file, () => {
-      const suggestions = readLog(file);
-      if (suggestions.some((entry) => entry.suggestion_id === suggestionId)) return { status: "exists", suggestion_id: suggestionId };
-      suggestions.push({ suggestion_id: suggestionId, title, posted_on: today(), last_status: "new", last_shown_status: null });
-      writeTextAtomic(file, `${JSON.stringify({ suggestions }, null, 2)}\n`);
+      const log = readLog(file);
+      if (log.suggestions.some((entry) => entry.suggestion_id === suggestionId)) return { status: "exists", suggestion_id: suggestionId };
+      log.suggestions.push({ suggestion_id: suggestionId, title, posted_on: today(), last_status: "new", last_shown_status: null });
+      writeLog(file, log);
       return { status: "added", suggestion_id: suggestionId };
     });
   }
   if (args.op === "seen") {
+    const suggestionId = text(args.suggestion_id, "suggestion_id");
     const status = text(args.status, "status");
     if (!(SUGGESTION_STATUSES as readonly string[]).includes(status)) {
       throw new ValidationError(`status must be one of ${SUGGESTION_STATUSES.map((s) => `"${s}"`).join(", ")}`);
     }
     return withFileLock(file, () => {
-      const suggestions = readLog(file);
-      const entry = suggestions.find((candidate) => candidate.suggestion_id === suggestionId);
+      const log = readLog(file);
+      const entry = log.suggestions.find((candidate) => candidate.suggestion_id === suggestionId);
       if (!entry) throw new DataServerError(`no suggestion ${suggestionId} in this device's log`, "not_found");
       entry.last_status = status;
       entry.last_shown_status = status;
-      writeTextAtomic(file, `${JSON.stringify({ suggestions }, null, 2)}\n`);
+      writeLog(file, log);
       return { status: "updated", suggestion_id: suggestionId, last_shown_status: status };
     });
   }
-  throw new ValidationError(`op must be "add" or "seen"`);
+  if (args.op === "hold") {
+    const draft = args.draft as Record<string, unknown> | undefined;
+    if (typeof draft !== "object" || draft === null || Array.isArray(draft)) {
+      throw new ValidationError("draft must be the suggestion as drafted: an object with title and body");
+    }
+    text(draft.title, "draft.title");
+    text(draft.body, "draft.body");
+    const entry: HeldSuggestion = { held_id: randomUUID(), held_on: today(), draft };
+    return withFileLock(file, () => {
+      const log = readLog(file);
+      log.held.push(entry);
+      writeLog(file, log);
+      return { status: "held", held_id: entry.held_id };
+    });
+  }
+  if (args.op === "release") {
+    const heldId = text(args.held_id, "held_id");
+    return withFileLock(file, () => {
+      const log = readLog(file);
+      const held = log.held.filter((entry) => entry.held_id !== heldId);
+      if (held.length === log.held.length) throw new DataServerError(`no held suggestion ${heldId} in this device's log`, "not_found");
+      writeLog(file, { ...log, held });
+      return { status: "released", held_id: heldId };
+    });
+  }
+  throw new ValidationError(`op must be "add", "seen", "hold" or "release"`);
 }
