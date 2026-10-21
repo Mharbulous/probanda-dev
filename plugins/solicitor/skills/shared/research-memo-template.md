@@ -69,6 +69,14 @@ closes with the authorities relied on:
 ## Conclusion
 ```
 
+In every format, each proposition of law is one sentence, then its source's own words:
+
+```
+<the proposition, one sentence> (<citation>, at <pinpoint>)
+
+> <the verbatim passage at that pinpoint>
+```
+
 When the question splits into issues, write one sequence under each issue's own heading,
 `## Issue <n>: <the issue in a few words>`, with the format's sections one level down (`###`).
 `## Question presented` and `## Authorities` stay at the top level, once each.

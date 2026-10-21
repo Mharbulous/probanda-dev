@@ -33,8 +33,8 @@ file whole with the `Read` tool, which numbers its lines.
    requires, permits or provides: a test's elements, a statute's effect, what courts have held,
    whether conduct is actionable. That is `shared/legal-research.md`'s definition, applied as
    written. Not swept: procedural mechanics and arithmetic, a quoted authority's own words
-   identified as such, a party's own position attributed to them, and a hunch or
-   recommendation already labelled as needing research (that file's items 1 to 4).
+   identified as such, a party's own position attributed to them (that file's items 1 to 3), and a
+   sentence framed explicitly as a hunch.
 2. **Keep only the unsupported ones.** Drop a sentence that carries a citation to an authority,
    with a pinpoint, in the sentence itself or in a footnote it calls. Drop a sentence that links
    or names a saved research answer file. Every other sentence from step 1 stays. Whether a

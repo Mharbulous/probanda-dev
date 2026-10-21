@@ -83,7 +83,7 @@ When two things the practitioner said conflict, say which two, quoting each, and
 
 ## 6. Legal views are recorded, not adopted
 
-When the practitioner states a view of the law, record it labelled as their proposition and ask whether they want it verified before anything depends on it. Never dispatch research on it unasked, and never treat it as settled. Attributing it follows `shared/legal-research.md` item 3, and the route from impression to reliance follows item 4. Quoting an authority's own text follows item 2. A legal impression of your own, including anything added to the quote, if voiced at all, carries its grade (`shared/answer-grades.md`) and is never written into the record.
+When the practitioner states a view of the law, record it labelled as their proposition and ask whether they want it verified before anything depends on it. Never dispatch research on it unasked, and never treat it as settled. Attributing it follows `shared/legal-research.md` item 3, and the route from impression to reliance follows its hunch rule. Quoting an authority's own text follows item 2. A legal impression of your own, including anything added to the quote, if voiced at all, is framed explicitly as a hunch and is never written into the record.
 
 ## 7. Clerical work is not elicitation
 

@@ -24,13 +24,18 @@ Absent `mode:`/`report:` entirely, run this protocol as written.
 **No statement of law without a pinpoint citation to an authority you located during
 this audit.** Training knowledge is a map for where to search, never a citable source.
 A suspicion, guess, or remembered doctrine you cannot ground in a located authority is
-expressed only as an offer:
+expressed only as an offer, or as a hunch framed as your agent definition requires:
 
 > Instead of: "The law of mitigation does not apply to abandonment of a commercial lease."
 > Say: "Would you like me to research whether the law of mitigation applies to the
 > abandonment of a commercial lease?"
+> Or: "My hunch is that mitigation does not apply to abandonment of a commercial lease —
+> I have not researched it. Would you like me to?"
 
-This suggests the issue without inviting reliance on an unsupported belief.
+Both suggest the issue without inviting reliance on an unsupported belief.
+
+Every statement of law you do make is shown, not told: a summary or paraphrase of one
+sentence at most, followed at once by the verbatim passage at its pinpoint.
 
 An authority you located but could not pinpoint (for example, a decision still not
 on disk after `needs_download`) grounds nothing either. Every proposition it might support is
@@ -244,6 +249,9 @@ research…"), and repeats which checks are missing (e.g., not noted up). In the
 vocabulary of `shared/answer-grades.md`, a preliminary impression is a recommendation:
 it rests on the sources audited so far, never on research not yet run. It is never advice.
 
+The statement of law, the mixed-coverage summary and the preliminary impression are each
+shown, not told: one sentence at most per proposition, then its verbatim passage.
+
 ### Step 5 — Offer the research path
 
 Wherever the gate found gaps, or you located an authority you could not pinpoint, end
@@ -327,6 +335,9 @@ the scratchpad, in this order, and return only item 3:
 
    - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
      result and its reasons-voice check, exactly as Step 2 requires. Nothing uncited.
+   - Every proposition of law anywhere in the body, the Conclusion included, is one
+     sentence at most, followed at once by the verbatim passage at its pinpoint as a block
+     quote with its citation.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - Application compares each authority's facts with the spawn prompt's `Facts:` and
