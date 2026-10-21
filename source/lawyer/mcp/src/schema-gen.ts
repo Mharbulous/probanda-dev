@@ -3570,7 +3570,8 @@ export function cloudKeyToolDefinitions(): ToolDefinition[] {
         "The key is typed on that page, never in chat and never as a tool argument. " +
         "Send the link, and when the practitioner says it is done, call practice_data__config_status, whose cloud_credential then reads present. " +
         "A practitioner who has no key asks Probanda for one with key_request__submit. " +
-        "The page checks the key against Probanda's Cloud before saving it; it is saved on this computer, encrypted at rest, and never logged or echoed back.",
+        "The page checks the key against Probanda's Cloud before saving it; it is saved on this computer, encrypted at rest, and never logged or echoed back. " +
+        "That check confirms only that the key works, not who it was issued to or whether they were verified.",
       inputSchema: objectSchema([], []),
       annotations: { destructiveHint: true },
     },
@@ -3588,7 +3589,9 @@ export function cloudKeyToolDefinitions(): ToolDefinition[] {
       name: "key_request__status",
       description:
         "Report where this computer's request for Probanda's key stands: {requested, request_id, status, requested_at, decided_at, next}. " +
-        "status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail.",
+        "status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail. " +
+        "The only answer to whether Probanda verified the practitioner: issued with decided_at covers the request sent from this computer. " +
+        "Probanda's Cloud holds no verification record for a key itself, so a present key is not proof of verification.",
       inputSchema: objectSchema([], []),
       annotations: { readOnlyHint: true },
     },

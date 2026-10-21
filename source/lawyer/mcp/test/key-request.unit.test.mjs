@@ -78,6 +78,16 @@ test("status before any request says none was sent and calls nothing", async (t)
   assert.equal(calls.length, 0);
 });
 
+test("status with a key but no request says no verification record is linked to it", async (t) => {
+  withKey(t);
+  const calls = fakeCloud(t, () => [500, {}]);
+  const result = await call("key_request__status");
+  assert.equal(result.requested, false);
+  assert.match(result.next, /no verification record/);
+  assert.doesNotMatch(result.next, /key_request__submit/);
+  assert.equal(calls.length, 0);
+});
+
 test("submit refuses details as tool arguments", async () => {
   await assert.rejects(() => call("key_request__submit", { full_name: "Jane Example" }), /unknown field/);
 });

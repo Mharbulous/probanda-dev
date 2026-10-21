@@ -89,6 +89,14 @@ async function submit(env: NodeJS.ProcessEnv): Promise<unknown> {
 async function status(env: NodeJS.ProcessEnv): Promise<unknown> {
   const saved = sent ?? (await readProtectedJson(requestPath(env), null) as SavedRequest | null);
   if (!saved?.request_token) {
+    if ((await loadCloudKey(env)).configured) {
+      return {
+        requested: false,
+        next:
+          "This computer holds Probanda's key, but no request was sent from it, so Probanda's Cloud holds no verification record " +
+          "linked to this key. Tell the practitioner so, and never say they are verified.",
+      };
+    }
     return {
       requested: false,
       next: "No request for Probanda's key was sent from this computer. Call key_request__submit to send one.",
@@ -109,7 +117,8 @@ async function status(env: NodeJS.ProcessEnv): Promise<unknown> {
 const NEXT: Record<string, string> = {
   pending: "Probanda has not decided this request yet. Check again later.",
   issued:
-    "Probanda has issued this computer's key and sends it to the practitioner directly. When they have it, call " +
+    "Probanda checked the details sent from this computer against the Law Society of British Columbia's directory and issued a key on decided_at. " +
+    "Probanda sends the key to the practitioner directly. When they have it, call " +
     "cloud_key__configure_credential and have them paste it on the page it serves, never in chat.",
   declined:
     "Probanda could not verify the details sent. The practitioner can check them against their own entry in the " +

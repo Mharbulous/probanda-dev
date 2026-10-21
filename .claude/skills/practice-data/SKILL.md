@@ -218,6 +218,8 @@ Probanda's key is the one credential for every access to Probanda's Cloud: pract
 
 A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send the practitioner the link it returns. On that page they type only what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name) and an email and optional phone for contact, never in chat. Probanda verifies them and sends the key to the email address their firm's website or the directory lists for them. Call `key_request__status` to report where the request stands. When it reports `issued`, call `cloud_key__configure_credential` so they can paste the key they received.
 
+A practitioner who asks whether Probanda has verified them as a lawyer, or how and when, gets the answer from `key_request__status` alone. Probanda's Cloud holds no verification record for a key itself, so a present key, or a key the page accepted, proves nothing about verification. If the status is `issued`, say that Probanda checked the details sent from this computer against the Law Society of British Columbia's directory and issued a key on `decided_at`. If `requested` is false and `cloud_credential` is present, say that there is no verification record linked to this computer's key. Never call them verified from the key's presence, never repeat the details they typed, and never offer `key_request__submit` while a key is present, because it refuses.
+
 If `key_request__submit` or `cloud_key__configure_credential` is not in your tool list, the plugin was updated after this session's tools loaded. Tell the practitioner to fully restart the app (quit it, not just close the window), and nothing else.
 
 ### Practice quirks
