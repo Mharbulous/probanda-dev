@@ -132,7 +132,7 @@ export async function render_practice_board(store: PracticeStore): Promise<Recor
   const data = await buildPracticeBoardData(store, new Date());
   const { panels } = data;
 
-  const file = join(dirname(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
+  const file = join(dirname(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
   if (existsSync(file) && !readFileSync(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
   }

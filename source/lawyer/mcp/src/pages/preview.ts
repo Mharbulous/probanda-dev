@@ -114,7 +114,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html = renderPracticeBoardHtml(await buildPracticeBoardData(store, new Date()), composed);
-    return { path: writePreview(dirname(resolvePracticeDbPath()), stem(PRACTICE_BOARD_FILE), html, false) };
+    return { path: writePreview(dirname(resolvePracticeDbPath(store.env)), stem(PRACTICE_BOARD_FILE), html, false) };
   }
 
   if (args.matter_root === undefined) throw new ValidationError(`real data for the ${page} page needs matter_root`);

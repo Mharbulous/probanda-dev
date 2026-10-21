@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 
 import { writePartiesOfRecord } from "./helpers/matter-data-fixture.mjs";
@@ -18,6 +18,7 @@ const reads = await import("../build/tools/practice/reads.js");
 const writes = await import("../build/tools/practice/writes.js");
 const contacts = await import("../build/tools/practice/contacts.js");
 const { render_practice_board } = await import("../build/tools/practice/practice-board.js");
+const { pagesPreview } = await import("../build/pages/preview.js");
 
 async function setup(t, label, env = {}) {
   const dir = mkdtempSync(join(tmpdir(), `coclerk-contacts-${label}-`));
@@ -243,12 +244,13 @@ test("the cloud's refusal of a contact write comes back as its question, with no
 });
 
 test("an old copy's reads are the same with contacts, affiliations and matter roles in the store", async (t) => {
-  const { store } = await setup(t, "old-copy");
+  const { store, dir } = await setup(t, "old-copy");
   await matter(store, "L112");
   await writes.insert_time_entry(store, { matt_num: "L112", entry_date: "2026-10-01", hours: 1.5, description: "Draft" });
   await writes.upsert_task(store, { matt_num: "L112", task_type: "client", description: "Call client", deadline_date: "2026-10-20" });
   const readAll = async () => {
     const board = await render_practice_board(store);
+    assert.equal(dirname(board.work_board_path), dir, "the Work Board goes beside the store's own practice.db (#124)");
     delete board.work_board_path;
     return {
       lookup: (await reads.matter_lookup(store, { matt_num: "L112" })).rows.map(({ updated_at, ...row }) => row),
@@ -257,6 +259,8 @@ test("an old copy's reads are the same with contacts, affiliations and matter ro
     };
   };
   const before = await readAll();
+  const preview = await pagesPreview({ page: "Work Board", data: "real" }, store);
+  assert.equal(dirname(preview.path), dir, "the real-data Work Board preview goes beside the store's own practice.db (#124)");
 
   const { contact_id } = await person(store, "Client Person");
   const firm = await contacts.upsert_contact(store, { entity: "organization", name: "Client Co" });
