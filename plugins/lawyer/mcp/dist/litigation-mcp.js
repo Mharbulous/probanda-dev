@@ -1,4 +1,4 @@
-// build-stamp: ba2cf46616df
+// build-stamp: 4c1a91703a3c
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -2088,9 +2088,9 @@ var require_json_schema_traverse = __commonJS({
       cb = opts.cb || cb;
       var pre = typeof cb == "function" ? cb : cb.pre || function() {
       };
-      var post = cb.post || function() {
+      var post2 = cb.post || function() {
       };
-      _traverse(opts, pre, post, schema, "", schema);
+      _traverse(opts, pre, post2, schema, "", schema);
     };
     traverse.keywords = {
       additionalItems: true,
@@ -2136,7 +2136,7 @@ var require_json_schema_traverse = __commonJS({
       maxProperties: true,
       minProperties: true
     };
-    function _traverse(opts, pre, post, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
+    function _traverse(opts, pre, post2, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
       if (schema && typeof schema == "object" && !Array.isArray(schema)) {
         pre(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
         for (var key in schema) {
@@ -2144,18 +2144,18 @@ var require_json_schema_traverse = __commonJS({
           if (Array.isArray(sch)) {
             if (key in traverse.arrayKeywords) {
               for (var i3 = 0; i3 < sch.length; i3++)
-                _traverse(opts, pre, post, sch[i3], jsonPtr + "/" + key + "/" + i3, rootSchema, jsonPtr, key, schema, i3);
+                _traverse(opts, pre, post2, sch[i3], jsonPtr + "/" + key + "/" + i3, rootSchema, jsonPtr, key, schema, i3);
             }
           } else if (key in traverse.propsKeywords) {
             if (sch && typeof sch == "object") {
               for (var prop in sch)
-                _traverse(opts, pre, post, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
+                _traverse(opts, pre, post2, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
             }
           } else if (key in traverse.keywords || opts.allKeys && !(key in traverse.skipKeywords)) {
-            _traverse(opts, pre, post, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
+            _traverse(opts, pre, post2, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
           }
         }
-        post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
+        post2(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       }
     }
     function escapeJsonPtr(str) {
@@ -4482,11 +4482,11 @@ var require_core = __commonJS({
     }
     function addRule(keyword, definition, dataType) {
       var _a4;
-      const post = definition === null || definition === void 0 ? void 0 : definition.post;
-      if (dataType && post)
+      const post2 = definition === null || definition === void 0 ? void 0 : definition.post;
+      if (dataType && post2)
         throw new Error('keyword with "post" flag cannot have "type"');
       const { RULES } = this;
-      let ruleGroup = post ? RULES.post : RULES.rules.find(({ type: t3 }) => t3 === dataType);
+      let ruleGroup = post2 ? RULES.post : RULES.rules.find(({ type: t3 }) => t3 === dataType);
       if (!ruleGroup) {
         ruleGroup = { type: dataType, rules: [] };
         RULES.rules.push(ruleGroup);
@@ -73143,8 +73143,8 @@ var UrlElicitationRequiredError = class extends McpError {
 };
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
-function isTerminal(status) {
-  return status === "completed" || status === "failed" || status === "cancelled";
+function isTerminal(status2) {
+  return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
 }
 
 // node_modules/zod-to-json-schema/dist/esm/parsers/string.js
@@ -74061,8 +74061,8 @@ var Protocol = class {
         }
         return task;
       },
-      storeTaskResult: async (taskId, status, result) => {
-        await taskStore.storeTaskResult(taskId, status, result, sessionId);
+      storeTaskResult: async (taskId, status2, result) => {
+        await taskStore.storeTaskResult(taskId, status2, result, sessionId);
         const task = await taskStore.getTask(taskId, sessionId);
         if (task) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -74078,15 +74078,15 @@ var Protocol = class {
       getTaskResult: (taskId) => {
         return taskStore.getTaskResult(taskId, sessionId);
       },
-      updateTaskStatus: async (taskId, status, statusMessage) => {
+      updateTaskStatus: async (taskId, status2, statusMessage) => {
         const task = await taskStore.getTask(taskId, sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, `Task "${taskId}" not found - it may have been cleaned up`);
         }
         if (isTerminal(task.status)) {
-          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
+          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status2}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
         }
-        await taskStore.updateTaskStatus(taskId, status, statusMessage, sessionId);
+        await taskStore.updateTaskStatus(taskId, status2, statusMessage, sessionId);
         const updatedTask = await taskStore.getTask(taskId, sessionId);
         if (updatedTask) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -74962,6 +74962,20 @@ async function readProtectedJson(path, fallback, protect = process.platform === 
     throw error2;
   }
 }
+async function writeProtectedJson(path, value, protect = process.platform === "win32") {
+  await mkdir(dirname(path), { recursive: true });
+  const data = Buffer.from(JSON.stringify(value), "utf8");
+  const stored = protect ? await protectLocalSecret(data) : data;
+  const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
+  await writeFile(tmp, stored);
+  await rename(tmp, path);
+}
+async function protectLocalSecret(data) {
+  if (process.platform !== "win32") {
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
+  }
+  return runDpapi("Protect", data);
+}
 async function unprotectLocalSecret(data) {
   if (process.platform !== "win32") {
     throw new Error("Persistent local secret storage is supported only on Windows in v1");
@@ -75025,11 +75039,14 @@ async function loadCommonsKey(env = process.env) {
     key.credentialError = detail.split("\n")[0].trim();
     process.stderr.write(
       `legal-commons: stored credential at ${credentialPath(env)} could not be read \u2014 ${detail}
-Starting unconfigured; call the commons server's configure_credential tool to replace it.
+Starting unconfigured; call cloud_key__configure_credential to replace it.
 `
     );
   }
   return key;
+}
+async function saveCommonsKey(staticKey, env = process.env) {
+  await writeProtectedJson(credentialPath(env), { staticKey }, true);
 }
 
 // src/cloud-key.ts
@@ -75040,7 +75057,7 @@ async function loadCloudKey(env = process.env) {
   return {
     configured: false,
     supabaseUrl,
-    reason: `${reason}; set it with the commons server's configure_credential tool, or ask Probanda for a key with its key_request__submit tool`
+    reason: `${reason}; set it with cloud_key__configure_credential, or ask Probanda for a key with key_request__submit`
   };
 }
 
@@ -75721,9 +75738,9 @@ var PracticeStore = class {
     for (const { key, value } of dump[ITEM] ?? []) items.set(key, JSON.parse(value));
     const meta2 = {};
     for (const { key, value } of dump[META] ?? []) meta2[key] = JSON.parse(value);
-    const pending = /* @__PURE__ */ new Map();
-    for (const { key, value } of dump[PENDING] ?? []) pending.set(key, JSON.parse(value));
-    return { items, meta: meta2, pending };
+    const pending3 = /* @__PURE__ */ new Map();
+    for (const { key, value } of dump[PENDING] ?? []) pending3.set(key, JSON.parse(value));
+    return { items, meta: meta2, pending: pending3 };
   }
   /** Every item, for the reads. */
   items() {
@@ -75761,16 +75778,16 @@ var PracticeStore = class {
     for (const spec of specs) {
       if (spec.data) local[spec.id] = { kind: spec.kind, data: definedOnly(spec.data), fields: Object.keys(spec.data) };
     }
-    const pending = {
+    const pending3 = {
       queued_at: (/* @__PURE__ */ new Date()).toISOString(),
       write: { tenant: meta2.tenant, write_id: randomUUID(), store: "practice", tool, intent, ops },
       local
     };
-    const writeId = pending.write.write_id;
-    this.kv.apply([...init, { op: "set", namespace: PENDING, key: writeId, value: JSON.stringify(pending) }]);
+    const writeId = pending3.write.write_id;
+    this.kv.apply([...init, { op: "set", namespace: PENDING, key: writeId, value: JSON.stringify(pending3) }]);
     let reply;
     try {
-      reply = await callItems(this.env, "write", pending.write);
+      reply = await callItems(this.env, "write", pending3.write);
       if (reply.saved !== true && reply.saved !== false) throw new CloudUnreachableError("a reply with no saved field");
     } catch (err) {
       this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
@@ -75780,32 +75797,32 @@ var PracticeStore = class {
       this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
       throw new ValidationError(this.fillQuestion(String(reply.question ?? ""), snap.items, local), "refused");
     }
-    return this.applySaved(writeId, pending, reply, snap);
+    return this.applySaved(writeId, pending3, reply, snap);
   }
   /** Replays every pending write with its own write_id, oldest first. A cloud that does not answer leaves them pending. */
   async replayPending() {
     const replayed = [];
     const queue = [...this.snapshot().pending.entries()].sort(([, a3], [, b3]) => a3.queued_at.localeCompare(b3.queued_at));
-    for (const [writeId, pending] of queue) {
-      const reply = await callItems(this.env, "write", pending.write);
+    for (const [writeId, pending3] of queue) {
+      const reply = await callItems(this.env, "write", pending3.write);
       if (reply.saved === false) {
         this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
-        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: false });
+        replayed.push({ write_id: writeId, tool: pending3.write.tool, saved: false });
       } else if (reply.saved === true) {
-        await this.applySaved(writeId, pending, reply, this.snapshot());
-        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: true });
+        await this.applySaved(writeId, pending3, reply, this.snapshot());
+        replayed.push({ write_id: writeId, tool: pending3.write.tool, saved: true });
       } else {
         throw new CloudUnreachableError("a reply with no saved field");
       }
     }
     return replayed;
   }
-  async applySaved(writeId, pending, reply, snap) {
+  async applySaved(writeId, pending3, reply, snap) {
     const results = Array.isArray(reply.ops) && reply.ops.every(isOpResult) ? reply.ops : null;
     if (!results) throw this.notApplied(writeId, "its reply named no op results");
     let sync;
     try {
-      sync = await callItems(this.env, "sync", { tenant: pending.write.tenant, store: "practice", since: Number(snap.meta.sync_seq ?? 0) });
+      sync = await callItems(this.env, "sync", { tenant: pending3.write.tenant, store: "practice", since: Number(snap.meta.sync_seq ?? 0) });
     } catch (err) {
       throw this.notApplied(writeId, err.message);
     }
@@ -75814,7 +75831,7 @@ var PracticeStore = class {
     const changed = /* @__PURE__ */ new Set();
     const base = Date.now();
     results.forEach((result, index) => {
-      const local = pending.local[result.id];
+      const local = pending3.local[result.id];
       if (!result.saved || !local) return;
       const now2 = new Date(base + index).toISOString();
       const current = items.get(result.as);
@@ -77355,7 +77372,7 @@ function fileToolDefinitions() {
     },
     {
       name: "suggestion_log__read",
-      description: 'Read this device\'s log of suggestions it posted to the Probanda team. Returns {suggestions: [{suggestion_id, title, posted_on, last_status, last_shown_status}]}; an empty list when none were posted from this device. `last_status` is the last status known ("new", "approved", "approved in part" or "rejected"), and `last_shown_status` is the last one shown to the person, null until one is shown.',
+      description: 'Read this device\'s log of suggestions it posted to the Probanda team, and of suggestions it holds unposted. Returns {suggestions: [{suggestion_id, title, posted_on, last_status, last_shown_status}], held: [{held_id, held_on, draft}]}; each list is empty when there is nothing in it. `last_status` is the last status known ("new", "approved", "approved in part" or "rejected"), and `last_shown_status` is the last one shown to the person, null until one is shown. A held `draft` is a suggestion drafted while this device had no Probanda key, exactly as it was shown to the person.',
       inputSchema: {
         type: "object",
         properties: {},
@@ -77365,16 +77382,18 @@ function fileToolDefinitions() {
     },
     {
       name: "suggestion_log__write",
-      description: 'Update this device\'s log of posted suggestions. `op: "add"` takes `suggestion_id` and `title` after a suggestion is posted, recorded with status "new" (an id already logged returns `exists`). `op: "seen"` takes `suggestion_id` and `status` ("new", "approved", "approved in part" or "rejected") once that status has been shown to the person, and sets both `last_status` and `last_shown_status` to it. An id not in the log is `not_found`.',
+      description: 'Update this device\'s log of suggestions. `op: "add"` takes `suggestion_id` and `title` after a suggestion is posted, recorded with status "new" (an id already logged returns `exists`). `op: "seen"` takes `suggestion_id` and `status` ("new", "approved", "approved in part" or "rejected") once that status has been shown to the person, and sets both `last_status` and `last_shown_status` to it. `op: "hold"` takes `draft`, the suggestion exactly as shown to the person ({title, body, source, items, skill}), when it cannot be posted because this device has no Probanda key, and returns its `held_id`. Nothing held is ever posted unseen: once the key is set, show the held draft again and post only on the person\'s yes. `op: "release"` takes `held_id` and removes that held draft, after it is posted or when the person drops it. An id not in the log is `not_found`.',
       inputSchema: {
         type: "object",
         properties: {
-          op: { type: "string", enum: ["add", "seen"] },
+          op: { type: "string", enum: ["add", "seen", "hold", "release"] },
           suggestion_id: { type: "string" },
           title: { type: "string" },
-          status: { type: "string", enum: ["new", "approved", "approved in part", "rejected"] }
+          status: { type: "string", enum: ["new", "approved", "approved in part", "rejected"] },
+          draft: { type: "object" },
+          held_id: { type: "string" }
         },
-        required: ["op", "suggestion_id"],
+        required: ["op"],
         additionalProperties: false
       },
       annotations: { destructiveHint: false, openWorldHint: false }
@@ -77636,7 +77655,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_job_board"),
-      description: "Create one Job Board with no Writing on a proceeding: the one door for a board that holds work no Writing carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. `title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one with none keeps its own Job Board, which already holds jobs with no Writing, and the call is refused with no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, a Counsel Brief, a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so each Writing's mockups read stale once. Returns filing_id, the id drafting_forms__render, drafting_forms__board_card and each job's filing_id take for this board, proceeding_id and title.",
+      description: "Create one Job Board with no Writing on a proceeding: the one door for a board that holds work no Writing carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. `title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one with none keeps its own Job Board, which already holds jobs with no Writing, and the call is refused with no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so each Writing's mockups read stale once. Returns filing_id, the id drafting_forms__render, drafting_forms__board_card and each job's filing_id take for this board, proceeding_id and title.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77898,7 +77917,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("render"),
-      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir or presentation_dir, markdown returns only for the documents named in documents; every other document carries markdown_chars, its length, in its place, so to read a document's work markers name its document_type in documents. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. A mockup render of a Writing whose Proposed lane holds a note-up Proposal that no live job holds and the practitioner has not shelved also carries note_up_due, those keys in the lane's order: the session writes them into the Writing's one `Note up all cited authorities` job, or adds them to it (/drafting-data jobs-create.md \xA73k). Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined or none; the statement itself is board_card's goals lane), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), a merged board's page holding every section merged into it (drafting_data__merge_job_boards): `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup, Counsel Brief or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
+      description: "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir or presentation_dir, markdown returns only for the documents named in documents; every other document carries markdown_chars, its length, in its place, so to read a document's work markers name its document_type in documents. Each mockup ends with a Legend section explaining each symbol printed on it, never on the filed face; beside a document's markdown, symbol_notes lists the notes written for the model on those symbols, one string each, when there are any -- they are written to no file. render_mode 'filed' (issue 359) writes nothing to disk and returns each document's markdown with every human-side element stripped (work markers, Held in reserve, source traces, HTML comments) -- the filed face. 'filed' responses carry no path, only file_name; the caller decides where it lands. Always renders -- no expected-revision guard (issue 302). A database ahead of the installed bundle's schema (issue 352) refuses instead: empty documents, bundle_outdated true, and a note to rebuild/reinstall the plugin. A drafting filing's party counsel and address for service are read live from case data through case_party_id: each party they cannot be read for prints none, gets a mockup-only line and a parties_drift row, and 'filed' refuses with parties_drift_gate_failed while any stands; a sent filing renders the party rows it printed. On a successful mockup-mode render, the response also carries rendered_at (issue 548), the exact YYYY-MM-DD HH:mm stamp this render printed on its documents' Rendered lines; when nothing changed since the last render, the advocacy files are reused and rendered_at is the minute they were last rendered. A mockup render of a Writing whose Proposed lane holds a note-up Proposal that no live job holds and the practitioner has not shelved also carries note_up_due, those keys in the lane's order: the session writes them into the Writing's one `Note up all cited authorities` job, or adds them to it (/drafting-data jobs-create.md \xA73k). Optional session_token (ADR 0009, issue 609) is the caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a job-driven session and the response ECHOES it back, so the session keeps one identity for tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file of the filing's: only when documents names Work_board does its entry carry board_summary in place of markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as a short fixed-grammar summary: `# Job Board \u2014 Matter <matter no> <matter description> \xB7 Client <client name> (<client no>) \xB7 Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or `none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined or none; the statement itself is board_card's goals lane), `Unmet completion criteria:` with one line per unmet or pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet completion criteria: none` when every criterion is met), and `Met completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ \u2014 <text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's detail, the criterion items, the Proposed and shelved lines and the loose threads come from drafting_forms__board_card. Those two are the only board content a session reads; a session never reads a matter page (shared/html-pages.md). Optional documents narrows the RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery remedy. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) is the absolute host path of this filing's presentation folder: directly under the matter's 0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- anything else is refused, naming the expected ending. The server then writes every document's presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 amendments), a merged board's page holding every section merged into it (drafting_data__merge_job_boards): `Job Board <id>.html` per live Writing and `Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; a job with no filing_id is on every Writing's page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, `<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths [{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its name; a retired filing has no page and its entry no path. Each page is written atomically (temp file, then rename) and only over a file carrying its page's marker: one without it is refused before any page or presentation copy is written. A page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when this filing's section matches, apart from its Rendered minute, the one the last such render recorded in matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; empty when no job moved. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated (code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one file and only files this renderer writes. The server never renames; the caller renames or chooses, then passes presentation_dir. A successful mockup render also carries background_job, the background render job's status (see drafting_forms__bootstrap). Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths (every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. It takes only client fields, session_token and draft_dir, and refuses a proceeding that has a filing. A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with no mockup or presentation copy written; draft_dir rewrites the matter's pages, its own `Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is refused with job_board_only. Every response also carries timings: per-phase durations in ms, for profiling only.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78246,6 +78265,27 @@ function submissionFormsToolDefinitions() {
     }
   ];
 }
+function cloudKeyToolDefinitions() {
+  return [
+    {
+      name: "cloud_key__configure_credential",
+      description: "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them. The one key serves every access to Probanda's Cloud: practice writes, the Suggestion Box and the legal commons. The key is typed on that page, never in chat and never as a tool argument. Send the link, and when the practitioner says it is done, call practice_data__config_status, whose cloud_credential then reads present. A practitioner who has no key asks Probanda for one with key_request__submit. The page checks the key against Probanda's Cloud before saving it; it is saved on this computer, encrypted at rest, and never logged or echoed back.",
+      inputSchema: objectSchema([], []),
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "key_request__submit",
+      description: "For a computer with no Probanda key (practice_data__config_status reports cloud_credential: missing): returns a link to a page on this computer where the practitioner asks Probanda for a key. They type there what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name, for British Columbia) and an email and optional phone for contact. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. Probanda verifies the person and sends the key to the email address their firm's website or the directory lists, never the typed one; they then paste it on cloud_key__configure_credential's page. Send the link, and when the practitioner says it is sent, call key_request__status. Refused when this computer already holds a key.",
+      inputSchema: objectSchema([], [])
+    },
+    {
+      name: "key_request__status",
+      description: "Report where this computer's request for Probanda's key stands: {requested, request_id, status, requested_at, decided_at, next}. status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail.",
+      inputSchema: objectSchema([], []),
+      annotations: { readOnlyHint: true }
+    }
+  ];
+}
 function buildToolDefinitions() {
   return [
     ...practiceToolDefinitions(),
@@ -78254,7 +78294,8 @@ function buildToolDefinitions() {
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
-    ...fileToolDefinitions()
+    ...fileToolDefinitions(),
+    ...cloudKeyToolDefinitions()
   ];
 }
 
@@ -78554,7 +78595,7 @@ async function active_deadlines(store, args) {
     sources: sourcesByAnchor.get(String(anchor.id)) ?? []
   }));
   const deadlines = rowsOf(items, "deadline").filter(inMatter);
-  const withStatus = (status) => deadlines.filter((row2) => row2.status === status);
+  const withStatus = (status2) => deadlines.filter((row2) => row2.status === status2);
   const deadlineRows = [
     ...withStatus("active"),
     ...withStatus("not_applicable").filter((row2) => args.include_notified === true || row2.expiry_notified_at === null || row2.expiry_notified_at === void 0),
@@ -78657,8 +78698,8 @@ function autoDetect(env, startDir) {
   const declared = readConfigRepoRoot(cfgPath, tried);
   if (declared) return remember(cacheKey, declared, tried);
   const probes = conventionalCandidates(env);
-  for (const probe of probes) {
-    if (isRepoRoot(probe)) return remember(cacheKey, probe, tried);
+  for (const probe2 of probes) {
+    if (isRepoRoot(probe2)) return remember(cacheKey, probe2, tried);
   }
   tried.push(
     probes.length ? `conventional location${probes.length > 1 ? "s" : ""} (${probes.join(", ")}) -- no match` : "conventional location -- neither USERPROFILE nor HOME is set"
@@ -80289,8 +80330,8 @@ async function upsert_signal(store, args) {
 async function ingest_court_calendar_year(store, args) {
   const year = Number(args.year);
   if (!Number.isInteger(year)) throw new ValidationError("ingest_court_calendar_year requires an integer year");
-  const status = asString(args.status, "status");
-  if (status !== "confirmed" && status !== "unavailable") {
+  const status2 = asString(args.status, "status");
+  if (status2 !== "confirmed" && status2 !== "unavailable") {
     throw new ValidationError('ingest_court_calendar_year status must be "confirmed" or "unavailable"');
   }
   const days = Array.isArray(args.days) ? args.days : [];
@@ -80321,7 +80362,7 @@ async function ingest_court_calendar_year(store, args) {
       op: "upsert",
       id: yearOp,
       kind: "calendar_year",
-      state: status,
+      state: status2,
       data: { year, source_document: args.source_document ?? null, checked_at: nowIso() }
     },
     ...priorDays,
@@ -81022,7 +81063,7 @@ function pendingWrites(env) {
   }
 }
 async function config_status(args, env = process.env) {
-  const status = {
+  const status2 = {
     path: null,
     override: !!env.COCLERK_CONFIG_PATH,
     exists: false,
@@ -81038,43 +81079,43 @@ async function config_status(args, env = process.env) {
     pending_writes: pendingWrites(env)
   };
   try {
-    status.path = configPath(env);
-    status.exists = isFile(status.path);
+    status2.path = configPath(env);
+    status2.exists = isFile(status2.path);
   } catch (err) {
-    status.path = env.COCLERK_CONFIG_PATH ?? null;
-    status.error = err.message;
+    status2.path = env.COCLERK_CONFIG_PATH ?? null;
+    status2.error = err.message;
   }
-  if (status.exists && status.path) {
+  if (status2.exists && status2.path) {
     try {
-      const config2 = JSON.parse(readFileSync8(status.path, "utf-8"));
-      status.keys_present = Object.keys(config2);
-      status.keys_missing = keysMissing(config2);
+      const config2 = JSON.parse(readFileSync8(status2.path, "utf-8"));
+      status2.keys_present = Object.keys(config2);
+      status2.keys_missing = keysMissing(config2);
       if (typeof config2.practice_quirks === "string" && config2.practice_quirks !== "") {
-        status.practice_quirks = config2.practice_quirks;
+        status2.practice_quirks = config2.practice_quirks;
       }
       if (typeof config2.case_data_root === "string" && config2.case_data_root !== "") {
-        status.case_data_root = config2.case_data_root;
-        status.root_exists = isDir(config2.case_data_root);
-        status.practice_db_exists = rootWorks(config2.case_data_root);
+        status2.case_data_root = config2.case_data_root;
+        status2.root_exists = isDir(config2.case_data_root);
+        status2.practice_db_exists = rootWorks(config2.case_data_root);
       }
     } catch (err) {
-      status.parse_error = err.message;
+      status2.parse_error = err.message;
     }
   }
   if (args.matter_root !== void 0) {
     try {
       const root = caseDataRootFromMatterRoot(args.matter_root, env);
-      if (root !== null) status.candidates.push({ root, source: "matter_root", practice_db_exists: rootWorks(root) });
-      else status.candidate_error = `the matter's matter-data folder does not sit in a "0. CASE DATA" folder`;
+      if (root !== null) status2.candidates.push({ root, source: "matter_root", practice_db_exists: rootWorks(root) });
+      else status2.candidate_error = `the matter's matter-data folder does not sit in a "0. CASE DATA" folder`;
     } catch (err) {
-      status.candidate_error = err.message;
+      status2.candidate_error = err.message;
     }
-  } else if (!status.exists && !status.error) {
+  } else if (!status2.exists && !status2.error) {
     const scan = scanCandidates(env);
-    for (const root of scan.roots) status.candidates.push({ root, source: "scan", practice_db_exists: rootWorks(root) });
-    if (scan.truncated) status.scan_truncated = true;
+    for (const root of scan.roots) status2.candidates.push({ root, source: "scan", practice_db_exists: rootWorks(root) });
+    if (scan.truncated) status2.scan_truncated = true;
   }
-  return status;
+  return status2;
 }
 async function config_set_root(args, env = process.env) {
   const path = configPath(env);
@@ -81143,8 +81184,8 @@ function expand(name, files, chain) {
   return text5.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
 }
 function composeTemplate(entry, files) {
-  const page = expand(entry, files, []);
-  const parts = page.split(DATA);
+  const page2 = expand(entry, files, []);
+  const parts = page2.split(DATA);
   if (parts.length !== 2) throw new Error(`template "${entry}" has ${parts.length - 1} ${DATA} markers; it needs exactly one`);
   const [head, tail] = parts;
   if (head.includes("@@") || tail.includes("@@")) throw new Error(`template "${entry}" holds a leftover @@ after composing`);
@@ -81664,9 +81705,9 @@ function publish(job) {
   if (!ours(job)) return false;
   job.status.updated_at = nowIso2();
   if (job.pageFile) {
-    const page = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
+    const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
 `;
-    const code2 = writeStatusFile(job.pageFile, page);
+    const code2 = writeStatusFile(job.pageFile, page2);
     if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
   }
   const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
@@ -81750,20 +81791,20 @@ function installExitHandler() {
 function mirrorStatus(dbPath, env) {
   const lockFile = hostLocalPath(dbPath, "render-job.lock", env);
   const job = jobs.get(lockFile);
-  let status;
+  let status2;
   if (job) {
-    status = job.status;
+    status2 = job.status;
   } else {
     try {
-      status = JSON.parse(readFileSync10(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
+      status2 = JSON.parse(readFileSync10(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
     } catch {
       return { state: "idle" };
     }
   }
-  if (status.state !== "running") return { ...status };
-  if (!job && !existsSync12(lockFile)) return { ...status, state: "aborted" };
-  if (Date.now() - Date.parse(status.updated_at) > status.stall_after_ms) return { ...status, state: "stalled" };
-  return { ...status };
+  if (status2.state !== "running") return { ...status2 };
+  if (!job && !existsSync12(lockFile)) return { ...status2, state: "aborted" };
+  if (Date.now() - Date.parse(status2.updated_at) > status2.stall_after_ms) return { ...status2, state: "stalled" };
+  return { ...status2 };
 }
 function backgroundJobStatus(dbPath, env = process.env) {
   return mirrorStatus(dbPath, env);
@@ -83294,7 +83335,7 @@ var SYMBOLS = [
     modelNote: "One act: the verbatim diff through /verify-law first, then fit and ratio through /legal-research. It clears on the research lawyer's return either way: verified, or failed with the finding seated under \u{1F443}.",
     slug: "scrutinize",
     title: "Scrutinize",
-    condition: "statement line: `statement.verification='lead'` \u2227 its authority's `killed_on` \u2205 \u2014 not for a statement under a submission or order deployed on no live Writing (a Writing with `retired_on` \u2205), nothing relying on it there: every reserved \u{1F0A1} item is one, and so is an item deployed only on retired Writings, which is not reserved (1c, #959); re-linking makes it derive again (v47); the same for the order's line where such an order's ladder prints. Proposition line: \u22651 counted statement of law (from a non-killed, non-overruled authority, not `'failed'`) \u2227 none verified or settled \u2014 so \u{1F4D6} \u2295 \u{1F52C} per proposition by construction; a `'failed'` or `'settled'` statement renders no \u{1F52C} on any line (\xA71 \u2192 Failed, Settled); \u{1F6A7} owns the line when it fires. Clause line: an implied clause whose cited statement is a lead from an authority neither killed nor overruled \u2014 so no implied clause rests on unverified law and reads clean; co-renders (\u2228) with \u{1F4CD}. Doctrinal, jurisdictional and prose-cited alike. Co-renders (\u2228) with \u{1F4DC} \u{1F4CD} \u{1F4C7} \u{1F3C5} on the statement line and with \u{1F949} \u2295 \u{1F948} \u2295 \u{1F3C5} on the proposition line. The lead statement itself stays under the brief-only cap, except a prose-cited one, which prints on its mockup-only line, since the Counsel Brief lists no prose-cited statement and the block reaches no sent face; the proposition-line \u{1F52C} renders on every mockup so no line reads falsely clean (rule 6); never on a filed face",
+    condition: "statement line: `statement.verification='lead'` \u2227 its authority's `killed_on` \u2205 \u2014 not for a statement under a submission or order deployed on no live Writing (a Writing with `retired_on` \u2205), nothing relying on it there: every reserved \u{1F0A1} item is one, and so is an item deployed only on retired Writings, which is not reserved (1c, #959); re-linking makes it derive again (v47); the same for the order's line where such an order's ladder prints. Proposition line: \u22651 counted statement of law (from a non-killed, non-overruled authority, not `'failed'`) \u2227 none verified or settled \u2014 so \u{1F4D6} \u2295 \u{1F52C} per proposition by construction; a `'failed'` or `'settled'` statement renders no \u{1F52C} on any line (\xA71 \u2192 Failed, Settled); \u{1F6A7} owns the line when it fires. Clause line: an implied clause whose cited statement is a lead from an authority neither killed nor overruled \u2014 so no implied clause rests on unverified law and reads clean; co-renders (\u2228) with \u{1F4CD}. Doctrinal, jurisdictional and prose-cited alike. Co-renders (\u2228) with \u{1F4DC} \u{1F4CD} \u{1F4C7} \u{1F3C5} on the statement line and with \u{1F949} \u2295 \u{1F948} \u2295 \u{1F3C5} on the proposition line. The lead statement itself stays under the brief-only cap, except a prose-cited one, which prints on its mockup-only line, since the block reaches no sent face; the proposition-line \u{1F52C} renders on every mockup so no line reads falsely clean (rule 6); never on a filed face",
     history: "`authorities.verification` \u2192 `statements_of_law.verification` shipped v25 (#774, design #502; an authority is a lead when none of its statements is verified, derived); renderer shipped 2026-09-20, reading `statements_of_law.verification` since v25 \u2014 proposition line, doctrinal statement line and the order's own line (the jurisdictional ladder); clause line admitted #1122, render shipped #1126; prose-cited instance admitted #1214; `'failed'` admitted v46 (2026-10-02): the negative return, finding in `doubt` (CHECK-required), counts as none across statements; v47 (2026-10-02): a failed row is never reset by an edit, `'settled'` admitted (counsel's confirmed close, counts as support), a verified or settled row returns to `'lead'` by trigger when its `authority_id`, `pinpoint` or `excerpt` moves off its snapshot, and no statement-line or order-line \u{1F52C} under a submission or order deployed on no live Writing"
   },
   {
@@ -83493,8 +83534,8 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "unserved-petitum",
     title: "Draft a submission for the order",
-    condition: "`order_sought` with no `served_by` row; renders on the order's own line, primary or alternative alike (#832) \u2014 never on the face of a requisition form (Form 8 Default Judgment, Consent Order): a requisition files no argument, so no submission is owed to its orders and there is no work to name (rule 1; #960). The same order still carries \u{1F9B5} on the filing's Written Arguments companion where it is deployed there, and on its Counsel Brief line while reserved \u2014 an alternative placed under a form-deployed primary on the Form 8 is deployed by that placement, not reserved, so it carries neither \u{1F0A1} nor \u{1F9B5} there (#960)",
-    history: "v10 (`served_by` junction, #380); render shipped \u2014 NoA Part 1, Written Arguments, Counsel Brief reserved orders; requisition faces excepted #960"
+    condition: "`order_sought` with no `served_by` row; renders on the order's own line, primary or alternative alike (#832) \u2014 never on the face of a requisition form (Form 8 Default Judgment, Consent Order): a requisition files no argument, so no submission is owed to its orders and there is no work to name (rule 1; #960). The same order still carries \u{1F9B5} on the filing's Written Arguments companion where it is deployed there, and is recorded as a Proposal while reserved, though no page prints it \u2014 an alternative placed under a form-deployed primary on the Form 8 is deployed by that placement, not reserved, so it carries neither \u{1F0A1} nor \u{1F9B5} there (#960)",
+    history: "v10 (`served_by` junction, #380); render shipped \u2014 NoA Part 1, Written Arguments; reserved orders recorded only; requisition faces excepted #960"
   },
   {
     glyph: "\u{1F9F5}",
@@ -83517,7 +83558,7 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "factual-basis",
     title: "Link or draft the factual basis",
-    condition: "`submissions` row with no `submission_facts` row, and no recorded no-facts-needed decision for the current wording (v48) \u2014 a contention resting on no stated fact; renders on the first numbered paragraph belonging to the submission \u2014 its own contention line, restored as the argument's opening numbered paragraph by ticket 2026-09-01 (WA *Submissions*; Form 32 Part 3; Form 33 Part 5; the BCCA stay response book's Part 2 written argument at its *Part 3: Analysis*; BCCA factum Part 3; Counsel Brief, deployed and held-in-reserve alike \u2014 a reserved submission appears in no venue document, so the brief is the only surface on which its missing factual basis can be seen; a killed submission is never in that section \u2014 it renders no contention paragraph at all, only a plain unnumbered line under *Killed submissions* (\xA74); never delivered, so never a filed face). A submission with no linked facts and no linked law still renders that contention paragraph, numbered like any other and carrying \u{1F9FE} \u2014 it never disappears and never degrades to an unnumbered marker-only line \u2014 but the marker itself never reaches a filed face. Contention-level, above \u{1F464} (which proves each fact); not \u{1F4D6}'s twin \u2014 its law-side mirror (`submission_law` \u2205) is \u{1F4DA} (\xA76). Fires on a law-only submission until counsel records that it needs no stated fact (v48). On the Form 32 Part 3 and Form 33 Part 5 mockups it leaves the line's marker set and prints after the submission's trace comment, joined to the fact-reference comment with no space: `\u{1F9FE}<!-- supporting fact paragraphs:  NONE -->` (two spaces before NONE, verbatim)",
+    condition: "`submissions` row with no `submission_facts` row, and no recorded no-facts-needed decision for the current wording (v48) \u2014 a contention resting on no stated fact; renders on the first numbered paragraph belonging to the submission \u2014 its own contention line, restored as the argument's opening numbered paragraph by ticket 2026-09-01 (WA *Submissions*; Form 32 Part 3; Form 33 Part 5; the BCCA stay response book's Part 2 written argument at its *Part 3: Analysis*; BCCA factum Part 3); a held-in-reserve submission appears in no venue document, so its \u{1F9FE} is recorded as a Proposal and printed nowhere; a killed submission renders no contention paragraph at all (\xA74). A submission with no linked facts and no linked law still renders that contention paragraph, numbered like any other and carrying \u{1F9FE} \u2014 it never disappears and never degrades to an unnumbered marker-only line \u2014 but the marker itself never reaches a filed face. Contention-level, above \u{1F464} (which proves each fact); not \u{1F4D6}'s twin \u2014 its law-side mirror (`submission_law` \u2205) is \u{1F4DA} (\xA76). Fires on a law-only submission until counsel records that it needs no stated fact (v48). On the Form 32 Part 3 and Form 33 Part 5 mockups it leaves the line's marker set and prints after the submission's trace comment, joined to the fact-reference comment with no space: `\u{1F9FE}<!-- supporting fact paragraphs:  NONE -->` (two spaces before NONE, verbatim)",
     history: "derived from the junction, no column (#373); render site moved off the contention line 2026-08-31 (the contention sentence stopped rendering at all); moved back onto it 2026-09-01 when the contention paragraph was restored (\xA76); exemption built v48 (2026-10-04): counsel's recorded decision clears it; reset when the wording changes; on the Form 32/33 mockups moved off the marker set and onto the supporting-fact-paragraphs comment (7ad3c44)"
   },
   {
@@ -83529,7 +83570,7 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "proposition",
     title: "Link or draft the proposition it requires",
-    condition: "`submissions` row with no `submission_law` row, no recorded no-law-needed decision for the current wording (v60), and not an ordinary-costs submission (below) \u2014 a contention resting on no stated law. It reads the junction's existence, not statement counts, as \u{1F9FE} reads `submission_facts`: a proposition with no authority yet is \u{1F4D6}'s work on the proposition's own line, not \u{1F4DA}'s. Renders at \u{1F9FE}'s one site, the submission's contention line, so on \u{1F9FE}'s surfaces (WA *Submissions*; Form 32 Part 3; Form 33 Part 5; the BCCA stay response book's *Part 3: Analysis*; BCCA factum Part 3; Counsel Brief, deployed and held-in-reserve alike); a killed submission's line carries none (\xA71 \u2192 Killed). It renders for the human on every mockup and is withheld from the filed face, as every marker is. Unlike \u{1F9FE} it stays in the line's marker set on the Form 32 Part 3 and Form 33 Part 5 mockups and never moves onto the supporting-fact-paragraphs comment: law is never folded into a comment. A submission with neither link and no record carries both \u{1F9FE} and \u{1F4DA}. Fires on a fact-only submission until counsel records that it needs no stated law (v60); the line then prints ` (no stated law needed, per counsel <date>)`, which the filed face strips. A submission that only asks for ordinary costs never fires it, and prints no tag of its own: it serves at least one order, every wording of every order it serves that is not crossed out (`order_sought.wording` and each `filing_orders.wording_override`) contains the word *costs* and only the fixed ordinary-costs words (`markers.ts` `ORDINARY_COSTS_WORDS`), and its contention mentions costs and names none of the unusual-costs modifiers (special, any event, scale, solicitor, double, lump, increased, non-party, non party, nonparty, lawyer, counsel, personally, indemnity, uplift, against). It is the practitioner's fixed classification rule, never a legal judgment made at runtime, and it fails closed: any other word or any number keeps \u{1F4DA}",
+    condition: "`submissions` row with no `submission_law` row, no recorded no-law-needed decision for the current wording (v60), and not an ordinary-costs submission (below) \u2014 a contention resting on no stated law. It reads the junction's existence, not statement counts, as \u{1F9FE} reads `submission_facts`: a proposition with no authority yet is \u{1F4D6}'s work on the proposition's own line, not \u{1F4DA}'s. Renders at \u{1F9FE}'s one site, the submission's contention line, so on \u{1F9FE}'s surfaces (WA *Submissions*; Form 32 Part 3; Form 33 Part 5; the BCCA stay response book's *Part 3: Analysis*; BCCA factum Part 3; a held-in-reserve submission is recorded, not printed); a killed submission's line carries none (\xA71 \u2192 Killed). It renders for the human on every mockup and is withheld from the filed face, as every marker is. Unlike \u{1F9FE} it stays in the line's marker set on the Form 32 Part 3 and Form 33 Part 5 mockups and never moves onto the supporting-fact-paragraphs comment: law is never folded into a comment. A submission with neither link and no record carries both \u{1F9FE} and \u{1F4DA}. Fires on a fact-only submission until counsel records that it needs no stated law (v60); the line then prints ` (no stated law needed, per counsel <date>)`, which the filed face strips. A submission that only asks for ordinary costs never fires it, and prints no tag of its own: it serves at least one order, every wording of every order it serves that is not crossed out (`order_sought.wording` and each `filing_orders.wording_override`) contains the word *costs* and only the fixed ordinary-costs words (`markers.ts` `ORDINARY_COSTS_WORDS`), and its contention mentions costs and names none of the unusual-costs modifiers (special, any event, scale, solicitor, double, lump, increased, non-party, non party, nonparty, lawyer, counsel, personally, indemnity, uplift, against). It is the practitioner's fixed classification rule, never a legal judgment made at runtime, and it fails closed: any other word or any number keeps \u{1F4DA}",
     history: "the law-side mirror of \u{1F9FE}, held until admitted 2026-10-06 (application-paragraphs spec \xA74.6, P5; work-markers \xA76); derived from the junction, no column; counsel's no-law-needed record v60 (`submissions.no_law_needed_on`, reset when the wording changes, refused beside `no_facts_needed_on`); ordinary costs exempt 2026-10-07 (practitioner: asking for ordinary costs needs no proposition of law; unusual costs orders still fire)"
   },
   {
@@ -83539,7 +83580,7 @@ var SYMBOLS = [
     meaning: "nothing else is owed on the line, and counsel has not approved it as it now reads",
     work: "review the content in context and approve it",
     actor: "practitioner",
-    condition: "no other 1a work marker renders on the object's line (on a merged line, such as a Notice of Application fact line joining a postulate with its statements of fact, every object's markers count) \u2227 no approval matches its current content: its stored fields as reviewed (statement, paragraph or slot text, excerpt, pinpoint \u2014 never the rendered wording) differ byte for byte from its latest approval snapshot, or it has none. Computed, never stored: any later change re-raises it with no trigger and no invalidation write. Attaches to statements of law, statements of fact, propositions, postulates, submissions, orders sought, clauses, prose slots and rhetorical paragraphs \u2014 never a whole document. A prose slot is one slot of a Writing's own text (a `filing_prose` row that a `slot:<name>`, `addressee` or `sender` part of its stored layout renders), reviewed whole and marked once, on its last line. The last rung before clean on both ladders (\xA75). \u26A0\uFE0F \u2295 \u{1F6A8}, and \u{1F570}\uFE0F (\xA71 \u2192 Fit tells), render beside it as bare events \u2014 they route no 1a work, and the routing decision is counsel's, taken in the review, so the \u{1F9D0} on that statement carries counsel's review of the treatment, including one set in the noting-up sweep. The authority's treatment is part of the statement snapshot (review.md), so any later change of it re-raises \u{1F9D0} on an approved statement. The order's line takes the same rule for its basis: \u26A0\uFE0F \u2295 \u{1F6A8} from a jurisdictional statement's ladder render beside the order's \u{1F9D0}, and the statement filling each of the order's `filled` edges, with its authority's treatment, is part of the order snapshot (review.md), so a later change of treatment, or of which statement fills the basis, re-raises \u{1F9D0} on an approved order. The kill is not part of it, as elsewhere. Killed and overruled silence it as every 1a row (\xA71). An overruling does not silence \u{1F9D0} on the proposition's line, which is not the authority's own line: while a counted statement survives, a proposition with an overruled statement carries \u26D4 beside \u{1F9D0} wherever \u{1F9D0} fires, until approved, the review confirming the overruling. Which of its statements are overruled is part of the proposition snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved proposition, and a later kill does not. The `(overruled: \u2026)` tag beside that \u26D4 (\xA71) is not part of it, so an edit of the authority's title or citation re-raises nothing. Neither the kill nor the overruling silences \u{1F9D0} on the clause line, which is neither the cited authority's own line nor its statement's and takes no \u{1F3DB}\uFE0F \u2295 \u{1F4D6} reopen prefix (\u{1F4CD} row): until approved, a clause citing an overruled authority reads \u26D4 \u{1F9D0}, the review confirming the overruling as well as the wording, and one citing a killed authority reads `(killed <date>)` \u{1F9D0}, the statement counting as none. Whether the cited authority is overruled is part of the clause snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved clause; its `killed_on` is not, since the kill is counsel's own act. Once approved, the bare \u26D4 names the routing work (Types), and the `(killed <date>)` tag keeps the clean line from being read as finished (\xA74 (ii), rule 6). Content filled by an unattended run carries it like any other unapproved content. Documents that are sent only (a Filing, or a Writing that is sent, an internal memo included) \u2014 the Counsel Brief is never sent and carries none. Renders for the human on every mockup of such a document; never on a filed or sent face",
+    condition: "no other 1a work marker renders on the object's line (on a merged line, such as a Notice of Application fact line joining a postulate with its statements of fact, every object's markers count) \u2227 no approval matches its current content: its stored fields as reviewed (statement, paragraph or slot text, excerpt, pinpoint \u2014 never the rendered wording) differ byte for byte from its latest approval snapshot, or it has none. Computed, never stored: any later change re-raises it with no trigger and no invalidation write. Attaches to statements of law, statements of fact, propositions, postulates, submissions, orders sought, clauses, prose slots and rhetorical paragraphs \u2014 never a whole document. A prose slot is one slot of a Writing's own text (a `filing_prose` row that a `slot:<name>`, `addressee` or `sender` part of its stored layout renders), reviewed whole and marked once, on its last line. The last rung before clean on both ladders (\xA75). \u26A0\uFE0F \u2295 \u{1F6A8}, and \u{1F570}\uFE0F (\xA71 \u2192 Fit tells), render beside it as bare events \u2014 they route no 1a work, and the routing decision is counsel's, taken in the review, so the \u{1F9D0} on that statement carries counsel's review of the treatment, including one set in the noting-up sweep. The authority's treatment is part of the statement snapshot (review.md), so any later change of it re-raises \u{1F9D0} on an approved statement. The order's line takes the same rule for its basis: \u26A0\uFE0F \u2295 \u{1F6A8} from a jurisdictional statement's ladder render beside the order's \u{1F9D0}, and the statement filling each of the order's `filled` edges, with its authority's treatment, is part of the order snapshot (review.md), so a later change of treatment, or of which statement fills the basis, re-raises \u{1F9D0} on an approved order. The kill is not part of it, as elsewhere. Killed and overruled silence it as every 1a row (\xA71). An overruling does not silence \u{1F9D0} on the proposition's line, which is not the authority's own line: while a counted statement survives, a proposition with an overruled statement carries \u26D4 beside \u{1F9D0} wherever \u{1F9D0} fires, until approved, the review confirming the overruling. Which of its statements are overruled is part of the proposition snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved proposition, and a later kill does not. The `(overruled: \u2026)` tag beside that \u26D4 (\xA71) is not part of it, so an edit of the authority's title or citation re-raises nothing. Neither the kill nor the overruling silences \u{1F9D0} on the clause line, which is neither the cited authority's own line nor its statement's and takes no \u{1F3DB}\uFE0F \u2295 \u{1F4D6} reopen prefix (\u{1F4CD} row): until approved, a clause citing an overruled authority reads \u26D4 \u{1F9D0}, the review confirming the overruling as well as the wording, and one citing a killed authority reads `(killed <date>)` \u{1F9D0}, the statement counting as none. Whether the cited authority is overruled is part of the clause snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved clause; its `killed_on` is not, since the kill is counsel's own act. Once approved, the bare \u26D4 names the routing work (Types), and the `(killed <date>)` tag keeps the clean line from being read as finished (\xA74 (ii), rule 6). Content filled by an unattended run carries it like any other unapproved content. Documents that are sent only (a Filing, or a Writing that is sent, an internal memo included) \u2014 the reserve inventory records none. Renders for the human on every mockup of such a document; never on a filed or sent face",
     history: "`review_approvals` v27 (#868 \u2014 append-only, revision-exempt); marker admitted #861 as \u{1F4CB} *counsel's review*, re-glyphed and renamed 2026-09-24 (\xA76); render shipped #912, glyph shipped #1061; clause kind admitted #1122 (review.md snapshot row), render shipped #1126; prose slot kind admitted #1207 (review.md snapshot row), render shipped #1207; rhetorical paragraph kind admitted v71 (review.md snapshot row, wording alone; its plain-text tells hold nothing back)"
   },
   // Table 1b, events: the work column is the work each routes.
@@ -83687,7 +83728,7 @@ var SYMBOLS = [
     condition: "fact-side \u{1F464} fires \u2227 a `marker_suppressions` row (`marker='\u{1F464}'`, `keyed_table='facts'`, `keyed_id`) \u21D2 \u{1F92B} in \u{1F464}'s place, any spent rung prefix kept; the \u{1F464} derivation is unchanged and its Evidence criterion entry is flagged suppressed, counted met; the row is deleted when the fact's `postulate` moves off its `item` or the fact is deleted",
     history: "v69"
   },
-  // Table 1c, holds: printed in the Counsel Brief only.
+  // Table 1c, holds: printed on no page.
   {
     glyph: "\u{1F0A1}",
     name: "held in reserve",
@@ -83695,7 +83736,7 @@ var SYMBOLS = [
     meaning: "drafted and deliberately held: no document of the filing deploys it, and for an order, submission or rhetorical paragraph no document of any filing of the proceeding",
     work: "decide later whether to deploy or abandon it",
     actor: "practitioner",
-    condition: "\u{1F0A1} **reserved** \u2014 derived, never stored: a pool item deployed by no document of the filing \u2014 for an order, submission or rhetorical paragraph (v71), of any filing of the proceeding (#959: one deployed only on another filing is listed marker-free under *used on other filings*, not reserved) \u2014 drafted, deliberately held; deploy-or-abandon deferred \u2192 practitioner (later); renders only in the Counsel Brief. When the practitioner abandons, the decision lands as *killed* (`killed_on` on the submission or authority, schema v16) \u2014 not a marker (rule 5, as crossed out; \xA74); the Counsel Brief's *Killed* sections are its rendering, and a killed item never shows \u{1F0A1} \u2014 nothing is deferred any more; a reserved rhetorical paragraph is abandoned by deleting its placements, links and row (v71), never killed.",
+    condition: "\u{1F0A1} **reserved** \u2014 derived, never stored: a pool item deployed by no document of the filing \u2014 for an order, submission or rhetorical paragraph (v71), of any filing of the proceeding (#959: one deployed only on another filing is not reserved) \u2014 drafted, deliberately held; deploy-or-abandon deferred \u2192 practitioner (later); printed on no page. When the practitioner abandons, the decision lands as *killed* (`killed_on` on the submission or authority, schema v16) \u2014 not a marker (rule 5, as crossed out; \xA74), kept in the database; a killed item never shows \u{1F0A1} \u2014 nothing is deferred any more; a reserved rhetorical paragraph is abandoned by deleting its placements, links and row (v71), never killed.",
     history: ""
   },
   {
@@ -83705,7 +83746,7 @@ var SYMBOLS = [
     meaning: "a statement held for impeachment",
     work: "decide later whether to deploy or abandon it",
     actor: "practitioner",
-    condition: "\u{1F925} **impeachment** \u2014 statement-level: `purpose='impeachment'`; Counsel Brief only, alongside lead and failed statements of law (`statement.verification` `'lead'` \u2295 `'failed'`, the brief-only cap). No longer \u{1F0A1}'s subset by storage; same hold posture.",
+    condition: "\u{1F925} **impeachment** \u2014 statement-level: `purpose='impeachment'`; printed on no page, like lead and failed statements of law (`statement.verification` `'lead'` \u2295 `'failed'`, the brief-only cap). No longer \u{1F0A1}'s subset by storage; same hold posture.",
     history: ""
   },
   {
@@ -83716,7 +83757,7 @@ var SYMBOLS = [
     work: "decide on disclosure and prepare a rebuttal, at application review",
     actor: "practitioner",
     modelNote: "The pipeline never decides whether disclosure is required; that question goes through /legal-research. When a predicted point is actually raised, record it as their point to answer and remove the prediction; no link is kept.",
-    condition: "\u{1F6A9} **adverse** \u2014 disclosure judgment (candour) and rebuttal preparation deferred \u2192 practitioner, at application review; Counsel Brief only, never delivered \u2014 the pipeline never decides whether disclosure is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` (assertion level) \u2295 an `anticipated_points` row existing (the practitioner's own prediction of a point the other side may run, not yet raised). Orthogonal to \u{1F0A1}, not a subset of it like \u{1F925} \u2014 reads no deployment state at all: `anticipated_points` is never pointed to by any document, so it must never be read by \u{1F0A1}'s \"deployed by no document\" predicate (which would otherwise fire vacuously on every row); a `facts.adverse` flag is likewise silent to deployment, so an adverse fact can be deployed \u2014 even disclosed \u2014 and still carry \u{1F6A9} (\xA74 \u2192 adverse orthogonal).",
+    condition: "\u{1F6A9} **adverse** \u2014 disclosure judgment (candour) and rebuttal preparation deferred \u2192 practitioner, at application review; printed on no page \u2014 the pipeline never decides whether disclosure is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` (assertion level) \u2295 an `anticipated_points` row existing (the practitioner's own prediction of a point the other side may run, not yet raised). Orthogonal to \u{1F0A1}, not a subset of it like \u{1F925} \u2014 reads no deployment state at all: `anticipated_points` is never pointed to by any document, so it must never be read by \u{1F0A1}'s \"deployed by no document\" predicate (which would otherwise fire vacuously on every row); a `facts.adverse` flag is likewise silent to deployment, so an adverse fact can be deployed \u2014 even disclosed \u2014 and still carry \u{1F6A9} (\xA74 \u2192 adverse orthogonal).",
     history: ""
   }
 ];
@@ -83793,10 +83834,7 @@ var PLACEMENTS = [
     text: "no witness tenders this document and no admission covers it: find the tendering witness or record the admission"
   },
   { glyph: "\u{1F9E9}", documents: ["Witness_statement"], text: "as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it" },
-  { glyph: "\u{1F9E9}", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" },
-  { glyph: "\u{1F0A1}", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" },
-  { glyph: "\u{1F925}", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" },
-  { glyph: "\u{1F6A9}", documents: ["Counsel_brief"], text: "prints in the Counsel Brief only; never delivered" }
+  { glyph: "\u{1F9E9}", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" }
 ];
 var GLYPHS_LONGEST_FIRST = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length);
 function splitGlyphs(run) {
@@ -84064,7 +84102,7 @@ var ALL_MARKER_GLYPHS = [
   "\u{1F0A1}",
   // reserved
   "\u{1F6A9}",
-  // adverse (Counsel-Brief-only hold)
+  // adverse (hold, printed on no page)
   "\u{1F9B5}",
   // unserved petitum
   "\u{1F9F5}",
@@ -84209,18 +84247,6 @@ function notBestCopyMarkers(documents) {
   const result = /* @__PURE__ */ new Map();
   for (const d3 of documents) result.set(d3.id, labelHasBest.has(d3.label) ? "" : "\u{1F3C6}");
   return result;
-}
-function reservedMarker(deployed) {
-  return deployed ? "" : "\u{1F0A1}";
-}
-function impeachmentMarker(purpose) {
-  return purpose === "impeachment" ? "\u{1F925}" : "";
-}
-function adverseFactMarker(adverse) {
-  return adverse === 1 ? "\u{1F6A9}" : "";
-}
-function anticipatedPointMarker() {
-  return "\u{1F6A9}";
 }
 function unservedPetitumMarker(hasServedBy) {
   return hasServedBy ? "" : "\u{1F9B5}";
@@ -85494,7 +85520,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "ba2cf46616df";
+var BUILD_STAMP = false ? null : "4c1a91703a3c";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85538,7 +85564,7 @@ function buildStampStatus(env = process.env) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 76;
+var BAKED_SCHEMA_VERSION = false ? null : 77;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -86033,28 +86059,28 @@ function effectiveStatus(input) {
     const hash = passageHash(item.passage);
     const freshness = freshnessOf(item, input.checked);
     const row2 = byRef.get(item.rule_ref);
-    let status = input.learned ? "unconfirmed" : "vetted";
+    let status2 = input.learned ? "unconfirmed" : "vetted";
     let practitioner = false;
     if (row2?.status === "corrected") {
-      status = "corrected";
+      status2 = "corrected";
       out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
     } else if (row2?.status === "confirmed") {
       if (row2.confirmed_against.passage_hash === hash) {
-        status = input.learned ? "confirmed" : "vetted";
+        status2 = input.learned ? "confirmed" : "vetted";
       } else {
         out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
       }
     } else if (input.practitionerConfirms && item.source === "practitioner" && input.learned) {
-      status = "confirmed";
+      status2 = "confirmed";
       practitioner = true;
     }
     if (row2 && row2.confirmed_against.passage_hash === hash && row2.confirmed_against.currency !== item.currency) {
       out.currency_moved.push({ rule_ref: row2.rule_ref, confirmed_currency: row2.confirmed_against.currency, currency: item.currency });
     }
-    if (freshness === "missing" && (status === "confirmed" || status === "corrected")) status = "unconfirmed";
+    if (freshness === "missing" && (status2 === "confirmed" || status2 === "corrected")) status2 = "unconfirmed";
     out.items.push({
       rule_ref: item.rule_ref,
-      status,
+      status: status2,
       freshness,
       passage_hash: hash,
       currency: item.currency,
@@ -86706,17 +86732,17 @@ async function checkRecord(record2, fetcher) {
   const facts = { record: record2.path, page_url: record2.page_url };
   const hosts = /* @__PURE__ */ new Set();
   const done = (gap2) => ({ ...facts, hosts_fetched: [...hosts], ...gap2 ? { gap: gap2 } : {} });
-  const page = await fetcher.fetchSource(record2.page_url);
-  page.hosts.forEach((host) => hosts.add(host));
-  if (!page.ok) {
-    if (page.reason === "fetch_failed" && page.status !== void 0) facts.page_status = page.status;
-    return done(gapOf(page));
+  const page2 = await fetcher.fetchSource(record2.page_url);
+  page2.hosts.forEach((host) => hosts.add(host));
+  if (!page2.ok) {
+    if (page2.reason === "fetch_failed" && page2.status !== void 0) facts.page_status = page2.status;
+    return done(gapOf(page2));
   }
-  facts.page_status = page.status;
-  const html = page.bytes.toString("utf-8");
+  facts.page_status = page2.status;
+  const html = page2.bytes.toString("utf-8");
   const joined = htmlBlocks(html).join(" ");
   if (joined === "") {
-    return done({ reason: "fetch_failed", host: new URL(page.final_url).hostname, url: page.final_url, detail: "empty_text" });
+    return done({ reason: "fetch_failed", host: new URL(page2.final_url).hostname, url: page2.final_url, detail: "empty_text" });
   }
   if (record2.marker_pattern) {
     const found = markersFound(joined, record2.marker_pattern);
@@ -86726,7 +86752,7 @@ async function checkRecord(record2, fetcher) {
   }
   let pdfGap;
   if (record2.pdf_url) {
-    facts.pdf_linked_from_page = pdfLinkedFromPage(html, page.final_url, record2.pdf_url);
+    facts.pdf_linked_from_page = pdfLinkedFromPage(html, page2.final_url, record2.pdf_url);
     const pdf = await fetcher.fetchSource(record2.pdf_url);
     pdf.hosts.forEach((host) => hosts.add(host));
     if (pdf.ok) {
@@ -87025,11 +87051,11 @@ function sidecarRows(kp, seams, label2) {
   }
   return rows22;
 }
-function blockOf(kp, content, status, items) {
+function blockOf(kp, content, status2, items) {
   const kindOf = blockKindOf(kp);
   if (!kindOf) return {};
   const known = new Set(items.map((item) => item.rule_ref));
-  const corrections = status.corrections.map(({ rule_ref, value }) => ({ rule_ref, value }));
+  const corrections = status2.corrections.map(({ rule_ref, value }) => ({ rule_ref, value }));
   const uncited = (refs) => {
     const missing = refs.filter((ref) => !known.has(ref));
     if (missing.length) {
@@ -87089,7 +87115,7 @@ function knowledgeRead(path, seams = {}) {
   }
   const learned = learnedBy === "agent";
   const { items, shadowed_sources } = itemsOf(kp, front, seams, label2);
-  const status = effectiveStatus({
+  const status2 = effectiveStatus({
     items,
     rows: sidecarRows(kp, seams, label2),
     learned,
@@ -87103,8 +87129,8 @@ function knowledgeRead(path, seams = {}) {
     content,
     learned,
     header: headerOf(front),
-    ...status,
-    ...blockOf(kp, content, status, items),
+    ...status2,
+    ...blockOf(kp, content, status2, items),
     ...served.shadowed ? { shadowed_local: { path: served.shadowed.abs, identical: identicalText(content, served.shadowed.text) } } : {},
     ...shadowed_sources.length ? { shadowed_sources } : {},
     ...provenance3(served.shipped_from, seams)
@@ -88915,16 +88941,16 @@ function renderEvidenceIndex(ctx) {
   lines2.push("| --- | --- | --- | --- |");
   docs.forEach((d3) => {
     const date3 = d3.document_date ?? "undated";
-    const status = tenderStatus.get(d3.document_id);
+    const status2 = tenderStatus.get(d3.document_id);
     const eligible = isExhibitTenderRole(d3.role);
-    const marker = eligible ? unsponsoredExhibitMarker(status.hasTender) : "";
-    const spentGlyphs = eligible ? status.spentGlyphs : "";
+    const marker = eligible ? unsponsoredExhibitMarker(status2.hasTender) : "";
+    const spentGlyphs = eligible ? status2.spentGlyphs : "";
     const gap2 = d3.description ? "" : ` ${gapMarker("not_recorded")}`;
     recordGlyphs(ctx.inventory, gap2.trim(), ["\u{1F3F7}\uFE0F"], { table: "documents", id: d3.document_id, item: d3.label });
     const copyMarker = copyMarkers.get(d3.document_id) ?? "";
     const markers = printMarkerSets([[gap2.trim(), spentGlyphs, marker, copyMarker].filter(Boolean).join(" ")]);
     lines2.push(
-      `| Ex. ${exhibitMap.get(d3.document_id)} | ${date3} | ${d3.description ?? "(not recorded)"}${markers ? ` ${markers}` : ""} | ${status.tenderedBy} | <!-- document_id ${d3.document_id} -->`
+      `| Ex. ${exhibitMap.get(d3.document_id)} | ${date3} | ${d3.description ?? "(not recorded)"}${markers ? ` ${markers}` : ""} | ${status2.tenderedBy} | <!-- document_id ${d3.document_id} -->`
     );
   });
   if (docs.some((d3) => d3.file_path)) {
@@ -89284,34 +89310,6 @@ function renderRhetoricFiled(row2, n3, prefix, citePrefix = "> ") {
   }
   return lines2;
 }
-var FORM_PARTS = {
-  notice_of_application: ["facts", "submissions", "orders"],
-  application_response: ["facts", "submissions"],
-  requisition_default_judgment: [],
-  requisition_consent: [],
-  submissions_package: ["submissions", "orders"],
-  bcca_stay_response: ["facts", "submissions", "orders"],
-  bcca_factum: ["facts", "submissions", "orders"]
-};
-var GENERAL_FORM_PARTS = ["submissions", "orders"];
-var NO_WRITTEN_ARGUMENT_COMPANION = /* @__PURE__ */ new Set(["submissions_package", "bcca_stay_response", "bcca_factum"]);
-var WRITTEN_ARGUMENT_PARTS = ["submissions", "orders"];
-function rhetoricPrintable(kind, document2, part) {
-  if (document2 === "written_argument") return !NO_WRITTEN_ARGUMENT_COMPANION.has(kind) && WRITTEN_ARGUMENT_PARTS.includes(part);
-  return (FORM_PARTS[kind] ?? GENERAL_FORM_PARTS).includes(part);
-}
-function fetchProceedingRhetoric(dbPath, proceedingId) {
-  if (!rhetoricHeld(dbPath)) return [];
-  return rows3(dbPath, `SELECT id, wording FROM rhetorical_paragraphs WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-function fetchFilingRhetoricPlacements(dbPath, filingId) {
-  if (!rhetoricHeld(dbPath)) return [];
-  return rows3(
-    dbPath,
-    `SELECT rhetorical_paragraph_id, document, part FROM filing_rhetoric WHERE filing_id = ? ORDER BY document, part, ordinal, id`,
-    [filingId]
-  );
-}
 
 // src/submission/pre-filing/checks.ts
 var EXHIBIT_FILE_RE = /^Exhibit (\d+)\b/i;
@@ -89549,8 +89547,8 @@ function formatFlag(rules) {
 
 // src/submission/forms/projections.ts
 function currencyLabel(w3) {
-  const status = w3.currency_status ?? "unchecked";
-  return w3.provision === null ? status : `${w3.provision} ${status}`;
+  const status2 = w3.currency_status ?? "unchecked";
+  return w3.provision === null ? status2 : `${w3.provision} ${status2}`;
 }
 var SIGNING_SPACE = "________________________________";
 function gap(ctx, state, what, row2 = { table: "layout_parts", id: state.part }) {
@@ -90254,12 +90252,12 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
     throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
-  const status = args.status;
-  if (!STATUSES.includes(status)) throw new ValidationError(`${TOOL3}.status must be confirmed, inferred or declined`, "invalid_status");
+  const status2 = args.status;
+  if (!STATUSES.includes(status2)) throw new ValidationError(`${TOOL3}.status must be confirmed, inferred or declined`, "invalid_status");
   const statement = args.statement ?? null;
-  if (status === "declined" ? statement !== null : typeof statement !== "string" || statement.trim() === "") {
+  if (status2 === "declined" ? statement !== null : typeof statement !== "string" || statement.trim() === "") {
     throw new ValidationError(
-      status === "declined" ? `${TOOL3}: a declined statement of goals carries no statement` : `${TOOL3}.statement must be the statement of goals, not blank`,
+      status2 === "declined" ? `${TOOL3}: a declined statement of goals carries no statement` : `${TOOL3}.statement must be the statement of goals, not blank`,
       "invalid_statement"
     );
   }
@@ -90294,7 +90292,7 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   if (at !== void 0 && (!Number.isInteger(at) || at < 1 || at > merged.length)) {
     throw new ValidationError(`${TOOL3}.merged_index must be between 1 and ${merged.length}, the board's merged statements`, "invalid_merged_index");
   }
-  if (at !== void 0 && status === "declined") {
+  if (at !== void 0 && status2 === "declined") {
     throw new ValidationError(`${TOOL3}: a merged statement is confirmed or inferred, never declined`, "invalid_status");
   }
   const description = args.description ?? (at === void 0 ? prior?.description : merged[at - 1].description) ?? null;
@@ -90307,7 +90305,7 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
         ORDER BY key`
   ).rows.map((r3) => r3.key).filter((k3) => k3 !== key && !(k3.startsWith(PROCEEDING_PREFIX) && index.proceedingSurvives(Number(k3.slice(PROCEEDING_PREFIX.length)))));
   const entry = `json_object('description', ?, 'statement', ?, 'status', ?, 'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW})`;
-  const entryParams = [description, statement, status, status, args.session_token];
+  const entryParams = [description, statement, status2, status2, args.session_token];
   const write = at !== void 0 ? { sql: `json_set(json(?), '$.merged[${at - 1}]', json_set(${entry}, '$.from', ?))`, params: [JSON.stringify(prior), ...entryParams, merged[at - 1].from] } : merged.length > 0 ? { sql: `json_set(${entry}, '$.merged', json(?))`, params: [...entryParams, JSON.stringify(merged)] } : { sql: entry, params: entryParams };
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -90322,16 +90320,16 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   if (whole === null) throw new DataServerError(`${TOOL3}: ${key} is missing after the write`, "write_failed");
   const stored = at === void 0 ? whole : whole.merged[at - 1];
   const label2 = `${onFiling ? `Job Board ${id}` : `proceeding ${id}'s board`}${at === void 0 ? "" : ` (merged statement ${at})`}`;
-  const note = status === "confirmed" ? `The statement of goals on ${label2} is recorded as confirmed (approved_at ${stored.approved_at}). Re-render to show it.` : status === "inferred" ? `The statement of goals on ${label2} is recorded as inferred: the session's wording, not confirmed. Re-render to show it.` : `The practitioner's decline is recorded on ${label2}: no statement is stored. Re-render to show it.`;
+  const note = status2 === "confirmed" ? `The statement of goals on ${label2} is recorded as confirmed (approved_at ${stored.approved_at}). Re-render to show it.` : status2 === "inferred" ? `The statement of goals on ${label2} is recorded as inferred: the session's wording, not confirmed. Re-render to show it.` : `The practitioner's decline is recorded on ${label2}: no statement is stored. Re-render to show it.`;
   return {
     key,
     ...onFiling ? { filing_id: id } : { proceeding_id: id },
     description: stored.description,
     statement: stored.statement,
-    status,
+    status: status2,
     approved_at: stored.approved_at,
     updated_at: stored.updated_at,
-    session_wording: status === "inferred",
+    session_wording: status2 === "inferred",
     stale_keys_removed: stale,
     note,
     ...written.warning ? { warning: written.warning } : {}
@@ -90700,10 +90698,10 @@ function renderGeneral(ctx, stored, cited2) {
     }
   });
   const recipients = fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties);
-  const sent = recipients.filter((r3) => r3.role !== "bcc");
+  const sent2 = recipients.filter((r3) => r3.role !== "bcc");
   const declaresRecipients = Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("recipients");
-  const noTo = declaresRecipients && !sent.some((r3) => r3.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];
-  if (noTo.length + sent.length > 0) lines2.push("", ...noTo, ...sent.map((r3) => recipientEntry(r3, r3.role === "to" ? "To" : "cc")));
+  const noTo = declaresRecipients && !sent2.some((r3) => r3.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];
+  if (noTo.length + sent2.length > 0) lines2.push("", ...noTo, ...sent2.map((r3) => recipientEntry(r3, r3.role === "to" ? "To" : "cc")));
   const authorities = fetchFilingLaw(ctx.dbPath, ctx.filing.id);
   const authorityItems = [...authorityUnconfirmed(ctx.filing, layout) ? [UNCONFIRMED_AUTHORITY_LINE] : [], ...authorities.map((row2) => authorityCitedLine(ctx, row2))];
   const pageLimit = scalarValue(layout.page_limit);
@@ -91223,7 +91221,8 @@ var HELD_CRITERIA = ["primary-authority", "excerpts", "noting-up", "recipients"]
 function holdsBeforeSend(filing) {
   return filing.needs_forum_parts === 0 || filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general";
 }
-var NEVER_DELIVERED_DOCS = /* @__PURE__ */ new Set(["Counsel_brief", "Work_board"]);
+var RESERVE_INVENTORY_DOC = "Counsel_brief";
+var NEVER_DELIVERED_DOCS = /* @__PURE__ */ new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
 function isEvidenceWork(e3) {
   return !NEVER_DELIVERED_DOCS.has(e3.doc) && EVIDENCE.members(e3);
 }
@@ -93930,9 +93929,9 @@ function renderWrittenArguments(ctx, documentKey) {
       const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
       const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
       const rebuttal = rebuttalMarker(op.answered_by_submission_id);
-      const status = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
+      const status2 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
       recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
-      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status ? ` ${status}` : ""} <!-- opposing_point_id ${op.id} -->`);
+      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status2 ? ` ${status2}` : ""} <!-- opposing_point_id ${op.id} -->`);
     }
     lines2.push("");
   }
@@ -93953,37 +93952,25 @@ function fetchProceedingOrders(dbPath, proceedingId) {
   const edgesByOrder = fetchJurisdictionEdges(dbPath, orders.map((o3) => o3.id));
   return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
 }
-function fetchOtherFilingDeployments(dbPath, proceedingId, filingId, today4) {
+function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
   const filings = rows12(
     dbPath,
-    // A Job Board with no Writing deploys nothing and is no filing to name here.
+    // A Job Board with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
     [proceedingId, filingId, JOB_BOARD_KIND]
   );
-  const orders = /* @__PURE__ */ new Map();
-  const submissions = /* @__PURE__ */ new Map();
-  const rhetoric = /* @__PURE__ */ new Map();
-  const held = rhetoricHeld(dbPath);
-  const add = (map, id, label2) => {
-    const labels = map.get(id) ?? [];
-    if (!labels.includes(label2)) labels.push(label2);
-    map.set(id, labels);
-  };
+  const orders = /* @__PURE__ */ new Set();
+  const submissions = /* @__PURE__ */ new Set();
   for (const f3 of filings) {
-    const label2 = `${f3.title} (${LIFECYCLE_LABELS[deriveLifecycle(f3, fetchHearingDate(dbPath, f3.id), today4).state]})`;
     for (const r3 of rows12(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
-      add(orders, r3.order_sought_id, label2);
+      orders.add(r3.order_sought_id);
     }
-    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) add(orders, id, label2);
+    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
     for (const r3 of rows12(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
-      add(submissions, r3.submission_id, label2);
-    }
-    if (!held) continue;
-    for (const r3 of rows12(dbPath, `SELECT rhetorical_paragraph_id FROM filing_rhetoric WHERE filing_id = ?`, [f3.id])) {
-      add(rhetoric, r3.rhetorical_paragraph_id, label2);
+      submissions.add(r3.submission_id);
     }
   }
-  return { orders, submissions, rhetoric };
+  return { orders, submissions };
 }
 function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
   const relied = rows12(
@@ -94009,20 +93996,6 @@ function fetchProceedingSubmissions(dbPath, proceedingId) {
     [proceedingId]
   );
 }
-function fetchKilledSubmissions(dbPath, proceedingId) {
-  return rows12(
-    dbPath,
-    `SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id`,
-    [proceedingId]
-  );
-}
-function fetchKilledAuthorities(dbPath, proceedingId) {
-  return rows12(
-    dbPath,
-    `SELECT id, style_of_cause_or_title, citation, killed_on FROM authorities WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id`,
-    [proceedingId]
-  );
-}
 function fetchStruckSubmissionIds(dbPath, proceedingId) {
   const served = rows12(
     dbPath,
@@ -94039,32 +94012,14 @@ function fetchStruckSubmissionIds(dbPath, proceedingId) {
   }
   return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
 }
-function fetchProceedingStatements(dbPath, proceedingId) {
-  return rows12(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, f.postulate, sof.excerpt, sof.purpose
-     FROM statements_of_fact sof JOIN facts f ON f.id = sof.fact_id
-     WHERE sof.proceeding_id = ? ORDER BY sof.id`,
-    [proceedingId]
-  );
-}
-function fetchProceedingFacts(dbPath, proceedingId) {
-  return rows12(dbPath, `SELECT id, postulate, adverse FROM facts WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-function fetchAnticipatedPoints(dbPath, proceedingId) {
-  return rows12(dbPath, `SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id`, [proceedingId]);
-}
-function renderCounselBrief(ctx) {
+function recordReserveInventory(ctx) {
   const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
   const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
   const deployedOrders = /* @__PURE__ */ new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
   const deployedSubmissions = /* @__PURE__ */ new Set([...formIds.submissionIds, ...waIds.submissionIds]);
-  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, ctx.rendered.slice(0, 10));
-  const pooledOrders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id);
-  const orders = pooledOrders.filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
-  const ordersElsewhere = pooledOrders.filter((o3) => !deployedOrders.has(o3.id) && elsewhere.orders.has(o3.id));
+  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
+  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
   const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
-  const statements = fetchProceedingStatements(ctx.dbPath, ctx.proceeding.id);
   const submissionIds = submissions.map((s3) => s3.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
   const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
@@ -94088,7 +94043,7 @@ function renderCounselBrief(ctx) {
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
   const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
-  function renderBody(s3, startPara, renderedLawAssertions, paragraphPrefix, extraFirstParagraphMarker) {
+  function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
     return renderSubmissionParagraphs(
       s3.id,
       s3.contention,
@@ -94098,166 +94053,37 @@ function renderCounselBrief(ctx) {
       exhibitMap,
       labelMap,
       copyMarkers,
-      extraFirstParagraphMarker,
-      renderedLawAssertions,
-      // Site 21: the Counsel Brief is the only surface where lead statements print, so the
-      // statement-line 🔬 and its 📇 come only from here (design §4). A statement whose law
-      // assertion nothing on a live Writing relies on raises no 🔬 (spec R6, schema v47). The test
-      // is per statement, not per submission: a lead under a reserved submission keeps 🔬 while
-      // another live-deployed submission or order requires the same proposition.
+      "",
+      renderedLawAssertions2,
+      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
+      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
+      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
+      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
+      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
       { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
     );
   }
-  const lines2 = [];
-  lines2.push(frontmatterFor7(ctx, "Counsel_brief"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
-  lines2.push("");
-  lines2.push("*Privileged and confidential \u2014 counsel's eyes only. Never delivered.*");
-  lines2.push("");
-  lines2.push("## Orders sought");
-  lines2.push("");
   for (const o3 of orders) {
-    const struck2 = o3.crossed_out_on !== null;
-    const wording = struck2 ? `~~${o3.wording}~~` : o3.wording;
-    const reserved = reservedMarker(deployedOrders.has(o3.id));
-    let marker = reserved;
-    if (reserved && !struck2) {
-      const jurMarker = recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
-      const petitum = unservedPetitumMarker(o3.hasServedBy);
-      recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
-      marker = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, reserved])]);
-    }
-    lines2.push(`- ${wording}${marker ? ` ${marker}` : ""} <!-- order_sought_id ${o3.id} -->`);
-  }
-  lines2.push("");
-  if (ordersElsewhere.length > 0) {
-    lines2.push("## Orders used on other filings");
-    lines2.push("");
-    for (const o3 of ordersElsewhere) {
-      const wording = o3.crossed_out_on !== null ? `~~${o3.wording}~~` : o3.wording;
-      lines2.push(`- ${wording} \u2014 ${elsewhere.orders.get(o3.id)?.join("; ")} <!-- order_sought_id ${o3.id} -->`);
-    }
-    lines2.push("");
+    if (deployedOrders.has(o3.id) || o3.crossed_out_on !== null) continue;
+    recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
+    recordGlyphs(ctx.inventory, unservedPetitumMarker(o3.hasServedBy), ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
   }
   const numbered = submissions.filter((s3) => ctx.paragraphLedger.has(s3.id));
-  const struck = submissions.filter((s3) => !ctx.paragraphLedger.has(s3.id) && struckIds.has(s3.id));
-  const unnumbered = submissions.filter((s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id));
-  const isElsewhere = (s3) => !deployedSubmissions.has(s3.id) && elsewhere.submissions.has(s3.id);
-  const held = unnumbered.filter((s3) => !isElsewhere(s3));
-  const submissionsElsewhere = unnumbered.filter(isElsewhere);
-  lines2.push("## Submissions");
-  lines2.push("");
+  const held = submissions.filter(
+    (s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id) && (deployedSubmissions.has(s3.id) || !elsewhere.submissions.has(s3.id))
+  );
   for (const documentKey of ["form", "written_argument"]) {
     const group = numbered.filter((s3) => ctx.paragraphLedger.get(s3.id)?.document === documentKey).sort((a3, b3) => (ctx.paragraphLedger.get(a3.id)?.para ?? 0) - (ctx.paragraphLedger.get(b3.id)?.para ?? 0));
-    if (group.length === 0) continue;
-    lines2.push(
-      documentKey === "form" ? "*Paragraph numbers as in this filing's venue document (mockup).*" : "*Paragraph numbers as in the Written Arguments (mockup).*"
-    );
-    const renderedLawAssertions = /* @__PURE__ */ new Map();
+    const renderedLawAssertions2 = /* @__PURE__ */ new Map();
     for (const s3 of group) {
       const entry = ctx.paragraphLedger.get(s3.id);
       if (entry === void 0) continue;
-      lines2.push(...renderBody(s3, entry.para - 1, renderedLawAssertions, "", "").lines);
-      lines2.push("");
+      recordBody(s3, entry.para - 1, renderedLawAssertions2, "");
     }
   }
-  for (const s3 of struck) {
-    lines2.push(`~~${s3.contention}~~ (crossed out \u2014 every order it serves is crossed out) <!-- submission_id ${s3.id} -->`);
-  }
-  if (struck.length > 0) lines2.push("");
-  if (held.length > 0) {
-    lines2.push("## Held in reserve");
-    lines2.push("");
-    lines2.push("*Numbered independently (R1, R2, \u2026): these appear on no face of this filing, so there is no paragraph number to share.*");
-    const renderedLawAssertions = /* @__PURE__ */ new Map();
-    let r3 = 0;
-    for (const s3 of held) {
-      const result = renderBody(s3, r3, renderedLawAssertions, "R", reservedMarker(deployedSubmissions.has(s3.id)));
-      lines2.push(...result.lines);
-      lines2.push("");
-      r3 = result.nextPara;
-    }
-  }
-  if (submissionsElsewhere.length > 0) {
-    lines2.push("## Submissions used on other filings");
-    lines2.push("");
-    for (const s3 of submissionsElsewhere) {
-      lines2.push(`- ${s3.contention} \u2014 ${elsewhere.submissions.get(s3.id)?.join("; ")} <!-- submission_id ${s3.id} -->`);
-    }
-    lines2.push("");
-  }
-  const killedSubmissions = fetchKilledSubmissions(ctx.dbPath, ctx.proceeding.id);
-  if (killedSubmissions.length > 0) {
-    lines2.push("## Killed submissions");
-    lines2.push("");
-    for (const s3 of killedSubmissions) {
-      lines2.push(`- ${s3.contention} (killed ${s3.killed_on}) <!-- submission_id ${s3.id} -->`);
-    }
-    lines2.push("");
-  }
-  const rhetoricRows = fetchProceedingRhetoric(ctx.dbPath, ctx.proceeding.id);
-  if (rhetoricRows.length > 0) {
-    const placements = fetchFilingRhetoricPlacements(ctx.dbPath, ctx.filing.id);
-    lines2.push("## Rhetorical paragraphs");
-    lines2.push("");
-    for (const rp of rhetoricRows) {
-      const here = placements.filter((p3) => p3.rhetorical_paragraph_id === rp.id);
-      const trace = `<!-- rhetorical_paragraph_id ${rp.id} -->`;
-      if (here.length > 0) {
-        const printed = here.map((p3) => {
-          const kindLabel = p3.document === "written_argument" ? "the Written Arguments" : ctx.filing.kind;
-          const notPrinted = rhetoricPrintable(ctx.filing.kind, p3.document, p3.part) ? "" : ` (not printed: ${kindLabel} has no ${p3.part} part)`;
-          return `${p3.document}, ${p3.part}${notPrinted}`;
-        });
-        lines2.push(`- ${rp.wording} \u2014 printed on ${printed.join("; ")} ${trace}`);
-      } else if (elsewhere.rhetoric.has(rp.id)) {
-        lines2.push(`- ${rp.wording} \u2014 ${elsewhere.rhetoric.get(rp.id)?.join("; ")} ${trace}`);
-      } else {
-        lines2.push(`- ${rp.wording} ${reservedMarker(false)} ${trace}`);
-      }
-    }
-    lines2.push("");
-  }
-  const killedAuthorities = fetchKilledAuthorities(ctx.dbPath, ctx.proceeding.id);
-  if (killedAuthorities.length > 0) {
-    lines2.push("## Killed authorities");
-    lines2.push("");
-    for (const a3 of killedAuthorities) {
-      const citation = a3.citation ? `, ${a3.citation}` : "";
-      lines2.push(`- ${a3.style_of_cause_or_title}${citation} (killed ${a3.killed_on}) <!-- authority_id ${a3.id} -->`);
-    }
-    lines2.push("");
-  }
-  const impeachment = statements.filter((s3) => s3.purpose === "impeachment");
-  if (impeachment.length > 0) {
-    lines2.push("## Impeachment material");
-    lines2.push("");
-    for (const s3 of impeachment) {
-      const content = s3.excerpt ? `"${s3.excerpt}" (re: ${s3.postulate})` : s3.postulate;
-      lines2.push(`- ${content} ${impeachmentMarker(s3.purpose)} <!-- statement_of_fact_id ${s3.id} -->`);
-    }
-    lines2.push("");
-  }
-  const facts = fetchProceedingFacts(ctx.dbPath, ctx.proceeding.id);
-  const adverseFacts = facts.filter((f3) => adverseFactMarker(f3.adverse) !== "");
-  if (adverseFacts.length > 0) {
-    lines2.push("## Adverse facts");
-    lines2.push("");
-    for (const f3 of adverseFacts) {
-      lines2.push(`- ${f3.postulate} ${adverseFactMarker(f3.adverse)} <!-- fact_id ${f3.id} -->`);
-    }
-    lines2.push("");
-  }
-  const anticipatedPoints = fetchAnticipatedPoints(ctx.dbPath, ctx.proceeding.id);
-  if (anticipatedPoints.length > 0) {
-    lines2.push("## Anticipated points");
-    lines2.push("");
-    for (const p3 of anticipatedPoints) {
-      lines2.push(`- ${p3.point} ${anticipatedPointMarker()} <!-- anticipated_point_id ${p3.id} -->`);
-    }
-    lines2.push("");
-  }
-  return lines2.join("\n").trimEnd() + "\n";
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  let r3 = 0;
+  for (const s3 of held) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
 }
 
 // src/submission/forms/render-notice-of-application.ts
@@ -94576,8 +94402,7 @@ var DOCUMENT_CODES = {
   Factum: { code: "FACTUM", name: "Factum" },
   Response_book: { code: "RB", name: "Response Book" },
   Written_arguments: { code: "WA", name: "Written Arguments" },
-  Evidence_index: { code: "INDEX", name: "Evidence Index" },
-  Counsel_brief: { code: "BRIEF", name: "Counsel Brief" }
+  Evidence_index: { code: "INDEX", name: "Evidence Index" }
 };
 var ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];
 function typeLabel(documentType, fileName) {
@@ -96583,6 +96408,251 @@ var ARGUMENTS_PAGE = {
   data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.writings.map((w3) => w3.filing))
 };
 
+// src/templates/view-pages/facts.css.ts
+var facts_css_default = '.controls{display:flex;flex-direction:column;gap:8px}\n.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}\n.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}\n.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}\np.note{margin:0 0 12px;font-size:13px;color:var(--muted)}\nul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\nli.fact .head{display:flex;gap:10px;align-items:baseline}\nli.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}\nli.fact .date{font-family:var(--mono);font-size:12px;white-space:nowrap}\nli.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}\nul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}\nul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}\nul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}\nul.evidence .decision{display:block;color:var(--deleted)}\nli.fact[data-class="pending"]{opacity:.5;border-style:dashed}\nli.fact[data-class="inadmissible"] .text{text-decoration:line-through}\n.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}';
+
+// src/templates/view-pages/facts.js.ts
+var facts_js_default = `(function () {
+  "use strict";
+  var view = window.VIEW_PAGE;
+  if (!view) return;
+  var data = view.data;
+  var board = document.querySelector(".board");
+  // Material Facts and Procedural History share this script: Procedural History's data is in date
+  // order and each fact carries its date.
+  var dated = data.order === "date";
+  var KEY = dated ? "coclerk.procedural-history.filters" : "coclerk.material-facts.filters";
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  var counts = { provable: 0, pending: 0, inadmissible: 0 };
+  data.facts.forEach(function (f) { counts[f["class"]] += 1; });
+
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+
+  var controls = el("section", "controls");
+  var countRow = el("p", "counts");
+  [
+    ["Provable", counts.provable],
+    ["Not yet in evidence", counts.pending],
+    ["Inadmissible evidence only", counts.inadmissible]
+  ].forEach(function (pair) {
+    var span = el("span", "", String(pair[1]));
+    span.setAttribute("data-k", pair[0]);
+    countRow.appendChild(span);
+  });
+  controls.appendChild(countRow);
+  board.appendChild(controls);
+
+  var list = el("section");
+  var h2 = el("h2", "", "Facts ");
+  h2.appendChild(el("span", "count", String(data.facts.length)));
+  list.appendChild(h2);
+  list.appendChild(el("p", "note", dated ? "In the order the steps happened." : "In the order the Writing states the facts."));
+  var EVIDENCE_NOTES = {
+    never_rendered: "This Writing has not been rendered yet, so no evidence shows as in hand.",
+    changed_since: "The matter's data has changed since this Writing was last rendered, so no evidence shows as in hand until it is rendered again."
+  };
+  if (data.evidence !== "read") list.appendChild(el("p", "note", EVIDENCE_NOTES[data.evidence]));
+  var empty = el("p", "empty", "");
+  var ul = el("ul", "facts");
+
+  var STATES = { in_hand: "in hand", pending: "not yet in hand", inadmissible: "inadmissible" };
+  data.facts.forEach(function (f) {
+    var li = el("li", "fact");
+    li.setAttribute("data-class", f["class"]);
+    var head = el("div", "head");
+    head.appendChild(el("span", "num", f.position + "."));
+    if (dated) head.appendChild(el("span", "date", f.date));
+    head.appendChild(el("span", "text", f.text));
+    li.appendChild(head);
+    if (f.basis !== null) li.appendChild(el("p", "basis", f.basis));
+    if (f.links.length > 0) {
+      var ev = el("ul", "evidence");
+      f.links.forEach(function (l) {
+        var item = el("li", "", l.cite === null ? l.witness : l.witness + ": " + l.cite);
+        if (l.state !== null) item.appendChild(el("span", "chip", STATES[l.state]));
+        if (l.concern) {
+          var flag = el("span", "flag", "\u2691 admissibility concern");
+          flag.setAttribute("title", l.concern);
+          item.appendChild(flag);
+        }
+        if (l.decided_on !== null) item.appendChild(el("span", "decision", "Recorded inadmissible on " + l.decided_on + (l.decision ? ": " + l.decision : "")));
+        ev.appendChild(item);
+      });
+      li.appendChild(ev);
+    }
+    ul.appendChild(li);
+  });
+  list.appendChild(ul);
+  list.appendChild(empty);
+  board.appendChild(list);
+
+  function apply() {
+    var shown = counts.provable + (board.classList.contains("show-pending") ? counts.pending : 0) + (board.classList.contains("show-inadmissible") ? counts.inadmissible : 0);
+    empty.textContent = data.facts.length === 0 ? (dated ? "This Writing uses no procedural facts." : "This Writing uses no material facts.") :"No fact to show. Tick a box above to show the others.";
+    empty.hidden = shown > 0;
+  }
+
+  [
+    ["pending", "Show facts not yet in evidence"],
+    ["inadmissible", "Show facts with only inadmissible evidence"]
+  ].forEach(function (pair) {
+    var label = el("label");
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = saved[pair[0]] === true;
+    board.classList.toggle("show-" + pair[0], box.checked);
+    box.addEventListener("change", function () {
+      board.classList.toggle("show-" + pair[0], box.checked);
+      saved[pair[0]] = box.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* the page works without it */ }
+      apply();
+    });
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(pair[1]));
+    controls.appendChild(label);
+  });
+  apply();
+})();`;
+
+// src/templates/view-pages/material-facts.html.ts
+var material_facts_html_default = '@@include(view-head.html)@@\n<title>Material Facts</title>\n<style>\n@@include(board.css)@@\n\n@@include(facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Material Facts</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(facts.js)@@\n</script>\n</body>\n</html>';
+
+// src/templates/view-pages/procedural-history.html.ts
+var procedural_history_html_default = '@@include(view-head.html)@@\n<title>Procedural History</title>\n<style>\n@@include(board.css)@@\n\n@@include(facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Procedural History</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(facts.js)@@\n</script>\n</body>\n</html>';
+
+// src/submission/forms/facts-pages.ts
+function rows15(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function factsInFilingOrder(dbPath, filingId) {
+  const found = rows15(
+    dbPath,
+    `SELECT f.*, cr.label AS court_record_label
+     FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
+           UNION ALL
+           SELECT fact_id, 1, ordinal, 0 FROM filing_facts WHERE filing_id = ? AND document = 'written_argument'
+           UNION ALL
+           SELECT sf.fact_id, CASE fs.document WHEN 'form' THEN 2 ELSE 3 END, fs.ordinal, sf.fact_id
+           FROM filing_submissions fs JOIN submission_facts sf ON sf.submission_id = fs.submission_id
+           WHERE fs.filing_id = ?) u
+     JOIN facts f ON f.id = u.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     ORDER BY u.grp, u.k1, u.k2`,
+    [filingId, filingId, filingId]
+  );
+  const seen = /* @__PURE__ */ new Set();
+  return found.filter((f3) => {
+    if (seen.has(f3.id)) return false;
+    seen.add(f3.id);
+    return true;
+  });
+}
+function statementsOf(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  return rows15(
+    dbPath,
+    `SELECT sof.*, w.name AS witness_name, ins.label AS instrument_label, ex.label AS exhibit_label
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents ins ON ins.id = sof.instrument
+     LEFT JOIN documents ex ON ex.id = sof.exhibit_id
+     WHERE sof.fact_id IN (${factIds.map(() => "?").join(", ")})
+     ORDER BY sof.id`,
+    factIds
+  );
+}
+function linksWithWork(inventory, statements) {
+  const work = inventory.filter(isEvidenceWork);
+  const open = /* @__PURE__ */ new Set();
+  for (const s3 of statements) {
+    const outstanding = work.some(
+      (e3) => e3.table === "statements_of_fact" && e3.id === s3.id || e3.table === "witnesses" && e3.generating && e3.statement_id === s3.id || e3.table === "documents" && (e3.id === s3.instrument || e3.id === s3.exhibit_id)
+    );
+    if (outstanding) open.add(s3.id);
+  }
+  return open;
+}
+function citeOf(s3) {
+  const labels = /* @__PURE__ */ new Map();
+  if (s3.instrument !== null && s3.instrument_label !== null) labels.set(s3.instrument, s3.instrument_label);
+  if (s3.exhibit_id !== null && s3.exhibit_label !== null) labels.set(s3.exhibit_id, s3.exhibit_label);
+  const line = factStatementCitationLine(/* @__PURE__ */ new Map(), labels, { instrument_id: s3.instrument, pinpoint: s3.pinpoint, exhibit_id: s3.exhibit_id, exhibit_pinpoint: s3.exhibit_pinpoint });
+  return line === null ? null : line.replace(/^> /, "");
+}
+function boardFacts(ctx) {
+  const parts = ctx.writings.map((w3) => factsFor({ ...ctx, filing: w3.filing, proceeding: w3.proceeding }));
+  const seen = /* @__PURE__ */ new Set();
+  const facts = [];
+  for (const { id, ...f3 } of parts.flatMap((p3) => p3.facts)) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    facts.push(f3);
+  }
+  return { evidence: parts.find((p3) => p3.evidence !== "read")?.evidence ?? "read", facts };
+}
+function materialFactsData(ctx) {
+  const { evidence, facts } = boardFacts(ctx);
+  return { order: "filing", evidence, facts: facts.filter((f3) => f3.date === null).map((f3, i3) => ({ ...f3, position: i3 + 1 })) };
+}
+function proceduralHistoryData(ctx) {
+  const { evidence, facts } = boardFacts(ctx);
+  const dated = facts.filter((f3) => f3.date !== null).sort((a3, b3) => a3.date.localeCompare(b3.date));
+  return { order: "date", evidence, facts: dated.map((f3, i3) => ({ ...f3, position: i3 + 1 })) };
+}
+function factsFor(ctx) {
+  const { dbPath, filing, proceeding, now, revision } = ctx;
+  const manifest = readManifest(mockupDir(dbPath, filing.id));
+  const inventory = manifest !== null && manifest.stamp.revision === revision ? manifest.inventory : null;
+  const facts = factsInFilingOrder(dbPath, filing.id);
+  const statements = statementsOf(dbPath, facts.map((f3) => f3.id)).filter((s3) => s3.purpose !== "impeachment");
+  const open = inventory === null ? /* @__PURE__ */ new Set() : linksWithWork(inventory, statements);
+  const unrecorded = facts.filter((f3) => f3.court_record === null).map((f3) => f3.id);
+  const opposing = unrecorded.length === 0 ? [] : fetchParties(dbPath, proceeding.id).filter((p3) => p3.is_client !== 1).map((p3) => p3.id);
+  const admitted = unrecorded.length === 0 ? /* @__PURE__ */ new Set() : fetchFactAdmissionCoverage(dbPath, unrecorded, opposing, now.slice(0, 10));
+  return {
+    evidence: manifest === null ? "never_rendered" : inventory === null ? "changed_since" : "read",
+    facts: facts.map((f3, i3) => {
+      const onRecord = f3.court_record !== null;
+      const guarded = onRecord || admitted.has(f3.id);
+      const links = statements.filter((s3) => s3.fact_id === f3.id);
+      const pageLinks = links.map((s3) => {
+        const decided = s3.inadmissible_on !== void 0 && s3.inadmissible_on !== null;
+        const state = decided ? "inadmissible" : guarded ? null : inventory !== null && !open.has(s3.id) ? "in_hand" : "pending";
+        return {
+          witness: s3.witness_name,
+          cite: citeOf(s3),
+          state,
+          concern: s3.admissibility_note,
+          decided_on: decided ? s3.inadmissible_on : null,
+          decision: decided ? s3.inadmissible_note ?? null : null
+        };
+      });
+      const basis = onRecord ? `On the court record${f3.court_record_label === null ? "" : `: ${f3.court_record_label}`}${f3.court_record_pinpoint ? `, ${f3.court_record_pinpoint}` : ""}` : admitted.has(f3.id) ? "Admitted by every opposing party" : null;
+      const cls = guarded || pageLinks.some((l3) => l3.state === "in_hand") ? "provable" : pageLinks.length > 0 && pageLinks.every((l3) => l3.state === "inadmissible") ? "inadmissible" : "pending";
+      return { id: f3.id, position: i3 + 1, date: f3.procedural_on ?? null, text: f3.postulate, class: cls, basis, links: pageLinks };
+    })
+  };
+}
+var SHARED = { "view-head.html": view_head_html_default, "board.css": board_css_default, "facts.css": facts_css_default, "shared.js": shared_js_default, "facts.js": facts_js_default };
+var PROCEDURAL_HISTORY = {
+  name: "Procedural History",
+  ...composeTemplate("procedural-history.html", { "procedural-history.html": procedural_history_html_default, ...SHARED }),
+  data: proceduralHistoryData
+};
+var MATERIAL_FACTS = {
+  name: "Material Facts",
+  ...composeTemplate("material-facts.html", { "material-facts.html": material_facts_html_default, ...SHARED }),
+  data: materialFactsData
+};
+
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
 import { existsSync as existsSync26, linkSync as linkSync2, mkdirSync as mkdirSync11, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
@@ -97059,236 +97129,6 @@ var LOOSE_IDEAS_PAGE = {
   metaExtra: looseIdeasMeta
 };
 
-// src/templates/view-pages/provable-facts.css.ts
-var provable_facts_css_default = '.controls{display:flex;flex-direction:column;gap:8px}\n.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}\n.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}\n.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}\np.note{margin:0 0 12px;font-size:13px;color:var(--muted)}\nul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\nli.fact .head{display:flex;gap:10px;align-items:baseline}\nli.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}\nli.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}\nul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}\nul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}\nul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}\nul.evidence .decision{display:block;color:var(--deleted)}\nli.fact[data-class="pending"]{opacity:.5;border-style:dashed}\nli.fact[data-class="inadmissible"] .text{text-decoration:line-through}\n.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}';
-
-// src/templates/view-pages/provable-facts.html.ts
-var provable_facts_html_default = '@@include(view-head.html)@@\n<title>Provable Facts</title>\n<style>\n@@include(board.css)@@\n\n@@include(provable-facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Provable Facts</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(provable-facts.js)@@\n</script>\n</body>\n</html>\n';
-
-// src/templates/view-pages/provable-facts.js.ts
-var provable_facts_js_default = `(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var board = document.querySelector(".board");
-  var KEY = "coclerk.provable-facts.filters";
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  var counts = { provable: 0, pending: 0, inadmissible: 0 };
-  data.facts.forEach(function (f) { counts[f["class"]] += 1; });
-
-  var saved = {};
-  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
-
-  var controls = el("section", "controls");
-  var countRow = el("p", "counts");
-  [
-    ["Provable", counts.provable],
-    ["Not yet in evidence", counts.pending],
-    ["Inadmissible evidence only", counts.inadmissible]
-  ].forEach(function (pair) {
-    var span = el("span", "", String(pair[1]));
-    span.setAttribute("data-k", pair[0]);
-    countRow.appendChild(span);
-  });
-  controls.appendChild(countRow);
-  board.appendChild(controls);
-
-  var list = el("section");
-  var h2 = el("h2", "", "Facts ");
-  h2.appendChild(el("span", "count", String(data.facts.length)));
-  list.appendChild(h2);
-  list.appendChild(el("p", "note", "In the order the Writing states the facts."));
-  var EVIDENCE_NOTES = {
-    never_rendered: "This Writing has not been rendered yet, so no evidence shows as in hand.",
-    changed_since: "The matter's data has changed since this Writing was last rendered, so no evidence shows as in hand until it is rendered again."
-  };
-  if (data.evidence !== "read") list.appendChild(el("p", "note", EVIDENCE_NOTES[data.evidence]));
-  var empty = el("p", "empty", "");
-  var ul = el("ul", "facts");
-
-  var STATES = { in_hand: "in hand", pending: "not yet in hand", inadmissible: "inadmissible" };
-  data.facts.forEach(function (f) {
-    var li = el("li", "fact");
-    li.setAttribute("data-class", f["class"]);
-    var head = el("div", "head");
-    head.appendChild(el("span", "num", f.position + "."));
-    head.appendChild(el("span", "text", f.text));
-    li.appendChild(head);
-    if (f.basis !== null) li.appendChild(el("p", "basis", f.basis));
-    if (f.links.length > 0) {
-      var ev = el("ul", "evidence");
-      f.links.forEach(function (l) {
-        var item = el("li", "", l.cite === null ? l.witness : l.witness + ": " + l.cite);
-        if (l.state !== null) item.appendChild(el("span", "chip", STATES[l.state]));
-        if (l.concern) {
-          var flag = el("span", "flag", "\u2691 admissibility concern");
-          flag.setAttribute("title", l.concern);
-          item.appendChild(flag);
-        }
-        if (l.decided_on !== null) item.appendChild(el("span", "decision", "Recorded inadmissible on " + l.decided_on + (l.decision ? ": " + l.decision : "")));
-        ev.appendChild(item);
-      });
-      li.appendChild(ev);
-    }
-    ul.appendChild(li);
-  });
-  list.appendChild(ul);
-  list.appendChild(empty);
-  board.appendChild(list);
-
-  function apply() {
-    var shown = counts.provable + (board.classList.contains("show-pending") ? counts.pending : 0) + (board.classList.contains("show-inadmissible") ? counts.inadmissible : 0);
-    empty.textContent = data.facts.length === 0 ? "This Writing uses no facts." : "No fact to show. Tick a box above to show the others.";
-    empty.hidden = shown > 0;
-  }
-
-  [
-    ["pending", "Show facts not yet in evidence"],
-    ["inadmissible", "Show facts with only inadmissible evidence"]
-  ].forEach(function (pair) {
-    var label = el("label");
-    var box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = saved[pair[0]] === true;
-    board.classList.toggle("show-" + pair[0], box.checked);
-    box.addEventListener("change", function () {
-      board.classList.toggle("show-" + pair[0], box.checked);
-      saved[pair[0]] = box.checked;
-      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* the page works without it */ }
-      apply();
-    });
-    label.appendChild(box);
-    label.appendChild(document.createTextNode(pair[1]));
-    controls.appendChild(label);
-  });
-  apply();
-})();`;
-
-// src/submission/forms/provable-facts-page.ts
-function rows15(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function factsInFilingOrder(dbPath, filingId) {
-  const found = rows15(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, cr.label AS court_record_label
-     FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
-           UNION ALL
-           SELECT fact_id, 1, ordinal, 0 FROM filing_facts WHERE filing_id = ? AND document = 'written_argument'
-           UNION ALL
-           SELECT sf.fact_id, CASE fs.document WHEN 'form' THEN 2 ELSE 3 END, fs.ordinal, sf.fact_id
-           FROM filing_submissions fs JOIN submission_facts sf ON sf.submission_id = fs.submission_id
-           WHERE fs.filing_id = ?) u
-     JOIN facts f ON f.id = u.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     ORDER BY u.grp, u.k1, u.k2`,
-    [filingId, filingId, filingId]
-  );
-  const seen = /* @__PURE__ */ new Set();
-  return found.filter((f3) => {
-    if (seen.has(f3.id)) return false;
-    seen.add(f3.id);
-    return true;
-  });
-}
-function statementsOf(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  return rows15(
-    dbPath,
-    `SELECT sof.*, w.name AS witness_name, ins.label AS instrument_label, ex.label AS exhibit_label
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents ins ON ins.id = sof.instrument
-     LEFT JOIN documents ex ON ex.id = sof.exhibit_id
-     WHERE sof.fact_id IN (${factIds.map(() => "?").join(", ")})
-     ORDER BY sof.id`,
-    factIds
-  );
-}
-function linksWithWork(inventory, statements) {
-  const work = inventory.filter(isEvidenceWork);
-  const open = /* @__PURE__ */ new Set();
-  for (const s3 of statements) {
-    const outstanding = work.some(
-      (e3) => e3.table === "statements_of_fact" && e3.id === s3.id || e3.table === "witnesses" && e3.generating && e3.statement_id === s3.id || e3.table === "documents" && (e3.id === s3.instrument || e3.id === s3.exhibit_id)
-    );
-    if (outstanding) open.add(s3.id);
-  }
-  return open;
-}
-function citeOf(s3) {
-  const labels = /* @__PURE__ */ new Map();
-  if (s3.instrument !== null && s3.instrument_label !== null) labels.set(s3.instrument, s3.instrument_label);
-  if (s3.exhibit_id !== null && s3.exhibit_label !== null) labels.set(s3.exhibit_id, s3.exhibit_label);
-  const line = factStatementCitationLine(/* @__PURE__ */ new Map(), labels, { instrument_id: s3.instrument, pinpoint: s3.pinpoint, exhibit_id: s3.exhibit_id, exhibit_pinpoint: s3.exhibit_pinpoint });
-  return line === null ? null : line.replace(/^> /, "");
-}
-function provableFactsData(ctx) {
-  const parts = ctx.writings.map((w3) => provableFactsFor({ ...ctx, filing: w3.filing, proceeding: w3.proceeding }));
-  const seen = /* @__PURE__ */ new Set();
-  const facts = [];
-  for (const { id, ...f3 } of parts.flatMap((p3) => p3.facts)) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    facts.push({ ...f3, position: facts.length + 1 });
-  }
-  return { evidence: parts.find((p3) => p3.evidence !== "read")?.evidence ?? "read", facts };
-}
-function provableFactsFor(ctx) {
-  const { dbPath, filing, proceeding, now, revision } = ctx;
-  const manifest = readManifest(mockupDir(dbPath, filing.id));
-  const inventory = manifest !== null && manifest.stamp.revision === revision ? manifest.inventory : null;
-  const facts = factsInFilingOrder(dbPath, filing.id);
-  const statements = statementsOf(dbPath, facts.map((f3) => f3.id)).filter((s3) => s3.purpose !== "impeachment");
-  const open = inventory === null ? /* @__PURE__ */ new Set() : linksWithWork(inventory, statements);
-  const unrecorded = facts.filter((f3) => f3.court_record === null).map((f3) => f3.id);
-  const opposing = unrecorded.length === 0 ? [] : fetchParties(dbPath, proceeding.id).filter((p3) => p3.is_client !== 1).map((p3) => p3.id);
-  const admitted = unrecorded.length === 0 ? /* @__PURE__ */ new Set() : fetchFactAdmissionCoverage(dbPath, unrecorded, opposing, now.slice(0, 10));
-  return {
-    evidence: manifest === null ? "never_rendered" : inventory === null ? "changed_since" : "read",
-    facts: facts.map((f3, i3) => {
-      const onRecord = f3.court_record !== null;
-      const guarded = onRecord || admitted.has(f3.id);
-      const links = statements.filter((s3) => s3.fact_id === f3.id);
-      const pageLinks = links.map((s3) => {
-        const decided = s3.inadmissible_on !== void 0 && s3.inadmissible_on !== null;
-        const state = decided ? "inadmissible" : guarded ? null : inventory !== null && !open.has(s3.id) ? "in_hand" : "pending";
-        return {
-          witness: s3.witness_name,
-          cite: citeOf(s3),
-          state,
-          concern: s3.admissibility_note,
-          decided_on: decided ? s3.inadmissible_on : null,
-          decision: decided ? s3.inadmissible_note ?? null : null
-        };
-      });
-      const basis = onRecord ? `On the court record${f3.court_record_label === null ? "" : `: ${f3.court_record_label}`}${f3.court_record_pinpoint ? `, ${f3.court_record_pinpoint}` : ""}` : admitted.has(f3.id) ? "Admitted by every opposing party" : null;
-      const cls = guarded || pageLinks.some((l3) => l3.state === "in_hand") ? "provable" : pageLinks.length > 0 && pageLinks.every((l3) => l3.state === "inadmissible") ? "inadmissible" : "pending";
-      return { id: f3.id, position: i3 + 1, text: f3.postulate, class: cls, basis, links: pageLinks };
-    })
-  };
-}
-var PROVABLE_FACTS = {
-  name: "Provable Facts",
-  ...composeTemplate("provable-facts.html", {
-    "provable-facts.html": provable_facts_html_default,
-    "view-head.html": view_head_html_default,
-    "board.css": board_css_default,
-    "provable-facts.css": provable_facts_css_default,
-    "shared.js": shared_js_default,
-    "provable-facts.js": provable_facts_js_default
-  }),
-  data: provableFactsData
-};
-
 // src/templates/view-pages/raw-research.css.ts
 var raw_research_css_default = ".filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\n.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}";
 
@@ -97506,25 +97346,26 @@ var RAW_RESEARCH_PAGE = {
 // src/submission/view-pages.ts
 var VIEW_PAGE_MARKER = "data-view-page";
 var VIEW_PAGES = [
-  PROVABLE_FACTS,
+  PROCEDURAL_HISTORY,
+  MATERIAL_FACTS,
   RAW_RESEARCH_PAGE,
   ARGUMENTS_PAGE,
   LOOSE_IDEAS_PAGE
 ];
-function viewPageFile(page, board) {
-  return board.filing_id === null ? `${page.name} - Job Board - proceeding ${board.proceeding_id}.html` : `${page.name} - Job Board ${board.filing_id}.html`;
+function viewPageFile(page2, board) {
+  return board.filing_id === null ? `${page2.name} - Job Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Job Board ${board.filing_id}.html`;
 }
 function escapeRegExp(text5) {
   return text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function isViewPageFile(fileName) {
-  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)} - Job Board (?:- proceeding )?\\d+\\.html$`, "i").test(fileName));
+  return VIEW_PAGES.some((page2) => new RegExp(`^${escapeRegExp(page2.name)} - Job Board (?:- proceeding )?\\d+\\.html$`, "i").test(fileName));
 }
-function renderViewPageHtml(page, meta2, data) {
-  const extra = page.metaExtra ? page.metaExtra(data) : void 0;
-  const line = JSON.stringify({ name: page.name, meta: meta2, extra, data }).replace(/</g, "\\u003c");
-  return `${page.head}window.VIEW_PAGE = ${line};
-${page.tail}`;
+function renderViewPageHtml(page2, meta2, data) {
+  const extra = page2.metaExtra ? page2.metaExtra(data) : void 0;
+  const line = JSON.stringify({ name: page2.name, meta: meta2, extra, data }).replace(/</g, "\\u003c");
+  return `${page2.head}window.VIEW_PAGE = ${line};
+${page2.tail}`;
 }
 
 // src/submission/matter-pages.ts
@@ -97559,7 +97400,7 @@ function writingsOf(group) {
   return group.members.filter((m3) => m3.filing !== null && !isJobOnlyBoard(m3.filing));
 }
 function viewTargets(groups) {
-  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page) => ({ page, group, writings, file: viewPageFile(page, group.board) })));
+  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page2) => ({ page: page2, group, writings, file: viewPageFile(page2, group.board) })));
 }
 function refuseForeignMatterPages(draftDir, dbPath) {
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
@@ -97580,10 +97421,10 @@ function guardTargets(names, views) {
   ];
 }
 function refuseForeignPages(draftDir, targets) {
-  for (const { name, marker, page } of targets) {
+  for (const { name, marker, page: page2 } of targets) {
     const file = join29(draftDir, name);
     if (existsSync27(file) && !readFileSync23(file, "utf-8").includes(marker)) {
-      throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page}'s marker, so this renderer did not write it`);
+      throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
 }
@@ -97594,7 +97435,7 @@ function writePage(file, html) {
 function stem(fileName) {
   return fileName.replace(/\.[^.]+$/, "");
 }
-var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+)\.html$/i;
+var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 function generatorWrote(file) {
   const text5 = readFileSync23(file, "utf-8");
   return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
@@ -99624,7 +99465,7 @@ function checkExecution(docs, instruments) {
   }
   const inScope = candidates.filter((d3) => deponentOf.has(d3) || d3.text_by_page && looksSigned(d3));
   for (const doc of inScope) {
-    const push = (page, quote, problem) => findings.push({ document: doc.file_name, page, quote, problem, severity: "high" });
+    const push = (page2, quote, problem) => findings.push({ document: doc.file_name, page: page2, quote, problem, severity: "high" });
     if (!doc.text_by_page) {
       push(1, doc.file_name, `could not be read: ${doc.error ?? "not a PDF or DOCX"}`);
       continue;
@@ -99971,7 +99812,7 @@ function buildContext(dbPath, proceeding, filing, parties2, revision, client, ap
     clientNo: client.clientNo ?? "",
     matterNo: client.matterNo ?? "",
     matterDescription: client.matterDescription ?? "",
-    // Fresh per filing: every renderSubmissionParagraphs call site fills it, renderCounselBrief
+    // Fresh per filing: every renderSubmissionParagraphs call site fills it, recordReserveInventory
     // reads it back. See the field's own doc comment on RenderContext.
     paragraphLedger: /* @__PURE__ */ new Map(),
     // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
@@ -100006,9 +99847,6 @@ function renderDocument(ctx, timings, documentType, fileName, render, label2 = t
   const markdown = timed(timings, `render ${fileName}`, render);
   stampDoc(ctx.inventory, from, documentType);
   return { documentType, fileName, markdown, label: label2 };
-}
-function withDelivery(doc) {
-  return { ...doc, neverDelivered: NEVER_DELIVERED_DOCS.has(doc.documentType) };
 }
 function layoutFor(filing) {
   return filing.layout_snapshot === null ? null : storedLayout(filing);
@@ -100072,7 +99910,9 @@ function documentsForFiling(ctx, timings, general, cited2) {
   if (companions.includes("written-arguments")) {
     docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));
   }
-  docs.push(withDelivery(renderDocument(ctx, timings, "Counsel_brief", "Counsel Brief.md", () => renderCounselBrief(ctx))));
+  const from = ctx.inventory.length;
+  recordReserveInventory(ctx);
+  stampDoc(ctx.inventory, from, RESERVE_INVENTORY_DOC);
   return docs;
 }
 function findMissingLawCitations(markdown) {
@@ -100376,7 +100216,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   if (drift.rows.length > 0) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
   if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };
   if (renderMode === "filed") {
-    const deliverable = built.filter((doc) => !doc.neverDelivered);
+    const deliverable = built;
     const missing = deliverable.map((doc) => ({ doc, ids: findMissingLawCitations(doc.markdown) })).filter((r3) => r3.ids.length > 0);
     if (missing.length > 0) {
       return {
@@ -100474,7 +100314,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const untracked = timed(
     timings,
     "citation_scan",
-    () => scanUntrackedCitations(dbPath, ctx.proceeding.id, built.filter((doc) => !NEVER_DELIVERED_DOCS.has(doc.documentType)), ctx.inventory)
+    () => scanUntrackedCitations(dbPath, ctx.proceeding.id, built, ctx.inventory)
   );
   if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
   timed(timings, "remove retired board files", () => {
@@ -104542,9 +104382,9 @@ function serve(composed, skill, prior) {
     inForce
   };
 }
-async function logServed(dbPath, token, path, sent, env) {
-  if (sent.length === 0) return null;
-  const statements = sent.map(({ rule }) => ({
+async function logServed(dbPath, token, path, sent2, env) {
+  if (sent2.length === 0) return null;
+  const statements = sent2.map(({ rule }) => ({
     sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW7})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
@@ -105014,45 +104854,74 @@ function suggestionLogPath(env) {
   return join34(dirname17(configPath(env)), "suggestions.local.json");
 }
 function readLog(file) {
-  if (!existsSync38(file)) return [];
-  const suggestions = readJson2(file).suggestions;
+  if (!existsSync38(file)) return { suggestions: [], held: [] };
+  const { suggestions, held = [] } = readJson2(file);
   if (!Array.isArray(suggestions)) throw new DataServerError(`${file} has no "suggestions" list`, "invalid_file");
-  return suggestions;
+  if (!Array.isArray(held)) throw new DataServerError(`${file} has a "held" entry that is not a list`, "invalid_file");
+  return { suggestions, held };
+}
+function writeLog(file, log) {
+  writeTextAtomic(file, `${JSON.stringify(log, null, 2)}
+`);
 }
 function suggestionLogRead(env = process.env) {
-  return { suggestions: readLog(suggestionLogPath(env)) };
+  return { ...readLog(suggestionLogPath(env)) };
 }
 async function suggestionLogWrite(args, env = process.env) {
   const file = suggestionLogPath(env);
-  const suggestionId = text4(args.suggestion_id, "suggestion_id");
   if (args.op === "add") {
+    const suggestionId = text4(args.suggestion_id, "suggestion_id");
     const title = text4(args.title, "title");
     return withFileLock(file, () => {
-      const suggestions = readLog(file);
-      if (suggestions.some((entry) => entry.suggestion_id === suggestionId)) return { status: "exists", suggestion_id: suggestionId };
-      suggestions.push({ suggestion_id: suggestionId, title, posted_on: today3(), last_status: "new", last_shown_status: null });
-      writeTextAtomic(file, `${JSON.stringify({ suggestions }, null, 2)}
-`);
+      const log = readLog(file);
+      if (log.suggestions.some((entry) => entry.suggestion_id === suggestionId)) return { status: "exists", suggestion_id: suggestionId };
+      log.suggestions.push({ suggestion_id: suggestionId, title, posted_on: today3(), last_status: "new", last_shown_status: null });
+      writeLog(file, log);
       return { status: "added", suggestion_id: suggestionId };
     });
   }
   if (args.op === "seen") {
-    const status = text4(args.status, "status");
-    if (!SUGGESTION_STATUSES.includes(status)) {
+    const suggestionId = text4(args.suggestion_id, "suggestion_id");
+    const status2 = text4(args.status, "status");
+    if (!SUGGESTION_STATUSES.includes(status2)) {
       throw new ValidationError(`status must be one of ${SUGGESTION_STATUSES.map((s3) => `"${s3}"`).join(", ")}`);
     }
     return withFileLock(file, () => {
-      const suggestions = readLog(file);
-      const entry = suggestions.find((candidate) => candidate.suggestion_id === suggestionId);
+      const log = readLog(file);
+      const entry = log.suggestions.find((candidate) => candidate.suggestion_id === suggestionId);
       if (!entry) throw new DataServerError(`no suggestion ${suggestionId} in this device's log`, "not_found");
-      entry.last_status = status;
-      entry.last_shown_status = status;
-      writeTextAtomic(file, `${JSON.stringify({ suggestions }, null, 2)}
-`);
-      return { status: "updated", suggestion_id: suggestionId, last_shown_status: status };
+      entry.last_status = status2;
+      entry.last_shown_status = status2;
+      writeLog(file, log);
+      return { status: "updated", suggestion_id: suggestionId, last_shown_status: status2 };
     });
   }
-  throw new ValidationError(`op must be "add" or "seen"`);
+  if (args.op === "hold") {
+    const draft = args.draft;
+    if (typeof draft !== "object" || draft === null || Array.isArray(draft)) {
+      throw new ValidationError("draft must be the suggestion as drafted: an object with title and body");
+    }
+    text4(draft.title, "draft.title");
+    text4(draft.body, "draft.body");
+    const entry = { held_id: randomUUID9(), held_on: today3(), draft };
+    return withFileLock(file, () => {
+      const log = readLog(file);
+      log.held.push(entry);
+      writeLog(file, log);
+      return { status: "held", held_id: entry.held_id };
+    });
+  }
+  if (args.op === "release") {
+    const heldId = text4(args.held_id, "held_id");
+    return withFileLock(file, () => {
+      const log = readLog(file);
+      const held = log.held.filter((entry) => entry.held_id !== heldId);
+      if (held.length === log.held.length) throw new DataServerError(`no held suggestion ${heldId} in this device's log`, "not_found");
+      writeLog(file, { ...log, held });
+      return { status: "released", held_id: heldId };
+    });
+  }
+  throw new ValidationError(`op must be "add", "seen", "hold" or "release"`);
 }
 
 // src/files/repo-docs.ts
@@ -105479,8 +105348,8 @@ async function pdfPages(path) {
     try {
       const pages = [];
       for (let n3 = 1; n3 <= doc.numPages; n3++) {
-        const page = await doc.getPage(n3);
-        const content = await page.getTextContent();
+        const page2 = await doc.getPage(n3);
+        const content = await page2.getTextContent();
         let text5 = "";
         for (const item of content.items) {
           if (!("str" in item)) continue;
@@ -105488,7 +105357,7 @@ async function pdfPages(path) {
           if (item.hasEOL) text5 += "\n";
         }
         pages.push(text5);
-        page.cleanup();
+        page2.cleanup();
       }
       return pages;
     } finally {
@@ -105542,10 +105411,10 @@ var SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
 var MAX_SAVE_ATTEMPTS = 100;
 var LAW_TEXT_SUBFOLDER = "law-text";
 function downloadsDir(env = process.env) {
-  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir9(), "Downloads");
-  const dir = canonicalRoot(probe, `Downloads folder not found at ${probe}`, "downloads_missing");
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir9(), "Downloads");
+  const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
   if (!statSync18(dir).isDirectory()) {
-    throw new DataServerError(`Downloads path is not a folder: ${probe}`, "downloads_missing");
+    throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
   }
   return dir;
 }
@@ -105838,8 +105707,8 @@ function writeNewVersion(dir, filename, body) {
   );
 }
 function nextVersionName(dir, stem2, ext) {
-  const escape2 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version2 = new RegExp(`^${escape2(stem2)}(?: v(\\d+))?${escape2(ext)}$`, "i");
+  const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const version2 = new RegExp(`^${escape3(stem2)}(?: v(\\d+))?${escape3(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync26(dir)) {
     const match = version2.exec(name);
@@ -106045,7 +105914,7 @@ function checkPages(pages, ext) {
   return { first, last };
 }
 function textLines(file, ext, bytes, range, seams) {
-  const split = (text5, page) => text5.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page }));
+  const split = (text5, page2) => text5.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page: page2 }));
   let lines2;
   let source;
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -106202,6 +106071,317 @@ async function saveAnswerTool(args, env = process.env) {
     ...warning
   };
 }
+
+// src/key-request/tools.ts
+import { createHash as createHash12, randomBytes as randomBytes6 } from "node:crypto";
+import { createServer as createServer2 } from "node:http";
+import { join as join36 } from "node:path";
+
+// src/key-request/page.ts
+import { randomBytes as randomBytes5 } from "node:crypto";
+import { createServer } from "node:http";
+var MAX_BODY = 4 * 1024;
+var TITLE2 = "Probanda's Cloud key";
+var pending;
+var listening;
+async function serveKeyPage(save2) {
+  const link = randomBytes5(24).toString("hex");
+  pending = { link, save: save2 };
+  listening ??= listen();
+  return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
+}
+function listen() {
+  const server = createServer((req, res) => {
+    handle(req, res).catch(() => {
+      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      else res.destroy();
+    });
+  });
+  server.on("connection", (socket) => socket.unref());
+  return new Promise((resolve8, reject) => {
+    server.once("error", (err) => {
+      listening = void 0;
+      reject(err);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      server.unref();
+      resolve8(server.address().port);
+    });
+  });
+}
+async function handle(req, res) {
+  const m3 = /^\/cloud-key\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const current = pending;
+  if (!m3 || !current || m3[1] !== current.link) {
+    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
+  }
+  if (req.method === "GET") return page(res, 200, TITLE2, FORM);
+  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
+  try {
+    await current.save(typed);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return page(res, 200, TITLE2, `<p class="error">Not saved: ${escape2(message)}</p>${FORM}`);
+  }
+  if (pending === current) pending = void 0;
+  page(
+    res,
+    200,
+    "Connected",
+    "<p>Connected to Probanda's Cloud. The key is saved on this computer, encrypted, and will be used after a restart.</p><p>You can close this tab and return to Claude.</p>"
+  );
+}
+var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer save practice records, send suggestions about the plugin and use the legal commons.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p><p class="note">No key yet? Return to Claude and ask to request Probanda's key.</p>`;
+function page(res, status2, title, body) {
+  res.writeHead(status2, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff"
+  });
+  res.end(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+  );
+}
+var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
+function escape2(text5) {
+  return text5.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+}
+function readBody(req) {
+  return new Promise((resolve8, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > MAX_BODY) {
+        reject(new Error("the form is larger than 4 KB"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve8(Buffer.concat(chunks).toString("utf-8")));
+    req.on("error", reject);
+  });
+}
+
+// src/key-request/save-key.ts
+async function configureCloudKey(env = process.env) {
+  const url = await serveKeyPage((typed) => saveKey(typed, env));
+  return {
+    status: "awaiting_key",
+    url,
+    next: "Send the practitioner this link and ask them to paste the key on that page, never in chat. When they say it is done, call practice_data__config_status: cloud_credential then reads present. The link works only on this computer, until a new link is made or the server restarts."
+  };
+}
+async function saveKey(typed, env) {
+  const staticKey = typed.trim();
+  if (!staticKey) throw new ValidationError("paste the key");
+  if (staticKey.startsWith("sb_publishable_")) {
+    throw new ValidationError(
+      "that is the project's publishable key, which cannot reach Probanda's Cloud. Paste the key Probanda gave you for this computer instead"
+    );
+  }
+  await probe((await loadCloudKey(env)).supabaseUrl, staticKey);
+  try {
+    await saveCommonsKey(staticKey, env);
+  } catch (error2) {
+    throw new ValidationError(
+      `the key works, but this computer could not save it: ${error2 instanceof Error ? error2.message : String(error2)}`
+    );
+  }
+}
+async function probe(supabaseUrl, staticKey) {
+  let res;
+  try {
+    res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: staticKey },
+      body: "{}"
+    });
+  } catch (error2) {
+    throw new ValidationError(
+      `Probanda's Cloud did not answer, so the key was not checked or saved: ${error2 instanceof Error ? error2.message : String(error2)}`
+    );
+  }
+  if (!res.ok) {
+    throw new ValidationError(`that key did not work against Probanda's Cloud (${res.status}): ${await res.text() || res.statusText}`);
+  }
+}
+
+// src/key-request/tools.ts
+var MAX_NAME = 200;
+var MAX_EMAIL = 254;
+var MAX_PHONE = 40;
+var TITLE3 = "Ask Probanda for a key";
+var pending2;
+var listening2;
+var sent;
+function requestPath(env = process.env) {
+  return join36(defaultStateDir(env), "key-request.json.dpapi");
+}
+function isKeyRequestToolName(name) {
+  return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
+}
+function callKeyRequestTool(name, env = process.env) {
+  switch (name) {
+    case "key_request__submit":
+      return submit(env);
+    case "key_request__status":
+      return status(env);
+    case "cloud_key__configure_credential":
+      return configureCloudKey(env);
+    default:
+      throw new ValidationError(`Unknown key_request tool "${name}"`);
+  }
+}
+async function submit(env) {
+  const key = await loadCloudKey(env);
+  if (key.configured) {
+    throw new ValidationError("this computer already holds Probanda's key (practice_data__config_status reports cloud_credential: present), so no request is needed");
+  }
+  const link = randomBytes6(24).toString("hex");
+  pending2 = { link, projectUrl: key.supabaseUrl, env };
+  listening2 ??= listen2();
+  return {
+    status: "awaiting_details",
+    url: `http://127.0.0.1:${await listening2}/key-request/${link}`,
+    next: "Send the practitioner this link and ask them to type their details on that page, never in chat. When they say it is sent, call key_request__status. The link works only on this computer, until a new link is made or the server restarts."
+  };
+}
+async function status(env) {
+  const saved = sent ?? await readProtectedJson(requestPath(env), null);
+  if (!saved?.request_token) {
+    return {
+      requested: false,
+      next: "No request for Probanda's key was sent from this computer. Call key_request__submit to send one."
+    };
+  }
+  const reply = await post((await loadCloudKey(env)).supabaseUrl, "functions/v1/key-request-status", { request_token: saved.request_token }, "return the request's status");
+  const state = typeof reply.status === "string" ? reply.status : "unknown";
+  return {
+    requested: true,
+    request_id: saved.request_id,
+    status: state,
+    requested_at: typeof reply.requested_at === "string" ? reply.requested_at : saved.requested_at,
+    decided_at: typeof reply.decided_at === "string" ? reply.decided_at : null,
+    next: NEXT[state] ?? "Report the status to the practitioner as it is."
+  };
+}
+var NEXT = {
+  pending: "Probanda has not decided this request yet. Check again later.",
+  issued: "Probanda has issued this computer's key and sends it to the practitioner directly. When they have it, call cloud_key__configure_credential and have them paste it on the page it serves, never in chat.",
+  declined: "Probanda could not verify the details sent. The practitioner can check them against their own entry in the Law Society of British Columbia's directory and send a new request with key_request__submit."
+};
+async function post(projectUrl, path, body, what) {
+  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const text5 = await res.text();
+  let reply = {};
+  try {
+    reply = text5 ? JSON.parse(text5) : {};
+  } catch {
+  }
+  if (!res.ok) {
+    const error2 = typeof reply.error === "string" ? reply.error : res.statusText;
+    throw new ValidationError(`Probanda's Cloud did not ${what} (${res.status}): ${error2}`);
+  }
+  return reply;
+}
+function requestBody(form, tokenHash, thisYear = (/* @__PURE__ */ new Date()).getFullYear()) {
+  const fullName = (form.get("full_name") ?? "").trim();
+  const firmName = (form.get("firm_name") ?? "").trim();
+  const yearText = (form.get("year_of_call") ?? "").trim();
+  const callDate = (form.get("call_date") ?? "").trim();
+  if (!fullName || !firmName || fullName.length > MAX_NAME || firmName.length > MAX_NAME) {
+    throw new ValidationError(`type your full name and your firm's name as the directory shows them, each in 1 to ${MAX_NAME} characters`);
+  }
+  const year = Number(yearText);
+  if (!/^\d{4}$/.test(yearText) || year < 1900 || year > thisYear) {
+    throw new ValidationError("type your year of call as four digits");
+  }
+  if (callDate && (!/^\d{4}-\d{2}-\d{2}$/.test(callDate) || callDate.slice(0, 4) !== yearText)) {
+    throw new ValidationError("the call date must fall in your year of call");
+  }
+  const email2 = (form.get("email") ?? "").trim();
+  const phone = (form.get("phone") ?? "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email2) || email2.length > MAX_EMAIL) {
+    throw new ValidationError("type the email address Probanda can contact you at");
+  }
+  if (phone && (!/^[0-9+().\- ]+$/.test(phone) || phone.length > MAX_PHONE)) {
+    throw new ValidationError(`type your phone number in digits, spaces and + ( ) - only, up to ${MAX_PHONE} characters`);
+  }
+  return {
+    full_name: fullName,
+    jurisdiction: "BC",
+    year_of_call: year,
+    ...callDate ? { call_date: callDate } : {},
+    firm_name: firmName,
+    email: email2,
+    ...phone ? { phone } : {},
+    token_hash: tokenHash
+  };
+}
+function listen2() {
+  const server = createServer2((req, res) => {
+    handle2(req, res).catch(() => {
+      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      else res.destroy();
+    });
+  });
+  server.on("connection", (socket) => socket.unref());
+  return new Promise((resolve8, reject) => {
+    server.once("error", (err) => {
+      listening2 = void 0;
+      reject(err);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      server.unref();
+      resolve8(server.address().port);
+    });
+  });
+}
+async function handle2(req, res) {
+  const m3 = /^\/key-request\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const current = pending2;
+  if (!m3 || !current || m3[1] !== current.link) {
+    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
+  }
+  if (req.method === "GET") return page(res, 200, TITLE3, FORM2);
+  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  const token = randomBytes6(24).toString("hex");
+  let reply;
+  try {
+    const body = requestBody(new URLSearchParams(await readBody(req)), createHash12("sha256").update(token).digest("hex"));
+    reply = await post(current.projectUrl, "functions/v1/key-request-submit", body, "save the request");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return page(res, 200, TITLE3, `<p class="error">Not sent: ${escape2(message)}</p>${FORM2}`);
+  }
+  if (pending2 === current) pending2 = void 0;
+  if (typeof reply.request_id !== "string") {
+    return page(res, 200, TITLE3, `<p class="error">Probanda's Cloud did not confirm the request, so it may not have been saved. Return to Claude and ask for a new link.</p>`);
+  }
+  sent = { request_id: reply.request_id, request_token: token, requested_at: (/* @__PURE__ */ new Date()).toISOString() };
+  let kept = "";
+  try {
+    await writeProtectedJson(requestPath(current.env), sent);
+  } catch (err) {
+    kept = `<p class="error">This computer could not save the request's reference, so its status can be checked only until Claude restarts: ${escape2(err instanceof Error ? err.message : String(err))}</p>`;
+  }
+  page(
+    res,
+    200,
+    "Request sent",
+    "<p>Your request is with Probanda. Probanda checks your details against the Law Society of British Columbia's directory and, once it has verified you, sends your key to the email address your firm's website or the directory lists for you.</p>" + kept + "<p>You can close this tab and return to Claude. Ask Claude at any time where your request stands. When your key arrives, ask Claude to set Probanda's key, and paste it on the page Claude gives you, never in chat.</p>"
+  );
+}
+var FORM2 = `<p>Probanda's key lets this computer use Probanda's shared services: the legal commons, the Suggestion Box and the saving of practice records. Probanda gives one to each practising lawyer it has verified.</p><form method="post"><label>Full name, as the Law Society's directory shows it<br><input name="full_name" maxlength="200" autocomplete="name" required autofocus></label><p>Jurisdiction: British Columbia</p><label>Year of call<br><input name="year_of_call" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><label>Call date (optional)<br><input type="date" name="call_date"></label><label>Firm name, as the directory shows it under "Primary location"<br><input name="firm_name" maxlength="200" autocomplete="organization" required></label><label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label><button type="submit">Send request</button></form><p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia's public directory that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>`;
 
 // src/dispatch.ts
 var definitions;
@@ -106618,6 +106798,9 @@ async function callTool(context, name, rawArgs) {
   if (name === "research__preflight") {
     return researchPreflight();
   }
+  if (isKeyRequestToolName(name)) {
+    return callKeyRequestTool(name);
+  }
   throw new ValidationError(`Unknown tool "${name}"`);
 }
 function logTimings(name, timings) {
@@ -106689,7 +106872,7 @@ function textResult(result) {
 
 // src/page-api/server.ts
 import { existsSync as existsSync41 } from "node:fs";
-import { createServer } from "node:http";
+import { createServer as createServer3 } from "node:http";
 import { isAbsolute as isAbsolute7 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
@@ -106715,7 +106898,7 @@ async function setSeedDeferral(args, env = process.env) {
 }
 
 // src/page-api/server.ts
-var MAX_BODY = 4 * 1024;
+var MAX_BODY2 = 4 * 1024;
 var RETRY_MS = 15e3;
 var STATUS = {
   deferred: 200,
@@ -106734,8 +106917,8 @@ async function startPageApi(env = process.env, options = {}) {
   let stopped = false;
   let warnedBusy = false;
   let retry;
-  const server = createServer((req, res) => {
-    handle(req, res, env, startedAt).catch((err) => {
+  const server = createServer3((req, res) => {
+    handle3(req, res, env, startedAt).catch((err) => {
       if (!res.headersSent) json2(req, res, 500, { error: err instanceof Error ? err.message : String(err) });
       else res.destroy();
     });
@@ -106775,7 +106958,7 @@ async function startPageApi(env = process.env, options = {}) {
     }
   };
 }
-async function handle(req, res, env, startedAt) {
+async function handle3(req, res, env, startedAt) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
@@ -106795,7 +106978,7 @@ async function handle(req, res, env, startedAt) {
   if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
   let body;
   try {
-    body = JSON.parse(await readBody(req));
+    body = JSON.parse(await readBody2(req));
   } catch (err) {
     return json2(req, res, 400, { error: `The request could not be read: ${err.message}` });
   }
@@ -106820,13 +107003,13 @@ function corsHeaders(req) {
     Vary: "Origin"
   };
 }
-function readBody(req) {
+function readBody2(req) {
   return new Promise((resolve8, reject) => {
     const chunks = [];
     let size = 0;
     req.on("data", (chunk) => {
       size += chunk.length;
-      if (size > MAX_BODY) {
+      if (size > MAX_BODY2) {
         reject(new Error("the request is larger than 4 KB"));
         req.destroy();
         return;
@@ -106837,8 +107020,8 @@ function readBody(req) {
     req.on("error", reject);
   });
 }
-function json2(req, res, status, body) {
-  res.writeHead(status, {
+function json2(req, res, status2, body) {
+  res.writeHead(status2, {
     ...corsHeaders(req),
     "Content-Type": "application/json; charset=utf-8",
     "X-Content-Type-Options": "nosniff",

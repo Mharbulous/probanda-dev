@@ -94,7 +94,7 @@ async function status(env: NodeJS.ProcessEnv): Promise<unknown> {
       next: "No request for Probanda's key was sent from this computer. Call key_request__submit to send one.",
     };
   }
-  const reply = await post((await loadCloudKey(env)).supabaseUrl, "key-request-status", { request_token: saved.request_token }, "return the request's status");
+  const reply = await post((await loadCloudKey(env)).supabaseUrl, "functions/v1/key-request-status", { request_token: saved.request_token }, "return the request's status");
   const state = typeof reply.status === "string" ? reply.status : "unknown";
   return {
     requested: true,
@@ -117,8 +117,10 @@ const NEXT: Record<string, string> = {
 };
 
 // One call to a key-request Edge Function. It sends no key: there is none yet.
-async function post(projectUrl: string, fn: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/functions/v1/${fn}`, {
+// The path is written out whole at each call, so check_plugin.py's bundle-purity
+// check sees it.
+async function post(projectUrl: string, path: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -206,7 +208,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   let reply: Record<string, unknown>;
   try {
     const body = requestBody(new URLSearchParams(await readBody(req)), createHash("sha256").update(token).digest("hex"));
-    reply = await post(current.projectUrl, "key-request-submit", body, "save the request");
+    reply = await post(current.projectUrl, "functions/v1/key-request-submit", body, "save the request");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return page(res, 200, TITLE, `<p class="error">Not sent: ${escape(message)}</p>${FORM}`);
