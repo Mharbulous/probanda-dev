@@ -95,8 +95,8 @@ function malloc(lib: WrappedPdfiumModule, bytes: number): number {
   return ptr;
 }
 
-/** Opens the PDF at `path` and runs `work` on it. `work` yields between pages, so each page's open,
- * use and close stays within one turn of the event loop; the document stays open across turns, which
+/** Opens the PDF at `path` and runs `work` on it. `work` yields between pages and tiles, so each
+ * page's open, use and close stays within one turn of the event loop; the document stays open across turns, which
  * PDFium allows. A trap (WebAssembly.RuntimeError) drops the cached instance, so the next call loads a
  * fresh one. */
 async function withPdf<T>(
@@ -109,9 +109,10 @@ async function withPdf<T>(
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync(path);
 
+  const pending = loadPdfium(wasm);
   let lib: WrappedPdfiumModule;
   try {
-    lib = await loadPdfium(wasm);
+    lib = await pending;
   } catch (err) {
     throw new DataServerError(`the PDF renderer did not load: ${(err as Error).message}`, "renderer_unavailable");
   }
@@ -133,7 +134,8 @@ async function withPdf<T>(
       lib.pdfium.wasmExports.free(dataPtr);
     }
   } catch (err) {
-    if (err instanceof WebAssembly.RuntimeError) loaded.delete(wasm.href);
+    // Only this call's instance: a concurrent call may already have loaded a fresh one.
+    if (err instanceof WebAssembly.RuntimeError && loaded.get(wasm.href) === pending) loaded.delete(wasm.href);
     throw err;
   }
 }
@@ -175,25 +177,30 @@ export async function pdfPageImages(
     const pages: PageImagesResult["pages"] = [];
     for (let n = first; n <= last; n++) {
       if (n > first) await nextTurn();
-      pages.push(
-        withPage(lib, doc, n, (page) => {
-          if (classify(lib, page, n) === "born_digital") return { page: n, kind: "born_digital" as const };
-          const { width, height } = pageSize(lib, page, n, args.tiles ? TILE_DPI : DPI);
-          const tiles = args.tiles ? overlappingHalves(width, height) : tileRows(width, 0, height);
-          renderDir ??= mkdtempSync(join(tmpdir(), "probanda-pages-"));
-          const dir = renderDir;
-          const images = tiles.map(([top, rows], i) => {
-            const png = renderPng(lib, page, n, width, height, top, rows);
-            const name = tiles.length === 1 ? pageName(n) : `${pageName(n)}-tile-${i + 1}`;
-            const file = join(dir, `${name}.png`);
-            writeFileSync(file, png);
-            const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height: rows };
-            if (tiles.length > 1) image.tile = i + 1;
-            return image;
-          });
-          return { page: n, kind: "scanned" as const, images };
-        })
-      );
+      const plan = withPage(lib, doc, n, (page) => {
+        if (classify(lib, page, n) === "born_digital") return null;
+        const { width, height } = pageSize(lib, page, n, args.tiles ? TILE_DPI : DPI);
+        return { width, height, tiles: args.tiles ? overlappingHalves(width, height) : tileRows(width, 0, height) };
+      });
+      if (!plan) {
+        pages.push({ page: n, kind: "born_digital" });
+        continue;
+      }
+      const { width, height, tiles } = plan;
+      renderDir ??= mkdtempSync(join(tmpdir(), "probanda-pages-"));
+      const images: PageImage[] = [];
+      for (const [i, [top, rows]] of tiles.entries()) {
+        // Each tile loads the page again, so its render, encoding and free stay within one turn.
+        await nextTurn();
+        const png = withPage(lib, doc, n, (page) => renderPng(lib, page, n, width, height, top, rows));
+        const name = tiles.length === 1 ? pageName(n) : `${pageName(n)}-tile-${i + 1}`;
+        const file = join(renderDir, `${name}.png`);
+        writeFileSync(file, png);
+        const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height: rows };
+        if (tiles.length > 1) image.tile = i + 1;
+        images.push(image);
+      }
+      pages.push({ page: n, kind: "scanned", images });
     }
     return {
       source_sha256: createHash("sha256").update(data).digest("hex"),

@@ -1,4 +1,4 @@
-// build-stamp: 549fb3147433
+// build-stamp: 80ba3a993166
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -85693,7 +85693,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "549fb3147433";
+var BUILD_STAMP = false ? null : "80ba3a993166";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -112705,9 +112705,10 @@ async function withPdf(path, wasm, work) {
   if (!existsSync40(path) || !statSync18(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname5(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync33(path);
+  const pending3 = loadPdfium(wasm);
   let lib;
   try {
-    lib = await loadPdfium(wasm);
+    lib = await pending3;
   } catch (err) {
     throw new DataServerError(`the PDF renderer did not load: ${err.message}`, "renderer_unavailable");
   }
@@ -112728,7 +112729,7 @@ async function withPdf(path, wasm, work) {
       lib.pdfium.wasmExports.free(dataPtr);
     }
   } catch (err) {
-    if (err instanceof WebAssembly.RuntimeError) loaded.delete(wasm.href);
+    if (err instanceof WebAssembly.RuntimeError && loaded.get(wasm.href) === pending3) loaded.delete(wasm.href);
     throw err;
   }
 }
@@ -112761,25 +112762,29 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
     const pages = [];
     for (let n3 = first; n3 <= last; n3++) {
       if (n3 > first) await nextTurn();
-      pages.push(
-        withPage(lib, doc, n3, (page2) => {
-          if (classify2(lib, page2, n3) === "born_digital") return { page: n3, kind: "born_digital" };
-          const { width, height } = pageSize(lib, page2, n3, args.tiles ? TILE_DPI : DPI);
-          const tiles = args.tiles ? overlappingHalves(width, height) : tileRows(width, 0, height);
-          renderDir ??= mkdtempSync2(join37(tmpdir5(), "probanda-pages-"));
-          const dir = renderDir;
-          const images = tiles.map(([top, rows22], i3) => {
-            const png = renderPng(lib, page2, n3, width, height, top, rows22);
-            const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join37(dir, `${name}.png`);
-            writeFileSync13(file, png);
-            const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows22 };
-            if (tiles.length > 1) image.tile = i3 + 1;
-            return image;
-          });
-          return { page: n3, kind: "scanned", images };
-        })
-      );
+      const plan = withPage(lib, doc, n3, (page2) => {
+        if (classify2(lib, page2, n3) === "born_digital") return null;
+        const { width: width2, height: height2 } = pageSize(lib, page2, n3, args.tiles ? TILE_DPI : DPI);
+        return { width: width2, height: height2, tiles: args.tiles ? overlappingHalves(width2, height2) : tileRows(width2, 0, height2) };
+      });
+      if (!plan) {
+        pages.push({ page: n3, kind: "born_digital" });
+        continue;
+      }
+      const { width, height, tiles } = plan;
+      renderDir ??= mkdtempSync2(join37(tmpdir5(), "probanda-pages-"));
+      const images = [];
+      for (const [i3, [top, rows22]] of tiles.entries()) {
+        await nextTurn();
+        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows22));
+        const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
+        const file = join37(renderDir, `${name}.png`);
+        writeFileSync13(file, png);
+        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows22 };
+        if (tiles.length > 1) image.tile = i3 + 1;
+        images.push(image);
+      }
+      pages.push({ page: n3, kind: "scanned", images });
     }
     return {
       source_sha256: createHash10("sha256").update(data).digest("hex"),

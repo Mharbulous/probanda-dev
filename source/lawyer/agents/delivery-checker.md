@@ -52,7 +52,7 @@ You find out whether one letter went out and whether it arrived, from evidence, 
 | `environment_notes` | The practitioner's environment notes, copied by the caller. May be absent |
 | `methods` | Optional. Check only these methods. Absent means every method the letter states |
 | `draft` | Optional. A Job Board draft that may be this letter: `writing_id`, `mockup_path`, `addressee`, `subject`, `date`, and `last_changed` when the board shows one |
-| `page_manifests` | One for each PDF the caller names: the letter when it is a PDF, and on a second dispatch each PDF the first one reported back. Each is `{path, pages}`, where `pages` is the page manifest, in page order: `{page, images}` for a scanned page, its images top to bottom, and `{pages: "a-b", pdf}` for a run of born-digital pages |
+| `page_manifests` | One for each PDF the caller names: the letter when it is a PDF, and on a second dispatch each PDF the first one reported back. Each is `{path, pages}`, where `path` is the PDF's path relative to `matter_root`, the same string you report for it as a `file` pointer or as `sent_text_source`, and `pages` is the page manifest, in page order: `{page, images}` for a scanned page, its images top to bottom, and `{pages: "a-b", pdf}` for a run of born-digital pages |
 
 A dispatch without `matter_root`, `letter_path` or `file_size` returns exactly `{"status": "refused", "reason": "<what is missing>"}`, with no tool call. A PDF letter with no manifest in `page_manifests` returns exactly `{"status": "refused", "reason": "needs page images"}`, with no tool call.
 

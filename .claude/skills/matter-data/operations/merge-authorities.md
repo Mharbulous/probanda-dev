@@ -44,7 +44,7 @@ Pass `--pair` when the user named the two rows; omit it to sweep the whole `law.
 
 For each proposed pair, the plan leaves **B4** (decision date) and **B6** (document comparison) as `agent_required` — the script cannot read PDFs. For each pair:
 
-1. Open **both** `file_path` documents with the native Read tool.
+1. Open **both** `file_path` documents. For a PDF, call `pdf_pages__images` for the pages you read first, by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (`../references/design-decisions.md` #71): read a scanned page only from its PNGs and a born-digital page natively with the Read tool. A refusal is reported with its reason, and the pair is escalated, not mergeable.
 2. Compare judgment date, judge/panel, docket/registry number, court header, and approximate length (B4/B6). Check the two `disposition` texts for contradiction (B5, if the script flagged it).
 3. **Any mismatch or doubt → treat the pair as escalated, not mergeable** — do not clear the check.
 

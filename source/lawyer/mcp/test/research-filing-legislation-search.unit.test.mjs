@@ -172,7 +172,9 @@ test("until the in-server extractor lands, a PDF or .docx is refused, never read
   }
 });
 
-test("an OCR'd PDF is refused and its hidden text layer never searched", (t) => {
+// A guard for the planned move to extractText: today every PDF is refused before it is read, so this
+// passes whatever the scanned-page check does. It starts to bite once PDFs are read.
+test("guard for the move to extractText: an OCR'd PDF is refused and its hidden text layer never searched", (t) => {
   const s = setup(t);
   const scan = join(s.books, "Scanned Act.pdf");
   const ocr = Array.from({ length: 40 }, (_, i) => `BT 3 Tr /F1 12 Tf 72 ${740 - 17 * i} Td (${i + 1} The court may refer a question.) Tj ET`).join(" ");

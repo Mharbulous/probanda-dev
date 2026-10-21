@@ -1,4 +1,4 @@
-// build-stamp: 383c7fd08507
+// build-stamp: 22bccdff0354
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -18475,6 +18475,7 @@ function ensureListening() {
       });
     });
     server.on("connection", (socket) => socket.unref());
+    server.keepAliveTimeout = 0;
     server.once("error", (err) => {
       listening = void 0;
       reject(err);

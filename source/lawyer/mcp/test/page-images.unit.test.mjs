@@ -33,10 +33,15 @@ test("classifyPdfPages gives the same kinds and renders nothing", async () => {
   assert.deepEqual(await classifyPdfPages(SCANNED), ["scanned", "born_digital", "born_digital", "scanned"]);
 });
 
-test("a form's /Matrix is applied once: not at all, or twice, would move the image off the page", async () => {
-  const form = (matrix) => ({ Fm1: { bbox: [-612, 0, 0, 792], matrix, content: drawImage(-612, 0, 612, 792) } });
-  assert.deepEqual(await kinds({ pages: [{ content: "/Fm1 Do" }], forms: form([1, 0, 0, 1, 612, 0]) }), ["scanned"]);
-  assert.deepEqual(await kinds({ pages: [{ content: "/Fm1 Do" }], forms: form([1, 0, 0, 1, 0, 0]) }), ["born_digital"]);
+const offPageForm = (matrix) => ({ Fm1: { bbox: [-612, 0, 0, 792], matrix, content: drawImage(-612, 0, 612, 792) } });
+
+test("PDFium folds a form's own /Matrix into its children's bounds: translated onto the page is scanned, left off it is born_digital", async () => {
+  assert.deepEqual(await kinds({ pages: [{ content: "/Fm1 Do" }], forms: offPageForm([1, 0, 0, 1, 612, 0]) }), ["scanned"]);
+  assert.deepEqual(await kinds({ pages: [{ content: "/Fm1 Do" }], forms: offPageForm([1, 0, 0, 1, 0, 0]) }), ["born_digital"]);
+});
+
+test("a cm before a form's Do is composed once into its children's bounds: not at all, or twice, would leave the image off the page", async () => {
+  assert.deepEqual(await kinds({ pages: [{ content: "q 1 0 0 1 612 0 cm /Fm1 Do Q" }], forms: offPageForm([1, 0, 0, 1, 0, 0]) }), ["scanned"]);
 });
 
 test("a scanned letter page renders to one 150 dpi PNG with the image's colours where they belong", async () => {
