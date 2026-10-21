@@ -66,3 +66,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Find where `key_request__submit` and `key_request__status` are registered (**UNVERIFIED**: `source/researcher/commons-mcp/src`). Check for any registration gate or announce list. Re-read `probanda-setup` step 7.3 and `legal-commons` §Configuration. If the companion spec has landed, apply this spec's changes to the tools' new home.
+
+### Verification against HEAD (29127154, 2026-10-20)
+
+| Claim in this spec | Found at HEAD | Effect on the build |
+|---|---|---|
+| The tools are registered in `source/researcher/commons-mcp/src` | Moved by the companion spec (29127154). `key_request__submit` and `key_request__status` are now in `cloudKeyToolDefinitions()` in `source/lawyer/mcp/src/schema-gen.ts`, with `cloud_key__configure_credential`, routed in `dispatch.ts` to `src/key-request/tools.ts`. The commons server no longer registers them. | This spec's changes apply to the lawyer data server. |
+| A registration gate may hide the tools when no key is held (§4.1) | None, before or after the move. At 29127154^ the researcher `buildToolDefinitions()` always spread `keyRequestToolDefinitions()`, and `index.ts` returned `buildToolDefinitions()` from `ListTools` with no condition. The lawyer server's `ListTools` handler does the same. | No gate to remove (§4.2 does not apply). |
+| An announce step lists only some tools | No announce list in either server: `ListTools` returns the whole `buildToolDefinitions()`. | None. |
+| The running server predates 0.6.2 (§2, UNVERIFIED) | Confirmed from history. The tools were first added in 43b0196c and first shipped in researcher 0.6.2 (7f82bd4b, 2026-10-20 15:16). The researcher bundle before 7f82bd4b holds no `key_request__submit`; the 0.6.2 bundle holds 8, matching §2. A server lists the tools of the bundle it started from, so a server started before the 0.6.2 sync lists none. | Cause is a stale server (§4.3): the fix is the skill text naming the one remedy, a full app restart. |
+| A key-less start lists both tools (criterion 1) | `source/lawyer/mcp/test/key-request-server.e2e.test.mjs` starts the data server alone with an empty `LOCALAPPDATA` and no key variables, and asserts all three key tools are listed. | Reused for criterion 1. |
+| `probanda-setup` step 7.3 says "if the researcher plugin is installed" | No longer: 29127154 made the call unconditional. It does not say what to do when the tool is absent. | Add the absent-tool remedy, through practice-data's Configuration (Probanda's key). |
+| `legal-commons` §Configuration says the same | No longer: it points to lawyer's practice-data, Configuration (Probanda's key), and tests for no plugin. | No change needed. |
+| The other "needs Probanda's key" sites | `legal-research` step 0, `suggestion`, and `draft`'s `suggestion-box.md` name `key_request__submit` without a plugin test. The `suggestion` test for the researcher plugin is about `suggestion_box__submit`, which researcher still serves. | No change needed. |
+| §9 open question: can a plugin update restart its servers without an app restart | Not answerable from source. It does not change the design: the text names the restart either way. | Left open for Brahm. |
