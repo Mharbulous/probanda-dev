@@ -1,0 +1,220 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haiku Chunk Size Test</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one reading column; each test is a section with findings, a 2x2 grid of small-multiple charts, a table and its limits. */
+:root {
+  --bg: #f7f8f8; --surface: #ffffff; --fg: #1d2428; --muted: #5d6a72; --rule: #dde3e6; --grid: #e9edef;
+  --s1: #1f78b4; --s2: #d95f02; --s3: #7b5ea7; --band: rgba(31,120,180,.08);
+  --display: "Fraunces", Georgia, serif; --body: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161a1c; --surface: #1d2225; --fg: #e4e9eb; --muted: #9aa7ae; --rule: #2e363a; --grid: #262d31;
+  --s1: #4a97d4; --s2: #d4701f; --s3: #9479c4; --band: rgba(74,151,212,.12); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161a1c; --surface: #1d2225; --fg: #e4e9eb; --muted: #9aa7ae; --rule: #2e363a; --grid: #262d31;
+  --s1: #4a97d4; --s2: #d4701f; --s3: #9479c4; --band: rgba(74,151,212,.12); color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1 { font: 600 clamp(28px, 4vw, 38px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 clamp(22px, 3vw, 27px)/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3.sec { font: 600 17px/1.3 var(--body); margin: 0; }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 17px; }
+section.test { display: grid; gap: 18px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.findings { display: grid; gap: 10px; margin: 0; padding-left: 20px; max-width: 72ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.chart { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: grid; gap: 8px; min-width: 0; position: relative; align-content: start; }
+.chart h4 { margin: 0; font: 600 15px var(--body); }
+.chart .sub { font-size: 13px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+svg text { font: 11px var(--mono); fill: var(--muted); }
+svg .lab { fill: var(--fg); font-weight: 500; }
+.tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); font: 12px/1.45 var(--mono); padding: 6px 9px; border-radius: 4px; white-space: nowrap; z-index: 2; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+tr.key td { color: var(--muted); }
+.caveats { display: grid; gap: 8px; margin: 0; padding-left: 20px; max-width: 72ch; color: var(--muted); font-size: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.filters label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.filters input { accent-color: var(--s1); margin: 0; }
+.verdict { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--s1); border-radius: 6px; padding: 14px 16px; max-width: 72ch; }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Fact extraction · Haiku 5.5 · lawyer:extract-facts</div>
+    <h1>Haiku Chunk Size Test</h1>
+    <p class="lede">How many pages should one Haiku subagent read? This test split 20 pages into batches of 1 to 20 pages, gave each batch to its own subagent, and scored every run against an answer key of facts checked by Fable.</p>
+    <div class="verdict"><strong>For a cheap first pass, use Haiku high at 15 to 20 pages per subagent.</strong> Haiku high kept 58–65% recall at every batch size, while Haiku medium fell from 65% at 1–3 pages to 39% at 20. Haiku high at 20 pages found 63% of the key for $0.039 per 20 pages, less than medium costs at 5 pages (59%, $0.044). Errors were rare everywhere: 23 bad claims in 9,337, nearly all from four hard passages.</div>
+  </header>
+
+  <section class="test">
+    <div class="eyebrow">20 pages · 634 runs · 104 key facts checked by Fable</div>
+    <h2>Rotated windows: Haiku medium and high</h2>
+    <p>Pages 1–20 of a scanned records production from a client matter, read in circular windows: a window of k pages starts at each page in turn and wraps from page 20 back to page 1, so every batch size sees every page equally often and at every position in the batch. Each size was repeated (the 1-page arm reads every page 10 times), and all 16 effort and size combinations ran mixed together in one queue, so a slow or fast patch of the service affected them all alike. Each run was scored only against the key facts its window could show.</p>
+    <ul class="findings">
+      <li><strong>Medium recall falls steadily with batch size</strong>: 65% at 1–3 pages, 59% at 5, 54% at 10, 49% at 15 and 39% at 20.</li>
+      <li><strong>High recall holds at every batch size</strong>: 58–65% from 1 to 20 pages. From 10 pages up, high finds 6 to 24 points more than medium.</li>
+      <li><strong>Cost and time per page fall the whole way.</strong> Per 20 pages, medium costs $0.120 at 1 page and $0.019 at 20; high costs $0.179 and $0.039. Time per page falls from 34 to 5 seconds on medium and from 57 to 13 on high. High costs 1.4 to 2.1 times as much as medium at the same size.</li>
+      <li><strong>Errors depend on the passage, not the batch size.</strong> 23 of 9,337 claims were wrong or unsupported, and 20 of them came from four hard passages, at small and large batches and on both settings. See "Errors by cause" below.</li>
+      <li><strong>The 3- and 4-page medium arms held up on a full rerun.</strong> Recall went from 64.9% to 63.9% at 3 pages and from 62.7% to 61.1% at 4 pages, and bad claims from 2 to 1 and from 1 to 0. Both 3-page errors in the first round came from one run misreading one faint date, and every rerun run that reported that date read it correctly.</li>
+      <li><strong>Small batches buy nothing on high.</strong> High at 1 page costs 4.6 times as much as at 20 pages for about the same recall.</li>
+    </ul>
+    <div class="grid">
+      <div class="chart" id="d-recall"><h4>Recall</h4><div class="sub">Key facts found, of those each run could see</div>
+        <div class="legend"><span style="--c:var(--s1)">Haiku medium</span><span style="--c:var(--s2)">Haiku high</span></div></div>
+      <div class="chart" id="d-cost"><h4>Cost per 20 pages</h4><div class="sub">US dollars at list price, per 20 pages read</div>
+        <div class="legend"><span style="--c:var(--s1)">Haiku medium</span><span style="--c:var(--s2)">Haiku high</span></div></div>
+      <div class="chart" id="d-error"><h4>Error rate</h4><div class="sub">Wrong or unsupported claims, % of claims. Untick a cause to see the error rate without it.</div>
+        <div class="filters"><label><input type="checkbox" id="f-scan" checked> Include faint-scan errors</label><label><input type="checkbox" id="f-form" checked> Include 2016-form errors</label></div>
+        <div class="legend"><span style="--c:var(--s1)">Haiku medium</span><span style="--c:var(--s2)">Haiku high</span></div></div>
+      <div class="chart" id="d-time"><h4>Time per page</h4><div class="sub">Subagent seconds per page read</div>
+        <div class="legend"><span style="--c:var(--s1)">Haiku medium</span><span style="--c:var(--s2)">Haiku high</span></div></div>
+    </div>
+    <h3 class="sec">Errors by cause</h3>
+    <p>Bad claims (stated wrongly or unsupported), counted by the passage that caused them. Each arm makes so few errors that which arm a hard passage lands in is mostly chance.</p>
+    <ul class="caveats">
+      <li><strong>Faint scan:</strong> page 5 is a faint screen capture, and "08 Sep 2017" was read as "06 Sep" in about 1 of 11 runs that reported it. This is a Haiku image-reading weakness, not a batch-size effect.</li>
+      <li><strong>Devotion answer:</strong> a form records an answer that does not fit its question, and Haiku restated it so that its meaning was reversed.</li>
+      <li><strong>2016 form:</strong> the same confusing question-and-answer layout on an older form in the same document.</li>
+      <li><strong>Draft letter:</strong> a draft letter states a refusal, and Haiku stated it as the organization's actual decision.</li>
+    </ul>
+    <div class="tablebox"><table id="te"></table></div>
+    <h3 class="sec">Every arm</h3>
+    <div class="tablebox"><table id="td"></table></div>
+    <h3 class="sec">Limits of this test</h3>
+    <ul class="caveats">
+      <li>One document: redacted emails and forms. Pages 14, 16 and 18 are almost entirely redacted, and several emails repeat across pages (10, 12 and 13; 8 and 17; 15 and 20). The key lists every page a fact appears on, and a run got credit if any of those pages was in its window.</li>
+      <li>"±" in the table is one standard error of recall across runs. The 20-page arm is 5 repeats of the same window, so its spread shows run-to-run noise only. Differences under about 5 points are not reliable.</li>
+      <li>The key is 86 facts from the first Opus pass, checked by Fable (85 correct, 1 reworded), with duplicates merged and 29 facts Fable found missing added. Recall is lower than in two earlier, smaller tests (not shown) partly because this key is finer-grained.</li>
+      <li>Scorers were Opus, one per file of about 300 claims, told to accept any reasonable reading of an ambiguous passage. Each run was scored once.</li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function chart(id, data, {series, yMax, yTicks, fmt, labelEnds}) {
+  const box = document.getElementById(id);
+  const W = 440, H = 230, L = 44, R = 14, T = 12, B2 = 34;
+  const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, role: "img"}, box);
+  // Linear page axis from 0 to the largest batch, so equal page gaps get equal width.
+  const pMax = data[data.length - 1].p;
+  const x = i => L + (W - L - R) * data[i].p / pMax;
+  const y = v => T + (H - T - B2) * (1 - v / yMax);
+  el("line", {x1: L, x2: L, y1: T, y2: H - B2, stroke: "var(--grid)", "stroke-width": 1}, svg);
+  el("text", {x: L, y: H - B2 + 16, "text-anchor": "middle"}, svg, 0);
+  for (const t of yTicks) {
+    el("line", {x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: "var(--grid)", "stroke-width": 1}, svg);
+    el("text", {x: L - 6, y: y(t) + 4, "text-anchor": "end"}, svg, fmt(t));
+  }
+  data.forEach((a, i) => el("text", {x: x(i), y: H - B2 + 16, "text-anchor": "middle"}, svg, a.p));
+  el("text", {x: (L + W - R) / 2, y: H - 3, "text-anchor": "middle"}, svg, "pages per subagent");
+  for (const s of series) {
+    el("polyline", {points: data.map((a, i) => `${x(i)},${y(a[s.k])}`).join(" "), fill: "none", stroke: s.c, "stroke-width": 2, "stroke-linejoin": "round"}, svg);
+    data.forEach((a, i) => el("circle", {cx: x(i), cy: y(a[s.k]), r: 4.5, fill: s.c, stroke: "var(--surface)", "stroke-width": 2}, svg));
+  }
+  if (series.length === 1) {
+    const s = series[0], vals = data.map(a => a[s.k]);
+    const iMax = vals.indexOf(Math.max(...vals)), iMin = vals.indexOf(Math.min(...vals));
+    for (const i of new Set([iMax, iMin])) {
+      const above = y(vals[i]) > T + 22;
+      el("text", {class: "lab", x: x(i), y: y(vals[i]) + (above ? -10 : 18), "text-anchor": i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"}, svg, fmt(vals[i]));
+    }
+  }
+  if (labelEnds) {
+    const last = data.length - 1;
+    const ys = series.map(s => y(data[last][s.k]));
+    series.forEach((s, j) => {
+      const other = ys[1 - j], below = ys[j] > other;
+      el("text", {class: "lab", x: x(last), y: ys[j] + (below ? 16 : -9), "text-anchor": "end"}, svg, fmt(data[last][s.k]));
+    });
+  }
+  const tip = document.createElement("div");
+  tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  data.forEach((a, i) => {
+    const lo = i ? (x(i - 1) + x(i)) / 2 : L, hi = i < data.length - 1 ? (x(i) + x(i + 1)) / 2 : W - R;
+    const hit = el("rect", {x: lo, y: T, width: hi - lo, height: H - T - B2, fill: "transparent"}, svg);
+    hit.addEventListener("pointerenter", () => {
+      tip.innerHTML = `<b>${a.p} page${a.p > 1 ? "s" : ""}</b><br>` + series.map(s => `${s.name}: ${fmt(a[s.k])}`).join("<br>");
+      tip.hidden = false;
+      const r = svg.getBoundingClientRect(), b = box.getBoundingClientRect();
+      const px = r.left - b.left + x(i) / W * r.width;
+      tip.style.left = Math.min(Math.max(px - tip.offsetWidth / 2, 8), b.width - tip.offsetWidth - 8) + "px";
+      tip.style.top = (r.top - b.top + 4) + "px";
+    });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; });
+  });
+}
+
+const pct = v => Math.round(v) + "%", pct1 = v => (Math.round(v * 10) / 10) + "%", usd = v => "$" + v.toFixed(2), sec = v => Math.round(v) + " s";
+const MH = (a, b) => [{k: a, name: "Medium", c: "var(--s1)"}, {k: b, name: "High", c: "var(--s2)"}];
+
+// Test 3: [pages, effort, runs, page reads, claims, key checks, found, wrong, supported, unsupported, recall, se, error %, cost per 20 pages, s per page]
+const RAW3 = [[1,"m",200,200,1312,1420,917,3,68,1,64.6,1.7,0.3,0.1198,33.7],[2,"m",20,40,243,267,174,0,7,0,65.2,4.4,0.0,0.0867,26.1],[3,"m",20,60,311,379,246,2,9,0,64.9,3.1,0.64,0.0641,19.2],[4,"m",20,80,362,491,308,1,8,0,62.7,3.6,0.28,0.0538,17.3],[5,"m",20,100,389,602,356,0,1,0,59.1,4.7,0.0,0.0444,14.0],[10,"m",20,200,614,1138,617,0,3,0,54.2,3.7,0.0,0.0306,9.1],[15,"m",12,180,472,987,487,3,1,1,49.3,5.0,0.85,0.0253,7.5],[20,"m",5,100,204,520,201,2,2,0,38.7,9.0,0.98,0.0185,5.2],[1,"h",200,200,1481,1420,876,5,108,0,61.7,1.8,0.34,0.1792,56.7],[2,"h",20,40,247,267,169,0,7,0,63.3,4.6,0.0,0.1248,40.7],[3,"h",20,60,350,379,247,0,20,0,65.2,4.3,0.0,0.1047,34.9],[4,"h",20,80,428,491,303,0,18,0,61.7,4.7,0.0,0.0818,28.4],[5,"h",20,100,509,602,378,0,9,0,62.8,3.6,0.0,0.0764,25.3],[10,"h",20,200,784,1138,686,1,16,1,60.3,3.0,0.26,0.0551,18.3],[15,"h",12,180,601,987,571,0,5,0,57.9,2.7,0.0,0.045,14.6],[20,"h",5,100,355,520,327,2,1,0,62.9,1.5,0.56,0.0393,12.6]];
+// Rerun of medium at 3 and 4 pages (round 2), same columns as RAW3; shown in the tables only.
+const RERUN = [[3,"mr",20,60,310,379,242,1,18,0,63.9,4.0,0.32,0.0651,20.4],[4,"mr",20,80,365,491,300,0,5,0,61.1,5.2,0.0,0.0574,17.8]];
+const EFF = {m: "medium", h: "high", mr: "medium, rerun"};
+const r3 = r => ({p: r[0], e: EFF[r[1]], runs: r[2], reads: r[3], claims: r[4], checks: r[5], found: r[6], wrong: r[7], sup: r[8], uns: r[9], recall: r[10], se: r[11], error: r[12], cost: r[13], spp: r[14]});
+const D3 = RAW3.filter(r => r[1] === "m").map((m, i) => {
+  const M = r3(m), H = r3(RAW3[i + 8]);
+  return {p: M.p, mRecall: M.recall, hRecall: H.recall, mCost: M.cost, hCost: H.cost, mTime: M.spp, hTime: H.spp};
+});
+const usd3 = v => "$" + v.toFixed(3);
+chart("d-recall", D3, {series: MH("mRecall", "hRecall"), yMax: 100, yTicks: [0, 25, 50, 75, 100], fmt: pct, labelEnds: true});
+chart("d-cost", D3, {series: MH("mCost", "hCost"), yMax: 0.2, yTicks: [0, 0.05, 0.1, 0.15, 0.2], fmt: usd3, labelEnds: true});
+chart("d-time", D3, {series: MH("mTime", "hTime"), yMax: 60, yTicks: [0, 20, 40, 60], fmt: sec, labelEnds: true});
+const colsD = [["Pages", r => r.p], ["Effort", r => r.e], ["Subagents", r => r.runs], ["Pages read", r => r.reads], ["Claims", r => r.claims],
+  ["Key checks", r => r.checks], ["Found", r => r.found], ["Recall", r => r.recall.toFixed(1) + "% ± " + r.se.toFixed(1)], ["Wrong", r => r.wrong],
+  ["Extra, supported", r => r.sup], ["Extra, unsupported", r => r.uns], ["Error", r => r.error.toFixed(2) + "%"],
+  ["Cost per 20 pages", r => "$" + r.cost.toFixed(3)], ["Seconds per page", r => r.spp.toFixed(1)]];
+document.getElementById("td").innerHTML =
+  "<thead><tr>" + colsD.map(c => `<th>${c[0]}</th>`).join("") + "</tr></thead><tbody>" +
+  RAW3.concat(RERUN).map(r3).sort((a, b) => a.p - b.p || (a.e > b.e ? -1 : 1)).map(r => "<tr>" + colsD.map(c => `<td>${c[1](r)}</td>`).join("") + "</tr>").join("") + "</tbody>";
+
+// Bad claims by cause: [pages, arm, claims, faint scan, devotion answer, 2016 form, draft letter, other].
+const CAUSES = [[1,"m",1312,1,1,0,0,2],[2,"m",243,0,0,0,0,0],[3,"m",311,2,0,0,0,0],[4,"m",362,0,0,0,0,1],[5,"m",389,0,0,0,0,0],[10,"m",614,0,0,0,0,0],[15,"m",472,0,2,1,1,0],[20,"m",204,0,1,0,1,0],[1,"h",1481,3,2,0,0,0],[2,"h",247,0,0,0,0,0],[3,"h",350,0,0,0,0,0],[4,"h",428,0,0,0,0,0],[5,"h",509,0,0,0,0,0],[10,"h",784,1,0,0,1,0],[15,"h",601,0,0,0,0,0],[20,"h",355,2,0,0,0,0],[3,"mr",310,0,0,1,0,0],[4,"mr",365,0,0,0,0,0]];
+const sumCol = i => CAUSES.reduce((t, r) => t + r[i], 0);
+const causeRow = (a, b, cells) => { const bad = cells.slice(1).reduce((t, v) => t + v, 0);
+  return `<tr><td>${a}</td><td>${b}</td>` + cells.map(v => `<td>${v ? v.toLocaleString() : "·"}</td>`).join("") + `<td>${bad}</td><td>${(100 * bad / cells[0]).toFixed(2)}%</td></tr>`; };
+document.getElementById("te").innerHTML =
+  "<thead><tr>" + ["Pages", "Effort", "Claims", "Faint scan", "Devotion answer", "2016 form", "Draft letter", "Other", "Bad claims", "Rate"].map(h => `<th>${h}</th>`).join("") + "</tr></thead><tbody>" +
+  CAUSES.map(r => causeRow(r[0], EFF[r[1]], r.slice(2))).join("") +
+  causeRow("All", "", [2, 3, 4, 5, 6, 7].map(sumCol)) + "</tbody>";
+
+// Error-rate chart from the round-1 rows of CAUSES. Devotion, draft-letter and other errors always count;
+// the faint-scan and 2016-form errors count only while their boxes are ticked. Fixed 0-1% axis so toggling never rescales.
+const errRate = (r, scan, form) => 100 * (r[4] + r[6] + r[7] + (scan ? r[3] : 0) + (form ? r[5] : 0)) / r[2];
+function drawError() {
+  const box = document.getElementById("d-error");
+  box.querySelector("svg")?.remove();
+  box.querySelector(".tip")?.remove();
+  const scan = document.getElementById("f-scan").checked, form = document.getElementById("f-form").checked;
+  const row = (e, p) => CAUSES.find(r => r[1] === e && r[0] === p);
+  const data = D3.map(d => ({p: d.p, m: errRate(row("m", d.p), scan, form), h: errRate(row("h", d.p), scan, form)}));
+  chart("d-error", data, {series: MH("m", "h"), yMax: 1, yTicks: [0, 0.25, 0.5, 0.75, 1], fmt: v => v.toFixed(2) + "%"});
+}
+for (const id of ["f-scan", "f-form"]) document.getElementById(id).addEventListener("change", drawError);
+drawError();
+
+</script>
