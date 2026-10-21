@@ -31,7 +31,7 @@ WRITE = {
 }
 READ = {
     "browse", "search", "find_candidates", "lookup_by_citation", "resolve_by_id", "treatment_chain",
-    "rule_period_find", "configure_credential", "configure_status",
+    "rule_period_find", "configure_status",
 }
 TROUBLESHOOT = {"search", "record", "confirm_fix", "configure_credential", "configure_status"}
 SUGGESTION_BOX = {"submit", "configure_credential", "configure_status"}

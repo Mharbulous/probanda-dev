@@ -24,7 +24,7 @@ export { callTool, dispatchTool } from "./dispatch.js";
 // key. Local practice/case data lives in the Probanda plugin's runtime.
 export async function createDispatchContext(env: NodeJS.ProcessEnv = process.env): Promise<DispatchContext> {
   const poolConfig = await loadLegalCommonsConfig(env);
-  const legalCommons = new LegalCommonsClient(poolConfig);
+  const legalCommons = new LegalCommonsClient(poolConfig, () => loadLegalCommonsConfig(env));
   // The store's env guard compares against the pool's loaded URL and key, so it
   // is handed this config rather than loading the pool's credential a second time.
   const troubleshoot = new LegalCommonsClient(await loadTroubleshootConfig(env, poolConfig));

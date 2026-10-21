@@ -1,10 +1,10 @@
 import { join } from "node:path";
 
-import { defaultStateDir, readProtectedJson } from "./dpapi-store.js";
+import { defaultStateDir, readProtectedJson, writeProtectedJson } from "./dpapi-store.js";
 
-// The one Probanda's Cloud credential: the static Supabase key that the commons
-// server's legal_commons__configure_credential tool saves. Shared by the commons
-// server and the lawyer plugin's data server, so both read the same file with the same
+// The one Probanda's Cloud credential: the static Supabase key that the lawyer
+// plugin's data server saves through cloud_key__configure_credential. Shared by
+// the commons server and the data server, so both read the same file with the same
 // overrides (docs/Plans/2026-10-14_practice-db-conversion.md, step 3). Plain
 // JavaScript for the reason given in dpapi-store.js.
 
@@ -52,8 +52,15 @@ export async function loadCommonsKey(env = process.env) {
     key.credentialError = detail.split("\n")[0].trim();
     process.stderr.write(
       `legal-commons: stored credential at ${credentialPath(env)} could not be read — ` +
-      `${detail}\nStarting unconfigured; call the commons server's configure_credential tool to replace it.\n`
+      `${detail}\nStarting unconfigured; call cloud_key__configure_credential to replace it.\n`
     );
   }
   return key;
+}
+
+// Saves the key to the file loadCommonsKey reads. `protect` is forced true: this
+// is a real secret, and the default would silently write it as PLAINTEXT into a
+// file still named `.dpapi` on any non-Windows host. Failing loudly there is correct.
+export async function saveCommonsKey(staticKey, env = process.env) {
+  await writeProtectedJson(credentialPath(env), { staticKey }, true);
 }

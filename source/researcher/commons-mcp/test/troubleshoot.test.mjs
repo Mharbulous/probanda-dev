@@ -394,7 +394,7 @@ test("each client instance names itself when not configured", async () => {
   await assert.rejects(() => pool.get("principle"), {
     message:
       "legal-commons is not configured: this computer has no Probanda key. If the practitioner has one, " +
-      "call legal_commons__configure_credential and have them paste it on the page it serves; if not, " +
+      "call cloud_key__configure_credential and have them paste it on the page it serves; if not, " +
       "call key_request__submit so they can ask Probanda for one. A developer may instead set " +
       "LEGAL_COMMONS_SUPABASE_KEY in the runtime environment (Claude Code CLI).",
   });

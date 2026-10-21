@@ -1,16 +1,17 @@
-// The commons key page: where the practitioner pastes the legal-commons key, so
+// The Probanda's Cloud key page: where the practitioner pastes Probanda's key, so
 // it is never a tool argument and never passes through the chat or the model.
-// The shape of the lawyer data server's mail and TimeCamp pages: node:http on
-// 127.0.0.1, port 0, started lazily and unref'd, one random path token per
-// link, only the newest link works, and a successful save spends it. The key
-// is never logged, echoed into a page or put in an error.
+// cloud_key__configure_credential serves it (credential.ts), and the key request
+// page (tools.ts) uses its page helpers. The shape of the mail and TimeCamp
+// pages: node:http on 127.0.0.1, port 0, started lazily and unref'd, one random
+// path token per link, only the newest link works, and a successful save spends
+// it. The key is never logged, echoed into a page or put in an error.
 
 import { randomBytes } from "node:crypto";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
 /** Checks the typed key against Probanda's Cloud and saves it; throws with a message safe to show. */
-export type SaveKey = (key: string) => Promise<{ persisted: boolean; warning?: string }>;
+export type SaveKey = (key: string) => Promise<void>;
 
 const MAX_BODY = 4 * 1024;
 const TITLE = "Probanda's Cloud key";
@@ -23,7 +24,7 @@ export async function serveKeyPage(save: SaveKey): Promise<string> {
   const link = randomBytes(24).toString("hex");
   pending = { link, save };
   listening ??= listen();
-  return `http://127.0.0.1:${await listening}/commons/${link}`;
+  return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
 }
 
 function listen(): Promise<number> {
@@ -47,7 +48,7 @@ function listen(): Promise<number> {
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const m = /^\/commons\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const m = /^\/cloud-key\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
   const current = pending;
   if (!m || !current || m[1] !== current.link) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
@@ -56,23 +57,21 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (req.method !== "POST") return page(res, 405, "Not allowed", "");
 
   const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
-  let outcome: Awaited<ReturnType<SaveKey>>;
   try {
-    outcome = await current.save(typed);
+    await current.save(typed);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return page(res, 200, TITLE, `<p class="error">Not saved: ${escape(message)}</p>${FORM}`);
   }
   if (pending === current) pending = undefined;
-  const saved = outcome.persisted
-    ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>"
-    : `<p class="error">It works for this session only and could not be saved: ${escape(outcome.warning ?? "")}</p>`;
-  page(res, 200, "Connected", `<p>Connected to Probanda's Cloud.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
+  page(res, 200, "Connected",
+    "<p>Connected to Probanda's Cloud. The key is saved on this computer, encrypted, and will be used after a restart.</p>" +
+    "<p>You can close this tab and return to Claude.</p>");
 }
 
 const FORM =
-  "<p>Paste the key Probanda gave you for this computer. It lets this computer read and contribute to the " +
-  "legal commons and send suggestions about the plugin.</p>" +
+  "<p>Paste the key Probanda gave you for this computer. It lets this computer save practice records, " +
+  "send suggestions about the plugin and use the legal commons.</p>" +
   '<form method="post"><label>Probanda\'s Cloud key<br>' +
   '<input type="password" name="secret" autocomplete="off" required autofocus></label>' +
   '<button type="submit">Check and save</button></form>' +

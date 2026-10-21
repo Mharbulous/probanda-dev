@@ -94,6 +94,7 @@ import { researchPreflight } from "./research/preflight.js";
 import { legislationSearch } from "./files/legislation-search.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
 import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matter-root.js";
+import { callKeyRequestTool, isKeyRequestToolName } from "./key-request/tools.js";
 import type { KnowledgeSeams } from "./knowledge/tree.js";
 
 export interface DispatchContext {
@@ -611,6 +612,10 @@ export async function callTool(
 
   if (name === "research__preflight") {
     return researchPreflight();
+  }
+
+  if (isKeyRequestToolName(name)) {
+    return callKeyRequestTool(name);
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);

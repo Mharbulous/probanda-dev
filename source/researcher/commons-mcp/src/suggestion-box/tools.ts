@@ -13,7 +13,7 @@ import { findSuggestionHits } from "../troubleshoot/redact.js";
 // suggestions whose IDs the caller holds. Tool definitions live in schema-gen.ts.
 
 const NOT_CONFIGURED_HINT =
-  "the Suggestion Box has no key on this computer: call legal_commons__configure_credential once " +
+  "the Suggestion Box has no key on this computer: call cloud_key__configure_credential once " +
   "and have the practitioner paste the key Probanda gave them on the page it serves, or, if they have none, " +
   "call key_request__submit so they can ask Probanda for one";
 

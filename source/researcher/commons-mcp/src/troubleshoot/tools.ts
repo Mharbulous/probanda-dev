@@ -92,8 +92,8 @@ async function confirmFix(client: LegalCommonsClient, args: Record<string, unkno
   return client.rpc("confirm_entry", { p_entry_id: String(args.entry_id) });
 }
 
-// configure_credential — same shape as the pool's legal_commons__configure_credential
-// (set live, probe, restore on failure, persist, report a failed persist), plus
+// configure_credential — set live, probe, restore on failure, persist, report a
+// failed persist, plus
 // a URL, because the store has no baked one, and two separation guards: the
 // store must never be pointed at the pool's project or handed the pool's key.
 async function configureCredential(context: DispatchContext, args: Record<string, unknown>): Promise<unknown> {

@@ -12,3 +12,5 @@ export interface CommonsKey {
 export declare function credentialPath(env?: NodeJS.ProcessEnv): string;
 
 export declare function loadCommonsKey(env?: NodeJS.ProcessEnv): Promise<CommonsKey>;
+
+export declare function saveCommonsKey(staticKey: string, env?: NodeJS.ProcessEnv): Promise<void>;

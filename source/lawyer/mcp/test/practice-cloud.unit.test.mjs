@@ -166,7 +166,7 @@ test("a wrong key gets the unreachable message with its status", async (t) => {
   assert.deepEqual(entries(kv, "item"), []);
 });
 
-test("no credential: the write fails naming the commons configure_credential tool, and nothing is sent or stored", async (t) => {
+test("no credential: the write fails naming cloud_key__configure_credential, and nothing is sent or stored", async (t) => {
   const cloud = await startFakeCloud(t);
   const localAppData = mkdtempSync(join(tmpdir(), "coclerk-practice-nokey-"));
   t.after(() => rmSync(localAppData, { recursive: true, force: true }));
@@ -174,7 +174,7 @@ test("no credential: the write fails naming the commons configure_credential too
   const store = new PracticeStore({ SUPABASE_URL: cloud.env.SUPABASE_URL, LOCALAPPDATA: localAppData }, kv);
   await assert.rejects(writes.upsert_task(store, { task_type: "admin", description: "File the report" }), (err) => {
     assert.equal(err.code, "cloud_not_configured");
-    assert.match(err.message, /^Probanda's Cloud is not configured: no credential is configured; set it with the commons server's configure_credential tool, or ask Probanda for a key with its key_request__submit tool\. Nothing was saved\.$/);
+    assert.match(err.message, /^Probanda's Cloud is not configured: no credential is configured; set it with cloud_key__configure_credential, or ask Probanda for a key with key_request__submit\. Nothing was saved\.$/);
     return true;
   });
   assert.equal(cloud.requests.length, 0);

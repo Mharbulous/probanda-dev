@@ -146,7 +146,6 @@ class AgentShimContractTests(unittest.TestCase):
             "mcp__plugin_researcher_commons__legal_commons__link_authority",
             "mcp__plugin_researcher_commons__legal_commons__unlink_authority",
             "mcp__plugin_researcher_commons__legal_commons__merge_authority",
-            "mcp__plugin_researcher_commons__legal_commons__configure_credential",
         ):
             self.assertIsNotNone(
                 WRITE_TOOL_PATTERN.search(tool), f"{tool} is not recognized as a write tool"

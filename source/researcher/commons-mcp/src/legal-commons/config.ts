@@ -1,4 +1,3 @@
-import { writeProtectedJson } from "../dpapi-store.js";
 import { credentialPath, loadCommonsKey } from "../../../../mcp-shared/commons-key.js";
 
 // The credential's path, env override and loading live in
@@ -17,9 +16,9 @@ export { credentialPath };
 // values into a plugin's spawned MCP server process (confirmed platform gap,
 // anthropics/claude-code #39125, duplicate #45613) — an env-only credential is
 // therefore unreachable from Cowork's GUI. The static key is instead accepted
-// once via the legal_commons__configure_credential tool call (tool args are not
-// subject to the injection gap) and persisted to a host-backed, DPAPI-encrypted
-// file this process reads on every call — see dpapi-store.ts. `env` remains
+// once on the page the lawyer plugin's cloud_key__configure_credential serves,
+// and persisted to a host-backed, DPAPI-encrypted file this process reads at
+// start and again while it holds no key — see dpapi-store.ts. `env` remains
 // the first-checked source so an explicit env var (Claude Code CLI, developer
 // testing) still overrides the persisted file.
 //
@@ -40,27 +39,8 @@ export interface LegalCommonsConfig {
   notConfiguredHint?: string;
 }
 
-interface PersistedCredential {
-  staticKey: string;
-}
-
 // Env wins outright over the persisted file; the reasoning is on
 // loadCommonsKey. Never throws on an unreadable credential file.
 export async function loadLegalCommonsConfig(env: NodeJS.ProcessEnv = process.env): Promise<LegalCommonsConfig> {
   return { ...(await loadCommonsKey(env)), schema: env.LEGAL_COMMONS_SCHEMA || "legal_commons" };
-}
-
-// Called by legal_commons__configure_credential. Persists the static key to the
-// host-backed DPAPI file so the next process launch (next Cowork session) picks
-// it up via loadLegalCommonsConfig without the caller re-entering it.
-//
-// `protect` is forced true rather than left to default off-platform: this is a
-// real secret, and the default would silently write it as PLAINTEXT into a file
-// still named `.dpapi` on any non-Windows host. Failing loudly there is correct.
-export async function persistLegalCommonsCredential(
-  staticKey: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
-  const value: PersistedCredential = { staticKey };
-  await writeProtectedJson(credentialPath(env), value, true);
 }

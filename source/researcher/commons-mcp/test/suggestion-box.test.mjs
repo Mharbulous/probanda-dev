@@ -105,7 +105,7 @@ test("submit is refused when this computer has no key, before any call", async (
   const calls = fakeFetch(t);
   const message = errorMessage(await withManifest.dispatch.dispatchTool(context(withManifest, ""), "suggestion_box__submit", SUGGESTION));
   assert.match(message, /has no key on this computer/);
-  assert.match(message, /legal_commons__configure_credential/);
+  assert.match(message, /cloud_key__configure_credential/);
   assert.equal(calls.length, 0);
 });
 

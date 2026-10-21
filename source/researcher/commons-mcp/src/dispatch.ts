@@ -5,7 +5,6 @@ import { callLegalCommonsTool, isLegalCommonsToolName } from "./legal-commons/to
 import type { LegalCommonsClient } from "./legal-commons/client.js";
 import { callTroubleshootTool, isTroubleshootToolName } from "./troubleshoot/tools.js";
 import { callSuggestionBoxTool, isSuggestionBoxToolName } from "./suggestion-box/tools.js";
-import { callKeyRequestTool, isKeyRequestToolName } from "./key-request/tools.js";
 
 export interface DispatchContext {
   // Layer-3 pool client. Uses a static credential and has no auth/crypto gate —
@@ -45,6 +44,11 @@ export async function callTool(
   const definition = toolDefinition(name);
   const args = validateToolInput(definition, rawArgs);
 
+  if (isLegalCommonsToolName(name) || isSuggestionBoxToolName(name)) {
+    // The key may have been saved since this server started (cloud_key__configure_credential, lawyer plugin).
+    // Test doubles have no reload.
+    await context.legalCommons.reloadKeyIfUnset?.();
+  }
   if (isLegalCommonsToolName(name)) {
     return callLegalCommonsTool(context.legalCommons, name, args);
   }
@@ -54,10 +58,6 @@ export async function callTool(
   if (isSuggestionBoxToolName(name)) {
     // The Suggestion Box posts with the pool's client and key.
     return callSuggestionBoxTool(context.legalCommons, name, args);
-  }
-  if (isKeyRequestToolName(name)) {
-    // A key request reaches the pool's project with no key: the client gives only its URL and whether a key is held.
-    return callKeyRequestTool(context.legalCommons, name);
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);

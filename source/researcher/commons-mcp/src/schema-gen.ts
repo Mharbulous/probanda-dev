@@ -329,22 +329,12 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
       ], ["id", "reason"]),
     },
     {
-      name: legalCommonsPrefixed("configure_credential"),
-      description:
-        "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them " +
-        "(the same key serves legal_commons__* and suggestion_box__submit). The key is typed on that page, never in chat and never as a tool argument. " +
-        "Send the link, and when the practitioner says it is done, call legal_commons__configure_status. " +
-        "A practitioner who has no key asks Probanda for one with key_request__submit. " +
-        "The page checks the key against the pool before saving it; it is persisted host-side, encrypted at rest, and never logged or echoed back.",
-      inputSchema: objectSchema([], []),
-      annotations: { destructiveHint: true },
-    },
-    {
       name: legalCommonsPrefixed("configure_status"),
       description:
-        "Report whether this machine already has a legal-commons pool credential stored, plus a " +
+        "Report whether this machine already has Probanda's key stored, plus a " +
         "redacted hint identifying which key it is. Use before asking the user for a key, so an " +
-        "already-configured machine is not prompted again. Never returns the key itself.",
+        "already-configured machine is not prompted again. Never returns the key itself. " +
+        "The lawyer plugin's cloud_key__configure_credential sets the key, and its key_request__submit asks Probanda for one.",
       inputSchema: objectSchema([], []),
       annotations: { readOnlyHint: true },
     },
@@ -448,7 +438,7 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
     {
       name: suggestionBoxPrefixed("submit"),
       description:
-        "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key legal_commons__configure_credential stores (a practitioner with none asks for one with key_request__submit). " +
+        "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key cloud_key__configure_credential stores (a practitioner with none asks for one with key_request__submit). " +
         "title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. " +
         "source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, " +
         "or llm for a vetted loose thread (through /draft's Suggestion Box). " +
@@ -534,31 +524,6 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
   ];
 }
 
-// Key-request namespace: a practitioner with no key asks Probanda for one. Hand-written
-// like the other namespaces. Routed in dispatch.ts.
-export function keyRequestToolDefinitions(): ToolDefinition[] {
-  return [
-    {
-      name: "key_request__submit",
-      description:
-        "For a computer with no Probanda key (legal_commons__configure_status reports configured: false): returns a link to a page on this computer where the practitioner " +
-        "asks Probanda for a key. They type there what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name, " +
-        "for British Columbia) and an email and optional phone for contact. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. " +
-        "Probanda verifies the person and sends the key to the email address their firm's website or the directory lists, never the typed one; they then paste it on legal_commons__configure_credential's page. " +
-        "Send the link, and when the practitioner says it is sent, call key_request__status. Refused when this computer already holds a key.",
-      inputSchema: objectSchema([], []),
-    },
-    {
-      name: "key_request__status",
-      description:
-        "Report where this computer's request for Probanda's key stands: {requested, request_id, status, requested_at, decided_at, next}. " +
-        "status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail.",
-      inputSchema: objectSchema([], []),
-      annotations: { readOnlyHint: true },
-    },
-  ];
-}
-
 // The one tool list every host and every session sees: the layer-3 legal-commons
 // pool namespace, the troubleshooting store namespace and the Suggestion Box
 // namespace. Local practice and case data live in the Probanda plugin.
@@ -567,6 +532,5 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...legalCommonsToolDefinitions(),
     ...troubleshootToolDefinitions(),
     ...suggestionBoxToolDefinitions(),
-    ...keyRequestToolDefinitions(),
   ];
 }

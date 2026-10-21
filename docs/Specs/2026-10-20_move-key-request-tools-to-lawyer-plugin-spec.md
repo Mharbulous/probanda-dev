@@ -42,6 +42,8 @@ Goal: the lawyer plugin, the base plugin every practitioner has, serves the key-
 2. Duplicate them in both plugins: a second copy to keep in step, and a name clash.
 3. Leave them in researcher and make lawyer depend on it: breaks the seam.
 
+Decision on `legal_commons__configure_credential` (Brahm, 2026-10-20, answering §9): it moves too. Source shows one credential file (`credential.json.dpapi`, `source/mcp-shared/commons-key.js`) serves the commons server and the lawyer `data` server. The `data` server registers the credential-save tool as `cloud_key__configure_credential`, and the researcher registration is removed with no alias. The write goes through a new `saveCommonsKey` in `commons-key.js`. Because the commons server read the file only at start, its pool client now re-reads it whenever it holds no key, so a key saved on the lawyer page reaches it in the same session.
+
 ## 7. Implementation plan
 
 1. Verify against HEAD (§10) and append a verification table to this spec.

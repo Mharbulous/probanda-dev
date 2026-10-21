@@ -240,7 +240,6 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
     "legal_commons__amend_criterion_text",
     "legal_commons__amend_principle_text",
     "legal_commons__browse",
-    "legal_commons__configure_credential",
     "legal_commons__configure_status",
     "legal_commons__find_candidates",
     "legal_commons__link_authority",
@@ -263,64 +262,6 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
   }
 });
 
-// configure_credential's persistence path (writeProtectedJson -> DPAPI on
-// win32) is covered separately in dpapi-store.test.mjs; here we cover the
-// validation and probe that run on the key page before any file I/O, so these
-// pass on every platform the test suite runs on.
-function fakeConfigurable(probeFails = false) {
-  let key = "";
-  return {
-    probeCount: 0,
-    staticKey: () => key,
-    setStaticKey(next) { key = next; },
-    async get() {
-      this.probeCount += 1;
-      if (probeFails) throw new Error("PostgREST failed (401): invalid api key");
-      return [];
-    },
-  };
-}
-
-// The key is typed on the local page configure_credential serves, never passed
-// as a tool argument. Posts `secret` to that page and returns its HTML.
-async function pasteOnKeyPage(lc, secret) {
-  const result = await index.callTool(context(lc), "legal_commons__configure_credential", {});
-  assert.equal(result.status, "awaiting_key");
-  assert.match(result.url, /^http:\/\/127\.0\.0\.1:\d+\/commons\/[0-9a-f]{48}$/);
-  const res = await fetch(result.url, { method: "POST", body: new URLSearchParams({ secret }) });
-  assert.equal(res.status, 200);
-  return res.text();
-}
-
-test("configure_credential refuses a static_key argument", async () => {
-  const lc = fakeConfigurable();
-  await assert.rejects(
-    () => index.callTool(context(lc), "legal_commons__configure_credential", { static_key: "sb_secret_X" }),
-    /unknown field/
-  );
-  assert.equal(lc.staticKey(), "", "must not go live");
-});
-
-test("configure_credential's page rejects the publishable key without probing or saving it", async () => {
-  const lc = fakeConfigurable();
-  const html = await pasteOnKeyPage(lc, "sb_publishable_ABCDEFGHIJKLMNOP");
-  assert.match(html, /Not saved: that is the project&#39;s publishable key/);
-  assert.equal(lc.probeCount, 0, "must fail before spending a network round trip");
-  assert.equal(lc.staticKey(), "", "must not go live");
-});
-
-// A wrong key arriving mid-session must not knock out a session that was
-// already working — the probe failure has to roll the live key back.
-test("configure_credential's page restores the previous key when the probe fails", async () => {
-  const lc = fakeConfigurable(true);
-  lc.setStaticKey("sb_secret_ALREADYWORKING");
-  const html = await pasteOnKeyPage(lc, "sb_secret_WRONGKEY");
-  assert.match(html, /Not saved: that key did not work against the legal-commons pool/);
-  assert.ok(!html.includes("sb_secret_WRONGKEY"), "the page does not echo the key");
-  assert.equal(lc.probeCount, 1);
-  assert.equal(lc.staticKey(), "sb_secret_ALREADYWORKING");
-});
-
 // configure_status is the one tool a caller may run before a credential exists,
 // so it must answer rather than throw the not-configured error, and it must
 // never hand back the key it is reporting on.
@@ -338,4 +279,27 @@ test("configure_status redacts the key it reports on", async () => {
   assert.equal(result.configured, true);
   assert.equal(result.key_hint, "sb_secret_…7890");
   assert.ok(!result.key_hint.includes("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), "hint must not contain the key body");
+});
+
+// The key is saved by the lawyer plugin's cloud_key__configure_credential, in another process, so a
+// pool client that started with none reads the credential file again before a pool or Suggestion Box call.
+test("a pool client with no key picks up a key saved since it started", async () => {
+  const { LegalCommonsClient } = await import("../build/legal-commons/client.js");
+  let reads = 0;
+  const reload = async () => {
+    reads += 1;
+    return { staticKey: "sb_secret_SAVEDLATER_ABCDEFGHIJ7890" };
+  };
+  const client = new LegalCommonsClient({ supabaseUrl: "https://x", staticKey: "", schema: "legal_commons" }, reload);
+  const result = await index.callTool(context(client), "legal_commons__configure_status", {});
+  assert.equal(result.configured, true);
+  await index.callTool(context(client), "legal_commons__configure_status", {});
+  assert.equal(reads, 1, "a client that holds a key reads nothing again");
+});
+
+test("the commons server no longer serves the key tools", () => {
+  const names = schemaGen.buildToolDefinitions().map((t) => t.name);
+  for (const name of ["legal_commons__configure_credential", "key_request__submit", "key_request__status"]) {
+    assert.ok(!names.includes(name), `${name} is the lawyer data server's`);
+  }
 });

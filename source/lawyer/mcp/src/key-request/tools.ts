@@ -3,10 +3,11 @@ import { type IncomingMessage, type Server, type ServerResponse, createServer } 
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 
-import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../dpapi-store.js";
+import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
+import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
-import { escape, page, readBody } from "../key-page.js";
-import type { LegalCommonsClient } from "../legal-commons/client.js";
+import { escape, page, readBody } from "./page.js";
+import { configureCloudKey } from "./save-key.js";
 
 // Runtime logic for the key_request namespace: a practitioner with no key asks
 // Probanda for one. key_request__submit serves a page on this computer where
@@ -17,14 +18,15 @@ import type { LegalCommonsClient } from "../legal-commons/client.js";
 // else, to the key-request-submit Edge Function with no key, because the
 // practitioner has none yet. Brahm lists the queue (/view-key-requests in the
 // developer plugin), mints the key and delivers it out of band, and the
-// practitioner enters it on legal_commons__configure_credential's page.
+// practitioner enters it on cloud_key__configure_credential's page (save-key.ts).
 //
 // The request is identified by a random token only this computer holds; the
 // cloud stores its SHA-256. key_request__status sends the token to
 // key-request-status and reports pending, issued or declined.
-// The page follows key-page.ts: node:http on 127.0.0.1, port 0, started lazily
+// The page follows page.ts: node:http on 127.0.0.1, port 0, started lazily
 // and unref'd, one random path token per link, only the newest link works, and
 // a successful send spends it. Tool definitions live in schema-gen.ts.
+// It sends to the project loadCloudKey names, the one the key works against.
 
 /** The only fields a request carries, besides the jurisdiction and the token's hash. */
 export const REQUEST_FIELDS = ["full_name", "year_of_call", "call_date", "firm_name", "email", "phone"] as const;
@@ -40,7 +42,7 @@ interface SavedRequest {
   requested_at: string;
 }
 
-let pending: { link: string; client: LegalCommonsClient } | undefined;
+let pending: { link: string; projectUrl: string; env: NodeJS.ProcessEnv } | undefined;
 let listening: Promise<number> | undefined;
 // The last request this process sent, so a failed save to disk still leaves
 // this session able to check it.
@@ -51,26 +53,29 @@ export function requestPath(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 export function isKeyRequestToolName(name: string): boolean {
-  return name.startsWith("key_request__");
+  return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
 }
 
-export function callKeyRequestTool(client: LegalCommonsClient, name: string): Promise<unknown> {
+export function callKeyRequestTool(name: string, env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
   switch (name) {
     case "key_request__submit":
-      return submit(client);
+      return submit(env);
     case "key_request__status":
-      return status(client);
+      return status(env);
+    case "cloud_key__configure_credential":
+      return configureCloudKey(env);
     default:
       throw new ValidationError(`Unknown key_request tool "${name}"`);
   }
 }
 
-async function submit(client: LegalCommonsClient): Promise<unknown> {
-  if (client.hasStaticKey()) {
-    throw new ValidationError("this computer already holds Probanda's key (legal_commons__configure_status reports it), so no request is needed");
+async function submit(env: NodeJS.ProcessEnv): Promise<unknown> {
+  const key = await loadCloudKey(env);
+  if (key.configured) {
+    throw new ValidationError("this computer already holds Probanda's key (practice_data__config_status reports cloud_credential: present), so no request is needed");
   }
   const link = randomBytes(24).toString("hex");
-  pending = { link, client };
+  pending = { link, projectUrl: key.supabaseUrl, env };
   listening ??= listen();
   return {
     status: "awaiting_details",
@@ -81,15 +86,15 @@ async function submit(client: LegalCommonsClient): Promise<unknown> {
   };
 }
 
-async function status(client: LegalCommonsClient): Promise<unknown> {
-  const saved = sent ?? (await readProtectedJson(requestPath(), null) as SavedRequest | null);
+async function status(env: NodeJS.ProcessEnv): Promise<unknown> {
+  const saved = sent ?? (await readProtectedJson(requestPath(env), null) as SavedRequest | null);
   if (!saved?.request_token) {
     return {
       requested: false,
       next: "No request for Probanda's key was sent from this computer. Call key_request__submit to send one.",
     };
   }
-  const reply = await post(client, "key-request-status", { request_token: saved.request_token }, "return the request's status");
+  const reply = await post((await loadCloudKey(env)).supabaseUrl, "key-request-status", { request_token: saved.request_token }, "return the request's status");
   const state = typeof reply.status === "string" ? reply.status : "unknown";
   return {
     requested: true,
@@ -105,15 +110,15 @@ const NEXT: Record<string, string> = {
   pending: "Probanda has not decided this request yet. Check again later.",
   issued:
     "Probanda has issued this computer's key and sends it to the practitioner directly. When they have it, call " +
-    "legal_commons__configure_credential and have them paste it on the page it serves, never in chat.",
+    "cloud_key__configure_credential and have them paste it on the page it serves, never in chat.",
   declined:
     "Probanda could not verify the details sent. The practitioner can check them against their own entry in the " +
     "Law Society of British Columbia's directory and send a new request with key_request__submit.",
 };
 
 // One call to a key-request Edge Function. It sends no key: there is none yet.
-async function post(client: LegalCommonsClient, fn: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${client.projectUrl().replace(/\/$/, "")}/functions/v1/${fn}`, {
+async function post(projectUrl: string, fn: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/functions/v1/${fn}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -201,7 +206,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   let reply: Record<string, unknown>;
   try {
     const body = requestBody(new URLSearchParams(await readBody(req)), createHash("sha256").update(token).digest("hex"));
-    reply = await post(current.client, "key-request-submit", body, "save the request");
+    reply = await post(current.projectUrl, "key-request-submit", body, "save the request");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return page(res, 200, TITLE, `<p class="error">Not sent: ${escape(message)}</p>${FORM}`);
@@ -213,7 +218,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   sent = { request_id: reply.request_id, request_token: token, requested_at: new Date().toISOString() };
   let kept = "";
   try {
-    await writeProtectedJson(requestPath(), sent);
+    await writeProtectedJson(requestPath(current.env), sent);
   } catch (err) {
     kept = `<p class="error">This computer could not save the request's reference, so its status can be checked only until Claude restarts: ${
       escape(err instanceof Error ? err.message : String(err))}</p>`;

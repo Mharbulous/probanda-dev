@@ -213,9 +213,9 @@ The runtime holds a single static credential: the key Probanda gave this machine
 `suggestion_box__submit`. There is no login, unlock, or session step, and no
 embedding/model API key (retrieval runs entirely in Postgres).
 
-The credential is supplied once per machine through `legal_commons__configure_credential`,
-which returns a link to a page on this computer. The practitioner pastes the key on
-that page, never in chat; the page validates it against the pool and stores it
+The credential is supplied once per machine through the lawyer plugin's
+`cloud_key__configure_credential`, which returns a link to a page on this computer. The
+practitioner pastes the key on that page, never in chat; the page validates it and stores it
 encrypted on the host, where it survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
 (see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
@@ -226,14 +226,7 @@ reports whether this machine already holds a credential, and identifies which on
 by a redacted hint, without exposing the key. If it reports one is configured but
 calls still fail, the error names the cause (an unreadable stored file reads
 differently from an absent one); do not work around it. If none is configured, call
-`legal_commons__configure_credential` and send the practitioner the link it returns.
+`cloud_key__configure_credential` and send the practitioner the link it returns.
 Never ask for the key in chat, and never echo it back into the transcript.
 
-A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send
-the practitioner the link it returns. On that page they type only what verifying a
-practising lawyer requires (full name, year of call, an optional call date and firm
-name) and an email and optional phone for contact, never in chat. Probanda verifies
-them and sends the key to the email address their firm's website or the directory
-lists for them. Call
-`key_request__status` to report where the request stands; when it reports `issued`,
-call `legal_commons__configure_credential` so they can paste the key they received.
+A practitioner who has no key asks Probanda for one: lawyer's practice-data, Configuration (Probanda's key).

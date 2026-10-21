@@ -3493,6 +3493,44 @@ export function contactsToolDefinitions(): ToolDefinition[] {
   ];
 }
 
+// Probanda's Cloud key: the one credential every server reads
+// (source/mcp-shared/commons-key.js), and the request a practitioner with none
+// sends for one. Hand-written. Routed in dispatch.ts to src/key-request/.
+export function cloudKeyToolDefinitions(): ToolDefinition[] {
+  return [
+    {
+      name: "cloud_key__configure_credential",
+      description:
+        "One-time setup: returns a link to a page on this computer where the practitioner pastes the key Probanda gave them. " +
+        "The one key serves every access to Probanda's Cloud: practice writes, the Suggestion Box and the legal commons. " +
+        "The key is typed on that page, never in chat and never as a tool argument. " +
+        "Send the link, and when the practitioner says it is done, call practice_data__config_status, whose cloud_credential then reads present. " +
+        "A practitioner who has no key asks Probanda for one with key_request__submit. " +
+        "The page checks the key against Probanda's Cloud before saving it; it is saved on this computer, encrypted at rest, and never logged or echoed back.",
+      inputSchema: objectSchema([], []),
+      annotations: { destructiveHint: true },
+    },
+    {
+      name: "key_request__submit",
+      description:
+        "For a computer with no Probanda key (practice_data__config_status reports cloud_credential: missing): returns a link to a page on this computer where the practitioner " +
+        "asks Probanda for a key. They type there what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name, " +
+        "for British Columbia) and an email and optional phone for contact. Those details are typed on that page, never in chat and never as a tool argument, and go to Probanda's Cloud and nowhere else. " +
+        "Probanda verifies the person and sends the key to the email address their firm's website or the directory lists, never the typed one; they then paste it on cloud_key__configure_credential's page. " +
+        "Send the link, and when the practitioner says it is sent, call key_request__status. Refused when this computer already holds a key.",
+      inputSchema: objectSchema([], []),
+    },
+    {
+      name: "key_request__status",
+      description:
+        "Report where this computer's request for Probanda's key stands: {requested, request_id, status, requested_at, decided_at, next}. " +
+        "status is pending, issued or declined; requested is false when no request was sent from this computer. next says what to do. Sends no personal detail.",
+      inputSchema: objectSchema([], []),
+      annotations: { readOnlyHint: true },
+    },
+  ];
+}
+
 // The one tool list every host and every session sees: local-backed practice
 // tools, local-backed matter-data tools, and the host-side file surface. This
 // litigation runtime has no Supabase surface and no layer-3 legal-commons
@@ -3508,6 +3546,7 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
+    ...cloudKeyToolDefinitions(),
   ];
 }
 

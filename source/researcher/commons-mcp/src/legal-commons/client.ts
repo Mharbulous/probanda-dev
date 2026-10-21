@@ -15,11 +15,25 @@ export interface SelectOptions {
 }
 
 export class LegalCommonsClient {
-  constructor(private readonly config: LegalCommonsConfig) {}
+  // `reload` reads the credential file again. Only the pool's client has one:
+  // the lawyer plugin's cloud_key__configure_credential saves the key from
+  // another process, so a pool client that started with none must look again.
+  constructor(
+    private readonly config: LegalCommonsConfig,
+    private readonly reload?: () => Promise<Pick<LegalCommonsConfig, "staticKey" | "credentialError">>
+  ) {}
 
-  // Lets legal_commons__configure_credential take effect immediately for the
-  // rest of this process's life, without waiting for the next MCP server
-  // restart to re-read the persisted credential file.
+  // Picks up a key saved since this process started. Called before every pool
+  // and Suggestion Box tool; costs a file read only while no key is held.
+  async reloadKeyIfUnset(): Promise<void> {
+    if (this.config.staticKey || !this.reload) return;
+    const { staticKey, credentialError } = await this.reload();
+    if (staticKey) this.setStaticKey(staticKey);
+    else this.config.credentialError = credentialError;
+  }
+
+  // Sets the key live for the rest of this process's life: troubleshoot's
+  // configure_credential uses it, and so does reloadKeyIfUnset.
   setStaticKey(staticKey: string): void {
     this.config.staticKey = staticKey;
     // A newly supplied key supersedes whatever unreadable file was found at
@@ -137,7 +151,7 @@ export class LegalCommonsClient {
       throw new ValidationError(
         (this.config.notConfiguredHint ??
           "legal-commons is not configured: this computer has no Probanda key. If the practitioner has one, " +
-          "call legal_commons__configure_credential and have them paste it on the page it serves; if not, " +
+          "call cloud_key__configure_credential and have them paste it on the page it serves; if not, " +
           "call key_request__submit so they can ask Probanda for one. A developer may instead set " +
           "LEGAL_COMMONS_SUPABASE_KEY in the runtime environment (Claude Code CLI).") +
         // A stored-but-unreadable credential is a different problem with a
