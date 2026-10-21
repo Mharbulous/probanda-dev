@@ -3,7 +3,7 @@ name: legal-research
 description: >
   MANDATORY gate for any question about what the law IS: a test's elements, a statute's
   effect, what courts have held, authority on a point, or a Westlaw query. Trigger BEFORE
-  answering or searching the web. Applying law to facts -> /apply-to-facts.
+  answering or searching the web, unless the answer is framed explicitly as a hunch. Applying law to facts -> /apply-to-facts.
 ---
 
 <!-- REGRESSION-PRONE: CanLII-first research has recurred repeatedly. See docs/design/2026-09-24 research-lawyer Westlaw-first fix plan.md before editing. Tests: legal-research/tests/. -->

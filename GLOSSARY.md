@@ -347,8 +347,8 @@ Legal writing for which no venue publishes the form document, even where it pres
 _Avoid_: informal (the tone is often formal); correspondence (narrower; a memo to file is free-form but addressed to no one).
 
 **Hunch**:
-A first impression drawn only from what the model already knew before the session began — nothing in the session (no file, tool result, or line of conversation) was consulted.
-_Avoid_: guess, gut feeling, "I think" with no label; hunch for an answer formed after reading the files (that is a **Recommendation**).
+A first impression drawn only from what the model already knew before the session began — nothing in the session (no file, tool result, or line of conversation) was consulted. For a view of the law, every impression outside the research-agent is a hunch, whatever it rests on.
+_Avoid_: guess, gut feeling, "I think" with no label; hunch for an answer formed after reading the files (that is a **Recommendation**, except for a view of the law).
 
 **Instrument**:
 The executed or served document through which something reaches the forum — two vehicles, both fact-domain. The **witness's instrument** carries a witness's words: an affidavit or a witness statement (`statement.instrument`); execution is the signing or swearing (🖋️ sign it ⊕ ✒️ swear it), and an account with no instrument yet is ✍️ draft it. The **admission instrument** is the document through which an admission is sought from a party — notice to admit, pleading, interrogatories, or the examination transcript (`admissions.instrument`); its work is service (🎾). Fact domain only: published law arrives already executed.

@@ -13,6 +13,8 @@ answer sounds, how many times it has been revised, or who is speaking.
 | **Recommendation** | An answer formed from information already within reach. | The repository, the matter's files, tool results, the conversation — whatever was already on the shelf. | Was it formed after reading what was available, without sending a separate agent off to research the point? |
 | **Advice** | A recommendation that has been checked carefully against everything within reach **and** is backed by targeted research from a separately-spawned agent working independently. | Everything within reach, plus that agent's own findings on the specific point. | Did a separate agent contribute evidence on this point, and was that evidence reviewed before the answer was given? |
 
+For a view of the law, the only grade outside the research-agent is **hunch**, whatever it rests on (`shared/legal-research.md`).
+
 ## The grade only goes up
 
 The grade describes the answer at the moment it is stated. A hunch that is then

@@ -4,12 +4,12 @@
 
 (This doctrine is read via the `/legal-research` gate; the file was formerly `shared/statements-of-law.md`.)
 
-Never answer a question about what the law is directly — always defer to the
-`research-agent` agent. A "statement of law" is any assertion about what the law
-requires, permits, or provides: the elements of a test, the effect of a statute,
-what courts have held, whether conduct is actionable. If you cannot attach a
-pinpoint citation to an already-verified authority, it is a statement of law and
-it is not yours to make.
+Never make a statement or give an opinion about the law; instead, frame your
+statement explicitly as a hunch or offer to invoke the research-agent. A hunch is
+never cited, built into work product or used to settle a decision. The moment
+anything will depend on it, it goes to the research-agent. A "statement of law" is
+any assertion about what the law requires, permits, or provides: the elements of a
+test, the effect of a statute, what courts have held, whether conduct is actionable.
 
 **Not statements of law (answer normally):**
 
@@ -22,28 +22,10 @@ it is not yours to make.
    and that review make a passage quotable, never reliable: no
    conclusion, advice or filed content rests on the authority until
    `research-agent` has returned it, because only its audit notes it up and
-   compares its facts. A research memo or case brief is a lead (item 4).
+   compares its facts. A research memo or case brief is a lead, not an authority.
 3. *A party's own positions* — restating what a pleading, submission, or the
    client asserts, attributed as an assertion, not endorsed as law.
-4. *A labelled hunch or recommendation, never relied on* — an unverified legal
-   impression may be voiced when (a) it is explicitly labelled with its grade
-   and as requiring legal research: a **hunch** when it rests on training
-   knowledge alone ("that might collide with the contract-law term 'invitation
-   to treat' — but that's a hunch that needs legal research"), a
-   **recommendation** when something already in reach prompted it — the
-   practitioner's own `6. LAW\` memo, an ingested authority, a passage in the
-   matter file ("the 2026-06-30 memo suggests mitigation may not apply here —
-   a recommendation, not yet verified"); (b) nothing relies on it — it is never
-   cited, built into work product, or used to settle a decision — and (c) it
-   carries its conversion path: the moment anything will depend on it, route
-   it to `research-agent`, whose return is the only grade that may be relied
-   on (advice, in the vocabulary of `shared/answer-grades.md`). Both grades
-   pass through the same gate. Withdrawing the point into silence is worse
-   than the labelled impression — it leaves the practitioner nothing to
-   assess. The label licenses mentioning, not relying: neither label cures an
-   unverified statement someone intends to act on, and the reliance path still
-   runs through the gate below.
-5. *In-pipeline research stages* — components with their own citation-gated
+4. *In-pipeline research stages* — components with their own citation-gated
    research discipline (`/researcher`, `/case-brief`,
    `/verify-law` with `verify-authorities`) are compliant implementations of this rule, not
    violations: they forbid training-knowledge citations and flag unsupported

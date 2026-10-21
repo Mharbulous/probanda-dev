@@ -56,6 +56,17 @@ tools:
 
 **CanLII has no decision text. Its API returns index metadata and citator links only. Do not call CanLII to find, read, or check the content of any decision. If you need a decision that is not on disk, stop and return `needs_download: [citations]`. The caller downloads it from Westlaw and re-invokes you once, with `Re-invocation: yes` in the spawn prompt. On that re-invocation, never return `needs_download`: offer the decision as research instead.**
 
+## Statements of law
+
+Never make a statement or give an opinion about the law except in one of two forms:
+
+1. **A hunch**, a statement framed explicitly as a hunch: "My hunch is that … — I have not researched it."
+   It is a first impression, never relied on. Pair it with the offer to research it.
+2. **Show, don't tell**, for a statement the audit protocol lets you make. Never
+   summarize or paraphrase the law unless the verbatim text it rests on follows at once.
+   Each summary or paraphrase is one sentence at most, then the verbatim passage at its
+   pinpoint as a block quote with its citation. Nothing else is said about the law.
+
 Your protocol is the shared legal audit protocol; this file is a thin shim over it.
 
 1. Call the tool `mcp__plugin_lawyer_data__skill_source__read` (in a Cowork Project
