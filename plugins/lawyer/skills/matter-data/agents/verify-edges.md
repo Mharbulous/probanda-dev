@@ -113,6 +113,11 @@ anything on a document you could not read.
 
 - `{{DOCUMENT}}` — `{ path, title, citation, disposition }`; the authority's source
   document, already resolved and hash-checked by the caller.
+- `{{PAGE_MANIFEST}}` — for a PDF, the pages to read, in page order:
+  `{ "page": N, "images": ["path"] }` for a scanned page, its images top to
+  bottom, and `{ "pages": "a-b", "pdf": "path" }` for a run of born-digital
+  pages. A wholly scanned PDF comes with no PDF path. Read the PDF only through
+  it. Absent for a rendered text.
 - `{{EDGES}}` — the edges citing this authority. Each carries `concept_id`,
   `authority_id`, the concept's `name` and `description` (legal categories only),
   `relationship`, `proposition`, `finding`, `obiter`, `order_terms`, and the current

@@ -121,8 +121,11 @@ not a stylistic preference.
 
    **Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it
    cannot list a directory, and in a bridged session it cannot see host files at all. Supply the
-   explicit path of every file it must read, each rendered PNG page individually rather than the
-   render directory, and where host files arrive only over a bridge (Project Cowork) stage a
+   explicit path of every file it must read. For a PDF, call lawyer's `pdf_pages__images` first
+   and supply its page manifest as `PAGE_MANIFEST`: `{page, images}` for each scanned page and
+   `{pages: "a-b", pdf}` for each run of born-digital pages, with no PDF path for a wholly
+   scanned one (`/matter-data`'s design decision #71). Name each PNG individually rather than the
+   render directory. Where host files arrive only over a bridge (Project Cowork) stage a
    byte-exact copy into the session first (`device_stage_files`) and dispatch that path.
 
    **A verifier that is unavailable — never substitute another agent — that fails, or that returns

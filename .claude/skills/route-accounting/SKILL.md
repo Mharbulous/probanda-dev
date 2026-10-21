@@ -193,7 +193,9 @@ to Step 4 with an empty result set.
 Build each subagent's prompt from
 `subagents/subagent-prompt-template-routing.md`, filling in:
 
-- **the batch's explicit work list** — absolute paths, this batch only;
+- **the batch's explicit work list** — absolute paths, this batch only, and
+  each `.pdf`'s page manifest from lawyer's `pdf_pages__images` (the
+  template's orchestrator notes say how);
 - **the run date** — rule 6's 30-day-age test is computed against this, not
   against any file's own date;
 - **the four destination-root paths**, verbatim, as recorded from Step 2;
@@ -206,7 +208,8 @@ Build each subagent's prompt from
 definition enforces this structurally — its toolset has no `Edit`, `Write`,
 or any rename/move capability, so a subagent dispatched under that type
 cannot mutate the filesystem regardless of what its prompt says. `Read` is
-available for opening a file's content (needed for routing rules 4 and 6).
+available for opening a file's content (needed for routing rules 4 and 6), a
+PDF's scanned pages only through their page images.
 Its `Bash` is prompt-scoped to reading: listing the folder, reading file
 bytes, and the SwitchYard plugin's `environment-gauge` skill for stubborn
 `.docx` files. If the fallback to the generic agent above is used instead,
