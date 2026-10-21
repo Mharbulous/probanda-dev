@@ -45,7 +45,9 @@ export interface LegislationSearchSeams {
 // memo-index-plan.md). It had not landed when this tool was built, and the pre-filing `extractDocuments`
 // needs host pypdf, so it is deliberately not used. Once `extractText` is on main, make this the
 // production default (it is async, so legislationSearch becomes async), map its reason codes onto
-// `unreadable` / `ocr_unavailable` / `no_text`, and drop this refusal.
+// `unreadable` / `ocr_unavailable` / `no_text`, and drop this refusal. Until then no PDF text is read
+// here, so no scanned or OCR'd page's text layer can reach a hit; once it is, extractText refuses a PDF
+// with any scanned page as `ocr_unavailable` (classifyPdfPages, src/files/extract/page-images.ts).
 function noPageExtractor(path: string): string[] {
   throw new DataServerError(
     `PDF and .docx text is not read yet (it awaits the in-server extractor); search a .md, .txt or .html copy instead: ${path}`,

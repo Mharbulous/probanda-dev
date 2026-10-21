@@ -10,6 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { drawImage, imagePdfBytes } from "./helpers/synthetic-docs.mjs";
+
 const { legislationSearch } = await import("../build/files/legislation-search.js");
 const { buildToolDefinitions } = await import("../build/schema-gen.js");
 
@@ -168,6 +170,14 @@ test("until the in-server extractor lands, a PDF or .docx is refused, never read
     writeFileSync(file, "%PDF-1.4\n%%EOF\n");
     assert.equal(codeOf(() => legislationSearch(s.matter, file, ["court"])), "extractor_unavailable");
   }
+});
+
+test("an OCR'd PDF is refused and its hidden text layer never searched", (t) => {
+  const s = setup(t);
+  const scan = join(s.books, "Scanned Act.pdf");
+  const ocr = Array.from({ length: 40 }, (_, i) => `BT 3 Tr /F1 12 Tf 72 ${740 - 17 * i} Td (${i + 1} The court may refer a question.) Tj ET`).join(" ");
+  writeFileSync(scan, imagePdfBytes({ pages: [{ content: `${drawImage(0, 0, 612, 792)} ${ocr}` }] }));
+  assert.equal(codeOf(() => legislationSearch(s.matter, scan, ["court"])), "extractor_unavailable");
 });
 
 test("refusals: outside the matter, a firewall tree, and bad arguments", (t) => {

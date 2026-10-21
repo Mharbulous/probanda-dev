@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
-import { docBytes, docxBytes, pdfBytes } from "./helpers/synthetic-docs.mjs";
+import { docBytes, docxBytes, drawImage, imagePdfBytes, pdfBytes } from "./helpers/synthetic-docs.mjs";
 
 const { extractText } = await import("../build/files/text-extract.js");
 
@@ -52,9 +52,16 @@ test("a PDF with almost no text is ocr_unavailable", async () => {
   assert.match(got.reason, /^ocr_unavailable: \d+ bytes of text over 1 page\(s\), under 500 per page/);
 });
 
+test("an OCR'd PDF, a full-page image under a full invisible text layer, is unread and its text never returned", async () => {
+  const ocr = Array.from({ length: 40 }, (_, i) => `BT 3 Tr /F1 12 Tf 72 ${740 - 17 * i} Td (Placeholder hidden OCR line ${i} of the text layer) Tj ET`).join(" ");
+  const born = { content: `BT /F1 12 Tf 72 720 Td (Placeholder) Tj ET ${ocr.replaceAll("3 Tr", "0 Tr")}` };
+  const got = await extractText(file("ocr.pdf", imagePdfBytes({ pages: [born, { content: `${drawImage(0, 0, 612, 792)} ${ocr}` }] })));
+  assert.deepEqual(got, { status: "unread", reason: "ocr_unavailable: page 2 is a scanned or OCR'd page, whose text layer is never read" });
+});
+
 test("a corrupt or empty PDF is unreadable", async () => {
   assert.match((await extractText(file("garbage.pdf", "not a pdf at all"))).reason, /^unreadable: /);
-  assert.match((await extractText(file("empty.pdf", ""))).reason, /^unreadable: file is empty/);
+  assert.match((await extractText(file("empty.pdf", ""))).reason, /^unreadable: PDFium cannot open .*empty\.pdf as a PDF/);
 });
 
 test("a .docx reads one line per paragraph", async () => {

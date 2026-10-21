@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "node scripts/templates.mjs && tsc",
+    "build": "node scripts/templates.mjs && tsc && node -e \"require('fs').copyFileSync('node_modules/@embedpdf/pdfium/dist/pdfium.wasm', 'build/files/extract/pdfium.wasm')\"",
     "bundle": "node scripts/bundle.mjs",
     "test": "npm run build && npm run bundle && node scripts/test.mjs",
     "start": "node dist/litigation-mcp.js",

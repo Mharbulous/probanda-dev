@@ -8,7 +8,8 @@
 // `kind` is pdf | docx | doc | text. `method` is "text" for an extracted document and "copy" for a
 // file already in text form. `pages` is a PDF's page count; null otherwise. PDF pages are joined
 // with "\n\f\n". `reason` always opens with one of five codes, so a caller can branch on the prefix:
-//   ocr_unavailable        a PDF under SCANNED_BYTES_PER_PAGE bytes of text per page: likely scanned
+//   ocr_unavailable        a PDF with a scanned or OCR'd page (pdf_pages__images' classification), whose
+//                          text layer is never read, or under SCANNED_BYTES_PER_PAGE bytes of text per page
 //   unsupported_type       an extension with no reader, or a Word 6/95 .doc
 //   unreadable             the reader failed on this file (corrupt, password-protected, ...)
 //   extractor_unavailable  the bundled PDF reader itself could not load
@@ -21,8 +22,10 @@
 import { readFileSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
+import { DataServerError } from "../errors.js";
 import { docText, DocUnsupported } from "./extract/doc.js";
 import { docxText } from "./extract/docx.js";
+import { classifyPdfPages } from "./extract/page-images.js";
 import { pdfPages, PdfExtractorUnavailable } from "./extract/pdf.js";
 
 // A PDF with less text than this per page is taken as scanned (Brahm's decision, 2026-10-05). No OCR
@@ -44,6 +47,11 @@ export async function extractText(path: string): Promise<TextExtraction> {
     if (COPIED_EXTENSIONS.has(ext)) {
       result = { status: "ok", kind: "text", method: "copy", text: readFileSync(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
+      // A scanned or OCR'd page is read only from its image: its text layer may be garbled, or hidden.
+      const scanned = (await classifyPdfPages(path)).indexOf("scanned");
+      if (scanned >= 0) {
+        return unread(`ocr_unavailable: page ${scanned + 1} is a scanned or OCR'd page, whose text layer is never read`);
+      }
       const pages = await pdfPages(path);
       const text = pages.join("\n\f\n");
       const bytes = Buffer.byteLength(text.trim(), "utf-8");
@@ -62,6 +70,7 @@ export async function extractText(path: string): Promise<TextExtraction> {
     }
   } catch (err) {
     if (err instanceof PdfExtractorUnavailable) return unread(`extractor_unavailable: ${err.message}`);
+    if (err instanceof DataServerError && err.code === "renderer_unavailable") return unread(`extractor_unavailable: ${err.message}`);
     if (err instanceof DocUnsupported) return unread(`unsupported_type: ${err.message}`);
     return unread(`unreadable: ${(err as Error).message}`);
   }

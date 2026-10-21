@@ -24,31 +24,51 @@ export function pdfBytes(pages, { compress = false } = {}) {
   return assemblePdf(objs);
 }
 
-/** A PDF of three pages, or four with `form`, for the page renderer: (1) a full-page image under
- * invisible (render mode 3) text, as an OCR'd scan; (2) the same image under visible text; (3)
- * text alone; (4) the image and invisible text wrapped in a form XObject. `mediaBox` sizes every
- * page. `encrypted` adds a Standard security handler whose user password is not empty. */
-export function scannedPdfBytes({ mediaBox = [612, 792], form = false, encrypted = false } = {}) {
-  const [w, h] = mediaBox;
-  // Object numbers: 1 catalog, 2 pages, 3 font, 4 image, 5 form, then page/content pairs from 6.
-  const image = `q ${w} 0 0 ${h} 0 0 cm /Im1 Do Q`;
-  const text = (mode) => `BT ${mode} Tr /F1 12 Tf 72 ${h - 72} Td (Placeholder text layer) Tj ET`;
-  const contents = [`${image} ${text(3)}`, `${image} ${text(0)}`, text(0)];
-  if (form) contents.push("/Fm1 Do");
-  const pixels = Buffer.alloc(8 * 8 * 3, 0x80);
-  // The form draws the image at quarter area and its /Matrix doubles it, so the page is covered only
-  // when the form's matrix is applied.
-  const formBody = Buffer.from(`q ${w / 2} 0 0 ${h / 2} 0 0 cm /Im1 Do Q ${text(3)}`, "latin1");
-  const resources = "<< /Font << /F1 3 0 R >> /XObject << /Im1 4 0 R /Fm1 5 0 R >> >>";
+/** The 8x8 RGB image every image page draws: left half red, right half blue, with a green 2x2
+ * marker in its top-left corner, so a swapped channel, a flip, a missed rotation or an all-white
+ * render shows in the decoded PNG. */
+export const IMAGE_PIXELS = Buffer.from(
+  Array.from({ length: 64 }, (_, i) => {
+    const [row, col] = [Math.floor(i / 8), i % 8];
+    if (row < 2 && col < 2) return [0, 255, 0];
+    return col < 4 ? [255, 0, 0] : [0, 0, 255];
+  }).flat()
+);
+
+/** Content-stream operators that draw the image over [x, x + w] x [y, y + h]. */
+export const drawImage = (x, y, w, h) => `q ${w} 0 0 ${h} ${x} ${y} cm /Im1 Do Q`;
+
+/** One placeholder line in text render mode `mode` (0 visible, 3 invisible, 7 invisible clip). */
+export const drawText = (mode, x, y, size = 12) => `BT ${mode} Tr /F1 ${size} Tf ${x} ${y} Td (Placeholder text layer) Tj ET`;
+
+/** 40 visible lines down a 612 x 792 page: well over 5% of it. */
+export const textBlock = () =>
+  Array.from({ length: 40 }, (_, i) => `BT /F1 12 Tf 72 ${740 - 17 * i} Td (Placeholder text layer, visible on the page) Tj ET`).join(" ");
+
+/** A PDF of `pages` ([{content, mediaBox = [0, 0, 612, 792], cropBox?, rotate?}]), every page and form
+ * sharing the image /Im1, the font /F1 and the form XObjects in `forms` ({name: {bbox, matrix?,
+ * content}}). `encrypted` adds a Standard security handler whose user password is not empty. */
+export function imagePdfBytes({ pages, forms = {}, encrypted = false }) {
+  const names = Object.keys(forms);
+  // Object numbers: 1 catalog, 2 pages, 3 font, 4 image, the forms from 5, then page/content pairs.
+  const first = 5 + names.length;
+  const xobjects = ["/Im1 4 0 R", ...names.map((n, i) => `/${n} ${5 + i} 0 R`)].join(" ");
+  const resources = `<< /Font << /F1 3 0 R >> /XObject << ${xobjects} >> >>`;
   const objs = [
     Buffer.from("<< /Type /Catalog /Pages 2 0 R >>", "latin1"),
-    Buffer.from(`<< /Type /Pages /Kids [${contents.map((_, i) => `${6 + 2 * i} 0 R`).join(" ")}] /Count ${contents.length} >>`, "latin1"),
+    Buffer.from(`<< /Type /Pages /Kids [${pages.map((_, i) => `${first + 2 * i} 0 R`).join(" ")}] /Count ${pages.length} >>`, "latin1"),
     Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "latin1"),
-    stream("/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceRGB /BitsPerComponent 8", pixels),
-    stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${w} ${h}] /Matrix [2 0 0 2 0 0] /Resources ${resources}`, formBody),
+    stream("/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceRGB /BitsPerComponent 8", IMAGE_PIXELS),
+    ...names.map((n) => {
+      const { bbox, matrix, content } = forms[n];
+      const m = matrix ? ` /Matrix [${matrix.join(" ")}]` : "";
+      return stream(`/Type /XObject /Subtype /Form /BBox [${bbox.join(" ")}]${m} /Resources ${resources}`, Buffer.from(content, "latin1"));
+    }),
   ];
-  contents.forEach((content, i) => {
-    objs.push(Buffer.from(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Contents ${7 + 2 * i} 0 R /Resources ${resources} >>`, "latin1"));
+  pages.forEach(({ content, mediaBox = [0, 0, 612, 792], cropBox, rotate }, i) => {
+    const crop = cropBox ? ` /CropBox [${cropBox.join(" ")}]` : "";
+    const rot = rotate ? ` /Rotate ${rotate}` : "";
+    objs.push(Buffer.from(`<< /Type /Page /Parent 2 0 R /MediaBox [${mediaBox.join(" ")}]${crop}${rot} /Contents ${first + 1 + 2 * i} 0 R /Resources ${resources} >>`, "latin1"));
     objs.push(stream("", Buffer.from(content, "latin1")));
   });
   let trailer = "";
@@ -58,6 +78,23 @@ export function scannedPdfBytes({ mediaBox = [612, 792], form = false, encrypted
     trailer = ` /Encrypt ${objs.length} 0 R /ID [<${"22".repeat(16)}> <${"22".repeat(16)}>]`;
   }
   return assemblePdf(objs, trailer);
+}
+
+/** A PDF of three pages, or four with `form`, for the page renderer: (1) a full-page image under
+ * invisible (render mode 3) text, as an OCR'd scan; (2) the same image under a page of visible text;
+ * (3) that text alone; (4) the image and invisible text in a form XObject whose /Matrix moves them
+ * onto the page: drawn at x -612..0, the page is covered only when the matrix is applied exactly
+ * once. `mediaBox` ([w, h]) sizes every page. `encrypted` adds a Standard security handler. */
+export function scannedPdfBytes({ mediaBox = [612, 792], form = false, encrypted = false } = {}) {
+  const [w, h] = mediaBox;
+  const image = drawImage(0, 0, w, h);
+  const pages = [`${image} ${drawText(3, 72, h - 72)}`, `${image} ${textBlock()}`, textBlock()].map((content) => ({ content, mediaBox: [0, 0, w, h] }));
+  const forms = {};
+  if (form) {
+    forms.Fm1 = { bbox: [-w, 0, 0, h], matrix: [1, 0, 0, 1, w, 0], content: `${drawImage(-w, 0, w, h)} ${drawText(3, 72 - w, h - 72)}` };
+    pages.push({ content: "/Fm1 Do", mediaBox: [0, 0, w, h] });
+  }
+  return imagePdfBytes({ pages, forms, encrypted });
 }
 
 function stream(dict, data) {

@@ -1,4 +1,4 @@
-// build-stamp: 4e1e40021222
+// build-stamp: 549fb3147433
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77637,7 +77637,7 @@ function fileToolDefinitions() {
     },
     {
       name: "pdf_pages__images",
-      description: 'Classify each page of one PDF as `scanned` or `born_digital`, and render every scanned page to PNG, so a scanned or OCR\'d page is read from its image and never from its text layer. Call it before reading a PDF\'s content. `path` is the absolute path of the `.pdf`; `pages` (`"X"` or `"X-Y"`) limits the call to those pages; `tiles: true` renders each scanned page as two half-page tiles at 200 dpi, for small print. A page is `scanned` when images cover at least half of it and none of its text is visible (an invisible OCR layer counts as no text); every other page is `born_digital`, is not rendered, and is read from the PDF as before. A scanned page is rendered at 150 dpi, RGB on white, without annotations; one over about 3,000,000 pixels is cut into horizontal tiles under that size. The PDF is never changed: the PNGs go in a new folder in the OS temp directory, never in the matter. The same page renders to the same bytes on every call. Returns {source_sha256, page_count, render_dir, pages: [{page, kind, images?: [{path, sha256, width, height, tile?}]}]}, with `images` (top to bottom) on scanned pages only and `tile` (from 1) only on a page cut into tiles. Refused: `not_found`, `not_pdf`, `password_protected`, `renderer_unavailable`, `bad_pages`.',
+      description: 'Classify each page of one PDF as `scanned` or `born_digital`, and render every scanned page to PNG, so a scanned or OCR\'d page is read from its image and never from its text layer. Call it before reading a PDF\'s content. `path` is the absolute path of the `.pdf`; `pages` (`"X"` or `"X-Y"`) limits the call to those pages; `tiles: true` renders each scanned page at 200 dpi as a top and a bottom tile, each a little over half the page, overlapping by about 10% of its height, for small print. A page is `scanned` when images cover at least 50% of it and either some of its text, text inside a form included, is invisible (render mode 3 or 7, as an OCR layer is) or its visible text covers under 5% of it (a Bates or header stamp, or no text at all); every other page is `born_digital`, is not rendered, and is read from the PDF as before. A scanned page is rendered RGB on white, without annotations, at 150 dpi (200 with `tiles`), lowered so the page is at most 2000 px wide; the page, or with `tiles` each half, is cut into as few horizontal tiles of equal height as keep each at most 2000 px tall and 3,000,000 pixels. The PDF is never changed: the PNGs go in a new folder in the OS temp directory, never in the matter, made at the first scanned page (`render_dir` is null when no page is scanned). The same page renders to the same bytes with the same server build. Returns {source_sha256, page_count, render_dir, pages: [{page, kind, images?: [{path, sha256, width, height, tile?}]}]}, with `images` (top to bottom) on scanned pages only and `tile` (from 1) only on a page cut into tiles. Refused: `data_error` (a relative path), `not_found`, `not_pdf`, `password_protected`, `bad_pages` (a bad range, or a page PDFium cannot load), `page_too_large` (a page over 14,400 pt a side, or too big to draw), `renderer_unavailable`.',
       inputSchema: {
         type: "object",
         properties: {
@@ -82070,7 +82070,7 @@ async function buildPracticeBoardData(store, now) {
 async function render_practice_board(store) {
   const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
   const { panels } = data;
-  const file = join15(dirname8(resolvePracticeDbPath()), PRACTICE_BOARD_FILE);
+  const file = join15(dirname8(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
   if (existsSync13(file) && !readFileSync11(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
   }
@@ -85693,7 +85693,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "4e1e40021222";
+var BUILD_STAMP = false ? null : "549fb3147433";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -101468,7 +101468,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
   const opening = draftDir === void 0 || todos === void 0 || dates === void 0 || refused3 ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
-  const coverage = await phase("ingest_coverage", () => openedIngestCoverage(opening.opened, dbPath, root));
+  const coverage2 = await phase("ingest_coverage", () => openedIngestCoverage(opening.opened, dbPath, root));
   const currency = await phase("form_currency", () => openedFormCurrency(opening.opened, dbPath));
   const courtFile = await phase(
     "court_file_affidavits",
@@ -101490,7 +101490,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
       parties_drift: drift.rows,
       ...drift.note !== void 0 ? { parties_drift_note: drift.note } : {},
       ...offers.length > 0 ? { counsel_offers: offers } : {},
-      ingest_coverage: coverage,
+      ingest_coverage: coverage2,
       ...currency ? { form_currency: currency } : {},
       ...courtFile !== void 0 ? { court_file_affidavits: courtFile } : {},
       timings
@@ -106656,7 +106656,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname19(resolvePracticeDbPath()), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname19(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if (page2 === "Litigation Strategy" && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -106707,17 +106707,17 @@ function withoutListener(page2) {
 }
 
 // src/files/research-filing.ts
-import { createHash as createHash10 } from "node:crypto";
+import { createHash as createHash11 } from "node:crypto";
 import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync40,
+  existsSync as existsSync41,
   mkdirSync as mkdirSync18,
   readdirSync as readdirSync26,
-  readFileSync as readFileSync35,
-  statSync as statSync18,
-  writeFileSync as writeFileSync13
+  readFileSync as readFileSync36,
+  statSync as statSync19,
+  writeFileSync as writeFileSync14
 } from "node:fs";
 import { homedir as homedir9 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
@@ -106775,7 +106775,7 @@ function checkCoverageLine(text5) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync34 } from "node:fs";
+import { readFileSync as readFileSync35 } from "node:fs";
 import { win32 as pathWin3224 } from "node:path";
 
 // src/files/extract/doc.ts
@@ -107009,741 +107009,11 @@ function docxText(path) {
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
-// src/files/extract/pdf.ts
-import { readFileSync as readFileSync33 } from "node:fs";
-var pdfjs;
-var quietDepth = 0;
-var savedLog = console.log;
-async function quietStdout(fn2) {
-  if (quietDepth++ === 0) {
-    savedLog = console.log;
-    console.log = console.error;
-  }
-  try {
-    return await fn2();
-  } finally {
-    if (--quietDepth === 0) console.log = savedLog;
-  }
-}
-function loadPdfJs() {
-  pdfjs ??= (async () => {
-    const g3 = globalThis;
-    const stubbed = g3.DOMMatrix === void 0;
-    if (stubbed) g3.DOMMatrix = class {
-    };
-    try {
-      await Promise.resolve().then(() => (init_pdf_worker_min(), pdf_worker_min_exports));
-      return await Promise.resolve().then(() => (init_pdf_min(), pdf_min_exports));
-    } finally {
-      if (stubbed) delete g3.DOMMatrix;
-    }
-  })();
-  return pdfjs;
-}
-var PdfExtractorUnavailable = class extends Error {
-};
-async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync33(path));
-  if (data.length === 0) throw new Error("file is empty (0 bytes)");
-  return quietStdout(async () => {
-    let lib;
-    try {
-      lib = await loadPdfJs();
-    } catch (err) {
-      throw new PdfExtractorUnavailable(`pdf.js did not load: ${err.message}`);
-    }
-    let doc;
-    try {
-      doc = await lib.getDocument({
-        data,
-        verbosity: lib.VerbosityLevel.ERRORS,
-        isEvalSupported: false,
-        disableFontFace: true,
-        useSystemFonts: false,
-        stopAtErrors: false
-      }).promise;
-    } catch (err) {
-      if (err.name === "PasswordException") throw new Error("password-protected");
-      throw err;
-    }
-    try {
-      const pages = [];
-      for (let n3 = 1; n3 <= doc.numPages; n3++) {
-        const page2 = await doc.getPage(n3);
-        const content = await page2.getTextContent();
-        let text5 = "";
-        for (const item of content.items) {
-          if (!("str" in item)) continue;
-          text5 += item.str;
-          if (item.hasEOL) text5 += "\n";
-        }
-        pages.push(text5);
-        page2.cleanup();
-      }
-      return pages;
-    } finally {
-      await doc.destroy();
-    }
-  });
-}
-
-// src/files/text-extract.ts
-var SCANNED_BYTES_PER_PAGE = 500;
-var COPIED_EXTENSIONS = /* @__PURE__ */ new Set([".txt", ".md", ".json", ".htm", ".html"]);
-var unread = (reason) => ({ status: "unread", reason });
-async function extractText(path) {
-  const ext = pathWin3224.extname(path).toLowerCase();
-  let result;
-  try {
-    if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync34(path, "utf-8"), pages: null };
-    } else if (ext === ".pdf") {
-      const pages = await pdfPages(path);
-      const text5 = pages.join("\n\f\n");
-      const bytes = Buffer.byteLength(text5.trim(), "utf-8");
-      if (bytes < SCANNED_BYTES_PER_PAGE * Math.max(pages.length, 1)) {
-        return unread(
-          `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
-        );
-      }
-      result = { status: "ok", kind: "pdf", method: "text", text: text5, pages: pages.length };
-    } else if (ext === ".docx") {
-      result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
-    } else if (ext === ".doc") {
-      result = { status: "ok", kind: "doc", method: "text", text: docText(path), pages: null };
-    } else {
-      return unread(`unsupported_type: ${ext || "no extension"}`);
-    }
-  } catch (err) {
-    if (err instanceof PdfExtractorUnavailable) return unread(`extractor_unavailable: ${err.message}`);
-    if (err instanceof DocUnsupported) return unread(`unsupported_type: ${err.message}`);
-    return unread(`unreadable: ${err.message}`);
-  }
-  if (result.text.trim() === "") return unread("no_text: the file holds no text");
-  return result;
-}
-
-// src/files/research-filing.ts
-var LAW_SEGMENT = "6. law";
-var PROTECTED_SEGMENTS3 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
-var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
-var MANIFEST = "case-download-manifest.json";
-var SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
-var MAX_SAVE_ATTEMPTS = 100;
-var LAW_TEXT_SUBFOLDER = "law-text";
-function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir9(), "Downloads");
-  const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
-  if (!statSync18(dir).isDirectory()) {
-    throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
-  }
-  return dir;
-}
-function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE__ */ new Date()) {
-  const dir = downloadsDir(env);
-  const since = sinceMtime === void 0 ? void 0 : Date.parse(sinceMtime);
-  if (since !== void 0 && Number.isNaN(since)) {
-    throw new DataServerError(`since_mtime is not an ISO timestamp: ${sinceMtime}`, "invalid_argument");
-  }
-  const entries = [];
-  for (const name of readdirSync26(dir)) {
-    if (filename !== void 0 && name !== filename) continue;
-    const stat = statSync18(pathWin3225.join(dir, name));
-    if (!stat.isFile()) continue;
-    if (since !== void 0 && stat.mtimeMs < since) continue;
-    entries.push({
-      filename: name,
-      mtime: stat.mtime.toISOString(),
-      bytes: stat.size,
-      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(name).toLowerCase())
-    });
-  }
-  entries.sort((a3, b3) => a3.mtime < b3.mtime ? 1 : a3.mtime > b3.mtime ? -1 : 0);
-  return { now: now.toISOString(), downloads_dir: dir, entries };
-}
-function listLawFolder(destinationDir) {
-  const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync26(dir).map((name) => ({ name, stat: statSync18(pathWin3225.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
-  return { entries };
-}
-function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
-  const dir = resolveLawDir(destinationDir);
-  assertBareFilename(sourceFilename, "source_filename");
-  const destName = destinationFilename ?? sourceFilename;
-  assertBareFilename(destName, "destination_filename");
-  const source = pathWin3225.join(downloadsDir(env), sourceFilename);
-  if (!existsSync40(source) || !statSync18(source).isFile()) {
-    throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
-  }
-  if (IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(sourceFilename).toLowerCase())) {
-    throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
-  }
-  const dest = pathWin3225.join(dir, destName);
-  if (existsSync40(dest)) {
-    throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
-  }
-  const bytes = statSync18(source).size;
-  copyFileSync4(source, dest, constants.COPYFILE_EXCL);
-  return { path: dest, bytes };
-}
-function appendManifest(destinationDir, record2) {
-  const dir = resolveLawDir(destinationDir);
-  if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
-    throw new DataServerError("record must be a JSON object", "invalid_argument");
-  }
-  const path = pathWin3225.join(dir, MANIFEST);
-  appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync35(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
-  return { path, records };
-}
-function saveAnswer(destinationDir, filename, text5, fromScratch) {
-  assertBareFilename(filename, "filename");
-  const ext = pathWin3225.extname(filename);
-  if (ext.toLowerCase() !== ".md") {
-    throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
-  }
-  if (text5 === void 0 === (fromScratch === void 0)) {
-    throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
-  }
-  let body;
-  if (fromScratch !== void 0) {
-    body = scratchBytes(destinationDir, fromScratch);
-  } else {
-    if (typeof text5 !== "string" || text5.length === 0) {
-      throw new DataServerError("text must be a non-empty string", "invalid_argument");
-    }
-    body = Buffer.from(text5, "utf-8");
-  }
-  const { dir, created } = resolveOrCreateLawDir(destinationDir);
-  const saved = writeNewVersion(dir, filename, body);
-  const sha2562 = createHash10("sha256").update(body).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2562 };
-}
-function scratchBytes(destinationDir, fromScratch) {
-  if (typeof fromScratch !== "string" || !pathWin3225.isAbsolute(fromScratch)) {
-    throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
-  }
-  let law = existsSync40(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
-  while (pathWin3225.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3225.dirname(law);
-  const root = validateMatterRoot(pathWin3225.dirname(law));
-  const draft = findDraftDir(root);
-  if (draft === void 0) {
-    throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
-  }
-  const scratchDir = pathWin3225.join(draft, ...SCRATCH_SUBFOLDERS);
-  const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
-  assertUnprotected(realScratchDir);
-  const source = canonicalRoot(fromScratch, `from_scratch not found: ${fromScratch}`, "not_found");
-  if (pathWin3225.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
-    throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
-  }
-  if (!statSync18(source).isFile()) {
-    throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
-  }
-  const body = readFileSync35(source);
-  if (body.length === 0) {
-    throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
-  }
-  return body;
-}
-function writeScratch(matterRoot, filename, text5, kind) {
-  assertBareFilename(filename, "filename");
-  if (pathWin3225.extname(filename).toLowerCase() !== ".md") {
-    throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
-  }
-  if (typeof text5 !== "string" || text5.length === 0) {
-    throw new DataServerError("text must be a non-empty string", "invalid_argument");
-  }
-  if (kind !== void 0 && kind !== "research-notes") {
-    throw new DataServerError(`kind must be "research-notes" when given: ${kind}`, "invalid_argument");
-  }
-  if (kind === "research-notes") checkCoverageLine(text5);
-  const { dir, created } = researchScratchDir(validateMatterRoot(matterRoot));
-  const body = Buffer.from(text5, "utf-8");
-  const saved = writeNewVersion(dir, filename, body);
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created };
-}
-function researchScratchDir(root) {
-  const found = findDraftDir(root);
-  if (found === void 0) {
-    throw new DataServerError(`${root} has no 0. DRAFT folder; the scratchpad lives in it`, "draft_dir_missing");
-  }
-  const draft = canonicalRoot(found, `the 0. DRAFT folder does not resolve: ${found}`, "draft_dir_missing");
-  assertUnprotected(draft);
-  let dir = draft;
-  let created = false;
-  for (const name of SCRATCH_SUBFOLDERS) {
-    dir = pathWin3225.join(dir, name);
-    try {
-      mkdirSync18(dir);
-      created = true;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-    }
-    assertUnprotected(canonicalRoot(dir, `scratchpad folder does not resolve: ${dir}`, "not_found"));
-  }
-  return { dir, created };
-}
-async function lawFolderText(matterRoot, destinationDir) {
-  const root = validateMatterRoot(matterRoot);
-  const law = resolveLawDir(destinationDir);
-  if (!law.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
-    throw new DataServerError(`destination_dir is not in this matter: ${law}`, "not_in_matter");
-  }
-  const segments = law.split(/[\\/]+/);
-  const below = segments.slice(segments.findIndex((s3) => s3.toLowerCase() === LAW_SEGMENT) + 1);
-  let outDir = researchScratchDir(root).dir;
-  for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
-    outDir = pathWin3225.join(outDir, name);
-    mkdirSync18(outDir, { recursive: true });
-    assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
-  }
-  const files = readdirSync26(law).filter((name) => statSync18(pathWin3225.join(law, name)).isFile()).sort();
-  const rows22 = [];
-  for (const file of files) {
-    const read3 = await extractText(pathWin3225.join(law, file));
-    if (read3.status === "unread") {
-      rows22.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
-      continue;
-    }
-    const textPath = pathWin3225.join(outDir, `${file}.txt`);
-    const body = Buffer.from(read3.text, "utf-8");
-    writeFileSync13(textPath, body);
-    rows22.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
-  }
-  return { out_dir: outDir, files: rows22 };
-}
-function assertUnprotected(realDir) {
-  if (realDir.split(/[\\/]+/).some((s3) => PROTECTED_SEGMENTS3.has(s3.toLowerCase()))) {
-    throw new DataServerError(`the scratchpad would be inside a privileged/disclosed tree: ${realDir}`, "protected");
-  }
-}
-var FETCHED_RECORD_FIELDS = ["citation", "title", "kind", "jurisdiction", "official", "currency_marker"];
-function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /* @__PURE__ */ new Date()) {
-  if (typeof url !== "string" || url === "") {
-    throw new DataServerError("url must be the non-empty URL passed to sources__fetch", "invalid_argument");
-  }
-  assertBareFilename(filename, "filename");
-  const fields = fetchedRecordFields(record2);
-  const dir = resolveLawDir(destinationDir);
-  const fetched = (seams.fetcher ?? sourcesFetcher).memoized(url);
-  if (fetched === null || fetched === "expired") {
-    const why = fetched === null ? "was never fetched in this server process" : "was fetched more than 24 hours ago";
-    throw new DataServerError(`${url} ${why}; fetch it with sources__fetch first`, "not_fetched");
-  }
-  const pdf = fetched.bytes.subarray(0, 5).toString("latin1") === "%PDF-";
-  const ext = pdf ? ".pdf" : ".md";
-  if (pathWin3225.extname(filename).toLowerCase() !== ext) {
-    throw new DataServerError(
-      `filename must end in ${ext}, because ${fetched.final_url} returned ${pdf ? "a PDF" : "an HTML page"}: ${filename}`,
-      "invalid_filename"
-    );
-  }
-  const fetchedAt = now.toISOString();
-  let body = fetched.bytes;
-  if (!pdf) {
-    const header = [
-      "---",
-      `url: ${JSON.stringify(fetched.url)}`,
-      `final_url: ${JSON.stringify(fetched.final_url)}`,
-      `sha256: ${JSON.stringify(fetched.sha256)}`,
-      `fetched_at: ${JSON.stringify(fetchedAt)}`,
-      `currency_marker: ${JSON.stringify(fields.currency_marker)}`,
-      "---",
-      ""
-    ].join("\n");
-    body = Buffer.from(header + htmlBlocks(fetched.bytes.toString("utf-8")).join("\n") + "\n", "utf-8");
-  }
-  const saved = writeNewVersion(dir, filename, body);
-  const manifestRecord = {
-    citation: fields.citation,
-    title: fields.title,
-    kind: fields.kind,
-    jurisdiction: fields.jurisdiction,
-    status: "downloaded",
-    source: "official-publisher",
-    official: fields.official,
-    publisher_host: new URL(fetched.final_url).hostname,
-    url: fetched.url,
-    final_url: fetched.final_url,
-    sha256: fetched.sha256,
-    filename: saved.filename,
-    path: saved.path,
-    fetched_at: fetchedAt,
-    currency_marker: fields.currency_marker
-  };
-  const manifest = appendManifest(dir, manifestRecord);
-  return { path: saved.path, filename: saved.filename, bytes: body.length, record: manifestRecord, manifest };
-}
-function fetchedRecordFields(record2) {
-  if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
-    throw new DataServerError("record must be a JSON object", "invalid_argument");
-  }
-  const r3 = record2;
-  const extra = Object.keys(r3).filter((key) => !FETCHED_RECORD_FIELDS.includes(key));
-  if (extra.length > 0) {
-    throw new DataServerError(
-      `record may carry only ${FETCHED_RECORD_FIELDS.join(", ")}; the runtime fills the rest. Refused: ${extra.join(", ")}`,
-      "invalid_argument"
-    );
-  }
-  for (const key of ["title", "kind", "jurisdiction", "currency_marker"]) {
-    if (!filledString(r3[key])) throw new DataServerError(`record.${key} must be a non-empty string`, "invalid_argument");
-  }
-  if (r3.citation !== void 0 && r3.citation !== null && !filledString(r3.citation)) {
-    throw new DataServerError("record.citation must be a non-empty string when given", "invalid_argument");
-  }
-  if (typeof r3.official !== "boolean") {
-    throw new DataServerError("record.official must be true or false", "invalid_argument");
-  }
-  return {
-    citation: r3.citation ?? null,
-    title: r3.title,
-    kind: r3.kind,
-    jurisdiction: r3.jurisdiction,
-    official: r3.official,
-    currency_marker: r3.currency_marker
-  };
-}
-function filledString(value) {
-  return typeof value === "string" && value.trim() !== "";
-}
-function writeNewVersion(dir, filename, body) {
-  const ext = pathWin3225.extname(filename);
-  const stem3 = filename.slice(0, -ext.length);
-  for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
-    const name = nextVersionName(dir, stem3, ext);
-    const path = pathWin3225.join(dir, name);
-    try {
-      writeFileSync13(path, body, { flag: "wx" });
-    } catch (err) {
-      if (err.code === "EEXIST") continue;
-      throw err;
-    }
-    return { path, filename: name };
-  }
-  throw new DataServerError(
-    `no free version of ${filename} in ${dir} after ${MAX_SAVE_ATTEMPTS} attempts`,
-    "dest_exists"
-  );
-}
-function nextVersionName(dir, stem3, ext) {
-  const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
-  let highest = 0;
-  for (const name of readdirSync26(dir)) {
-    const match = version2.exec(name);
-    if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
-  }
-  return highest === 0 ? `${stem3}${ext}` : `${stem3} v${highest + 1}${ext}`;
-}
-function resolveOrCreateLawDir(destinationDir) {
-  try {
-    return { dir: resolveLawDir(destinationDir), created: false };
-  } catch (err) {
-    if (err.code !== "not_found" || existsSync40(destinationDir)) throw err;
-  }
-  const parent = resolveLawDir(pathWin3225.dirname(destinationDir));
-  if (PROTECTED_SEGMENTS3.has(pathWin3225.basename(destinationDir).toLowerCase())) {
-    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${destinationDir}`, "protected");
-  }
-  let created = true;
-  try {
-    mkdirSync18(pathWin3225.join(parent, pathWin3225.basename(destinationDir)));
-  } catch (err) {
-    if (err.code !== "EEXIST") throw err;
-    created = false;
-  }
-  return { dir: resolveLawDir(destinationDir), created };
-}
-function resolveLawDir(destinationDir) {
-  if (typeof destinationDir !== "string" || !pathWin3225.isAbsolute(destinationDir)) {
-    throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
-  }
-  const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
-  if (!statSync18(dir).isDirectory()) {
-    throw new DataServerError(`destination is not a folder: ${destinationDir}`, "not_found");
-  }
-  const segments = dir.split(/[\\/]+/).map((s3) => s3.toLowerCase());
-  if (!segments.includes(LAW_SEGMENT)) {
-    throw new DataServerError(`destination_dir is not inside a matter's 6. LAW tree: ${dir}`, "not_law_folder");
-  }
-  if (segments.some((s3) => PROTECTED_SEGMENTS3.has(s3))) {
-    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${dir}`, "protected");
-  }
-  return dir;
-}
-function assertBareFilename(name, label2) {
-  if (typeof name !== "string" || name.length === 0 || name.includes("\0") || /[\\/]/.test(name) || /^[A-Za-z]:/.test(name) || name === "." || name === "..") {
-    throw new DataServerError(`${label2} must be a bare filename: ${name}`, "invalid_filename");
-  }
-}
-
-// src/research/preflight.ts
-import { tmpdir as tmpdir5 } from "node:os";
-import { join as join37 } from "node:path";
-var PROBE_STEM = join37(tmpdir5(), "coclerk-research-preflight-probe-absent");
-var CAPS = {
-  "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
-  "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
-  knowledge_tree: "legislation-fetcher cannot read its publisher map, so no statute text is retrieved"
-};
-function errorText(err) {
-  return err instanceof Error ? err.message : String(err);
-}
-function probeExtractor(ext, extract) {
-  try {
-    extract([PROBE_STEM + ext]);
-    return null;
-  } catch (err) {
-    return errorText(err);
-  }
-}
-function extractorFix(detail) {
-  return /pip install pypdf/.test(detail) ? "Run `pip install pypdf` for the Python the detail names. No restart is needed." : "Install Python 3, or set COCLERK_PYTHON to a Python that has pypdf.";
-}
-function researchPreflight(seams = {}) {
-  const extract = seams.extract ?? extractDocuments;
-  const issues = [];
-  const pdf = probeExtractor(".pdf", extract);
-  if (pdf !== null) issues.push({ row: "extractor.pdf", detail: pdf, caps: CAPS["extractor.pdf"], fix: extractorFix(pdf) });
-  const docx = probeExtractor(".docx", extract);
-  if (docx !== null) issues.push({ row: "extractor.docx", detail: docx, caps: CAPS["extractor.docx"], fix: extractorFix(docx) });
-  let tree = null;
-  try {
-    knowledgeList({ dir: "legal-research" }, seams);
-  } catch (err) {
-    tree = errorText(err);
-  }
-  if (tree !== null) {
-    issues.push({ row: "knowledge_tree", detail: tree, caps: CAPS.knowledge_tree, fix: "Do what the detail says: it names the file and the setting." });
-  }
-  return {
-    extractor: { pdf: pdf === null ? "ok" : "missing", docx: docx === null ? "ok" : "missing" },
-    knowledge_tree: tree === null ? "ok" : "error",
-    chrome: "not_checked",
-    issues
-  };
-}
-
-// src/files/legislation-search.ts
-import { createHash as createHash11 } from "node:crypto";
-import { readFileSync as readFileSync36, statSync as statSync19 } from "node:fs";
-import { win32 as pathWin3226 } from "node:path";
-var PROTECTED_SEGMENTS4 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
-var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
-var HTML_EXTENSIONS = /* @__PURE__ */ new Set([".htm", ".html"]);
-var EXTRACTED_EXTENSIONS = /* @__PURE__ */ new Set([".pdf", ".docx"]);
-var SCANNED_BYTES_PER_PAGE2 = 500;
-var MAX_TERMS = 50;
-var MAX_SECTION_CHARS = 6e3;
-var SECTION_LINE = /^(\d+(?:-\d+)?(?:\.\d+)?)\s+\S/;
-var MAX_SECTION_JUMP = 50;
-var MAX_HEADING_CHARS = 120;
-function noPageExtractor(path) {
-  throw new DataServerError(
-    `PDF and .docx text is not read yet (it awaits the in-server extractor); search a .md, .txt or .html copy instead: ${path}`,
-    "extractor_unavailable"
-  );
-}
-function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}) {
-  const file = resolveMatterFile(matterRoot, path);
-  const termList = checkTerms(terms2);
-  const pattern = checkRegex(regex);
-  if (termList.length === 0 && pattern === null) {
-    throw new DataServerError("give terms, a regex, or both", "invalid_argument");
-  }
-  const ext = pathWin3226.extname(file).toLowerCase();
-  const range = checkPages(pages, ext);
-  const bytes = readFileSync36(file);
-  const { lines: lines2, source } = textLines(file, ext, bytes, range, seams);
-  const chunks = sectionChunks(lines2);
-  const hits = [];
-  for (const chunk2 of chunks) {
-    const body = chunk2.lines.map((l3) => l3.text).join("\n");
-    const lower = body.toLowerCase();
-    const matched = termList.filter((t3) => lower.includes(t3.toLowerCase()));
-    if (pattern !== null && pattern.test(body)) matched.push(`/${pattern.source}/`);
-    if (matched.length === 0) continue;
-    const hit = {
-      block: chunk2.block,
-      section: chunk2.section,
-      heading: chunk2.heading,
-      page: chunk2.lines[0]?.page ?? null,
-      matched,
-      text: body.length > MAX_SECTION_CHARS ? body.slice(0, MAX_SECTION_CHARS) : body
-    };
-    if (body.length > MAX_SECTION_CHARS) hit.truncated = true;
-    hits.push(hit);
-  }
-  return {
-    path: file,
-    sha256: createHash11("sha256").update(bytes).digest("hex"),
-    source,
-    pages: range,
-    terms: termList,
-    regex: pattern === null ? null : pattern.source,
-    lines_searched: lines2.length,
-    sections_searched: sectionBlocks(chunks),
-    unsectioned_lines: chunks.filter((c3) => c3.section === null).reduce((n3, c3) => n3 + c3.lines.length, 0),
-    hits
-  };
-}
-function resolveMatterFile(matterRoot, path) {
-  const root = validateMatterRoot(matterRoot);
-  if (typeof path !== "string" || !pathWin3226.isAbsolute(path)) {
-    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
-  }
-  const file = canonicalRoot(path, `file not found: ${path}`, "not_found");
-  if (!statSync19(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
-  if (!file.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
-    throw new DataServerError(`path is not in this matter: ${file}`, "not_in_matter");
-  }
-  if (file.split(/[\\/]+/).some((s3) => PROTECTED_SEGMENTS4.has(s3.toLowerCase()))) {
-    throw new DataServerError(`path is inside a privileged/disclosed tree: ${file}`, "protected");
-  }
-  return file;
-}
-function checkTerms(terms2) {
-  if (terms2 === void 0) return [];
-  const list = typeof terms2 === "string" ? [terms2] : terms2;
-  if (!Array.isArray(list) || list.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
-    throw new DataServerError("terms must be a non-empty string or an array of them", "invalid_argument");
-  }
-  if (list.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
-  return list;
-}
-function checkRegex(regex) {
-  if (regex === void 0) return null;
-  if (typeof regex !== "string" || regex === "") {
-    throw new DataServerError("regex must be a non-empty string", "invalid_argument");
-  }
-  try {
-    return new RegExp(regex, "i");
-  } catch (err) {
-    throw new DataServerError(`regex does not compile: ${err.message}`, "invalid_argument");
-  }
-}
-function checkPages(pages, ext) {
-  if (pages === void 0) return null;
-  if (ext !== ".pdf") throw new DataServerError("pages applies only to a PDF", "invalid_argument");
-  const m3 = typeof pages === "string" ? /^\s*(\d+)\s*(?:[-–]\s*(\d+))?\s*$/.exec(pages) : null;
-  if (m3 === null) throw new DataServerError(`pages must read "X-Y" or "X": ${String(pages)}`, "invalid_argument");
-  const first = Number(m3[1]);
-  const last = Number(m3[2] ?? m3[1]);
-  if (first < 1 || last < first) throw new DataServerError(`pages is not a range: ${pages}`, "invalid_argument");
-  return { first, last };
-}
-function textLines(file, ext, bytes, range, seams) {
-  const split = (text5, page2) => text5.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page: page2 }));
-  let lines2;
-  let source;
-  if (TEXT_EXTENSIONS.has(ext)) {
-    source = ext === ".md" ? "md" : "txt";
-    lines2 = split(stripFrontMatter(bytes.toString("utf-8")), null);
-  } else if (HTML_EXTENSIONS.has(ext)) {
-    source = "html";
-    lines2 = split(htmlBlocks(bytes.toString("utf-8")).join("\n"), null);
-  } else if (EXTRACTED_EXTENSIONS.has(ext)) {
-    source = ext === ".pdf" ? "pdf" : "docx";
-    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text5, i3) => ({ text: text5, page: i3 + 1 }));
-    if (range !== null) {
-      if (range.last > pageTexts.length) {
-        throw new DataServerError(`pages ${range.first}-${range.last} run past the file's ${pageTexts.length} pages`, "invalid_argument");
-      }
-      pageTexts = pageTexts.slice(range.first - 1, range.last);
-    }
-    const textBytes = Buffer.byteLength(pageTexts.map((p3) => p3.text).join("").trim(), "utf-8");
-    if (source === "pdf" && textBytes < SCANNED_BYTES_PER_PAGE2 * Math.max(pageTexts.length, 1)) {
-      throw new DataServerError(
-        `${textBytes} bytes of text over ${pageTexts.length} page(s), under ${SCANNED_BYTES_PER_PAGE2} per page, so likely scanned; no OCR runs`,
-        "ocr_unavailable"
-      );
-    }
-    lines2 = pageTexts.flatMap((p3) => split(p3.text, source === "pdf" ? p3.page : null));
-  } else {
-    throw new DataServerError(`unsupported file type: ${ext || "no extension"}`, "unsupported_type");
-  }
-  if (lines2.length === 0) throw new DataServerError("the file holds no text", "no_text");
-  return { lines: lines2, source };
-}
-function stripFrontMatter(text5) {
-  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text5);
-  return m3 === null ? text5 : text5.slice(m3[0].length);
-}
-function sectionKey(num) {
-  return num.split(/[-.]/).map(Number);
-}
-function compareKeys(a3, b3) {
-  for (let i3 = 0; i3 < Math.max(a3.length, b3.length); i3++) {
-    const d3 = (a3[i3] ?? -1) - (b3[i3] ?? -1);
-    if (d3 !== 0) return d3;
-  }
-  return 0;
-}
-function isHeading(text5) {
-  return text5.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text5) && !SECTION_LINE.test(text5) && !/^[([]/.test(text5);
-}
-function sectionChunks(lines2) {
-  const chunks = [];
-  let block2 = 1;
-  let last = null;
-  let current = { block: block2, section: null, heading: null, lines: [] };
-  const open = (section2, line) => {
-    let heading = null;
-    const prev = current.lines[current.lines.length - 1];
-    if (prev !== void 0 && isHeading(prev.text) && (current.section !== null || current.lines.length > 1)) {
-      heading = prev.text;
-      current.lines.pop();
-    }
-    if (current.lines.length > 0) chunks.push(current);
-    current = { block: block2, section: section2, heading, lines: [line] };
-  };
-  for (const line of lines2) {
-    const m3 = SECTION_LINE.exec(line.text);
-    if (m3 === null) {
-      current.lines.push(line);
-      continue;
-    }
-    const key = sectionKey(m3[1]);
-    const restart = key.every((n3) => n3 === 1) && !m3[1].includes(".");
-    if (last === null) {
-      last = key;
-      open(m3[1], line);
-    } else if (compareKeys(key, last) > 0 && key[0] - last[0] <= MAX_SECTION_JUMP) {
-      last = key;
-      open(m3[1], line);
-    } else if (restart && compareKeys(key, last) < 0) {
-      block2 += 1;
-      last = key;
-      open(m3[1], line);
-    } else {
-      current.lines.push(line);
-    }
-  }
-  if (current.lines.length > 0) chunks.push(current);
-  return chunks;
-}
-function sectionBlocks(chunks) {
-  const blocks2 = [];
-  for (const chunk2 of chunks) {
-    if (chunk2.section === null) continue;
-    const open = blocks2[blocks2.length - 1];
-    if (open !== void 0 && open.block === chunk2.block) {
-      open.last = chunk2.section;
-      open.count += 1;
-    } else {
-      blocks2.push({ block: chunk2.block, heading: chunk2.heading, first: chunk2.section, last: chunk2.section, count: 1 });
-    }
-  }
-  return { count: blocks2.reduce((n3, b3) => n3 + b3.count, 0), blocks: blocks2 };
-}
-
 // src/files/extract/page-images.ts
-import { createHash as createHash12 } from "node:crypto";
-import { existsSync as existsSync41, mkdtempSync as mkdtempSync2, readFileSync as readFileSync37, statSync as statSync20, writeFileSync as writeFileSync14 } from "node:fs";
-import { tmpdir as tmpdir6 } from "node:os";
-import { extname as extname5, isAbsolute as isAbsolute7, join as join38 } from "node:path";
+import { createHash as createHash10 } from "node:crypto";
+import { existsSync as existsSync40, mkdtempSync as mkdtempSync2, readFileSync as readFileSync33, statSync as statSync18, writeFileSync as writeFileSync13 } from "node:fs";
+import { tmpdir as tmpdir5 } from "node:os";
+import { extname as extname5, isAbsolute as isAbsolute7, join as join37 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -113394,12 +112664,17 @@ async function init(moduleOverrides) {
 
 // src/files/extract/page-images.ts
 var MAX_PIXELS = 3e6;
+var MAX_SIDE = 2e3;
 var DPI = 150;
 var TILE_DPI = 200;
+var TILE_OVERLAP = 0.1;
+var MAX_PAGE_POINTS = 14400;
+var MIN_IMAGE_COVER = 0.5;
+var MAX_TEXT_COVER = 0.05;
 var OBJ_TEXT = 1;
 var OBJ_IMAGE = 3;
 var OBJ_FORM = 5;
-var TEXT_INVISIBLE = 3;
+var INVISIBLE_TEXT_MODES = /* @__PURE__ */ new Set([3, 7]);
 var ERR_PASSWORD = 4;
 var BITMAP_BGR = 2;
 var DEFAULT_WASM = new URL("./pdfium.wasm", import.meta.url);
@@ -113408,7 +112683,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync37(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync33(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -113420,69 +112695,99 @@ function loadPdfium(wasm) {
 function heapU8(lib) {
   return lib.pdfium.HEAPU8;
 }
-async function pdfPageImages(args, wasm = DEFAULT_WASM) {
-  const { path } = args;
+function malloc(lib, bytes) {
+  const ptr = lib.pdfium.wasmExports.malloc(Math.max(bytes, 1));
+  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, "renderer_unavailable");
+  return ptr;
+}
+async function withPdf(path, wasm, work) {
   if (!isAbsolute7(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync41(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync40(path) || !statSync18(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname5(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync37(path);
+  const data = readFileSync33(path);
   let lib;
   try {
     lib = await loadPdfium(wasm);
   } catch (err) {
     throw new DataServerError(`the PDF renderer did not load: ${err.message}`, "renderer_unavailable");
   }
-  const m3 = lib.pdfium;
-  const { malloc, free } = m3.wasmExports;
-  const dataPtr = malloc(data.length);
-  heapU8(lib).set(data, dataPtr);
-  const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
-  if (!doc) {
-    const code = lib.FPDF_GetLastError();
-    free(dataPtr);
-    if (code === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
-    throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code})`, "not_pdf");
-  }
   try {
+    const dataPtr = malloc(lib, data.length);
+    heapU8(lib).set(data, dataPtr);
+    const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
+    if (!doc) {
+      const code = lib.FPDF_GetLastError();
+      lib.pdfium.wasmExports.free(dataPtr);
+      if (code === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
+      throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code})`, "not_pdf");
+    }
+    try {
+      return await work(lib, doc, data);
+    } finally {
+      lib.FPDF_CloseDocument(doc);
+      lib.pdfium.wasmExports.free(dataPtr);
+    }
+  } catch (err) {
+    if (err instanceof WebAssembly.RuntimeError) loaded.delete(wasm.href);
+    throw err;
+  }
+}
+function withPage(lib, doc, n3, use) {
+  const page2 = lib.FPDF_LoadPage(doc, n3 - 1);
+  if (!page2) throw new DataServerError(`PDFium cannot load page ${n3} of this PDF`, "bad_pages");
+  try {
+    return use(page2);
+  } finally {
+    lib.FPDF_ClosePage(page2);
+  }
+}
+var nextTurn = () => new Promise((resolve8) => setImmediate(resolve8));
+async function classifyPdfPages(path, wasm = DEFAULT_WASM) {
+  return withPdf(path, wasm, async (lib, doc) => {
+    const kinds = [];
+    const pageCount = lib.FPDF_GetPageCount(doc);
+    for (let n3 = 1; n3 <= pageCount; n3++) {
+      if (n3 > 1) await nextTurn();
+      kinds.push(withPage(lib, doc, n3, (page2) => classify2(lib, page2, n3)));
+    }
+    return kinds;
+  });
+}
+async function pdfPageImages(args, wasm = DEFAULT_WASM) {
+  return withPdf(args.path, wasm, async (lib, doc, data) => {
     const pageCount = lib.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
-    const renderDir = mkdtempSync2(join38(tmpdir6(), "probanda-pages-"));
+    let renderDir = null;
     const pages = [];
     for (let n3 = first; n3 <= last; n3++) {
-      const page2 = lib.FPDF_LoadPage(doc, n3 - 1);
-      try {
-        if (!isScanned(lib, page2)) {
-          pages.push({ page: n3, kind: "born_digital" });
-          continue;
-        }
-        const dpi = args.tiles ? TILE_DPI : DPI;
-        const width = Math.round(lib.FPDF_GetPageWidthF(page2) * dpi / 72);
-        const height = Math.round(lib.FPDF_GetPageHeightF(page2) * dpi / 72);
-        const tiles = tileRows(width, height, args.tiles ? 2 : void 0);
-        const images = tiles.map(([top, rows22], i3) => {
-          const png = renderPng(lib, page2, width, height, top, rows22);
-          const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-          const file = join38(renderDir, `${name}.png`);
-          writeFileSync14(file, png);
-          const image = { path: file, sha256: createHash12("sha256").update(png).digest("hex"), width, height: rows22 };
-          if (tiles.length > 1) image.tile = i3 + 1;
-          return image;
-        });
-        pages.push({ page: n3, kind: "scanned", images });
-      } finally {
-        lib.FPDF_ClosePage(page2);
-      }
+      if (n3 > first) await nextTurn();
+      pages.push(
+        withPage(lib, doc, n3, (page2) => {
+          if (classify2(lib, page2, n3) === "born_digital") return { page: n3, kind: "born_digital" };
+          const { width, height } = pageSize(lib, page2, n3, args.tiles ? TILE_DPI : DPI);
+          const tiles = args.tiles ? overlappingHalves(width, height) : tileRows(width, 0, height);
+          renderDir ??= mkdtempSync2(join37(tmpdir5(), "probanda-pages-"));
+          const dir = renderDir;
+          const images = tiles.map(([top, rows22], i3) => {
+            const png = renderPng(lib, page2, n3, width, height, top, rows22);
+            const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
+            const file = join37(dir, `${name}.png`);
+            writeFileSync13(file, png);
+            const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows22 };
+            if (tiles.length > 1) image.tile = i3 + 1;
+            return image;
+          });
+          return { page: n3, kind: "scanned", images };
+        })
+      );
     }
     return {
-      source_sha256: createHash12("sha256").update(data).digest("hex"),
+      source_sha256: createHash10("sha256").update(data).digest("hex"),
       page_count: pageCount,
       render_dir: renderDir,
       pages
     };
-  } finally {
-    lib.FPDF_CloseDocument(doc);
-    free(dataPtr);
-  }
+  });
 }
 function pageName(n3) {
   return `page-${String(n3).padStart(4, "0")}`;
@@ -113498,13 +112803,28 @@ function pageRange(pages, pageCount) {
   }
   return [first, last];
 }
-function tileRows(width, height, count) {
-  let n3 = count ?? Math.max(1, Math.ceil(width * height / MAX_PIXELS));
-  while (count === void 0 && width * Math.ceil(height / n3) > MAX_PIXELS) n3++;
-  const rows22 = Math.ceil(height / n3);
+function pageSize(lib, page2, n3, dpi) {
+  const wPt = lib.FPDF_GetPageWidthF(page2);
+  const hPt = lib.FPDF_GetPageHeightF(page2);
+  if (!(wPt <= MAX_PAGE_POINTS && hPt <= MAX_PAGE_POINTS)) {
+    throw new DataServerError(`page ${n3} is ${wPt} x ${hPt} pt, over the PDF limit of ${MAX_PAGE_POINTS} pt a side`, "page_too_large");
+  }
+  const scale = Math.min(dpi, MAX_SIDE * 72 / wPt) / 72;
+  return {
+    width: Math.min(MAX_SIDE, Math.max(1, Math.round(wPt * scale))),
+    height: Math.max(1, Math.round(hPt * scale))
+  };
+}
+function tileRows(width, top, rows22) {
+  const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
+  const each = Math.ceil(rows22 / Math.ceil(rows22 / maxRows));
   const tiles = [];
-  for (let top = 0; top < height; top += rows22) tiles.push([top, Math.min(rows22, height - top)]);
+  for (let t3 = top; t3 < top + rows22; t3 += each) tiles.push([t3, Math.min(each, top + rows22 - t3)]);
   return tiles;
+}
+function overlappingHalves(width, height) {
+  const half = Math.ceil((height + Math.round(height * TILE_OVERLAP)) / 2);
+  return [...tileRows(width, 0, half), ...tileRows(width, height - half, half)].sort((a3, b3) => a3[0] - b3[0]);
 }
 function compose(inner, outer) {
   const [a3, b3, c3, d3, e3, f3] = inner;
@@ -113516,25 +112836,33 @@ function transform2([a3, b3, c3, d3, e3, f3], [l3, bo2, r3, t3]) {
   const ys2 = [l3, r3].flatMap((x3) => [bo2, t3].map((y3) => b3 * x3 + d3 * y3 + f3));
   return [Math.min(...xs2), Math.min(...ys2), Math.max(...xs2), Math.max(...ys2)];
 }
-function isScanned(lib, page2) {
+function classify2(lib, page2, n3) {
   const m3 = lib.pdfium;
-  const floats = m3.wasmExports.malloc(24);
+  const floats = malloc(lib, 24);
   const read3 = (count) => Array.from({ length: count }, (_3, i3) => m3.getValue(floats + 4 * i3, "float"));
   const images = [];
-  let visibleText = false;
+  const texts = [];
+  let invisibleText = false;
   let box;
   try {
-    lib.FPDF_GetPageBoundingBox(page2, floats);
+    if (!lib.FPDF_GetPageBoundingBox(page2, floats)) {
+      throw new DataServerError(`PDFium cannot read the page box of page ${n3} of this PDF`, "bad_pages");
+    }
     box = read3(4);
+    const bounds = (obj, matrix) => lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12) ? transform2(matrix, read3(4)) : null;
     const walk4 = (count, objectAt2, matrix) => {
-      for (let i3 = 0; i3 < count && !visibleText; i3++) {
+      for (let i3 = 0; i3 < count; i3++) {
         const obj = objectAt2(i3);
         const type = lib.FPDFPageObj_GetType(obj);
         if (type === OBJ_TEXT) {
-          if (lib.FPDFTextObj_GetTextRenderMode(obj) !== TEXT_INVISIBLE) visibleText = true;
+          if (INVISIBLE_TEXT_MODES.has(lib.FPDFTextObj_GetTextRenderMode(obj))) invisibleText = true;
+          else {
+            const rect = bounds(obj, matrix);
+            if (rect) texts.push(rect);
+          }
         } else if (type === OBJ_IMAGE) {
-          lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12);
-          images.push(transform2(matrix, read3(4)));
+          const rect = bounds(obj, matrix);
+          if (rect) images.push(rect);
         } else if (type === OBJ_FORM) {
           lib.FPDFPageObj_GetMatrix(obj, floats);
           const inner = compose(read3(6), matrix);
@@ -113546,26 +112874,29 @@ function isScanned(lib, page2) {
   } finally {
     m3.wasmExports.free(floats);
   }
-  if (visibleText || images.length === 0) return false;
+  if (images.length === 0) return "born_digital";
   const [left, top, right, bottom] = box;
-  const width = right - left;
-  const height = top - bottom;
-  if (width <= 0 || height <= 0) return false;
+  const pageBox = [left, bottom, right, top];
+  if (right - left <= 0 || top - bottom <= 0) return "born_digital";
+  const scanned = coverage(images, pageBox) >= MIN_IMAGE_COVER && (invisibleText || coverage(texts, pageBox) < MAX_TEXT_COVER);
+  return scanned ? "scanned" : "born_digital";
+}
+function coverage(rects, [left, bottom, right, top]) {
   const N3 = 100;
   const grid = new Uint8Array(N3 * N3);
-  const cell = (v3) => Math.min(N3, Math.max(0, v3));
-  for (const [l3, b3, r3, t3] of images) {
-    const x0 = cell(Math.floor((l3 - left) / width * N3));
-    const x1 = cell(Math.ceil((r3 - left) / width * N3));
-    const y0 = cell(Math.floor((b3 - bottom) / height * N3));
-    const y1 = cell(Math.ceil((t3 - bottom) / height * N3));
-    for (let y3 = y0; y3 < y1; y3++) grid.fill(1, y3 * N3 + x0, y3 * N3 + x1);
+  const cell = (v3, lo2, span) => Math.min(N3, Math.max(0, Math.ceil((v3 - lo2) / span * N3 - 0.5)));
+  for (const [l3, b3, r3, t3] of rects) {
+    const x0 = cell(l3, left, right - left);
+    const x1 = cell(r3, left, right - left);
+    const y0 = cell(b3, bottom, top - bottom);
+    const y1 = cell(t3, bottom, top - bottom);
+    for (let y3 = y0; y3 < y1; y3++) if (x0 < x1) grid.fill(1, y3 * N3 + x0, y3 * N3 + x1);
   }
-  return grid.reduce((sum, v3) => sum + v3, 0) * 2 >= N3 * N3;
+  return grid.reduce((sum, v3) => sum + v3, 0) / (N3 * N3);
 }
-function renderPng(lib, page2, width, height, top, rows22) {
+function renderPng(lib, page2, n3, width, height, top, rows22) {
   const bitmap = lib.FPDFBitmap_CreateEx(width, rows22, BITMAP_BGR, 0, 0);
-  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows22} bitmap`, "renderer_unavailable");
+  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows22} bitmap for page ${n3}`, "page_too_large");
   try {
     lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows22, 4294967295);
     lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, 0);
@@ -113611,6 +112942,741 @@ function chunk(type, data) {
   data.copy(out, 8);
   out.writeUInt32BE(crc322(out.subarray(4, 8 + data.length)), 8 + data.length);
   return out;
+}
+
+// src/files/extract/pdf.ts
+import { readFileSync as readFileSync34 } from "node:fs";
+var pdfjs;
+var quietDepth = 0;
+var savedLog = console.log;
+async function quietStdout(fn2) {
+  if (quietDepth++ === 0) {
+    savedLog = console.log;
+    console.log = console.error;
+  }
+  try {
+    return await fn2();
+  } finally {
+    if (--quietDepth === 0) console.log = savedLog;
+  }
+}
+function loadPdfJs() {
+  pdfjs ??= (async () => {
+    const g3 = globalThis;
+    const stubbed = g3.DOMMatrix === void 0;
+    if (stubbed) g3.DOMMatrix = class {
+    };
+    try {
+      await Promise.resolve().then(() => (init_pdf_worker_min(), pdf_worker_min_exports));
+      return await Promise.resolve().then(() => (init_pdf_min(), pdf_min_exports));
+    } finally {
+      if (stubbed) delete g3.DOMMatrix;
+    }
+  })();
+  return pdfjs;
+}
+var PdfExtractorUnavailable = class extends Error {
+};
+async function pdfPages(path) {
+  const data = new Uint8Array(readFileSync34(path));
+  if (data.length === 0) throw new Error("file is empty (0 bytes)");
+  return quietStdout(async () => {
+    let lib;
+    try {
+      lib = await loadPdfJs();
+    } catch (err) {
+      throw new PdfExtractorUnavailable(`pdf.js did not load: ${err.message}`);
+    }
+    let doc;
+    try {
+      doc = await lib.getDocument({
+        data,
+        verbosity: lib.VerbosityLevel.ERRORS,
+        isEvalSupported: false,
+        disableFontFace: true,
+        useSystemFonts: false,
+        stopAtErrors: false
+      }).promise;
+    } catch (err) {
+      if (err.name === "PasswordException") throw new Error("password-protected");
+      throw err;
+    }
+    try {
+      const pages = [];
+      for (let n3 = 1; n3 <= doc.numPages; n3++) {
+        const page2 = await doc.getPage(n3);
+        const content = await page2.getTextContent();
+        let text5 = "";
+        for (const item of content.items) {
+          if (!("str" in item)) continue;
+          text5 += item.str;
+          if (item.hasEOL) text5 += "\n";
+        }
+        pages.push(text5);
+        page2.cleanup();
+      }
+      return pages;
+    } finally {
+      await doc.destroy();
+    }
+  });
+}
+
+// src/files/text-extract.ts
+var SCANNED_BYTES_PER_PAGE = 500;
+var COPIED_EXTENSIONS = /* @__PURE__ */ new Set([".txt", ".md", ".json", ".htm", ".html"]);
+var unread = (reason) => ({ status: "unread", reason });
+async function extractText(path) {
+  const ext = pathWin3224.extname(path).toLowerCase();
+  let result;
+  try {
+    if (COPIED_EXTENSIONS.has(ext)) {
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync35(path, "utf-8"), pages: null };
+    } else if (ext === ".pdf") {
+      const scanned = (await classifyPdfPages(path)).indexOf("scanned");
+      if (scanned >= 0) {
+        return unread(`ocr_unavailable: page ${scanned + 1} is a scanned or OCR'd page, whose text layer is never read`);
+      }
+      const pages = await pdfPages(path);
+      const text5 = pages.join("\n\f\n");
+      const bytes = Buffer.byteLength(text5.trim(), "utf-8");
+      if (bytes < SCANNED_BYTES_PER_PAGE * Math.max(pages.length, 1)) {
+        return unread(
+          `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
+        );
+      }
+      result = { status: "ok", kind: "pdf", method: "text", text: text5, pages: pages.length };
+    } else if (ext === ".docx") {
+      result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
+    } else if (ext === ".doc") {
+      result = { status: "ok", kind: "doc", method: "text", text: docText(path), pages: null };
+    } else {
+      return unread(`unsupported_type: ${ext || "no extension"}`);
+    }
+  } catch (err) {
+    if (err instanceof PdfExtractorUnavailable) return unread(`extractor_unavailable: ${err.message}`);
+    if (err instanceof DataServerError && err.code === "renderer_unavailable") return unread(`extractor_unavailable: ${err.message}`);
+    if (err instanceof DocUnsupported) return unread(`unsupported_type: ${err.message}`);
+    return unread(`unreadable: ${err.message}`);
+  }
+  if (result.text.trim() === "") return unread("no_text: the file holds no text");
+  return result;
+}
+
+// src/files/research-filing.ts
+var LAW_SEGMENT = "6. law";
+var PROTECTED_SEGMENTS3 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
+var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
+var MANIFEST = "case-download-manifest.json";
+var SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
+var MAX_SAVE_ATTEMPTS = 100;
+var LAW_TEXT_SUBFOLDER = "law-text";
+function downloadsDir(env = process.env) {
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir9(), "Downloads");
+  const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
+  if (!statSync19(dir).isDirectory()) {
+    throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
+  }
+  return dir;
+}
+function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE__ */ new Date()) {
+  const dir = downloadsDir(env);
+  const since = sinceMtime === void 0 ? void 0 : Date.parse(sinceMtime);
+  if (since !== void 0 && Number.isNaN(since)) {
+    throw new DataServerError(`since_mtime is not an ISO timestamp: ${sinceMtime}`, "invalid_argument");
+  }
+  const entries = [];
+  for (const name of readdirSync26(dir)) {
+    if (filename !== void 0 && name !== filename) continue;
+    const stat = statSync19(pathWin3225.join(dir, name));
+    if (!stat.isFile()) continue;
+    if (since !== void 0 && stat.mtimeMs < since) continue;
+    entries.push({
+      filename: name,
+      mtime: stat.mtime.toISOString(),
+      bytes: stat.size,
+      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(name).toLowerCase())
+    });
+  }
+  entries.sort((a3, b3) => a3.mtime < b3.mtime ? 1 : a3.mtime > b3.mtime ? -1 : 0);
+  return { now: now.toISOString(), downloads_dir: dir, entries };
+}
+function listLawFolder(destinationDir) {
+  const dir = resolveLawDir(destinationDir);
+  const entries = readdirSync26(dir).map((name) => ({ name, stat: statSync19(pathWin3225.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  return { entries };
+}
+function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
+  const dir = resolveLawDir(destinationDir);
+  assertBareFilename(sourceFilename, "source_filename");
+  const destName = destinationFilename ?? sourceFilename;
+  assertBareFilename(destName, "destination_filename");
+  const source = pathWin3225.join(downloadsDir(env), sourceFilename);
+  if (!existsSync41(source) || !statSync19(source).isFile()) {
+    throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
+  }
+  if (IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(sourceFilename).toLowerCase())) {
+    throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
+  }
+  const dest = pathWin3225.join(dir, destName);
+  if (existsSync41(dest)) {
+    throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
+  }
+  const bytes = statSync19(source).size;
+  copyFileSync4(source, dest, constants.COPYFILE_EXCL);
+  return { path: dest, bytes };
+}
+function appendManifest(destinationDir, record2) {
+  const dir = resolveLawDir(destinationDir);
+  if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
+    throw new DataServerError("record must be a JSON object", "invalid_argument");
+  }
+  const path = pathWin3225.join(dir, MANIFEST);
+  appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
+  const records = readFileSync36(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  return { path, records };
+}
+function saveAnswer(destinationDir, filename, text5, fromScratch) {
+  assertBareFilename(filename, "filename");
+  const ext = pathWin3225.extname(filename);
+  if (ext.toLowerCase() !== ".md") {
+    throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
+  }
+  if (text5 === void 0 === (fromScratch === void 0)) {
+    throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
+  }
+  let body;
+  if (fromScratch !== void 0) {
+    body = scratchBytes(destinationDir, fromScratch);
+  } else {
+    if (typeof text5 !== "string" || text5.length === 0) {
+      throw new DataServerError("text must be a non-empty string", "invalid_argument");
+    }
+    body = Buffer.from(text5, "utf-8");
+  }
+  const { dir, created } = resolveOrCreateLawDir(destinationDir);
+  const saved = writeNewVersion(dir, filename, body);
+  const sha2562 = createHash11("sha256").update(body).digest("hex");
+  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2562 };
+}
+function scratchBytes(destinationDir, fromScratch) {
+  if (typeof fromScratch !== "string" || !pathWin3225.isAbsolute(fromScratch)) {
+    throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
+  }
+  let law = existsSync41(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
+  while (pathWin3225.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3225.dirname(law);
+  const root = validateMatterRoot(pathWin3225.dirname(law));
+  const draft = findDraftDir(root);
+  if (draft === void 0) {
+    throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
+  }
+  const scratchDir = pathWin3225.join(draft, ...SCRATCH_SUBFOLDERS);
+  const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
+  assertUnprotected(realScratchDir);
+  const source = canonicalRoot(fromScratch, `from_scratch not found: ${fromScratch}`, "not_found");
+  if (pathWin3225.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
+    throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
+  }
+  if (!statSync19(source).isFile()) {
+    throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
+  }
+  const body = readFileSync36(source);
+  if (body.length === 0) {
+    throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
+  }
+  return body;
+}
+function writeScratch(matterRoot, filename, text5, kind) {
+  assertBareFilename(filename, "filename");
+  if (pathWin3225.extname(filename).toLowerCase() !== ".md") {
+    throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
+  }
+  if (typeof text5 !== "string" || text5.length === 0) {
+    throw new DataServerError("text must be a non-empty string", "invalid_argument");
+  }
+  if (kind !== void 0 && kind !== "research-notes") {
+    throw new DataServerError(`kind must be "research-notes" when given: ${kind}`, "invalid_argument");
+  }
+  if (kind === "research-notes") checkCoverageLine(text5);
+  const { dir, created } = researchScratchDir(validateMatterRoot(matterRoot));
+  const body = Buffer.from(text5, "utf-8");
+  const saved = writeNewVersion(dir, filename, body);
+  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created };
+}
+function researchScratchDir(root) {
+  const found = findDraftDir(root);
+  if (found === void 0) {
+    throw new DataServerError(`${root} has no 0. DRAFT folder; the scratchpad lives in it`, "draft_dir_missing");
+  }
+  const draft = canonicalRoot(found, `the 0. DRAFT folder does not resolve: ${found}`, "draft_dir_missing");
+  assertUnprotected(draft);
+  let dir = draft;
+  let created = false;
+  for (const name of SCRATCH_SUBFOLDERS) {
+    dir = pathWin3225.join(dir, name);
+    try {
+      mkdirSync18(dir);
+      created = true;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+    assertUnprotected(canonicalRoot(dir, `scratchpad folder does not resolve: ${dir}`, "not_found"));
+  }
+  return { dir, created };
+}
+async function lawFolderText(matterRoot, destinationDir) {
+  const root = validateMatterRoot(matterRoot);
+  const law = resolveLawDir(destinationDir);
+  if (!law.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
+    throw new DataServerError(`destination_dir is not in this matter: ${law}`, "not_in_matter");
+  }
+  const segments = law.split(/[\\/]+/);
+  const below = segments.slice(segments.findIndex((s3) => s3.toLowerCase() === LAW_SEGMENT) + 1);
+  let outDir = researchScratchDir(root).dir;
+  for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
+    outDir = pathWin3225.join(outDir, name);
+    mkdirSync18(outDir, { recursive: true });
+    assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
+  }
+  const files = readdirSync26(law).filter((name) => statSync19(pathWin3225.join(law, name)).isFile()).sort();
+  const rows22 = [];
+  for (const file of files) {
+    const read3 = await extractText(pathWin3225.join(law, file));
+    if (read3.status === "unread") {
+      rows22.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
+      continue;
+    }
+    const textPath = pathWin3225.join(outDir, `${file}.txt`);
+    const body = Buffer.from(read3.text, "utf-8");
+    writeFileSync14(textPath, body);
+    rows22.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
+  }
+  return { out_dir: outDir, files: rows22 };
+}
+function assertUnprotected(realDir) {
+  if (realDir.split(/[\\/]+/).some((s3) => PROTECTED_SEGMENTS3.has(s3.toLowerCase()))) {
+    throw new DataServerError(`the scratchpad would be inside a privileged/disclosed tree: ${realDir}`, "protected");
+  }
+}
+var FETCHED_RECORD_FIELDS = ["citation", "title", "kind", "jurisdiction", "official", "currency_marker"];
+function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /* @__PURE__ */ new Date()) {
+  if (typeof url !== "string" || url === "") {
+    throw new DataServerError("url must be the non-empty URL passed to sources__fetch", "invalid_argument");
+  }
+  assertBareFilename(filename, "filename");
+  const fields = fetchedRecordFields(record2);
+  const dir = resolveLawDir(destinationDir);
+  const fetched = (seams.fetcher ?? sourcesFetcher).memoized(url);
+  if (fetched === null || fetched === "expired") {
+    const why = fetched === null ? "was never fetched in this server process" : "was fetched more than 24 hours ago";
+    throw new DataServerError(`${url} ${why}; fetch it with sources__fetch first`, "not_fetched");
+  }
+  const pdf = fetched.bytes.subarray(0, 5).toString("latin1") === "%PDF-";
+  const ext = pdf ? ".pdf" : ".md";
+  if (pathWin3225.extname(filename).toLowerCase() !== ext) {
+    throw new DataServerError(
+      `filename must end in ${ext}, because ${fetched.final_url} returned ${pdf ? "a PDF" : "an HTML page"}: ${filename}`,
+      "invalid_filename"
+    );
+  }
+  const fetchedAt = now.toISOString();
+  let body = fetched.bytes;
+  if (!pdf) {
+    const header = [
+      "---",
+      `url: ${JSON.stringify(fetched.url)}`,
+      `final_url: ${JSON.stringify(fetched.final_url)}`,
+      `sha256: ${JSON.stringify(fetched.sha256)}`,
+      `fetched_at: ${JSON.stringify(fetchedAt)}`,
+      `currency_marker: ${JSON.stringify(fields.currency_marker)}`,
+      "---",
+      ""
+    ].join("\n");
+    body = Buffer.from(header + htmlBlocks(fetched.bytes.toString("utf-8")).join("\n") + "\n", "utf-8");
+  }
+  const saved = writeNewVersion(dir, filename, body);
+  const manifestRecord = {
+    citation: fields.citation,
+    title: fields.title,
+    kind: fields.kind,
+    jurisdiction: fields.jurisdiction,
+    status: "downloaded",
+    source: "official-publisher",
+    official: fields.official,
+    publisher_host: new URL(fetched.final_url).hostname,
+    url: fetched.url,
+    final_url: fetched.final_url,
+    sha256: fetched.sha256,
+    filename: saved.filename,
+    path: saved.path,
+    fetched_at: fetchedAt,
+    currency_marker: fields.currency_marker
+  };
+  const manifest = appendManifest(dir, manifestRecord);
+  return { path: saved.path, filename: saved.filename, bytes: body.length, record: manifestRecord, manifest };
+}
+function fetchedRecordFields(record2) {
+  if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
+    throw new DataServerError("record must be a JSON object", "invalid_argument");
+  }
+  const r3 = record2;
+  const extra = Object.keys(r3).filter((key) => !FETCHED_RECORD_FIELDS.includes(key));
+  if (extra.length > 0) {
+    throw new DataServerError(
+      `record may carry only ${FETCHED_RECORD_FIELDS.join(", ")}; the runtime fills the rest. Refused: ${extra.join(", ")}`,
+      "invalid_argument"
+    );
+  }
+  for (const key of ["title", "kind", "jurisdiction", "currency_marker"]) {
+    if (!filledString(r3[key])) throw new DataServerError(`record.${key} must be a non-empty string`, "invalid_argument");
+  }
+  if (r3.citation !== void 0 && r3.citation !== null && !filledString(r3.citation)) {
+    throw new DataServerError("record.citation must be a non-empty string when given", "invalid_argument");
+  }
+  if (typeof r3.official !== "boolean") {
+    throw new DataServerError("record.official must be true or false", "invalid_argument");
+  }
+  return {
+    citation: r3.citation ?? null,
+    title: r3.title,
+    kind: r3.kind,
+    jurisdiction: r3.jurisdiction,
+    official: r3.official,
+    currency_marker: r3.currency_marker
+  };
+}
+function filledString(value) {
+  return typeof value === "string" && value.trim() !== "";
+}
+function writeNewVersion(dir, filename, body) {
+  const ext = pathWin3225.extname(filename);
+  const stem3 = filename.slice(0, -ext.length);
+  for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
+    const name = nextVersionName(dir, stem3, ext);
+    const path = pathWin3225.join(dir, name);
+    try {
+      writeFileSync14(path, body, { flag: "wx" });
+    } catch (err) {
+      if (err.code === "EEXIST") continue;
+      throw err;
+    }
+    return { path, filename: name };
+  }
+  throw new DataServerError(
+    `no free version of ${filename} in ${dir} after ${MAX_SAVE_ATTEMPTS} attempts`,
+    "dest_exists"
+  );
+}
+function nextVersionName(dir, stem3, ext) {
+  const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
+  let highest = 0;
+  for (const name of readdirSync26(dir)) {
+    const match = version2.exec(name);
+    if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
+  }
+  return highest === 0 ? `${stem3}${ext}` : `${stem3} v${highest + 1}${ext}`;
+}
+function resolveOrCreateLawDir(destinationDir) {
+  try {
+    return { dir: resolveLawDir(destinationDir), created: false };
+  } catch (err) {
+    if (err.code !== "not_found" || existsSync41(destinationDir)) throw err;
+  }
+  const parent = resolveLawDir(pathWin3225.dirname(destinationDir));
+  if (PROTECTED_SEGMENTS3.has(pathWin3225.basename(destinationDir).toLowerCase())) {
+    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${destinationDir}`, "protected");
+  }
+  let created = true;
+  try {
+    mkdirSync18(pathWin3225.join(parent, pathWin3225.basename(destinationDir)));
+  } catch (err) {
+    if (err.code !== "EEXIST") throw err;
+    created = false;
+  }
+  return { dir: resolveLawDir(destinationDir), created };
+}
+function resolveLawDir(destinationDir) {
+  if (typeof destinationDir !== "string" || !pathWin3225.isAbsolute(destinationDir)) {
+    throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
+  }
+  const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
+  if (!statSync19(dir).isDirectory()) {
+    throw new DataServerError(`destination is not a folder: ${destinationDir}`, "not_found");
+  }
+  const segments = dir.split(/[\\/]+/).map((s3) => s3.toLowerCase());
+  if (!segments.includes(LAW_SEGMENT)) {
+    throw new DataServerError(`destination_dir is not inside a matter's 6. LAW tree: ${dir}`, "not_law_folder");
+  }
+  if (segments.some((s3) => PROTECTED_SEGMENTS3.has(s3))) {
+    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${dir}`, "protected");
+  }
+  return dir;
+}
+function assertBareFilename(name, label2) {
+  if (typeof name !== "string" || name.length === 0 || name.includes("\0") || /[\\/]/.test(name) || /^[A-Za-z]:/.test(name) || name === "." || name === "..") {
+    throw new DataServerError(`${label2} must be a bare filename: ${name}`, "invalid_filename");
+  }
+}
+
+// src/research/preflight.ts
+import { tmpdir as tmpdir6 } from "node:os";
+import { join as join38 } from "node:path";
+var PROBE_STEM = join38(tmpdir6(), "coclerk-research-preflight-probe-absent");
+var CAPS = {
+  "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
+  "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
+  knowledge_tree: "legislation-fetcher cannot read its publisher map, so no statute text is retrieved"
+};
+function errorText(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+function probeExtractor(ext, extract) {
+  try {
+    extract([PROBE_STEM + ext]);
+    return null;
+  } catch (err) {
+    return errorText(err);
+  }
+}
+function extractorFix(detail) {
+  return /pip install pypdf/.test(detail) ? "Run `pip install pypdf` for the Python the detail names. No restart is needed." : "Install Python 3, or set COCLERK_PYTHON to a Python that has pypdf.";
+}
+function researchPreflight(seams = {}) {
+  const extract = seams.extract ?? extractDocuments;
+  const issues = [];
+  const pdf = probeExtractor(".pdf", extract);
+  if (pdf !== null) issues.push({ row: "extractor.pdf", detail: pdf, caps: CAPS["extractor.pdf"], fix: extractorFix(pdf) });
+  const docx = probeExtractor(".docx", extract);
+  if (docx !== null) issues.push({ row: "extractor.docx", detail: docx, caps: CAPS["extractor.docx"], fix: extractorFix(docx) });
+  let tree = null;
+  try {
+    knowledgeList({ dir: "legal-research" }, seams);
+  } catch (err) {
+    tree = errorText(err);
+  }
+  if (tree !== null) {
+    issues.push({ row: "knowledge_tree", detail: tree, caps: CAPS.knowledge_tree, fix: "Do what the detail says: it names the file and the setting." });
+  }
+  return {
+    extractor: { pdf: pdf === null ? "ok" : "missing", docx: docx === null ? "ok" : "missing" },
+    knowledge_tree: tree === null ? "ok" : "error",
+    chrome: "not_checked",
+    issues
+  };
+}
+
+// src/files/legislation-search.ts
+import { createHash as createHash12 } from "node:crypto";
+import { readFileSync as readFileSync37, statSync as statSync20 } from "node:fs";
+import { win32 as pathWin3226 } from "node:path";
+var PROTECTED_SEGMENTS4 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
+var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
+var HTML_EXTENSIONS = /* @__PURE__ */ new Set([".htm", ".html"]);
+var EXTRACTED_EXTENSIONS = /* @__PURE__ */ new Set([".pdf", ".docx"]);
+var SCANNED_BYTES_PER_PAGE2 = 500;
+var MAX_TERMS = 50;
+var MAX_SECTION_CHARS = 6e3;
+var SECTION_LINE = /^(\d+(?:-\d+)?(?:\.\d+)?)\s+\S/;
+var MAX_SECTION_JUMP = 50;
+var MAX_HEADING_CHARS = 120;
+function noPageExtractor(path) {
+  throw new DataServerError(
+    `PDF and .docx text is not read yet (it awaits the in-server extractor); search a .md, .txt or .html copy instead: ${path}`,
+    "extractor_unavailable"
+  );
+}
+function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}) {
+  const file = resolveMatterFile(matterRoot, path);
+  const termList = checkTerms(terms2);
+  const pattern = checkRegex(regex);
+  if (termList.length === 0 && pattern === null) {
+    throw new DataServerError("give terms, a regex, or both", "invalid_argument");
+  }
+  const ext = pathWin3226.extname(file).toLowerCase();
+  const range = checkPages(pages, ext);
+  const bytes = readFileSync37(file);
+  const { lines: lines2, source } = textLines(file, ext, bytes, range, seams);
+  const chunks = sectionChunks(lines2);
+  const hits = [];
+  for (const chunk2 of chunks) {
+    const body = chunk2.lines.map((l3) => l3.text).join("\n");
+    const lower = body.toLowerCase();
+    const matched = termList.filter((t3) => lower.includes(t3.toLowerCase()));
+    if (pattern !== null && pattern.test(body)) matched.push(`/${pattern.source}/`);
+    if (matched.length === 0) continue;
+    const hit = {
+      block: chunk2.block,
+      section: chunk2.section,
+      heading: chunk2.heading,
+      page: chunk2.lines[0]?.page ?? null,
+      matched,
+      text: body.length > MAX_SECTION_CHARS ? body.slice(0, MAX_SECTION_CHARS) : body
+    };
+    if (body.length > MAX_SECTION_CHARS) hit.truncated = true;
+    hits.push(hit);
+  }
+  return {
+    path: file,
+    sha256: createHash12("sha256").update(bytes).digest("hex"),
+    source,
+    pages: range,
+    terms: termList,
+    regex: pattern === null ? null : pattern.source,
+    lines_searched: lines2.length,
+    sections_searched: sectionBlocks(chunks),
+    unsectioned_lines: chunks.filter((c3) => c3.section === null).reduce((n3, c3) => n3 + c3.lines.length, 0),
+    hits
+  };
+}
+function resolveMatterFile(matterRoot, path) {
+  const root = validateMatterRoot(matterRoot);
+  if (typeof path !== "string" || !pathWin3226.isAbsolute(path)) {
+    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
+  }
+  const file = canonicalRoot(path, `file not found: ${path}`, "not_found");
+  if (!statSync20(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
+  if (!file.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
+    throw new DataServerError(`path is not in this matter: ${file}`, "not_in_matter");
+  }
+  if (file.split(/[\\/]+/).some((s3) => PROTECTED_SEGMENTS4.has(s3.toLowerCase()))) {
+    throw new DataServerError(`path is inside a privileged/disclosed tree: ${file}`, "protected");
+  }
+  return file;
+}
+function checkTerms(terms2) {
+  if (terms2 === void 0) return [];
+  const list = typeof terms2 === "string" ? [terms2] : terms2;
+  if (!Array.isArray(list) || list.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
+    throw new DataServerError("terms must be a non-empty string or an array of them", "invalid_argument");
+  }
+  if (list.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
+  return list;
+}
+function checkRegex(regex) {
+  if (regex === void 0) return null;
+  if (typeof regex !== "string" || regex === "") {
+    throw new DataServerError("regex must be a non-empty string", "invalid_argument");
+  }
+  try {
+    return new RegExp(regex, "i");
+  } catch (err) {
+    throw new DataServerError(`regex does not compile: ${err.message}`, "invalid_argument");
+  }
+}
+function checkPages(pages, ext) {
+  if (pages === void 0) return null;
+  if (ext !== ".pdf") throw new DataServerError("pages applies only to a PDF", "invalid_argument");
+  const m3 = typeof pages === "string" ? /^\s*(\d+)\s*(?:[-–]\s*(\d+))?\s*$/.exec(pages) : null;
+  if (m3 === null) throw new DataServerError(`pages must read "X-Y" or "X": ${String(pages)}`, "invalid_argument");
+  const first = Number(m3[1]);
+  const last = Number(m3[2] ?? m3[1]);
+  if (first < 1 || last < first) throw new DataServerError(`pages is not a range: ${pages}`, "invalid_argument");
+  return { first, last };
+}
+function textLines(file, ext, bytes, range, seams) {
+  const split = (text5, page2) => text5.split(/\r?\n|\f/).map((t3) => t3.trim()).filter((t3) => t3 !== "").map((t3) => ({ text: t3, page: page2 }));
+  let lines2;
+  let source;
+  if (TEXT_EXTENSIONS.has(ext)) {
+    source = ext === ".md" ? "md" : "txt";
+    lines2 = split(stripFrontMatter(bytes.toString("utf-8")), null);
+  } else if (HTML_EXTENSIONS.has(ext)) {
+    source = "html";
+    lines2 = split(htmlBlocks(bytes.toString("utf-8")).join("\n"), null);
+  } else if (EXTRACTED_EXTENSIONS.has(ext)) {
+    source = ext === ".pdf" ? "pdf" : "docx";
+    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text5, i3) => ({ text: text5, page: i3 + 1 }));
+    if (range !== null) {
+      if (range.last > pageTexts.length) {
+        throw new DataServerError(`pages ${range.first}-${range.last} run past the file's ${pageTexts.length} pages`, "invalid_argument");
+      }
+      pageTexts = pageTexts.slice(range.first - 1, range.last);
+    }
+    const textBytes = Buffer.byteLength(pageTexts.map((p3) => p3.text).join("").trim(), "utf-8");
+    if (source === "pdf" && textBytes < SCANNED_BYTES_PER_PAGE2 * Math.max(pageTexts.length, 1)) {
+      throw new DataServerError(
+        `${textBytes} bytes of text over ${pageTexts.length} page(s), under ${SCANNED_BYTES_PER_PAGE2} per page, so likely scanned; no OCR runs`,
+        "ocr_unavailable"
+      );
+    }
+    lines2 = pageTexts.flatMap((p3) => split(p3.text, source === "pdf" ? p3.page : null));
+  } else {
+    throw new DataServerError(`unsupported file type: ${ext || "no extension"}`, "unsupported_type");
+  }
+  if (lines2.length === 0) throw new DataServerError("the file holds no text", "no_text");
+  return { lines: lines2, source };
+}
+function stripFrontMatter(text5) {
+  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text5);
+  return m3 === null ? text5 : text5.slice(m3[0].length);
+}
+function sectionKey(num) {
+  return num.split(/[-.]/).map(Number);
+}
+function compareKeys(a3, b3) {
+  for (let i3 = 0; i3 < Math.max(a3.length, b3.length); i3++) {
+    const d3 = (a3[i3] ?? -1) - (b3[i3] ?? -1);
+    if (d3 !== 0) return d3;
+  }
+  return 0;
+}
+function isHeading(text5) {
+  return text5.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text5) && !SECTION_LINE.test(text5) && !/^[([]/.test(text5);
+}
+function sectionChunks(lines2) {
+  const chunks = [];
+  let block2 = 1;
+  let last = null;
+  let current = { block: block2, section: null, heading: null, lines: [] };
+  const open = (section2, line) => {
+    let heading = null;
+    const prev = current.lines[current.lines.length - 1];
+    if (prev !== void 0 && isHeading(prev.text) && (current.section !== null || current.lines.length > 1)) {
+      heading = prev.text;
+      current.lines.pop();
+    }
+    if (current.lines.length > 0) chunks.push(current);
+    current = { block: block2, section: section2, heading, lines: [line] };
+  };
+  for (const line of lines2) {
+    const m3 = SECTION_LINE.exec(line.text);
+    if (m3 === null) {
+      current.lines.push(line);
+      continue;
+    }
+    const key = sectionKey(m3[1]);
+    const restart = key.every((n3) => n3 === 1) && !m3[1].includes(".");
+    if (last === null) {
+      last = key;
+      open(m3[1], line);
+    } else if (compareKeys(key, last) > 0 && key[0] - last[0] <= MAX_SECTION_JUMP) {
+      last = key;
+      open(m3[1], line);
+    } else if (restart && compareKeys(key, last) < 0) {
+      block2 += 1;
+      last = key;
+      open(m3[1], line);
+    } else {
+      current.lines.push(line);
+    }
+  }
+  if (current.lines.length > 0) chunks.push(current);
+  return chunks;
+}
+function sectionBlocks(chunks) {
+  const blocks2 = [];
+  for (const chunk2 of chunks) {
+    if (chunk2.section === null) continue;
+    const open = blocks2[blocks2.length - 1];
+    if (open !== void 0 && open.block === chunk2.block) {
+      open.last = chunk2.section;
+      open.count += 1;
+    } else {
+      blocks2.push({ block: chunk2.block, heading: chunk2.heading, first: chunk2.section, last: chunk2.section, count: 1 });
+    }
+  }
+  return { count: blocks2.reduce((n3, b3) => n3 + b3.count, 0), blocks: blocks2 };
 }
 
 // src/submission/forms/save-job-answer.ts
