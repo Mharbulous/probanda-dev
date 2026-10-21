@@ -4,7 +4,10 @@
   if (!view) return;
   var data = view.data;
   var board = document.querySelector(".board");
-  var KEY = "coclerk.provable-facts.filters";
+  // Material Facts and Procedural History share this script: Procedural History's data is in date
+  // order and each fact carries its date.
+  var dated = data.order === "date";
+  var KEY = dated ? "coclerk.procedural-history.filters" : "coclerk.material-facts.filters";
 
   function el(tag, cls, text) {
     var node = document.createElement(tag);
@@ -37,7 +40,7 @@
   var h2 = el("h2", "", "Facts ");
   h2.appendChild(el("span", "count", String(data.facts.length)));
   list.appendChild(h2);
-  list.appendChild(el("p", "note", "In the order the Writing states the facts."));
+  list.appendChild(el("p", "note", dated ? "In the order the steps happened." : "In the order the Writing states the facts."));
   var EVIDENCE_NOTES = {
     never_rendered: "This Writing has not been rendered yet, so no evidence shows as in hand.",
     changed_since: "The matter's data has changed since this Writing was last rendered, so no evidence shows as in hand until it is rendered again."
@@ -52,6 +55,7 @@
     li.setAttribute("data-class", f["class"]);
     var head = el("div", "head");
     head.appendChild(el("span", "num", f.position + "."));
+    if (dated) head.appendChild(el("span", "date", f.date));
     head.appendChild(el("span", "text", f.text));
     li.appendChild(head);
     if (f.basis !== null) li.appendChild(el("p", "basis", f.basis));
@@ -78,7 +82,7 @@
 
   function apply() {
     var shown = counts.provable + (board.classList.contains("show-pending") ? counts.pending : 0) + (board.classList.contains("show-inadmissible") ? counts.inadmissible : 0);
-    empty.textContent = data.facts.length === 0 ? "This Writing uses no facts." : "No fact to show. Tick a box above to show the others.";
+    empty.textContent = data.facts.length === 0 ? (dated ? "This Writing uses no procedural facts." : "This Writing uses no material facts.") :"No fact to show. Tick a box above to show the others.";
     empty.hidden = shown > 0;
   }
 

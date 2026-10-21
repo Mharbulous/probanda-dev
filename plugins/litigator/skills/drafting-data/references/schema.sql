@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 76
+-- Current version: db_meta.schema_version = 77
 
 
 CREATE TABLE db_meta (
@@ -83,7 +83,7 @@ CREATE TABLE facts (
     id            INTEGER PRIMARY KEY,
     proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
     postulate     TEXT NOT NULL,
-    court_record INTEGER REFERENCES documents(id), court_record_pinpoint TEXT, adverse INTEGER CHECK (adverse IN (0, 1)));
+    court_record INTEGER REFERENCES documents(id), court_record_pinpoint TEXT, adverse INTEGER CHECK (adverse IN (0, 1)), procedural_on TEXT CHECK (procedural_on IS NULL OR procedural_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'));
 
 CREATE TABLE statements_of_fact (
     id                 INTEGER PRIMARY KEY,

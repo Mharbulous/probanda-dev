@@ -103,7 +103,7 @@ test("a proceeding's Job Board page carries its tickets and seeds, and no filing
     );
     assert.deepEqual(
       readdirSync(f.draft),
-      ["Arguments - Job Board 1.html", "Job Board - proceeding 1.html", "Job Board - proceeding 3.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html"],
+      ["Arguments - Job Board 1.html", "Job Board - proceeding 1.html", "Job Board - proceeding 3.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html"],
       "no Pre-filing proceeding folder, only the matter's pages"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");

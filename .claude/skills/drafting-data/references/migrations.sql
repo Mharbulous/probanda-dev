@@ -4969,3 +4969,26 @@ CREATE TABLE ticket_sources (
 );
 
 UPDATE db_meta SET value = '76' WHERE key = 'schema_version';
+
+-- MIGRATE 76 -> 77
+-- The Job Board's Provable Facts page splits in two (Brahm, 2026-10-20, docs/ADRs/0011): Procedural
+-- History, the facts that speak to the litigation process itself (a filing, a service, procedural
+-- correspondence), each on the date it happened, and Material Facts, every other fact. Both keep how
+-- each fact is proven.
+--
+-- facts gains procedural_on, YYYY-MM-DD: the date the procedural step happened. NULL is a material
+-- fact. One column holds both the kind and the date, so a procedural fact without a date cannot be
+-- stored. The session sets it by inference from the fact and its source, and the practitioner's
+-- correction sets or clears it (SKILL.md "Procedural and material facts"). It records an act that
+-- has happened, never a date by which something must be done: nothing computes from it and no
+-- deadline is derived from it.
+--
+-- This column deepens drafting-data's reliance on Exception 2 of the commandments by Brahm's express
+-- ruling of 2026-10-20 (ADR 0011).
+--
+-- Additive: one ADD COLUMN, no rebuild. Every existing fact reads NULL, so it stays on Material
+-- Facts, the renamed Provable Facts page. facts keeps its revision triggers, so a fact moved between
+-- the pages re-renders them. The hop writes no row and moves no revision.
+ALTER TABLE facts ADD COLUMN procedural_on TEXT CHECK (procedural_on IS NULL OR procedural_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]');
+
+UPDATE db_meta SET value = '77' WHERE key = 'schema_version';

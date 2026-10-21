@@ -15,10 +15,13 @@
 //
 // Each page is one entry template in src/templates/view-pages/ (map #125), with its name written
 // literally, sharing view-head.html and shared.js; its page file composes it.
+//
+// Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
+// `Provable Facts - Job Board <id>.html` left from before is an old page file (matter-pages.ts OLD_PAGE).
 
 import { ARGUMENTS_PAGE } from "./forms/arguments-page.js";
+import { MATERIAL_FACTS, PROCEDURAL_HISTORY } from "./forms/facts-pages.js";
 import { LOOSE_IDEAS_PAGE } from "./forms/loose-ideas-page.js";
-import { PROVABLE_FACTS } from "./forms/provable-facts-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
 import { RAW_RESEARCH_PAGE } from "./forms/raw-research-page.js";
 
@@ -56,7 +59,8 @@ export interface ViewPage {
 
 /** Every view page, one line each, in the order each filing's pages are listed in view_page_paths. */
 export const VIEW_PAGES: readonly ViewPage[] = [
-  PROVABLE_FACTS,
+  PROCEDURAL_HISTORY,
+  MATERIAL_FACTS,
   RAW_RESEARCH_PAGE,
   ARGUMENTS_PAGE,
   LOOSE_IDEAS_PAGE,

@@ -19,7 +19,7 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
 const { callTool } = await import("../build/dispatch.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
-const { provableFactsData } = await import("../build/submission/forms/provable-facts-page.js");
+const { materialFactsData, proceduralHistoryData } = await import("../build/submission/forms/facts-pages.js");
 const { buildLooseIdeasData } = await import("../build/submission/forms/loose-ideas-page.js");
 const { readBoardData, jobBoardPages, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
@@ -144,7 +144,7 @@ test("one page draws every section on the board, each job once, with one set of 
 
   assert.deepEqual(jobBoardPages(m.draft), ["Job Board - proceeding 3.html", "Job Board 1.html", "Job Board 2.html"]);
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
-  assert.deepEqual(moved, ["Arguments", "Job Board 3", "Loose Threads", "Provable Facts", "Raw Research"].map((n) => join(m.draft, n === "Job Board 3" ? "Job Board 3.html" : `${n} - Job Board 3.html`).toLowerCase()).sort());
+  assert.deepEqual(moved, ["Arguments", "Job Board 3", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(m.draft, n === "Job Board 3" ? "Job Board 3.html" : `${n} - Job Board 3.html`).toLowerCase()).sort());
   const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, join(m.draft, "Job Board 1.html"), "the absorbed Writing's render returns its survivor's page");
 
@@ -152,7 +152,7 @@ test("one page draws every section on the board, each job once, with one set of 
   assert.deepEqual(page.board, { filing_id: 1, proceeding_id: 1 });
   assert.deepEqual(page.sections.map((s) => s.meta.filing_id), [1, 3], "the survivor's section first");
   assert.deepEqual(page.sections.map((s) => s.tickets.map((x) => x.id)), [[1, 3], [2]], "each job once");
-  assert.deepEqual(page.views.map((v) => v.file), ["Provable Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => `${n} - Job Board 1.html`));
+  assert.deepEqual(page.views.map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => `${n} - Job Board 1.html`));
   assert.equal(readBoardData(join(m.draft, "Job Board 2.html")).board, undefined, "an unmerged page carries no board key");
 
   const views = result.view_page_paths.filter((v) => v.path.includes("Job Board 1.html"));
@@ -170,7 +170,7 @@ test("a survivor that is retired keeps its page's id while an absorbed Writing i
   const page = readBoardData(join(m.draft, "Job Board 1.html"));
   assert.deepEqual(page.board, { filing_id: 1, proceeding_id: 1 }, "the page is named by its retired survivor");
   assert.deepEqual(page.sections.map((s) => s.meta.filing_id), [3]);
-  assert.ok(readdirSync(m.draft).includes("Provable Facts - Job Board 1.html"));
+  assert.ok(readdirSync(m.draft).includes("Material Facts - Job Board 1.html"));
 });
 
 test("a merged pre-filing board's first Writing joins the survivor, and later Writings get their own boards", async (t) => {
@@ -216,14 +216,22 @@ test("set_board_goal refuses an absorbed board, writes a merged statement by ind
   assert.deepEqual(stored.merged.map((g) => [g.from, g.statement]), [["board_goal:filing:3", "Goal: defeat the counterclaim in full."]]);
 });
 
-test("the merged view pages read every Writing: Provable Facts Writing by Writing, each fact once; loose threads per proceeding", async (t) => {
+test("the merged view pages read every Writing: Material Facts and Procedural History Writing by Writing, each fact once; loose threads per proceeding", async (t) => {
   const m = await fixture(t);
   const filings = query(m.dbPath, "SELECT * FROM filings ORDER BY id");
   const proceedings = query(m.dbPath, "SELECT * FROM proceedings ORDER BY id");
   const w = (id) => ({ filing: filings.find((f) => f.id === id), proceeding: proceedings.find((p) => p.id === filings.find((f) => f.id === id).proceeding_id) });
 
-  const facts = provableFactsData({ dbPath: m.dbPath, ...w(1), writings: [w(1), w(2)], now: NOW, revision: 1 }).facts;
-  assert.deepEqual(facts.map((f) => [f.position, f.text]), [[1, "The order was served."], [2, "The respondent did not appear."]]);
+  const ctx = { dbPath: m.dbPath, ...w(1), writings: [w(1), w(2)], now: NOW, revision: 1 };
+  assert.deepEqual(materialFactsData(ctx).facts.map((f) => [f.position, f.text]), [[1, "The order was served."], [2, "The respondent did not appear."]]);
+  assert.deepEqual(proceduralHistoryData(ctx).facts, [], "a fact with no procedural date is material only");
+
+  // A fact the session dates as a procedural step moves to Procedural History, with its date, and leaves Material Facts.
+  await submissionDataExecute(m.dbPath, "UPDATE facts SET procedural_on = '2026-03-04' WHERE postulate = 'The order was served.';");
+  assert.deepEqual(materialFactsData(ctx).facts.map((f) => [f.position, f.date, f.text]), [[1, null, "The respondent did not appear."]]);
+  const history = proceduralHistoryData(ctx);
+  assert.equal(history.order, "date");
+  assert.deepEqual(history.facts.map((f) => [f.position, f.date, f.text]), [[1, "2026-03-04", "The order was served."]]);
 
   const ideas = buildLooseIdeasData(m.dbPath, [filings[0], filings[2]], { ...process.env });
   assert.deepEqual(ideas.ideas.map((i) => [i.id, i.proceeding_id]), [[1, 1], [2, 2]]);

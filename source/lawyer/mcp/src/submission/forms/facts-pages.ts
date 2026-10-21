@@ -1,6 +1,9 @@
-// The Provable Facts page (planning/1. Design/2026-10-07_provable-facts-page-spec.md), a view page
-// (view-pages.ts): the facts one live filing uses, in the order the filing states them, each in one
-// of three classes read from recorded data only.
+// The Material Facts and Procedural History pages (planning/1. Design/2026-10-07_provable-facts-page-spec.md,
+// split by docs/ADRs/0011), two view pages (view-pages.ts) drawn by one reader: the facts one live
+// filing uses, each in one of three classes read from recorded data only. A fact whose
+// facts.procedural_on holds a date (schema v77) speaks to the litigation process itself and is on
+// Procedural History, in date order with its date; every other fact is on Material Facts, in the
+// order the filing states them. The date records a step that happened: nothing here computes from it.
 //
 // - Provable: on the court record, admitted by every opposing party, or proved by at least one link
 //   to evidence in hand that the practitioner has not recorded as inadmissible.
@@ -20,16 +23,17 @@
 // A statement held for impeachment proves nothing and no forum document prints it, so it is not a
 // link here. No class is inferred from document text, and the page states no law.
 //
-// The order is the filing's: its form's facts by ordinal, then the facts only its Written Arguments
+// The filing order is its form's facts by ordinal, then the facts only its Written Arguments
 // state, then the facts only its submissions rest on, in submission order.
 //
-// The page itself is the template set in src/templates/view-pages/ (map #125).
+// Each page is an entry template in src/templates/view-pages/ (map #125), sharing facts.css and facts.js.
 
 import { composeTemplate } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
-import provableFactsCss from "../../templates/view-pages/provable-facts.css.js";
-import provableFactsHtml from "../../templates/view-pages/provable-facts.html.js";
-import provableFactsJs from "../../templates/view-pages/provable-facts.js.js";
+import factsCss from "../../templates/view-pages/facts.css.js";
+import factsJs from "../../templates/view-pages/facts.js.js";
+import materialFactsHtml from "../../templates/view-pages/material-facts.html.js";
+import proceduralHistoryHtml from "../../templates/view-pages/procedural-history.html.js";
 import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import { submissionDataQuery } from "../backend.js";
@@ -47,6 +51,9 @@ function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
 interface FactRow {
   id: number;
   postulate: string;
+  /** Schema v77. Absent (undefined) on a database held below it, since the row is read with f.*:
+   * every fact there is material. */
+  procedural_on?: string | null;
   court_record: number | null;
   court_record_pinpoint: string | null;
   court_record_label: string | null;
@@ -83,13 +90,17 @@ interface PageLink {
 
 interface PageFact {
   position: number;
+  /** facts.procedural_on: the date of a procedural step, null on a material fact. */
+  date: string | null;
   text: string;
   class: FactClass;
   basis: string | null;
   links: PageLink[];
 }
 
-export interface ProvableFactsData {
+export interface FactsPageData {
+  /** `date` on Procedural History, `filing` on Material Facts. */
+  order: "filing" | "date";
   /** Whether the filing's last render saw its links as they stand now (`read`), or why not. */
   evidence: "read" | "never_rendered" | "changed_since";
   facts: PageFact[];
@@ -99,7 +110,7 @@ export interface ProvableFactsData {
 function factsInFilingOrder(dbPath: string, filingId: number): FactRow[] {
   const found = rows<FactRow>(
     dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, cr.label AS court_record_label
+    `SELECT f.*, cr.label AS court_record_label
      FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
            UNION ALL
            SELECT fact_id, 1, ordinal, 0 FROM filing_facts WHERE filing_id = ? AND document = 'written_argument'
@@ -161,22 +172,35 @@ function citeOf(s: StatementRow): string | null {
   return line === null ? null : line.replace(/^> /, "");
 }
 
-/** The page's data: each of the board's Writings in turn, the survivor's first, each in its own
- * order, a fact two Writings use listed once where it first occurs (ADR 0010). Drafting facts carry no
- * date. The evidence note is the first Writing's that was not read. */
-export function provableFactsData(ctx: ViewPageContext): ProvableFactsData {
-  const parts = ctx.writings.map((w) => provableFactsFor({ ...ctx, filing: w.filing, proceeding: w.proceeding }));
+/** Both pages' facts: each of the board's Writings in turn, the survivor's first, each in its own
+ * order, a fact two Writings use listed once where it first occurs (ADR 0010). The evidence note is
+ * the first Writing's that was not read. */
+function boardFacts(ctx: ViewPageContext): { evidence: FactsPageData["evidence"]; facts: PageFact[] } {
+  const parts = ctx.writings.map((w) => factsFor({ ...ctx, filing: w.filing, proceeding: w.proceeding }));
   const seen = new Set<number>();
   const facts: PageFact[] = [];
   for (const { id, ...f } of parts.flatMap((p) => p.facts)) {
     if (seen.has(id)) continue;
     seen.add(id);
-    facts.push({ ...f, position: facts.length + 1 });
+    facts.push(f);
   }
   return { evidence: parts.find((p) => p.evidence !== "read")?.evidence ?? "read", facts };
 }
 
-function provableFactsFor(ctx: Omit<ViewPageContext, "writings">): { evidence: ProvableFactsData["evidence"]; facts: (PageFact & { id: number })[] } {
+/** Material Facts: every fact with no procedural date, in the board's order. */
+export function materialFactsData(ctx: ViewPageContext): FactsPageData {
+  const { evidence, facts } = boardFacts(ctx);
+  return { order: "filing", evidence, facts: facts.filter((f) => f.date === null).map((f, i) => ({ ...f, position: i + 1 })) };
+}
+
+/** Procedural History: every fact with a procedural date, by date, the board's order breaking a tie. */
+export function proceduralHistoryData(ctx: ViewPageContext): FactsPageData {
+  const { evidence, facts } = boardFacts(ctx);
+  const dated = facts.filter((f) => f.date !== null).sort((a, b) => (a.date as string).localeCompare(b.date as string));
+  return { order: "date", evidence, facts: dated.map((f, i) => ({ ...f, position: i + 1 })) };
+}
+
+function factsFor(ctx: Omit<ViewPageContext, "writings">): { evidence: FactsPageData["evidence"]; facts: (PageFact & { id: number })[] } {
   const { dbPath, filing, proceeding, now, revision } = ctx;
   const manifest = readManifest(mockupDir(dbPath, filing.id));
   // The inventory's silence on a link counts only when its render saw the link as it stands now.
@@ -216,20 +240,21 @@ function provableFactsFor(ctx: Omit<ViewPageContext, "writings">): { evidence: P
         : pageLinks.length > 0 && pageLinks.every((l) => l.state === "inadmissible")
           ? "inadmissible"
           : "pending";
-      return { id: f.id, position: i + 1, text: f.postulate, class: cls, basis, links: pageLinks };
+      return { id: f.id, position: i + 1, date: f.procedural_on ?? null, text: f.postulate, class: cls, basis, links: pageLinks };
     }),
   };
 }
 
-export const PROVABLE_FACTS: ViewPage = {
-  name: "Provable Facts",
-  ...composeTemplate("provable-facts.html", {
-    "provable-facts.html": provableFactsHtml,
-    "view-head.html": viewHeadHtml,
-    "board.css": boardCss,
-    "provable-facts.css": provableFactsCss,
-    "shared.js": sharedJs,
-    "provable-facts.js": provableFactsJs,
-  }),
-  data: provableFactsData,
+const SHARED = { "view-head.html": viewHeadHtml, "board.css": boardCss, "facts.css": factsCss, "shared.js": sharedJs, "facts.js": factsJs };
+
+export const PROCEDURAL_HISTORY: ViewPage = {
+  name: "Procedural History",
+  ...composeTemplate("procedural-history.html", { "procedural-history.html": proceduralHistoryHtml, ...SHARED }),
+  data: proceduralHistoryData,
+};
+
+export const MATERIAL_FACTS: ViewPage = {
+  name: "Material Facts",
+  ...composeTemplate("material-facts.html", { "material-facts.html": materialFactsHtml, ...SHARED }),
+  data: materialFactsData,
 };

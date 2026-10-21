@@ -1101,7 +1101,7 @@ export const RESERVE_INVENTORY_DOC = "Counsel_brief";
 export const NEVER_DELIVERED_DOCS: ReadonlySet<string> = new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
 
 /** Whether one inventory entry is work the `evidence` criterion counts, on a document that goes to
- * the forum: the Provable Facts page reads it per statement of fact (provable-facts-page.ts). */
+ * the forum: the Material Facts and Procedural History pages read it per statement of fact (facts-pages.ts). */
 export function isEvidenceWork(e: InventoryEntry): boolean {
   return !NEVER_DELIVERED_DOCS.has(e.doc) && EVIDENCE.members(e);
 }

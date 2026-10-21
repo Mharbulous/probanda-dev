@@ -5015,5 +5015,73 @@ class TestV75SeedDiscardAndSuggest(unittest.TestCase):
         self.assertIn("suggested_at", columns)
 
 
+class TestV77FactProceduralOn(unittest.TestCase):
+    """v77: the Provable Facts page splits into Procedural History and Material Facts (ADR 0011).
+    facts gains procedural_on, a date that makes a fact procedural; every existing fact reads NULL,
+    so it lands on Material Facts, and the pre-migration copy-aside is written."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The contract was signed.'), (2, 1, 'The claim was served.');
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    @staticmethod
+    def _revision(con):
+        return int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=76)[-1], (75, 76))
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(self.SEED)
+        con.commit()
+        self.revision = self._revision(con)
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 77})["applied"], [{"from": 76, "to": 77}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_every_existing_fact_lands_on_material_facts_and_no_revision_moves(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 77)
+        self.assertEqual(self._revision(con), self.revision, "the hop moves no revision")
+        self.assertEqual(
+            con.execute("SELECT id, postulate, procedural_on FROM facts ORDER BY id").fetchall(),
+            [(1, "The contract was signed.", None), (2, "The claim was served.", None)],
+        )
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_the_copy_aside_holds_the_pre_migration_facts(self):
+        self._hop()
+        backups = backups_of(self.db_path)
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(schema_version(backups[0]), 76)
+        con = sqlite3.connect(str(backups[0]))
+        self.addCleanup(con.close)
+        self.assertNotIn("procedural_on", [r[1] for r in con.execute("PRAGMA table_info(facts)")])
+        self.assertEqual(con.execute("SELECT id FROM facts ORDER BY id").fetchall(), [(1,), (2,)])
+
+    def test_a_procedural_fact_takes_a_date_and_moving_it_moves_the_revision(self):
+        con = self._hop()
+        con.execute("UPDATE facts SET procedural_on = '2026-03-04' WHERE id = 2")
+        con.commit()
+        self.assertGreater(self._revision(con), self.revision, "moving a fact between the pages re-renders them")
+        self.assertEqual(con.execute("SELECT procedural_on FROM facts WHERE id = 2").fetchone(), ("2026-03-04",))
+        for bad in ("March 4, 2026", "2026-3-4", ""):
+            with self.assertRaises(sqlite3.IntegrityError):
+                con.execute("UPDATE facts SET procedural_on = ? WHERE id = 1", (bad,))
+
+    def test_a_fresh_database_holds_the_column(self):
+        engine.run({"db_path": str(self.db_path)})
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        self.assertIn("procedural_on", [r[1] for r in con.execute("PRAGMA table_info(facts)")])
+
+
 if __name__ == "__main__":
     unittest.main()

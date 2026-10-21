@@ -3,6 +3,7 @@
 Shared doctrine. It is not a skill: it has no `SKILL.md` and is never wrapped. Each matter keeps one readable log of what has happened in it, written as work proceeds and read in place of asking the practitioner to recount it.
 
 - **The file.** `ProceduralHistory.md` at the top of the matter folder, one per matter (`shared/workspace-output-rule.md`, the third exception). Where the matter has more than one proceeding, each entry names its proceeding by court file number.
+- **Not the Procedural History page.** A Job Board's Procedural History view page (`shared/html-pages.md`) is drawn from the drafting database's dated facts, each with how it will be proven. This file is the matter's own log, and neither is written from the other.
 - **Header.** A YAML header with one field, `last_updated`, an ISO 8601 timestamp with its offset (`2026-10-13T18:59:58-07:00`). The writing tool (below) stamps it from the host's own clock on every write. Never write it by hand.
 - **Body.** Newest first. One `## YYYY-MM-DD` heading for each date on which something happened, and under it one bullet for each event: what happened in one line, then the source file as a path relative to the matter folder. An event the practitioner told the session carries `(the practitioner, <date told>)` in place of a path. Today's heading also holds the session's work in progress: `Started Job <N>: <title>`, and `Completed Job <N>: <title>` when it is done.
 

@@ -62,7 +62,7 @@ test("two renders of one matter leave one Job Board page per live filing and one
     renderInto(f, 1, draft, FIRST);
     renderInto(f, 2, draft, SECOND);
 
-    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", "Arguments - Job Board 2.html", OPENING_PAGE, REPLY_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Loose Threads - Job Board 2.html", "Provable Facts - Job Board 1.html", "Provable Facts - Job Board 2.html", "Raw Research - Job Board 1.html", "Raw Research - Job Board 2.html", "SUB Opening Submissions Package", "SUB Reply Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", "Arguments - Job Board 2.html", OPENING_PAGE, REPLY_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Loose Threads - Job Board 2.html", "Material Facts - Job Board 1.html", "Material Facts - Job Board 2.html", "Procedural History - Job Board 1.html", "Procedural History - Job Board 2.html", "Raw Research - Job Board 1.html", "Raw Research - Job Board 2.html", "SUB Opening Submissions Package", "SUB Reply Submissions Package"]);
     for (const [name, filingId] of [[OPENING_PAGE, 1], [REPLY_PAGE, 2]]) {
       const page = readBoardData(join(draft, name));
       assert.equal(page.meta.rendered, SECOND, `the later render's ${name}`);
@@ -134,7 +134,7 @@ test("a matter with one live filing has that filing's Job Board page, the Litiga
 
     renderInto(f, 1, draft, FIRST);
 
-    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", OPENING_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", OPENING_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]);
     const { meta: pageMeta, ...page } = sectionOf(draft, 1);
     const { meta: builtMeta, ...built } = boardDataOf(f.dbPath, 1, ASHBOURNE, SECOND);
     assert.deepEqual(page, built);
@@ -172,7 +172,7 @@ test("a retired filing's Job Board page goes to TRASH", async (t) => {
   await submissionDataExecute(m.dbPath, "UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 2;");
   const retired = render(SECOND);
   assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
-  assert.deepEqual(retired.moved_to_trash.map((x) => x.from.toLowerCase()), [join(m.draft, "Arguments - Job Board 2.html").toLowerCase(), join(m.draft, REPLY_PAGE).toLowerCase(), join(m.draft, "Loose Threads - Job Board 2.html").toLowerCase(), join(m.draft, "Provable Facts - Job Board 2.html").toLowerCase(), join(m.draft, "Raw Research - Job Board 2.html").toLowerCase()]);
+  assert.deepEqual(retired.moved_to_trash.map((x) => x.from.toLowerCase()), [join(m.draft, "Arguments - Job Board 2.html").toLowerCase(), join(m.draft, REPLY_PAGE).toLowerCase(), join(m.draft, "Loose Threads - Job Board 2.html").toLowerCase(), join(m.draft, "Material Facts - Job Board 2.html").toLowerCase(), join(m.draft, "Procedural History - Job Board 2.html").toLowerCase(), join(m.draft, "Raw Research - Job Board 2.html").toLowerCase()]);
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
 
@@ -1298,7 +1298,10 @@ test("a page write moves every old page file the generator wrote into TRASH and 
   await seedOneFiling(m.dbPath);
   const board = '<!doctype html>\n<html lang="en" data-workboard-shell>\n';
   const todoList = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n';
+  const view = '<!doctype html>\n<html lang="en" data-view-page>\n';
   const marked = {
+    [join(m.draft, "Provable Facts - Job Board 1.html")]: view,
+    [join(m.draft, "Provable Facts - Job Board - proceeding 3.html")]: view,
     [join(m.draft, "Job Board.html")]: board,
     [join(m.draft, "Job Board-1.html")]: board,
     [join(m.draft, "Job Board - SUB Opening Submissions Package.html")]: board,

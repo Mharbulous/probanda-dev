@@ -81,7 +81,7 @@ test("render with draft_dir uses the one undated presentation folder", async () 
     const again = renderFromDraft(f, draft);
 
     assert.deepEqual(again.documents.map((d) => d.presentation_path), first.documents.map((d) => d.presentation_path));
-    assert.deepEqual(readdirSync(draft).sort(), ["Arguments - Job Board 1.html", OPENING_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]);
+    assert.deepEqual(readdirSync(draft).sort(), ["Arguments - Job Board 1.html", OPENING_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]);
     assert.equal(readdirSync(leaf).some((name) => name.endsWith(".html")), false, "the board is the filing's page at the draft folder's top, not a presentation copy");
   } finally {
     f.cleanup();

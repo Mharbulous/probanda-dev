@@ -951,8 +951,12 @@ export const JOB_BOARD_FIXTURE: MatterJobBoardData = {
   ],
   "views": [
     {
-      "name": "Provable Facts",
-      "file": "Provable Facts - Job Board 1.html"
+      "name": "Procedural History",
+      "file": "Procedural History - Job Board 1.html"
+    },
+    {
+      "name": "Material Facts",
+      "file": "Material Facts - Job Board 1.html"
     },
     {
       "name": "Raw Research",

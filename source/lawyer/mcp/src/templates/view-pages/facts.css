@@ -7,6 +7,7 @@ ul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;g
 li.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
 li.fact .head{display:flex;gap:10px;align-items:baseline}
 li.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}
+li.fact .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
 li.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}
 ul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}
 ul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}

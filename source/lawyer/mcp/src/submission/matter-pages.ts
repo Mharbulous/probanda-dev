@@ -276,8 +276,9 @@ function stem(fileName: string): string {
 }
 
 /** A page file's name in any layout or copy this generator ever wrote (D3), matched case-insensitively:
- * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09. */
-const OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+)\.html$/i;
+ * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09, and
+ * `Provable Facts - Job Board <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011). */
+const OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 
 /** Whether this generator wrote the file: a page marker, or a revision the Job Board's older layouts carried. */
 function generatorWrote(file: string): boolean {

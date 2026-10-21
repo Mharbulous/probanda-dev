@@ -1,17 +1,19 @@
-// The Provable Facts page's placeholder fixture (map #125, #141): hand-written synthetic data for a
+// The Material Facts page's placeholder fixture (map #125, #141): hand-written synthetic data for a
 // fixture-mode preview, the meta and data renderViewPageHtml takes. No real person, entity or matter, and
 // no machine path (#140). It holds one fact of each class, a court-record basis and each link state.
 
-import type { ProvableFactsData } from "../submission/forms/provable-facts-page.js";
+import type { FactsPageData } from "../submission/forms/facts-pages.js";
 import type { ViewPageMeta } from "../submission/view-pages.js";
 
-export const PROVABLE_FACTS_FIXTURE: { meta: ViewPageMeta; data: ProvableFactsData } = {
+export const MATERIAL_FACTS_FIXTURE: { meta: ViewPageMeta; data: FactsPageData } = {
   meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
   data: {
+    order: "filing",
     evidence: "read",
     facts: [
       {
         position: 1,
+        date: null,
         text: "The parties signed the purchase agreement on 3 March 2025.",
         class: "provable",
         basis: "Pleadings, para. 4 (admitted)",
@@ -19,6 +21,7 @@ export const PROVABLE_FACTS_FIXTURE: { meta: ViewPageMeta; data: ProvableFactsDa
       },
       {
         position: 2,
+        date: null,
         text: "The buyer paid the deposit of $10,000 on 10 March 2025.",
         class: "provable",
         basis: null,
@@ -26,6 +29,7 @@ export const PROVABLE_FACTS_FIXTURE: { meta: ViewPageMeta; data: ProvableFactsDa
       },
       {
         position: 3,
+        date: null,
         text: "The seller refused delivery on 1 May 2025.",
         class: "pending",
         basis: null,
@@ -33,6 +37,7 @@ export const PROVABLE_FACTS_FIXTURE: { meta: ViewPageMeta; data: ProvableFactsDa
       },
       {
         position: 4,
+        date: null,
         text: "The seller's manager said the goods were never ordered.",
         class: "inadmissible",
         basis: null,

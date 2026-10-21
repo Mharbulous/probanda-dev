@@ -13,12 +13,16 @@ DRAFT = r"<matter>\0. DRAFT"
 STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOARD 1.HTML",
                    "Litigation Strategy.html", "To Do List.html", "Work Board.html",
                    # A merged pre-filing board's view page (docs/ADRs/0010).
-                   "Provable Facts - Job Board - proceeding 3.html"]
+                   "Provable Facts - Job Board - proceeding 3.html",
+                   # The pages Provable Facts split into (docs/ADRs/0011).
+                   "Procedural History - Job Board 1.html", "Material Facts - Job Board 2.html",
+                   "Material Facts - Job Board - proceeding 3.html"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Job Board 1 preview 1.html",
                  "Job Board - proceeding 2 preview 3.html", "Provable Facts - Job Board 1 preview 1.html",
                  "Raw Research - Job Board 4 preview 2.html", "Arguments - Job Board 1 preview 10.html",
-                 "Loose Threads - Job Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML"]
+                 "Loose Threads - Job Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
+                 "Procedural History - Job Board 1 preview 1.html", "Material Facts - Job Board 1 preview 2.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Job Board.html", "Job Board - SUB Opening.html", "Job Board 1-1.html",
                      "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html",

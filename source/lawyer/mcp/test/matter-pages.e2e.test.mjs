@@ -64,7 +64,7 @@ test("two processes rendering one matter at once leave one of each page, both wh
     // No render here starts a background job, so its status file is allowed but not expected.
     assert.deepEqual(
       readdirSync(draft).filter((name) => name !== "workboard-status.js"),
-      ["Arguments - Job Board 1.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]
+      ["Arguments - Job Board 1.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]
     );
     assert.deepEqual(readdirSync(draft, { recursive: true }).filter((name) => TEMP_OR_NUMBERED.test(name)), [], "no temp file and no numbered copy");
     const mockups = join(dirname(f.dbPath), "mockups");

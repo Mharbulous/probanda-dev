@@ -1,4 +1,4 @@
-// The four view pages (view-pages.ts, map #125): a sha256 pin of the page each renders for a fixture,
+// The five view pages (view-pages.ts, map #125): a sha256 pin of the page each renders for a fixture,
 // taken before the move to templates, and each entry template's literal name against the registry's.
 // The pins are checked by hash only; no test reads a page.
 
@@ -12,7 +12,7 @@ const { renderViewPageHtml, VIEW_PAGES } = await import("../build/submission/vie
 const { LOOSE_THREADS_PAGE_NAME } = await import("../build/submission/forms/loose-ideas-page.js");
 
 /** Each page's entry template, in VIEW_PAGES order. */
-const ENTRIES = ["provable-facts.html", "raw-research.html", "arguments.html", "loose-threads.html"];
+const ENTRIES = ["procedural-history.html", "material-facts.html", "raw-research.html", "arguments.html", "loose-threads.html"];
 
 test("each entry template's title and heading equal its VIEW_PAGES name", () => {
   assert.equal(VIEW_PAGES.length, ENTRIES.length);
@@ -21,14 +21,15 @@ test("each entry template's title and heading equal its VIEW_PAGES name", () => 
     assert.equal(text.match(/<title>(.*)<\/title>/)[1], VIEW_PAGES[i].name, `${entry} <title>`);
     assert.equal(text.match(/<h1>(.*)<\/h1>/)[1], VIEW_PAGES[i].name, `${entry} <h1>`);
   });
-  assert.equal(VIEW_PAGES[3].name, LOOSE_THREADS_PAGE_NAME);
+  assert.equal(VIEW_PAGES[4].name, LOOSE_THREADS_PAGE_NAME);
 });
 
 const META = { filing: "Notice of <Application>", matter: "L200", client: "Acme Co", revision: 7, rendered: "2026-10-15 09:30" };
 
 /** One fixture per page, in VIEW_PAGES order. Only the data line depends on it; each holds a `<`. */
 const FIXTURES = {
-  "Provable Facts": { evidence: "read", facts: [{ position: 1, text: "The <deal> closed", class: "provable", basis: null, links: [] }] },
+  "Procedural History": { order: "date", evidence: "read", facts: [{ position: 1, date: "2026-03-04", text: "The <claim> was served", class: "provable", basis: null, links: [] }] },
+  "Material Facts": { order: "filing", evidence: "read", facts: [{ position: 1, date: null, text: "The <deal> closed", class: "provable", basis: null, links: [] }] },
   "Raw Research": { counts: { in_use: 1, undecided: 0, not_relevant: 0 }, groups: [{ heading: "Not <linked>", note: null, cards: [] }] },
   Arguments: { submissions: [], counter_arguments: [{ key: "anticipated:1", kind: "anticipated", text: "No <duty>", source: null, linked: [] }] },
   "Loose Threads": {
@@ -42,9 +43,11 @@ const FIXTURES = {
   },
 };
 
-/** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates. */
+/** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
+ * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011). */
 const PINS = {
-  "Provable Facts": "0a2c0c2fea36f3a85bc1e94990aa35ac0091b25185476be57b9fd4a9d275aacf",
+  "Procedural History": "365b48cc75e2619772712e5aa6e136379858e561d2ac87b53a9e26050249e56c",
+  "Material Facts": "12e0e689e544795536479bb598699fa635cb2b4c00d140d1dea9a86564d136e0",
   "Raw Research": "2fbcdabaf808ffbb6e5ba5af9cb88dd9b86ac6e16b2e7bd62125a1c60e9c7467",
   Arguments: "d59b25d2ddf076c2b6225eee2eb3b9b3b5400f6e892d058e619e731d6939825f",
   "Loose Threads": "e929662fda806198cb12d9164ee6f365027514716793813060eb76aadfc1aee8",

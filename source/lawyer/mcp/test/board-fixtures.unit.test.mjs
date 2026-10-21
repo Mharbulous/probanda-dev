@@ -13,7 +13,8 @@ const { renderApprovalPage } = await import("../build/housekeeping/page.js");
 const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
 const { JOB_BOARD_FIXTURE } = await import("../build/board-fixtures/job-board.js");
-const { PROVABLE_FACTS_FIXTURE } = await import("../build/board-fixtures/provable-facts.js");
+const { PROCEDURAL_HISTORY_FIXTURE } = await import("../build/board-fixtures/procedural-history.js");
+const { MATERIAL_FACTS_FIXTURE } = await import("../build/board-fixtures/material-facts.js");
 const { RAW_RESEARCH_FIXTURE } = await import("../build/board-fixtures/raw-research.js");
 const { ARGUMENTS_FIXTURE } = await import("../build/board-fixtures/arguments.js");
 const { LOOSE_THREADS_FIXTURE } = await import("../build/board-fixtures/loose-threads.js");
@@ -23,7 +24,8 @@ const line = (value) => JSON.stringify(value).replace(/</g, "\\u003c");
 const page = (name) => VIEW_PAGES.find((p) => p.name === name);
 
 const VIEWS = [
-  ["Provable Facts", PROVABLE_FACTS_FIXTURE],
+  ["Procedural History", PROCEDURAL_HISTORY_FIXTURE],
+  ["Material Facts", MATERIAL_FACTS_FIXTURE],
   ["Raw Research", RAW_RESEARCH_FIXTURE],
   ["Arguments", ARGUMENTS_FIXTURE],
   ["Loose Threads", LOOSE_THREADS_FIXTURE],

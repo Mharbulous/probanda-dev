@@ -54,8 +54,9 @@ import sys
 STEM = r"(?:job board|litigation strategy|to do list|work board|matter board|work_board @rev)"
 # The view pages' names, lowercased (plugins/litigation/mcp/src/submission/view-pages.ts VIEW_PAGES).
 # Each new view page adds its lowercased name here. "loose ideas" is the Loose Threads page's name
-# before 2026-10-08, kept so an old copy not yet moved to TRASH is still refused.
-VIEW_NAMES = ("provable facts", "raw research", "arguments", "loose threads", "loose ideas")
+# before 2026-10-08, and "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011),
+# each kept so an old copy not yet moved to TRASH is still refused.
+VIEW_NAMES = ("procedural history", "material facts", "raw research", "arguments", "loose threads", "loose ideas", "provable facts")
 # A view page: a listed name, then " - job board <id>.html", or " - filing <id>.html", its name
 # before 2026-10-09, kept so an old copy not yet moved to TRASH is still recognised. A preview of a
 # page (#139) is the page's stem, then " preview <n>.html"; a board stem already matches STEM, so
@@ -67,13 +68,16 @@ PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js
 # Canonical names a Grep glob is tried against.
 SAMPLE_PAGES = ("Job Board.html", "Job Board 1.html", "Job Board - filing 1.html", "Job Board - proceeding 3.html", "Litigation Strategy.html", "To Do List.html",
                 "Work Board.html", "Matter Board.html", "Work_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
-                "Provable Facts - Job Board 1.html", "Raw Research - Job Board 1.html", "Arguments - Job Board 1.html",
+                "Procedural History - Job Board 1.html", "Material Facts - Job Board 1.html", "Provable Facts - Job Board 1.html",
+                "Raw Research - Job Board 1.html", "Arguments - Job Board 1.html",
                 "Loose Threads - Job Board 1.html", "Provable Facts - filing 1.html", "Raw Research - filing 1.html",
                 "Arguments - filing 1.html", "Loose Threads - filing 1.html", "Loose Ideas - filing 1.html",
                 "Work Board preview 1.html", "Litigation Strategy preview 1.html", "Job Board 1 preview 1.html",
-                "Job Board - proceeding 3 preview 1.html", "Provable Facts - Job Board 1 preview 1.html",
+                "Job Board - proceeding 3 preview 1.html", "Procedural History - Job Board 1 preview 1.html",
+                "Material Facts - Job Board 1 preview 1.html", "Provable Facts - Job Board 1 preview 1.html",
                 "Raw Research - Job Board 1 preview 1.html", "Arguments - Job Board 1 preview 1.html",
-                "Loose Threads - Job Board 1 preview 1.html", "Provable Facts - Job Board - proceeding 3.html")
+                "Loose Threads - Job Board 1 preview 1.html", "Provable Facts - Job Board - proceeding 3.html",
+                "Procedural History - Job Board - proceeding 3.html", "Material Facts - Job Board - proceeding 3.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",
               "NotebookRead": "notebook_path", "NotebookEdit": "notebook_path"}
