@@ -236,7 +236,8 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
             if metadata_id and metadata_id.casefold() == matter_id.casefold():
                 return candidate, bool(stored)
 
-    # The firm-root folder named for the matter, as it was derived before ADR 0013.
+    # The firm-root folder named for the matter, as it was derived before ADR 0013. It wins
+    # while it exists, even without main.sqlite, so a matter not yet relocated is rebuilt in place.
     mid, sn = None, None
     for cand in (nominee, legacy_dir):
         if cand:
@@ -246,7 +247,7 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
     if not mid:
         mid, sn = parse_folder_name(matter_root)
     firm_folder = norm_join(root, f"{mid} {sn}".strip())
-    if os.path.exists(norm_join(firm_folder, 'main.sqlite')):
+    if os.path.isdir(firm_folder):
         return firm_folder, bool(stored and nominee != legacy_dir
                                  and os.path.normcase(nominee) != os.path.normcase(firm_folder))
 
