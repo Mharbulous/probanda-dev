@@ -49,7 +49,7 @@ With housekeeping current, invoice files sort by name (`YYYY-MM-DD INV#nnnnn ...
 
 ## Step 4 — Read the bill to find the exact last-billed date
 
-Read the invoice PDF. Look at the time-entry bar chart (or itemized list) and find the single latest date with a billed entry — **read the axis/labels precisely, do not eyeball or round to the invoice date.** The invoice date and the last billed date are often the same but are not guaranteed to be, and the whole downstream date-range filter depends on getting this exact.
+Read the invoice PDF. Call `pdf_pages__images` for it first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). Every invoice PDF read below is read the same way. If the tool refuses, say so with its reason and read the PDF no other way. Look at the time-entry bar chart (or itemized list) and find the single latest date with a billed entry — **read the axis/labels precisely, do not eyeball or round to the invoice date.** The invoice date and the last billed date are often the same but are not guaranteed to be, and the whole downstream date-range filter depends on getting this exact.
 
 Sanity-check: the last billed date should be on or before the invoice date. If it's after, something is wrong — recheck.
 
@@ -58,7 +58,7 @@ Sanity-check: the last billed date should be on or before the invoice date. If i
 Invoke the `practice-data` skill's `invoice-data` operation for the matter number to see what practice-data thinks the last invoice date is.
 
 - If it returns no rows and no import date, practice-data has never been populated for this matter — flag this to the user rather than silently trusting the PDF-derived date.
-- If the practice-data invoices don't match what's on disk, **verify before recording anything**: open each candidate invoice PDF and confirm (a) it bears a lawyer's signature, and (b) the invoice number printed inside the document matches the invoice number in the file name. Never trust the file name alone for invoice number, date, or amount — read the PDF.
+- If the practice-data invoices don't match what's on disk, **verify before recording anything**: open each candidate invoice PDF, as Step 4 reads one, and confirm (a) it bears a lawyer's signature, and (b) the invoice number printed inside the document matches the invoice number in the file name. Never trust the file name alone for invoice number, date, or amount — read the PDF.
 - Once verified, invoke the `practice-data` skill's `import-invoices` operation to record each invoice's matter number, invoice number, issue date, amount, amount paid and status. Leave amount paid and status blank unless the document itself gives positive evidence of what was actually paid — a static invoice PDF only proves the amount *billed*, not what happened to it afterward.
 
 ## Step 6 — Pull unbilled time from TimeCamp

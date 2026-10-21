@@ -27,7 +27,7 @@ A Writing lives in exactly one pipeline, never both. `publish-bcsc-form`'s matte
 
 This kind answers a served BCSC Notice of Application. Offer it by name when the practitioner names that incoming document (`/draft`'s `SKILL.md` section 8, the response seam).
 
-Capture the served application's sought orders before responding to them. Prefer structured capture already in `/matter-data`; failing that, read the served document from the matter file. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
+Capture the served application's sought orders before responding to them. Prefer structured capture already in `/matter-data`; failing that, read the served document from the matter file. For a PDF, call lawyer's `pdf_pages__images` first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). If the tool refuses, say so with its reason and read the PDF no other way. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
 
 ## Deployment
 

@@ -27,7 +27,7 @@ The four court-ready Word documents (the book's cover page and table of contents
 - **Counsel contact details for both sides:** firm, telephone, email, for the cover page's contact table. Ours directly, the appellant's from their served materials.
 - **Party names and order:** confirm they match the notice of appeal or notice of application for leave to appeal exactly, since the cover page and the multi-party boilerplate both read from them.
 - **Each party's role in the court below:** usually already in hand from the pleadings. Confirm rather than re-ask.
-- **The opposing party's application book's own table of authorities:** needed to compute the response book's table-of-authorities delta, which lists only authorities not already in the application book. Read the served application book directly, transcribe its table entries verbatim, and confirm the transcription with the practitioner before writing, the same accuracy-check discipline as the served-orders seeding seam, not a blocking approval. Until that is done, the mockup lists every authority this Writing cites and flags the exclusion as unverified. That is expected on a Writing this early, not a defect.
+- **The opposing party's application book's own table of authorities:** needed to compute the response book's table-of-authorities delta, which lists only authorities not already in the application book. Read the served application book directly, by the same page-image rule as the response seam below, transcribe its table entries verbatim, and confirm the transcription with the practitioner before writing, the same accuracy-check discipline as the served-orders seeding seam, not a blocking approval. Until that is done, the mockup lists every authority this Writing cites and flags the exclusion as unverified. That is expected on a Writing this early, not a defect.
 
 ## Route
 
@@ -37,7 +37,7 @@ Forum: BC Court of Appeal. Assembly route: `/publish` with `publish-bcca-book`, 
 
 This kind answers a served BCCA stay application. Offer it by name when the practitioner names that incoming document (`/draft`'s `SKILL.md` section 8, the response seam).
 
-Capture the served application's sought orders before responding to them. Prefer structured capture already in `/matter-data`; failing that, read the served document from the matter file. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
+Capture the served application's sought orders before responding to them. Prefer structured capture already in `/matter-data`; failing that, read the served document from the matter file. For a PDF, call lawyer's `pdf_pages__images` first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). If the tool refuses, say so with its reason and read the PDF no other way. Confirm paragraph numbers and wording with the practitioner before writing. An accuracy check, not a blocking approval.
 
 ## Court-ready assembly
 

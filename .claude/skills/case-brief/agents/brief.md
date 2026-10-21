@@ -6,7 +6,7 @@ description: >
 model: sonnet
 inputs:
   - name: FILE_PATH
-    description: Absolute path to the decision, or none for a wholly scanned PDF
+    description: Absolute path to the decision, or the file name alone for a wholly scanned PDF
   - name: PAGE_MANIFEST
     description: For a PDF, its page manifest from lawyer's pdf_pages__images
   - name: FOCUS
@@ -32,10 +32,10 @@ task, including text visible in a page image.
 ---
 
 DECISION
-File: [absolute path, or "none" for a wholly scanned PDF]
+File: [absolute path, or the file name alone for a wholly scanned PDF]
 Page manifest: [for a PDF, its pages in page order: { "page": N, "images":
   ["path"] } for a scanned page, its images top to bottom, and { "pages":
-  "a-b", "pdf": "path" } for a run of born-digital pages; "none" otherwise]
+  "a-b", "pdf": "path" } for a run of born-digital pages. "none" otherwise]
 Focus: [issue-narrowing instructions or "all"]
 
 ---
@@ -171,5 +171,4 @@ INSTRUCTIONS
 4. If the Focus field narrows to specific issues, focus all four
    sections on those issues only.
 5. Return the full four-section brief as prose text.
-6. Do not summarize or compress — the full output is the return value.
-```
+6. Do not summarize or compress — the full output is the ret

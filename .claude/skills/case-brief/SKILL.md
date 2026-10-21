@@ -49,7 +49,7 @@ replaces reading the decision: the brief is always your own reading of the text.
 
 When briefing more than one decision, spawn one read-only Sonnet subagent per decision using the prompt in `agents/brief.md`. The subagent reads the decision and returns the four-section brief. The main agent assembles the multi-decision response. For a single decision, inline reading is acceptable.
 
-Before any read of a PDF decision, inline or by a subagent, call lawyer's `pdf_pages__images` for it (`/matter-data`'s design decision #71). Read a page it returns as `scanned` only from its PNG, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:`. A subagent gets the page manifest in its prompt: `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages, with no file path for a wholly scanned decision.
+Before any read of a PDF decision, inline or by a subagent, call lawyer's `pdf_pages__images` for it (`/matter-data`'s design decision #71). Read a page it returns as `scanned` only from its PNG, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:`. A subagent gets the page manifest in its prompt: `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages, with no file path for a wholly scanned decision, only its file name. In a bridged session each PNG is staged like any other rendering, for an inline read as for a subagent (`/matter-data`'s ingest-extract Universal rules). If the tool refuses, say so with its reason and brief nothing from that decision: never read it another way.
 
 ## Brief Format
 

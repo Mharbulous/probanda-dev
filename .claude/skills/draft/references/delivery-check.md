@@ -24,26 +24,25 @@ Spawn `lawyer:delivery-checker` once for the letter, each time a trigger fires, 
 
    - `matter_root`, `letter_path`, `file_name`, and `file_size`, the file's size in bytes;
    - `environment_notes`: the practitioner's environment notes, as this session was given them (`/practice-data`, "Practice quirks");
-   - `page_manifests`, when the letter is a PDF: call `pdf_pages__images` for it first and pass its page manifest, `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages. A scanned page is read only from its images (`/matter-data`'s design decision #71);
+   - `page_manifests`, when the letter is a PDF: call `pdf_pages__images` for it first and pass its page manifest, `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages. A scanned page is read only from its images (`/matter-data`'s design decision #71). In a bridged session each PNG is staged like any other rendering (`/matter-data`'s ingest-extract Universal rules). If the tool refuses, dispatch nothing: report that the letter's delivery was not checked, with the refusal's reason;
    - `draft`, when the letter is a Writing on this board: `writing_id`, `mockup_path` (the letter's copy from the latest render), `addressee`, `subject` and `date` as the mockup prints them, and `last_changed`, the latest stamp the letter's job cards show (`board_card(jobs: [N])`), left out when they show none.
 
 ## 4. Acting on the result
 
-When a check's note says a PDF the checker found needs page images, first call `pdf_pages__images` for each such PDF and dispatch the checker once more with the letter's and every such PDF's manifest. Act on the second result only.
-
 Do these in order. Nothing in this section asks the practitioner anything.
 
-1. **Report.** One line per stated method: the method, whether it was confirmed sent and confirmed delivered, and for anything not confirmed what was searched. A `could_not_check` is reported as not checked, with its reason, never as not sent. Never state a deadline, a deemed date of service or how long remains from a sent or delivered time (`shared/deadline-isolation.md`).
-2. **No draft, or `draft.is_this_letter` false.** Stop here.
-3. **`draft.sync_allowed` false.** Leave the draft and the `Deliver` job as they are. Say in one line why, from `sync_blocked_by`: no method was confirmed sent, or the draft was changed after the letter went and may be a follow-up letter. Stop here.
-4. **`draft.differs` true: update the draft to the letter as sent.**
+1. **Page images first.** When the result is refused with the reason `needs page images`, a check's `note` is exactly `needs page images`, or `draft.sync_blocked_by` is exactly `needs page images`, call `pdf_pages__images` for the letter, for each PDF such a check names as a `file` pointer, and for the PDF at `draft.sent_text_source`, as each applies. Stage each PNG as section 3 says. Dispatch the checker once more with the letter's and every such PDF's manifest, and act on the second result only. There is no third dispatch: a check still marked that way is reported as not checked, and a draft still blocked that way is left as it is. A refusal from the tool is reported with its reason, and that PDF stays unread.
+2. **Report.** One line per stated method: the method, whether it was confirmed sent and confirmed delivered, and for anything not confirmed what was searched. A `could_not_check` is reported as not checked, with its reason, never as not sent. Never state a deadline, a deemed date of service or how long remains from a sent or delivered time (`shared/deadline-isolation.md`).
+3. **No draft, or `draft.is_this_letter` false.** Stop here.
+4. **`draft.sync_allowed` false.** Leave the draft and the `Deliver` job as they are. Say in one line why, from `sync_blocked_by`: no method was confirmed sent, or the draft was changed after the letter went and may be a follow-up letter. Stop here.
+5. **`draft.differs` true: update the draft to the letter as sent.**
    1. If the `live` lane shows a job on this letter in progress in another session, change nothing: say so in one line, naming the job, and stop here.
    2. Save the draft as it stood: copy the letter's mockup copy into the letter's Writing folder (SKILL.md section 13) as a new file, `<mockup name> before sent update.md`, at the next free ` vN` name if that exists. Never overwrite one.
-   3. Replace the letter's stored text with the text of the file at `draft.sent_text_source`, paragraph for paragraph and changing no word, through `/drafting-data`'s write for a general Writing's prose rows and clauses.
+   3. Replace the letter's stored text with the text of the file at `draft.sent_text_source` (a PDF read through its page manifest, a scanned page only from its PNGs), paragraph for paragraph and changing no word, through `/drafting-data`'s write for a general Writing's prose rows and clauses.
    4. Render the mockup (SKILL.md section 11).
-5. **Record the letter as sent**, when a stated method is confirmed sent: `/drafting-data`'s Sent write, with the date of the earliest confirmed send as `sent_on` and `draft.sent_text_source` as the copy. A refusal is handled as `references/letters.md` section 8 says, except that `sent_copy_mismatch` after step 4 is quoted in one line and stops: never ask which text is right, and never retry. On a staff machine, name the signing lawyer and stop.
-6. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 4.2's file) and the letter as sent. Then one line: the Job Board draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
-7. **Keep nothing.** Write the result to no database, file, job, idea or note. It is done with once this section has run.
+6. **Record the letter as sent**, when a stated method is confirmed sent: `/drafting-data`'s Sent write, with the date of the earliest confirmed send as `sent_on` and `draft.sent_text_source` as the copy. A refusal is handled as `references/letters.md` section 8 says, except that `sent_copy_mismatch` after step 5 is quoted in one line and stops: never ask which text is right, and never retry. On a staff machine, name the signing lawyer and stop.
+7. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 5.2's file) and the letter as sent. Then one line: the Job Board draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
+8. **Keep nothing.** Write the result to no database, file, job, idea or note. It is done with once this section has run.
 
 ## 5. The question, when one is still needed
 

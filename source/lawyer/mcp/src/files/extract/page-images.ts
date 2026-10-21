@@ -1,12 +1,14 @@
 // pdf_pages__images: renders a PDF's scanned pages to PNG files, so a scanned or OCR'd page is read
 // from its image and never from its text layer (an OCR layer is often garbled, and an invisible one
-// can carry text no human sees). Born-digital pages are classified and left alone.
+// can carry text no human sees). Born-digital pages are classified and left alone. classifyPdfPages
+// gives the same classification and renders nothing, for the tools that read a PDF's text layer.
 //
-// The renderer is PDFium (Apache-2.0) as WebAssembly, from @embedpdf/pdfium (MIT): its JS glue is
-// inlined by esbuild and scripts/bundle.mjs copies pdfium.wasm next to the bundle, so nothing is
-// installed at run time and no host renderer is needed. The PNG encoder is the few lines below, on
-// node:zlib, so the same page always gives the same bytes. Imported only by the data server's
-// dispatch, which keeps the renderer out of the contacts and files bundles.
+// The renderer is PDFium (BSD-3/Apache-2.0) as WebAssembly, from @embedpdf/pdfium (MIT): its JS glue
+// is inlined by esbuild and scripts/bundle.mjs copies pdfium.wasm, with THIRD-PARTY-NOTICES.txt, next
+// to the bundle, so nothing is installed at run time and no host renderer is needed. The PNG encoder
+// is the few lines below, on node:zlib, so the same page gives the same bytes with the same server
+// build. Imported only by the data server's dispatch and text tools, which keeps the renderer out of
+// the contacts, files and timecamp bundles.
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -17,21 +19,35 @@ import { init, type WrappedPdfiumModule } from "@embedpdf/pdfium";
 
 import { DataServerError, ValidationError } from "../../errors.js";
 
-// Above about 3,000,000 pixels (about 4,000 image tokens at w*h/750) Claude Code shrinks an image,
-// so a larger page is cut into horizontal tiles that each stay under it.
+// The Claude API refuses an image over 2000 px on a side once a request holds more than 20 images,
+// and Claude Code shrinks one over about 3,000,000 pixels (about 4,000 image tokens at w*h/750). So
+// a page is drawn at most MAX_SIDE wide (its dpi lowered if need be) and cut into horizontal tiles
+// that each keep within both limits.
 const MAX_PIXELS = 3_000_000;
+const MAX_SIDE = 2000;
 const DPI = 150;
 const TILE_DPI = 200;
-// FPDF_PAGEOBJ_* and FPDF_TEXTRENDERMODE_INVISIBLE (fpdf_edit.h), FPDF_ERR_PASSWORD (fpdfview.h),
-// FPDFBitmap_BGR (3 bytes a pixel, blue first).
+// The two `tiles` halves overlap by this share of the page height, so a stamp at mid-height is whole
+// in at least one of them.
+const TILE_OVERLAP = 0.1;
+// The PDF limit on a page side, in points (ISO 32000-1, Annex C).
+const MAX_PAGE_POINTS = 14_400;
+// Scanned: images cover at least MIN_IMAGE_COVER of the page, and either some text is invisible or
+// the visible text covers under MAX_TEXT_COVER of it.
+const MIN_IMAGE_COVER = 0.5;
+const MAX_TEXT_COVER = 0.05;
+// FPDF_PAGEOBJ_* and FPDF_TEXTRENDERMODE_INVISIBLE / _CLIP (fpdf_edit.h), FPDF_ERR_PASSWORD
+// (fpdfview.h), FPDFBitmap_BGR (3 bytes a pixel, blue first).
 const OBJ_TEXT = 1;
 const OBJ_IMAGE = 3;
 const OBJ_FORM = 5;
-const TEXT_INVISIBLE = 3;
+const INVISIBLE_TEXT_MODES = new Set([3, 7]);
 const ERR_PASSWORD = 4;
 const BITMAP_BGR = 2;
 
 const DEFAULT_WASM = new URL("./pdfium.wasm", import.meta.url);
+
+export type PageKind = "scanned" | "born_digital";
 
 export interface PageImage {
   path: string;
@@ -44,11 +60,12 @@ export interface PageImage {
 export interface PageImagesResult {
   source_sha256: string;
   page_count: number;
-  render_dir: string;
-  pages: Array<{ page: number; kind: "scanned" | "born_digital"; images?: PageImage[] }>;
+  render_dir: string | null;
+  pages: Array<{ page: number; kind: PageKind; images?: PageImage[] }>;
 }
 
-// One PDFium instance per wasm file, loaded on first use and kept for the life of the process.
+// One PDFium instance per wasm file, loaded on first use and kept for the life of the process, or
+// until it traps.
 const loaded = new Map<string, Promise<WrappedPdfiumModule>>();
 
 function loadPdfium(wasm: URL): Promise<WrappedPdfiumModule> {
@@ -72,11 +89,21 @@ function heapU8(lib: WrappedPdfiumModule): Uint8Array {
   return (lib.pdfium as unknown as { HEAPU8: Uint8Array }).HEAPU8;
 }
 
-export async function pdfPageImages(
-  args: { path: string; pages?: string; tiles?: boolean },
-  wasm: URL = DEFAULT_WASM
-): Promise<PageImagesResult> {
-  const { path } = args;
+function malloc(lib: WrappedPdfiumModule, bytes: number): number {
+  const ptr = lib.pdfium.wasmExports.malloc(Math.max(bytes, 1));
+  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, "renderer_unavailable");
+  return ptr;
+}
+
+/** Opens the PDF at `path` and runs `work` on it. `work` yields between pages, so each page's open,
+ * use and close stays within one turn of the event loop; the document stays open across turns, which
+ * PDFium allows. A trap (WebAssembly.RuntimeError) drops the cached instance, so the next call loads a
+ * fresh one. */
+async function withPdf<T>(
+  path: string,
+  wasm: URL,
+  work: (lib: WrappedPdfiumModule, doc: number, data: Buffer) => Promise<T>
+): Promise<T> {
   if (!isAbsolute(path)) throw new ValidationError(`path must be absolute: ${path}`);
   if (!existsSync(path) || !statSync(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
@@ -88,48 +115,85 @@ export async function pdfPageImages(
   } catch (err) {
     throw new DataServerError(`the PDF renderer did not load: ${(err as Error).message}`, "renderer_unavailable");
   }
-  const m = lib.pdfium;
-  const { malloc, free } = m.wasmExports;
-
-  // PDFium reads the document from this buffer for as long as it is open.
-  const dataPtr = malloc(data.length);
-  heapU8(lib).set(data, dataPtr);
-  const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
-  if (!doc) {
-    const code = lib.FPDF_GetLastError();
-    free(dataPtr);
-    if (code === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
-    throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code})`, "not_pdf");
-  }
   try {
+    // PDFium reads the document from this buffer for as long as it is open.
+    const dataPtr = malloc(lib, data.length);
+    heapU8(lib).set(data, dataPtr);
+    const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
+    if (!doc) {
+      const code = lib.FPDF_GetLastError();
+      lib.pdfium.wasmExports.free(dataPtr);
+      if (code === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
+      throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code})`, "not_pdf");
+    }
+    try {
+      return await work(lib, doc, data);
+    } finally {
+      lib.FPDF_CloseDocument(doc);
+      lib.pdfium.wasmExports.free(dataPtr);
+    }
+  } catch (err) {
+    if (err instanceof WebAssembly.RuntimeError) loaded.delete(wasm.href);
+    throw err;
+  }
+}
+
+/** Loads page `n` (from 1), runs `use` on it and closes it, all in this turn of the event loop. */
+function withPage<T>(lib: WrappedPdfiumModule, doc: number, n: number, use: (page: number) => T): T {
+  const page = lib.FPDF_LoadPage(doc, n - 1);
+  if (!page) throw new DataServerError(`PDFium cannot load page ${n} of this PDF`, "bad_pages");
+  try {
+    return use(page);
+  } finally {
+    lib.FPDF_ClosePage(page);
+  }
+}
+
+const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
+
+/** The kind of every page of the PDF at `path`, renders nothing. */
+export async function classifyPdfPages(path: string, wasm: URL = DEFAULT_WASM): Promise<PageKind[]> {
+  return withPdf(path, wasm, async (lib, doc) => {
+    const kinds: PageKind[] = [];
+    const pageCount = lib.FPDF_GetPageCount(doc);
+    for (let n = 1; n <= pageCount; n++) {
+      if (n > 1) await nextTurn();
+      kinds.push(withPage(lib, doc, n, (page) => classify(lib, page, n)));
+    }
+    return kinds;
+  });
+}
+
+export async function pdfPageImages(
+  args: { path: string; pages?: string; tiles?: boolean },
+  wasm: URL = DEFAULT_WASM
+): Promise<PageImagesResult> {
+  return withPdf(args.path, wasm, async (lib, doc, data) => {
     const pageCount = lib.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
-    const renderDir = mkdtempSync(join(tmpdir(), "probanda-pages-"));
+    let renderDir: string | null = null;
     const pages: PageImagesResult["pages"] = [];
     for (let n = first; n <= last; n++) {
-      const page = lib.FPDF_LoadPage(doc, n - 1);
-      try {
-        if (!isScanned(lib, page)) {
-          pages.push({ page: n, kind: "born_digital" });
-          continue;
-        }
-        const dpi = args.tiles ? TILE_DPI : DPI;
-        const width = Math.round((lib.FPDF_GetPageWidthF(page) * dpi) / 72);
-        const height = Math.round((lib.FPDF_GetPageHeightF(page) * dpi) / 72);
-        const tiles = tileRows(width, height, args.tiles ? 2 : undefined);
-        const images = tiles.map(([top, rows], i) => {
-          const png = renderPng(lib, page, width, height, top, rows);
-          const name = tiles.length === 1 ? pageName(n) : `${pageName(n)}-tile-${i + 1}`;
-          const file = join(renderDir, `${name}.png`);
-          writeFileSync(file, png);
-          const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height: rows };
-          if (tiles.length > 1) image.tile = i + 1;
-          return image;
-        });
-        pages.push({ page: n, kind: "scanned", images });
-      } finally {
-        lib.FPDF_ClosePage(page);
-      }
+      if (n > first) await nextTurn();
+      pages.push(
+        withPage(lib, doc, n, (page) => {
+          if (classify(lib, page, n) === "born_digital") return { page: n, kind: "born_digital" as const };
+          const { width, height } = pageSize(lib, page, n, args.tiles ? TILE_DPI : DPI);
+          const tiles = args.tiles ? overlappingHalves(width, height) : tileRows(width, 0, height);
+          renderDir ??= mkdtempSync(join(tmpdir(), "probanda-pages-"));
+          const dir = renderDir;
+          const images = tiles.map(([top, rows], i) => {
+            const png = renderPng(lib, page, n, width, height, top, rows);
+            const name = tiles.length === 1 ? pageName(n) : `${pageName(n)}-tile-${i + 1}`;
+            const file = join(dir, `${name}.png`);
+            writeFileSync(file, png);
+            const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height: rows };
+            if (tiles.length > 1) image.tile = i + 1;
+            return image;
+          });
+          return { page: n, kind: "scanned" as const, images };
+        })
+      );
     }
     return {
       source_sha256: createHash("sha256").update(data).digest("hex"),
@@ -137,10 +201,7 @@ export async function pdfPageImages(
       render_dir: renderDir,
       pages,
     };
-  } finally {
-    lib.FPDF_CloseDocument(doc);
-    free(dataPtr);
-  }
+  });
 }
 
 function pageName(n: number): string {
@@ -159,14 +220,37 @@ function pageRange(pages: string | undefined, pageCount: number): [number, numbe
   return [first, last];
 }
 
-/** [top row, row count] of each tile: `count` equal tiles, or as few as keep each under MAX_PIXELS. */
-function tileRows(width: number, height: number, count?: number): Array<[number, number]> {
-  let n = count ?? Math.max(1, Math.ceil((width * height) / MAX_PIXELS));
-  while (count === undefined && width * Math.ceil(height / n) > MAX_PIXELS) n++;
-  const rows = Math.ceil(height / n);
+/** The page's pixel size at `dpi`, with the dpi lowered so the width is at most MAX_SIDE, and each
+ * side at least 1 px. */
+function pageSize(lib: WrappedPdfiumModule, page: number, n: number, dpi: number): { width: number; height: number } {
+  const wPt = lib.FPDF_GetPageWidthF(page);
+  const hPt = lib.FPDF_GetPageHeightF(page);
+  if (!(wPt <= MAX_PAGE_POINTS && hPt <= MAX_PAGE_POINTS)) {
+    throw new DataServerError(`page ${n} is ${wPt} x ${hPt} pt, over the PDF limit of ${MAX_PAGE_POINTS} pt a side`, "page_too_large");
+  }
+  const scale = Math.min(dpi, (MAX_SIDE * 72) / wPt) / 72;
+  return {
+    width: Math.min(MAX_SIDE, Math.max(1, Math.round(wPt * scale))),
+    height: Math.max(1, Math.round(hPt * scale)),
+  };
+}
+
+/** [top row, row count] of each tile of rows [top, top + rows): as few equal tiles as keep each at
+ * most MAX_SIDE tall and MAX_PIXELS in all. `width` is at most MAX_SIDE, so a tile holds at least
+ * 1,500 rows. */
+function tileRows(width: number, top: number, rows: number): Array<[number, number]> {
+  const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
+  const each = Math.ceil(rows / Math.ceil(rows / maxRows));
   const tiles: Array<[number, number]> = [];
-  for (let top = 0; top < height; top += rows) tiles.push([top, Math.min(rows, height - top)]);
+  for (let t = top; t < top + rows; t += each) tiles.push([t, Math.min(each, top + rows - t)]);
   return tiles;
+}
+
+/** The top and bottom halves of the page, overlapping by TILE_OVERLAP of its height, each cut
+ * further if it is over the limits; top to bottom. */
+function overlappingHalves(width: number, height: number): Array<[number, number]> {
+  const half = Math.ceil((height + Math.round(height * TILE_OVERLAP)) / 2);
+  return [...tileRows(width, 0, half), ...tileRows(width, height - half, half)].sort((a, b) => a[0] - b[0]);
 }
 
 // A matrix [a b c d e f] maps (x, y) to (a x + c y + e, b x + d y + f).
@@ -186,27 +270,38 @@ function transform([a, b, c, d, e, f]: Matrix, [l, bo, r, t]: Rect): Rect {
   return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }
 
-/** Scanned: images cover at least half the page box (on a 100x100 grid), and no text object on the
- * page is visible. Form XObjects are walked, since scanners sometimes wrap the page image in one. */
-function isScanned(lib: WrappedPdfiumModule, page: number): boolean {
+/** Scanned: the union of image bounds covers at least half the page box, and either some text object
+ * has an invisible render mode (3, or 7 its clip variant) or the union of the visible text objects'
+ * bounds covers under 5% of it (no text at all included). Form XObjects are walked, since scanners
+ * sometimes wrap the page image in one, and Acrobat puts Bates and header stamps in one. */
+function classify(lib: WrappedPdfiumModule, page: number, n: number): PageKind {
   const m = lib.pdfium;
-  const floats = m.wasmExports.malloc(24);
+  const floats = malloc(lib, 24);
   const read = (count: number) => Array.from({ length: count }, (_, i) => m.getValue(floats + 4 * i, "float"));
   const images: Rect[] = [];
-  let visibleText = false;
+  const texts: Rect[] = [];
+  let invisibleText = false;
   let box: number[];
   try {
-    lib.FPDF_GetPageBoundingBox(page, floats);
+    if (!lib.FPDF_GetPageBoundingBox(page, floats)) {
+      throw new DataServerError(`PDFium cannot read the page box of page ${n} of this PDF`, "bad_pages");
+    }
     box = read(4); // left, top, right, bottom
+    const bounds = (obj: number, matrix: Matrix): Rect | null =>
+      lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12) ? transform(matrix, read(4) as Rect) : null;
     const walk = (count: number, objectAt: (i: number) => number, matrix: Matrix): void => {
-      for (let i = 0; i < count && !visibleText; i++) {
+      for (let i = 0; i < count; i++) {
         const obj = objectAt(i);
         const type = lib.FPDFPageObj_GetType(obj);
         if (type === OBJ_TEXT) {
-          if (lib.FPDFTextObj_GetTextRenderMode(obj) !== TEXT_INVISIBLE) visibleText = true;
+          if (INVISIBLE_TEXT_MODES.has(lib.FPDFTextObj_GetTextRenderMode(obj))) invisibleText = true;
+          else {
+            const rect = bounds(obj, matrix);
+            if (rect) texts.push(rect);
+          }
         } else if (type === OBJ_IMAGE) {
-          lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12);
-          images.push(transform(matrix, read(4) as Rect));
+          const rect = bounds(obj, matrix);
+          if (rect) images.push(rect);
         } else if (type === OBJ_FORM) {
           lib.FPDFPageObj_GetMatrix(obj, floats);
           const inner = compose(read(6) as Matrix, matrix);
@@ -218,30 +313,35 @@ function isScanned(lib: WrappedPdfiumModule, page: number): boolean {
   } finally {
     m.wasmExports.free(floats);
   }
-  if (visibleText || images.length === 0) return false;
-
+  if (images.length === 0) return "born_digital";
   const [left, top, right, bottom] = box;
-  const width = right - left;
-  const height = top - bottom;
-  if (width <= 0 || height <= 0) return false;
-  const N = 100;
-  const grid = new Uint8Array(N * N);
-  const cell = (v: number) => Math.min(N, Math.max(0, v));
-  for (const [l, b, r, t] of images) {
-    const x0 = cell(Math.floor(((l - left) / width) * N));
-    const x1 = cell(Math.ceil(((r - left) / width) * N));
-    const y0 = cell(Math.floor(((b - bottom) / height) * N));
-    const y1 = cell(Math.ceil(((t - bottom) / height) * N));
-    for (let y = y0; y < y1; y++) grid.fill(1, y * N + x0, y * N + x1);
-  }
-  return grid.reduce((sum, v) => sum + v, 0) * 2 >= N * N;
+  const pageBox: Rect = [left, bottom, right, top];
+  if (right - left <= 0 || top - bottom <= 0) return "born_digital";
+  const scanned = coverage(images, pageBox) >= MIN_IMAGE_COVER && (invisibleText || coverage(texts, pageBox) < MAX_TEXT_COVER);
+  return scanned ? "scanned" : "born_digital";
 }
 
-/** Rows [top, top + rows) of the page drawn at width x height pixels, as an RGB PNG on white, with
- * no annotations. */
-function renderPng(lib: WrappedPdfiumModule, page: number, width: number, height: number, top: number, rows: number): Buffer {
+/** The share of `box` the union of `rects` covers, clipped to it, on a 100x100 grid: a cell counts
+ * when its centre is inside a rect. */
+function coverage(rects: Rect[], [left, bottom, right, top]: Rect): number {
+  const N = 100;
+  const grid = new Uint8Array(N * N);
+  const cell = (v: number, lo: number, span: number) => Math.min(N, Math.max(0, Math.ceil(((v - lo) / span) * N - 0.5)));
+  for (const [l, b, r, t] of rects) {
+    const x0 = cell(l, left, right - left);
+    const x1 = cell(r, left, right - left);
+    const y0 = cell(b, bottom, top - bottom);
+    const y1 = cell(t, bottom, top - bottom);
+    for (let y = y0; y < y1; y++) if (x0 < x1) grid.fill(1, y * N + x0, y * N + x1);
+  }
+  return grid.reduce((sum, v) => sum + v, 0) / (N * N);
+}
+
+/** Rows [top, top + rows) of page `n` drawn at width x height pixels, as an RGB PNG on white, with no
+ * annotations. */
+function renderPng(lib: WrappedPdfiumModule, page: number, n: number, width: number, height: number, top: number, rows: number): Buffer {
   const bitmap = lib.FPDFBitmap_CreateEx(width, rows, BITMAP_BGR, 0, 0);
-  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows} bitmap`, "renderer_unavailable");
+  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows} bitmap for page ${n}`, "page_too_large");
   try {
     lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows, 0xffffffff);
     lib.FPDF_RenderPageBitmap(bitmap, page, 0, -top, width, height, 0, 0);
