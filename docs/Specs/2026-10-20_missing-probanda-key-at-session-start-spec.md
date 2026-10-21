@@ -66,3 +66,15 @@ None.
 ## 10. Verify against HEAD before building
 
 Re-read 2026-10-20_probanda-key-request-route-spec.md (and its §11 table) and the `/lawyer:suggestion` entry text, and check whether any session-start hook already checks `configure_status`.
+
+### Verification against HEAD (8c65c092, 2026-10-20)
+
+| Claim or pointer | Found at HEAD | Effect on the build |
+|---|---|---|
+| The key is `researcher`'s commons key (§11) | No longer. 29127154 moved `key_request__submit`, `key_request__status` and the key-saving tool (now `cloud_key__configure_credential`) to the lawyer `data` server (`source/lawyer/mcp/src/schema-gen.ts` `cloudKeyToolDefinitions()`). One file, `credential.json.dpapi` in `%LOCALAPPDATA%\Coclerk\legal-commons\` (`source/mcp-shared/commons-key.js` `credentialPath()`), serves both servers. `LEGAL_COMMONS_SUPABASE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` in the environment overrides it. | The check can live in `lawyer` and name nothing in `researcher`. |
+| Which tool reports the key's status | Lawyer `practice_data__config_status` reports `cloud_credential: "present" \| "missing"` (`tools/practice/config.ts`). Researcher's `legal_commons__configure_status` reads the same file. | The hook and the skill use `practice_data__config_status`. |
+| The key-request route (companion spec) | Its text lives in `.claude/skills/practice-data/SKILL.md`, Configuration, "Probanda's key" (lines 215-221), including the restart fix when the tools are absent. | The notice points to that section and does not restate it. |
+| `/lawyer:suggestion` entry text | `.claude/skills/suggestion/SKILL.md` §1, line 25: checks `legal_commons__configure_status`, and with no key offers only the preference. A complaint raised with no key is dropped. 7c26c300 added the Rule wording in §3 around `preferences__write`. | §1 changes to check `practice_data__config_status` and hold the drafted text. §3 stays as it is. |
+| Whether any session-start hook checks the key | `source/lawyer/plugin.json` alone has SessionStart hooks: `inject-practice-quirks`, `hidden-skills-note` and `inject-preferences`. None reads the credential or calls `configure_status`. No other plugin has a SessionStart hook. | A new lawyer SessionStart hook, listed in `source/assignment.json`. |
+| The device log (§4.2) | `suggestion_log__read` and `__write` (`source/lawyer/mcp/src/preferences/tools.ts`) keep only posted suggestions (`add`, `seen`) in `suggestions.local.json` beside probanda.json. Nothing can be held there. | Add a held list with `hold` and `release` ops, with tests. dist is not rebuilt (§8). |
+| Cowork | `inject-preferences.py` shows the pattern: when the local file is out of the hook's reach, it tells the session to use the tool. The key file is a Windows DPAPI file, so a hook outside Windows cannot see it. | Outside Windows the hook tells the session to check `practice_data__config_status` instead. |
