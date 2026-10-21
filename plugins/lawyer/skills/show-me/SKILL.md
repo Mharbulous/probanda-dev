@@ -1,7 +1,7 @@
 ---
 name: show-me
 user-invocable: false
-description: "Standardize how a decision or a question about a document is presented to a human: one decision at a time, asked in line as plain text, with the source documents themselves presented for the human to check (page-extracted, the passage highlighted) rather than quoted or described, the current and proposed text shown in full, full context rather than a curated slice, and any missing-data claim verified at its source. Applies before any approval ask or sign-off, including before presenting any draft or proposal for sign-off, and before any question to the practitioner about a specific document, an approval, a factual question or a question asked again: the document's file card goes out with the question every time it is asked."
+description: "Standardize how a decision or a question about a document is presented to a human: one decision at a time, asked in line as plain text, with the source documents themselves presented for the human to check (page-extracted, the passage highlighted) rather than quoted or described, the current and proposed text shown in full, full context rather than a curated slice, and any missing-data claim verified at its source. Applies before any approval ask or sign-off, including before presenting any draft or proposal for sign-off, and before any question to the practitioner about a specific document, an approval, a factual question or a question asked again: the document's file card goes out with the question every time it is asked. Also applies whenever the practitioner asks to be shown a Job or Jobs, which it displays in one fixed layout."
 ---
 
 <!-- lawyer v0.5.6 -->
@@ -15,6 +15,7 @@ description: "Standardize how a decision or a question about a document is prese
 | Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill |
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
+| Showing a Job | The practitioner asks to be shown a Job or Jobs |
 | Mechanics | Building the page extract and sending the files, text and question in order |
 | Presenting a file saved on the PC (fallback route) | Only when `mcp__cowork__present_files` is not in the session's tool list: sending a card for a file saved on the PC from a cloud session linked to it (remote-device-only host) |
 | Example | A bad and a good presentation are needed side by side |
@@ -33,6 +34,8 @@ How to present a decision to a human for approval, once something has already de
 Applies inside any live exchange where an agent asks a human to approve, choose, or authorize something. It also applies to any question put to the practitioner about a specific document, whether the question is an approval, a factual one ("is this the letter that was sent?", "is this the signed copy?") or one already asked earlier in the session. In this repo that's mostly legal and accounting work — the housekeeping approval page, route-accounting routing-plan approvals, docket-clerk open items, draft filings or correspondence presented for lawyer sign-off, invoice/retainer approvals, apply-to-facts conclusions presented for confirmation, bookkeeping fact ratifications and write go-aheads (e.g. QBO entries) — but the discipline is domain-general: it governs any point where a skill asks a human to approve, choose, or authorize something, not only those.
 
 It does not decide *whether* a candidate question needs a human at all — that call belongs to the calling skill's own judgment about what's consequential enough to interrupt the human for. This skill starts once the answer is yes; it governs only how that question gets presented.
+
+Showing a Job the practitioner asks to see is governed here too, by "Showing a Job" below. Rules 1 to 9 do not apply to it unless a decision about the Job is asked.
 
 ## The rules
 
@@ -130,6 +133,31 @@ The file's text goes to the gatekeeper write as read from the file, never retype
 - Orange marks omitted text, discrepant text, or the exact word or words at issue.
 - Every caption states the legend.
 - Use no more than two colours.
+
+## Showing a Job
+
+Whenever the practitioner asks to be shown a Job or Jobs, display each one in this layout and no other. Read each Job with `drafting_forms__board_card` with `jobs: [N, …]`, never from the Job Board page (`shared/html-pages.md`).
+
+```markdown
+### Job <N>: <title>
+> Intent: <intent>
+
+✅ <done step text> (done <HH:MM>)  
+⬜ <open step text>  
+<status line>
+
+*<Kind> job, priority <p>, scope `<scope>` (<what that scope is, in a lawyer's words>). It waits on <nothing | Job #M>, and has <no either-or partner | either-or partner Job #K>.*
+```
+
+- The heading is `### Job N: title`.
+- The intent is one blockquote line beginning `Intent:`.
+- Each step is on its own line, starting with ✅ (U+2705) when done or ⬜ when not. The emoji replaces the bullet: never a markdown bullet and an emoji together (`- ✅`), and never ☑️ or ☐.
+- Steps are tight: end each step line with two trailing spaces (a hard line break), with no blank line between steps.
+- A done step ends with its done time in parentheses, `(done HH:MM)`, with the date before the time when it was not done today.
+- After the steps comes the status line: `Job completed.` for a Completed job, otherwise the card's lane label (Ready, In Progress, Blocked, Bring Forward, Shelved or Superseded).
+- Then a blank line and one closing italic line giving the card's kind, priority, scope, waits-on and either-or.
+- Never append a separate "Work completed." line after a Job display.
+- For several Jobs, repeat the layout for each, in the order asked.
 
 ## Mechanics
 
