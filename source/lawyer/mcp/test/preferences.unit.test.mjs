@@ -119,3 +119,31 @@ test("the suggestion log sits beside probanda.json: add, then seen sets both sta
   assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-2", status: "new" }, f.env))).code, "not_found");
   assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-1", status: "done" }, f.env))).name, "ValidationError");
 });
+
+test("a suggestion drafted with no key is held verbatim beside the posted log, then released", async (t) => {
+  const f = fixture(t);
+  assert.deepEqual(suggestionLogRead(f.env).held, []);
+  const draft = { title: "Shorter letters", body: "Letters run long.", source: "user", items: [{ pain: "Too long", where: "draft", done_test: "One page", constraints: [], changes: [] }] };
+  const { status, held_id } = await suggestionLogWrite({ op: "hold", draft }, f.env);
+  assert.equal(status, "held");
+  await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Another" }, f.env);
+  const log = suggestionLogRead(f.env);
+  assert.equal(log.suggestions.length, 1);
+  assert.equal(log.held.length, 1);
+  assert.deepEqual(log.held[0].draft, draft);
+  assert.equal(log.held[0].held_id, held_id);
+  assert.match(log.held[0].held_on, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal((await suggestionLogWrite({ op: "release", held_id }, f.env)).status, "released");
+  assert.deepEqual(suggestionLogRead(f.env).held, []);
+  assert.equal(suggestionLogRead(f.env).suggestions.length, 1);
+  assert.equal((await rejection(() => suggestionLogWrite({ op: "release", held_id }, f.env))).code, "not_found");
+  for (const bad of [undefined, "text", { title: "No body" }, { body: "No title" }]) {
+    assert.equal((await rejection(() => suggestionLogWrite({ op: "hold", draft: bad }, f.env))).name, "ValidationError");
+  }
+});
+
+test("a log written before held suggestions existed still reads", async (t) => {
+  const f = fixture(t);
+  writeFileSync(f.logFile, JSON.stringify({ suggestions: [] }));
+  assert.deepEqual(suggestionLogRead(f.env), { suggestions: [], held: [] });
+});

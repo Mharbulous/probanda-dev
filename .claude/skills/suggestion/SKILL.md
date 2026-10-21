@@ -22,7 +22,9 @@ The installed plugin is a read-only synced copy. Never look for, clone or edit i
 ## 1. Before starting
 
 - **Outcome check.** When `suggestion_log__read` lists any suggestion whose `last_status` differs from `last_shown_status`, or `new` was last seen, call `suggestion_box__status` with those ids. For each status that changed, say one line ("Your suggestion about the deadline summary was approved."), then record it with `suggestion_log__write({op: "seen", suggestion_id, status})`. If the status tool is not in the tool list, or the call fails, skip this silently: an older researcher plugin lacks the tool, and the cloud may not answer yet.
-- **Posting needs the researcher plugin.** `suggestion_box__submit` is served by it. If it is absent, Path A's preference still works: say in one line that sending a suggestion needs the researcher plugin, and offer only the preference. If `legal_commons__configure_status` does not report `configured: true`, say in one line that the Suggestion Box needs Probanda's key set once through `cloud_key__configure_credential`, and that a practitioner with no key asks Probanda for one through `key_request__submit`, and offer only the preference.
+- **Posting needs the researcher plugin.** `suggestion_box__submit` is served by it. If it is absent, Path A's preference still works: say in one line that sending a suggestion needs the researcher plugin, and offer only the preference.
+- **Posting needs Probanda's key.** If `practice_data__config_status` reports `cloud_credential: missing`, the suggestion is drafted as usual and held on this computer instead of posted (section 6). Unless this session has already said so, say in one line that sending it needs Probanda's key, and offer the route in the practice-data skill, Configuration, "Probanda's key".
+- **Held suggestions.** When posting is available and `suggestion_log__read` lists `held` drafts, show each draft exactly as held, then ask section 6's question. On Yes, post that exact text, record it with `suggestion_log__write({op: "add", ...})`, then remove the draft with `suggestion_log__write({op: "release", held_id})`. On Modify, show their text again for a yes. On No, release the draft and post nothing.
 
 ## 2. Extract the pains
 
@@ -42,7 +44,7 @@ A preference is a Rule (`shared/paralegal-posture.md` section 9): it is made onl
    - The instruction is generic and names no client, matter, person, document or path. A refusal from the tool is a question to put to the practitioner, who restates the rule in their own words, then write again.
    - Apply the preference for the rest of this session too.
    - If the tool reports that `person` is unset, say that preferences need the person key set once through `practice_data__upsert_firm_profile`, and continue without it.
-3. **Then offer the suggestion,** if posting is available (section 1): "This might help other lawyers too. Shall I draft a suggestion for the Probanda team?" On yes, go to section 5.
+3. **Then offer the suggestion,** if the researcher plugin is installed (section 1): "This might help other lawyers too. Shall I draft a suggestion for the Probanda team?" On yes, go to section 5.
 
 **Enforcing and changing a Rule.** A later request that conflicts with a saved Rule is refused: "I cannot do X because on [date] you created the rule, `Never do X`. If you want me to do X you must first change or remove that rule." The session may then show new wording in a code block. "Approved" does not adopt it: "Changes to rules must come from your own words. To adopt this as the new rule, you must cut & paste the above modified rule into chat." Once the practitioner pastes it or types their own, retire the old Rule with `preferences__write({op: "retire", id})` and add the new one in their words. A Rule binds only the practitioner who made it, in sessions where a Probanda skill was invoked. A practitioner may make a Rule that extends the gate to other situations, for themselves only, and may reverse it.
 
@@ -84,6 +86,8 @@ Show the title, the body and every item exactly as they will be posted. Then ask
   - `source` is `assisted` for Solved and Gap, and `user` when the practitioner initiated it.
 - **No.** Post nothing.
 - **Modify.** Take their new text and show it again for a yes. Their edited text goes to the tool exactly as typed, because they are its author.
+
+**With no key** (section 1), ask instead: "Would you like me to keep this suggestion on this computer and send it once Probanda's key is set?" Yes | No | Modify. On Yes, call `suggestion_log__write({op: "hold", draft: {title, body, source, items, skill}})` with exactly the text shown, and say it is held on this computer, not sent. Never say a held suggestion was sent.
 
 ## 7. Report
 
