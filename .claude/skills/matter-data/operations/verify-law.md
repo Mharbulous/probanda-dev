@@ -55,13 +55,13 @@ Report, per authority, which arm resolved it (recorded path, or hash-fallback wi
 
 **Hash the original bytes, always.** Resolution matches `file_hash` against the file as it sits on disk — never against converted text (`../shared/extraction-protocol.md`).
 
-**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem. Where host files arrive only over a bridge (Project Cowork), stage a byte-exact copy into the session first (`device_stage_files`) and dispatch that path.
+**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem. A PDF is dispatched as its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (`../references/design-decisions.md` #71): call `pdf_pages__images` for it, and the verifier reads a scanned page only from its PNG. Where host files arrive only over a bridge (Project Cowork), stage a byte-exact copy into the session first (`device_stage_files`), each PNG included, and dispatch that path.
 
 ### RTF pre-processing
 
 Most authority documents here are Westlaw `.doc` files that are actually RTF, and the harness file-read tool **refuses them as binary** — so a verifier handed the raw path can read nothing. Render first, exactly as [`ingest-extract.md`](ingest-extract.md) §"RTF pre-processing" specifies (that file is the single source of truth for the rule): a `.doc` whose header bytes are `{\rtf` is rendered to text in the temp dir by `render_document.py` and the subagent is dispatched against the **rendered text**, while the DB rows keep the original `file_path` and `file_hash`.
 
-If rendering fails, the document is **unresolvable for this pass**: report the renderer's stated reason and escalate its edges with class `source_unresolvable` per §2.3 rather than dispatching a verifier that cannot read. A PDF without a text layer follows the protocol's image rule instead.
+If rendering fails, the document is **unresolvable for this pass**: report the renderer's stated reason and escalate its edges with class `source_unresolvable` per §2.3 rather than dispatching a verifier that cannot read. A PDF is not rendered here: it goes through `pdf_pages__images` as above, and a refusal from that tool makes it unresolvable for this pass in the same way.
 
 ## 3. Dispatch the verifier (session-isolated)
 

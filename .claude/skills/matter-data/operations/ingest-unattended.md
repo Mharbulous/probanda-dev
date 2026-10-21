@@ -67,7 +67,7 @@ Pre-process as `ingest-extract.md` says: render a `.docx`, `.eml`, `.msg` or RTF
 
 ## Step 3 — Route each file from its first page
 
-A file whose `path` begins with `2. SOLICITOR CLIENT` (case-insensitive) takes Path B by `ingest-extract.md`'s solicitor-client folder rule before any routing read, the caller's included. Reuse the page-1 routing read this session already made for the file, when its caller made one; otherwise read page 1 now (for `.docx`, `.eml` and `.msg`, the head of the rendering). An internal document (a client email, a lawyer's note, an internal memo) takes Path B inline and never reaches a subagent. Every other file goes through `ingest-extract.md`'s gates (compound-book segmentation, the affidavit gate, Notice of Application detection) to its path and its extractor.
+A file whose `path` begins with `2. SOLICITOR CLIENT` (case-insensitive) takes Path B by `ingest-extract.md`'s solicitor-client folder rule before any routing read, the caller's included. Reuse the page-1 routing read this session already made for the file, when its caller made one; otherwise read page 1 now (for `.docx`, `.eml` and `.msg`, the head of the rendering, and for a PDF through `pdf_pages__images` by `ingest-extract.md`'s Universal rules, a scanned page read only from its PNG). An internal document (a client email, a lawyer's note, an internal memo) takes Path B inline and never reaches a subagent. Every other file goes through `ingest-extract.md`'s gates (compound-book segmentation, the affidavit gate, Notice of Application detection) to its path and its extractor.
 
 ## Step 4 — Read in parallel, write in order
 

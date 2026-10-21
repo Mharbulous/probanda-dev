@@ -73,7 +73,7 @@ Every write below is confirmation-gated exactly as §3 describes — this is aut
 
 ### Read court identity directly
 
-Read page 1 (or, for `.docx`/`.eml`, the rendering already produced by [`ingest-extract.md`](ingest-extract.md)'s Document pre-processing section) of the group's lead document. One read yields both the party names on the caption (for R1) and the court, registry, file number, and style of cause (for R3) — do not dispatch a subagent or add a field to any extractor's output contract for this; read the document yourself, the way `order-effects.md` Step 2 reads an order's operative terms directly. If a second document in the group has a caption that disagrees with the first, split it into its own group.
+Read page 1 (or, for `.docx`/`.eml`, the rendering already produced by [`ingest-extract.md`](ingest-extract.md)'s Document pre-processing section) of the group's lead document. A PDF's page 1 goes through `pdf_pages__images` first, by that file's Universal rules: a scanned page is read only from its PNG. One read yields both the party names on the caption (for R1) and the court, registry, file number, and style of cause (for R3) — do not dispatch a subagent or add a field to any extractor's output contract for this; read the document yourself, the way `order-effects.md` Step 2 reads an order's operative terms directly. If a second document in the group has a caption that disagrees with the first, split it into its own group.
 
 ### R1 — Client relevance screen
 

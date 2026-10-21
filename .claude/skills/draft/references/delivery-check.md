@@ -24,9 +24,12 @@ Spawn `lawyer:delivery-checker` once for the letter, each time a trigger fires, 
 
    - `matter_root`, `letter_path`, `file_name`, and `file_size`, the file's size in bytes;
    - `environment_notes`: the practitioner's environment notes, as this session was given them (`/practice-data`, "Practice quirks");
+   - `page_manifests`, when the letter is a PDF: call `pdf_pages__images` for it first and pass its page manifest, `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages. A scanned page is read only from its images (`/matter-data`'s design decision #71);
    - `draft`, when the letter is a Writing on this board: `writing_id`, `mockup_path` (the letter's copy from the latest render), `addressee`, `subject` and `date` as the mockup prints them, and `last_changed`, the latest stamp the letter's job cards show (`board_card(jobs: [N])`), left out when they show none.
 
 ## 4. Acting on the result
+
+When a check's note says a PDF the checker found needs page images, first call `pdf_pages__images` for each such PDF and dispatch the checker once more with the letter's and every such PDF's manifest. Act on the second result only.
 
 Do these in order. Nothing in this section asks the practitioner anything.
 
