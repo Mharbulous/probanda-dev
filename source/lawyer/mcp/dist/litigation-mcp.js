@@ -1,4 +1,4 @@
-// build-stamp: 4c1a91703a3c
+// build-stamp: 869808f70b04
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75879,7 +75879,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname18 } from "node:path";
+import { dirname as dirname19 } from "node:path";
 
 // src/knowledge/index.ts
 var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
@@ -76330,6 +76330,17 @@ async function rule_overlay(store, args) {
 }
 
 // src/schema-gen.ts
+var PAGE_NAMES = [
+  "Work Board",
+  "Litigation Strategy",
+  "Job Board",
+  "Procedural History",
+  "Material Facts",
+  "Raw Research",
+  "Arguments",
+  "Loose Threads",
+  "Housekeeping approval"
+];
 function schemaFor(field) {
   const type = field.type === "num" ? "number" : field.type === "bool" ? "boolean" : field.type === "obj" ? "object" : "string";
   const schema = { type };
@@ -77394,6 +77405,35 @@ function fileToolDefinitions() {
           held_id: { type: "string" }
         },
         required: ["op"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "pages__template",
+      description: "Return one page's template files, the source its HTML is generated from: {page, entry, files: {<file name>: <text>}}. `entry` is the file composing starts from: it pulls in the others with @@include(<name>)@@ and marks the data line with @@data@@. Reads no file and no page. Change a copy of any file's text and pass it to pages__preview (the Housekeeping approval page's to housekeeping__preview) as an override.",
+      inputSchema: {
+        type: "object",
+        properties: { page: { type: "string", enum: PAGE_NAMES } },
+        required: ["page"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "pages__preview",
+      description: "Render one page with `overrides` (template file name to replacement text, from pages__template) in place of its own template files, write it as `<page file name> preview <n>.html`, and return {path}, never the HTML: present the file to the practitioner as a file card and never read it. An override naming no file of the page is refused. `data: \"fixture\"` draws placeholder data and writes into the fixture preview folder (`<OS temp folder>\\Probanda fixture previews`), the only preview the Suggestion Box takes; it takes no other input. `data: \"real\"` draws the practitioner's own data, stays on this machine, and is written beside the page it previews: the Work Board's beside practice.db (no other input); any other page's in the matter's draft folder, with `matter_root`, plus `filing_id` or `proceeding_id` for a Job Board and `filing_id` for a view page. A real Loose Threads preview's buttons are cut off from the listener, so they change nothing. The Housekeeping approval page is housekeeping__preview's.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          page: { type: "string", enum: PAGE_NAMES.filter((name) => name !== "Housekeeping approval") },
+          overrides: { type: "object", additionalProperties: { type: "string" } },
+          data: { type: "string", enum: ["fixture", "real"] },
+          matter_root: { type: "string" },
+          filing_id: { type: "integer", minimum: 1 },
+          proceeding_id: { type: "integer", minimum: 1 }
+        },
+        required: ["page", "data"],
         additionalProperties: false
       },
       annotations: { destructiveHint: false, openWorldHint: false }
@@ -81191,6 +81231,9 @@ function composeTemplate(entry, files) {
   if (head.includes("@@") || tail.includes("@@")) throw new Error(`template "${entry}" holds a leftover @@ after composing`);
   return { head, tail };
 }
+function templated(template) {
+  return { template, ...composeTemplate(template.entry, template.files) };
+}
 
 // src/templates/work-board/board.css.ts
 var board_css_default = `/* Job Board stylesheet (design doc \xA77, 2026-09-08). System fonts only: no
@@ -81415,15 +81458,19 @@ var work_board_js_default = `(function () {
 // src/submission/forms/practice-board-shell.ts
 var PRACTICE_BOARD_FILE = "Work Board.html";
 var PRACTICE_BOARD_MARKER = "data-practice-board-shell";
-var { head: HEAD, tail: TAIL } = composeTemplate("work-board.html", {
-  "work-board.html": work_board_html_default,
-  "board.css": board_css_default,
-  "work-board.css": work_board_css_default,
-  "work-board.js": work_board_js_default
-});
-function renderPracticeBoardHtml(data) {
-  return `${HEAD}window.PRACTICE_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
-${TAIL}`;
+var WORK_BOARD_TEMPLATE = {
+  entry: "work-board.html",
+  files: {
+    "work-board.html": work_board_html_default,
+    "board.css": board_css_default,
+    "work-board.css": work_board_css_default,
+    "work-board.js": work_board_js_default
+  }
+};
+var PAGE = composeTemplate(WORK_BOARD_TEMPLATE.entry, WORK_BOARD_TEMPLATE.files);
+function renderPracticeBoardHtml(data, page2 = PAGE) {
+  return `${page2.head}window.PRACTICE_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
+${page2.tail}`;
 }
 
 // src/submission/matter-dates.ts
@@ -85520,7 +85567,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "4c1a91703a3c";
+var BUILD_STAMP = false ? null : "869808f70b04";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94408,8 +94455,8 @@ var ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh
 function typeLabel(documentType, fileName) {
   const row2 = DOCUMENT_CODES[documentType];
   if (row2 !== void 0) return { short: row2.code, long: row2.name };
-  const stem2 = fileName.replace(/\.[^.]+$/, "");
-  return { short: stem2, long: stem2 };
+  const stem3 = fileName.replace(/\.[^.]+$/, "");
+  return { short: stem3, long: stem3 };
 }
 function withSubject(label2, title) {
   let subject = title.trim();
@@ -95018,15 +95065,19 @@ var matter_board_js_default = `(function () {
 // src/submission/forms/matter-board-shell.ts
 var MATTER_BOARD_FILE = "Litigation Strategy.html";
 var MATTER_BOARD_MARKER = "data-matter-board-shell";
-var { head: HEAD2, tail: TAIL2 } = composeTemplate("matter-board.html", {
-  "matter-board.html": matter_board_html_default,
-  "board.css": board_css_default,
-  "matter-board.css": matter_board_css_default,
-  "matter-board.js": matter_board_js_default
-});
-function renderMatterBoardHtml(data) {
-  return `${HEAD2}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
-${TAIL2}`;
+var LITIGATION_STRATEGY_TEMPLATE = {
+  entry: "matter-board.html",
+  files: {
+    "matter-board.html": matter_board_html_default,
+    "board.css": board_css_default,
+    "matter-board.css": matter_board_css_default,
+    "matter-board.js": matter_board_js_default
+  }
+};
+var PAGE2 = composeTemplate(LITIGATION_STRATEGY_TEMPLATE.entry, LITIGATION_STRATEGY_TEMPLATE.files);
+function renderMatterBoardHtml(data, page2 = PAGE2) {
+  return `${page2.head}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
+${page2.tail}`;
 }
 
 // src/submission/forms/render-matter-board.ts
@@ -96075,16 +96126,20 @@ var workboard_js_default = `(function () {
 })();`;
 
 // src/submission/forms/workboard-shell.ts
-var { head: HEAD3, tail: TAIL3 } = composeTemplate("job-board.html", {
-  "job-board.html": job_board_html_default,
-  "job-board.css": job_board_css_default,
-  "job-board.js": job_board_js_default,
-  "workboard.css": workboard_css_default,
-  "workboard.js": workboard_js_default
-});
-function renderWorkBoardHtml(data) {
-  return `${HEAD3}window.WORKBOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
-${TAIL3}`;
+var JOB_BOARD_TEMPLATE = {
+  entry: "job-board.html",
+  files: {
+    "job-board.html": job_board_html_default,
+    "job-board.css": job_board_css_default,
+    "job-board.js": job_board_js_default,
+    "workboard.css": workboard_css_default,
+    "workboard.js": workboard_js_default
+  }
+};
+var PAGE3 = composeTemplate(JOB_BOARD_TEMPLATE.entry, JOB_BOARD_TEMPLATE.files);
+function renderWorkBoardHtml(data, page2 = PAGE3) {
+  return `${page2.head}window.WORKBOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
+${page2.tail}`;
 }
 
 // src/templates/view-pages/arguments.css.ts
@@ -96396,14 +96451,17 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
 }
 var ARGUMENTS_PAGE = {
   name: "Arguments",
-  ...composeTemplate("arguments.html", {
-    "arguments.html": arguments_html_default,
-    "view-head.html": view_head_html_default,
-    "board.css": board_css_default,
-    "view-folder.css": view_folder_css_default,
-    "arguments.css": arguments_css_default,
-    "shared.js": shared_js_default,
-    "arguments.js": arguments_js_default
+  ...templated({
+    entry: "arguments.html",
+    files: {
+      "arguments.html": arguments_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "view-folder.css": view_folder_css_default,
+      "arguments.css": arguments_css_default,
+      "shared.js": shared_js_default,
+      "arguments.js": arguments_js_default
+    }
   }),
   data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.writings.map((w3) => w3.filing))
 };
@@ -96644,12 +96702,12 @@ function factsFor(ctx) {
 var SHARED = { "view-head.html": view_head_html_default, "board.css": board_css_default, "facts.css": facts_css_default, "shared.js": shared_js_default, "facts.js": facts_js_default };
 var PROCEDURAL_HISTORY = {
   name: "Procedural History",
-  ...composeTemplate("procedural-history.html", { "procedural-history.html": procedural_history_html_default, ...SHARED }),
+  ...templated({ entry: "procedural-history.html", files: { "procedural-history.html": procedural_history_html_default, ...SHARED } }),
   data: proceduralHistoryData
 };
 var MATERIAL_FACTS = {
   name: "Material Facts",
-  ...composeTemplate("material-facts.html", { "material-facts.html": material_facts_html_default, ...SHARED }),
+  ...templated({ entry: "material-facts.html", files: { "material-facts.html": material_facts_html_default, ...SHARED } }),
   data: materialFactsData
 };
 
@@ -97116,14 +97174,17 @@ function looseIdeasMeta(data) {
 var LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 var LOOSE_IDEAS_PAGE = {
   name: LOOSE_THREADS_PAGE_NAME,
-  ...composeTemplate("loose-threads.html", {
-    "loose-threads.html": loose_threads_html_default,
-    "view-head.html": view_head_html_default,
-    "board.css": board_css_default,
-    "loose-threads.css": loose_threads_css_default,
-    "view-folder.css": view_folder_css_default,
-    "shared.js": shared_js_default,
-    "loose-threads.js": loose_threads_js_default
+  ...templated({
+    entry: "loose-threads.html",
+    files: {
+      "loose-threads.html": loose_threads_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "loose-threads.css": loose_threads_css_default,
+      "view-folder.css": view_folder_css_default,
+      "shared.js": shared_js_default,
+      "loose-threads.js": loose_threads_js_default
+    }
   }),
   data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.writings.map((w3) => w3.filing)),
   metaExtra: looseIdeasMeta
@@ -97332,13 +97393,16 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
 }
 var RAW_RESEARCH_PAGE = {
   name: "Raw Research",
-  ...composeTemplate("raw-research.html", {
-    "raw-research.html": raw_research_html_default,
-    "view-head.html": view_head_html_default,
-    "board.css": board_css_default,
-    "raw-research.css": raw_research_css_default,
-    "shared.js": shared_js_default,
-    "raw-research.js": raw_research_js_default
+  ...templated({
+    entry: "raw-research.html",
+    files: {
+      "raw-research.html": raw_research_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "raw-research.css": raw_research_css_default,
+      "shared.js": shared_js_default,
+      "raw-research.js": raw_research_js_default
+    }
   }),
   data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.writings.map((w3) => w3.filing))
 };
@@ -97436,6 +97500,7 @@ function stem(fileName) {
   return fileName.replace(/\.[^.]+$/, "");
 }
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
+var PREVIEW_FILE = / preview \d+\.html$/i;
 function generatorWrote(file) {
   const text5 = readFileSync23(file, "utf-8");
   return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
@@ -97447,7 +97512,7 @@ function sweepOldPages(draftDir, names) {
   const subfolders = readdirSync15(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join29(draftDir, e3.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync15(dir, { withFileTypes: true })) {
-      if (!entry.isFile() || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
+      if (!entry.isFile() || PREVIEW_FILE.test(entry.name) || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
       if (dir === draftDir && targets.includes(entry.name.toLowerCase())) continue;
       const file = join29(dir, entry.name);
       try {
@@ -97462,7 +97527,7 @@ function sweepOldPages(draftDir, names) {
   }
   return { ...moved.length > 0 ? { moved_to_trash: moved } : {}, ...skipped.length > 0 ? { trash_skipped: skipped } : {} };
 }
-function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse = {}) {
+function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse = {}, templates = {}) {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
   const live = ranked.filter((r3) => !r3.filing.retired_on);
@@ -97494,7 +97559,7 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       writings: (manifest?.files ?? []).map((f3) => f3.label ?? { short: stem(f3.file_name), long: stem(f3.file_name) })
     };
   };
-  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos));
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos), templates.matterBoard);
   const jobBoards = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
     const sections = distinctRows(built.map((b3) => b3.section));
@@ -97511,14 +97576,15 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       court_file: sections.flatMap(
         (s3) => s3.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s3.meta.filing_id, dirname13(draftDir)).filter((a3) => a3.mismatch !== null)
       )
-    });
+    }, templates.jobBoard);
   });
   const viewPages = viewsWritten.map((v3) => {
     const [first] = v3.writings;
+    const page2 = templates.views?.[v3.page.name] ?? v3.page;
     return renderViewPageHtml(
-      v3.page,
+      page2,
       { filing: v3.writings.map((w3) => w3.filing.title).join("; "), matter: meta2.matter, client: meta2.client, revision, rendered: now },
-      v3.page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v3.writings, now, revision })
+      page2.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v3.writings, now, revision })
     );
   });
   const html = [matterBoard, ...jobBoards, ...viewPages];
@@ -99163,11 +99229,11 @@ function formCurrency(formKey, today4, seams = {}) {
   const identityFiles = [];
   const lists = [];
   let front = null;
-  for (const stem2 of STEMS[formKey] ?? [formKey]) {
-    const identityFile = `publish/CAN/BC/BCSC/Documents/${stem2}.md`;
+  for (const stem3 of STEMS[formKey] ?? [formKey]) {
+    const identityFile = `publish/CAN/BC/BCSC/Documents/${stem3}.md`;
     let file;
     try {
-      file = readFrontMatter(read2(`publish/references/CAN/BC/BCSC/Documents/${stem2}.md`), identityFile) ?? {};
+      file = readFrontMatter(read2(`publish/references/CAN/BC/BCSC/Documents/${stem3}.md`), identityFile) ?? {};
     } catch (err) {
       if (!(err instanceof DataServerError && err.code === "not_found")) throw err;
       lists.push([]);
@@ -99447,10 +99513,10 @@ var BLANK_SIGNER_RE = /\b(?:Signed|Signature|Sworn|Affirmed|Name|Per)\b[^:\n[]{0
 function checkExecution(docs, instruments) {
   const findings = [];
   const candidates = docs.filter((d3) => !EXHIBIT_FILE_RE.test(d3.file_name));
-  const stem2 = (d3) => norm(d3.file_name.replace(/\.[^.]+$/, ""));
+  const stem3 = (d3) => norm(d3.file_name.replace(/\.[^.]+$/, ""));
   const deponentOf = /* @__PURE__ */ new Map();
   for (const row2 of instruments) {
-    const doc = candidates.find((d3) => stem2(d3).startsWith(norm(row2.label)) && !/[a-z0-9]/.test(stem2(d3)[norm(row2.label).length] ?? ""));
+    const doc = candidates.find((d3) => stem3(d3).startsWith(norm(row2.label)) && !/[a-z0-9]/.test(stem3(d3)[norm(row2.label).length] ?? ""));
     if (doc) {
       deponentOf.set(doc, row2.deponent);
     } else {
@@ -102077,8 +102143,8 @@ function citedExtract(ctx, spec, pdf, proposedFile) {
   }
   const pages = writtenPages(run.stdout);
   const painted = paintedSpecs(run.stdout);
-  const stem2 = `${spec.prefix}1 cited - ${pathSafe(spec.authority.title)} - p${pages[0]}${pages.length > 1 ? `-${pages[pages.length - 1]}` : ""}` + (spec.paragraph !== null && paraNotPainted === void 0 ? ` para ${spec.paragraph}` : "");
-  const { extract, files } = extractFiles(ctx, dir, stem2, run.stdout, pages, painted);
+  const stem3 = `${spec.prefix}1 cited - ${pathSafe(spec.authority.title)} - p${pages[0]}${pages.length > 1 ? `-${pages[pages.length - 1]}` : ""}` + (spec.paragraph !== null && paraNotPainted === void 0 ? ` para ${spec.paragraph}` : "");
+  const { extract, files } = extractFiles(ctx, dir, stem3, run.stdout, pages, painted);
   return {
     extract: {
       ...extract,
@@ -102134,8 +102200,8 @@ function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
   }
   if (run.exit !== 0) return refusal("highlight_failed", `context extract: ${outputOf(run)}`);
   const pages = writtenPages(run.stdout);
-  const stem2 = `${spec.prefix}2 context - ${pathSafe(spec.authority.title)} - pp${pages[0]}-${pages[pages.length - 1]}`;
-  const { extract, files } = extractFiles(ctx, dir, stem2, run.stdout, pages, paintedSpecs(run.stdout));
+  const stem3 = `${spec.prefix}2 context - ${pathSafe(spec.authority.title)} - pp${pages[0]}-${pages[pages.length - 1]}`;
+  const { extract, files } = extractFiles(ctx, dir, stem3, run.stdout, pages, paintedSpecs(run.stdout));
   return {
     extract: {
       ...extract,
@@ -102145,10 +102211,10 @@ function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
     files
   };
 }
-function extractFiles(ctx, dir, stem2, stdout, pages, painted) {
-  const files = [{ from: pathWin3219.join(dir, "extract.pdf"), name: `${stem2}.pdf` }];
+function extractFiles(ctx, dir, stem3, stdout, pages, painted) {
+  const files = [{ from: pathWin3219.join(dir, "extract.pdf"), name: `${stem3}.pdf` }];
   for (const match of stdout.matchAll(/^preview: (.*-p(\d+)\.png)$/gm)) {
-    files.push({ from: match[1], name: `${stem2}-p${match[2]}.png` });
+    files.push({ from: match[1], name: `${stem3}-p${match[2]}.png` });
   }
   const at = (name) => pathWin3219.join(ctx.folder, name);
   return { extract: { pdf: at(files[0].name), pngs: files.slice(1).map((f3) => at(f3.name)), pages, painted }, files };
@@ -103484,11 +103550,11 @@ function draftFolder2(root) {
   }
   return resolveWithin(root, names[0], "0. DRAFT folder");
 }
-function writeNextFree(dir, stem2, ext, data) {
-  const m3 = VERSION_SUFFIX.exec(stem2);
-  const base = m3 ? stem2.slice(0, m3.index) : stem2;
+function writeNextFree(dir, stem3, ext, data) {
+  const m3 = VERSION_SUFFIX.exec(stem3);
+  const base = m3 ? stem3.slice(0, m3.index) : stem3;
   const own = m3 ? Number(m3[1]) : 1;
-  const candidates = [[stem2, own]];
+  const candidates = [[stem3, own]];
   for (let v3 = Math.max(2, own + 1); v3 < 1e3; v3 += 1) candidates.push([`${base} v${v3}`, v3]);
   for (const [name, version2] of candidates) {
     const path = pathWin3222.join(dir, `${name}${ext}`);
@@ -103541,10 +103607,10 @@ function exportDocx(args, root) {
     throw new PathOutOfScopeError(`path must be a .md at the top of the 0. DRAFT folder: ${given}`);
   }
   if (extname4(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
-  const stem2 = basename6(source, extname4(source));
+  const stem3 = basename6(source, extname4(source));
   const docx = markdownToDocx(readFileSync28(source, "utf-8"));
-  const written = writeNextFree(dir, stem2, ".docx", docx);
-  const wanted = pathWin3222.join(dir, `${stem2}.docx`);
+  const written = writeNextFree(dir, stem3, ".docx", docx);
+  const wanted = pathWin3222.join(dir, `${stem3}.docx`);
   return {
     success: true,
     path: written.path,
@@ -104985,6 +105051,1535 @@ function repoDocsRead(relative3, env) {
   };
 }
 
+// src/pages/preview.ts
+import { basename as basename7, dirname as dirname18 } from "node:path";
+
+// src/housekeeping/templates/approval.css.ts
+var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
+
+// src/housekeeping/templates/approval.html.ts
+var approval_html_default = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Housekeeping: </title>\n<style>\n@@include(approval.css)@@\n</style>\n</head>\n<body>\n<main id="app"></main>\n<script type="application/json" id="hk-data">@@data@@</script>\n<script>\n@@include(approval.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/housekeeping/templates/approval.js.ts
+var approval_js_default = `(function () {
+  "use strict";
+  var data = JSON.parse(document.getElementById("hk-data").textContent);
+  var P = data.proposal, A = data.approval, GROUPS = data.groups, INFO = data.info;
+  var APPROVED = "Approved. You can go back to Claude.";
+  var base = location.pathname.replace(/\\/+$/, "");
+  var approved = !!A;
+  var state = {}, views = [], app = document.getElementById("app");
+  var head, banner = null;
+
+  function el(tag, props, kids) {
+    var node = document.createElement(tag);
+    if (props) Object.keys(props).forEach(function (k) {
+      if (k === "text") node.textContent = props[k];
+      else if (k === "className") node.className = props[k];
+      else node.setAttribute(k, props[k]);
+    });
+    (kids || []).forEach(function (kid) { if (kid) node.appendChild(typeof kid === "string" ? document.createTextNode(kid) : kid); });
+    return node;
+  }
+  function baseName(p) { var s = p.split(/[\\\\/]/); return s[s.length - 1]; }
+  // The folder part of a matter-relative path, with its trailing separator, or "" at the root.
+  function folderOf(p) { var i = Math.max(p.lastIndexOf("\\\\"), p.lastIndexOf("/")); return i < 0 ? "" : p.slice(0, i + 1); }
+  function count(s) { return P.rows.filter(function (r) { return r.section === s; }).length; }
+  // A stuck or misfiled row is shown for information only: nothing to approve on it.
+  function informational(kind) { return INFO.indexOf(kind) >= 0; }
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+  function stamp(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + two(d.getHours()) + ":" + two(d.getMinutes());
+  }
+
+  function header() {
+    var h = P.header;
+    function meta(label, value) { return el("span", { "data-k": label, text: String(value) }); }
+    head = el("header", null, [
+      el("h1", { text: "Housekeeping approvals" }),
+      el("div", { className: "meta" }, [
+        meta("matter", P.matter_root.split(/[\\\\/]/).filter(Boolean).pop()),
+        meta("run", stamp(P.created_at)),
+        meta("to decide", decidable.length),
+        meta("ingested, nothing to approve", count("ingested_only")),
+        meta("left for the next run", count("deferred"))
+      ])
+    ]);
+    if (h.finished_line) head.appendChild(el("p", { className: "note", text: h.finished_line }));
+    if (h.open_in_word.length) head.appendChild(el("p", { className: "note", text: "Open in Word, skipped this run: " + h.open_in_word.join(", ") }));
+    if (h.folders_not_looked_inside.length) head.appendChild(el("p", { className: "note", text: "Folders not looked inside: " + h.folders_not_looked_inside.join(", ") }));
+    app.appendChild(head);
+  }
+  function showBanner() { if (!banner) banner = head.appendChild(el("div", { className: "banner", text: APPROVED })); }
+
+  // The file where it is now: a subfolder file's folder in bold, then its name as a link that opens it.
+  function src(r) {
+    var dir = folderOf(r.current_path);
+    return el("div", { className: "src" }, [
+      dir ? el("span", { className: "dir", text: dir }) : null,
+      el("a", { href: base + "/file/" + encodeURIComponent(r.row_id), target: "_blank", rel: "noopener", text: baseName(r.current_path) })
+    ]);
+  }
+
+  // The arrow and the one proposed result (spec \xA7B7.5): no verb word, folders and TRASH and the
+  // other matter bold, names normal weight; then the short notes that change what Approve does.
+  function to(r) {
+    var a = r.action, parts;
+    function arrow(kids) { return [el("span", { className: "verb" }), el("span", { className: "tgt" }, kids)]; }
+    function bold(text) { return el("span", { className: "dest-f", text: text }); }
+    function name(text) { return el("span", { className: "nn", text: text }); }
+    if (a.kind === "file") parts = arrow([el("span", { className: "dir", text: a.folder + "\\\\" }), name(a.name)]);
+    else if (a.kind === "rename") parts = arrow([name(a.name)]);
+    else if (a.kind === "move") parts = arrow([bold(a.folder)]);
+    else if (a.kind === "draft") parts = arrow([bold(P.draft_folder)]);
+    else if (a.kind === "duplicate") parts = arrow([bold("TRASH")]);
+    else if (a.kind === "misfiled") parts = arrow([bold("client matter " + a.matter)]);
+    else if (a.kind === "unreadable") parts = [el("span", { className: "verb solo", text: "TRY AGAIN NEXT RUN" })];
+    else parts = [el("span", { className: "verb solo", text: "LEAVE WHERE IT IS" }), el("span", { className: "why", text: a.reason })];
+    var notes = [];
+    if (a.create_folder) notes.push("new folder");
+    if (a.file_no_ingest) notes.push("filed without reading it into the case database");
+    if (a.answer) notes.push("read in with the answer: " + a.answer);
+    if (a.final) notes.push("read in first");
+    notes.forEach(function (n) { parts.push(el("span", { className: "aside", text: "(" + n + ")" })); });
+    return el("div", { className: "to" }, parts);
+  }
+
+  function refresh() { views.forEach(function (v) { v(); }); tally(); }
+
+  function rowView(r) {
+    var what = el("div", { className: "what" }, [src(r), to(r)]);
+    if (informational(r.action.kind)) return el("li", { className: "card", id: "row-" + r.row_id, "data-state": "info" }, [what]);
+    var pair = "r-" + r.row_id;
+    var ok = el("input", { type: "radio", name: pair, value: "ok", className: "ok" });
+    var leave = el("input", { type: "radio", name: pair, value: "leave", className: "leave" });
+    var card = el("li", { className: "card", id: "row-" + r.row_id }, [
+      what,
+      el("div", { className: "pick", role: "radiogroup", "aria-label": "Decision" }, [
+        el("label", { className: "opt ok" }, [ok, el("span", { text: "Approve" })]),
+        el("label", { className: "opt leave" }, [leave, el("span", { text: "Leave as is" })])
+      ])
+    ]);
+    ok.addEventListener("change", function () { state[r.row_id] = true; refresh(); });
+    leave.addEventListener("change", function () { state[r.row_id] = false; refresh(); });
+    views.push(function () {
+      var on = state[r.row_id];
+      ok.checked = on;
+      leave.checked = !on;
+      ok.disabled = leave.disabled = approved;
+      card.setAttribute("data-state", on ? "ok" : "leave");
+    });
+    return card;
+  }
+
+  function group(kind, heading, rows) {
+    var list = el("ol", { className: "stack" });
+    var h2 = el("h2", null, [el("span", { className: "gt", text: heading }), el("span", { className: "count", text: String(rows.length) })]);
+    var section = el("section", { className: "grp", id: "grp-" + kind, "data-kind": kind }, [h2, list]);
+    rows.forEach(function (r) { list.appendChild(rowView(r)); });
+    if (informational(kind)) return section;
+    var all = el("input", { type: "checkbox", "aria-label": "Approve every row in " + heading });
+    h2.appendChild(el("label", { className: "all" }, [all, el("span", { className: "box", "aria-hidden": "true" }), el("span", { className: "lbl", text: "Approve all / none" })]));
+    function approvedHere() { return rows.filter(function (r) { return state[r.row_id]; }).length; }
+    // A click when every row is approved sets them all to Leave as is; any other click approves them all.
+    all.addEventListener("change", function () {
+      var approve = approvedHere() !== rows.length;
+      rows.forEach(function (r) { state[r.row_id] = approve; });
+      refresh();
+    });
+    views.push(function () {
+      var n = approvedHere();
+      all.checked = n === rows.length;
+      all.indeterminate = n > 0 && n < rows.length;
+      all.disabled = approved;
+    });
+    return section;
+  }
+
+  var offered = P.rows.filter(function (r) { return r.section === "offered"; });
+  var decidable = offered.filter(function (r) { return !informational(r.action.kind); });
+  decidable.forEach(function (r) { state[r.row_id] = false; });
+  if (approved) A.rows.forEach(function (e) { if (e.row_id in state) state[e.row_id] = e.approve === true; });
+
+  header();
+  if (approved) showBanner();
+  var board = el("div", { className: "board" });
+  GROUPS.forEach(function (g) {
+    var rows = offered.filter(function (r) { return r.action.kind === g[0]; });
+    if (rows.length) board.appendChild(group(g[0], g[1], rows));
+  });
+  app.appendChild(board);
+
+  var ingested = P.rows.filter(function (r) { return r.section === "ingested_only"; });
+  if (ingested.length) {
+    var details = el("details", { className: "ingested" }, [el("summary", { text: "Ingested, nothing to approve (" + ingested.length + ")" })]);
+    ingested.forEach(function (r) {
+      var line = src(r);
+      if (r.notes.length) line.appendChild(document.createTextNode(" \\u2014 " + r.notes.join("; ")));
+      details.appendChild(line);
+    });
+    app.appendChild(details);
+  }
+
+  var nOk = el("b"), nLeave = el("b"), message = el("span", { className: "msg" });
+  var button = el("button", { type: "button", className: "submit", text: "Submit" });
+  document.body.appendChild(el("div", { className: "bar" }, [el("div", { className: "in" }, [
+    el("div", { className: "tally" }, [el("span", { className: "t-ok" }, [nOk, " approved"]), el("span", null, [nLeave, " left as is"])]),
+    message,
+    button
+  ])]));
+  function tally() {
+    var n = decidable.filter(function (r) { return state[r.row_id]; }).length;
+    nOk.textContent = String(n);
+    nLeave.textContent = String(decidable.length - n);
+    if (approved) { button.style.display = "none"; message.className = "msg done"; message.textContent = APPROVED; }
+  }
+  // Always enabled: submitting with nothing approved posts rows: [], a valid approval (spec \xA7B8.3).
+  button.addEventListener("click", function () {
+    var rows = decidable.filter(function (r) { return state[r.row_id]; }).map(function (r) { return { row_id: r.row_id, approve: true }; });
+    button.disabled = true; message.className = "msg"; message.textContent = "Saving\\u2026";
+    fetch(base + "/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ run: P.run_id, rows: rows }) })
+      .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+      .then(function (out) {
+        if (!out.ok) throw new Error(out.body && out.body.error || "The approval was not saved.");
+        approved = true;
+        refresh();
+        showBanner();
+        window.scrollTo(0, 0);
+      })
+      .catch(function (err) { message.className = "msg error"; message.textContent = err.message; button.disabled = false; });
+  });
+  refresh();
+})();`;
+
+// src/housekeeping/page.ts
+var APPROVAL_TEMPLATE = {
+  entry: "approval.html",
+  files: { "approval.html": approval_html_default, "approval.css": approval_css_default, "approval.js": approval_js_default }
+};
+var PAGE4 = composeTemplate(APPROVAL_TEMPLATE.entry, APPROVAL_TEMPLATE.files);
+var CSS = "\n" + approval_css_default + "\n";
+
+// src/board-fixtures/job-board.ts
+var JOB_BOARD_FIXTURE = {
+  "meta": {
+    "revision": 12,
+    "matter": "L4801",
+    "client": "Ashbourne",
+    "rendered": "2026-01-15 09:00",
+    "client_no": "C0001",
+    "forum": "Supreme Court of British Columbia",
+    "registry": "Vancouver",
+    "file_number": "S-000000",
+    "style_of_cause": "Ashbourne v. Sample Holdings Ltd."
+  },
+  "sections": [
+    {
+      "meta": {
+        "revision": 1,
+        "matter": "L4801",
+        "client": "Ashbourne",
+        "file": "",
+        "filing": "Opening Submissions Package",
+        "filing_id": 1,
+        "proceeding_id": 1,
+        "rendered": "2026-01-15 09:00",
+        "state": "drafting",
+        "state_label": "Drafting",
+        "state_since": null,
+        "ready_to_retire": false
+      },
+      "tickets": [
+        {
+          "id": 1,
+          "title": "Audit the three Westlaw memos",
+          "intent": "Verify the propositions with pinpoints.",
+          "kind": "work",
+          "priority": 5,
+          "status": "completed",
+          "category": "completed",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": "2026-09-02T09:00",
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [
+            {
+              "id": 5,
+              "status": "superseded",
+              "rejected": false
+            }
+          ],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 2,
+          "title": "Draft the reply on attornment",
+          "intent": "Write the reply submission once the memos are audited.",
+          "kind": "work",
+          "priority": 4,
+          "status": "queued",
+          "category": "ready",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [
+            "facts",
+            "statements_of_law:12"
+          ],
+          "blocked_by": [
+            {
+              "id": 1,
+              "status": "completed",
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [
+            "factual-basis:submissions:1"
+          ],
+          "proposal_items": {
+            "factual-basis:submissions:1": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement."
+          },
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_one_step",
+            "reworded",
+            "marker_not_eligible"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 3,
+          "title": "Cite-check the reply",
+          "intent": "Confirm every citation in the reply once it is drafted.",
+          "kind": "work",
+          "priority": 3,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 2,
+              "status": "queued",
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 4,
+          "title": "Rebuild the evidence index",
+          "intent": "Reconcile the exhibit list against the disclosure log.",
+          "kind": "work",
+          "priority": 2,
+          "status": "wip",
+          "category": "wip",
+          "locked_by": "sess-a1",
+          "locked_at": "2026-09-02T10:05",
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [],
+          "circular": false,
+          "steps": [
+            {
+              "ordinal": 1,
+              "text": "Audit the exhibit list",
+              "done_at": "2026-09-02T10:10"
+            },
+            {
+              "ordinal": 2,
+              "text": "Reconcile against the disclosure log",
+              "done_at": null
+            }
+          ],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": "2026-09-02T10:12",
+          "active_at": null
+        },
+        {
+          "id": 5,
+          "title": "Old approach to the stay argument",
+          "intent": "Superseded by ticket 1's revised approach.",
+          "kind": "work",
+          "priority": 1,
+          "status": "superseded",
+          "category": "superseded",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": {
+            "id": 1,
+            "status": "completed",
+            "rejected": false
+          },
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [
+            {
+              "id": 1,
+              "status": "completed",
+              "rejected": false
+            }
+          ],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 6,
+          "title": "Follow-on task from the old approach",
+          "intent": "Depends on the now-superseded ticket 5.",
+          "kind": "work",
+          "priority": 1,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 5,
+              "status": "superseded",
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 7,
+          "title": "Proceeding-wide filing tracker check",
+          "intent": "Confirm every filing in the proceeding is accounted for.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "ready",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 8,
+          "title": "Chart the outstanding research",
+          "intent": "Turn the remaining open questions into tickets.",
+          "kind": "charting",
+          "priority": 0,
+          "status": "queued",
+          "category": "ready",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 9,
+          "title": "Circular A",
+          "intent": "Depends on Circular B.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 10,
+              "status": "queued",
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": true,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 10,
+          "title": "Circular B",
+          "intent": "Depends on Circular A.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 9,
+              "status": "queued",
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": true,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 11,
+          "title": "Cross-proceeding blocker test",
+          "intent": "Blocked by a ticket the renderer never loads for this proceeding.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 99,
+              "status": null,
+              "rejected": false
+            }
+          ],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 13,
+          "title": "Serve the August notice to admit",
+          "intent": "Serve it and diarise the response period.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "rejected",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": "2026-09-03T09:00",
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [
+            "serve-it:documents:10"
+          ],
+          "proposal_items": {
+            "serve-it:documents:10": "Notice to Admit dated 2026-08-01"
+          },
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "reworded",
+            "marker_not_eligible"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        },
+        {
+          "id": 14,
+          "title": "Tender the admitted diary entries",
+          "intent": "Enter the admission once the notice is served.",
+          "kind": "work",
+          "priority": 0,
+          "status": "queued",
+          "category": "waiting",
+          "locked_by": null,
+          "locked_at": null,
+          "completed_at": null,
+          "rejected_at": null,
+          "bf_on": null,
+          "superseded_by": null,
+          "scope": [],
+          "blocked_by": [
+            {
+              "id": 13,
+              "status": "queued",
+              "rejected": true
+            }
+          ],
+          "conflicts": [],
+          "circular": false,
+          "steps": [],
+          "proposal_keys": [],
+          "proposal_items": {},
+          "superseded_reason": null,
+          "subtitle": null,
+          "eligible": false,
+          "ineligible_reasons": [
+            "not_ready",
+            "not_one_step",
+            "no_proposal_keys"
+          ],
+          "dispatch_skips": [],
+          "lock_note": null,
+          "answers": [],
+          "sources": [],
+          "last_activity_at": null,
+          "active_at": null
+        }
+      ],
+      "seeds": [
+        {
+          "id": 1,
+          "idea": "Consider a standing exhibit-numbering convention for future filings in this proceeding.",
+          "surfaced_by": "noticed while reconciling the exhibit list",
+          "created": "2026-09-02T10:12",
+          "filing_id": 1,
+          "origin_ticket_id": 4,
+          "rank": null,
+          "rank_group": null,
+          "rank_reason": null,
+          "rank_job": null,
+          "deferred_at": null,
+          "from_filing": null
+        }
+      ],
+      "deleted": [],
+      "discardedSeeds": [],
+      "attachments": [],
+      "proposals": [
+        {
+          "key": "doctrinal-basis:law_assertions:4",
+          "slug": "doctrinal-basis",
+          "marker": "\u{1F4D6}",
+          "table": "law_assertions",
+          "id": 4,
+          "item": "a second point of law also not yet researched",
+          "label": "a second point of law also not yet researched",
+          "title": "Find doctrinal authority: a second point of law also not yet researched",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "primary-authority:law_assertions:2",
+          "slug": "primary-authority",
+          "marker": "\u{1F948}",
+          "table": "law_assertions",
+          "id": 2,
+          "item": "second point of law",
+          "label": "second point of law",
+          "title": "Find primary authority: second point of law",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "primary-authority:law_assertions:3",
+          "slug": "primary-authority",
+          "marker": "\u{1F948}",
+          "table": "law_assertions",
+          "id": 3,
+          "item": "point of law not yet researched",
+          "label": "point of law not yet researched",
+          "title": "Find primary authority: point of law not yet researched",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "jurisdictional-basis:order_sought:2",
+          "slug": "jurisdictional-basis",
+          "marker": "\u{1F3DB}\uFE0F",
+          "table": "order_sought",
+          "id": 2,
+          "item": "a reserved fallback order",
+          "label": "a reserved fallback order",
+          "title": "Find jurisdictional basis: a reserved fallback order",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "jurisdictional-basis:order_sought:3",
+          "slug": "jurisdictional-basis",
+          "marker": "\u{1F3DB}\uFE0F",
+          "table": "order_sought",
+          "id": 3,
+          "item": "an order whose only basis cites a killed authority",
+          "label": "an order whose only basis cites a killed authority",
+          "title": "Find jurisdictional basis: an order whose only basis cites a killed authority",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "authority-excerpt:statements_of_law:7",
+          "slug": "authority-excerpt",
+          "marker": "\u{1F4DC}",
+          "table": "statements_of_law",
+          "id": 7,
+          "item": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "label": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "title": "Quote the authority: Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "authority-pinpoint:statements_of_law:9",
+          "slug": "authority-pinpoint",
+          "marker": "\u{1F4CD}",
+          "table": "statements_of_law",
+          "id": 9,
+          "item": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "label": "Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "title": "Locate the authority pinpoint: Excerpt Pending v. Zephyr Holdings, 2022 BCSC 44",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "scrutinize:statements_of_law:4",
+          "slug": "scrutinize",
+          "marker": "\u{1F52C}",
+          "table": "statements_of_law",
+          "id": 4,
+          "item": "Reserved Authority v. X, 2020 BCSC 1",
+          "label": "Reserved Authority v. X, 2020 BCSC 1",
+          "title": "Scrutinize: Reserved Authority v. X, 2020 BCSC 1",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "note-up:authorities:6",
+          "slug": "note-up",
+          "marker": "\u{1F4C7}",
+          "table": "authorities",
+          "id": 6,
+          "item": "Fully Captured v. Westmount, 2021 BCCA 77",
+          "label": "Fully Captured v. Westmount, 2021 BCCA 77",
+          "title": "Note up: Fully Captured v. Westmount, 2021 BCCA 77",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "authority-rating:authorities:1",
+          "slug": "authority-rating",
+          "marker": "\u{1F3C5}",
+          "table": "authorities",
+          "id": 1,
+          "item": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+          "label": "Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+          "title": "Rate the authority: Tekk Enterprises v. Acme Co., 2024 BCCA 118",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "exhibit-excerpt:admissions:1",
+          "slug": "exhibit-excerpt",
+          "marker": "\u{1F4D1}",
+          "table": "admissions",
+          "id": 1,
+          "item": "Northridge Construction Ltd.: The Site Diary \u2014 Week 12 is a genuine business record of Northridge Construction Ltd.",
+          "label": 'admission 1, "Northridge Construction Ltd.: The Site Diary \u2014 Week\u2026"',
+          "title": 'Quote the exhibit: admission 1, "Northridge Construction Ltd.: The Site Diary \u2014 Week\u2026"',
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "testimony-excerpt:statements_of_fact:8",
+          "slug": "testimony-excerpt",
+          "marker": "\u{1F4AC}",
+          "table": "statements_of_fact",
+          "id": 8,
+          "item": "K. Bell: The change order for the final week was counter-signed before the work began.",
+          "label": 'statement of fact 8, "K. Bell: The change order for the final\u2026"',
+          "title": 'Quote the testimony: statement of fact 8, "K. Bell: The change order for the final\u2026"',
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "exhibit-pinpoint:admissions:5",
+          "slug": "exhibit-pinpoint",
+          "marker": "\u{1F4CC}",
+          "table": "admissions",
+          "id": 5,
+          "item": "Northridge Construction Ltd.: The Site Diary \u2014 Week 12 was retained without alteration.",
+          "label": 'admission 5, "Northridge Construction Ltd.: The Site Diary \u2014 Week\u2026"',
+          "title": 'Locate the exhibit pinpoint: admission 5, "Northridge Construction Ltd.: The Site Diary \u2014 Week\u2026"',
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "exhibit-pinpoint:statements_of_fact:7",
+          "slug": "exhibit-pinpoint",
+          "marker": "\u{1F4CC}",
+          "table": "statements_of_fact",
+          "id": 7,
+          "item": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+          "label": "M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+          "title": "Locate the exhibit pinpoint: M. Reyes: Overtime for the final week was recorded in the Site Diary.",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "testimony-pinpoint:statements_of_fact:8",
+          "slug": "testimony-pinpoint",
+          "marker": "\u{1F9F7}",
+          "table": "statements_of_fact",
+          "id": 8,
+          "item": "K. Bell: The change order for the final week was counter-signed before the work began.",
+          "label": 'statement of fact 8, "K. Bell: The change order for the final\u2026"',
+          "title": 'Locate the testimony pinpoint: statement of fact 8, "K. Bell: The change order for the final\u2026"',
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "interview:witnesses:3",
+          "slug": "interview",
+          "marker": "\u{1F5E3}\uFE0F",
+          "table": "witnesses",
+          "id": 3,
+          "item": "M. Reyes",
+          "label": "M. Reyes",
+          "title": "Interview: M. Reyes",
+          "lane": "proposed",
+          "holder": null,
+          "count": 1
+        },
+        {
+          "key": "sign-it:documents:3",
+          "slug": "sign-it",
+          "marker": "\u{1F58B}\uFE0F",
+          "table": "documents",
+          "id": 3,
+          "item": "Witness Statement of A. Renwick",
+          "label": "Witness Statement of A. Renwick",
+          "title": "Get it signed: Witness Statement of A. Renwick",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "enter-it:documents:9",
+          "slug": "enter-it",
+          "marker": "\u{1F579}\uFE0F",
+          "table": "documents",
+          "id": 9,
+          "item": "Response to Notice to Admit dated 2026-06-15",
+          "label": "Response to Notice to Admit dated 2026-06-15",
+          "title": "Enter the admission; pleading route: Requisition default judgment: Response to Notice to Admit dated 2026-06-15",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "enter-it:documents:14",
+          "slug": "enter-it",
+          "marker": "\u{1F579}\uFE0F",
+          "table": "documents",
+          "id": 14,
+          "item": "Notice to Admit dated 2020-01-01",
+          "label": "Notice to Admit dated 2020-01-01",
+          "title": "Enter the admission; pleading route: Requisition default judgment: Notice to Admit dated 2020-01-01",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "factual-basis:submissions:1",
+          "slug": "factual-basis",
+          "marker": "\u{1F9FE}",
+          "table": "submissions",
+          "id": 1,
+          "item": "The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.",
+          "label": 'submission 1, "The Respondent owes $150,000 under the plain words\u2026"',
+          "title": 'Link or draft the factual basis: submission 1, "The Respondent owes $150,000 under the plain words\u2026"',
+          "lane": "held",
+          "holder": {
+            "ticket_id": 2,
+            "ticketed_on": null
+          }
+        },
+        {
+          "key": "factual-basis:submissions:3",
+          "slug": "factual-basis",
+          "marker": "\u{1F9FE}",
+          "table": "submissions",
+          "id": 3,
+          "item": "A reserved fallback argument, held for reply.",
+          "label": "A reserved fallback argument, held for reply.",
+          "title": "Link or draft the factual basis: A reserved fallback argument, held for reply.",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "proposition:submissions:3",
+          "slug": "proposition",
+          "marker": "\u{1F4DA}",
+          "table": "submissions",
+          "id": 3,
+          "item": "A reserved fallback argument, held for reply.",
+          "label": "A reserved fallback argument, held for reply.",
+          "title": "Link or draft the proposition it requires: A reserved fallback argument, held for reply.",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "unserved-petitum:order_sought:2",
+          "slug": "unserved-petitum",
+          "marker": "\u{1F9B5}",
+          "table": "order_sought",
+          "id": 2,
+          "item": "a reserved fallback order",
+          "label": "a reserved fallback order",
+          "title": "Draft a submission for the order: a reserved fallback order",
+          "lane": "rejected",
+          "holder": null
+        },
+        {
+          "key": "unserved-petitum:order_sought:3",
+          "slug": "unserved-petitum",
+          "marker": "\u{1F9B5}",
+          "table": "order_sought",
+          "id": 3,
+          "item": "an order whose only basis cites a killed authority",
+          "label": "an order whose only basis cites a killed authority",
+          "title": "Draft a submission for the order: an order whose only basis cites a killed authority",
+          "lane": "proposed",
+          "holder": null
+        },
+        {
+          "key": "not-recorded:documents:2",
+          "slug": "not-recorded",
+          "marker": "\u{1F3F7}\uFE0F",
+          "table": "documents",
+          "id": 2,
+          "item": "Undescribed exhibit",
+          "label": "Undescribed exhibit",
+          "title": "Record label, date or description: Undescribed exhibit",
+          "lane": "held",
+          "holder": {
+            "ticket_id": 12,
+            "ticketed_on": "Reply Submissions Package"
+          }
+        }
+      ],
+      "lapsed_keys": [
+        "doctrinal-basis:law_assertions:4"
+      ],
+      "goals": {
+        "description": "Opening Submissions Package Drafting",
+        "statement": null,
+        "status": null
+      },
+      "goal": {
+        "sentence": "Completion Criteria",
+        "state": "pending",
+        "text": "No completion criteria are declared for this type of Writing."
+      },
+      "criteria": []
+    }
+  ],
+  "dates": {
+    "writing": [
+      {
+        "label": "Hearing",
+        "date": "2026-01-20",
+        "flag": null
+      }
+    ],
+    "header": [
+      {
+        "label": "Trial",
+        "date": "2026-09-14",
+        "flag": "Provisional"
+      }
+    ],
+    "criteria": {}
+  },
+  "writings": [
+    {
+      "short": "NOA",
+      "long": "Notice of Application"
+    }
+  ],
+  "views": [
+    {
+      "name": "Procedural History",
+      "file": "Procedural History - Job Board 1.html"
+    },
+    {
+      "name": "Material Facts",
+      "file": "Material Facts - Job Board 1.html"
+    },
+    {
+      "name": "Raw Research",
+      "file": "Raw Research - Job Board 1.html"
+    },
+    {
+      "name": "Arguments",
+      "file": "Arguments - Job Board 1.html"
+    },
+    {
+      "name": "Loose Threads",
+      "file": "Loose Threads - Job Board 1.html"
+    }
+  ],
+  "attached": []
+};
+
+// src/board-fixtures/litigation-strategy.ts
+var LITIGATION_STRATEGY_FIXTURE = {
+  meta: { revision: 12, matter: "L4801", client: "Ashbourne", rendered: "2026-01-15 09:00" },
+  todos: [
+    { id: "t1", description: "Ask the client for the signed purchase agreement", bf_date: "2026-01-16", filing_id: 1 },
+    { id: "t2", description: "Book the chambers hearing date", bf_date: "2026-01-19" },
+    { id: "t3", description: "Decide whether to amend the response", bf_date: null, proceeding_id: 3 }
+  ],
+  filings: [
+    { filing_id: 1, title: "Opening Submissions Package", state: "drafting", state_label: "Drafting", state_since: null, render_state: "stale", in_progress: 2 },
+    { filing_id: 2, title: "Notice of Application for Document Production", state: "filed", state_label: "Filed", state_since: "2026-01-08", render_state: "fresh", in_progress: 0 },
+    { filing_id: 4, title: "Trial Preparation", state: "drafting", state_label: "Open", state_since: null, render_state: "never", in_progress: 1, job_only: true },
+    { filing_id: 5, title: "Merged Reply Submissions", state: "drafting", state_label: "Drafting", state_since: null, render_state: "fresh", in_progress: 0 },
+    { filing_id: 6, title: "Merged Reply Brief", state: "drafting", state_label: "Drafting", state_since: null, render_state: "fresh", in_progress: 1 },
+    { filing_id: 3, title: "Withdrawn Application", state: "retired", state_label: "Retired", state_since: "2025-12-01", render_state: null, retired_on: "2025-12-01", retirement_reason: "withdrawn" }
+  ],
+  pre_filing: [{ proceeding_id: 3, proceeding: { court_or_centre: "Supreme Court of British Columbia", file_number: "S-000000" }, state_label: "Pre-filing", in_progress: 1 }],
+  boards: [{ name: "Merged Reply Submissions", filing_ids: [5, 6], proceeding_ids: [] }]
+};
+
+// src/board-fixtures/work-board.ts
+var WORK_BOARD_FIXTURE = {
+  meta: { rendered: "2026-01-15 09:00", today: "2026-01-15", horizon_days: 14 },
+  panels: {
+    overdue: [
+      { kind: "deadline", label: "Serve list of documents", date: "2026-01-09", flag: null, bf_date: null, matter: "L4801", client: "Ashbourne", matter_status: "active", billable: true }
+    ],
+    due_today: [
+      { kind: "deadline", label: "File application response", date: "2026-01-15", flag: null, bf_date: null, matter: "L4801", client: "Ashbourne", matter_status: "active", billable: true },
+      { kind: "todo", label: "Call the client about the settlement offer", date: "2026-01-15", flag: null, bf_date: null, matter: "L4802", client: "Bramblewood", matter_status: "active", billable: true }
+    ],
+    coming_up: [
+      { kind: "event", label: "Chambers hearing", date: "2026-01-20", flag: null, bf_date: null, matter: "L4801", client: "Ashbourne", matter_status: "active", billable: true },
+      { kind: "deadline", label: "Reply to notice to admit", date: "2026-01-22", flag: "Provisional: depends on the date of service", bf_date: null, matter: "L4802", client: "Bramblewood", matter_status: "active", billable: true },
+      { kind: "deadline", label: "Deliver expert report", date: "2026-01-27", flag: "Dates conflict", bf_date: null, matter: "L4803", client: "Cobblestone", matter_status: "active", billable: false }
+    ],
+    other: [
+      { kind: "todo", label: "Update the conflicts register", date: null, flag: null, bf_date: "2026-02-02", matter: "A0001", client: "Firm", matter_status: null, billable: false },
+      { kind: "todo", label: "Review the draft retainer letter", date: null, flag: null, bf_date: null, matter: "L4803", client: "Cobblestone", matter_status: "pending", billable: true }
+    ]
+  },
+  notes: ["The deadlines for L4804 could not be read: the sample note a failed read shows."],
+  conflicted: 1,
+  excluded_test_matters: 1
+};
+
+// src/board-fixtures/arguments.ts
+var ARGUMENTS_FIXTURE = {
+  meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
+  data: {
+    submissions: [
+      {
+        id: 1,
+        kind: "submission",
+        contention: "The seller repudiated the agreement by refusing delivery.",
+        where: "On this Writing",
+        facts: ["The parties signed the purchase agreement on 3 March 2025.", "The seller refused delivery on 1 May 2025."],
+        law: [{ text: "A party who refuses delivery without cause repudiates the contract.", killed_on: null }],
+        rebuts: ["raised:1"]
+      },
+      {
+        id: 2,
+        kind: "rebuttal",
+        contention: "The goods were ordered: the order log records the order.",
+        where: "On Notice of Application for Document Production",
+        facts: ["The buyer paid the deposit of $10,000 on 10 March 2025."],
+        law: [{ text: "Punitive damages follow any breach.", killed_on: "2026-01-09" }],
+        rebuts: ["raised:1", "anticipated:1"]
+      },
+      { id: 3, kind: "submission", contention: "In the alternative, the buyer is owed restitution of the deposit.", where: "Held in reserve", facts: [], law: [], rebuts: [] }
+    ],
+    counter_arguments: [
+      { key: "raised:1", kind: "raised", text: "The goods were never ordered.", source: "Application Response, Part 3, para. 2", linked: [1, 2] },
+      { key: "anticipated:1", kind: "anticipated", text: "The buyer waived delivery by silence.", source: null, linked: [2] }
+    ]
+  }
+};
+
+// src/board-fixtures/loose-threads.ts
+var LOOSE_THREADS_FIXTURE = {
+  meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
+  data: {
+    groups: [
+      { key: "decision", label: "Practitioner decisions", colour: "#6E4F8E", count: 1 },
+      { key: "research", label: "Research", colour: "#8E6620", count: 1 }
+    ],
+    ideas: [
+      { id: 1, rank: 1, idea: "The client prefers to settle before the hearing.", group: "decision", group_label: "Practitioner decisions", reason: "A decision already made shapes the reply.", job: "Draft a settlement offer letter.", surfaced_by: "draft", origin: "from Job #2", deferred_at: null },
+      { id: 2, rank: 2, idea: "Is there authority on waiver of delivery by silence?", group: "research", group_label: "Research", reason: "The other side may argue waiver.", job: "Research waiver by silence.", surfaced_by: "legal-research", origin: null, deferred_at: null },
+      { id: 3, rank: null, idea: "Consider a standing exhibit-numbering convention.", group: null, group_label: null, reason: null, job: null, surfaced_by: "draft", origin: "from Notice of Application for Document Production", deferred_at: null },
+      { id: 4, rank: null, idea: "Ask whether the expert can report sooner.", group: null, group_label: null, reason: null, job: null, surfaced_by: "practitioner", origin: null, deferred_at: "2026-01-12T10:00" }
+    ],
+    resolved: [
+      { id: 5, idea: "Check the limitation date.", how: "job", at: "2026-01-11T09:00", job_id: 7, job_title: "Confirm the limitation date" },
+      { id: 6, idea: "Mention the weather on the day of delivery.", how: "discarded", at: "2026-01-10T15:00", job_id: null, job_title: null },
+      { id: 7, idea: "The Job Board could show hearing dates.", how: "suggested", at: "2026-01-09T11:00", job_id: null, job_title: null }
+    ],
+    api: { port: 0, db_path: "", proceeding_id: 1, token: "" }
+  }
+};
+
+// src/board-fixtures/material-facts.ts
+var MATERIAL_FACTS_FIXTURE = {
+  meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
+  data: {
+    order: "filing",
+    evidence: "read",
+    facts: [
+      {
+        position: 1,
+        date: null,
+        text: "The parties signed the purchase agreement on 3 March 2025.",
+        class: "provable",
+        basis: "Pleadings, para. 4 (admitted)",
+        links: [{ witness: "A. Sample", cite: "Affidavit #1 of A. Sample, para. 6, Exhibit A", state: null, concern: null, decided_on: null, decision: null }]
+      },
+      {
+        position: 2,
+        date: null,
+        text: "The buyer paid the deposit of $10,000 on 10 March 2025.",
+        class: "provable",
+        basis: null,
+        links: [{ witness: "B. Example", cite: "Affidavit #1 of B. Example, para. 3", state: "in_hand", concern: null, decided_on: null, decision: null }]
+      },
+      {
+        position: 3,
+        date: null,
+        text: "The seller refused delivery on 1 May 2025.",
+        class: "pending",
+        basis: null,
+        links: [{ witness: "C. Placeholder", cite: null, state: "pending", concern: "No sworn statement yet", decided_on: null, decision: null }]
+      },
+      {
+        position: 4,
+        date: null,
+        text: "The seller's manager said the goods were never ordered.",
+        class: "inadmissible",
+        basis: null,
+        links: [{ witness: "B. Example", cite: "Affidavit #1 of B. Example, para. 9", state: "inadmissible", concern: "Hearsay", decided_on: "2026-01-10", decision: "Struck as hearsay; rely on the order log instead." }]
+      }
+    ]
+  }
+};
+
+// src/board-fixtures/procedural-history.ts
+var PROCEDURAL_HISTORY_FIXTURE = {
+  meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
+  data: {
+    order: "date",
+    evidence: "read",
+    facts: [
+      {
+        position: 1,
+        date: "2025-06-02",
+        text: "The buyer filed the notice of civil claim.",
+        class: "provable",
+        basis: "On the court record: Notice of Civil Claim",
+        links: []
+      },
+      {
+        position: 2,
+        date: "2025-06-09",
+        text: "The notice of civil claim was served on the seller by personal service.",
+        class: "provable",
+        basis: null,
+        links: [{ witness: "D. Server", cite: "Affidavit #1 of D. Server, para. 2, Exhibit A", state: "in_hand", concern: null, decided_on: null, decision: null }]
+      },
+      {
+        position: 3,
+        date: "2025-08-15",
+        text: "The buyer's counsel wrote to the seller's counsel proposing dates for document production.",
+        class: "pending",
+        basis: null,
+        links: [{ witness: "A. Sample", cite: null, state: "pending", concern: null, decided_on: null, decision: null }]
+      }
+    ]
+  }
+};
+
+// src/board-fixtures/raw-research.ts
+var RAW_RESEARCH_FIXTURE = {
+  meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
+  data: {
+    counts: { in_use: 2, undecided: 1, not_relevant: 1 },
+    groups: [
+      {
+        heading: "Breach of contract",
+        note: null,
+        propositions: [
+          {
+            law_assertion_id: 1,
+            text: "A party who refuses delivery without cause repudiates the contract.",
+            dead_end: false,
+            killed_on: null,
+            class: "in_use",
+            linked_to: ["Submission 1: The seller repudiated the agreement."],
+            statements: [
+              { statement_id: 11, class: "in_use", citation_title: "Sample Holdings Ltd. v. Example Traders Inc.", citation_rest: "2019 BCSC 0000 at para. 42", excerpt: "A refusal to deliver, without lawful excuse, is a repudiation.", status: ["Verified 2026-01-05", "Noted up 2026-01-06"] },
+              { statement_id: 12, class: "undecided", citation_title: "Placeholder v. Specimen", citation_rest: "2021 BCCA 0000 at para. 17", excerpt: null, status: ["Not verified"] }
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Damages",
+        note: "Research paused until the expert report arrives.",
+        propositions: [
+          { law_assertion_id: 2, text: "Lost profits are recoverable when they were in the parties' contemplation.", dead_end: false, killed_on: null, class: "in_use", linked_to: [], statements: [{ statement_id: 21, class: "in_use", citation_title: "Model Industries v. Dummy Corp.", citation_rest: "2020 BCSC 0000 at para. 88", excerpt: null, status: ["Verified 2026-01-07"] }] },
+          { law_assertion_id: 3, text: "Punitive damages follow any breach.", dead_end: true, killed_on: "2026-01-09", class: "not_relevant", linked_to: ["Submission 2 (killed 2026-01-09)"], statements: [] }
+        ]
+      }
+    ]
+  }
+};
+
+// src/pages/preview-file.ts
+import { mkdirSync as mkdirSync17, writeFileSync as writeFileSync12 } from "node:fs";
+import { tmpdir as tmpdir4 } from "node:os";
+import { join as join35 } from "node:path";
+var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
+function fixturePreviewDir() {
+  return join35(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
+}
+var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
+function composeWithOverrides(set, overrides = {}) {
+  const unknown2 = Object.keys(overrides).filter((name) => !Object.hasOwn(set.files, name));
+  if (unknown2.length > 0) {
+    throw new ValidationError(`overrides name no template file of this page: ${unknown2.join(", ")}. Its files are ${Object.keys(set.files).join(", ")}.`);
+  }
+  const notText = Object.keys(overrides).filter((name) => typeof overrides[name] !== "string");
+  if (notText.length > 0) throw new ValidationError(`each override is a file's whole text, a string: ${notText.join(", ")} is not`);
+  return composeTemplate(set.entry, { ...set.files, ...overrides });
+}
+function writePreview(dir, base, html, fixture) {
+  mkdirSync17(dir, { recursive: true });
+  const text5 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
+` : html;
+  for (let n3 = 1; ; n3++) {
+    const path = join35(dir, `${base} preview ${n3}.html`);
+    try {
+      writeFileSync12(path, text5, { flag: "wx" });
+      return path;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+  }
+}
+
+// src/pages/preview.ts
+var HOUSEKEEPING_PAGE = "Housekeeping approval";
+var PAGE_TEMPLATES = {
+  "Work Board": WORK_BOARD_TEMPLATE,
+  "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
+  "Job Board": JOB_BOARD_TEMPLATE,
+  ...Object.fromEntries(VIEW_PAGES.map((p3) => [p3.name, p3.template])),
+  [HOUSEKEEPING_PAGE]: APPROVAL_TEMPLATE
+};
+var VIEW_FIXTURES = {
+  "Procedural History": PROCEDURAL_HISTORY_FIXTURE,
+  "Material Facts": MATERIAL_FACTS_FIXTURE,
+  "Raw Research": RAW_RESEARCH_FIXTURE,
+  Arguments: ARGUMENTS_FIXTURE,
+  "Loose Threads": LOOSE_THREADS_FIXTURE
+};
+var FIXTURE_BOARD = { filing_id: 1, proceeding_id: 1 };
+function pagesTemplate(page2) {
+  const set = PAGE_TEMPLATES[page2];
+  if (set === void 0) throw new ValidationError(`no page is named "${page2}"`);
+  return { page: page2, entry: set.entry, files: set.files };
+}
+var stem2 = (fileName) => fileName.replace(/\.html$/i, "");
+async function pagesPreview(args, store) {
+  const { page: page2, data } = args;
+  if (page2 === HOUSEKEEPING_PAGE) throw new ValidationError(`the ${HOUSEKEEPING_PAGE} page is previewed by housekeeping__preview, in the file-manager plugin`);
+  const set = PAGE_TEMPLATES[page2];
+  if (set === void 0) throw new ValidationError(`no page is named "${page2}"`);
+  const composed = composeWithOverrides(set, args.overrides);
+  const view = VIEW_PAGES.find((p3) => p3.name === page2);
+  const viewPage = view && { ...view, ...composed };
+  const ids = { filing_id: args.filing_id, proceeding_id: args.proceeding_id };
+  if (data === "fixture") {
+    if (args.matter_root !== void 0 || ids.filing_id !== void 0 || ids.proceeding_id !== void 0) {
+      throw new ValidationError("fixture data takes no matter_root, filing_id or proceeding_id");
+    }
+    const dir = fixturePreviewDir();
+    if (viewPage) {
+      const { meta: meta2, data: fixture } = VIEW_FIXTURES[page2];
+      return { path: writePreview(dir, stem2(viewPageFile(viewPage, FIXTURE_BOARD)), renderViewPageHtml(viewPage, meta2, fixture), true) };
+    }
+    if (page2 === "Work Board") return { path: writePreview(dir, stem2(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(WORK_BOARD_FIXTURE, composed), true) };
+    if (page2 === "Litigation Strategy") return { path: writePreview(dir, stem2(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
+    return { path: writePreview(dir, `Job Board ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(JOB_BOARD_FIXTURE, composed), true) };
+  }
+  if (page2 === "Work Board") {
+    if (args.matter_root !== void 0 || ids.filing_id !== void 0 || ids.proceeding_id !== void 0) {
+      throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
+    }
+    const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
+    return { path: writePreview(dirname18(resolvePracticeDbPath()), stem2(PRACTICE_BOARD_FILE), html2, false) };
+  }
+  if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
+  if (page2 === "Litigation Strategy" && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
+    throw new ValidationError("the Litigation Strategy covers the whole matter: it takes no filing_id or proceeding_id");
+  }
+  if (page2 === "Job Board" && ids.filing_id === void 0 === (ids.proceeding_id === void 0)) {
+    throw new ValidationError("the Job Board needs exactly one of filing_id or proceeding_id");
+  }
+  if (viewPage && (ids.filing_id === void 0 || ids.proceeding_id !== void 0)) {
+    throw new ValidationError(`the ${page2} page needs filing_id and takes no proceeding_id`);
+  }
+  const root = validateMatterRoot(args.matter_root);
+  const dbPath = resolveDbPath(root);
+  const found = findDraftDir(root);
+  if (found === void 0) throw new ValidationError(`${root} has no 0. DRAFT folder, so it has no ${page2} page to preview`);
+  const draftDir = resolveDraftDir(found, "pages__preview.matter_root");
+  const client = (await lookUpMatter(root, store, {})).client;
+  const matterNo = client.matterNo ?? matterToken(root) ?? void 0;
+  const built = buildMatterPages(
+    dbPath,
+    draftDir,
+    client,
+    nowStamp(),
+    fetchRevision(dbPath),
+    await readMatterTodos(store, matterNo),
+    await readMatterDates(store, matterNo),
+    ids.filing_id === void 0 ? {} : { only: ids.filing_id },
+    viewPage ? { views: { [page2]: page2 === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page2 === "Job Board" ? { jobBoard: composed } : { matterBoard: composed }
+  );
+  const target = page2 === "Litigation Strategy" ? MATTER_BOARD_FILE : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const fileName = target === void 0 ? void 0 : basename7(target);
+  const html = built.pages.find((p3) => p3.name === fileName)?.html;
+  if (fileName === void 0 || html === void 0) {
+    const which = ids.filing_id !== void 0 ? `filing ${ids.filing_id}` : `proceeding ${ids.proceeding_id}`;
+    throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
+  }
+  return { path: writePreview(draftDir, stem2(fileName), html, false) };
+}
+function withoutListener(page2) {
+  return {
+    ...page2,
+    data: (ctx) => {
+      const data = page2.data(ctx);
+      const { tokens: _tokens, ...api } = data.api;
+      return { ...data, api: { ...api, port: 0, token: "" } };
+    }
+  };
+}
+
 // src/files/research-filing.ts
 import { createHash as createHash10 } from "node:crypto";
 import {
@@ -104992,11 +106587,11 @@ import {
   constants,
   copyFileSync as copyFileSync4,
   existsSync as existsSync40,
-  mkdirSync as mkdirSync17,
+  mkdirSync as mkdirSync18,
   readdirSync as readdirSync26,
   readFileSync as readFileSync35,
   statSync as statSync18,
-  writeFileSync as writeFileSync12
+  writeFileSync as writeFileSync13
 } from "node:fs";
 import { homedir as homedir9 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
@@ -105554,7 +107149,7 @@ function researchScratchDir(root) {
   for (const name of SCRATCH_SUBFOLDERS) {
     dir = pathWin3225.join(dir, name);
     try {
-      mkdirSync17(dir);
+      mkdirSync18(dir);
       created = true;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -105574,7 +107169,7 @@ async function lawFolderText(matterRoot, destinationDir) {
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
     outDir = pathWin3225.join(outDir, name);
-    mkdirSync17(outDir, { recursive: true });
+    mkdirSync18(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
   const files = readdirSync26(law).filter((name) => statSync18(pathWin3225.join(law, name)).isFile()).sort();
@@ -105587,7 +107182,7 @@ async function lawFolderText(matterRoot, destinationDir) {
     }
     const textPath = pathWin3225.join(outDir, `${file}.txt`);
     const body = Buffer.from(read2.text, "utf-8");
-    writeFileSync12(textPath, body);
+    writeFileSync13(textPath, body);
     rows22.push({ file, text_path: textPath, bytes: body.length, method: read2.method, status: "ok" });
   }
   return { out_dir: outDir, files: rows22 };
@@ -105689,12 +107284,12 @@ function filledString(value) {
 }
 function writeNewVersion(dir, filename, body) {
   const ext = pathWin3225.extname(filename);
-  const stem2 = filename.slice(0, -ext.length);
+  const stem3 = filename.slice(0, -ext.length);
   for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
-    const name = nextVersionName(dir, stem2, ext);
+    const name = nextVersionName(dir, stem3, ext);
     const path = pathWin3225.join(dir, name);
     try {
-      writeFileSync12(path, body, { flag: "wx" });
+      writeFileSync13(path, body, { flag: "wx" });
     } catch (err) {
       if (err.code === "EEXIST") continue;
       throw err;
@@ -105706,15 +107301,15 @@ function writeNewVersion(dir, filename, body) {
     "dest_exists"
   );
 }
-function nextVersionName(dir, stem2, ext) {
+function nextVersionName(dir, stem3, ext) {
   const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version2 = new RegExp(`^${escape3(stem2)}(?: v(\\d+))?${escape3(ext)}$`, "i");
+  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync26(dir)) {
     const match = version2.exec(name);
     if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
   }
-  return highest === 0 ? `${stem2}${ext}` : `${stem2} v${highest + 1}${ext}`;
+  return highest === 0 ? `${stem3}${ext}` : `${stem3} v${highest + 1}${ext}`;
 }
 function resolveOrCreateLawDir(destinationDir) {
   try {
@@ -105728,7 +107323,7 @@ function resolveOrCreateLawDir(destinationDir) {
   }
   let created = true;
   try {
-    mkdirSync17(pathWin3225.join(parent, pathWin3225.basename(destinationDir)));
+    mkdirSync18(pathWin3225.join(parent, pathWin3225.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -105759,9 +107354,9 @@ function assertBareFilename(name, label2) {
 }
 
 // src/research/preflight.ts
-import { tmpdir as tmpdir4 } from "node:os";
-import { join as join35 } from "node:path";
-var PROBE_STEM = join35(tmpdir4(), "coclerk-research-preflight-probe-absent");
+import { tmpdir as tmpdir5 } from "node:os";
+import { join as join36 } from "node:path";
+var PROBE_STEM = join36(tmpdir5(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -106075,7 +107670,7 @@ async function saveAnswerTool(args, env = process.env) {
 // src/key-request/tools.ts
 import { createHash as createHash12, randomBytes as randomBytes6 } from "node:crypto";
 import { createServer as createServer2 } from "node:http";
-import { join as join36 } from "node:path";
+import { join as join37 } from "node:path";
 
 // src/key-request/page.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -106220,7 +107815,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join36(defaultStateDir(env), "key-request.json.dpapi");
+  return join37(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -106746,6 +108341,12 @@ async function callTool(context, name, rawArgs) {
   if (name === "suggestion_log__write") {
     return suggestionLogWrite(args);
   }
+  if (name === "pages__template") {
+    return pagesTemplate(args.page);
+  }
+  if (name === "pages__preview") {
+    return pagesPreview(args, context.practiceDb);
+  }
   if (name === "sources__fetch") {
     return sourcesFetch(args);
   }
@@ -106818,9 +108419,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname18(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname18(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname18(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname19(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname19(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname19(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
