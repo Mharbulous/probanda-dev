@@ -740,9 +740,9 @@ test("bootstrap lists a seeded matter's filings and reports the schema version, 
 // from the returned markdown only. The fixtures below have no hearing row; do not
 // "fix" the divergence where one exists -- see the ADR 0013 tests further down.
 //
-// Issue #337: the mockups are written outside every Cowork sandbox mount, so a
-// session can never open the paths it is handed. render's response is the only
-// channel that crosses that boundary -- if it carries no markdown, ADR 0005's
+// Issue #337: a session never opens the mockup paths it is handed (the rule
+// outlived the move into the matter folder, docs/ADRs/0013). render's response is
+// the only channel it reads -- if it carries no markdown, ADR 0005's
 // "orient from the mockup" rule has no working path and a session falls back to
 // the query battery ADR 0005 exists to forbid.
 test("render returns each document's markdown, byte-identical to the file it wrote", async () => {
