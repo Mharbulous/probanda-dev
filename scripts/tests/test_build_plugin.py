@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
@@ -262,6 +263,34 @@ class CutoverBuildTest(unittest.TestCase):
     def test_server_the_plugin_does_not_declare_stops_the_build(self):
         self.put("source/practice/.mcp.json", "{}")
         self.assert_stops("declares the servers [], but 'practice' ships ['data']")
+
+
+class LockedFolderTest(unittest.TestCase):
+    """A folder that Windows briefly locks is renamed once the lock lets go."""
+
+    def test_move_aside_that_fails_twice_then_succeeds_completes_the_build(self):
+        sys.path.insert(0, str(REPO / "scripts"))
+        import build_plugin
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            out.mkdir()
+            (out / "kept.md").write_text("old", encoding="utf-8")
+            real_rename = Path.rename
+            attempts = []
+
+            def flaky_rename(src, dst):
+                if src == out:
+                    attempts.append(dst)
+                    if len(attempts) <= 2:
+                        raise PermissionError(5, "Access is denied")
+                return real_rename(src, dst)
+
+            with mock.patch.object(Path, "rename", flaky_rename), mock.patch.object(build_plugin.time, "sleep"):
+                build_plugin.write({"new.md": b"new"}, out)
+            self.assertEqual(len(attempts), 3)
+            self.assertTrue((out / "new.md").is_file())
+            self.assertFalse((out / "kept.md").exists())
+            self.assertEqual(sorted(p.name for p in Path(tmp).iterdir()), ["out"])
 
 
 if __name__ == "__main__":
