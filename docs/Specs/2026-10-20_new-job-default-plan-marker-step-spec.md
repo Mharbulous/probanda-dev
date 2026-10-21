@@ -21,7 +21,7 @@ Goal: every job created without an approved plan carries one step reading exactl
 
 ## 4. Design
 
-1. Add the marker step as fixed text in `jobs-create.md` §3 for every outlined job whose steps the practitioner has not supplied or approved, and as a fixed-text route in the practitioner-words gate for that exact string.
+1. Add the marker step as fixed text in `jobs-create.md` §3 for every outlined job with no steps that the practitioner supplied or approved and none derived from a Proposal card. No gate route is needed: after the gate spec (2026-10-20_approved-research-issues-pass-job-words-gate-spec.md), the gate no longer reads step text.
 2. The pickup review, restating check and pre-claim check treat a job whose only step is the marker as "needs a plan" and route it to planning, not as a one-step job with a restating step.
 3. `/job-planning` replaces the marker step with the approved plan (the 2026-10-15 spec's upgrade rule; a marker step has no `done_at`).
 
@@ -49,7 +49,7 @@ Goal: every job created without an approved plan carries one step reading exactl
 ## 8. Implementation criteria
 
 1. A job created by outlining without supplied steps carries exactly one step with the marker text.
-2. The gate passes the marker text as fixed text and still refuses other session-written steps.
+2. A job outlined from a Proposal keeps its card-derived steps and gets no marker. §3's stock fixed-text jobs keep their fixed steps.
 3. A job whose only step is the marker is never announced or assigned as having an approved plan, and the restating check does not flag it.
 4. `/job-planning` replaces the marker with the planned steps and leaves done steps alone.
 
@@ -57,7 +57,12 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Should the marker also be offered on jobs from Proposals, whose steps come from the record? (Brahm)
+None.
+
+## 11. Decisions (Brahm, 2026-10-20)
+
+- Proposal jobs keep their card-derived steps. The marker goes only on a job with no supplied, approved or derived steps.
+- The words gate no longer reads step text, per the gate spec, so the marker needs no gate route. This spec lands after the gate spec.
 
 ## 10. Verify against HEAD before building
 

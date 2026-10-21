@@ -63,8 +63,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Should the same flow apply to a research plan started from a Proposal rather than a practitioner question? (Brahm)
-- Should the questions be batched (up to four per form) or strictly one at a time? The practitioner said one at a time. (Brahm)
+None.
+
+## 11. Decisions (Brahm, 2026-10-20)
+
+- **Batching.** Batch up to four issues per multiple-choice form. Each issue is its own Yes/No question.
+- **Proposals.** Moot: `/legal-research` has no route that starts a plan from a Proposal.
+- **The gate.** Per the gate spec, the words gate no longer reads job titles, intents or steps, and the "a widget echo is no words" reason for plain-text questions is gone. The jobs need no approval route, and the forms are allowed.
+- **Jobs.** Each job created carries the marker step "Create a plan for how to complete this job." from 2026-10-20_new-job-default-plan-marker-step-spec.md.
+- **Landing order.** This spec lands after both of those specs.
 
 ## 10. Verify against HEAD before building
 

@@ -56,7 +56,12 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Is a per-machine key check at session start acceptable cost, or should it run only on the first plugin complaint? (Brahm)
+None.
+
+## 11. Decisions (Brahm, 2026-10-20)
+
+- The check runs at session start.
+- Decide the owning plugin by the layering rules (CLAUDE.md, `source/layering.json`): the key is `researcher`'s commons key, and `lawyer` names nothing in `researcher`.
 
 ## 10. Verify against HEAD before building
 
