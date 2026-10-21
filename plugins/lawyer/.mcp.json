@@ -1,0 +1,14 @@
+{
+  "data": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/mcp/dist/litigation-mcp.js"
+    ]
+  },
+  "contacts-calendars-email": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js"
+    ]
+  }
+}
