@@ -25,4 +25,7 @@ practitioner asks. (A moved or renamed source file is `relocate-source.md`, not 
    backups and the old folder's path, which the practitioner may delete once
    satisfied. Reopen any drafting session on this matter before more drafting work,
    and re-plan any migration: an outstanding plan token named the old path. On a refusal, report the check that failed and the staging folder it
-   names. The pointer was not changed and nothing was deleted.
+   names. The pointer was not changed and nothing was deleted. On
+   `relocate_incomplete`, the copy is in place but a pointer file stayed locked:
+   report which pointer files were and were not rewritten, and the step the error
+   gives to finish (usually replacing a pointer file with its leftover `.tmp`).

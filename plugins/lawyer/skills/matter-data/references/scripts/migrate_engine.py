@@ -45,6 +45,7 @@ import re
 import shutil
 import sqlite3
 import tempfile
+import time
 
 import rebuild
 import resolve_paths
@@ -57,6 +58,7 @@ DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
 REF_FILES = ('migrations.sql', 'triggers.sql', 'queries.sql')
 BACKUP_FORMAT = 1
 ENV_BACKUP_ROOT = 'COCLERK_CASE_BACKUP_ROOT'    # test/override hook
+REPLACE_RETRY_SECONDS = 30                      # a cloud sync client locks a file for seconds
 
 MARKER_RE = re.compile(
     r'^-- MIGRATE\s+(\d+)\s*->\s*(\d+)\s*-- DB:\s*(main|law|privileged)\s*$')
@@ -402,7 +404,15 @@ def write_text_atomic(path, text):
         fh.write(text)
         fh.flush()
         os.fsync(fh.fileno())
-    os.replace(tmp, path)
+    deadline = time.monotonic() + REPLACE_RETRY_SECONDS
+    while True:
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.5)
 
 
 # --------------------------------------------------------------------------

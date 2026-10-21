@@ -168,6 +168,42 @@ class RelocateTests(unittest.TestCase):
             relocate.run({"mode": "plan", "matter_root": str(self.matter_root)})
         self.assertIn("already in the matter folder", caught.exception.message)
 
+    def locked_coclerk(self, failures):
+        """os.replace that raises PermissionError on coclerk.json `failures` times, as a cloud
+        sync client does while it syncs the file, then behaves normally."""
+        real_replace = os.replace
+        left = [failures]
+
+        def replace(src, dst):
+            if str(dst).endswith("coclerk.json") and left[0] > 0:
+                left[0] -= 1
+                raise PermissionError(13, "Access is denied", str(src))
+            return real_replace(src, dst)
+        return replace
+
+    def test_a_briefly_locked_pointer_is_retried_and_both_pointers_match(self):
+        with mock.patch.object(migrate_engine.os, "replace", self.locked_coclerk(2)), \
+                mock.patch.object(migrate_engine.time, "sleep"):
+            relocate.run({"mode": "apply", "matter_root": str(self.matter_root)})
+        ptr = self.pointer_bytes()
+        self.assertEqual(ptr["probanda.json"], ptr["coclerk.json"])
+        self.assertEqual(json.loads(ptr["coclerk.json"])["case_data_dir"], "0. CASE DATA")
+
+    def test_a_pointer_that_stays_locked_reports_the_true_state(self):
+        before_old = self.old_hashes()
+        with mock.patch.object(migrate_engine.os, "replace", self.locked_coclerk(10 ** 6)), \
+                mock.patch.object(migrate_engine, "REPLACE_RETRY_SECONDS", 0):
+            with self.assertRaises(migrate_engine.MigrateError) as caught:
+                relocate.run({"mode": "apply", "matter_root": str(self.matter_root)})
+        exc = caught.exception
+        self.assertEqual(exc.code, "relocate_incomplete")
+        self.assertEqual([Path(p).name for p in exc.details["rewritten"]], ["probanda.json"])
+        self.assertEqual([Path(p).name for p in exc.details["not_rewritten"]], ["coclerk.json"])
+        self.assertEqual(Path(exc.details["leftover_tmp"]), self.matter_root / "coclerk.json.tmp")
+        self.assertTrue((self.matter_root / "coclerk.json.tmp").is_file())
+        after = {str(p.relative_to(self.target)): sha(p) for p in self.target.rglob("*") if p.is_file()}
+        self.assertEqual(after, before_old, "the verified copy is in place")
+
 
 if __name__ == "__main__":
     unittest.main()

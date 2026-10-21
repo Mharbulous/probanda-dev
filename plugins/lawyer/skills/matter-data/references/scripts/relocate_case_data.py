@@ -14,7 +14,9 @@ Two modes:
 
 It deletes nothing. The old folder is left in place for the practitioner to
 delete. On any failure no pointer changes, and the staging folder stays and is
-named in the error. Only Probanda's own pointer is written, so this is not a
+named in the error. The one exception is a pointer write that still fails after
+write_text_atomic's retry, once the copy is in place: that raises
+relocate_incomplete, naming which pointer files were rewritten. Only Probanda's own pointer is written, so this is not a
 file-manager operation (Commandment 7).
 
 HOST-SIDE ONLY, like every module in this directory: the SQLite checks run on
@@ -206,8 +208,29 @@ def apply(matter_root):
         'evidence_sql_path': resolve_paths.default_evidence_sql(matter_root, target),
     }
     text = json.dumps(normalized, indent=2)
-    for p in resolve_paths.pointer_paths(matter_root):
-        migrate_engine.write_text_atomic(p, text)
+    paths = resolve_paths.pointer_paths(matter_root)
+    written = []
+    try:
+        for p in paths:
+            migrate_engine.write_text_atomic(p, text)
+            written.append(p)
+    except OSError as exc:
+        failed = paths[len(written)]
+        rest = paths[len(written):]
+        leftover = failed + '.tmp' if os.path.exists(failed + '.tmp') else None
+        fix = ("Once the file is released, replace %s with %s, which holds the new pointer."
+               % (failed, leftover) if leftover else
+               "Write the new pointer below into each file not rewritten: %s" % text)
+        raise MigrateError(
+            "relocate_incomplete",
+            "Every copy verified and is in place at %s, but writing the pointer file %s failed "
+            "(%s: %s). Rewritten: %s. Not rewritten: %s. A rerun will refuse, because the new "
+            "folder is no longer empty. %s Nothing was deleted." % (
+                target, failed, type(exc).__name__, exc, ', '.join(written) or 'none',
+                ', '.join(rest), fix),
+            {"target": target, "rewritten": written, "not_rewritten": rest,
+             "leftover_tmp": leftover, "pointer_backups": backups,
+             "exception": "%s: %s" % (type(exc).__name__, exc)})
 
     return {
         "mode": "apply",
