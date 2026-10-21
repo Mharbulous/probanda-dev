@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { connect } from "node:net";
 import { join } from "node:path";
 import test from "node:test";
 
@@ -94,6 +95,39 @@ test("serving again invalidates the earlier token: its page and its Approve are 
     assert.equal(refused.status, 410);
     assert.equal(existsSync(join(runDir(m, runId), "approval.json")), false);
     assert.equal((await fetch(second.url)).status, 200);
+  } finally {
+    m.cleanup();
+  }
+});
+
+test("a keep-alive socket reused after the event loop was blocked past 5 s is still served (#153)", async () => {
+  const m = fixture();
+  try {
+    const runId = withRun(m, "20260924-100000-aaaa");
+    const url = new URL((await servePage(m.root, runId)).url);
+    const socket = connect(Number(url.port), url.hostname);
+    const replies = [];
+    let buffered = "";
+    socket.on("data", (chunk) => {
+      buffered += chunk;
+      for (const status of buffered.match(/^HTTP\/1\.1 \d+/gm) ?? []) replies.push(Number(status.slice(9)));
+      buffered = buffered.replace(/^HTTP\/1\.1 \d+/gm, "");
+    });
+    const closed = new Promise((resolve) => socket.on("close", resolve));
+    socket.on("error", () => {});
+    const request = `GET ${url.pathname} HTTP/1.1\r\nHost: ${url.host}\r\n\r\n`;
+    socket.write(request);
+    while (replies.length < 1) await new Promise((resolve) => setTimeout(resolve, 20));
+    // Past Node's default 5 s keep-alive timeout, then the client sends in the same tick, before
+    // the server's overdue idle timer has run: the race the CI run hit (fetch failed).
+    const until = Date.now() + 6000;
+    while (Date.now() < until);
+    socket.write(request);
+    const deadline = Date.now() + 3000;
+    while (replies.length < 2 && !socket.destroyed && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.deepEqual(replies, [200, 200]);
+    socket.end();
+    await closed;
   } finally {
     m.cleanup();
   }

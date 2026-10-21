@@ -142,6 +142,10 @@ function ensureListening(): Promise<{ server: Server; port: number }> {
     });
     // Neither the listener nor a browser's keep-alive socket may hold the process open.
     server.on("connection", (socket) => socket.unref());
+    // The server never closes an idle keep-alive socket: with Node's 5 s default, a client could
+    // send on it in the instant the server closed it, and the fetch or Approve POST failed (#153).
+    // The client closes its own idle sockets, and closePageServer ends any left.
+    server.keepAliveTimeout = 0;
     server.once("error", (err) => {
       listening = undefined;
       reject(err);
