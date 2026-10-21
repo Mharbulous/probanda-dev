@@ -96,8 +96,9 @@ other question runs the duties in their numbered order.
    the layer directly.
 2. **Tier 3 text, from `research_filing__law_folder_text`.** The agent's grant
    cannot open a `.docx` or `.doc`. The tool extracts text-layer PDFs, `.docx` and
-   `.doc` inside the data server, with no host Python or package; a scanned PDF
-   holds almost no text and comes back `ocr_unavailable`. Before each spawn
+   `.doc` inside the data server, with no host Python or package; a PDF with any
+   scanned or OCR'd page comes back `ocr_unavailable`, because a scanned page's
+   text layer is never read. Before each spawn
    or re-invocation, call `research_filing__law_folder_text` with the matter root
    and each issue's `6. LAW\<issue>\` folder. Pass its rows verbatim in the spawn
    prompt's `6. LAW listing and extracted text:` field, and name every
