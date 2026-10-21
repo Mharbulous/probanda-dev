@@ -69,6 +69,9 @@ what a rule means. Writes go through the clerk. A question of law met on the way
    verbatim with its subrule, the source URL and the fetch date. A prompt carrying passages
    skips the clerk's first spawn. Relay any open item other than an approval as
    `shared/deadline-isolation.md` "Calling docket-clerk" says, and re-spawn with the answer.
+   A clerk reply that already carries drafted records answering a procedural-research item
+   (description `resolves: assumption:<id>`) goes straight to step 4: there is no amending
+   text to fetch.
 4. **Approve one record at a time** under `/show-me`. For each drafted record the clerk
    returns, show the current shipped row in full, the proposed record in full and the source
    passage itself, then ask for approve, change or reject. Never batch the asks, and never
