@@ -201,7 +201,8 @@ test("configure_credential's page checks the key, then saves it where every serv
   assert.match(html, /Connected to Probanda's Cloud/);
   assert.ok(!html.includes("sb_secret_GOODKEY"), "the page does not echo the key");
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, `${PROJECT}/rest/v1/principle?select=principle_id&limit=1`);
+  assert.equal(calls[0].url, `${PROJECT}/functions/v1/items-sync`);
+  assert.deepEqual(calls[0].body, {});
   assert.equal(calls[0].headers.apikey, "sb_secret_GOODKEY_0123456789");
   assert.deepEqual(await loadCloudKey(), { configured: true, supabaseUrl: PROJECT, staticKey: "sb_secret_GOODKEY_0123456789" });
   await assert.rejects(() => call("key_request__submit"), /already holds Probanda's key/);

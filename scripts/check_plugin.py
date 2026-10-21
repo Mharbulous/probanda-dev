@@ -173,12 +173,15 @@ DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # is exempt: it is the plugins' Supabase surface. canlii, files, timecamp and
 # contacts-calendars-email must carry neither
 # 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
-# go to Probanda's Cloud, but only through the three items functions: every
-# 'functions/v1/' path in it must be items-write, items-sync or items-seed, and it must
-# carry no other functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
+# go to Probanda's Cloud, but only through the three items functions and the two
+# key-request functions that let a practitioner ask for Probanda's key (Brahm,
+# 2026-10-20): every 'functions/v1/' path in it must be items-write, items-sync,
+# items-seed, key-request-submit or key-request-status, and it must carry no other
+# functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
 # bundle is not checked for any other Supabase use, such as a Supabase client library.
 PURITY_SERVERS = ("data", "canlii", "files", "timecamp", "contacts-calendars-email")
-DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed")
+DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed",
+                       "functions/v1/key-request-submit", "functions/v1/key-request-status")
 _FUNCTIONS_PATH = re.compile(r"functions/v1/[a-z0-9_-]*")
 HOST_PATH_SERVERS = ("data", "canlii", "commons", "files", "timecamp", "contacts-calendars-email")
 
@@ -1405,7 +1408,7 @@ CHECKS = (
      "ships in a built plugin", check_shipped_path_registry),
     ("bundle-purity: no canlii or files dist bundle carries 'supabase' or 'legal_commons__'; the data "
      "bundle carries no 'legal_commons__', no '/rest/v1/' and no 'functions/v1/' path but items-write, "
-     "items-sync and items-seed", check_bundle_purity),
+     "items-sync, items-seed, key-request-submit and key-request-status", check_bundle_purity),
     ("sources-host-guard: the data server's sources module fetches only over https from allowed "
      "hosts, SOURCES_ALLOWED_HOSTS as expected, guarded before every request", check_sources_host_guard),
     ("fetch-grant-allowlist: only allowlisted agents grant sources__fetch, each present one under "

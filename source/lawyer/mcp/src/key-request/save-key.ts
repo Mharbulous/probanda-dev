@@ -46,15 +46,19 @@ async function saveKey(typed: string, env: NodeJS.ProcessEnv): Promise<void> {
   }
 }
 
-// One cheap authenticated read, so a wrong but plausible key fails here with a
-// clear cause instead of on a later write. It is the read the key has always
-// been checked with: one row of the legal commons, which only Probanda's key reads.
+// One cheap authenticated call, so a wrong but plausible key fails here with a
+// clear cause instead of on a later write. An empty body to items-sync reads
+// nothing: it gets 401 for a wrong key and a 200 refusal (no tenant) for a good
+// one (cloud/items/README.md). The data server reaches Probanda's Cloud only
+// through the items functions and the key-request functions (check_plugin.py,
+// bundle-purity).
 async function probe(supabaseUrl: string, staticKey: string): Promise<void> {
   let res: Response;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/principle?select=principle_id&limit=1`, {
-      method: "GET",
-      headers: { apikey: staticKey, Authorization: `Bearer ${staticKey}`, Accept: "application/json", "Accept-Profile": "legal_commons" },
+    res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: staticKey },
+      body: "{}",
     });
   } catch (error) {
     throw new ValidationError(
