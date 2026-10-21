@@ -25,7 +25,7 @@ export function fixturePreviewDir(): string {
 }
 
 /** The last line of every fixture preview, after the page's own text. */
-export const FIXTURE_PREVIEW_MARKER = "<!-- probanda:fixture-preview -->";
+export const FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 
 /** `set` composed with `overrides` (file name to text) in place of its inlined files. An override
  * naming no file of the set is refused, so a misspelt name never previews the unchanged page. */
