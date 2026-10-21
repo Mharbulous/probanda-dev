@@ -96,11 +96,16 @@ var sourcesFetcher = createSourceFetcher(() => SOURCES_ALLOWED_HOSTS, HTTPS_TRAN
 
 CHECK_NAMES = [
     "roster-sanity", "reserved-name", "description-no-xml-tags", "description-length",
-    "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "bundle-purity",
+    "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "shipped-path-registry", "bundle-purity",
     "sources-host-guard", "fetch-grant-allowlist", "recital-rule-mirror", "bundle-no-host-path",
     "bundle-schema-ceiling", "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
     "hook-matchers", "dependencies", "unique-names", "layering", "file-ops",
 ]
+# The real registry pins the real repo's skills, so the fixture pins a file alpha ships.
+SHIPPED_PATHS = (
+    {"path": "alpha/references/rules.md", "literal": '"alpha/references/rules.md"',
+     "source": "src/repo-root.ts", "server": "data"},
+)
 # One matcher of each kind the hook-matchers check reads, and two it lets through.
 HOOKS = {
     "PreToolUse": [{"matcher": "Bash|mcp__(.+__)?plugin_probanda_data__sources__fetch", "hooks": []},
@@ -153,6 +158,7 @@ class Fixture:
         self.write(src + "commons-mcp/dist/legal-commons-mcp.js",
                    '// src/index.ts\nvar client = "supabase"; var tool = "legal_commons__browse";\n')
         self.write(src + "mcp/src/submission/migrate.ts", "from migrate_engine import MigrateError, run\n")
+        self.write(src + "mcp/src/repo-root.ts", 'const RULES = "alpha/references/rules.md";\n')
 
         s = ".claude/skills/"
         self.write(s + "alpha/SKILL.md", SOURCE_SKILL_MD)
@@ -240,6 +246,9 @@ class FixtureTest(unittest.TestCase):
         self.fixture.write("reference_unshipped_baseline.json", json.dumps({"known_unshipped": []}) + "\n")
         patcher = mock.patch.object(check_plugin, "REFERENCE_UNSHIPPED_BASELINE",
                                     os.path.join(self.fixture.root, "reference_unshipped_baseline.json"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch.object(check_plugin, "SHIPPED_PATH_REGISTRY", SHIPPED_PATHS)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -333,6 +342,15 @@ class TestPlantedViolations(FixtureTest):
         self.fixture.write(".claude/skills/drafting-data/references/scripts/migrate_engine.py",
                            ENGINE.replace("def run(request):", "def run2(request):"))
         self.assertOnlyFails("entry-point-registry", "'run' not found at top level")
+
+    def test_shipped_path_registry_literal(self):
+        self.fixture.write("source/probanda/mcp/src/repo-root.ts", 'const RULES = "alpha/references/law.md";\n')
+        self.assertOnlyFails("shipped-path-registry", "src/repo-root.ts no longer holds")
+
+    def test_shipped_path_registry_unshipped(self):
+        unshipped = {**SHIPPED_PATHS[0], "path": "alpha/references/missing.md"}
+        with mock.patch.object(check_plugin, "SHIPPED_PATH_REGISTRY", (unshipped,)):
+            self.assertOnlyFails("shipped-path-registry", "no built plugin ships skills/alpha/references/missing.md")
 
     def test_bundle_purity(self):
         self.fixture.write("source/probanda/canlii-mcp/dist/canlii-mcp.js",
@@ -723,6 +741,7 @@ class TestSecondPlugin(FixtureTest):
 
     NOT_APPLICABLE = {
         "entry-point-registry": "solicitor ships no server that imports a pinned entry point",
+        "shipped-path-registry": "solicitor ships no server that resolves a pinned skills-tree path",
         "bundle-purity": "solicitor ships neither the data nor the canlii server",
         "sources-host-guard": "solicitor does not ship the data server",
         "fetch-grant-allowlist": "solicitor ships no agent",
