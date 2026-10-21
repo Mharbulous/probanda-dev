@@ -66,3 +66,20 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Find the registrations (**UNVERIFIED**: `source/researcher/commons-mcp/src`), the page module, and what `source/mcp-shared/` and `source/lawyer/mcp/src/cloud-key.ts` already share. Re-read the §2 skill sites.
+
+### Verification against HEAD (2026-10-20, at 3f2e570f)
+
+| Claim or pointer | Found at HEAD |
+|---|---|
+| Registration of `key_request__submit` and `key_request__status` | `source/researcher/commons-mcp/src/schema-gen.ts`, `keyRequestToolDefinitions()`, added unconditionally to `buildToolDefinitions()`. Routed in `src/dispatch.ts` by `isKeyRequestToolName`. Logic, page and status call in `src/key-request/tools.ts`. No registration gate: `ListTools` always returns the full list. |
+| The page module | `src/key-page.ts`: the page `legal_commons__configure_credential` serves, plus the `page`, `escape` and `readBody` helpers that `key-request/tools.ts` imports. Both pages are node:http on 127.0.0.1, port 0, one newest link. |
+| `legal_commons__configure_credential` | Defined in `schema-gen.ts`, routed in `legal-commons/tools.ts` (`configureCredential`, `saveCredential`: rejects the publishable key, probes `principle` in the `legal_commons` schema, then persists). Persists through `legal-commons/config.ts` `persistLegalCommonsCredential` to `credentialPath()`. |
+| What `source/mcp-shared/` shares | `commons-key.js`: `BAKED_SUPABASE_URL`, `credentialPath()` (`credential.json.dpapi` in the state dir) and `loadCommonsKey()`. `dpapi-store.js`: the encrypted store. No write function for the credential. |
+| One credential file serves both servers | Confirmed. `source/lawyer/mcp/src/cloud-key.ts` wraps `loadCommonsKey`, and the data server reads it on every practice write (`practice/cloud.ts`) and in `practice_data__config_status`. The commons server reads the same file once, at start (`index.ts` `createDispatchContext`), so a key saved by another process reaches it only after a restart. |
+| The request record | `key-request.json.dpapi` in the state dir, read and written only by `key-request/tools.ts`. |
+| §2 skill sites | `probanda-setup` step 7.3 (line 61) matches the quote. `legal-commons` §Configuration is lines 212-239. Further sites that name the moved tools: `practice-data` Conventions (line 92), `suggestion` (line 25), `draft/references/suggestion-box.md` (line 9), `legal-research` step 0 (lines 47-48). |
+| Hints naming the tools | Commons `legal-commons/client.ts` (not-configured error), `suggestion-box/tools.ts` (no-key error), the `suggestion_box__submit` and `legal_commons__configure_credential` descriptions, `mcp-shared/commons-key.js` (stderr line), lawyer `cloud-key.ts` (reason). |
+| Layering | `scripts/check_layering.py` lists `key_request__` as a commons tool family. `source/layering.json` holds "commons server" conditional rulings for `practice-data` and `probanda-setup` that exist only for the key request. |
+| Bundles | `scripts/bundle.mjs` builds the data server from `index.ts`, which reaches `dispatch.ts`. The file-manager `files` bundle starts at `file-manager-index.ts`, whose dispatch imports only file_ops and housekeeping modules and `buildFileManagerToolDefinitions()`. A module imported only from `dispatch.ts` stays out of the `files`, `timecamp` and `contacts-calendars-email` bundles. No bundle script change is needed. |
+| Hook matchers | No `plugin.json` matcher names either tool or `legal_commons__configure_credential`. Researcher's `commons-read-only` matcher names write tools only. Its test lists `configure_credential` among the pool's read tools and reads the tracked bundle, and `test_agent_shim_contract.py` names `legal_commons__configure_credential`. |
+| Tests naming the moved tools | Researcher `test/key-request.test.mjs`, `test/legal-commons.test.mjs` (configure_credential), `test/suggestion-box.test.mjs` and `test/troubleshoot.test.mjs` (hint text). Lawyer `test/cloud-key.unit.test.mjs` and `test/practice-cloud.unit.test.mjs` (reason text). |
