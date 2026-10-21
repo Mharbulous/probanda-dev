@@ -11,7 +11,7 @@
 // label (ADR 0021 D2). Built from the board design template (board.css). The page itself is the
 // template set in src/templates/work-board/ (map #125); this module adds only the data line.
 
-import { composeTemplate } from "../../compose-template.js";
+import { type ComposedTemplate, composeTemplate, type TemplateSet } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import workBoardCss from "../../templates/work-board/work-board.css.js";
 import workBoardHtml from "../../templates/work-board/work-board.html.js";
@@ -52,14 +52,20 @@ export interface PracticeBoardData {
   excluded_test_matters: number;
 }
 
-const { head: HEAD, tail: TAIL } = composeTemplate("work-board.html", {
-  "work-board.html": workBoardHtml,
-  "board.css": boardCss,
-  "work-board.css": workBoardCss,
-  "work-board.js": workBoardJs,
-});
+export const WORK_BOARD_TEMPLATE: TemplateSet = {
+  entry: "work-board.html",
+  files: {
+    "work-board.html": workBoardHtml,
+    "board.css": boardCss,
+    "work-board.css": workBoardCss,
+    "work-board.js": workBoardJs,
+  },
+};
 
-/** The data line starts at column 0 and every `<` is escaped, so no recorded text can close the script. */
-export function renderPracticeBoardHtml(data: PracticeBoardData): string {
-  return `${HEAD}window.PRACTICE_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};\n${TAIL}`;
+const PAGE = composeTemplate(WORK_BOARD_TEMPLATE.entry, WORK_BOARD_TEMPLATE.files);
+
+/** The data line starts at column 0 and every `<` is escaped, so no recorded text can close the script.
+ * `page` is the composed template, a preview's own in place of the board's. */
+export function renderPracticeBoardHtml(data: PracticeBoardData, page: ComposedTemplate = PAGE): string {
+  return `${page.head}window.PRACTICE_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};\n${page.tail}`;
 }

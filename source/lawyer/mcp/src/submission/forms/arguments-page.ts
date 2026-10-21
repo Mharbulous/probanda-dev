@@ -18,7 +18,7 @@
 //
 // The page itself is the template set in src/templates/view-pages/ (map #125).
 
-import { composeTemplate } from "../../compose-template.js";
+import { templated } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import argumentsCss from "../../templates/view-pages/arguments.css.js";
 import argumentsHtml from "../../templates/view-pages/arguments.html.js";
@@ -189,14 +189,17 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const ARGUMENTS_PAGE: ViewPage = {
   name: "Arguments",
-  ...composeTemplate("arguments.html", {
-    "arguments.html": argumentsHtml,
-    "view-head.html": viewHeadHtml,
-    "board.css": boardCss,
-    "view-folder.css": viewFolderCss,
-    "arguments.css": argumentsCss,
-    "shared.js": sharedJs,
-    "arguments.js": argumentsJs,
+  ...templated({
+    entry: "arguments.html",
+    files: {
+      "arguments.html": argumentsHtml,
+      "view-head.html": viewHeadHtml,
+      "board.css": boardCss,
+      "view-folder.css": viewFolderCss,
+      "arguments.css": argumentsCss,
+      "shared.js": sharedJs,
+      "arguments.js": argumentsJs,
+    },
   }),
   data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
 };

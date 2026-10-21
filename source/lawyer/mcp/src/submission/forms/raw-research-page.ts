@@ -21,7 +21,7 @@
 // database until a session records one (spec §9.1: no). It adds no wording, summary or rating to a
 // proposition. The citation line is the mockups' own (lawStatementCitationLine), so the two never drift.
 
-import { composeTemplate } from "../../compose-template.js";
+import { templated } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import rawResearchCss from "../../templates/view-pages/raw-research.css.js";
 import rawResearchHtml from "../../templates/view-pages/raw-research.html.js";
@@ -346,13 +346,16 @@ function rawResearchFor(dbPath: string, proceedingId: number, ids: number[], mer
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const RAW_RESEARCH_PAGE: ViewPage = {
   name: "Raw Research",
-  ...composeTemplate("raw-research.html", {
-    "raw-research.html": rawResearchHtml,
-    "view-head.html": viewHeadHtml,
-    "board.css": boardCss,
-    "raw-research.css": rawResearchCss,
-    "shared.js": sharedJs,
-    "raw-research.js": rawResearchJs,
+  ...templated({
+    entry: "raw-research.html",
+    files: {
+      "raw-research.html": rawResearchHtml,
+      "view-head.html": viewHeadHtml,
+      "board.css": boardCss,
+      "raw-research.css": rawResearchCss,
+      "shared.js": sharedJs,
+      "raw-research.js": rawResearchJs,
+    },
   }),
   data: (ctx) => buildRawResearchData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
 };

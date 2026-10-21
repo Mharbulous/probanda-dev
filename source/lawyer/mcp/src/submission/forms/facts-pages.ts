@@ -28,7 +28,7 @@
 //
 // Each page is an entry template in src/templates/view-pages/ (map #125), sharing facts.css and facts.js.
 
-import { composeTemplate } from "../../compose-template.js";
+import { templated } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import factsCss from "../../templates/view-pages/facts.css.js";
 import factsJs from "../../templates/view-pages/facts.js.js";
@@ -249,12 +249,12 @@ const SHARED = { "view-head.html": viewHeadHtml, "board.css": boardCss, "facts.c
 
 export const PROCEDURAL_HISTORY: ViewPage = {
   name: "Procedural History",
-  ...composeTemplate("procedural-history.html", { "procedural-history.html": proceduralHistoryHtml, ...SHARED }),
+  ...templated({ entry: "procedural-history.html", files: { "procedural-history.html": proceduralHistoryHtml, ...SHARED } }),
   data: proceduralHistoryData,
 };
 
 export const MATERIAL_FACTS: ViewPage = {
   name: "Material Facts",
-  ...composeTemplate("material-facts.html", { "material-facts.html": materialFactsHtml, ...SHARED }),
+  ...templated({ entry: "material-facts.html", files: { "material-facts.html": materialFactsHtml, ...SHARED } }),
   data: materialFactsData,
 };
