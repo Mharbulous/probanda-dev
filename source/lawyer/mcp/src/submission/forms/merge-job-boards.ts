@@ -4,7 +4,8 @@
 // (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, every board it
 // had absorbed is re-pointed to the survivor, and its statement of goals is appended, with its own
 // status, to the survivor's `merged` list and its own row removed. No job, loose thread or Writing
-// row is written: each section is drawn on its survivor's page at the next render.
+// row is written: at the next render the survivor's page draws every board on it as one board
+// (combined-board.ts).
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";

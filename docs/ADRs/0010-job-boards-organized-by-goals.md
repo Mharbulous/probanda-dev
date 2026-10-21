@@ -13,6 +13,14 @@ ADR 0033 (CoClerk, 2026-10-05 amendment) drew one Job Board page per live Writin
 - **One set of view pages per board**, covering every Writing and proceeding on it. A merged Material Facts page (Provable Facts until ADR 0011) lists the survivor's Writing's facts in its own order, then each other Writing's facts not already listed, in its own order. Drafting facts carried no date, so a date order was considered and dropped. Since ADR 0011 a procedural fact carries the date of its step, and the merged Procedural History page lists the board's procedural facts, each once, in date order.
 - **A split** divides a board with more than one goal along goals the practitioner names. The session then proposes which Writings serve each side, and the facts, law and arguments follow the Writings that use them. A Writing is never divided. Specified now, built when first needed.
 
+## Amendment 2026-10-21: a merged board is drawn as one board
+
+The survivor's page first drew each merged board as its own section, each with its own Completion Criteria card and lanes, so the page held two of every panel. It now draws one board: one Completion Criteria card and one panel per lane, holding every Writing's jobs, each job once and naming the Writing it serves. board_summary and board_card read the same one board by any of its Writings' ids.
+
+- Criteria combine by id. A combined criterion is unmet while any Writing's is unmet, pending while any is pending, and met only when every Writing's is met. Where the Writings word it differently (a pre-filing and a pre-send gate), each Writing's wording is shown, named by its Writing. A criterion only one Writing holds names that Writing.
+- A deadline criterion is never combined: each Writing keeps its own, named by its Writing.
+- This is presentation only. Each Writing keeps its own documents, numbering, jobs and criteria, and each filing's gate still blocks only its own filing: one filing's gate being met never marks the other's met.
+
 ## Considered options
 
 - **Keep one Writing per page and move only jobs**: meets no requirement that the work be seen together, and leaves four view pages per Writing.

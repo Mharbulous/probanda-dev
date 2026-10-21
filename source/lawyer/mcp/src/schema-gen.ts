@@ -1664,8 +1664,11 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and " +
         "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
         "a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. " +
-        "The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and " +
-        "Writings, and one set of view pages across all its Writings, named by the survivor's id; the absorbed board's " +
+        "The survivor's page then draws the merged boards as one board: one Completion Criteria card and one set of " +
+        "lanes holding every board's jobs, each job naming the Writing it serves, and board_summary and board_card read " +
+        "that one board by any of its Writings' ids. Criteria combine by id and read unmet while any Writing's is unmet; " +
+        "each Writing's own gate still blocks only its own filing. One set of view pages spans all its Writings, named " +
+        "by the survivor's id; the absorbed board's " +
         "pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the " +
         "survivor's, and boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. " +
         "Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per " +
@@ -2125,7 +2128,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit " +
         "it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file " +
         "of the filing's: only when documents names Work_board does its entry carry board_summary in place of " +
-        "markdown (a retired filing's entry always carries it), the one section of this filing's Job Board page as " +
+        "markdown (a retired filing's entry always carries it), the board on this filing's Job Board page (on a merged " +
+        "board, the whole board, whichever of its Writings rendered) as " +
         "a short fixed-grammar summary: `# Job Board — Matter <matter no> <matter description> · Client <client " +
         "name> (<client no>) · Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or " +
         "`none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of " +
@@ -2155,7 +2159,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top " +
         "of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from " +
         "practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 " +
-        "amendments), a merged board's page holding every section merged into it (drafting_data__merge_job_boards): " +
+        "amendments), a merged board's page drawing every board merged into it as one board (drafting_data__merge_job_boards): " +
         "`Job Board <id>.html` per live Writing and " +
         "`Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; " +
         "a job with no filing_id is on every Writing's " +
@@ -2222,7 +2226,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("board_card"),
       description:
         "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when " +
-        "opened. " +
+        "opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws " +
+        "it, by any of its Writings' ids, each job line naming its Writing after its title. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
         "lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +
@@ -2340,7 +2345,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the " +
         "matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per " +
         "proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no " +
-        "Writing, a merged board's page holding every section merged into it (ADR 0033, 2026-10-05 amendments; " +
+        "Writing, a merged board's page drawing every board merged into it as one board (ADR 0033, 2026-10-05 amendments; " +
         "drafting_data__merge_job_boards): `Job Board " +
         "<id>.html` and `Job Board - proceeding <id>.html`, named by id so a retitle never moves a page; a job with " +
         "no filing_id is on every Writing's " +
