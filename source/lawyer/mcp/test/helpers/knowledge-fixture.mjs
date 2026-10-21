@@ -4,7 +4,7 @@
 // APPDATA, whose `_practice\knowledge\` is the overlay. No checkout resolves.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -18,7 +18,7 @@ function write(path, text) {
 }
 
 export function knowledgeFixture(t) {
-  const scratch = mkdtempSync(join(tmpdir(), "coclerk-knowledge-"));
+  const scratch = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-knowledge-")));
   t.after(() => rmSync(scratch, { recursive: true, force: true }));
   // Two folders below the scratch dir, so the sibling scan (the folders beside the install
   // and two levels up) reads this fixture alone and never the machine's whole temp dir.

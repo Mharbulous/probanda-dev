@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   utimesSync,
@@ -23,8 +24,8 @@ const { checkCoverageLine } = await import("../build/files/coverage-line.js");
 /** A throwaway Downloads folder plus an initialized matter with a 0. DRAFT folder, a 6. LAW tree, a
  * look-alike, and a firewall zone. */
 function fixture() {
-  const downloads = mkdtempSync(join(tmpdir(), "coclerk-downloads-"));
-  const matter = mkdtempSync(join(tmpdir(), "coclerk-filing-matter-"));
+  const downloads = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-downloads-")));
+  const matter = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-filing-matter-")));
   const files = {
     "6. LAW/Issue/2020 BCSC 1.pdf": "already filed\n",
     "6. LAW junk/x.pdf": "x\n",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -12,7 +12,7 @@ const SUFFIX = " (trashed 2026-09-14 093005)";
 
 /** A throwaway matter folder with a coclerk.json, drafts, a firewall zone and a TRASH folder. */
 function matterFixture() {
-  const root = mkdtempSync(join(tmpdir(), "coclerk-trash-matter-"));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-trash-matter-")));
   const files = {
     "coclerk.json": "{}",
     "0. DRAFT/x.md": "draft body\n",

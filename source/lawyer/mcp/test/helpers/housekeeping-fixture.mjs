@@ -1,7 +1,7 @@
 // Synthetic matter trees for the /housekeeping tool tests. Never a live matter.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
@@ -24,7 +24,7 @@ const TEMPLATE_DIRS = [
  * that matter-data folder and a throwaway template tree.
  */
 export function matterFixture(files = {}, { dirs = MATTER_DIRS } = {}) {
-  const base = mkdtempSync(join(tmpdir(), "coclerk-hk-"));
+  const base = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-hk-")));
   const root = join(base, "Matter");
   const caseData = join(base, "Matter case data");
   const template = join(base, "template");
