@@ -65,6 +65,18 @@ audit because the question is narrower, not because a check was skipped. It stat
 law — never build a conclusion on it; re-dispatch in opinion mode over any criterion
 you intend to rely on.
 
+**Approved plan issues become jobs.** The practitioner's "No" at the end of the
+`/legal-research` gate's step 2a approves the numbered list it answers. In a session
+holding no job, where a board resolves, write one research job per listed issue by
+`/drafting-data` §3l: its title and intent are the issue's text as the list showed it,
+and its one step is the plan marker (`/drafting-data`'s `jobs-create.md` §3, "The plan
+marker"). A skipped issue gets no job, and the jobs need no further approval: the "No"
+is the request. Then re-render the Job Board and stop. Writing the jobs dispatches
+nothing: each job's research runs through the gate when the job is worked. A session
+holding a `/draft` job writes no job: the approved issues are the issues steps 3 to 5
+run. With no board, write nothing, say in one line that the matter has no board to add
+jobs to, and run steps 3 to 5 on the approved issues.
+
 **A caller working a `/draft` job checks its lock before every dispatch.** Immediately
 before each `research-paralegal` dispatch and each audit-agent spawn or re-invocation
 below, run `/drafting-data`'s lock read before a dispatch on that job. Only the caller's

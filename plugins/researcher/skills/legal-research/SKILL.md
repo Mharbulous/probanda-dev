@@ -64,15 +64,25 @@ permitted to make statements of law.
 2a. Plan, before any search. Spawn `research-agent` with `mode: plan`
    (`shared/legal-audit-scoped.md`), the question, the factual context, the matter root,
    the `Preflight:` rows and the issue folders' `6. LAW\` listing
-   (`research_filing__list_law_folder`), by file name only. Relay its return verbatim: each
-   issue as a question, the sources to check for it in order, and the completion test. Ask
-   the practitioner to approve it, change it in their own words, or waive it. Steps 3 to 5
-   dispatch nothing until they approve or waive. A change goes back to the agent as a
-   fresh plan dispatch, and its plan is asked again. The approved plan's issues are the
-   issues the later steps run. The plan states no law, and you add none to it. Skip this
-   step on step 5's re-invocation, on a currency check asked on its own, and for a
-   question whose plan the practitioner already approved in this session. With nobody
-   present to approve, dispatch nothing further: report the plan and stop.
+   (`research_filing__list_law_folder`), by file name only. Then take the practitioner
+   through its issues one at a time:
+   - Ask each issue as its own multiple-choice question, the issue's text verbatim from
+     the return, with the options "Yes, research it" and "No, skip it", up to four
+     questions per form. A skipped issue is dropped. With no multiple-choice tool in the
+     session, show the issues as a numbered list and take the answers in plain text.
+   - After the last form, show only the numbered list of approved issues and the
+     question "Are there any other issues that you would like this research to cover?"
+     Add no sentence about what an answer does.
+   - When they add an issue, add it in their words, show the full numbered list again and
+     ask "Are there any more issues that you would like this research job to cover?"
+   - Their "No" approves the list. What follows is the doctrine's
+     (`shared/legal-research.md`, "Approved plan issues become jobs").
+   They may instead waive the whole plan, and steps 3 to 5 then run the question as
+   asked. Steps 3 to 5 dispatch nothing until they approve or waive. The plan states no
+   law, and you add no issue of your own. Skip this step on step 5's re-invocation, on a
+   currency check asked on its own, for a question whose plan the practitioner already
+   approved in this session, and for a held job whose title is an issue approved here.
+   With nobody present to approve, dispatch nothing further: report the plan and stop.
 3. Run Westlaw before the audit, without asking unless the practitioner declined: for each issue no pinpointable
    text in tiers 1–3 answers (a handoff's say-so is no check), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),

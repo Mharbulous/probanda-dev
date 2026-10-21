@@ -72,6 +72,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Create a pass finding job | A pre-review pass (`/draft`'s letter passes or overstatement review) leaves a finding undecided in the turn it states it | `references/jobs-stock.md` §3g |
 | Create the conversion job | The practitioner accepts `/draft`'s conversion offer after the Sent write on an `unstructured` or `unstructured-<recipient>` Writing | `references/jobs-stock.md` §3h |
 | Create a research offer job | The practitioner names a relayed `/legal-research` Step 5 offer to add | `references/jobs-stock.md` §3i |
+| Create research plan issue jobs | The practitioner answers "No" to `/legal-research`'s closing plan question, approving the listed issues | `references/jobs-stock.md` §3l |
 | Create a scrutiny review job | A scrutiny return is recorded `'failed'` on a statement linked to a live Writing, or a failed statement is linked to one again | `references/jobs-stock.md` §3d |
 | Assign a job (`drafting_data__assign_job`; semantics §4) | The practitioner picks a Ready job, or says yes to a take-over prompt | `references/jobs-run.md` §4 |
 | Approve a plan | `/draft` stamps the plan it announced for the job this session holds, under the standing announce-and-proceed rule, or the practitioner changes it | `references/jobs-run.md` §5 |
