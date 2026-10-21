@@ -278,25 +278,38 @@ a narrower direct tool path such as your own CanLII calls,
 and do not present citations the audit did not verify — an "unverified" caveat does
 not cure an unverified statement of law. The only paths forward are the ones the
 agent offered (fix the missing source or key, run the hand-off research, accept the
-preliminary impression), and the practitioner chooses among them.
+preliminary impression), and the practitioner chooses among them. A caller holding a
+`/draft` job takes the held-job rule below instead: on a job the agent's memo always
+answers, and its gaps become steps on the job.
 
 **After the answer, the caller persists it.** This rule covers the return of
 the `research-agent` agent, or whichever law-audit agent the gate dispatched.
 Any such return that states law with pinpoint citations is persisted, and so is
 a Mixed-coverage return (one saying "More research is needed on the following
-issues"), which is not a closed gate even where it reports layers unavailable.
+issues", or on a job one whose `Gaps` name a tier not run), which is not a closed gate
+even where it reports layers unavailable.
 Verified pinpoints are not a precondition: filing its cited decisions puts on
 disk the full text that verifying them needs.
 
 **On a held job, an open tier is not an answer.** A return to a caller working a `/draft`
 job whose `Gaps` section names a tier not run (`gap: <issue> : tiers not run: <tier>`,
-anything but `none`) is a pipeline step, not an answer: save nothing yet. Run each named
-tier: Westlaw by duty 3 on that issue, legislation by duty 4 for that instrument (its whole
-text), and an UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke the same
-agent with `Re-invocation: yes`, naming the new files. Repeat while a gap names a tier not
-yet run for that issue in this question: each tier runs at most once per issue. A tier
-that stops by the rules above (a Westlaw stop, a refusal the practitioner keeps, a
-fetcher stop) stops as they say. A caller holding no job keeps the single loop above.
+anything but `none`) is a pipeline step, not an answer: save nothing yet. First
+add one step to the held job for each tier it names, by `/drafting-data`'s partial replace
+(`jobs-run.md` §5), appended after the steps already on it, which keep their words and stamps, such as
+`Run the Westlaw query on <issue>`, `Fetch the full text of <citation>` or `Read <file>`,
+then `Put the question to /legal-research again with the new sources`. A tier only the
+practitioner can open, such as a missing key or credential, gets a step in the practitioner's
+name with its fix, listed for them under Movers (`/draft` `references/job-session.md`). Then
+work the steps: Westlaw by duty 3 on that issue, legislation by duty 4 for that instrument
+(its whole text), and an UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke
+the same agent with `Re-invocation: yes`, naming the new files. Repeat while a gap names a
+tier not yet run for that issue in this question: each tier runs at most once per issue. A
+step is stamped done only once its work has run, never while a return still names its tier
+not run. A tier that stops by the rules above (a Westlaw stop, a refusal the practitioner
+keeps, a fetcher stop) stops as they say, and its step stays open. Once no gap names a tier
+this session can run, persist the last return by the order below: its Conclusion answers
+the question, and the job stays open on each step not yet done (`/draft`
+`references/job-session.md`, Complete). A caller holding no job keeps the single loop above.
 
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.

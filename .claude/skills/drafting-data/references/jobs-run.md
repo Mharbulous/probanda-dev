@@ -93,7 +93,7 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
   WHERE id = 2 AND locked_by = 'sess-a1';
 ```
 
-One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. Then run the confirm-read below and read it as below.
+One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. It is also the write that adds a step for each tier a held research job's return names as not run (`shared/legal-research.md`, "On a held job, an open tier is not an answer"): its `INSERT` with no `DELETE`, so every step already on the job keeps its row and its stamp. Then run the confirm-read below and read it as below.
 
 **The pickup rewrite.** `/draft`'s pickup review (`draft/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
 
@@ -126,7 +126,7 @@ UPDATE tickets SET title = 'Reply to the letter of 3 May'
 
 It touches no step and no stamp. The title is the card's title with only a misspelled word corrected. Then run the confirm-read below and read it as below.
 
-If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above.
+If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/draft`'s `job-session.md`, "A form is one job") is appended by the partial replace's `INSERT` with no `DELETE`, so done steps keep their stamps, and is written with the stamp only once the practitioner re-approves the read-back list.
 
 **The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
 

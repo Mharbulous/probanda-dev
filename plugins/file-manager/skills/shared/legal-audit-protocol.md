@@ -254,9 +254,19 @@ Decide per issue whether the audit supports a solid statement of law.
   notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`, or
   `gap: <issue> : tiers not run: none` when every tier has run on it. Name each tier as
   the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
-  <the parts not on disk>]`, `6. LAW: <file> UNREAD`. A tier that ran on part of an
+  <the parts not on disk>]`, `6. LAW: <file> UNREAD`, `Commons: NOT AUDITED: <state>`,
+  `CanLII: <citation> NOT NOTED UP`. A tier that ran on part of an
   instrument or a subject has not run on the rest. The line says what was not searched,
   never what the law is.
+
+**On a job, the memo always answers.** When the spawn prompt's `Job question:` is not
+`none`, Step 4 has no closed gate and no mandated sentence: write the memo whatever the
+coverage. Each sub-issue's Conclusion answers the job question from the sources held, each
+proposition with its pinpoint. A sub-issue that no held authority answers is answered in one
+sentence naming what was searched: `No authority located in <the tiers searched>.` The
+Conclusion never defers to further research, offers research or names a tier not run.
+Those stay in the header's `Confidence:` line and in the notes' `Gaps` lines, one for each
+sub-issue in the shape above, so the caller can run them.
 
 A **preliminary impression** (only on request) uses the identical format as a
 statement of law — principles, pinpoint citations, factual comparison — but expressed
@@ -275,6 +285,8 @@ with concrete offers: what further research would close each gap, and whether it
 needs CanLII (key), the commons pool, or a Westlaw Deep Research run (hand-off packet
 below). Each authority you located but could not pinpoint gets its own offer in the shape shown under the non-negotiable rule: citation,
 proposition, and that its text was not read.
+On a job, write no offer for work on the job question: each such gap is its `gap:` line.
+An offer there is only for a point outside the job question.
 
 End every offer with ` live_issue: yes` when it bears on the spawn prompt's `Question:`
 as asked, and ` live_issue: no` when it does not, such as an adjacent point the audit
@@ -314,8 +326,8 @@ Would you like me to read the four other example files and check each for the ex
 
 ### Step 6 — Return shape (opinion mode only)
 
-When Step 4 lets you state law (every issue well supported, mixed coverage, or a
-preliminary impression the practitioner asked for), write the notes and the memo to
+When Step 4 lets you state law (every issue well supported, mixed coverage, a
+preliminary impression the practitioner asked for, or any job's memo), write the notes and the memo to
 the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
@@ -360,8 +372,8 @@ the scratchpad, in this order, and return only item 3:
      nothing else, flags where a court could distinguish them, and reaches no
      conclusion about the matter. Say in one sentence that applying the law to the
      matter's own facts is `/apply-to-facts`'s job.
-   - Mixed coverage: the first `## Conclusion` opens with Step 4's mandated sentence,
-     word for word. A preliminary impression uses Step 4's hedged wording and repeats
+   - Mixed coverage with `Job question: none`: the first `## Conclusion` opens with Step 4's mandated sentence,
+     word for word. On a job, each Conclusion answers as Step 4's "On a job" rule says. A preliminary impression uses Step 4's hedged wording and repeats
      which checks are missing.
 
    Before returning, also save the memo, from its `---` line to its last line and

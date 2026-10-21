@@ -63,7 +63,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Read job state | Before an `execute` script that writes a substance table (the scope read), or after an assign, an outline afresh or a release (their confirm-reads) | `references/jobs-common.md` §2 |
 | Check the lock before a research dispatch | Immediately before each `research-paralegal` dispatch and each law-audit agent spawn made while this session holds a job | `references/jobs-common.md` §2, "Lock read before a dispatch" |
 | Create a job | An outlining session writes the jobs the practitioner selected at the closing read-back, or a Proposal the practitioner picked. Every path that creates a job, and where its wording comes from, is listed in §3, "Who may create a job" | `references/jobs-create.md` §3 |
-| Outline afresh | The practitioner asks to rework a `queued`, unshelved job | `references/jobs-create.md` §3a |
+| Outline afresh | The practitioner asks to rework a `queued`, unshelved job, or adds a part to a queued form job | `references/jobs-create.md` §3a |
 | Intake | The practitioner pulls Proposals onto the board: a group or filter named, "take the next" with Ready empty, or a typed task naming a submission; the lines are the `proposed` lane's (`drafting_forms__board_card`, `lanes: ["proposed"]`) | `references/jobs-create.md` §3e |
 | Spin off blocker jobs | The practitioner says yes to the spin-off offered on an obstacle in the job this session holds | `references/jobs-create.md` §3f |
 | Create the loose-threads job | The practitioner says to work on the loose threads in a session holding no job; that job then consumes each thread it works | `references/jobs-create.md` §3j |

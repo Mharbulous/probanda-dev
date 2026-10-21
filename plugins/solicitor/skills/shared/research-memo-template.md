@@ -98,4 +98,5 @@ part, write one `### Sub-issue` per part, in order, with the format's sections u
 at `####`. With one part, write no sub-issue heading and put the format's sections at
 `###` under `## Issue`. No other issue or topic heading: a finding beyond the job question
 goes in the notes as a Step 5 offer, never in the memo. `## Authorities` stays at the
-top level, once.
+top level, once. Each `Conclusion` answers its part from the sources held and never defers to further research
+(`shared/legal-audit-protocol.md` Step 4, "On a job, the memo always answers").

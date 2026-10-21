@@ -128,7 +128,9 @@ permitted to make statements of law.
    layers unavailable, or offers only a preliminary impression — relay its
    confidence summary and research offers verbatim and stop. Nothing is saved
    until the practitioner chooses. A closed gate is
-   never a licence to answer the question yourself.
+   never a licence to answer the question yourself. A caller holding a `/draft` job never
+   relays and stops on gaps: it adds them to the job as steps and works them by the
+   doctrine's "On a held job, an open tier is not an answer".
 
 If step 1's read fails, the gate still holds: steps 2–5 are the complete minimum
 protocol. If the `research-agent` agent itself is unavailable, report that the
