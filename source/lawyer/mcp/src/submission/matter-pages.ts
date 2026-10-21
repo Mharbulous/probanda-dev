@@ -33,6 +33,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { buildStampStatus } from "../build-stamp.js";
+import type { ComposedTemplate } from "../compose-template.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { fileOpsTrash, type TrashResult } from "../file_ops/trash.js";
 import { attachedDrafts } from "./board-attachments.js";
@@ -280,6 +281,9 @@ function stem(fileName: string): string {
  * `Provable Facts - Job Board <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011). */
 const OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 
+/** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
+const PREVIEW_FILE = / preview \d+\.html$/i;
+
 /** Whether this generator wrote the file: a page marker, or a revision the Job Board's older layouts carried. */
 function generatorWrote(file: string): boolean {
   const text = readFileSync(file, "utf-8");
@@ -303,7 +307,7 @@ function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "m
     .map((e) => join(draftDir, e.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (!entry.isFile() || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
+      if (!entry.isFile() || PREVIEW_FILE.test(entry.name) || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
       if (dir === draftDir && targets.includes(entry.name.toLowerCase())) continue;
       const file = join(dir, entry.name);
       try {
@@ -361,7 +365,10 @@ export function buildMatterPages(
   /** The matter's dates, for the Job Board pages' HTML files only: never a section, the state file or
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
-  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {},
+  /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
+   * Strategy and Job Board templates, and whole view pages by name. Omitted, every page is the board's. */
+  templates: { matterBoard?: ComposedTemplate; jobBoard?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
@@ -399,7 +406,7 @@ export function buildMatterPages(
       writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
     };
   };
-  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos));
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos), templates.matterBoard);
   const jobBoards = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
     const sections = distinctRows(built.map((b) => b.section));
@@ -417,14 +424,15 @@ export function buildMatterPages(
       court_file: sections.flatMap((s) =>
         s.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null)
       ),
-    });
+    }, templates.jobBoard);
   });
   const viewPages = viewsWritten.map((v) => {
     const [first] = v.writings;
+    const page = templates.views?.[v.page.name] ?? v.page;
     return renderViewPageHtml(
-      v.page,
+      page,
       { filing: v.writings.map((w) => w.filing.title).join("; "), matter: meta.matter, client: meta.client, revision, rendered: now },
-      v.page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
+      page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
     );
   });
   const html = [matterBoard, ...jobBoards, ...viewPages];

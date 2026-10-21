@@ -9,6 +9,20 @@ import {
   SOURCE_KINDS,
 } from "./tools/practice/rule-overlay.js";
 
+/** The pages pages__template serves, as src/pages/preview.ts PAGE_TEMPLATES names them. Written out
+ * here so the files bundle, which builds its schemas from this module too, carries no board. */
+const PAGE_NAMES = [
+  "Work Board",
+  "Litigation Strategy",
+  "Job Board",
+  "Procedural History",
+  "Material Facts",
+  "Raw Research",
+  "Arguments",
+  "Loose Threads",
+  "Housekeeping approval",
+];
+
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -1228,6 +1242,37 @@ export function fileToolDefinitions(): ToolDefinition[] {
           status: { type: "string", enum: ["new", "approved", "approved in part", "rejected"] },
         },
         required: ["op", "suggestion_id"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "pages__template",
+      description:
+        "Return one page's template files, the source its HTML is generated from: {page, entry, files: {<file name>: <text>}}. `entry` is the file composing starts from: it pulls in the others with @@include(<name>)@@ and marks the data line with @@data@@. Reads no file and no page. Change a copy of any file's text and pass it to pages__preview (the Housekeeping approval page's to housekeeping__preview) as an override.",
+      inputSchema: {
+        type: "object",
+        properties: { page: { type: "string", enum: PAGE_NAMES } },
+        required: ["page"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
+      name: "pages__preview",
+      description:
+        "Render one page with `overrides` (template file name to replacement text, from pages__template) in place of its own template files, write it as `<page file name> preview <n>.html`, and return {path}, never the HTML: present the file to the practitioner as a file card and never read it. An override naming no file of the page is refused. `data: \"fixture\"` draws placeholder data and writes into the fixture preview folder (`<OS temp folder>\\Probanda fixture previews`), the only preview the Suggestion Box takes; it takes no other input. `data: \"real\"` draws the practitioner's own data, stays on this machine, and is written beside the page it previews: the Work Board's beside practice.db (no other input); any other page's in the matter's draft folder, with `matter_root`, plus `filing_id` or `proceeding_id` for a Job Board and `filing_id` for a view page. A real Loose Threads preview's buttons are cut off from the listener, so they change nothing. The Housekeeping approval page is housekeeping__preview's.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          page: { type: "string", enum: PAGE_NAMES.filter((name) => name !== "Housekeeping approval") },
+          overrides: { type: "object", additionalProperties: { type: "string" } },
+          data: { type: "string", enum: ["fixture", "real"] },
+          matter_root: { type: "string" },
+          filing_id: { type: "integer", minimum: 1 },
+          proceeding_id: { type: "integer", minimum: 1 },
+        },
+        required: ["page", "data"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },
@@ -2982,6 +3027,23 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
         type: "object",
         properties: matterRun,
         required: ["matter_root", "run_id"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "housekeeping__preview",
+      description:
+        "Render the approval page with `overrides` (template file name to replacement text, from pages__template with page \"Housekeeping approval\") in place of its own template files, write it as `Housekeeping approval preview <n>.html`, and return {path}, never the HTML: present the file to the practitioner as a file card and never read it. An override naming no file of the page is refused. `data: \"fixture\"` draws placeholder data, before approval or, with `approved: true`, after, and writes into the fixture preview folder (`<OS temp folder>\\Probanda fixture previews`), the only preview the Suggestion Box takes. `data: \"real\"` draws one run's proposal and recorded approval (`matter_root` and `run_id`), stays on this machine, and is written in that run's folder; its Submit approves nothing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          overrides: { type: "object", additionalProperties: { type: "string" } },
+          data: { type: "string", enum: ["fixture", "real"] },
+          approved: { type: "boolean" },
+          ...matterRun,
+        },
+        required: ["data"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },

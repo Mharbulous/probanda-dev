@@ -14,21 +14,28 @@
 // stack, dark mode through prefers-color-scheme, a sticky footer tally. The script keeps plain
 // ES5-style strings: no backticks.
 
-import { composeTemplate } from "../compose-template.js";
+import { type ComposedTemplate, composeTemplate, type TemplateSet } from "../compose-template.js";
 import { ACTION_GROUPS, type Approval, INFORMATION_ONLY, type Proposal } from "./proposal.js";
 import approvalCss from "./templates/approval.css.js";
 import approvalHtml from "./templates/approval.html.js";
 import approvalJs from "./templates/approval.js.js";
 
-const PAGE = composeTemplate("approval.html", { "approval.html": approvalHtml, "approval.css": approvalCss, "approval.js": approvalJs });
-// The matter name goes in the title, just before its closing tag.
-const TITLE_END = PAGE.head.indexOf("</title>");
+export const APPROVAL_TEMPLATE: TemplateSet = {
+  entry: "approval.html",
+  files: { "approval.html": approvalHtml, "approval.css": approvalCss, "approval.js": approvalJs },
+};
+
+const PAGE = composeTemplate(APPROVAL_TEMPLATE.entry, APPROVAL_TEMPLATE.files);
 const CSS = "\n" + approvalCss + "\n";
 
-export function renderApprovalPage(proposal: Proposal, approval: Approval | null): string {
+/** `page` is the composed template, a preview's own in place of the page's. */
+export function renderApprovalPage(proposal: Proposal, approval: Approval | null, page: ComposedTemplate = PAGE): string {
   const data = JSON.stringify({ proposal, approval, groups: Object.entries(ACTION_GROUPS), info: INFORMATION_ONLY }).replace(/</g, "\\u003c");
   const matter = proposal.matter_root.split(/[\\/]/).filter(Boolean).pop() ?? proposal.matter_root;
-  return PAGE.head.slice(0, TITLE_END) + escapeHtml(matter) + PAGE.head.slice(TITLE_END) + data + PAGE.tail;
+  // The matter name goes in the title, just before its closing tag.
+  const titleEnd = page.head.indexOf("</title>");
+  if (titleEnd < 0) throw new Error("the approval page's template has no </title> before its data marker");
+  return page.head.slice(0, titleEnd) + escapeHtml(matter) + page.head.slice(titleEnd) + data + page.tail;
 }
 
 /** The page shown for a token that no longer works. */

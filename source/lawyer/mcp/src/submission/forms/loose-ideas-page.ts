@@ -35,7 +35,7 @@
 // The page itself is the template set in src/templates/view-pages/ (map #125). loose-threads.css
 // includes view-folder.css itself, because the folder look sits between its header rules and the rest.
 
-import { composeTemplate } from "../../compose-template.js";
+import { templated } from "../../compose-template.js";
 import { pageApiPort, pageApiToken } from "../../page-api/token.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import looseThreadsCss from "../../templates/view-pages/loose-threads.css.js";
@@ -186,14 +186,17 @@ export const LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const LOOSE_IDEAS_PAGE: ViewPage = {
   name: LOOSE_THREADS_PAGE_NAME,
-  ...composeTemplate("loose-threads.html", {
-    "loose-threads.html": looseThreadsHtml,
-    "view-head.html": viewHeadHtml,
-    "board.css": boardCss,
-    "loose-threads.css": looseThreadsCss,
-    "view-folder.css": viewFolderCss,
-    "shared.js": sharedJs,
-    "loose-threads.js": looseThreadsJs,
+  ...templated({
+    entry: "loose-threads.html",
+    files: {
+      "loose-threads.html": looseThreadsHtml,
+      "view-head.html": viewHeadHtml,
+      "board.css": boardCss,
+      "loose-threads.css": looseThreadsCss,
+      "view-folder.css": viewFolderCss,
+      "shared.js": sharedJs,
+      "loose-threads.js": looseThreadsJs,
+    },
   }),
   data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
   metaExtra: looseIdeasMeta,

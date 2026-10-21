@@ -13,6 +13,13 @@ export interface ComposedTemplate {
   tail: string;
 }
 
+/** A board's template files as inlined (name to text) and the entry composeTemplate starts from. The
+ * preview tools (src/pages/) compose the same set with a session's overrides in place of files. */
+export interface TemplateSet {
+  entry: string;
+  files: Readonly<Record<string, string>>;
+}
+
 function expand(name: string, files: Readonly<Record<string, string>>, chain: string[]): string {
   if (chain.includes(name)) throw new Error(`template include cycle: ${[...chain, name].join(" -> ")}`);
   const text = files[name];
@@ -30,4 +37,9 @@ export function composeTemplate(entry: string, files: Readonly<Record<string, st
   const [head, tail] = parts;
   if (head.includes("@@") || tail.includes("@@")) throw new Error(`template "${entry}" holds a leftover @@ after composing`);
   return { head, tail };
+}
+
+/** A template set with its composed page, for a registry entry that keeps both. */
+export function templated(template: TemplateSet): ComposedTemplate & { template: TemplateSet } {
+  return { template, ...composeTemplate(template.entry, template.files) };
 }

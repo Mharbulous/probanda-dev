@@ -14,6 +14,7 @@ import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js
 import { preflight } from "./housekeeping/preflight.js";
 import { reconcile } from "./housekeeping/reconcile.js";
 import { resolveRun } from "./housekeeping/resolve.js";
+import { housekeepingPreview, type HousekeepingPreviewArgs } from "./housekeeping/preview.js";
 import { servePage } from "./housekeeping/server.js";
 import { waitApproval } from "./housekeeping/wait.js";
 
@@ -84,6 +85,10 @@ export async function callFileManagerTool(name: string, rawArgs: unknown): Promi
 
   if (name === "housekeeping__serve_page") {
     return servePage(args.matter_root as string, args.run_id as string);
+  }
+
+  if (name === "housekeeping__preview") {
+    return housekeepingPreview(args as unknown as HousekeepingPreviewArgs);
   }
 
   if (name === "housekeeping__wait_approval") {

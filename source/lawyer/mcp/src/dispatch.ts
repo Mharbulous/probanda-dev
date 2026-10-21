@@ -81,6 +81,7 @@ import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
 import { preferencesRead, preferencesWrite, suggestionLogRead, suggestionLogWrite } from "./preferences/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
+import { pagesPreview, pagesTemplate, type PreviewArgs } from "./pages/preview.js";
 import {
   appendManifest,
   fileDownload,
@@ -547,6 +548,14 @@ export async function callTool(
 
   if (name === "suggestion_log__write") {
     return suggestionLogWrite(args);
+  }
+
+  if (name === "pages__template") {
+    return pagesTemplate(args.page as string);
+  }
+
+  if (name === "pages__preview") {
+    return pagesPreview(args as unknown as PreviewArgs, context.practiceDb);
   }
 
   if (name === "sources__fetch") {

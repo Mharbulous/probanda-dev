@@ -18,7 +18,7 @@
 // The page itself is the template set in src/templates/matter-board/ (map #125); this module adds
 // only the data line.
 
-import { composeTemplate } from "../../compose-template.js";
+import { type ComposedTemplate, composeTemplate, type TemplateSet } from "../../compose-template.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import matterBoardCss from "../../templates/matter-board/matter-board.css.js";
 import matterBoardHtml from "../../templates/matter-board/matter-board.html.js";
@@ -30,15 +30,21 @@ export const MATTER_BOARD_FILE = "Litigation Strategy.html";
 /** On the page's root element. The overwrite guard recognises this server's own page by it. */
 export const MATTER_BOARD_MARKER = "data-matter-board-shell";
 
-const { head: HEAD, tail: TAIL } = composeTemplate("matter-board.html", {
-  "matter-board.html": matterBoardHtml,
-  "board.css": boardCss,
-  "matter-board.css": matterBoardCss,
-  "matter-board.js": matterBoardJs,
-});
+export const LITIGATION_STRATEGY_TEMPLATE: TemplateSet = {
+  entry: "matter-board.html",
+  files: {
+    "matter-board.html": matterBoardHtml,
+    "board.css": boardCss,
+    "matter-board.css": matterBoardCss,
+    "matter-board.js": matterBoardJs,
+  },
+};
+
+const PAGE = composeTemplate(LITIGATION_STRATEGY_TEMPLATE.entry, LITIGATION_STRATEGY_TEMPLATE.files);
 
 /** The data line starts at column 0 with meta.revision as its first key, and every `<` is escaped
- * so no filing title or to-do description can close the script. */
-export function renderMatterBoardHtml(data: MatterBoardData): string {
-  return `${HEAD}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};\n${TAIL}`;
+ * so no filing title or to-do description can close the script. `page` is the composed template, a
+ * preview's own in place of the board's. */
+export function renderMatterBoardHtml(data: MatterBoardData, page: ComposedTemplate = PAGE): string {
+  return `${page.head}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};\n${page.tail}`;
 }
