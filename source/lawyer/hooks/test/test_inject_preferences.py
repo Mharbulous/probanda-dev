@@ -43,8 +43,16 @@ def test_injects_active_entries_from_the_local_file(tmp_path):
                               entry("lawyer:show-me", "Old habit.", retired_on="2026-10-18")])
     text = context(run(config))
     assert text.startswith("Your saved preferences")
-    assert "- lawyer:draft: Use short paragraphs." in text
+    assert "- lawyer:draft: Use short paragraphs. (created 2026-10-19)" in text
     assert "Old habit." not in text
+
+
+def test_the_framing_says_to_refuse_a_conflict_by_quoting_the_rule_and_its_date(tmp_path):
+    text = context(run(setup(tmp_path, [entry("lawyer:draft", "Use short paragraphs.")])))
+    assert "Refuse a request that conflicts with one by quoting it and its date" in text
+    assert "on <date> you created the rule, `<the rule>`" in text
+    assert "\"Approved\" never adopts it" in text
+    assert "created_on date" in context(run(tmp_path / "absent" / "probanda.json"))
 
 
 def test_points_to_the_tool_when_the_config_is_out_of_reach(tmp_path):

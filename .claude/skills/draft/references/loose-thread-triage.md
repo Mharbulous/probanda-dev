@@ -41,7 +41,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 **Step 4. Outline or discard only on the practitioner's word.** They say which threads to outline as jobs of their own and which to discard, by rank or by idea. Never infer a discard from a low rank. Which thread the working route above takes is the session's choice, never asked here.
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
-- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job description is session wording: the practitioner-words gate on title, intent and steps applies to it, unless they wrote or adopted it in the conversation. A new job's title is their words cleaned by `/drafting-data` §3's rule, and its intent and steps keep every word, given only §3's capital and full stop.
+- **Pursue.** Outline it under Branch B (`references/job-session.md`). Outlining consumes it. The job's title, intent and steps are worded by `/drafting-data` §3's rule, with no adoption ceremony.
 - **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count) and re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
@@ -54,6 +54,6 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 **Tooling threads go to the Suggestion Box.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. An evaluator weighs each against doing nothing, and no thread is discarded or sent without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
-**Step 5. Record the effort as a Ready job**, outlined in the practitioner's own words: the practitioner-words gate on title, intent and steps applies, and the title is cleaned by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
+**Step 5. Record the effort as a Ready job**, worded by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
 
 Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through `board_card` only, and nothing about time remaining enters a rank, its reason or its job description.

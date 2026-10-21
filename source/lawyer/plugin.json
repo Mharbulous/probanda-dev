@@ -81,6 +81,20 @@
             "statusMessage": "Installed-plugin guard"
           }
         ]
+      },
+      {
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__preferences__write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/rule-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Rule gate"
+          }
+        ]
       }
     ],
     "SessionStart": [

@@ -35,12 +35,18 @@ For a practitioner-initiated suggestion about this session, do the same. For one
 
 ## 3. Path A: Solved
 
-1. Say what happened and offer the preference: "I see we first had trouble with [the pains], and we got there by [the fixes]. Shall I remember to do it this way for you from now on?"
-2. **On yes:** write it with `preferences__write({op: "add", skill, instruction})`.
-   - The instruction is generic and names no client, matter, person, document or path. A refusal from the tool is a question to answer, then write again.
+A preference is a Rule (`shared/paralegal-posture.md` section 9): it is made only in the practitioner's own words, and the Rule gate hook refuses any other.
+
+1. Say what happened and offer the preference: "I see we first had trouble with [the pains], and we got there by [the fixes]. Would you like a rule for this from now on? If so, say it in your own words." You may show a suggested wording in a code block for them to paste. Never save it on a yes to the suggestion alone.
+2. **Once they have stated it,** ask exactly: "Do you want me to enforce that rule for all future sessions?" **On yes:** write it with `preferences__write({op: "add", skill, instruction})`, the instruction their words exactly as they said them.
+   - The instruction is generic and names no client, matter, person, document or path. A refusal from the tool is a question to put to the practitioner, who restates the rule in their own words, then write again.
    - Apply the preference for the rest of this session too.
    - If the tool reports that `person` is unset, say that preferences need the person key set once through `practice_data__upsert_firm_profile`, and continue without it.
 3. **Then offer the suggestion,** if posting is available (section 1): "This might help other lawyers too. Shall I draft a suggestion for the Probanda team?" On yes, go to section 5.
+
+**Enforcing and changing a Rule.** A later request that conflicts with a saved Rule is refused: "I cannot do X because on [date] you created the rule, `Never do X`. If you want me to do X you must first change or remove that rule." The session may then show new wording in a code block. "Approved" does not adopt it: "Changes to rules must come from your own words. To adopt this as the new rule, you must cut & paste the above modified rule into chat." Once the practitioner pastes it or types their own, retire the old Rule with `preferences__write({op: "retire", id})` and add the new one in their words. A Rule binds only the practitioner who made it, in sessions where a Probanda skill was invoked. A practitioner may make a Rule that extends the gate to other situations, for themselves only, and may reverse it.
+
+**The Global Rule.** The gate itself is a Global Rule: it applies to every user, and no practitioner can change it, even in their own words. Only the Probanda team can. A suggestion to change it goes to the Probanda team through section 5.
 
 ## 4. Path B: Gap
 

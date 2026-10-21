@@ -32,10 +32,10 @@ class VacuousStepReadBackTest(unittest.TestCase):
         )
         self.assertIn("A step that equals or contains the title or the intent names no work", self.rule)
 
-    def test_read_back_names_it_and_proposes_by_adoption(self):
+    def test_read_back_names_it_and_rewrites_it_with_no_adoption(self):
         self.assertIn("only restates the request and so names no work", self.rule)
-        self.assertIn("by the adoption ceremony (`shared/paralegal-posture.md` section 3)", self.rule)
-        self.assertIn("Assign nothing and write nothing.", self.rule)
+        self.assertIn("with no adoption ceremony (`shared/paralegal-posture.md` section 3)", self.rule)
+        self.assertIn("Assign nothing and write nothing until it is rewritten.", self.rule)
 
     def test_never_announced_and_the_job_does_not_proceed(self):
         self.assertIn("never dispatch on it, and never ask whether it is still right.", self.rule)

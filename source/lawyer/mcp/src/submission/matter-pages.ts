@@ -881,7 +881,7 @@ function todoText(section: WorkBoardData, todos: MatterTodos): string {
  * it has one. Everything else on the board is drafting_forms__board_card's.
  *
  * There a Proposal line is `- <glyph> <title>` with a detail line opening `  key:`, under
- * `## Proposed` or `## Shelved`, which the practitioner-words gate reads titles from. A job's
+ * `## Proposed` or `## Shelved`. A job's
  * `  keys:` line prints each held key as `<key> = "<stored item>" (now: <glyph> "<current item>")`
  * when a Proposal in any lane carries that key, and `<key> = "<stored item>" (now: dead)` when none
  * does -- a Proposal held on this filing gets no line of its own, so that is where a session reads
