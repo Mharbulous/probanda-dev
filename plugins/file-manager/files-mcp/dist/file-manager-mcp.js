@@ -1,4 +1,4 @@
-// build-stamp: a228528b4e4a
+// build-stamp: 030abcc11035
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15580,6 +15580,22 @@ function housekeepingToolDefinitions() {
       annotations: { destructiveHint: false, openWorldHint: false }
     },
     {
+      name: "housekeeping__preview",
+      description: 'Render the approval page with `overrides` (template file name to replacement text, from pages__template with page "Housekeeping approval") in place of its own template files, write it as `Housekeeping approval preview <n>.html`, and return {path}, never the HTML: present the file to the practitioner as a file card and never read it. An override naming no file of the page is refused. `data: "fixture"` draws placeholder data, before approval or, with `approved: true`, after, and writes into the fixture preview folder (`<OS temp folder>\\Probanda fixture previews`), the only preview the Suggestion Box takes. `data: "real"` draws one run\'s proposal and recorded approval (`matter_root` and `run_id`), stays on this machine, and is written in that run\'s folder; its Submit approves nothing.',
+      inputSchema: {
+        type: "object",
+        properties: {
+          overrides: { type: "object", additionalProperties: { type: "string" } },
+          data: { type: "string", enum: ["fixture", "real"] },
+          approved: { type: "boolean" },
+          ...matterRun
+        },
+        required: ["data"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
       name: "housekeeping__wait_approval",
       description: `Wait for the practitioner to press Submit on a run's page. Returns as soon as approval.json exists: {status: "approved", approved_at, rows}. After about 45 s returns {status: "pending"} -- not an error; call again. Returns {status: "invalidated", newer_run} as soon as a newer run directory exists for the matter, proposal or not. Returns {status: "corrupt", file, problem} when approval.json is there but unreadable: tell the practitioner and apply nothing. If the practitioner says "done", call once more; if they say stop, end the run without applying.`,
       inputSchema: {
@@ -17259,9 +17275,9 @@ function readProposal(runDir, runId, root) {
   return { proposal: parsed };
 }
 function requireProposal(runDir, runId, root) {
-  const { proposal, problem } = readProposal(runDir, runId, root);
-  if (!proposal) throw new DataServerError(`run ${runId}: ${problem}`, "invalid_proposal");
-  return proposal;
+  const { proposal: proposal2, problem } = readProposal(runDir, runId, root);
+  if (!proposal2) throw new DataServerError(`run ${runId}: ${problem}`, "invalid_proposal");
+  return proposal2;
 }
 function readApproval(runDir, runId) {
   let text;
@@ -17282,8 +17298,8 @@ function readApproval(runDir, runId) {
   return { approval: parsed };
 }
 function requireApproval(runDir, runId) {
-  const { approval, problem } = readApproval(runDir, runId);
-  if (approval) return approval;
+  const { approval: approval2, problem } = readApproval(runDir, runId);
+  if (approval2) return approval2;
   if (problem) {
     throw new DataServerError(
       `run ${runId}: the saved approval ${pathWin326.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
@@ -17363,29 +17379,29 @@ function templateRoot(env = process.env) {
 async function resolveRun(matterRoot, runId, env = process.env) {
   const matter = openMatter(matterRoot);
   const dir = existingRunDir(matter, runId);
-  const proposal = requireProposal(dir, runId, matter.root);
-  const approval = requireApproval(dir, runId);
-  return { run_id: runId, approved_at: approval.approved_at, rows: resolveRows(matter, proposal, approval, readJournal(dir), env) };
+  const proposal2 = requireProposal(dir, runId, matter.root);
+  const approval2 = requireApproval(dir, runId);
+  return { run_id: runId, approved_at: approval2.approved_at, rows: resolveRows(matter, proposal2, approval2, readJournal(dir), env) };
 }
-function resolveRows(matter, proposal, approval, journal, env) {
-  return checkRows(planRows(matter, proposal, approval, journal, env), proposal, env);
+function resolveRows(matter, proposal2, approval2, journal, env) {
+  return checkRows(planRows(matter, proposal2, approval2, journal, env), proposal2, env);
 }
 function needsJournalLine(res) {
   return res.move || res.kind === "invalid";
 }
-function planRows(matter, proposal, approval, journal, env) {
-  const rows = new Map(proposal.rows.map((r) => [r.row_id, r]));
+function planRows(matter, proposal2, approval2, journal, env) {
+  const rows = new Map(proposal2.rows.map((r) => [r.row_id, r]));
   const template = new TemplateTree(env);
   const out = [];
-  for (const entry of approval.rows) {
-    const row2 = rows.get(entry.row_id);
-    const oldPath = row2 ? pathWin327.join(matter.root, row2.current_path) : "";
-    const decision = row2 ? decide(proposal, row2) : { kind: "invalid", error: "the row is not in proposal.json" };
+  for (const entry of approval2.rows) {
+    const row3 = rows.get(entry.row_id);
+    const oldPath = row3 ? pathWin327.join(matter.root, row3.current_path) : "";
+    const decision = row3 ? decide(proposal2, row3) : { kind: "invalid", error: "the row is not in proposal.json" };
     const res = { row_id: entry.row_id, kind: decision.kind, move: false, old_path: oldPath, folders_to_create: [], ok: false };
     const line = journal.get(entry.row_id);
     if (line) res.journal = line;
     if (decision.answer !== void 0) res.answer = decision.answer;
-    out.push({ res, row: row2, decision });
+    out.push({ res, row: row3, decision });
     if (decision.error) {
       res.failure = decision.error;
       continue;
@@ -17405,7 +17421,7 @@ function planRows(matter, proposal, approval, journal, env) {
     res.checks = {
       name: { verdict: "not_checked" },
       clash: { ok: true },
-      folder: folderCheck(matter.root, decision, folder, row2, proposal, template)
+      folder: folderCheck(matter.root, decision, folder, row3, proposal2, template)
     };
     res.name = decision.name;
     res.new_path = pathWin327.join(folder.abs, decision.name);
@@ -17413,13 +17429,13 @@ function planRows(matter, proposal, approval, journal, env) {
   }
   return out;
 }
-function checkRows(planned, proposal, env) {
+function checkRows(planned, proposal2, env) {
   const groups = [];
   const gates = /* @__PURE__ */ new Map();
   for (const item of planned) {
     const { res, decision } = item;
     if (!res.checks || decision.keep) continue;
-    const tokens = folderEntry(proposal, decision.folderRel)?.flag_tokens ?? [];
+    const tokens = folderEntry(proposal2, decision.folderRel)?.flag_tokens ?? [];
     let g = groups.findIndex((x) => x.flag_tokens.join("\0") === tokens.join("\0"));
     if (g < 0) g = groups.push({ names: [], flag_tokens: tokens }) - 1;
     gates.set(item, { group: g, index: groups[g].names.push(decision.name) - 1 });
@@ -17427,11 +17443,11 @@ function checkRows(planned, proposal, env) {
   const results = groups.length ? runNameGate(groups, env) : [];
   const claimed = /* @__PURE__ */ new Map();
   for (const item of planned) {
-    const { res, row: row2, decision } = item;
+    const { res, row: row3, decision } = item;
     if (!res.checks) continue;
     const gate = gates.get(item);
     if (gate) {
-      res.checks.name = nameVerdict(results[gate.group][gate.index], row2, decision, proposal);
+      res.checks.name = nameVerdict(results[gate.group][gate.index], row3, decision, proposal2);
     }
     res.checks.clash = clashCheck(res, claimed);
     const failed = [res.checks.folder, res.checks.clash].find((c) => !c.ok);
@@ -17442,12 +17458,12 @@ function checkRows(planned, proposal, env) {
   }
   return planned.map((item) => item.res);
 }
-function decide(proposal, row2) {
+function decide(proposal2, row3) {
   const invalid = (error2) => ({ kind: "invalid", error: error2 });
-  const a = row2.action;
-  const currentName = pathWin327.basename(row2.current_path);
-  const currentFolder = pathWin327.dirname(row2.current_path);
-  if (row2.section !== "offered" || !a) return invalid(`the row was not offered for a decision (${row2.section})`);
+  const a = row3.action;
+  const currentName = pathWin327.basename(row3.current_path);
+  const currentFolder = pathWin327.dirname(row3.current_path);
+  if (row3.section !== "offered" || !a) return invalid(`the row was not offered for a decision (${row3.section})`);
   if (INFORMATION_ONLY.includes(a.kind)) return invalid(`the row is information only (${a.kind}): nothing is approved on it`);
   switch (a.kind) {
     case "duplicate":
@@ -17455,7 +17471,7 @@ function decide(proposal, row2) {
     case "unreadable":
       return { kind: "retry" };
     case "draft":
-      return { kind: "draft_unchanged", name: currentName, keep: true, folderRel: proposal.draft_folder };
+      return { kind: "draft_unchanged", name: currentName, keep: true, folderRel: proposal2.draft_folder };
   }
   const folderRel = a.kind === "rename" ? currentFolder : a.folder;
   const name = a.kind === "move" ? currentName : a.name;
@@ -17463,22 +17479,22 @@ function decide(proposal, row2) {
   if (a.file_no_ingest) kind = "file_no_ingest";
   else if (a.final) kind = "final";
   else if (a.answer !== void 0) kind = "answered_question";
-  else if (row2.ingest_outcome === "ingested_by_reference") kind = "ingested_by_reference";
-  else if (row2.ingest_outcome !== "ingested") return invalid(`the file is not ingested (${row2.ingest_outcome}), so it cannot be filed`);
+  else if (row3.ingest_outcome === "ingested_by_reference") kind = "ingested_by_reference";
+  else if (row3.ingest_outcome !== "ingested") return invalid(`the file is not ingested (${row3.ingest_outcome}), so it cannot be filed`);
   else kind = same(folderRel, currentFolder) ? "rename_in_place" : "rename_and_file";
   const decision = { kind, folderRel, name, keep: a.kind === "move" && a.file_no_ingest === true };
   if (kind === "answered_question") decision.answer = a.answer;
   return decision;
 }
-function nameVerdict(gate, row2, decision, proposal) {
+function nameVerdict(gate, row3, decision, proposal2) {
   const folderRel = decision.folderRel;
   const name = decision.name;
-  const precomputed = row2.name_checks.find((c) => c.name === name && same(c.folder, folderRel));
+  const precomputed = row3.name_checks.find((c) => c.name === name && same(c.folder, folderRel));
   if (precomputed && !precomputed.ok) return { verdict: "fail", reason: precomputed.reason ?? `does not pass the check for ${folderRel}` };
   if (gate.flags.length) return { verdict: "fail", reason: `flag token raised: ${gate.flags.join(", ")}`, flags: gate.flags };
   if (gate.verdict === "conforms") return { verdict: "pass" };
   if (precomputed?.ok) return { verdict: "pass", reason: "passed the page-build check for this folder" };
-  const secondPass = folderEntry(proposal, folderRel)?.second_pass === true;
+  const secondPass = folderEntry(proposal2, folderRel)?.second_pass === true;
   return { verdict: secondPass ? "second_pass_required" : "fail", reason: gate.reason };
 }
 function clashCheck(res, claimed) {
@@ -17508,16 +17524,16 @@ function mapFolder(root, rel) {
   }
   return { abs, rel: pathWin327.relative(root, abs), missing, ambiguous };
 }
-function folderCheck(root, decision, folder, row2, proposal, template) {
+function folderCheck(root, decision, folder, row3, proposal2, template) {
   if (folder.ambiguous) return { ok: false, reason: `the folder is ambiguous: ${folder.ambiguous}` };
   const problem = destinationProblem(folder.rel.split(pathWin327.sep), decision.kind === "draft_unchanged");
   if (problem) return { ok: false, reason: problem };
   if (decision.kind === "draft_unchanged") {
-    return folder.missing.length ? { ok: false, reason: `${proposal.draft_folder} does not exist` } : { ok: true };
+    return folder.missing.length ? { ok: false, reason: `${proposal2.draft_folder} does not exist` } : { ok: true };
   }
   for (const missing of folder.missing) {
     const rel = pathWin327.relative(root, missing);
-    if (row2.action?.create_folder && same(rel, decision.folderRel)) continue;
+    if (row3.action?.create_folder && same(rel, decision.folderRel)) continue;
     const problem2 = template.creatable(rel.split(pathWin327.sep));
     if (problem2) return { ok: false, reason: problem2 };
   }
@@ -17583,9 +17599,9 @@ function depluralize(name) {
 function childDirs2(dir) {
   return readdirSync7(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
 }
-function folderEntry(proposal, rel) {
+function folderEntry(proposal2, rel) {
   let best;
-  for (const folder of proposal.folders) {
+  for (const folder of proposal2.folders) {
     const f = folder.path.toLowerCase().replace(/\//g, "\\");
     const r = rel.toLowerCase().replace(/\//g, "\\");
     if ((r === f || r.startsWith(f + "\\")) && (!best || folder.path.length > best.path.length)) best = folder;
@@ -17775,18 +17791,18 @@ function rotation(matter, runId) {
   for (let i = earlier.length - 1; i >= 0; i--) {
     const id = earlier[i];
     const dir = pathWin329.join(matter.housekeeping, id);
-    const { proposal } = readProposal(dir, id, matter.root);
-    if (!proposal) continue;
-    const { approval, problem } = readApproval(dir, id);
+    const { proposal: proposal2 } = readProposal(dir, id, matter.root);
+    if (!proposal2) continue;
+    const { approval: approval2, problem } = readApproval(dir, id);
     if (problem) {
       throw new DataServerError(
         `run ${id}: the saved approval ${pathWin329.join(dir, APPROVAL)} is unreadable, so rotation cannot be read from it (if it is only locked, retry): ${problem}`,
         "approval_corrupt"
       );
     }
-    const approved = new Set((approval?.rows ?? []).map((e) => e.row_id));
+    const approved = new Set((approval2?.rows ?? []).map((e) => e.row_id));
     const rotates = (r) => r.section === "offered" && (!approved.has(r.row_id) || INFORMATION_ONLY.includes(r.action.kind));
-    const rotated = new Set(proposal.rows.filter(rotates).map((r) => r.hash));
+    const rotated = new Set(proposal2.rows.filter(rotates).map((r) => r.hash));
     return { previousRun: id, rotated };
   }
   return { previousRun: null, rotated: /* @__PURE__ */ new Set() };
@@ -17887,8 +17903,8 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
   }
   const matter = openMatter(matterRoot);
   const dir = existingRunDir(matter, runId);
-  const proposal = requireProposal(dir, runId, matter.root);
-  if (!proposal.rows.some((r) => r.row_id === rowId)) {
+  const proposal2 = requireProposal(dir, runId, matter.root);
+  if (!proposal2.rows.some((r) => r.row_id === rowId)) {
     throw new DataServerError(`row ${rowId} is not in run ${runId}'s proposal.json`, "unknown_row");
   }
   requireApproval(dir, runId);
@@ -17945,35 +17961,35 @@ async function reconcile(matterRoot, runId, env = process.env) {
   const runs = [];
   for (const id of ids) {
     const dir = existingRunDir(matter, id);
-    const { proposal, problem } = readProposal(dir, id, matter.root);
-    if (!proposal) {
+    const { proposal: proposal2, problem } = readProposal(dir, id, matter.root);
+    if (!proposal2) {
       if (runId !== void 0) throw new DataServerError(`run ${id} cannot be reconciled: ${problem}`, "invalid_proposal");
       continue;
     }
     const saved = readApproval(dir, id);
     if (runId === void 0 && !saved.approval && !saved.problem) continue;
-    const approval = saved.approval ?? requireApproval(dir, id);
+    const approval2 = saved.approval ?? requireApproval(dir, id);
     const journal = readJournal(dir);
-    const planned = planRows(matter, proposal, approval, journal, env);
+    const planned = planRows(matter, proposal2, approval2, journal, env);
     if (!planned.some(({ res }) => needsJournalLine(res) && !journal.has(res.row_id))) continue;
     const rows = [];
-    const all = checkRows(planned, proposal, env);
+    const all = checkRows(planned, proposal2, env);
     for (const res of all) {
       if (journal.has(res.row_id) || !needsJournalLine(res)) continue;
       if (res.kind === "invalid") {
         rows.push(row(res, "unresolvable", "journal_failed", res.failure));
       } else if (res.kind === "trash") {
-        rows.push(await trashRow(matter, proposal, res, all));
+        rows.push(await trashRow(matter, proposal2, res, all));
       } else {
-        rows.push(await moveRow(proposal, res));
+        rows.push(await moveRow(proposal2, res));
       }
     }
-    runs.push({ run_id: id, approved_at: approval.approved_at, rows });
+    runs.push({ run_id: id, approved_at: approval2.approved_at, rows });
   }
   return { runs };
 }
-async function moveRow(proposal, res) {
-  const approved = rowOf(proposal, res.row_id).hash;
+async function moveRow(proposal2, res) {
+  const approved = rowOf(proposal2, res.row_id).hash;
   const newPath = res.new_path;
   const old = await hashAt(res.old_path);
   const dest = await hashAt(newPath);
@@ -17996,8 +18012,8 @@ function notMoved(res) {
   if (res.ok || pendingSecondPass) return row(res, "not_moved", "apply");
   return row(res, "not_moved", "journal_failed", res.failure);
 }
-async function trashRow(matter, proposal, res, all) {
-  const r = rowOf(proposal, res.row_id);
+async function trashRow(matter, proposal2, res, all) {
+  const r = rowOf(proposal2, res.row_id);
   const old = await hashAt(res.old_path);
   if (old.kind === "absent") return row(res, "trashed", "journal_done");
   if (!holds(old, r.hash)) return row(res, "changed", "journal_failed", "changed since approval");
@@ -18016,8 +18032,8 @@ function row(res, state, action, reason) {
   if (reason) out.reason = reason;
   return out;
 }
-function rowOf(proposal, rowId) {
-  const found = proposal.rows.find((r) => r.row_id === rowId);
+function rowOf(proposal2, rowId) {
+  const found = proposal2.rows.find((r) => r.row_id === rowId);
   if (!found) throw new DataServerError(`row ${rowId} is not in proposal.json`, "unknown_row");
   return found;
 }
@@ -18035,11 +18051,10 @@ async function hashAt(path) {
   return { kind: "file", sha256: hash.digest("hex") };
 }
 
-// src/housekeeping/server.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
-import { createReadStream as createReadStream2, existsSync as existsSync12, realpathSync as realpathSync8, statSync as statSync8 } from "node:fs";
-import { createServer } from "node:http";
-import { win32 as pathWin3212 } from "node:path";
+// src/pages/preview-file.ts
+import { mkdirSync as mkdirSync5, writeFileSync as writeFileSync3 } from "node:fs";
+import { tmpdir as tmpdir3 } from "node:os";
+import { join as join6 } from "node:path";
 
 // src/compose-template.ts
 var INCLUDE = /@@include\(([^)]*)\)@@/g;
@@ -18060,6 +18075,79 @@ function composeTemplate(entry, files) {
   if (head.includes("@@") || tail.includes("@@")) throw new Error(`template "${entry}" holds a leftover @@ after composing`);
   return { head, tail };
 }
+
+// src/pages/preview-file.ts
+var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
+function fixturePreviewDir() {
+  return join6(tmpdir3(), FIXTURE_PREVIEW_FOLDER);
+}
+var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
+function composeWithOverrides(set, overrides = {}) {
+  const unknown2 = Object.keys(overrides).filter((name) => !Object.hasOwn(set.files, name));
+  if (unknown2.length > 0) {
+    throw new ValidationError(`overrides name no template file of this page: ${unknown2.join(", ")}. Its files are ${Object.keys(set.files).join(", ")}.`);
+  }
+  const notText = Object.keys(overrides).filter((name) => typeof overrides[name] !== "string");
+  if (notText.length > 0) throw new ValidationError(`each override is a file's whole text, a string: ${notText.join(", ")} is not`);
+  return composeTemplate(set.entry, { ...set.files, ...overrides });
+}
+function writePreview(dir, base, html, fixture) {
+  mkdirSync5(dir, { recursive: true });
+  const text = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
+` : html;
+  for (let n = 1; ; n++) {
+    const path = join6(dir, `${base} preview ${n}.html`);
+    try {
+      writeFileSync3(path, text, { flag: "wx" });
+      return path;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+  }
+}
+
+// src/housekeeping/fixture.ts
+var HASH = "0".repeat(64);
+var row2 = (row_id, current_path, extra) => ({
+  row_id,
+  current_path,
+  hash: HASH,
+  ingest_outcome: "ingested",
+  source_ids: [],
+  section: "offered",
+  name_checks: [],
+  notes: [],
+  ...extra
+});
+var proposal = {
+  run_id: "20260115-090000-fixture",
+  matter_root: "Ashbourne L4801",
+  created_at: "2026-01-15T17:00:00.000Z",
+  header: { open_in_word: ["Draft reply.docx"], folders_not_looked_inside: ["9. ARCHIVE"], finished_line: "Finished 11 files." },
+  folders: [
+    { path: "3. CORRESPONDENCE", exists: true },
+    { path: "4. PLEADINGS", exists: true },
+    { path: "6. LAW", exists: false, flag_tokens: ["SCC", "BCCA"], second_pass: true }
+  ],
+  draft_folder: "0. DRAFT",
+  rows: [
+    row2("r1", "scan0001.pdf", { action: { kind: "file", name: "2026-01-05 LF Sample re Settlement offer.pdf", folder: "3. CORRESPONDENCE" }, name_checks: [{ name: "2026-01-05 LF Sample re Settlement offer.pdf", folder: "3. CORRESPONDENCE", ok: true }] }),
+    row2("r2", "3. CORRESPONDENCE\\letter.pdf", { action: { kind: "rename", name: "2026-01-06 LT Example re Document production.pdf" } }),
+    row2("r3", "Response to civil claim.pdf", { action: { kind: "move", folder: "4. PLEADINGS", file_no_ingest: true } }),
+    row2("r4", "6. LAW\\case.pdf", { action: { kind: "file", name: "Sample v Example 2019 BCSC 0000.pdf", folder: "6. LAW", create_folder: true }, store: "law" }),
+    row2("r5", "Draft reply v2.docx", { action: { kind: "draft" } }),
+    row2("r6", "scan0002.pdf", { action: { kind: "duplicate" }, twin: { path: "3. CORRESPONDENCE\\2026-01-05 LF Sample re Settlement offer.pdf", row_id: "r1", ingested: true } }),
+    row2("r7", "Invoice 0001.pdf", { action: { kind: "misfiled", matter: "L4802" } }),
+    row2("r8", "photo.heic", { action: { kind: "unreadable" }, ingest_outcome: "failed" }),
+    row2("r9", "notes.txt", { action: { kind: "stuck", reason: "No naming rule covers a plain-text note." } }),
+    row2("r10", "Statement of account.pdf", { action: { kind: "file", name: "2026-01-08 Statement of account.pdf", folder: "3. CORRESPONDENCE", answer: "Counterclaim", final: true }, ingest_outcome: "stopped" }),
+    row2("r11", "3. CORRESPONDENCE\\privileged memo.pdf", { section: "ingested_only", store: "privileged", notes: ["Stored as privileged."] }),
+    row2("r12", "large bundle.pdf", { section: "deferred", ingest_outcome: "none", notes: ["Deferred to the next run."] })
+  ],
+  rule_gaps: []
+};
+var approval = { run_id: proposal.run_id, approved_at: "2026-01-15T17:05:00.000Z", rows: [{ row_id: "r1", approve: true }, { row_id: "r3", approve: true }] };
+var HOUSEKEEPING_FIXTURE = { proposal, approval };
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -18262,13 +18350,18 @@ var approval_js_default = `(function () {
 })();`;
 
 // src/housekeeping/page.ts
-var PAGE = composeTemplate("approval.html", { "approval.html": approval_html_default, "approval.css": approval_css_default, "approval.js": approval_js_default });
-var TITLE_END = PAGE.head.indexOf("</title>");
+var APPROVAL_TEMPLATE = {
+  entry: "approval.html",
+  files: { "approval.html": approval_html_default, "approval.css": approval_css_default, "approval.js": approval_js_default }
+};
+var PAGE = composeTemplate(APPROVAL_TEMPLATE.entry, APPROVAL_TEMPLATE.files);
 var CSS = "\n" + approval_css_default + "\n";
-function renderApprovalPage(proposal, approval) {
-  const data = JSON.stringify({ proposal, approval, groups: Object.entries(ACTION_GROUPS), info: INFORMATION_ONLY }).replace(/</g, "\\u003c");
-  const matter = proposal.matter_root.split(/[\\/]/).filter(Boolean).pop() ?? proposal.matter_root;
-  return PAGE.head.slice(0, TITLE_END) + escapeHtml(matter) + PAGE.head.slice(TITLE_END) + data + PAGE.tail;
+function renderApprovalPage(proposal2, approval2, page2 = PAGE) {
+  const data = JSON.stringify({ proposal: proposal2, approval: approval2, groups: Object.entries(ACTION_GROUPS), info: INFORMATION_ONLY }).replace(/</g, "\\u003c");
+  const matter = proposal2.matter_root.split(/[\\/]/).filter(Boolean).pop() ?? proposal2.matter_root;
+  const titleEnd = page2.head.indexOf("</title>");
+  if (titleEnd < 0) throw new Error("the approval page's template has no </title> before its data marker");
+  return page2.head.slice(0, titleEnd) + escapeHtml(matter) + page2.head.slice(titleEnd) + data + page2.tail;
 }
 function stalePage() {
   return simplePage(
@@ -18286,7 +18379,28 @@ function escapeHtml(text) {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
+// src/housekeeping/preview.ts
+var BASE = "Housekeeping approval";
+function housekeepingPreview(args) {
+  const composed = composeWithOverrides(APPROVAL_TEMPLATE, args.overrides);
+  if (args.data === "fixture") {
+    if (args.matter_root !== void 0 || args.run_id !== void 0) throw new ValidationError("fixture data takes no matter_root or run_id");
+    const { proposal: proposal2, approval: approval2 } = HOUSEKEEPING_FIXTURE;
+    return { path: writePreview(fixturePreviewDir(), BASE, renderApprovalPage(proposal2, args.approved ? approval2 : null, composed), true) };
+  }
+  if (args.matter_root === void 0 || args.run_id === void 0) throw new ValidationError("real data needs matter_root and run_id");
+  if (args.approved !== void 0) throw new ValidationError("real data draws the run's approval as recorded: it takes no approved");
+  const matter = openMatter(args.matter_root);
+  const runDir = existingRunDir(matter, args.run_id);
+  const html = renderApprovalPage(requireProposal(runDir, args.run_id, matter.root), readApproval(runDir, args.run_id).approval, composed);
+  return { path: writePreview(runDir, BASE, html, false) };
+}
+
 // src/housekeeping/server.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+import { createReadStream as createReadStream2, existsSync as existsSync12, realpathSync as realpathSync8, statSync as statSync8 } from "node:fs";
+import { createServer } from "node:http";
+import { win32 as pathWin3212 } from "node:path";
 var MAX_BODY = 5 * 1024 * 1024;
 var CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 var FILE_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
@@ -18311,7 +18425,7 @@ var listening;
 async function servePage(matterRoot, runId) {
   const matter = openMatter(matterRoot);
   const runDir = existingRunDir(matter, runId);
-  const proposal = requireProposal(runDir, runId, matter.root);
+  const proposal2 = requireProposal(runDir, runId, matter.root);
   const newest = newestProposalRun(matter);
   if (newest !== runId) {
     throw new DataServerError(`run ${runId} is not the matter's newest run with a proposal (${newest}); serve that one`, "stale_run");
@@ -18321,7 +18435,7 @@ async function servePage(matterRoot, runId) {
   for (const [token2, grant] of grants) if (grant.matter.root.toLowerCase() === key) grants.delete(token2);
   const token = randomBytes3(24).toString("base64url");
   grants.set(token, { matter, runId, runDir });
-  return { url: `http://127.0.0.1:${port}/h/${token}/`, run_id: runId, rows: proposal.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  return { url: `http://127.0.0.1:${port}/h/${token}/`, run_id: runId, rows: proposal2.rows.length, approved: readApproval(runDir, runId).approval !== null };
 }
 function ensureListening() {
   listening ??= new Promise((resolve3, reject) => {
@@ -18364,11 +18478,11 @@ async function handle(req, res) {
   return file(grant, decodeURIComponent(m[3]), res);
 }
 function page(grant, res) {
-  const { proposal, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
-  if (!proposal) {
+  const { proposal: proposal2, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
+  if (!proposal2) {
     return send(res, 500, "text/html; charset=utf-8", simplePage("The page cannot be shown", `The proposal for this run cannot be read (${problem}). Go back to Claude.`));
   }
-  send(res, 200, "text/html; charset=utf-8", renderApprovalPage(proposal, readApproval(grant.runDir, grant.runId).approval));
+  send(res, 200, "text/html; charset=utf-8", renderApprovalPage(proposal2, readApproval(grant.runDir, grant.runId).approval));
 }
 async function approve(grant, req, res) {
   let body;
@@ -18384,14 +18498,14 @@ async function approve(grant, req, res) {
   if (newerRun(grant.matter, grant.runId) !== null) {
     return json(res, 409, { error: "This page is out of date: a newer run has started for this matter. Nothing was approved." });
   }
-  const { proposal, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
-  if (!proposal) {
+  const { proposal: proposal2, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
+  if (!proposal2) {
     return json(res, 500, { error: `The proposal for this run cannot be read (${problem}). Nothing was approved. Go back to Claude.` });
   }
   const v = new Checker();
   validateEntries(v, posted.rows);
   if (v.problems.length) return json(res, 400, { error: `The approval is malformed: ${v.problems.join("; ")}` });
-  const known = new Map(proposal.rows.map((r) => [r.row_id, r]));
+  const known = new Map(proposal2.rows.map((r) => [r.row_id, r]));
   const ids = posted.rows.map((e) => e.row_id);
   const unknown2 = ids.filter((id) => !known.has(id));
   if (unknown2.length) return json(res, 400, { error: `Unknown rows: ${unknown2.join(", ")}. Nothing was approved.` });
@@ -18404,9 +18518,9 @@ async function approve(grant, req, res) {
   }
   const path = pathWin3212.join(grant.runDir, APPROVAL);
   if (existsSync12(path)) return json(res, 409, { error: savedApprovalError(grant) });
-  const approval = { run_id: grant.runId, approved_at: (/* @__PURE__ */ new Date()).toISOString(), rows: posted.rows };
+  const approval2 = { run_id: grant.runId, approved_at: (/* @__PURE__ */ new Date()).toISOString(), rows: posted.rows };
   try {
-    writeNewDurably(path, JSON.stringify(approval, null, 2) + "\n");
+    writeNewDurably(path, JSON.stringify(approval2, null, 2) + "\n");
   } catch (err) {
     if (err.code === "EEXIST") return json(res, 409, { error: savedApprovalError(grant) });
     throw err;
@@ -18417,9 +18531,9 @@ function savedApprovalError(grant) {
   return readApproval(grant.runDir, grant.runId).approval ? "This run is already approved. Go back to Claude." : "The approval already saved for this run is unreadable, so nothing was changed. Go back to Claude.";
 }
 function file(grant, rowId, res) {
-  const { proposal } = readProposal(grant.runDir, grant.runId, grant.matter.root);
-  const row2 = proposal?.rows.find((r) => r.row_id === rowId);
-  const rel = row2?.current_path;
+  const { proposal: proposal2 } = readProposal(grant.runDir, grant.runId, grant.matter.root);
+  const row3 = proposal2?.rows.find((r) => r.row_id === rowId);
+  const rel = row3?.current_path;
   if (!rel) return send(res, 404, "text/plain; charset=utf-8", "No such file on this page");
   let real;
   try {
@@ -18506,8 +18620,8 @@ async function waitApproval(matterRoot, runId, env = process.env) {
   const dir = existingRunDir(matter, runId);
   const started = Date.now();
   for (; ; ) {
-    const { approval, problem } = readApproval(dir, runId);
-    if (approval) return { status: "approved", run_id: runId, approved_at: approval.approved_at, rows: approval.rows.length };
+    const { approval: approval2, problem } = readApproval(dir, runId);
+    if (approval2) return { status: "approved", run_id: runId, approved_at: approval2.approved_at, rows: approval2.rows.length };
     if (problem) return { status: "corrupt", run_id: runId, file: pathWin3213.join(dir, APPROVAL), problem };
     const newer = newerRun(matter, runId);
     if (newer !== null) return { status: "invalidated", run_id: runId, newer_run: newer };
@@ -18570,6 +18684,9 @@ async function callFileManagerTool(name, rawArgs) {
   }
   if (name === "housekeeping__serve_page") {
     return servePage(args.matter_root, args.run_id);
+  }
+  if (name === "housekeeping__preview") {
+    return housekeepingPreview(args);
   }
   if (name === "housekeeping__wait_approval") {
     return waitApproval(args.matter_root, args.run_id);
