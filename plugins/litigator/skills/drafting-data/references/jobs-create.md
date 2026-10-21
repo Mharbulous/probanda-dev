@@ -106,7 +106,7 @@ INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 2);
 -- canonical order required by the CHECK -- always the smaller id first.
 ```
 
-**The plan marker.** A job written here with no steps the practitioner supplied or approved, and none derived from a Proposal card, takes exactly one step, ordinal 1, this fixed text character for character: `Create a plan for how to complete this job.` The session never words a plan in its place. The marker says the job still needs a plan, so a planning pass finds it by its text. It is never reworded, never stamped done and never approved as a plan: `/job-planning` replaces it with the planned steps (`shared/job-planning.md` section 3), and `/draft` assigns no job whose only step it is (`draft/references/job-session.md`, "A job that needs a plan"). A job outlined from a Proposal keeps its card-derived steps, and each fixed-text create keeps the steps its own section gives, taking the marker only where that section says so (§3i, §3l).
+**The plan marker.** A job written here with no steps the practitioner supplied or approved, and none derived from a Proposal card, takes exactly one step, ordinal 1, this fixed text character for character: `Create a plan for how to complete this job.` The session never words a plan in its place. The marker says the job still needs a plan, so a planning pass finds it by its text. It is never reworded, never stamped done and never approved as a plan: `/job-planning` replaces it with the planned steps (`shared/job-planning.md` section 3), and `/draft` assigns no job whose only step it is (`draft/references/job-session.md`, "A job that needs a plan"). A job outlined from a Proposal keeps its card-derived steps, and each fixed-text create keeps the steps its own section gives, taking the marker only where that section says so (§3f, §3i, §3l).
 
 ```sql
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 1, 'Create a plan for how to complete this job.');
@@ -381,10 +381,10 @@ SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'does attornment de
 
 No row: the lock was lost before this blocker was written. Stop, run §2's confirm-read after a release on job 42 so the readings below have a row to read, name any blocker already written, and report. One row: the new job. More than one: stop and ask.
 
-**Call 3, the children**, on the recovered literal id (here `51`), unguarded on purpose: this job is the session's own creation and must not be left without a step. One `ticket_steps` row, ordinal 1, its text the intent verbatim. A research blocker (`/draft`'s `job-session.md`, Movers) is the one exception: its step is `What must be shown to establish this contention? <contention>`, the frame followed by the contention, the item on the held job's `keys:` line, character for character, because its title and intent name the contention only by its item label. The scope rows are the held job's own, copied, since the blocker's work serves the held job's step:
+**Call 3, the children**, on the recovered literal id (here `51`), unguarded on purpose: this job is the session's own creation and must not be left without a step. One `ticket_steps` row, ordinal 1, its text the plan marker (§3, "The plan marker"), because the practitioner approved the spin-off, not a plan for the blocker. A research blocker (`/draft`'s `job-session.md`, Movers) is the one exception: its step is `What must be shown to establish this contention? <contention>`, the frame followed by the contention, the item on the held job's `keys:` line, character for character, because its title and intent name the contention only by its item label. The scope rows are the held job's own, copied, since the blocker's work serves the held job's step:
 
 ```sql
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (51, 1, 'Does attornment defeat the stay?');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (51, 1, 'Create a plan for how to complete this job.');
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) SELECT 51, entity, entity_id FROM ticket_scope WHERE ticket_id = 42;
 ```
 

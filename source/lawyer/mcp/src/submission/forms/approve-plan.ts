@@ -10,6 +10,8 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 
 const TOOL = "drafting_data__approve_plan";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+/** The fixed step a job with no plan yet carries (jobs-create.md §3, "The plan marker"). */
+const PLAN_MARKER = "Create a plan for how to complete this job.";
 
 export interface ApprovePlanArgs {
   db_path: string;
@@ -46,11 +48,18 @@ export async function submissionDataApprovePlan(args: ApprovePlanArgs, env: Node
     throw new ValidationError(`${TOOL}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
-  const [job] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps FROM tickets WHERE id = ?", [id])
-    .rows as unknown as { steps: number }[];
+  const [job] = submissionDataQuery(
+    args.db_path,
+    "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps, (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id AND text = ?) AS markers FROM tickets WHERE id = ?",
+    [PLAN_MARKER, id]
+  ).rows as unknown as { steps: number; markers: number }[];
   if (job === undefined) throw new NotFoundError(`${TOOL}: no job ${id} in ${args.db_path}`, "not_found");
   // The steps are the plan, so a job with none has nothing to approve.
   if (job.steps === 0) throw new DataServerError(`${TOOL}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  // A job whose only step is the plan marker has no plan yet. A guiding question, never a rule (Commandment 6).
+  if (job.steps === 1 && job.markers === 1) {
+    throw new DataServerError(`${TOOL}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
+  }
 
   const written = await submissionDataWriteAll(
     args.db_path,

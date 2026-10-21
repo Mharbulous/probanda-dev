@@ -1796,7 +1796,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "changes 0), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), " +
         "completed, no_match (the guards matched nothing, and the returned status shows why). Never retry. It moves no " +
         "revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found, no_steps (the job has no " +
-        "steps, so no plan to approve). Returns ticket_id, outcome, changes, plan_approved_at, locked_by, status, " +
+        "steps, so no plan to approve), plan_marker_only (the job's only step is the plan marker, so it has no plan yet). " +
+        "Returns ticket_id, outcome, changes, plan_approved_at, locked_by, status, " +
         "rejected_at and a note.",
       inputSchema: {
         type: "object",

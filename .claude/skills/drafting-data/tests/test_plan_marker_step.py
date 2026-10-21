@@ -32,6 +32,15 @@ class PlanMarkerStepTest(unittest.TestCase):
         self.assertIn(f"VALUES (2, 1, '{MARKER}');", create)
         self.assertIn("A job outlined from a Proposal keeps its card-derived steps", rule)
 
+    def test_spin_off_blocker_takes_the_marker(self):
+        create = read("drafting-data", "references", "jobs-create.md")
+        spin_off = create[create.index("## 3f. Spin off blockers"):create.index("## 3j.")]
+        self.assertIn("its text the plan marker (§3, \"The plan marker\")", spin_off)
+        self.assertIn(f"VALUES (51, 1, '{MARKER}');", spin_off)
+        self.assertNotIn("the intent verbatim", spin_off)
+        self.assertIn("What must be shown to establish this contention? <contention>", spin_off)
+        self.assertIn("(§3f, §3i, §3l)", paragraph(create, "**The plan marker.**"))
+
     def test_research_offer_without_steps_takes_the_marker(self):
         stock = read("drafting-data", "references", "jobs-stock.md")
         self.assertIn("An offer with a `job:` line and no `steps:` line takes the plan marker", stock)

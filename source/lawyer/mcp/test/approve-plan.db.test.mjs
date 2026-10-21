@@ -30,9 +30,11 @@ async function jobs(t) {
      INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (5, 1, 'Ready job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
      INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, locked_by, locked_at) VALUES (6, 1, 'No steps', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-a1', '2026-10-01T09:05');
      INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, locked_by, locked_at, plan_approved_at) VALUES (7, 1, 'Approved', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-a1', '2026-10-01T09:05', '2026-10-01T09:06');
+     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, locked_by, locked_at) VALUES (8, 1, 'Marker only', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-a1', '2026-10-01T09:05');
      INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES
        (1, 1, 'First step.', NULL), (1, 2, 'Second step.', NULL), (2, 1, 'First step.', NULL), (3, 1, 'First step.', NULL),
-       (4, 1, 'First step.', '2026-10-01T09:15'), (5, 1, 'First step.', NULL), (7, 1, 'First step.', '2026-10-01T09:07');`
+       (4, 1, 'First step.', '2026-10-01T09:15'), (5, 1, 'First step.', NULL), (7, 1, 'First step.', '2026-10-01T09:07'),
+       (8, 1, 'Create a plan for how to complete this job.', NULL);`
   );
   return dbPath;
 }
@@ -107,6 +109,18 @@ test("a shelved, a completed and an unheld Ready job read shelved, completed and
     assert.equal(result.locked_by, null);
     assert.equal(stamp(dbPath, id), null);
   }
+  assert.equal(revision(dbPath), before);
+});
+
+test("a job whose only step is the plan marker is refused with a guiding question, writing nothing", async (t) => {
+  const dbPath = await jobs(t);
+  const before = revision(dbPath);
+  await assert.rejects(approve(dbPath, { ticket_id: 8 }), (err) => {
+    assert.equal(err.code, "plan_marker_only", err.message);
+    assert.match(err.message, /What steps will complete this job\?$/);
+    return true;
+  });
+  assert.equal(stamp(dbPath, 8), null);
   assert.equal(revision(dbPath), before);
 });
 
