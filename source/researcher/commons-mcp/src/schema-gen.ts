@@ -445,7 +445,8 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
         "skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. " +
         "items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked " +
         "origin probanda (Probanda's idea) or lawyer (the person's idea). " +
-        "previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. " +
+        "previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and exactly one of its html built from placeholder data, never from the matter, " +
+        "or the path of a fixture preview that a board preview tool returned, whose text the server reads and sends as its html; a path outside the fixture preview folder, or to a file that does not end with the fixture marker line, such as a real-data preview, is refused. " +
         "The server adds the researcher plugin's version itself. " +
         "Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, " +
         "or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. " +
@@ -495,8 +496,9 @@ export function suggestionBoxToolDefinitions(): ToolDefinition[] {
                 chosen: { type: "boolean" },
                 reason: { type: "string" },
                 html: { type: "string" },
+                path: { type: "string" },
               },
-              required: ["label", "chosen", "html"],
+              required: ["label", "chosen"],
               additionalProperties: false,
             },
           },

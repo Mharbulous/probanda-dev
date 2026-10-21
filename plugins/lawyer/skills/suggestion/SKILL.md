@@ -85,7 +85,7 @@ Remove every person, entity, matter, document and path, and name the plugin's pa
 Show the title, the body and every item exactly as they will be posted. Then ask in plain text, under `/show-me`: "Would you like to submit this suggestion?" Yes | No | Modify. Under Yes, state the mechanism: `suggestion_box__submit · saved in Probanda's Cloud · free`.
 
 - **Yes.** Only after an explicit yes, call `suggestion_box__submit({title, body, source, items, skill})` with exactly the text shown.
-  - Add `previews` only for Previews the practitioner saw rendered.
+  - Add `previews` only for Previews the practitioner saw rendered. Pass each as `{label, chosen, reason, path}`, with the path a board preview tool returned for a fixture preview. Never read the preview to pass its HTML.
   - Add `skill` when the suggestion is about one skill.
   - `source` is `assisted` for Solved and Gap, and `user` when the practitioner initiated it.
 - **No.** Post nothing.

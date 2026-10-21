@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { ValidationError } from "../errors.js";
 import type { LegalCommonsClient } from "../legal-commons/client.js";
 import { findSuggestionHits } from "../troubleshoot/redact.js";
@@ -23,6 +25,13 @@ const MAX_ITEMS = 10;
 const MAX_PREVIEWS = 4;
 const MAX_STATUS_IDS = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// The fixture preview folder and marker line, as pages__preview and
+// housekeeping__preview write them (FIXTURE_PREVIEW_FOLDER and
+// FIXTURE_PREVIEW_MARKER in source/lawyer/mcp/src/pages/preview-file.ts, a
+// separate bundle). A real-data preview is written beside its page, never here.
+const FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
+const FIXTURE_PREVIEW_LAST_LINE = "<!-- probanda-fixture-preview -->\n";
 
 // The researcher plugin's version, from its own plugin.json, never from the
 // model. The bundle runs as <plugin root>/commons-mcp/dist/legal-commons-mcp.js,
@@ -145,7 +154,8 @@ function checkItems(value: unknown): unknown[] {
 }
 
 // previews: UI Previews only, built from placeholder data: the chosen one and
-// the rejected ones.
+// the rejected ones. Each gives its html inline or the path of a fixture
+// preview, whose text is then posted as its html.
 function checkPreviews(value: unknown): Array<{ label: string; chosen: boolean; reason?: string; html: string }> {
   if (!Array.isArray(value) || value.length < 1 || value.length > MAX_PREVIEWS) {
     throw new ValidationError(`submit's previews, when given, must be a list of 1 to ${MAX_PREVIEWS} Previews`);
@@ -153,16 +163,50 @@ function checkPreviews(value: unknown): Array<{ label: string; chosen: boolean; 
   return value.map((preview, i) => {
     const label = `previews[${i}]`;
     if (!isObject(preview)) throw new ValidationError(`${label} must be an object`);
-    onlyKeys(label, preview, ["label", "chosen", "reason", "html"]);
+    onlyKeys(label, preview, ["label", "chosen", "reason", "html", "path"]);
     if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label}.chosen must be true or false`);
-    if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
+    if ((preview.html === undefined) === (preview.path === undefined)) {
+      throw new ValidationError(`${label} must give exactly one of html or path`);
+    }
+    let html: string;
+    if (preview.path !== undefined) {
+      html = readFixturePreview(label, preview.path);
+    } else {
+      if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
+      html = preview.html;
+    }
     return {
       label: nonEmpty(`${label}.label`, preview.label),
       chosen: preview.chosen,
       ...(preview.reason === undefined ? {} : { reason: nonEmpty(`${label}.reason`, preview.reason) }),
-      html: preview.html,
+      html,
     };
   });
+}
+
+// The text of a fixture preview: a file inside the fixture preview folder once
+// every symlink is resolved, whose last line is the fixture marker. Anything
+// else, a real-data preview included, is refused without echoing the path.
+function readFixturePreview(label: string, path: unknown): string {
+  const refused = new ValidationError(
+    `${label}.path must be a preview that a board preview tool wrote from fixtures, ` +
+    `in the fixture preview folder and ending with the fixture marker line`
+  );
+  if (typeof path !== "string" || !path.trim()) throw refused;
+  let folder: string;
+  let file: string;
+  try {
+    folder = realpathSync(join(tmpdir(), FIXTURE_PREVIEW_FOLDER));
+    file = realpathSync(resolve(path));
+  } catch {
+    throw refused;
+  }
+  const inside = relative(folder, file);
+  if (!inside || inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw refused;
+  if (!statSync(file).isFile()) throw refused;
+  const text = readFileSync(file, "utf-8");
+  if (!text.endsWith(FIXTURE_PREVIEW_LAST_LINE)) throw refused;
+  return text;
 }
 
 // status — the status and triage time of suggestions whose IDs this device

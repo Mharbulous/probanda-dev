@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -221,6 +221,86 @@ test("a Preview's html may run past 2,000 characters up to its own cap", async (
     ...SUGGESTION, previews: [{ ...PREVIEW, html: "e".repeat(200_000) }],
   });
   assert.equal(result.previews_saved, true);
+});
+
+// Fixture previews by path. The folder is the one pages__preview writes to, so
+// these tests write their own uniquely named files there and remove them after.
+const FIXTURES = join(tmpdir(), "Probanda fixture previews");
+const MARKER = "<!-- probanda-fixture-preview -->\n";
+const TAG = `suggestion-box-test-${process.pid}`;
+await mkdir(FIXTURES, { recursive: true });
+const written = [];
+after(() => Promise.all(written.map((path) => rm(path, { force: true }))));
+
+async function fixtureFile(name, text, dir = FIXTURES) {
+  const path = join(dir, `${TAG} ${name}.html`);
+  await writeFile(path, text);
+  written.push(path);
+  return path;
+}
+
+test("submit reads a fixture preview's path and sends its text as the html", async (t) => {
+  const calls = fakeFetch(t, () => reply(200, { suggestion_id: "s-5", previews_saved: true }));
+  const text = `<p>Confirm? Yes | No</p>\n${MARKER}`;
+  const path = await fixtureFile("good", text);
+  const result = await withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", {
+    ...SUGGESTION, previews: [{ label: "One question", chosen: true, path }],
+  });
+  assert.equal(result.previews_saved, true);
+  assert.deepEqual(JSON.parse(calls[0].body).previews, [{ label: "One question", chosen: true, html: text }]);
+});
+
+test("submit refuses a preview path that is not a fixture preview, before any call", async (t) => {
+  const calls = fakeFetch(t);
+  const submit = (preview) => withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", {
+    ...SUGGESTION, previews: [{ label: "One question", chosen: true, ...preview }],
+  });
+  const noMarker = await fixtureFile("no marker", "<p>Real data</p>\n");
+  const outside = await fixtureFile("outside", `<p>x</p>\n${MARKER}`, tmpdir());
+  const notFixture = /path must be a preview that a board preview tool wrote from fixtures/;
+  await assert.rejects(() => submit({ path: noMarker }), notFixture);
+  await assert.rejects(() => submit({ path: outside }), notFixture);
+  const besideFolder = await fixtureFile("beside", `<p>x</p>\n${MARKER}`, tmpdir());
+  await assert.rejects(() => submit({ path: join(FIXTURES, "..", besideFolder.split(/[\\/]/).at(-1)) }), notFixture);
+  await assert.rejects(() => submit({ path: join(FIXTURES, `${TAG} missing.html`) }), notFixture);
+  await assert.rejects(() => submit({ path: FIXTURES }), notFixture);
+  await assert.rejects(() => submit({ path: noMarker, html: "<p>x</p>" }), /exactly one of html or path/);
+  await assert.rejects(() => submit({}), /exactly one of html or path/);
+  assert.equal(calls.length, 0);
+});
+
+test("submit refuses a symlink in the fixture folder that points outside it", async (t) => {
+  const calls = fakeFetch(t);
+  const outside = await fixtureFile("link target", `<p>x</p>\n${MARKER}`, tmpdir());
+  const link = join(FIXTURES, `${TAG} link.html`);
+  try {
+    await symlink(outside, link, "file");
+  } catch {
+    t.skip("this machine cannot create a symlink");
+    return;
+  }
+  written.push(link);
+  await assert.rejects(
+    () => withManifest.dispatch.callTool(context(withManifest), "suggestion_box__submit", {
+      ...SUGGESTION, previews: [{ label: "One question", chosen: true, path: link }],
+    }),
+    /path must be a preview that a board preview tool wrote from fixtures/
+  );
+  assert.equal(calls.length, 0);
+});
+
+test("a fixture preview read by path gets the same redaction screen and cap as inline html", async (t) => {
+  const calls = fakeFetch(t);
+  const email = await fixtureFile("email", `<p>jdoe@example.com</p>\n${MARKER}`);
+  const long = await fixtureFile("long", `${"f".repeat(200_000)}\n${MARKER}`);
+  for (const [path, kind] of [[email, "email"], [long, "preview_too_long"]]) {
+    const message = errorMessage(await withManifest.dispatch.dispatchTool(context(withManifest), "suggestion_box__submit", {
+      ...SUGGESTION, previews: [{ label: "One question", chosen: true, path }],
+    }));
+    assert.ok(message.split(/[:;,] ?/).includes(kind), `message names ${kind}: ${message}`);
+    assert.ok(!message.includes("jdoe"));
+  }
+  assert.equal(calls.length, 0);
 });
 
 const ID_A = "11111111-1111-4111-8111-111111111111";

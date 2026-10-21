@@ -2979,7 +2979,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve.call(this, root, ref);
+      let _sch = resolve2.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3006,7 +3006,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve(root, ref) {
+    function resolve2(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3637,55 +3637,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve(baseURI, relativeURI, options) {
+    function resolve2(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative, options, skipNormalization) {
+    function resolveComponent(base, relative2, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative = parse3(serialize(relative, options), options);
+        relative2 = parse3(serialize(relative2, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative.scheme) {
-        target.scheme = relative.scheme;
-        target.userinfo = relative.userinfo;
-        target.host = relative.host;
-        target.port = relative.port;
-        target.path = removeDotSegments(relative.path || "");
-        target.query = relative.query;
+      if (!options.tolerant && relative2.scheme) {
+        target.scheme = relative2.scheme;
+        target.userinfo = relative2.userinfo;
+        target.host = relative2.host;
+        target.port = relative2.port;
+        target.path = removeDotSegments(relative2.path || "");
+        target.query = relative2.query;
       } else {
-        if (relative.userinfo !== void 0 || relative.host !== void 0 || relative.port !== void 0) {
-          target.userinfo = relative.userinfo;
-          target.host = relative.host;
-          target.port = relative.port;
-          target.path = removeDotSegments(relative.path || "");
-          target.query = relative.query;
+        if (relative2.userinfo !== void 0 || relative2.host !== void 0 || relative2.port !== void 0) {
+          target.userinfo = relative2.userinfo;
+          target.host = relative2.host;
+          target.port = relative2.port;
+          target.path = removeDotSegments(relative2.path || "");
+          target.query = relative2.query;
         } else {
-          if (!relative.path) {
+          if (!relative2.path) {
             target.path = base.path;
-            if (relative.query !== void 0) {
-              target.query = relative.query;
+            if (relative2.query !== void 0) {
+              target.query = relative2.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative.path[0] === "/") {
-              target.path = removeDotSegments(relative.path);
+            if (relative2.path[0] === "/") {
+              target.path = removeDotSegments(relative2.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative.path;
+                target.path = "/" + relative2.path;
               } else if (!base.path) {
-                target.path = relative.path;
+                target.path = relative2.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative2.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative.query;
+            target.query = relative2.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3693,7 +3693,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative.fragment;
+      target.fragment = relative2.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3895,7 +3895,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve,
+      resolve: resolve2,
       resolveComponent,
       equal,
       serialize,
@@ -14202,7 +14202,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -14219,7 +14219,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -14297,7 +14297,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve(parseResult.data);
+            resolve2(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -14558,12 +14558,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve, interval);
+      const timeoutId = setTimeout(resolve2, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -15433,12 +15433,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve2) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve();
+        resolve2();
       } else {
-        this._stdout.once("drain", resolve);
+        this._stdout.once("drain", resolve2);
       }
     });
   }
@@ -15523,10 +15523,10 @@ async function runDpapi(action, data) {
   const stderr = [];
   child.stdout.on("data", (chunk) => stdout.push(chunk));
   child.stderr.on("data", (chunk) => stderr.push(chunk));
-  const done = new Promise((resolve, reject) => {
+  const done = new Promise((resolve2, reject) => {
     child.on("error", reject);
     child.on("exit", (code) => {
-      if (code === 0) resolve();
+      if (code === 0) resolve2();
       else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
@@ -16400,7 +16400,7 @@ function suggestionBoxToolDefinitions() {
   return [
     {
       name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key cloud_key__configure_credential stores (a practitioner with none asks for one with key_request__submit). title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and its html built from placeholder data, never from the matter. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
+      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key cloud_key__configure_credential stores (a practitioner with none asks for one with key_request__submit). title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and exactly one of its html built from placeholder data, never from the matter, or the path of a fixture preview that a board preview tool returned, whose text the server reads and sends as its html; a path outside the fixture preview folder, or to a file that does not end with the fixture marker line, such as a real-data preview, is refused. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
       inputSchema: {
         type: "object",
         properties: {
@@ -16444,9 +16444,10 @@ function suggestionBoxToolDefinitions() {
                 label: { type: "string" },
                 chosen: { type: "boolean" },
                 reason: { type: "string" },
-                html: { type: "string" }
+                html: { type: "string" },
+                path: { type: "string" }
               },
-              required: ["label", "chosen", "html"],
+              required: ["label", "chosen"],
               additionalProperties: false
             }
           }
@@ -16831,7 +16832,9 @@ async function configureStatus2(client) {
 }
 
 // src/suggestion-box/tools.ts
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { isAbsolute, join as join5, relative, resolve, sep } from "node:path";
 var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call cloud_key__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves, or, if they have none, call key_request__submit so they can ask Probanda for one";
 var SOURCES = /* @__PURE__ */ new Set(["user", "llm", "assisted"]);
 var ORIGINS = /* @__PURE__ */ new Set(["probanda", "lawyer"]);
@@ -16839,6 +16842,8 @@ var MAX_ITEMS = 10;
 var MAX_PREVIEWS = 4;
 var MAX_STATUS_IDS = 50;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
+var FIXTURE_PREVIEW_LAST_LINE = "<!-- probanda-fixture-preview -->\n";
 var MANIFEST = new URL("../../.claude-plugin/plugin.json", import.meta.url);
 function pluginVersion() {
   let version2;
@@ -16945,16 +16950,45 @@ function checkPreviews(value) {
   return value.map((preview, i) => {
     const label = `previews[${i}]`;
     if (!isObject2(preview)) throw new ValidationError(`${label} must be an object`);
-    onlyKeys(label, preview, ["label", "chosen", "reason", "html"]);
+    onlyKeys(label, preview, ["label", "chosen", "reason", "html", "path"]);
     if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label}.chosen must be true or false`);
-    if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
+    if (preview.html === void 0 === (preview.path === void 0)) {
+      throw new ValidationError(`${label} must give exactly one of html or path`);
+    }
+    let html;
+    if (preview.path !== void 0) {
+      html = readFixturePreview(label, preview.path);
+    } else {
+      if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
+      html = preview.html;
+    }
     return {
       label: nonEmpty(`${label}.label`, preview.label),
       chosen: preview.chosen,
       ...preview.reason === void 0 ? {} : { reason: nonEmpty(`${label}.reason`, preview.reason) },
-      html: preview.html
+      html
     };
   });
+}
+function readFixturePreview(label, path) {
+  const refused = new ValidationError(
+    `${label}.path must be a preview that a board preview tool wrote from fixtures, in the fixture preview folder and ending with the fixture marker line`
+  );
+  if (typeof path !== "string" || !path.trim()) throw refused;
+  let folder;
+  let file;
+  try {
+    folder = realpathSync(join5(tmpdir(), FIXTURE_PREVIEW_FOLDER));
+    file = realpathSync(resolve(path));
+  } catch {
+    throw refused;
+  }
+  const inside = relative(folder, file);
+  if (!inside || inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw refused;
+  if (!statSync(file).isFile()) throw refused;
+  const text = readFileSync(file, "utf-8");
+  if (!text.endsWith(FIXTURE_PREVIEW_LAST_LINE)) throw refused;
+  return text;
 }
 async function status(client, args) {
   if (!client.hasStaticKey()) throw new ValidationError(NOT_CONFIGURED_HINT2);
