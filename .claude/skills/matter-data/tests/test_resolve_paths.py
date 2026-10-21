@@ -166,7 +166,7 @@ class ResolvePathsTests(unittest.TestCase):
         in_matter = self.matter_root / "0. CASE DATA"
         self.write_db(in_matter, "relocated")
         self.write_db(self.live_dir, "old", metadata={"matter_id": "T9999", "short_name": "Scratch Matter"})
-        pointer_path = self.write_pointer(r"C:\Users\DeletedProfile\case-data")
+        pointer_path = self.write_pointer(str(Path(self.temp.name) / "gone"))
         resolved = resolve_paths.resolve_pointer(str(self.matter_root))
         self.assertEqual(Path(resolved["case_data_dir"]), in_matter)
         healed = json.loads(pointer_path.read_text(encoding="utf-8"))

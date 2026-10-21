@@ -43,4 +43,4 @@ This supersedes the location reasoning of Coclerk ADRs 0008 and 0012. The Cocler
 
 - A relocated matter's `submission.sqlite` path changes, so its drafting lock key and any outstanding migrate plan token change with it. The relocate result says to re-run `drafting_forms__open_session` and re-plan any migration.
 - The old folder stays under the firm root until the practitioner deletes it. Every resolver prefers the matter's own folder once it holds `main.sqlite`.
-- Out of scope: the OneDrive "cloud sync provider failed to validate" / `disk I/O error` failure (both folders are in the same library), version bumps and bundles, the practice-level stores, and deleting old folders.
+- Out of scope: the sync client's "cloud sync provider failed to validate" error and the SQLite disk input-output error (both folders are in the same library), version bumps and bundles, the practice-level stores, and deleting old folders.

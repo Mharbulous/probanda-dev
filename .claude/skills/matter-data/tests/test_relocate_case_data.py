@@ -8,6 +8,7 @@ nothing, and on any failure the pointer files stay byte-identical.
 import hashlib
 import json
 import os
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -56,9 +57,9 @@ class RelocateTests(unittest.TestCase):
                         [("matter_id", "T9999"), ("short_name", "Scratch Matter")])
         con.commit()
         con.close()
+        # A fourth database beside the three, as the drafting database sits there.
+        shutil.copy2(self.old / "law.sqlite", self.old / "submission.sqlite")
         con = sqlite3.connect(self.old / "submission.sqlite")
-        con.execute("CREATE TABLE writing(id INTEGER PRIMARY KEY, title TEXT)")
-        con.execute("INSERT INTO writing(title) VALUES ('Notice of Application')")
         con.execute("PRAGMA user_version = 7")
         con.commit()
         con.close()
