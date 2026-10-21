@@ -1,13 +1,14 @@
 // Merged Job Boards (docs/ADRs/0010-job-boards-organized-by-goals.md): drafting_data__merge_job_boards
 // joins two boards on the practitioner's yes. The survivor is a Writing's board over a Job Board with
-// no Writing over a pre-filing board, then the lower id. One page per survivor draws every section on
-// it, one set of view pages spans its Writings, the absorbed pages go to TRASH, the statements of
+// no Writing over a pre-filing board, then the lower id. One page per survivor draws every board on
+// it as one board, one set of view pages spans its Writings, the absorbed pages go to TRASH, the statements of
 // goals are kept side by side, and the Litigation Strategy groups the merged sections under one heading.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { runInNewContext } from "node:vm";
 import test, { after } from "node:test";
 
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-merge-boards-locks-"));
@@ -22,6 +23,7 @@ const { awaitBackgroundJobs } = await import("../build/submission/render-job.js"
 const { materialFactsData, proceduralHistoryData } = await import("../build/submission/forms/facts-pages.js");
 const { buildLooseIdeasData } = await import("../build/submission/forms/loose-ideas-page.js");
 const { readBoardData, jobBoardPages, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
+const { combineSections } = await import("../build/submission/forms/combined-board.js");
 
 const NOW = "2026-10-19 09:00";
 const TOKEN = "tok-merge";
@@ -32,6 +34,12 @@ const merge = (dbPath, boards, confirmed = true) => callTool({}, "drafting_data_
 const setGoal = (dbPath, board, statement, extra = {}) =>
   callTool({}, "drafting_data__set_board_goal", { db_path: dbPath, ...board, statement, status: "inferred", session_token: TOKEN, ...extra });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
+
+/** The boards drawn on a page's one section: each merged one's state, or the section's own. */
+function members(page) {
+  assert.equal(page.sections.length, 1, "a page draws one board");
+  return page.sections[0].meta.writing_states ?? [page.sections[0].meta];
+}
 
 function matterBoard(path) {
   const prefix = "window.MATTER_BOARD = ";
@@ -134,7 +142,7 @@ test("a Writing's board survives a Job Board with no Writing of lower id, and a 
   );
 });
 
-test("one page draws every section on the board, each job once, with one set of view pages; the absorbed pages go to TRASH", async (t) => {
+test("one page draws the merged boards as one board, each job once, with one set of view pages; the absorbed pages go to TRASH", async (t) => {
   const m = await fixture(t);
   render(m, 1);
   assert.deepEqual(jobBoardPages(m.draft), ["Job Board - proceeding 3.html", "Job Board 1.html", "Job Board 2.html", "Job Board 3.html"]);
@@ -150,8 +158,13 @@ test("one page draws every section on the board, each job once, with one set of 
 
   const page = readBoardData(join(m.draft, "Job Board 1.html"));
   assert.deepEqual(page.board, { filing_id: 1, proceeding_id: 1 });
-  assert.deepEqual(page.sections.map((s) => s.meta.filing_id), [1, 3], "the survivor's section first");
-  assert.deepEqual(page.sections.map((s) => s.tickets.map((x) => x.id)), [[1, 3], [2]], "each job once");
+  assert.equal(page.sections.length, 1, "one board, not a section per merged board");
+  assert.deepEqual(members(page).map((w) => w.filing_id), [1, 3], "the survivor's Writing first");
+  assert.deepEqual(
+    page.sections[0].tickets.map((x) => [x.id, x.writing]),
+    [[1, "Opening Submissions Package"], [3, "Proceeding 1"], [2, "Counterclaim Submissions"]],
+    "each job once, tagged with its Writing"
+  );
   assert.deepEqual(page.views.map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => `${n} - Job Board 1.html`));
   assert.equal(readBoardData(join(m.draft, "Job Board 2.html")).board, undefined, "an unmerged page carries no board key");
 
@@ -177,7 +190,7 @@ test("a merged pre-filing board's first Writing joins the survivor, and later Wr
   const m = await fixture(t);
   await merge(m.dbPath, [{ proceeding_id: 3 }, { filing_id: 2 }]);
   render(m, 2);
-  assert.deepEqual(readBoardData(join(m.draft, "Job Board 2.html")).sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[2, 1], [null, 3]]);
+  assert.deepEqual(members(readBoardData(join(m.draft, "Job Board 2.html"))).map((w) => [w.filing_id, w.proceeding_id]), [[2, 1], [null, 3]]);
 
   await submissionDataExecute(
     m.dbPath,
@@ -186,7 +199,7 @@ test("a merged pre-filing board's first Writing joins the survivor, and later Wr
                                                                         (7, 3, 'submissions_package', 'reply', 'Third Reply');`
   );
   render(m, 2);
-  assert.deepEqual(readBoardData(join(m.draft, "Job Board 2.html")).sections.map((s) => s.meta.filing_id), [2, 6]);
+  assert.deepEqual(members(readBoardData(join(m.draft, "Job Board 2.html"))).map((w) => w.filing_id), [2, 6]);
   assert.ok(jobBoardPages(m.draft).includes("Job Board 7.html"));
   assert.equal(jobBoardPages(m.draft).includes("Job Board 6.html"), false);
 });
@@ -196,7 +209,7 @@ test("two pre-filing boards merge onto the lower proceeding's page", async (t) =
   await submissionDataExecute(m.dbPath, "INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L9999 - Test', NULL);");
   assert.deepEqual((await merge(m.dbPath, [{ proceeding_id: 4 }, { proceeding_id: 3 }])).survivor, { filing_id: null, proceeding_id: 3 });
   render(m, 1);
-  assert.deepEqual(readBoardData(join(m.draft, "Job Board - proceeding 3.html")).sections.map((s) => s.meta.proceeding_id), [3, 4]);
+  assert.deepEqual(members(readBoardData(join(m.draft, "Job Board - proceeding 3.html"))).map((w) => w.proceeding_id), [3, 4]);
   assert.equal(jobBoardPages(m.draft).includes("Job Board - proceeding 4.html"), false);
 });
 
@@ -246,4 +259,148 @@ test("the Litigation Strategy draws a merged board as one heading over its secti
   const data = matterBoard(join(m.draft, "Litigation Strategy.html"));
   assert.deepEqual(data.boards, [{ name: "Job Board 1", filing_ids: [1, 3], proceeding_ids: [] }]);
   assert.ok(readFileSync(join(m.draft, "Litigation Strategy.html"), "utf-8").includes('"Merged Job Boards"'));
+});
+
+// docs/ADRs/0010, 2026-10-21 amendment: a merged board is one board, not a section per merged board.
+
+/** Runs the Job Board page's drawing script against stand-in elements and returns every node drawn. */
+function drawPage(file) {
+  class Node {
+    constructor(tag) {
+      Object.assign(this, { tag, children: [], attrs: {}, className: "", id: "", text: "", style: { setProperty() {} } });
+    }
+    set textContent(value) {
+      this.text = String(value);
+      this.children = [];
+    }
+    get textContent() {
+      return this.text + this.children.map((c) => c.textContent).join("");
+    }
+    appendChild(child) {
+      this.children.push(child);
+      child.parent = this;
+      return child;
+    }
+    after(node) {
+      this.parent.children.splice(this.parent.children.indexOf(this) + 1, 0, node);
+      node.parent = this.parent;
+    }
+    setAttribute(key, value) {
+      this.attrs[key] = String(value);
+    }
+    addEventListener() {}
+    all() {
+      return this.children.flatMap((c) => [c, ...c.all()]);
+    }
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return this.all().find((n) => n.tag === selector) ?? null;
+      return this.all().find((n) => n.className.split(" ").includes(selector.slice(1))) ?? null;
+    }
+  }
+  const header = new Node("header");
+  header.appendChild(new Node("h1"));
+  header.appendChild(Object.assign(new Node("div"), { className: "meta" }));
+  const main = new Node("main");
+  main.appendChild(header);
+  const document = {
+    title: "",
+    body: new Node("body"),
+    querySelector: (selector) => (selector === "main" ? main : selector === "header" ? header : null),
+    createElement: (tag) => new Node(tag),
+    createTextNode: (text) => Object.assign(new Node("#text"), { text: String(text) }),
+  };
+  const script = readFileSync(file, "utf-8").split("<script>")[2].split("</script>")[0];
+  runInNewContext(script, { window: { WORKBOARD: readBoardData(file) }, document });
+  return main.all();
+}
+
+/** A section as a board builder returns one, holding only what combineSections reads. */
+function section(filingId, proceedingId, title, criteria, tickets = []) {
+  return {
+    meta: { revision: 1, matter: "L9999", client: "", file: "", filing: title, filing_id: filingId, proceeding_id: proceedingId, rendered: NOW, state: "drafting", state_label: "Drafting", state_since: null, ready_to_retire: false },
+    tickets,
+    seeds: [],
+    deleted: [],
+    discardedSeeds: [],
+    attachments: [],
+    proposals: [],
+    lapsed_keys: [],
+    goals: { description: "Goal", statement: null, status: null },
+    goal: { sentence: "Completion Criteria", state: criteria.some((c) => c.state === "unmet") ? "unmet" : "met", text: null },
+    criteria,
+  };
+}
+const criterion = (id, text, state, items = [], source = "sqlite") => ({ id, text, state, outstanding: state === "unmet" ? items.length || 1 : 0, items, source });
+const job = (id, extra = {}) => ({ id, status: "queued", rejected_at: null, superseded_by: null, blocked_by: [], conflicts: [], ...extra });
+
+test("combineSections pools criteria by id, unmet while any Writing's is unmet, and passes one section through unchanged", async (t) => {
+  const m = await fixture(t);
+  const a = section(1, 1, "Opening Submissions Package", [
+    criterion("noting-up", "Note up every authority", "met"),
+    criterion("gate", "pre-filing checks", "unmet", ["step 2"]),
+    criterion("open-items", "No open items", "met"),
+    criterion("deadline:hearing", "Hearing", "unmet", [], "practice"),
+  ], [job(1)]);
+  const b = section(3, 2, "Counterclaim Submissions", [
+    criterion("noting-up", "Note up every authority", "unmet", ["R v X"]),
+    criterion("gate", "pre-send checks", "met"),
+    criterion("counsel-review", "Counsel has reviewed", "unmet"),
+    criterion("deadline:hearing", "Hearing", "met", [], "practice"),
+  ], [job(2, { blocked_by: [{ id: 1, status: null, rejected: false }] })]);
+
+  assert.equal(combineSections(m.dbPath, [a]), a, "one section is the same object");
+  const board = combineSections(m.dbPath, [a, b]);
+  const byId = Object.fromEntries(board.criteria.map((c) => [c.id, c]));
+  assert.deepEqual(board.criteria.map((c) => c.id), ["noting-up", "gate", "open-items", "deadline:hearing", "counsel-review", "deadline:hearing@filing:3"]);
+  assert.equal(byId["noting-up"].state, "unmet", "unmet while any Writing's is unmet");
+  assert.equal(byId["noting-up"].text, "Note up every authority");
+  assert.deepEqual(byId["noting-up"].items, ["Counterclaim Submissions: R v X"]);
+  assert.equal(byId.gate.text, "Opening Submissions Package: pre-filing checks; Counterclaim Submissions: pre-send checks", "differing texts each name their Writing");
+  assert.equal(byId.gate.state, "unmet");
+  assert.equal(byId["open-items"].text, "No open items (Opening Submissions Package)", "a criterion one Writing holds names it");
+  assert.equal(byId["deadline:hearing@filing:3"].text, "Hearing (Counterclaim Submissions)", "a deadline is never combined");
+  assert.equal(board.goal.state, "unmet");
+  assert.deepEqual(board.tickets.map((x) => [x.id, x.writing]), [[1, "Opening Submissions Package"], [2, "Counterclaim Submissions"]]);
+  assert.deepEqual(board.tickets[1].blocked_by, [{ id: 1, status: "queued", rejected: false }], "a blocker on the board in another proceeding links");
+  assert.deepEqual(board.meta.writing_states.map((w) => w.filing_id), [1, 3]);
+  assert.equal(a.tickets[0].writing, undefined, "the sections themselves are not changed");
+});
+
+test("a merged page draws one board: one Criteria card, one panel per lane, no per-Writing heading, no repeated id", async (t) => {
+  const m = await fixture(t);
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  render(m, 1);
+  const nodes = drawPage(join(m.draft, "Job Board 1.html"));
+  const ids = nodes.map((n) => n.id).filter((id) => id !== "");
+  assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), [], "no element id repeats");
+  for (const id of ["goals", "ready", "in-progress", "completed", "ideas"]) assert.equal(ids.filter((x) => x === id).length, 1, id);
+  assert.equal(nodes.filter((n) => n.tag === "h2" && n.className === "writing-title").length, 0, "no per-Writing heading");
+  assert.ok(nodes.find((n) => n.id === "ticket-2").textContent.includes("Counterclaim Submissions"), "a job card names its Writing");
+});
+
+test("board_card and board_summary read the merged board as the page draws it, by either Writing", async (t) => {
+  const m = await fixture(t);
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  const card = (filingId) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: filingId, lanes: ["live", "criteria"] }, ASHBOURNE, NOW).card;
+  assert.equal(card(1), card(3), "either Writing reads the same board");
+  const jobs = card(1).split("\n").filter((l) => l.startsWith("- Job #"));
+  assert.deepEqual(
+    jobs.map((l) => /^- Job #(\d+) [^·]+ · ([^·]+) ·/.exec(l).slice(1, 3).map((s) => s.trim())),
+    [["1", "Opening Submissions Package"], ["3", "Proceeding 1"], ["2", "Counterclaim Submissions"]]
+  );
+  assert.match(submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, jobs: [2] }, ASHBOURNE, NOW).card, /^- Job #2 Settle the counterclaim/, "a job on the other Writing is on this board");
+
+  const summary = (filingId) => render(m, filingId).documents.find((d) => d.document_type === "Work_board").board_summary;
+  assert.equal(summary(3), summary(1), "the render's summary is the board's, whichever Writing rendered");
+});
+
+test("an unmerged board's page is unchanged: no Writing tag and no merged states", async (t) => {
+  const m = await fixture(t);
+  render(m, 1);
+  for (const file of ["Job Board 1.html", "Job Board 3.html"]) {
+    const page = readBoardData(join(m.draft, file));
+    assert.equal(page.sections.length, 1);
+    assert.equal(page.sections[0].meta.writing_states, undefined, file);
+    assert.ok(page.sections[0].tickets.every((x) => !("writing" in x)), file);
+  }
 });

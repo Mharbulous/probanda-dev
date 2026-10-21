@@ -277,6 +277,9 @@ export interface WorkBoardTicket {
    * the section builders; absent, which reads as null, within it, with nothing to measure, or with no
    * threshold set, so an unset threshold leaves the board data as it was. */
   idle_flag?: string | null;
+  /** A merged board only (combined-board.ts): the Writing the job serves, its filing's title, or
+   * `Proceeding <id>` for a job with no filing. Absent on a board holding one section. */
+  writing?: string;
 }
 
 export interface WorkBoardSeed {
@@ -394,6 +397,9 @@ export interface WorkBoardData {
     /** True only on a Job Board with no Writing (JOB_BOARD_KIND): `state` is null, `state_label` reads
      * Open or Closed, and the section has no Goal card, criteria or Proposals. */
     job_only?: true;
+    /** A merged board only (combined-board.ts): each section's own state, the survivor's first.
+     * `state_label` then lists them all and `ready_to_retire` is false. Absent otherwise. */
+    writing_states?: { filing_id: number | null; proceeding_id: number; title: string; state_label: string; state_since: string | null; ready_to_retire: boolean }[];
   };
   tickets: WorkBoardTicket[];
   seeds: WorkBoardSeed[];

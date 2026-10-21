@@ -65,7 +65,8 @@
 
   // The page's one section names the page: "Job Board <id>", the id the file name's, then the
   // heading's gold rule, then the Writing's title on its own line.
-  // A merged board's page (docs/ADRs/0010) is named by its survivor and titles each section instead.
+  // A merged board's page (docs/ADRs/0010) is named by its survivor, and its one section is every
+  // merged board's, pooled on the server: each job card names its Writing.
   var first = data.sections[0];
   var merged = !!data.board;
   if (merged) {
@@ -121,12 +122,13 @@
   // filing's board always drew them.
   data.sections.forEach(function (section, i) {
     var smeta = section.meta;
-    if (merged) {
-      main.appendChild(el("h2", "writing-title", smeta.filing_id === null ? "Proceeding " + smeta.proceeding_id : "Job Board " + smeta.filing_id + ": " + smeta.filing));
-    }
     if (smeta.ready_to_retire) {
       main.appendChild(el("p", "notice", "Appeal period expired " + smeta.state_since + " — ready to retire"));
     }
+    // A merged board's Writings each say so for themselves.
+    (smeta.writing_states || []).forEach(function (w) {
+      if (w.ready_to_retire) main.appendChild(el("p", "notice", w.title + ": appeal period expired " + w.state_since + " — ready to retire"));
+    });
     var board = el("div", "board");
     if (smeta.filing_id !== null) board.setAttribute("data-filing-id", String(smeta.filing_id));
     board.setAttribute("data-proceeding-id", String(smeta.proceeding_id));
@@ -186,6 +188,8 @@
       var summary = el("summary");
       summary.appendChild(el("span", "ref", "Job #" + t.id));
       summary.appendChild(el("span", "title", t.title));
+      // On a merged board, the Writing the job serves, drawn as given.
+      if (t.writing) summary.appendChild(el("span", "subtitle", t.writing));
       // Finished on the server (Goal card design §4.7), drawn as given.
       if (t.subtitle) summary.appendChild(el("span", "subtitle", t.subtitle));
       // An unattended run's lock, finished on the server (Goal card design §5.4) and drawn as given.

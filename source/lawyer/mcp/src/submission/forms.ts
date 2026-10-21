@@ -101,6 +101,7 @@ import type { RankedFiling } from "./forms/render-matter-board.js";
 import { deadlineCriteria, type MatterDates } from "./matter-dates.js";
 import type { MatterTodos } from "./matter-todos.js";
 import {
+  boardSectionOf,
   DATES_NOT_READ,
   pagePathFor,
   persistedTodos,
@@ -1080,7 +1081,8 @@ export function submissionFormsRender(
       document_type: "Work_board",
       ...(path !== undefined ? { path } : {}),
       file_name: path !== undefined ? basename(path) : "Job Board.html",
-      ...(withSummary ? { board_summary: renderBoardSummary(section, client, todos) } : {}),
+      // On a merged board the summary reads the whole board, as its page draws it.
+      ...(withSummary ? { board_summary: renderBoardSummary(boardSectionOf(dbPath, section, client, ctx.rendered, revision, dates), client, todos) } : {}),
       ...(written?.change ?? {}),
       pages_written: written !== undefined,
       ...(section.meta.ingest_inputs ? { ingest_inputs: section.meta.ingest_inputs } : {}),
@@ -1513,7 +1515,7 @@ export function submissionFormsRenderProceedingBoard(
   return {
     proceeding_id: proceedingId,
     revision,
-    board_summary: renderBoardSummary(section, client, todos),
+    board_summary: renderBoardSummary(boardSectionOf(dbPath, section, client, now, revision, dates), client, todos),
     ...(pages ?? {}),
     ...(pages !== undefined ? { job_board_path: pagePathFor(pages, section.meta) } : {}),
     pages_written: pages !== undefined,
