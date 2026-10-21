@@ -1,5 +1,6 @@
 // The data server, started alone with no key stored, lists the key tools
-// (docs/Specs/2026-10-20_move-key-request-tools-to-lawyer-plugin-spec.md, criterion 1).
+// (docs/Specs/2026-10-20_move-key-request-tools-to-lawyer-plugin-spec.md, criterion 1, and
+// docs/Specs/2026-10-20_key-request-tool-missing-in-session-spec.md, criterion 1).
 // Their behaviour is key-request.unit.test.mjs.
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";

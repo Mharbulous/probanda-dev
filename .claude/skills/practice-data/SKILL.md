@@ -218,6 +218,8 @@ Probanda's key is the one credential for every access to Probanda's Cloud: pract
 
 A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send the practitioner the link it returns. On that page they type only what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name) and an email and optional phone for contact, never in chat. Probanda verifies them and sends the key to the email address their firm's website or the directory lists for them. Call `key_request__status` to report where the request stands. When it reports `issued`, call `cloud_key__configure_credential` so they can paste the key they received.
 
+If `key_request__submit` or `cloud_key__configure_credential` is not in your tool list, the plugin was updated after this session's tools loaded. Tell the practitioner to fully restart the app (quit it, not just close the window), and nothing else.
+
 ### Practice quirks
 
 The optional `practice_quirks` key holds this practitioner's environment notes: facts about their own setup that a session would otherwise rediscover by trial and error, such as where their mail is routed, which mailbox the mail connector reads, folder habits and tool limits. It belongs to the practitioner, not the firm, and lives only in this file. It is never copied to the firm folder or into a matter database.
