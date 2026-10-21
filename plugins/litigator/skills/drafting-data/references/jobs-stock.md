@@ -334,7 +334,8 @@ The job's words come from the offer's `job:` and `steps:` lines in the return th
 
 - Title and intent: the offer's `job:` line, character for character, without its `job: ` label. Single quotes are doubled in the SQL literal.
 - Steps: the offer's `steps:` line, without its `steps: ` label, split on ` · `, one `ticket_steps` row per part, character for character, ordinals in the printed order. Step 5 lets no step restate the `job:` line, so `/draft`'s pre-claim check passes them.
-- An offer with no `job:` or `steps:` line gets no job. Write nothing, and say in one line that the offer carries no job line and that the practitioner can outline it in their own words under `/draft`.
+- An offer with no `job:` line gets no job. Write nothing, and say in one line that the offer carries no job line and that the practitioner can outline it in their own words under `/draft`.
+- An offer with a `job:` line and no `steps:` line takes the plan marker as its one step (`jobs-create.md` §3, "The plan marker"), never steps the session words.
 - An offer tagged `kind: note-up` gets no job, even on "add" (`shared/legal-audit-protocol.md`, Step 5, prints it with no `job:` line). Write nothing, and say in one line that a note-up is written only on the practitioner's own instruction, such as "note up <case>", outlined under `/draft`, or by the "Note up all cited authorities" create. **Hard rule:** no session writes a job whose title or intent is a note-up of an authority, a read of its citing cases, or a citator or KeyCite check, except on the practitioner's express instruction or by that create. Never from a research offer, a loose thread or a finding by the session's own reading.
 - The offer itself stays on record: the loose thread this add consumes keeps it verbatim (`seeds.idea`, with `charted_into` set to the job), so the job's words can be checked against it.
 - No scope rows: the job writes no substance table (`jobs-common.md` §2 allows a job with none).
@@ -371,6 +372,8 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Read the exa
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 2, 'Put the question to /legal-research');
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 3, 'Save the answer under this job');
 ```
+
+These rows stand for one offer's `steps:` line. They are never a default plan and are never copied onto another job: a job with no `steps:` line of its own takes the plan marker.
 
 **Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:
 
