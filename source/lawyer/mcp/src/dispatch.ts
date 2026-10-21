@@ -94,6 +94,7 @@ import {
 } from "./files/research-filing.js";
 import { researchPreflight } from "./research/preflight.js";
 import { legislationSearch } from "./files/legislation-search.js";
+import { pdfPageImages } from "./files/extract/page-images.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
 import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matter-root.js";
 import { callKeyRequestTool, isKeyRequestToolName } from "./key-request/tools.js";
@@ -632,6 +633,14 @@ export async function callTool(
 
   if (name === "research__preflight") {
     return researchPreflight();
+  }
+
+  if (name === "pdf_pages__images") {
+    return pdfPageImages({
+      path: args.path as string,
+      pages: args.pages as string | undefined,
+      tiles: args.tiles as boolean | undefined,
+    });
   }
 
   if (isKeyRequestToolName(name)) {

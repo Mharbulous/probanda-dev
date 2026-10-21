@@ -1502,6 +1502,22 @@ export function fileToolDefinitions(): ToolDefinition[] {
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
+    {
+      name: "pdf_pages__images",
+      description:
+        "Classify each page of one PDF as `scanned` or `born_digital`, and render every scanned page to PNG, so a scanned or OCR'd page is read from its image and never from its text layer. Call it before reading a PDF's content. `path` is the absolute path of the `.pdf`; `pages` (`\"X\"` or `\"X-Y\"`) limits the call to those pages; `tiles: true` renders each scanned page as two half-page tiles at 200 dpi, for small print. A page is `scanned` when images cover at least half of it and none of its text is visible (an invisible OCR layer counts as no text); every other page is `born_digital`, is not rendered, and is read from the PDF as before. A scanned page is rendered at 150 dpi, RGB on white, without annotations; one over about 3,000,000 pixels is cut into horizontal tiles under that size. The PDF is never changed: the PNGs go in a new folder in the OS temp directory, never in the matter. The same page renders to the same bytes on every call. Returns {source_sha256, page_count, render_dir, pages: [{page, kind, images?: [{path, sha256, width, height, tile?}]}]}, with `images` (top to bottom) on scanned pages only and `tile` (from 1) only on a page cut into tiles. Refused: `not_found`, `not_pdf`, `password_protected`, `renderer_unavailable`, `bad_pages`.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          pages: { type: "string" },
+          tiles: { type: "boolean" },
+        },
+        required: ["path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
   ];
 }
 

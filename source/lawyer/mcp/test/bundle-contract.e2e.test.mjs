@@ -148,7 +148,8 @@ test("a server spawned before a rebuild reports server_outdated from its bootstr
 });
 
 /**
- * Spawns `dist/litigation-mcp.js` copied ALONE into a marker-free tmpdir --
+ * Spawns `dist/litigation-mcp.js` copied ALONE into a marker-free tmpdir, with
+ * only the pdfium.wasm that ships beside it in dist/ --
  * nothing else from the repo is present, and the tmpdir's own ancestry (under
  * the OS temp root) holds no repo marker either. This is the same shape as an
  * extracted .plugin install: no .git, no .claude/skills, anywhere above the
@@ -158,6 +159,7 @@ async function withDistOnlyServer(env, fn) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-dist-only-"));
   const bundleCopy = join(dir, "litigation-mcp.js");
   copyFileSync(LITIGATION_BUNDLE, bundleCopy);
+  copyFileSync(join(dirname(LITIGATION_BUNDLE), "pdfium.wasm"), join(dir, "pdfium.wasm"));
 
   const transport = new StdioClientTransport({
     command: process.execPath,
@@ -293,6 +295,35 @@ test("the dist-only bundle extracts a 6. LAW PDF and .doc with no host Python, k
     );
   } finally {
     rmSync(matter, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  }
+});
+
+// The page renderer is bundled too: the packaged bundle loads PDFium's wasm from beside itself and
+// renders a scanned page with no host renderer, and PDFium's output stays off stdout.
+test("the dist-only bundle renders a scanned PDF page to PNG, keeping stdout clean", async () => {
+  const { scannedPdfBytes } = await import("./helpers/synthetic-docs.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "coclerk-page-images-bundle-"));
+  const pdf = join(dir, "scanned.pdf");
+  writeFileSync(pdf, scannedPdfBytes());
+  let renderDir;
+  try {
+    await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
+      const transportErrors = [];
+      client.onerror = (err) => transportErrors.push(err);
+      const result = await client.callTool({ name: "pdf_pages__images", arguments: { path: pdf } });
+      assert.notEqual(result.isError, true, JSON.stringify(result));
+      const parsed = JSON.parse(result.content[0].text);
+      renderDir = parsed.render_dir;
+      assert.deepEqual(parsed.pages.map((p) => p.kind), ["scanned", "born_digital", "born_digital"]);
+      const [image] = parsed.pages[0].images;
+      assert.equal(createHash("sha256").update(readFileSync(image.path)).digest("hex"), image.sha256);
+      assert.deepEqual([image.width, image.height], [1275, 1650]);
+      await client.listTools();
+      assert.deepEqual(transportErrors, []);
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+    if (renderDir) rmSync(renderDir, { recursive: true, force: true });
   }
 });
 

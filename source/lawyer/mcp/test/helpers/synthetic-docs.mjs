@@ -1,4 +1,4 @@
-// Synthetic PDF, .docx and .doc files for the text-extraction tests, built byte by byte with no
+// Synthetic PDF, .docx and .doc files for the text-extraction and page-image tests, built byte by byte with no
 // extra dependency and no host Python. Placeholder text only.
 
 import { crc32, deflateRawSync, deflateSync } from "node:zlib";
@@ -21,6 +21,51 @@ export function pdfBytes(pages, { compress = false } = {}) {
     objs.push(Buffer.concat([Buffer.from(`<< /Length ${stream.length}${filter} >>\nstream\n`, "latin1"), stream, Buffer.from("\nendstream", "latin1")]));
   });
   objs.push(Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "latin1"));
+  return assemblePdf(objs);
+}
+
+/** A PDF of three pages, or four with `form`, for the page renderer: (1) a full-page image under
+ * invisible (render mode 3) text, as an OCR'd scan; (2) the same image under visible text; (3)
+ * text alone; (4) the image and invisible text wrapped in a form XObject. `mediaBox` sizes every
+ * page. `encrypted` adds a Standard security handler whose user password is not empty. */
+export function scannedPdfBytes({ mediaBox = [612, 792], form = false, encrypted = false } = {}) {
+  const [w, h] = mediaBox;
+  // Object numbers: 1 catalog, 2 pages, 3 font, 4 image, 5 form, then page/content pairs from 6.
+  const image = `q ${w} 0 0 ${h} 0 0 cm /Im1 Do Q`;
+  const text = (mode) => `BT ${mode} Tr /F1 12 Tf 72 ${h - 72} Td (Placeholder text layer) Tj ET`;
+  const contents = [`${image} ${text(3)}`, `${image} ${text(0)}`, text(0)];
+  if (form) contents.push("/Fm1 Do");
+  const pixels = Buffer.alloc(8 * 8 * 3, 0x80);
+  // The form draws the image at quarter area and its /Matrix doubles it, so the page is covered only
+  // when the form's matrix is applied.
+  const formBody = Buffer.from(`q ${w / 2} 0 0 ${h / 2} 0 0 cm /Im1 Do Q ${text(3)}`, "latin1");
+  const resources = "<< /Font << /F1 3 0 R >> /XObject << /Im1 4 0 R /Fm1 5 0 R >> >>";
+  const objs = [
+    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>", "latin1"),
+    Buffer.from(`<< /Type /Pages /Kids [${contents.map((_, i) => `${6 + 2 * i} 0 R`).join(" ")}] /Count ${contents.length} >>`, "latin1"),
+    Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "latin1"),
+    stream("/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceRGB /BitsPerComponent 8", pixels),
+    stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${w} ${h}] /Matrix [2 0 0 2 0 0] /Resources ${resources}`, formBody),
+  ];
+  contents.forEach((content, i) => {
+    objs.push(Buffer.from(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Contents ${7 + 2 * i} 0 R /Resources ${resources} >>`, "latin1"));
+    objs.push(stream("", Buffer.from(content, "latin1")));
+  });
+  let trailer = "";
+  if (encrypted) {
+    const filler = "11".repeat(32);
+    objs.push(Buffer.from(`<< /Filter /Standard /V 1 /R 2 /O <${filler}> /U <${filler}> /P -4 >>`, "latin1"));
+    trailer = ` /Encrypt ${objs.length} 0 R /ID [<${"22".repeat(16)}> <${"22".repeat(16)}>]`;
+  }
+  return assemblePdf(objs, trailer);
+}
+
+function stream(dict, data) {
+  return Buffer.concat([Buffer.from(`<< ${dict} /Length ${data.length} >>\nstream\n`, "latin1"), data, Buffer.from("\nendstream", "latin1")]);
+}
+
+/** `objs` (object 1 first, the catalog) as a whole PDF with its xref table. */
+function assemblePdf(objs, trailerExtra = "") {
   const parts = [Buffer.from("%PDF-1.4\n", "latin1")];
   let length = parts[0].length;
   const offsets = [];
@@ -32,7 +77,7 @@ export function pdfBytes(pages, { compress = false } = {}) {
   });
   let tail = `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
   for (const o of offsets) tail += `${String(o).padStart(10, "0")} 00000 n \n`;
-  tail += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${length}\n%%EOF\n`;
+  tail += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R${trailerExtra} >>\nstartxref\n${length}\n%%EOF\n`;
   parts.push(Buffer.from(tail, "latin1"));
   return Buffer.concat(parts);
 }

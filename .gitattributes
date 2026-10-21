@@ -26,3 +26,4 @@ source/lawyer/mcp/src/housekeeping/templates/** text eol=lf
 *.docx binary
 *.xlsx binary
 *.pptx binary
+*.wasm binary
