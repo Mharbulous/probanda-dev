@@ -7,8 +7,8 @@
 //
 // Nothing here is templated, and neither string carries matter data.
 //
-// WORKBOARD_CSS is the Job Board's own copy and the prototype for board-template.ts, which the other
-// board pages use. A proven change here is promoted there (shared/html-pages.md, One design template).
+// WORKBOARD_CSS is the Job Board's own copy and the prototype for templates/work-board/board.css,
+// which the other board pages use. A proven change here is promoted there (shared/html-pages.md, One design template).
 
 import workboardCss from "../../templates/job-board/workboard.css.js";
 import workboardJs from "../../templates/job-board/workboard.js.js";

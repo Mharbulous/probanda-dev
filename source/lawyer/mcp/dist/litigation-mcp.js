@@ -1,4 +1,4 @@
-// build-stamp: 869808f70b04
+// build-stamp: c1180108bdbc
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -85567,7 +85567,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join20 } from "node:path";
-var BUILD_STAMP = false ? null : "869808f70b04";
+var BUILD_STAMP = false ? null : "c1180108bdbc";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -95213,7 +95213,7 @@ details.seed>summary .subtitle{display:block;font-size:12.5px;color:var(--muted)
    dots, only the file number labelled; then the dates (ADR 0013, 2026-10-04 amendments), this
    Writing's row and the matter's row, plain text with no control, each date as stored and its flag
    after it. A deadline a Goal card carries is drawn on that card instead: in its head while unmet,
-   and on its criterion row. The margin under the header is this page's own: board-template.ts
+   and on its criterion row. The margin under the header is this page's own: work-board/board.css
    still has the 28px margin it copied. */
 header{margin-bottom:16px}
 /* The Writing's title, on its own line under the heading's gold rule. It wraps rather than clips. */
