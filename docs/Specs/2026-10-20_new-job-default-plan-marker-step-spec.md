@@ -67,3 +67,17 @@ None.
 ## 10. Verify against HEAD before building
 
 Re-read `jobs-create.md` §3, the pickup review in `draft/references/job-session.md`, and the `job-planning` shared file and skill to see whether they already treat a placeholder step specially.
+
+### Verification against HEAD (8111cf07, 2026-10-20)
+
+| Item | Finding at HEAD |
+|---|---|
+| `drafting-data/references/jobs-create.md` §3, Call 3 | Confirmed: "one INSERT per step, always at least one". No placeholder or marker step. Its wording rule says that where the outlining answers hold no step that names the work, `/draft` words one before the closing read-back, where the practitioner selects it. |
+| `drafting-data/references/jobs-stock.md` §3i | Confirmed: steps are the offer's `steps:` line, split on ` · `. Call 3's example rows ("Read the example rule", "Put the question to /legal-research", "Save the answer under this job") are shown with no note that they are an example only. An offer with no `job:` or `steps:` line gets no job. No marker. The `steps:` line is not relayed to the practitioner (`shared/legal-research.md`, "After the answer"). §3 lists §3i among its fixed-text creates. |
+| `draft/references/job-session.md` pickup review, restating check, pre-claim check | No placeholder handling. The restating check ends by comparing the plan with `shared/job-planning.md` and upgrading one that falls short. A one-step job "runs on its creation approval once its step names work". |
+| `draft/references/take-over.md` | Restating check and plan upgrade run on a taken-over job. No marker handling. |
+| `shared/job-planning.md` | §3 upgrade rewrites only steps not yet done, by `/drafting-data` §5's pickup rewrite or partial replace. No marker handling. |
+| `job-planning/SKILL.md` | Steps 3 and 4 compare and upgrade. "A plan that meets them: say so in one line and stop." No marker handling. |
+| `drafting-data/hooks/practitioner-words-gate.py` | Confirmed: a job's title, intent and steps are not read. No gate route needed. |
+| `drafting_data__approve_plan` | Refuses only `no_steps`. It has no marker guard. Its source is under `source/lawyer/`, out of bounds for this change, so the "not approved while the marker is the only step" constraint is held in skill text only. |
+| Marker text anywhere in `.claude/` or `source/` | None. |
