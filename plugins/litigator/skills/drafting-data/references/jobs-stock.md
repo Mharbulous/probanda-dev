@@ -78,7 +78,7 @@ The Writing's save follows the letter save idiom below with this job's title, in
 
 ### Letter save idiom
 
-The two letter jobs are written through §3's two-call idiom, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. Their `title` and `intent` here are this section's fixed text, exempt from §3's words rule, and the practitioner-words gate (`hooks/practitioner-words-gate.py`) passes them as fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new jobs `20` and `21`, which in practice §3's call 2 recovers. A new letter has nothing queued on it, so each job takes §3's starting priority, `0`. A memo's save runs the same statements with the memo's intents and step text (above) in place of the letter's, never the letter's: the gate admits both, so it cannot catch the swap.
+The two letter jobs are written through §3's two-call idiom, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. Their `title` and `intent` here are this section's fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new jobs `20` and `21`, which in practice §3's call 2 recovers. A new letter has nothing queued on it, so each job takes §3's starting priority, `0`. A memo's save runs the same statements with the memo's intents and step text (above) in place of the letter's, never the letter's.
 
 The plain save, call 1 for each job:
 
@@ -328,9 +328,9 @@ The job is ordinary `work`: no title exclusion leaves it out of the open jobs th
 
 One fixed-text job per follow-up research offer the practitioner names to add. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
 
-**Who creates it.** The session that relayed the return, only when the practitioner names a relayed offer to add. The sort in `shared/legal-research.md` ("After the answer") creates no job: it captures each offer as a loose thread or drops it. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `session_proposed`, no `ticket_proposals` row and no `ticket_blocks` edge.
+**Who creates it.** The session that relayed the return, only when the practitioner names a relayed offer to add. The sort in `shared/legal-research.md` ("After the answer") creates no job: it captures each offer as a loose thread or drops it. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
-The job's words come from the offer's `job:` and `steps:` lines in the return the session relayed (`shared/legal-audit-protocol.md`, Step 5) and from this section, never from the session. The practitioner-words gate passes the title and intent only when they equal a `job:` line a subagent's return printed before the practitioner's last turn, and that turn says "add".
+The job's words come from the offer's `job:` and `steps:` lines in the return the session relayed (`shared/legal-audit-protocol.md`, Step 5) and from this section, never from the session.
 
 - Title and intent: the offer's `job:` line, character for character, without its `job: ` label. Single quotes are doubled in the SQL literal.
 - Steps: the offer's `steps:` line, without its `steps: ` label, split on ` · `, one `ticket_steps` row per part, character for character, ordinals in the printed order. Step 5 lets no step restate the `job:` line, so `/draft`'s pre-claim check passes them.

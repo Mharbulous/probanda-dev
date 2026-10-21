@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
-"""Refuse a job's wording that is not the practitioner's own words or a set pattern (#784).
+"""Refuse a paragraph revision, a confirmed statement of goals or a Job Board merge the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal and
-drafting_data__merge_job_boards (a merge passes only when the last practitioner turn is a bare yes). A job is created only on the practitioner's
-explicit request or from a pattern they set up in advance, and the gate reads every creation of
-one (jobs-create.md §3, "Who may create a job", lists each path and its route). It checks every
-tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ... SELECT,
-and refuses an insert that names no title; every tickets.title and tickets.intent an UPDATE
-tickets sets; every ticket_steps.text an INSERT INTO ticket_steps writes, by VALUES or by INSERT ... SELECT,
-in a script that also deletes from ticket_steps (the shape that replaces an existing job's
-steps: jobs-run.md §5, jobs-create.md §3a); and every ticket_steps.text an UPDATE
-ticket_steps sets to a string literal, except a literal ending in " [rev N]" (jobs-gate.md
-§14's result line). A `text || '<literal>' ...` value keeps the step's own words and appends
-literals (§14's waiver), so it passes unchecked. A step written with no delete in its script
-is a new job's step and is not read. It also checks every marker_suppressions.note an INSERT
-INTO or UPDATE marker_suppressions writes (v69, filing-checklists.md §6): counsel's words for a
-suppression, never a printed title or the session's paraphrase. Each checked value must be an unbroken run
-of one practitioner turn in this session's transcript. The transcript is the
+drafting_data__merge_job_boards (a merge passes only when the last practitioner turn is a bare yes).
+A job's title, intent and steps, and a marker suppression's note, are not read: their wording
+needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
+
+Each check reads this session's transcript. The transcript is the
 harness's own record, so the session being checked does not author the
 comparand. A practitioner turn is a `user` line with no isMeta, origin kind
 "human", and promptSource "sdk" (desktop and Cowork) or "typed"/"queued" (a
@@ -28,11 +18,8 @@ carries "sdk", and an accepted prompt suggestion is the app's words, so neither
 counts. The text typed after a slash command's name (the command-args) counts as
 one practitioner turn, though its record has no promptSource. The command's name
 and tags contribute no words, and the isMeta skill body that follows the command
-stays excluded. Case and runs of whitespace are ignored; punctuation and word
-order are not. A new job's title or intent may also close with a full stop the turn lacks, and any
-job's title may correct a word's spelling, word for word with no word added, dropped or moved
-(jobs-create.md §3's cleanup and presentation; on a held job, /draft's title spelling cleanup).
-An existing job's intent and steps take neither, and its title takes no full stop.
+stays excluded. An unbroken run of a turn ignores case and runs of whitespace;
+punctuation and word order count.
 
 The harness puts its own context inside those records as <system-reminder> blocks,
 in a text part ahead of the typed text or prefixed to it. A reminder is not the
@@ -44,22 +31,6 @@ A widget submission arrives as a practitioner turn too, echoing the values the
 session wrote into the widget. So every data-value from the session's earlier
 show_widget calls is struck out of each turn before matching: a selection
 supplies no words, and a typed answer still does.
-
-A value no turn of this session holds passes by a second route: words the practitioner
-wrote in an earlier session, quoted back. The session's own visible reply (not a
-subagent's) holds a fenced code block whose whole content is the value, a practitioner
-turn follows that reply, and some practitioner turn of another transcript in the same
-folder holds the block's content as an unbroken run. The folder is searched newest
-first, not into subfolders (a subagent's prompts are the session's), and only until
-DEADLINE_SECONDS. A loose thread is not evidence: the session writes loose threads itself.
-
-A tickets.title or tickets.intent no turn holds also passes as an approved proposal when it
-stood, as an unbroken run of one text part, in the session's visible reply (not a subagent's,
-not a tool call's input) since the previous practitioner turn, the next and last practitioner
-turn is a bare yes (APPROVALS, the whole turn), and the statement writing it sets
-session_proposed = 1 (an INSERT INTO tickets: the row's session_proposed is 1). A step text never passes that way: steps carry no session_proposed flag,
-so a proposed step is adopted by the practitioner pasting it back (shared/paralegal-posture.md
-section 3), which makes it a run of their own turn.
 
 The gate also reads every INSERT INTO paragraph_revisions, by VALUES or by INSERT ... SELECT: an
 on-the-fly revision of one reviewed paragraph (paragraph-revision.md). Its choice, origin,
@@ -94,32 +65,6 @@ practitioner must have written, and a job session writes filing_facts ungated al
 transcript check applies, a keyword test on the last turn would prove nothing, and a script whose
 only checked write is a passing move needs no transcript.
 
-A new job's tickets.title or tickets.intent also passes as a research offer the practitioner
-named to add (jobs-stock.md §3i): it equals, character for character, the text after `job: ` on a
-line of a subagent's result (an Agent or Task call of this session, not a subagent's own) that came
-before the last practitioner turn, and that turn, its reminders cut, holds the word "add".
-
-Exempt: jobs-gate.md §14's fixed gate job text, jobs-stock.md §3b's stock
-bundle jobs' fixed title, intent and step text, §3c's counsel's review jobs' fixed text (the
-review job's title by its "Counsel's review of " prefix), §3d's scrutiny review job's
-fixed intent and step (its title by its "Review scrutiny finding: " prefix), §3g's pass finding
-jobs' fixed titles and intents, §3h's conversion job when its title and intent in one inserted row
-name the same Writing, §3j's loose-threads step, jobs-create.md §3e's grouped intake title and
-§3k's note-up job title on a new job only, and a value
-equal, character for character, to a Proposal title an earlier drafting_forms__*
-tool result printed (a fast-path job's fixed text from the record), inline or
-persisted to a file. A ticket_steps.text is also exempt when it equals, character for
-character, a Proposal item such a result printed: the item on a detail line under Proposed
-or Shelved, a string on a job's `keys:` line, or a board_data proposal's item (a
-grouped intake job's steps, jobs-create.md §3e). An item never passes as a title or intent.
-An existing job's tickets.title or ticket_steps.text is also exempt when it is an unbroken run of a job card's own
-words such a result printed: the card's head line, its intent or one of its steps (/draft's pickup
-review shortens a title or splits a step by cutting, adding no word). Such a title may also correct a
-word's spelling, as above (/draft's title spelling cleanup on a held job). Never a tickets.intent.
-No exemption applies to a marker_suppressions.note: fixed text and printed titles are a job's.
-The gate cannot see which job holds a key, so this trusts the record as the title exemption
-does: printed by a drafting_forms__* result in this session.
-
 The gate also runs on drafting_data__set_board_goal, which records a Job Board's statement of
 goals (2026-10-14 Job Board goal card spec). A confirmed statement is the practitioner's: it passes
 when it is an unbroken run of one practitioner turn, or when it is, character for character, the one
@@ -139,8 +84,6 @@ import html
 import json
 import re
 import sys
-import time
-from pathlib import Path
 
 PREFIX = "Refused (practitioner-words gate, #784): "
 TYPED_SOURCES = {"sdk", "typed", "queued"}
@@ -151,89 +94,8 @@ ECHO = 300  # the most of a nearest turn a refusal shows
 COMMAND_ARGS = re.compile(r"<command-args>(.*?)</command-args>", re.S)
 DATA_VALUE = re.compile(r"""data-value\s*=\s*(?:"([^"]*)"|'([^']*)')""")
 FENCE = re.compile(r"^```[^\n]*\n(.*?)^```", re.M | re.S)
-WORD = re.compile(r"[A-Za-z0-9]+")
 # A whole practitioner turn that approves the session's proposal, as approval() normalizes it.
 APPROVALS = {"yes", "approved", "approve", "agreed", "go ahead", "yes, go ahead", "ok", "okay", "do it"}
-FLAG = [("name", "session_proposed"), ("p", "="), ("num", "1")]
-# The plugin's hook timeout is 10 s; a cancelled hook does not refuse, so the gate stops first.
-DEADLINE_SECONDS = 5
-
-# jobs-gate.md §14's fixed gate job, and jobs-stock.md §3b's stock bundle jobs, §3c's
-# counsel's review jobs and §3d's scrutiny review job, steps included: machine-composed text
-# that §3 exempts by name.
-FIXED_TEXT = {
-    "Pre-filing consistency gate",
-    "Run the pre-filing checks on the assembled package and clear or waive every failure "
-    "before the Writing is presented as ready to file.",
-    "Availability letter",
-    "Obtain the court's availability for the hearing of this application by letter.",
-    "File and serve",
-    "File this Writing in the registry, serve it, and record the filing date and any "
-    "affidavit of service.",
-    "Application book",
-    "Prepare the application book: render its title page and index, then bind them "
-    "with the documents and fill in the page numbers.",
-    "Draft the letter",
-    "Draft this letter and render its mockup for review.",
-    "Deliver",
-    "Send this letter to its recipients and record it as sent.",
-    "Draft this memo and render its mockup for review.",
-    "Circulate this memo or put it on file, and record it as sent.",
-    "Prepare the review pages",
-    "Extract the source pages each paragraph of this Writing relies on into the presentation "
-    "folder, ready for counsel's review.",
-    "Counsel reviews every paragraph of this Writing, in document order, against its source pages.",
-    "Counsel reviews the scrutinizer's finding on this statement of law against the source and confirms, "
-    "revises or drops the statement.",
-    "Draft the chambers-availability letter",
-    "File in the registry and record the filing date",
-    "Serve the filed documents",
-    "Affidavit of service, or n/a",
-    "Render the title page and index",
-    "Bind the book and fill in the page numbers",
-    "Send the letter to its recipients",
-    "Record the letter as sent",
-    "Draft the memo",
-    "Circulate the memo or put it on file",
-    "Record the memo as sent",
-    "Extract the source pages into the presentation folder",
-    "Review every paragraph and resolve every discussion point",
-    "Review the finding against the source and confirm, revise or drop the statement",
-    # §3b's Unstructured Writing job.
-    "Draft the Writing",
-    "Draft this Writing and render its mockup for review.",
-    # §3g's pass finding jobs.
-    "Check a date or quotation against its source",
-    "Bring a date, amount, name, quotation or citation in this Writing into line with the source it comes "
-    "from, or locate that source.",
-    "Decide a position our own correspondence contradicts",
-    "Counsel decides whether this Writing keeps, narrows or drops a position the firm's own prior "
-    "correspondence or filings contradict.",
-    "Decide an overstatement finding",
-    "Counsel keeps the assertion as drafted or rewrites it at its source's strength; a source not located "
-    "is found first.",
-    # §3j's loose-threads job's step.
-    "Rank the open loose threads if any is unranked, then work the top thread that is not deferred and not tooling",
-}
-# jobs-create.md §3e's grouped intake job and §3k's note-up job: fixed text for a new job only, never an
-# existing job's rewrite.
-NEW_JOB_TEXT = {"Locate pinpoint references for the following facts", "Note up all cited authorities"}
-# jobs-stock.md §3h's conversion job: its title and intent carry the same Writing title.
-CONVERSION_TITLE = re.compile(r"Make (.+) a Structured Writing", re.S)
-CONVERSION_INTENT = re.compile(r"Turn this Writing into a type file so the next (.+) is a Structured Writing\. "
-                               r"Unbilled: firm infrastructure\.", re.S)
-JOB_LINE = re.compile(r"^[ \t]*job: (.+?)[ \t]*$", re.M)  # a research offer's job line (§3i)
-ADD = re.compile(r"(?i)\badd\b")
-SUBAGENT_TOOLS = ("Agent", "Task")
-SPELLING = 0.75  # how near a cleaned title's word must be to the typed word (§3's title cleanup)
-# §3c's review job title is its prefix and the Writing's own title; §3d's is its prefix, the
-# authority's title and the statement's id.
-REVIEW_TITLE_PREFIXES = ("Counsel's review of ", "Review scrutiny finding: ")
-CHECKED = ("title", "intent")
-STEP_TEXT = "ticket_steps.text"
-SUPPRESSIONS = "marker_suppressions"
-NOTE_FIELD = "marker_suppressions.note"  # counsel's words verbatim (v69, filing-checklists.md §6)
-REV_TOKEN = re.compile(r" \[rev \d+\]$")  # jobs-gate.md §14's result line ends with it
 SET_ENDS = {"where", "from", "returning", "order", "limit"}
 COMPOUND = {"union", "intersect", "except"}
 REVISIONS = "paragraph_revisions"
@@ -264,7 +126,7 @@ TOKEN = re.compile(r"""
 
 
 class Unreadable(Exception):
-    """A checked job write whose title, intent or step text is not a plain string literal."""
+    """A paragraph_revisions write whose checked columns are not plain string literals."""
 
 
 def tokens(script):
@@ -314,13 +176,9 @@ def table_at(toks, i, table):
     return i + 1 if toks[i:i + 1] == [("name", table)] else None
 
 
-def qualified(field):
-    return field if "." in field else f"tickets.{field}"
-
-
 def literal(field, value):
     if len(value) != 1 or value[0][0] != "str":
-        raise Unreadable(f"{qualified(field)} is set to something other than one string literal")
+        raise Unreadable(f"{field} is set to something other than one string literal")
     return value[0][1]
 
 
@@ -362,105 +220,6 @@ def insert_values(toks, j, cols, table):
     return rows, j
 
 
-def job_inserts(toks, j):
-    """Every tickets.title and tickets.intent an INSERT INTO tickets writes, by VALUES or by INSERT ...
-    SELECT, flagged when the row's session_proposed is 1. A §3h conversion job's title and intent
-    naming the same Writing are fixed text and are not yielded."""
-    cols, j = insert_columns(toks, j, "tickets")
-    if "title" not in cols:
-        raise Unreadable("an INSERT INTO tickets that names no title")
-    rows, j = insert_values(toks, j, cols, "tickets")
-    if ("name", "set") in toks[j:]:
-        raise Unreadable("an INSERT INTO tickets that also sets a column after its values")
-    for row in rows:
-        values = {c: literal(c, row[cols.index(c)]) for c in CHECKED if c in cols}
-        flagged = "session_proposed" in cols and row[cols.index("session_proposed")] == [("num", "1")]
-        title = CONVERSION_TITLE.fullmatch(values["title"])
-        intent = CONVERSION_INTENT.fullmatch(values.get("intent", ""))
-        if title and intent and title.group(1) == intent.group(1):
-            continue
-        for field, value in values.items():
-            yield field, value, flagged, True
-
-
-def step_inserts(toks, j):
-    """Every ticket_steps.text an INSERT INTO ticket_steps writes, by VALUES or by INSERT ... SELECT."""
-    cols, j = insert_columns(toks, j, "ticket_steps")
-    if "text" not in cols:
-        return
-    k = cols.index("text")
-    rows, j = insert_values(toks, j, cols, "ticket_steps")
-    for row in rows:
-        yield STEP_TEXT, literal(STEP_TEXT, row[k]), False, False
-    if ("name", "text") in toks[j:]:
-        raise Unreadable("an INSERT INTO ticket_steps that also sets text after its values")
-
-
-def note_inserts(toks, j):
-    """Every marker_suppressions.note an INSERT INTO marker_suppressions writes, by VALUES or by INSERT ... SELECT."""
-    cols, j = insert_columns(toks, j, SUPPRESSIONS)
-    if "note" not in cols:
-        return
-    k = cols.index("note")
-    rows, _ = insert_values(toks, j, cols, SUPPRESSIONS)
-    for row in rows:
-        yield NOTE_FIELD, literal(NOTE_FIELD, row[k]), False, False
-
-
-def note_updates(toks, j):
-    """Every marker_suppressions.note an UPDATE marker_suppressions sets."""
-    if toks[j:j + 1] == [("name", "as")]:
-        j += 2
-    if toks[j:j + 1] != [("name", "set")]:
-        raise Unreadable(f"an UPDATE {SUPPRESSIONS} with no SET")
-    sets, _ = split(toks[j + 1:], ("p", ","), lambda t: t[0] == "name" and t[1] in SET_ENDS)
-    for assignment in sets:
-        if assignment[:1] == [("p", "(")]:
-            if ("name", "note") in assignment:
-                raise Unreadable(f"an UPDATE {SUPPRESSIONS} that sets note as a row value")
-        elif assignment[:2] == [("name", "note"), ("p", "=")]:
-            yield NOTE_FIELD, literal(NOTE_FIELD, assignment[2:]), False, False
-
-
-def appends(value):
-    """Whether value is `text || '<literal>' || ...`: the step's own words kept, literals appended."""
-    rest = value[1:]
-    return value[:1] == [("name", "text")] and len(rest) > 0 and len(rest) % 3 == 0 and all(
-        rest[i:i + 2] == [("p", "|"), ("p", "|")] and rest[i + 2][0] == "str" for i in range(0, len(rest), 3))
-
-
-def step_updates(toks, j):
-    """Every ticket_steps.text an UPDATE ticket_steps sets to a literal, except §14's result line."""
-    if toks[j:j + 1] == [("name", "as")]:
-        j += 2
-    if toks[j:j + 1] != [("name", "set")]:
-        raise Unreadable("an UPDATE ticket_steps with no SET")
-    sets, _ = split(toks[j + 1:], ("p", ","), lambda t: t[0] == "name" and t[1] in SET_ENDS)
-    for assignment in sets:
-        if assignment[:1] == [("p", "(")]:
-            if ("name", "text") in assignment:
-                raise Unreadable("an UPDATE ticket_steps that sets text as a row value")
-        elif assignment[:2] == [("name", "text"), ("p", "=")] and not appends(assignment[2:]):
-            value = literal(STEP_TEXT, assignment[2:])
-            if not REV_TOKEN.search(value):
-                yield STEP_TEXT, value, False, False
-
-
-def update_writes(toks, j):
-    if toks[j:j + 1] == [("name", "as")]:
-        j += 2
-    if toks[j:j + 1] != [("name", "set")]:
-        raise Unreadable("an UPDATE tickets with no SET")
-    sets, _ = split(toks[j + 1:], ("p", ","), lambda t: t[0] == "name" and t[1] in SET_ENDS)
-    flagged = FLAG in sets
-    for assignment in sets:
-        if assignment[:1] == [("p", "(")]:
-            if any(t in (("name", "title"), ("name", "intent")) for t in assignment):
-                raise Unreadable("an UPDATE tickets that sets title or intent as a row value")
-        elif assignment[:1] and assignment[0][1] in CHECKED and assignment[1:2] == [("p", "=")]:
-            yield assignment[0][1], literal(assignment[0][1], assignment[2:]), flagged, False
-
-
 def statements(toks):
     stmts, cur = [], []
     for t in toks:
@@ -470,49 +229,6 @@ def statements(toks):
         else:
             cur.append(t)
     return stmts + [cur]
-
-
-def deletes_steps(stmt):
-    return any(t == ("name", "delete") and stmt[k + 1:k + 2] == [("name", "from")]
-               and table_at(stmt, k + 2, "ticket_steps") is not None for k, t in enumerate(stmt))
-
-
-def ticket_writes(script):
-    """Every (field, value, flagged, new) the script writes that the gate checks: tickets.title and
-    tickets.intent by UPDATE tickets, flagged when the statement sets session_proposed = 1, and by
-    INSERT INTO tickets (new), flagged when the row's session_proposed is 1; ticket_steps.text
-    (field STEP_TEXT, never flagged) by an INSERT INTO ticket_steps in a script that deletes from
-    ticket_steps, or by an UPDATE ticket_steps. Also marker_suppressions.note (field NOTE_FIELD,
-    never flagged), counsel's words for a suppression, by INSERT or UPDATE."""
-    if not re.search(r"(?i)\btickets\b|\bticket_steps\b|\bmarker_suppressions\b", script):
-        return []
-    stmts = statements(tokens(script))
-    replaces = any(deletes_steps(stmt) for stmt in stmts)
-    written = []
-    for stmt in stmts:
-        for k, t in enumerate(stmt):
-            if t == ("name", "into"):
-                j = table_at(stmt, k + 1, "tickets")
-                if j is not None:
-                    written += job_inserts(stmt, j)
-                j = table_at(stmt, k + 1, "ticket_steps")
-                if j is not None and replaces:
-                    written += step_inserts(stmt, j)
-                j = table_at(stmt, k + 1, SUPPRESSIONS)
-                if j is not None:
-                    written += note_inserts(stmt, j)
-            elif t == ("name", "update"):
-                start = k + 3 if stmt[k + 1:k + 2] == [("name", "or")] else k + 1
-                j = table_at(stmt, start, "tickets")
-                if j is not None:
-                    written += update_writes(stmt, j)
-                j = table_at(stmt, start, "ticket_steps")
-                if j is not None:
-                    written += step_updates(stmt, j)
-                j = table_at(stmt, start, SUPPRESSIONS)
-                if j is not None:
-                    written += note_updates(stmt, j)
-    return written
 
 
 def revision_inserts(toks, j):
@@ -684,96 +400,6 @@ def text_of(content):
     return content if isinstance(content, str) else ""
 
 
-# A Proposal's line; a shelved job's `- Job #<id> <title> · Shelved` line under Shelved
-# (`- #<id> <title>` before the headline summary) is not one.
-SUMMARY_LINE = re.compile(r"^- (?!#\d|Job #\d)(\S+) (.+)$")
-
-
-def summary_titles(text):
-    """Every `- <glyph> <title>` line's title under a `## Proposed` or `## Shelved` heading,
-    up to the next `## ` heading: a drafting_forms__board_card lane's lines, and a board_summary's
-    from before it printed those lanes as counts (#1365)."""
-    titles, inside = set(), False
-    for line in text.split("\n"):
-        if line.startswith("## "):
-            inside = line.startswith("## Proposed") or line.startswith("## Shelved")
-        elif inside:
-            match = SUMMARY_LINE.match(line)
-            if match:
-                titles.add(match.group(2))
-    return titles
-
-
-ITEM_MARK = " · item: "
-LANE_MARK = " · lane: "
-JSON_STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
-
-
-def summary_items(text):
-    """Every Proposal item a card prints: each `  key: <key> · item: <item> · lane: <lane>` line's
-    item under a `## Proposed` or `## Shelved` heading, and every JSON string on a job's
-    `  keys: ` line anywhere. The item runs from the first item marker, since a key never holds
-    " · ", to the last lane marker, so an item holding " · " survives."""
-    items, inside = set(), False
-    for line in text.split("\n"):
-        if line.startswith("## "):
-            inside = line.startswith("## Proposed") or line.startswith("## Shelved")
-        elif line.startswith("  keys: "):
-            items |= {json.loads(s) for s in JSON_STRING.findall(line)}
-        elif inside and line.startswith("  key: ") and ITEM_MARK in line and LANE_MARK in line:
-            start, end = line.index(ITEM_MARK) + len(ITEM_MARK), line.rindex(LANE_MARK)
-            if end >= start:
-                items.add(line[start:end])
-    return items
-
-
-JOB_HEAD = re.compile(r"^- Job #\d+ (.+)$")
-STEP_MARK = re.compile(r"(?:^| · )\d+ [☐☑] ")
-DONE_STAMP = re.compile(r" \([^()]*\)$")
-
-
-def card_texts(text):
-    """Every job card's own words a card prints: the head line after `- Job #<id> ` (the title and
-    its chips), the `  intent: ` text, and each step's text on the `  steps: ` line, its done stamp
-    dropped. /draft's pickup review cuts a short title or a split step from these
-    (draft/references/job-session.md, the pickup review)."""
-    texts = set()
-    for line in text.split("\n"):
-        head = JOB_HEAD.match(line)
-        if head:
-            texts.add(head.group(1))
-        elif line.startswith("  intent: "):
-            texts.add(line[len("  intent: "):])
-        elif line.startswith("  steps: "):
-            texts |= {DONE_STAMP.sub("", s) for s in STEP_MARK.split(line[len("  steps: "):]) if s}
-    return texts
-
-
-def proposal_text(result_text):
-    """(Proposal titles, Proposal items, job card texts) in one tool result's JSON text: a
-    board_data-shaped `proposals` list's, and those printed in any string value, such as a
-    board_card result's `card`."""
-    try:
-        stack, titles, items, cards = [json.loads(result_text)], set(), set(), set()
-    except ValueError:
-        return set(), set(), set()
-    while stack:
-        node = stack.pop()
-        if isinstance(node, dict):
-            proposals = node.get("proposals")
-            if isinstance(proposals, list):
-                titles |= {p["title"] for p in proposals if isinstance(p, dict) and isinstance(p.get("title"), str)}
-                items |= {p["item"] for p in proposals if isinstance(p, dict) and isinstance(p.get("item"), str)}
-            stack.extend(node.values())
-        elif isinstance(node, list):
-            stack.extend(node)
-        elif isinstance(node, str):
-            titles |= summary_titles(node)
-            items |= summary_items(node)
-            cards |= card_texts(node)
-    return titles, items, cards
-
-
 def words(text):
     """text with every system-reminder block cut out, or "" when that leaves no words (#1366)."""
     text = REMINDER.sub(GAP, text)
@@ -797,19 +423,12 @@ def fences(text):
 
 
 def read_transcript(path):
-    """(practitioner turns with earlier widget values struck, Proposal titles printed, Proposal
-    items printed, normed fenced blocks of the session's own replies that a later practitioner
-    turn followed, the text parts of the session's visible reply before the last practitioner
-    turn when that turn is a bare yes, else [], the last practitioner turn with no widget value
-    struck, every fenced block, as shown, of the session's visible reply (text parts and
-    SendUserMessage messages) between the previous practitioner turn and the last, and the
-    scripts of drafting_data__execute calls since the last practitioner turn that a result
-    has answered, and the research offers' `job:` lines a subagent's result printed before the
-    last practitioner turn)."""
-    turns, widget_values, forms_calls, titles, items, cards = [], set(), set(), set(), set(), set()
-    pending, confirmed = set(), set()
-    subagents, returned, offers = set(), set(), set()
-    visible, proposal = [], []
+    """(practitioner turns with earlier widget values struck, the last practitioner turn with no
+    widget value struck, every fenced block, as shown, of the session's visible reply (text parts
+    and SendUserMessage messages) between the previous practitioner turn and the last, and the
+    scripts of drafting_data__execute calls since the last practitioner turn that a result has
+    answered)."""
+    turns, widget_values = [], set()
     last_raw, last_fences = "", ()
     shown, executes, executed = [], {}, []
     with open(path, encoding="utf-8") as fh:
@@ -823,8 +442,6 @@ def read_transcript(path):
             if rec.get("type") == "assistant":
                 for part in parts:
                     if part.get("type") == "text" and not rec.get("isSidechain"):
-                        pending |= {norm(b) for b in FENCE.findall(part.get("text") or "") if norm(b)}
-                        visible.append(part.get("text") or "")
                         shown += fences(part.get("text") or "")
                     if part.get("type") != "tool_use":
                         continue
@@ -839,28 +456,10 @@ def read_transcript(path):
                         code = "\n".join(v for v in (part.get("input") or {}).values() if isinstance(v, str))
                         widget_values |= {html.unescape(a or b) for a, b in DATA_VALUE.findall(code)
                                           if (a or b).strip()}
-                    elif "drafting_forms__" in name:
-                        forms_calls.add(part.get("id"))
-                    elif name in SUBAGENT_TOOLS and not rec.get("isSidechain"):
-                        subagents.add(part.get("id"))
             elif rec.get("type") == "user":
                 for part in parts:
                     if part.get("type") == "tool_result" and part.get("tool_use_id") in executes:
                         executed.append(executes.pop(part.get("tool_use_id")))
-                    if part.get("type") == "tool_result" and part.get("tool_use_id") in subagents:
-                        result = text_of(part.get("content"))
-                        if result.startswith("<persisted-output>"):
-                            full = rec.get("toolUseResult")
-                            result = text_of(full.get("content") if isinstance(full, dict) else full)
-                        returned |= set(JOB_LINE.findall(result))
-                    if part.get("type") == "tool_result" and part.get("tool_use_id") in forms_calls:
-                        result = text_of(part.get("content"))
-                        if result.startswith("<persisted-output>"):
-                            result = text_of(rec.get("toolUseResult"))  # the full result the stub stands in for
-                        printed_titles, printed_items, printed_cards = proposal_text(result)
-                        titles |= printed_titles
-                        items |= printed_items
-                        cards |= printed_cards
                 origin = rec.get("origin")
                 if rec.get("isMeta") or not isinstance(origin, dict) or origin.get("kind") != "human":
                     continue
@@ -877,11 +476,6 @@ def read_transcript(path):
                     turns.append(strike(turn, widget_values))
                     last_raw, last_fences = turn, tuple(shown)
                     shown, executes, executed = [], {}, []
-                    confirmed |= pending
-                    pending = set()
-                    offers |= returned
-                    proposal = visible if approval(turns[-1]) else []
-                    visible = []
             elif rec.get("type") == "attachment":
                 queued = rec.get("attachment") or {}
                 origin = queued.get("origin")
@@ -892,57 +486,11 @@ def read_transcript(path):
                         turns.append(strike(turn, widget_values))
                         last_raw, last_fences = turn, tuple(shown)
                         shown, executes, executed = [], {}, []
-                        confirmed |= pending
-                        pending = set()
-                        offers |= returned
-                        proposal = visible if approval(turns[-1]) else []
-                        visible = []
-    # a block no turn followed is dropped
-    return turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed, offers
+    return turns, last_raw, last_fences, executed
 
 
 def norm(text):
     return " ".join(text.split()).casefold()
-
-
-def in_turn(field, value, new, turn):
-    """Whether value is an unbroken run of turn. A new job's title or intent may also close with a
-    full stop the turn lacks, and any job's title may correct a word's spelling, word for word, no
-    word added, dropped or moved (jobs-create.md §3's cleanup and presentation; on a held job,
-    /draft's title spelling cleanup)."""
-    v, t = norm(value), norm(turn)
-    if v in t or (new and v.endswith(".") and v[:-1] in t):
-        return True
-    if field != "title":
-        return False
-    typed = WORD.findall(v)
-    for part in re.split(r"[\x00\x01]", t):  # a run never spans a struck widget value or a cut reminder
-        said = WORD.findall(part)
-        if typed and any(all(a == b or difflib.SequenceMatcher(None, a, b).ratio() >= SPELLING
-                             for a, b in zip(typed, said[i:i + len(typed)]))
-                         for i in range(len(said) - len(typed) + 1)):
-            return True
-    return False
-
-
-def earlier_turns_matching(blocks, current_path, deadline):
-    """(the blocks some practitioner turn of another transcript beside current_path holds,
-    transcripts searched, transcripts there). Newest first, not recursive, until deadline."""
-    current = Path(current_path)
-    files = sorted((p for p in current.parent.glob("*.jsonl") if p.name != current.name),
-                   key=lambda p: p.stat().st_mtime, reverse=True)
-    proven, searched = set(), 0
-    for path in files:
-        if proven == blocks or time.monotonic() >= deadline:
-            break
-        searched += 1
-        raw = path.read_text(encoding="utf-8").lower()
-        # Parse only a file holding each block's longest word; a block with no word is always parsed.
-        todo = {b for b in blocks - proven if max(WORD.findall(b), key=len, default="") in raw}
-        if todo:
-            turns = [norm(turn) for turn in read_transcript(path)[0]]
-            proven |= {b for b in todo if any(b in turn for turn in turns)}
-    return proven, searched, len(files)
 
 
 def nearest(value, turns):
@@ -983,7 +531,7 @@ def board_goal(payload):
         return refuse("the hook input names no transcript_path, so there is no record of what the "
                       "practitioner approved to check the statement of goals against.")
     try:
-        turns, _, _, _, _, _, last_raw, last_fences, _, _ = read_transcript(path)
+        turns, last_raw, last_fences, _ = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
     if any(norm(statement) in norm(turn) for turn in turns):
@@ -1008,7 +556,7 @@ def merge_boards(payload):
         return refuse("the hook input names no transcript_path, so there is no record of the "
                       "practitioner confirming the merge.")
     try:
-        last_raw = read_transcript(path)[6]
+        last_raw = read_transcript(path)[1]
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
     if approval(last_raw):
@@ -1021,7 +569,6 @@ def merge_boards(payload):
 
 
 def main():
-    start = time.monotonic()
     payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     if (payload.get("tool_name") or "").endswith(GOAL_TOOL):
         return board_goal(payload)
@@ -1039,17 +586,6 @@ def main():
     move_refusals = move_failures(moves, stmts)
     if move_refusals:
         return refuse("\n".join(move_refusals + [MOVE_CLOSING]))
-    try:
-        # Fixed text is a job's: it never passes as counsel's suppression note.
-        written = [(f, v, flagged, new) for f, v, flagged, new in ticket_writes(script)
-                   if f == NOTE_FIELD
-                   or (v not in FIXED_TEXT and not (new and v in NEW_JOB_TEXT)
-                       and not (f == "title" and v.startswith(REVIEW_TITLE_PREFIXES)))]
-    except Unreadable as exc:
-        return refuse(f"cannot read the practitioner's wording this script writes: {exc}. Write "
-                      "tickets.title, tickets.intent, ticket_steps.text and marker_suppressions.note as plain "
-                      "string literals, in UPDATE ... SET, INSERT ... VALUES or INSERT ... SELECT, as "
-                      "jobs-create.md, jobs-run.md and filing-checklists.md §6 show.")
     revision_refusals = revision_failures(revisions, stmts)
     if revision_refusals:
         return refuse("\n".join(revision_refusals + [REVISION_CLOSING]))
@@ -1058,86 +594,24 @@ def main():
         return refuse(f"this script writes {len(wording)} paragraph revisions, and one approval admits one "
                       f"paragraph.\n" + "\n".join(f"  wrote: {row['new_text']}" for row in wording)
                       + f"\n{REVISION_CLOSING}")
-    if not written and not wording:
+    if not wording:
         return 0
     path = payload.get("transcript_path") or ""
     if not path:
         return refuse("the hook input names no transcript_path, so there is no record of "
-                      "what the practitioner said to check the job's wording against.")
+                      "what the practitioner approved to check the paragraph revision against.")
     try:
-        turns, titles, items, cards, confirmed, proposal, last_raw, last_fences, executed, offers = read_transcript(path)
+        turns, last_raw, last_fences, executed = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
-    if wording and any(wrote_wording(earlier) for earlier in executed):
+    if any(wrote_wording(earlier) for earlier in executed):
         return refuse(f"a paragraph revision was already written, or attempted, since the practitioner's last "
                       f"turn, and one approval admits one paragraph.\n  field: {REVISION_FIELD}\n"
                       f"  wrote: {wording[0]['new_text']}\n{REVISION_CLOSING}")
     revision_refusals = revision_failures(revisions, stmts, turns, last_raw, last_fences)
     if revision_refusals:
         return refuse("\n".join(revision_refusals + [REVISION_CLOSING]))
-    # A printed item passes as a step only: a bare item is never a title or intent. A printed title
-    # never passes as counsel's suppression note, which is only ever their own words.
-    written = [(f, v, flagged, new) for f, v, flagged, new in written
-               if (f == NOTE_FIELD or v not in titles) and not (f == STEP_TEXT and v in items)]
-    # A title or step cut from a job card's own printed words adds none (/draft's pickup review). An
-    # existing job's only: a new job's title is never cut from another job's card. A title so cut may
-    # correct a word's spelling (/draft's title spelling cleanup on a held job).
-    cut = {norm(c) for c in cards}
-    written = [(f, v, flagged, new) for f, v, flagged, new in written
-               if not (f in ("title", STEP_TEXT) and not new and any(in_turn(f, v, False, c) for c in cut))]
-    # A research offer the practitioner named to add (jobs-stock.md §3i): its job: line, printed by a
-    # subagent's return before their last turn, and that turn holds the word "add".
-    if ADD.search(last_raw):
-        written = [(f, v, flagged, new) for f, v, flagged, new in written if not (new and v in offers)]
-    if not written:
-        return 0
-    if not turns:
-        return refuse(f"the session transcript at {path} holds no practitioner turn to "
-                      "check the job's wording against.")
-    failing = [(f, v, flagged) for f, v, flagged, new in written if not any(in_turn(f, v, new, turn) for turn in turns)]
-    quoted = {norm(v) for f, v, flagged in failing if norm(v) in confirmed}
-    # Only a quoted and confirmed value sends the gate to the earlier transcripts.
-    proven, searched, total = (earlier_turns_matching(quoted, path, start + DEADLINE_SECONDS)
-                               if quoted else (set(), 0, 0))
-    stopped = ", stopped at the gate's time limit" if searched < total else ""
-    # The bare-yes route is a title's or intent's only: a step carries no session_proposed flag.
-    proposed = {(f, norm(v)) for f, v, flagged in failing
-                if f in CHECKED and any(norm(v) in norm(part) for part in proposal)}
-    failures = [
-        f"{qualified(field)} stood in the session's visible reply and the practitioner's last turn "
-        f"approved it, but the statement writing it does not set tickets.session_proposed = 1.\n"
-        f"  field: {field}\n  wrote: {value}"
-        if (field, norm(value)) in proposed else
-        f"{qualified(field)} was quoted in a block and confirmed, but no other transcript in "
-        f"{Path(path).parent} holds it as an unbroken run of one practitioner turn "
-        f"({searched} of {total} transcripts searched{stopped}).\n"
-        f"  field: {field}\n  wrote: {value}"
-        if norm(value) in quoted else
-        f"{qualified(field)} is not an unbroken run of one thing the practitioner said in this session.\n"
-        f"  field: {field}\n  wrote: {value}\n"
-        f"  nearest turn: {echo(value, nearest(value, turns))}"
-        for field, value, flagged in failing
-        if norm(value) not in proven and not (flagged and (field, norm(value)) in proposed)
-    ]
-    if not failures:
-        return 0
-    return refuse("\n".join(failures) + "\nCut each from one answer, no word swapped, moved "
-                  "or added. Case and spacing are ignored; punctuation is not. A value the "
-                  "session wrote into a widget is not their words, even when a selection "
-                  "echoes it back, and shows here as [widget value]. Words the practitioner "
-                  "wrote in an earlier session may be quoted back in a fenced code block holding "
-                  "only those words, one block per value, and pass once the practitioner replies "
-                  "after the block. A title or intent the session showed in its visible reply passes "
-                  "when the exact text stood there, the next and last practitioner turn is a bare "
-                  "yes, and the write sets tickets.session_proposed = 1. A title or step cut from "
-                  "a job card a drafting_forms__ result printed, no word added, passes, on an existing job. Any "
-                  "job's title may correct a word's spelling, word for word. A new job's title or intent may "
-                  "close with a full stop. "
-                  "A research offer's job: line passes as a new job's title and intent when the practitioner's "
-                  "last turn says to add it. For wording the session "
-                  "proposes: Show the proposed wording in one code block, introduce it with the "
-                  "fixed sentence in shared/paralegal-posture.md section 3, and ask the practitioner "
-                  "to copy it, edit it if needed, and paste it back.")
+    return 0
 
 
 if __name__ == "__main__":

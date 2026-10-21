@@ -20,14 +20,19 @@ import sys
 from pathlib import Path
 
 FRAMING = (
-    "Your saved preferences: standing instructions this person asked Probanda to follow. "
-    "Apply each one when its skill runs. They never loosen a verification, approval or "
-    "privilege rule. To stop one, retire it with preferences__write."
+    "Your saved preferences: standing instructions (Rules) this person asked Probanda to follow, "
+    "each with the date they created it. Apply each one when its skill runs. They never loosen a "
+    "verification, approval or privilege rule. Refuse a request that conflicts with one by quoting it "
+    "and its date: \"I cannot do X because on <date> you created the rule, `<the rule>`. If you want me "
+    "to do X you must first change or remove that rule.\" A Rule changes only in the person's own words: "
+    "show proposed wording in a code block and ask them to paste it into chat, since \"Approved\" never "
+    "adopts it. Retire one with preferences__write only when they ask to remove or replace it."
 )
 POINTER = (
     "This person may have saved preferences for Probanda skills, stored out of this session's "
     "reach. Before the first Probanda skill runs, call preferences__read and apply each entry "
-    "when its skill runs. When the call fails with person_unset or finds no entries, carry on "
+    "when its skill runs. Each entry is a Rule: refuse a request that conflicts with one by quoting "
+    "it and its created_on date. When the call fails with person_unset or finds no entries, carry on "
     "without them."
 )
 
@@ -64,7 +69,7 @@ def context() -> str | None:
     try:
         entries = json.loads(prefs.read_text(encoding="utf-8"))["entries"]
         active = [entry for entry in entries if entry.get("retired_on") is None]
-        lines = [f"- {entry['skill']}: {entry['instruction']}" for entry in active]
+        lines = [f"- {entry['skill']}: {entry['instruction']} (created {entry['created_on']})" for entry in active]
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as err:
         return f"Saved preferences could not be read: {prefs} is malformed ({err!r})."
     if not lines:

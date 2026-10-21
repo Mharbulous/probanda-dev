@@ -3,16 +3,16 @@ Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3. Create (outlining only)
 
-**Who may create a job.** A job is created only on the practitioner's explicit request, or from a pattern they set up in advance: a document type's stock jobs, or a rule tied to a completion criterion. An idea that comes from the session or an agent, such as a research offer, a tangent, a suggestion or a finding outside these patterns, is captured as a loose thread (`jobs-run.md` §8, §8a) and never written as a job. The practitioner-words gate (`hooks/practitioner-words-gate.py`) reads the title and intent of every `INSERT INTO tickets` sent through `drafting_data__execute`, and refuses any value no route below passes, and any it cannot read as a plain literal. This table lists every path that creates a job.
+**Who may create a job.** A job is created only on the practitioner's explicit request, or from a pattern they set up in advance: a document type's stock jobs, or a rule tied to a completion criterion. An idea that comes from the session or an agent, such as a research offer, a tangent, a suggestion or a finding outside these patterns, is captured as a loose thread (`jobs-run.md` §8, §8a) and never written as a job. A job's wording needs no practitioner approval: the practitioner-words gate does not read it. This table lists every path that creates a job.
 
-| Path | Created when | Source | Gate route |
+| Path | Created when | Source | Wording |
 |---|---|---|---|
-| §3 outlining | The practitioner selects it at the closing read-back | Practitioner's request | Their own words, cleaned by the rules below, or a proposal approved with a bare yes and written with `session_proposed = 1` |
+| §3 outlining | The practitioner selects it at the closing read-back | Practitioner's request | The session's, from their answers, cleaned by the rules below |
 | §3 fast path, §3e intake | The practitioner picks a Proposal, or pulls Proposals onto the board | Practitioner's request | A Proposal title a `drafting_forms__*` result printed, or §3e's fixed group title |
-| §3f spin-off blockers | The practitioner says yes to the spin-off | Practitioner's request | Their own words, or an approved proposal with `session_proposed = 1` |
+| §3f spin-off blockers | The practitioner says yes to the spin-off | Practitioner's request | Their words, or the session's proposal from the obstacle as recorded |
 | §3j loose-threads job | The practitioner says to work on the loose threads | Practitioner's request | Their own words |
 | §3h conversion job | The practitioner accepts the conversion offer | Practitioner's request | Its fixed title and intent, naming one Writing |
-| §3i research offer job | The practitioner names a relayed offer to add | Practitioner's request | The offer's `job:` line from the subagent's return, with "add" in their last turn |
+| §3i research offer job | The practitioner names a relayed offer to add | Practitioner's request | The offer's `job:` line from the subagent's return |
 | §3b stock jobs | `/prepare` offers them, or a letter, memo or Unstructured Writing is saved | Practitioner's pattern: the document type | Fixed text |
 | §3c counsel's review pair | The completion criteria above counsel's review hold | Practitioner's pattern: the completion criteria | Fixed text and title prefix |
 | §3d scrutiny review job | A scrutiny return is recorded `'failed'` | Practitioner's pattern: the scrutiny rule | Fixed text and title prefix |
@@ -36,23 +36,21 @@ Every job of the batch takes one below the lowest `priority` returned, or the sc
 **Call 1 — create the job:**
 
 ```sql
-INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created, session_proposed, created_by)
-  VALUES (1, 1, 'reply to their attornment argument', 'I want to reply to their attornment argument once the memos are audited.', 'work', 4, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 0, 'sess-a1');
+INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created, created_by)
+  VALUES (1, 1, 'reply to their attornment argument', 'I want to reply to their attornment argument once the memos are audited.', 'work', 4, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'sess-a1');
 ```
-
-`session_proposed` is `1` only when the `title` and `intent` are a session proposal the practitioner approved word for word, and `0` otherwise.
 
 `created_by` is this session's own `session_token` (§1; `'sess-a1'` stands in for it), written by this section's two creates, the plain one above and the guarded one below, and by no other create. It is what lets this session later be assigned one of the jobs it created, and only those (§4).
 
-Outside eight fixed-text exceptions — §14's gate job, the fast-path job, §3b's stock bundle jobs, §3c's counsel's review jobs, §3d's scrutiny review jobs, §3i's research offer jobs, §3j's loose-threads job's step and §3k's note-up job — `title`, `intent` and every `ticket_steps.text` written here are the practitioner's own words as selected at the closing read-back, or a proposal the session showed in its visible reply that they approved word for word with a bare yes, written with `session_proposed = 1`, and never the session's words unapproved — `intent` one sentence of theirs or of the approved proposal, verbatim apart from the capital and full stop below (quoted at dispatch, so nothing the session composed may stand in it unapproved), `title` an unbroken run of their own words from one answer (the text typed after a slash command is one) or of the approved proposal, no word swapped or moved, and cleaned as below; the `title` literal is the selected card's value. How the work divides into jobs and steps is the session's call; the words in them are the practitioner's or a proposal they approved word for word. The steps are the job's plan, so the intent is never written as a step, not even a one-step job's only one, and no `ticket_steps.text` written here equals or contains the job's title or intent (`/draft`'s `job-session.md`, "A step that only restates the request"): where the answers hold no step that names the work, `/draft` proposes one by the adoption ceremony before the read-back. A fast-path job's title and intent are the Proposal's title as the card printed it, `<work name>: <item label>`, and its steps are §6a's step derivation (`filing-checklists.md`) on the Proposal's item, so that each step names the work rather than restating the title. All of them are fixed text from the record and not the session's words, written with no closing read-back because the pick is the practitioner's: a Proposal picked and left unedited is its approval. A stock bundle job's strings are §3b's, a counsel's review job's are §3c's, a scrutiny review job's are §3d's, and a research offer job's are §3i's, on the same terms.
+Outside eight fixed-text exceptions — §14's gate job, the fast-path job, §3b's stock bundle jobs, §3c's counsel's review jobs, §3d's scrutiny review jobs, §3i's research offer jobs, §3j's loose-threads job's step and §3k's note-up job — `title`, `intent` and every `ticket_steps.text` written here are worded by the session from what the practitioner selected at the closing read-back, with no adoption ceremony and no pasting (`shared/paralegal-posture.md` section 3) — `intent` one sentence stating what they asked, in their own words where their answer states it, `title` a short label for it, cleaned as below; the `title` literal is the selected card's value. Neither states a position, figure, statement of law or research question the practitioner or the record did not. How the work divides into jobs and steps is the session's call, and so is their wording. The steps are the job's plan, so the intent is never written as a step, not even a one-step job's only one, and no `ticket_steps.text` written here equals or contains the job's title or intent (`/draft`'s `job-session.md`, "A step that only restates the request"): where the answers hold no step that names the work, `/draft` writes one that does before the read-back. A fast-path job's title and intent are the Proposal's title as the card printed it, `<work name>: <item label>`, and its steps are §6a's step derivation (`filing-checklists.md`) on the Proposal's item, so that each step names the work rather than restating the title. All of them are fixed text from the record and not the session's words, written with no closing read-back because the pick is the practitioner's: a Proposal picked and left unedited is its approval. A stock bundle job's strings are §3b's, a counsel's review job's are §3c's, a scrutiny review job's are §3d's, and a research offer job's are §3i's, on the same terms.
 
-**A new job's title is a cleaned label; its intent is the record.** The title is how the Job Board names the job, and the intent carries what was asked, so the intent keeps every word the practitioner used, typos and all, and the title is cut from them and cleaned. Cleanup corrects spelling, typos, grammar and capitalisation only, and may close the title with a full stop. It never adds, drops, swaps or moves a word's meaning, never narrows or broadens what they asked, and states no law, figure, position or research question they did not. A title the practitioner gives as a title is written exactly as typed. Cleanup is not a proposal, so it needs no approval and leaves `session_proposed` as it was. It applies to a new job only: rewording an existing job's title (§3a, `jobs-run.md` §5) writes their words as typed, because the practitioner-words gate reads it. Fixed text, Proposal titles and the prefix-matched titles above are never cleaned.
+**A new job's title is a cleaned label; its intent is the record.** The title is how the Job Board names the job, and the intent carries what was asked, so the intent keeps every word the practitioner used, typos and all, and the title is cut from them and cleaned. Cleanup corrects spelling, typos, grammar and capitalisation only, and may close the title with a full stop. It never adds, drops, swaps or moves a word's meaning, never narrows or broadens what they asked, and states no law, figure, position or research question they did not. A title the practitioner gives as a title is written exactly as typed. Cleanup is not a proposal, so it needs no approval. Fixed text, Proposal titles and the prefix-matched titles above are never cleaned.
 
 | Typed | `title` | `intent` |
 |---|---|---|
 | `research whether there is such a think as criminal nuisance in BC` | `Research whether there is such a thing as criminal nuisance in BC` | `Research whether there is such a think as criminal nuisance in BC.` |
 
-**A new job's intent and steps take a capital and a full stop, and nothing else.** The intent and each step a new job takes from the practitioner's words start with a capital letter and end with a full stop, which is added only where their words have no closing mark: a question keeps its question mark. That is presentation only. No word is added, dropped, swapped or moved, so a leading article stays, and so does a filler word. A typo or dictation error stays too: fixing one in the intent or a step takes a proposal the practitioner approves word for word with a bare yes, written with `session_proposed = 1`. Presentation is not a proposal, so it needs no approval and leaves `session_proposed` as it was. It applies to a new job only, as the title's cleanup does: rewording an existing job's intent or steps (§3a, `jobs-run.md` §5) writes their words as typed, because the practitioner-words gate reads them and counts punctuation. The gate reads a new job's title and intent (§3, "Who may create a job") and allows them this cleanup and this closing full stop. It reads no step written without a delete from `ticket_steps`. Fixed text, Proposal titles and items, a step built from a printed item, and §3j's intent are never touched.
+**A new job's intent and steps take a capital and a full stop.** The intent and each step a new job takes from the practitioner's words start with a capital letter and end with a full stop, which is added only where their words have no closing mark: a question keeps its question mark. That is presentation only, and needs no approval. Fixed text, Proposal titles and items, a step built from a printed item, and §3j's intent are never touched.
 
 **A job outlined from Proposals takes the guarded create instead of the plain `INSERT` above** — the fast-path job always, and a hand-worded job outlined from Proposals too. The job row survives only when no `queued` or `wip` job with `rejected_at IS NULL` already holds any of its keys. Call 1 is the plain `INSERT ... VALUES`, followed in the same script by a `DELETE` of that row whenever a live job holds any of its keys, every key named in the `IN` list:
 
@@ -159,7 +157,7 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id)
   SELECT 42, 'statements_of_law', 12 FROM tickets WHERE id = 42 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL;
 ```
 
-`title` and `intent` are the practitioner's own words from this interview, on §3's terms — the session decides nothing about the wording here either.
+`title` and `intent` are worded from this interview, on §3's terms.
 
 **A `priority` set between two adjacent jobs renumbers the rows beneath it** (§3), and here those rows are *other* jobs, so their `UPDATE` cannot lean on job 42's own `WHERE` clause. It carries job 42's still-queued, unshelved state as an `EXISTS` of its own, the same shape a child delete uses — otherwise the renumbering commits alone when the outline itself matched nothing, and the Writing's queue is left reordered around a job that was never rewritten:
 
@@ -182,8 +180,6 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text)
 UPDATE tickets SET plan_approved_at = NULL
   WHERE id = 42 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL;
 ```
-
-A step list or title the session proposes, rather than one the practitioner words, is presented and adopted by the ceremony in `shared/paralegal-posture.md` section 3.
 
 **Edges may be added or deleted, on either side** — unlike §3, which only ever creates them:
 
@@ -349,11 +345,10 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (2, 'statements_o
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (2, 'statements_of_fact', 8);
 ```
 
-After the batch the session re-renders. The practitioner-words gate passes intake's titles and intents as Proposal titles a `drafting_forms__*` result printed, or as §3e's fixed group title, and reads no step written without a delete. A job of its own, or of one title, takes the Proposal's fixed text as title and intent, and its steps are §6a's step derivation on the card's item. A group job's title and intent are the table's fixed text and its steps are items from the record. A later rewrite of a group job's steps passes the gate when each step is an item a `drafting_forms__*` result printed in that session.
-
+After the batch the session re-renders. A job of its own, or of one title, takes the Proposal's fixed text as title and intent, and its steps are §6a's step derivation on the card's item. A group job's title and intent are the table's fixed text and its steps are items from the record.
 ## 3f. Spin off blockers (the holding session)
 
-The practitioner has said yes to the spin-off offered on an obstacle in the job this session holds (`/draft`'s `draft/references/job-session.md`, "An obstacle on any assigned job"). The session holds job 42 under its own token `'sess-a1'` (§1). Like §3e, this is a fixed-section create and not outlining, so it runs in the holding session on the job it holds. Each blocker's `title` and `intent` are the practitioner's own words on §3's terms, written with their explicit yes, or a proposal the session showed in its visible reply that they approved word for word with a bare yes, written with `session_proposed = 1`, except a question's `intent` is all its sentences, consecutive in one turn.
+The practitioner has said yes to the spin-off offered on an obstacle in the job this session holds (`/draft`'s `draft/references/job-session.md`, "An obstacle on any assigned job"). The session holds job 42 under its own token `'sess-a1'` (§1). Like §3e, this is a fixed-section create and not outlining, so it runs in the holding session on the job it holds. Each blocker's `title` and `intent` are worded on §3's terms, from the practitioner's words or the obstacle as recorded, and written with their explicit yes to the spin-off.
 
 **What each blocker copies from the held job**, read off the held job's card or §2's scope read: `proceeding_id`, `filing_id`, `billing_anchor` and `priority`. Copying `priority` places each blocker beside the work it unblocks, so the session asserts no order of its own. `kind` is `'work'`. Blockers are written in the order the practitioner named them, so at equal priority they queue in that order by `id`. §3's priority read is not run.
 
@@ -362,15 +357,13 @@ The practitioner has said yes to the spin-off offered on an obstacle in the job 
 **Call 1, the guarded create.** §3's `INSERT ... VALUES` then `DELETE`, the guard being the holder's lock instead of a key:
 
 ```sql
-INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created, session_proposed)
-  VALUES (1, 1, 'does attornment defeat the stay', 'Does attornment defeat the stay?', 'work', 4, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 0);
+INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
+  VALUES (1, 1, 'does attornment defeat the stay', 'Does attornment defeat the stay?', 'work', 4, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 DELETE FROM tickets WHERE id = last_insert_rowid()
   AND NOT EXISTS (SELECT 1 FROM tickets WHERE id = 42 AND locked_by = 'sess-a1');
 ```
 
-`session_proposed` is `1` only when the blocker's `title` and `intent` are the session's proposal, approved word for word with a bare yes, and `0` when they are the practitioner's own words.
-
-The `DELETE` directly follows the job's own `INSERT`, the only place `last_insert_rowid()` is safe (§3). The practitioner-words gate reads the `INSERT`: each blocker's title and intent are the practitioner's words, or the session's proposal they approved with a bare yes, written with `session_proposed = 1`. The `INSERT ... VALUES` is §3's own shape.
+The `DELETE` directly follows the job's own `INSERT`, the only place `last_insert_rowid()` is safe (§3). The `INSERT ... VALUES` is §3's own shape.
 
 **Call 2, id recovery.** Not §3's plain shape: its `LIMIT 1` would return an older job carrying the same title when the guard deleted the new row. §3e's shape, with no steps yet in place of no keys yet, and no `LIMIT`:
 
@@ -464,7 +457,7 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (60, 'filing_chro
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (60, 'filing_prose', NULL);
 ```
 
-The practitioner-words gate reads Call 1's title and intent against the practitioner's instruction, and reads no step written without a delete. The intent is the practitioner's words, the title is those words cleaned by §3's rule, and the step is the fixed text above.
+The intent is the practitioner's words, the title is those words cleaned by §3's rule, and the step is the fixed text above.
 
 Then assign the job with `drafting_data__assign_job` (`jobs-run.md` §4). The job consumes each thread it works by §3's held-job write ("Consuming a loose thread the held job worked"), ranks by `jobs-run.md` §8, and creates no job for a thread. A loose-threads job found with narrower scope is widened by `jobs-run.md` §7.
 
@@ -543,8 +536,6 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id)
     FROM tickets WHERE id = 31 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL;
 ```
 
-`changes` is the number of statements in the script when it landed, and 0 when it did not. On 0 the job was assigned or shelved in between: write nothing more, and the next render reports the keys again. The practitioner-words gate reads no step written without a delete and no conversion record, so it passes the append. The job's plan approval and every step already done stand.
+`changes` is the number of statements in the script when it landed, and 0 when it did not. On 0 the job was assigned or shelved in between: write nothing more, and the next render reports the keys again. The job's plan approval and every step already done stand.
 
 **Working and closing it.** It carries keys, so `/draft`'s pickup review and restating check skip it, and its steps are its plan, never re-divided, as a grouped intake job's are (`/draft`'s `job-session.md`). A key whose marker no longer fires drops that key's steps on the premise check. Each case's return is recorded by `references/note-up.md`, and each provision's currency result by `filing-checklists.md`, "Recording a statute-currency result". It completes by §9 when every step is done. §9's still-firing check reads its keys, so it completes only once 📇 has cleared on every one, or on the practitioner's yes. A completed job is never reopened: a 📇 that fires afterwards is reported again as `note_up_due` and goes into a new job.
-
-The practitioner-words gate passes the title and intent as this section's fixed text.
