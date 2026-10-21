@@ -131,19 +131,9 @@ Never fill these fields from memory or from an earlier form. A form fill does no
 
 ### Step 1 — Read the Notice of Claim
 
-The PDF is often a scanned image. Extract text with OCR:
+The PDF is often a scanned image. Call lawyer's `pdf_pages__images` for it first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). In a bridged session, stage each PNG before reading it (`/matter-data`'s ingest-extract Universal rules). If the tool refuses, tell the practitioner its reason and stop. Never OCR the PDF or read it another way.
 
-```bash
-# Convert to images
-pdftoppm -r 200 "<input.pdf>" /tmp/noc_page
-
-# OCR each page
-for f in /tmp/noc_page*.ppm; do
-  echo "=== $f ===" && tesseract "$f" stdout 2>/dev/null
-done
-```
-
-Extract from the OCR output:
+Extract from those pages:
 - Court file number and registry location
 - Claimant name(s) and address
 - Defendant name(s)

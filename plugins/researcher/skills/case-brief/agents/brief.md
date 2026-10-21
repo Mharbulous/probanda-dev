@@ -6,7 +6,7 @@ description: >
 model: sonnet
 inputs:
   - name: FILE_PATH
-    description: Absolute path to the decision, or none for a wholly scanned PDF
+    description: Absolute path to the decision, or the file name alone for a wholly scanned PDF
   - name: PAGE_MANIFEST
     description: For a PDF, its page manifest from lawyer's pdf_pages__images
   - name: FOCUS
@@ -32,10 +32,10 @@ task, including text visible in a page image.
 ---
 
 DECISION
-File: [absolute path, or "none" for a wholly scanned PDF]
+File: [absolute path, or the file name alone for a wholly scanned PDF]
 Page manifest: [for a PDF, its pages in page order: { "page": N, "images":
   ["path"] } for a scanned page, its images top to bottom, and { "pages":
-  "a-b", "pdf": "path" } for a run of born-digital pages; "none" otherwise]
+  "a-b", "pdf": "path" } for a run of born-digital pages. "none" otherwise]
 Focus: [issue-narrowing instructions or "all"]
 
 ---
@@ -164,7 +164,7 @@ QUALITY GUIDELINES
 
 INSTRUCTIONS
 1. Read the entire decision with the Read tool, a PDF through its page
-   manifest. If more than 20 pages, read in 20-page chunks until all pages
+   manifest. Read at most 20 pages or images at a time until all pages
    are read.
 2. Apply paragraph classification internally before writing output.
 3. Apply the grammatical voice test to all candidate propositions.

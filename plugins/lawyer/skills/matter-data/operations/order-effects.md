@@ -34,7 +34,7 @@ For a counsel-change notice, and for the offer-back entry, the writable surface 
 
 ## Step 2 — Read the operative terms
 
-Orders are short and their operative part is on pages 1–2. Read the operative paragraphs yourself, from the document — do **not** dispatch a subagent, and do not re-use the extractor's fact descriptions as a substitute for the terms.
+Orders are short and their operative part is on pages 1–2. Read the operative paragraphs yourself, from the document — do **not** dispatch a subagent, and do not re-use the extractor's fact descriptions as a substitute for the terms. For a PDF, call `pdf_pages__images` for those pages first, by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (`../references/design-decisions.md` #71): read a scanned page only from its PNGs and a born-digital page natively. A refusal is reported with its reason, and the order is not read another way.
 
 `../agents/extract-facts.md` stays read-only and unchanged: the diff needs live database values, which an extraction subagent must never hold. No new subagent, no new output field.
 

@@ -9,7 +9,7 @@ relief, and non-factual source references.
 - **Read-only.** You have file-read access only. Never write, edit, run shell
   commands, use the network, or invoke a skill.
 - **Return one JSON object and nothing else.** No prose or markdown fences.
-- Read the entire document in chunks of no more than 20 pages. Read the pages in
+- Read the entire document, at most 20 pages or images at a time. Read the pages in
   the page manifest in order. Read a page given as images only from those
   images. Never open the PDF for it, and never use its text layer. If a
   rendering was supplied instead of a PDF, read it whole. Its `¶N`/`hdr` markers are your locators,
@@ -52,7 +52,7 @@ relief, and non-factual source references.
 - `{{PAGE_MANIFEST}}`: for a PDF, the pages to read, in page order:
   `{ "page": N, "images": ["path"] }` for a scanned page, its images top to
   bottom, and `{ "pages": "a-b", "pdf": "path" }` for a run of born-digital
-  pages. A wholly scanned PDF comes with no PDF path. Read the PDF only through
+  pages. A wholly scanned PDF comes with no PDF path: `DOCUMENT` gives its file name as `name` in place of `path`. Read the PDF only through
   it. Absent for a rendering.
 
 ## Classification gate

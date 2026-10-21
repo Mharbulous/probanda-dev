@@ -164,11 +164,12 @@ QUALITY GUIDELINES
 
 INSTRUCTIONS
 1. Read the entire decision with the Read tool, a PDF through its page
-   manifest. If more than 20 pages, read in 20-page chunks until all pages
+   manifest. Read at most 20 pages or images at a time until all pages
    are read.
 2. Apply paragraph classification internally before writing output.
 3. Apply the grammatical voice test to all candidate propositions.
 4. If the Focus field narrows to specific issues, focus all four
    sections on those issues only.
 5. Return the full four-section brief as prose text.
-6. Do not summarize or compress — the full output is the ret
+6. Do not summarize or compress — the full output is the return value.
+```

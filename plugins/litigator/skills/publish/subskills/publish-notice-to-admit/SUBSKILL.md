@@ -51,7 +51,11 @@ the practitioner instructs you to do so.
 ## 2. Run one bounded verification pass
 
 Make one consolidated `/matter-data` request for the proceeding profile, party roles, and records
-material to the proposed admissions. Read every source document the practitioner cites. If
+material to the proposed admissions. Read every source document the practitioner cites. For a
+PDF, call lawyer's `pdf_pages__images` first, and read a page it returns as `scanned` only from
+its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:`
+(`/matter-data`'s design decision #71). If the tool refuses, say so with its reason and read the
+PDF no other way. If
 that pass exposes a concrete conflict, read only the single best obvious primary matter file
 needed to state the conflict accurately, then stop searching.
 

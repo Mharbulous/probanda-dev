@@ -116,6 +116,8 @@ Before the decision turn, run the verbatim check (`/verify-law` Mode A, step 2) 
 
 A proposed excerpt is cut from the source with `highlight_pages.py --excerpt-out` (Mechanics step 2), never typed. Run the verbatim check on the file. Exit 0 is required before the excerpt is proposed. If the check fails, change the span's start or end words and rerun. Never edit the file by hand. If it still fails, report the differing words and stop. The proposed excerpt then stays unproposed and the practitioner decides.
 
+A scanned page is never read from its text layer (`/matter-data`'s design decision #71), and both `--excerpt-out` and the script check read it. So for a PDF source, call `pdf_pages__images` for the excerpt's pages first. On a page it returns as `scanned`, cut no excerpt with `--excerpt-out`, and a proposed excerpt there stays unproposed. A stored excerpt on such a page goes through `/verify-law` Mode A, whose step 2 sends it to its verifier with the page images: report that verdict in place of the one-line script result.
+
 The file's text goes to the gatekeeper write as read from the file, never retyped.
 
 ## Marking conventions

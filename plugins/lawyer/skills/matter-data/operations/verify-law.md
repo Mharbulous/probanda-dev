@@ -69,7 +69,7 @@ Dispatch the read-only `lawyer:verify-edges` agent, whose body mirrors [`../agen
 
 Provide exactly:
 
-- the **document** — resolved absolute path (for a PDF, its page manifest in its place), plus `title`, `citation`, `disposition`;
+- the **document** — resolved absolute path, plus `title`, `citation`, `disposition`, and for a PDF its page manifest as the separate `PAGE_MANIFEST` field. For a wholly scanned PDF, the file name is given as `name` in place of the path;
 - the **edges** citing it — `concept_id`, `authority_id`, the concept's `name` and `description`, `relationship`, `proposition`, `finding`, `obiter`, `order_terms`, `pinpoint`, `excerpt`, and the current `verified` value. (`pinpoint` and `excerpt`, v8.5, carry the pinpoint and quoted passage a bridged edge was built from — exactly what the verifier needs to check the edge against the document, and local-only, so they never leave this dispatch.)
 - the **treatment vocabulary** — the whole text of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md) as `TREATMENT_VOCABULARY`, which defines each `relationship` the verifier tests.
 

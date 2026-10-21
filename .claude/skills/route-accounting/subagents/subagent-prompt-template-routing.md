@@ -177,7 +177,9 @@ If there were no escapes, write "Escape log: none."
   the file has fewer than 10 pages: call it again with no `pages`. Build each
   manifest from the result's `pages` (`/matter-data`'s design decision #71).
   Any other refusal puts that file on NEEDS MANUAL REVIEW with the refusal's
-  reason, and it is left out of the batch.
+  reason, and it is left out of the batch. In a bridged session, stage each
+  PNG like any other rendering (`/matter-data`'s ingest-extract Universal
+  rules) and put the staged path in the manifest.
 - **Model pin.** Dispatch with `model: "sonnet"`. Routing review needs no
   stronger model.
 - **Reference delivery is environment-dependent.** The batch's file paths

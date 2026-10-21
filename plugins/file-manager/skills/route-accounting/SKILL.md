@@ -199,7 +199,9 @@ Build each subagent's prompt from
 
 - **the batch's explicit work list** — absolute paths, this batch only, and
   each `.pdf`'s page manifest from lawyer's `pdf_pages__images` (the
-  template's orchestrator notes say how);
+  template's orchestrator notes say how). In a bridged session each PNG is
+  staged like any other rendering (`/matter-data`'s ingest-extract Universal
+  rules);
 - **the run date** — rule 6's 30-day-age test is computed against this, not
   against any file's own date;
 - **the four destination-root paths**, verbatim, as recorded from Step 2;

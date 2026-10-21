@@ -83,7 +83,11 @@ return the leave-alone signal; never guess a component to complete a name.
 For a **standalone "check this file name" / "what should I call this"**
 request: run **gate** on the current name first. If it conforms, say so — no
 further work. If it fails, read the file yourself, derive a proposed name
-under **propose**, and present it to the user for confirmation. Once they approve, the
+under **propose**, and present it to the user for confirmation. For a PDF,
+call `pdf_pages__images` first, and read a page it returns as `scanned` only
+from its PNGs, never from the PDF or its text layer, and a `born_digital` page
+with `Read` `pages:` (`/matter-data`'s design decision #71). If the tool
+refuses, say so with its reason and read the PDF no other way. Once they approve, the
 rename is `/file-apply`'s **apply** intent. If `/file-apply` is not available in
 this session, the `file-manager` plugin is not enabled: stop, tell the
 practitioner that this step renames a file and needs `file-manager`, and do

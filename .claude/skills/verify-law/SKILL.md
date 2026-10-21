@@ -90,6 +90,14 @@ not a stylistic preference.
    The excerpt text is supplied by the caller as bare text. This skill never reads it from any
    database — a caller that holds the excerpt in stored data passes the text, not a row.
 
+   **A scanned page skips the script.** The script reads the PDF's text layer, which a scanned
+   page must never be read from (`/matter-data`'s design decision #71). So for a PDF source,
+   first call lawyer's `pdf_pages__images` for the pages the claim cites, or for the whole
+   document when it cites none. When any of those pages is `scanned`, do not run the script.
+   Send the claim to step 3's verifier with the page manifest instead, and report its verdict as
+   the verifier's, saying the pages are scanned so no script verdict exists. If the tool
+   refuses, report the claim as source-unresolvable under step 4, with the refusal's reason.
+
    A bilingual report (an official S.C.R. PDF, English and French in parallel columns) is
    detected by itself: the script compares the English column with its running headers dropped,
    and its JSON says `"layout": "bilingual"`. Add `--lang fr` for a French excerpt. `"layout":
@@ -109,9 +117,9 @@ not a stylistic preference.
 
    Report the differing words from the JSON opcodes (`ours` against `source`) in a fenced block, never the stderr diff and never the whole excerpt. Never describe a difference in prose instead of giving the words. Diff each primary copy known to you. On a split, report each copy's result and no verbatim verdict.
 
-   **No "verbatim" or "not verbatim" verdict without the script's JSON in hand.** A model reading
-   the two texts side by side is not a verdict, however confident it sounds. This is the rule the
-   whole step exists for.
+   **No "verbatim" or "not verbatim" verdict without the script's JSON in hand,** except the
+   verifier's verdict on scanned pages above. A model reading the two texts side by side is not
+   a verdict, however confident it sounds. This is the rule the whole step exists for.
 
 3. **Proposition or pinpoint claim, even after step 2 → dispatch one fresh, session-isolated
    read-only `researcher:verify-claim` agent**, whose body mirrors [`agents/verify-claim.md`](agents/verify-claim.md).
@@ -126,7 +134,9 @@ not a stylistic preference.
    `{pages: "a-b", pdf}` for each run of born-digital pages, with no PDF path for a wholly
    scanned one (`/matter-data`'s design decision #71). Name each PNG individually rather than the
    render directory. Where host files arrive only over a bridge (Project Cowork) stage a
-   byte-exact copy into the session first (`device_stage_files`) and dispatch that path.
+   byte-exact copy into the session first (`device_stage_files`), each PNG included, and
+   dispatch that path. If the tool refuses, dispatch nothing: report the claim as
+   source-unresolvable under step 4, with the refusal's reason.
 
    **A verifier that is unavailable — never substitute another agent — that fails, or that returns
    malformed JSON yields no verdict.** Report it as source-unresolvable under step 4; Mode A writes

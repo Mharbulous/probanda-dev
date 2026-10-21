@@ -40,7 +40,7 @@ captured, wholesale, exactly as printed.
 - `{{PAGE_MANIFEST}}` — for a PDF, the pages to read, in page order:
   `{ "page": N, "images": ["path"] }` for a scanned page, its images top to
   bottom, and `{ "pages": "a-b", "pdf": "path" }` for a run of born-digital
-  pages. A wholly scanned PDF comes with no PDF path. Read the PDF only through
+  pages. A wholly scanned PDF comes with no PDF path: `DOCUMENT` gives its file name as `name` in place of `path`. Read the PDF only through
   it. Absent for a rendering.
 
 ## Self-validation (the fail-safe for a gate false positive)
