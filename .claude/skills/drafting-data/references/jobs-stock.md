@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -384,3 +384,19 @@ UPDATE seeds SET charted_into = 31 WHERE id = 7;
 This is one of two `charted_into` writes outside an outlining session, the other the loose-threads job's (`jobs-create.md` §3, "Consuming a loose thread the held job worked"). It runs in the session the sort ran in, and only on a thread that sort captured.
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.
+
+## 3l. Research plan issue jobs
+
+One job per issue on the list the practitioner approved at `/legal-research`'s plan stage (`shared/legal-research.md`, "Approved plan issues become jobs"). Their "No" to the closing question approves the list and is the request: it creates one job per listed issue and none for an issue they skipped. The plan stage runs in a session holding no job, and is not outlining: the write carries no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
+
+- Title and intent: the issue's text as the list showed it, character for character, without its number. Never cleaned. Single quotes are doubled in the SQL literal.
+- Steps: the plan marker as its one step (`jobs-create.md` §3, "The plan marker").
+- No scope rows, and `kind`, `billing_anchor`, `priority`, `filing_id` and `proceeding_id` as §3i gives them for a session holding no job. The board is the one §8a steps 1 and 2 resolve from the question's origin, and a question with no origin takes step 2's last branch, the proceeding. With no board, write nothing (`shared/legal-research.md` says what follows).
+
+Each issue is written by §3i's guarded create and its call 2, on the issue's title. A guard that fires says "already a job: Job #K" in one line and goes on with the next issue. Call 3 writes the plan marker on the recovered literal id:
+
+```sql
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (32, 1, 'Create a plan for how to complete this job.');
+```
+
+Once every issue is written, re-render the board with `draft_dir`, so its Job Board page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
