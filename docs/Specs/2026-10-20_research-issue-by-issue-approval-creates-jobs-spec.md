@@ -76,3 +76,17 @@ None.
 ## 10. Verify against HEAD before building
 
 Re-read step 2a in `shared/legal-research.md`, the research-agent `mode: plan` contract, and 2026-10-15_job-plan-minimum-standards-spec.md §4.4 and its §11 table.
+
+## 12. Verification against HEAD (2026-10-20, at 1f709ec6)
+
+| Check | Result | Where |
+|---|---|---|
+| Step 2a relays the whole plan and asks to approve, change or waive it | Holds | `.claude/skills/legal-research/SKILL.md`, "The gate", step 2a. Step 2a lives only there: `.claude/skills/shared/legal-research.md` has no step 2a and does not restate it. |
+| The research-agent `mode: plan` contract | Holds: one `Issue <n>:` block per issue, each written as a question, then `Completion test:`, the coverage line and the closing line "Plan only — no statement of law." No law is stated | `.claude/skills/shared/legal-audit-scoped.md`, "`mode: plan`"; `source/researcher/agents/research-agent.md` names the mode in its description |
+| 2026-10-15_job-plan-minimum-standards-spec.md §4.4 | It added the planning stage (step 2a) as a whole-plan approval before any search. It does not prescribe how the approval is asked. This spec supersedes that part only. The rest of §4.4 stands: the stage runs before any Westlaw or legislation dispatch and states no law | that spec, §4.4 and §8 criterion 4 |
+| That spec's §11 table | Its rows on the research-agent's modes (a new `mode: plan` was needed) still hold. Its §9 Q1 row (paste-to-adopt) is already marked reversed on 2026-10-20 | that spec, §11 |
+| Owner of step 2a's text | This spec, from 2026-10-20. `shared/job-planning.md` keeps only its pointer ("the issue list comes from `/legal-research`'s planning stage") | `.claude/skills/shared/job-planning.md` §2 |
+| Where research jobs are created today | One route only: §3i, a relayed Step 5 offer the practitioner names to add. The plan stage creates no job, so the new route is a new path for the table in `jobs-create.md` §3 | `.claude/skills/drafting-data/references/jobs-create.md` §3 table; `jobs-stock.md` §3i |
+| The plan marker paragraph | Holds, fixed text `Create a plan for how to complete this job.` | `jobs-create.md` §3, "The plan marker" |
+| Layering | `legal-research` and `research-agent` ship in `researcher`. `drafting-data` and `job-planning` ship in `litigator`, so `legal-research/SKILL.md` must not name them. `shared/` is not checked, and `shared/legal-research.md` already names `/drafting-data`, so the job-creation rule goes there and the skill points to it | `source/assignment.json`; `scripts/check_layering.py` (shared files never fail) |
+| A test pins step 2a's text | No | no match under `.claude/skills/legal-research/tests/` or `.claude/skills/drafting-data/tests/` |
