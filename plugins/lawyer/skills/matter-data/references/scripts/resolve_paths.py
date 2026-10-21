@@ -23,15 +23,16 @@ import tempfile
 
 # ---------------------------------------------------------------------------
 # DESIGN NOTE — staging discipline is load-bearing, NOT the folder location.
-# The SQLite binaries live in the '0. CASE DATA' sibling root, which is itself
-# INSIDE the SharePoint-synced library — no folder choice escapes cloud sync. A
+# The SQLite binaries live in the matter's own '0. CASE DATA' folder, INSIDE the
+# SharePoint-synced library — no folder choice escapes cloud sync. A
 # synced/FUSE-style mount serves stale file-size metadata that corrupts binary
 # SQLite reads and writes. What makes them safe is never leaving a live handle
 # on synced storage: temp-copy staging, DELETE journal, copy-back. A future
 # "simplifier" MUST NOT operate on the native binaries in place. The plain-text
 # pointer and dump are written atomically and are safe in the synced tree.
+# Location: docs/ADRs/0013-per-matter-case-data-inside-the-matter-folder.md.
 # ---------------------------------------------------------------------------
-CASE_DATA_FOLDER = '0. CASE DATA'                       # sibling root for binaries (synced library)
+CASE_DATA_FOLDER = '0. CASE DATA'                       # the matter's case-data folder, and the firm root's name
 LEGACY_ARTIFACTS_DIR = '9. AI'                          # legacy pointer/binary location
 ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'            # replaces computed root when set
 EXPECTED_USER_VERSION = 90                              # v9.0
@@ -98,11 +99,29 @@ def parse_folder_name(matter_folder):
 
 
 def case_data_root(matter_root):
-    """The native matter-data root: env override, else sibling '0. CASE DATA'."""
+    """The firm-level case data root: env override, else the library's '0. CASE DATA'.
+    A matter not yet relocated keeps its folder here (ADR 0013)."""
     override = os.environ.get(ENV_ROOT_OVERRIDE)
     if override:
         return override
     return norm_join(os.path.dirname(os.path.normpath(matter_root)), CASE_DATA_FOLDER)
+
+
+def matter_case_data_dir(matter_root):
+    """The matter's own case-data folder: MATTER_ROOT/0. CASE DATA (ADR 0013)."""
+    return norm_join(matter_root, CASE_DATA_FOLDER)
+
+
+def pointer_case_data_dir(matter_root, case_data_dir):
+    """The pointer's case_data_dir value: relative to the matter root when the folder is
+    inside it, absolute otherwise, as evidence_sql_path is stored."""
+    try:
+        rel = os.path.relpath(case_data_dir, matter_root)
+    except ValueError:
+        return case_data_dir
+    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
+        return case_data_dir
+    return rel
 
 
 def default_evidence_sql(matter_root, case_data_dir):
@@ -173,7 +192,9 @@ def _read_user_version(sqlite_path):
 
 
 def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
-    """Select a usable stored nominee or derive the location from the live root.
+    """Select a usable stored nominee, else the matter's own 0. CASE DATA folder
+    holding main.sqlite, else a not-yet-relocated folder under the firm root, else
+    the matter's own folder as the default (ADR 0013).
 
     Returns ``(case_data_dir, rejected_nominee)``. A stored path is only a
     nomination: absolute and relative custom locations remain supported when
@@ -189,6 +210,11 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
             and os.path.exists(norm_join(nominee, 'main.sqlite')):
         return nominee, False
 
+    in_matter = matter_case_data_dir(matter_root)
+    if os.path.exists(norm_join(in_matter, 'main.sqlite')):
+        return in_matter, bool(stored)
+
+    # A matter not yet relocated keeps its folder under the firm root.
     # A matter folder can be renamed independently of its database folder.
     # Search only direct live-root children with the same matter reference,
     # then prove identity from main.sqlite before selecting one.
@@ -210,6 +236,7 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
             if metadata_id and metadata_id.casefold() == matter_id.casefold():
                 return candidate, bool(stored)
 
+    # The firm-root folder named for the matter, as it was derived before ADR 0013.
     mid, sn = None, None
     for cand in (nominee, legacy_dir):
         if cand:
@@ -218,8 +245,12 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
                 break
     if not mid:
         mid, sn = parse_folder_name(matter_root)
-    folder = f"{mid} {sn}".strip()
-    derived = norm_join(root, folder)
+    firm_folder = norm_join(root, f"{mid} {sn}".strip())
+    if os.path.exists(norm_join(firm_folder, 'main.sqlite')):
+        return firm_folder, bool(stored and nominee != legacy_dir
+                                 and os.path.normcase(nominee) != os.path.normcase(firm_folder))
+
+    derived = in_matter
     rejected = bool(stored and nominee != legacy_dir
                     and os.path.normcase(nominee) != os.path.normcase(derived))
     return derived, rejected
@@ -264,7 +295,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
     case_data_dir, rejected_nominee = resolve_case_data_dir(
         matter_root, stored, root, legacy_dir)
 
-    # --- Step 4: legacy migration (9. AI -> native folder) -----------------
+    # --- Step 4: legacy migration (9. AI -> the matter's 0. CASE DATA) ------
     if _is_legacy_value(pointer.get('case_data_dir'), matter_root, legacy_dir) \
             or pointer_path not in root_ptrs:
         os.makedirs(case_data_dir, exist_ok=True)
@@ -274,9 +305,9 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
                 dst = norm_join(case_data_dir, fn)
                 if os.path.exists(src) and not os.path.exists(dst):
                     shutil.move(src, dst)
-        mid, sn = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
+        mid, _ = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
         if mid:
-            preferred = norm_join(root, f"{mid} {sn}".strip())
+            preferred = matter_case_data_dir(matter_root)
             if preferred != case_data_dir:
                 os.makedirs(os.path.dirname(preferred), exist_ok=True)
                 if not os.path.exists(preferred):
@@ -288,7 +319,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
     durable_dir = stored_ptr if running_in_sandbox and stored_ptr \
         and is_absolute(stored_ptr) and not _is_stale_sandbox(stored_ptr) \
         and not _is_legacy_value(stored_ptr, matter_root, legacy_dir) \
-        else case_data_dir
+        else pointer_case_data_dir(matter_root, case_data_dir)
     normalized = {
         'schema_version': EXPECTED_SCHEMA_VERSION,
         'matter_root': matter_root,

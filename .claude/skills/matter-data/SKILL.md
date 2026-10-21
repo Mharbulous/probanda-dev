@@ -68,6 +68,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 | "Is this folder fully ingested?" / ingest coverage of matter folders named by glob, with the newest ingested correspondence date | operations/ingest-coverage.md |
 | Ingest an explicit list of files without asking the practitioner anything (housekeeping's ingest step) | operations/ingest-unattended.md |
 | A file was moved or renamed and its stored path must follow it | operations/relocate-source.md |
+| "Move this matter's case data into the matter folder" / the case data is still under the firm-level `0. CASE DATA` | operations/relocate.md |
 | Internal, reached from ingest, extract-facts and ingest-unattended: a draft, signed or filed copy of a court document the matter already holds, kept as one source of record with the other copy superseded | operations/supersede-draft.md |
 | "Has housekeeping already reviewed these files?" / record a finished housekeeping review or a failed ingest / schedule a retry | operations/housekeeping-log.md |
 | "Dump the database" / "rebuild from dump" | operations/maintain.md |

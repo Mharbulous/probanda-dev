@@ -114,6 +114,23 @@ test("resolves db_path from coclerk.json, folds in the matter lookup, and bootst
   assert.deepEqual(m.pointerBytes(), before);
 });
 
+test("a relocated matter's relative pointer gives db_path under the matter's own 0. CASE DATA (ADR 0013)", async (t) => {
+  const m = matterFixture(t, { pointer: { case_data_dir: "0. CASE DATA", evidence_sql_path: "0. CASE DATA\\evidence.sql" } });
+  const dbPath = join(m.matterRoot, "0. CASE DATA", "submission.sqlite");
+  mkdirSync(join(m.matterRoot, "0. CASE DATA"));
+  await seedOneFiling(dbPath);
+  noPerUserConfig(t);
+  const context = await practiceContext(t);
+  const before = m.pointerBytes();
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.db_path.toLowerCase(), dbPath.toLowerCase());
+  assert.equal(result.filings.length, 1);
+  assert.equal(result.blocking, undefined, "the firm root beside the matter is found without the per-user file");
+  assert.deepEqual(m.pointerBytes(), before);
+});
+
 test("migrates a database that is behind, reports the backup, then bootstraps", async (t) => {
   const m = matterFixture(t);
   oneVersionBehind(m.dbPath);

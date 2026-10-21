@@ -158,6 +158,28 @@ test("check 2 lists each matter-data party no matter role points to, by the matt
   assert.match(twice.unresolved[0].reason, /more than one matter-data folder/);
 });
 
+test("check 2 finds a matter's own 0. CASE DATA folder (ADR 0013) ahead of an old one under the firm root", async (t) => {
+  const library = mkdtempSync(join(tmpdir(), "coclerk-contacts-library-"));
+  t.after(() => rmSync(library, { recursive: true, force: true }));
+  const root = join(library, "0. CASE DATA");
+  mkdirSync(root);
+  const { store } = await setup(t, "check2-in-matter", { COCLERK_CASE_DATA_ROOT: root });
+  const own = join(library, "L112 Smith v Jones", "0. CASE DATA");
+  mkdirSync(own, { recursive: true });
+  writePartiesOfRecord(own, { parties: [{ id: 1, name: "Sam Smith" }, { id: 2, name: "Jo Jones" }] });
+  // The old copy relocate leaves in place is not a second candidate.
+  const old = join(root, "L112 Smith v Jones");
+  mkdirSync(old);
+  writePartiesOfRecord(old, { parties: [{ id: 1, name: "Sam Smith" }] });
+  const { matter_id } = await matter(store, "L112");
+  const { contact_id } = await person(store, "Sam Smith");
+  await contacts.upsert_matter_role(store, { matt_num: "L112", contact_id, role: "client", case_party_id: 1 });
+
+  const result = await contacts.contact_checks(store, {});
+  assert.deepEqual(result.unresolved, []);
+  assert.deepEqual(result.parties_without_role.map((row) => [row.matter_id, row.party_id, row.name]), [[matter_id, 2, "Jo Jones"]]);
+});
+
 test("merge_contact combines lists, keeps the spare's name, moves and combines its roles, and deletes the spare", async (t) => {
   const { store } = await setup(t, "merge");
   await matter(store, "L109");

@@ -131,12 +131,57 @@ class ResolvePathsTests(unittest.TestCase):
         self.assertEqual(Path(resolved["case_data_dir"]), original)
 
     def test_missing_canonical_nominee_is_bootstrap_not_drift(self):
-        self.write_pointer(str(self.live_dir))
+        self.write_pointer("0. CASE DATA")
         warnings = []
         resolved = resolve_paths.resolve_pointer(
             str(self.matter_root), migrate_only=True, warn=warnings.append
         )
+        self.assertEqual(Path(resolved["case_data_dir"]), self.matter_root / "0. CASE DATA")
+        self.assertEqual(warnings, [])
+
+    def test_fresh_bootstrap_derives_the_matter_case_data_folder(self):
+        # ADR 0013: with no database anywhere, the default is MATTER_ROOT/0. CASE DATA,
+        # never a folder under the firm root.
+        self.write_pointer("")
+        resolved = resolve_paths.resolve_pointer(str(self.matter_root))
+        self.assertEqual(Path(resolved["case_data_dir"]), self.matter_root / "0. CASE DATA")
+        self.assertFalse(self.live_dir.exists())
+
+    def test_unrelocated_firm_root_matter_still_resolves(self):
+        self.write_db(self.live_dir, metadata={"matter_id": "T9999", "short_name": "Scratch Matter"})
+        pointer_path = self.write_pointer(str(self.live_dir))
+        resolved = resolve_paths.resolve_pointer(str(self.matter_root))
         self.assertEqual(Path(resolved["case_data_dir"]), self.live_dir)
+        healed = json.loads(pointer_path.read_text(encoding="utf-8"))
+        self.assertEqual(Path(healed["case_data_dir"]), self.live_dir)
+        self.assertTrue(os.path.isabs(healed["case_data_dir"]))
+
+    def test_unrelocated_matter_with_lost_pointer_still_found_by_matter_id(self):
+        self.write_db(self.live_dir, metadata={"matter_id": "T9999", "short_name": "Scratch Matter"})
+        self.write_pointer("")
+        resolved = resolve_paths.resolve_pointer(str(self.matter_root))
+        self.assertEqual(Path(resolved["case_data_dir"]), self.live_dir)
+
+    def test_in_matter_folder_wins_over_the_firm_root_and_is_stored_relative(self):
+        in_matter = self.matter_root / "0. CASE DATA"
+        self.write_db(in_matter, "relocated")
+        self.write_db(self.live_dir, "old", metadata={"matter_id": "T9999", "short_name": "Scratch Matter"})
+        pointer_path = self.write_pointer(r"C:\Users\DeletedProfile\case-data")
+        resolved = resolve_paths.resolve_pointer(str(self.matter_root))
+        self.assertEqual(Path(resolved["case_data_dir"]), in_matter)
+        healed = json.loads(pointer_path.read_text(encoding="utf-8"))
+        self.assertEqual(healed["case_data_dir"], "0. CASE DATA")
+        coclerk = json.loads((self.matter_root / "coclerk.json").read_text(encoding="utf-8"))
+        self.assertEqual(coclerk, healed)
+
+    def test_relative_pointer_value_resolves_to_the_matter_folder(self):
+        in_matter = self.matter_root / "0. CASE DATA"
+        self.write_db(in_matter)
+        pointer_path = self.write_pointer("0. CASE DATA")
+        warnings = []
+        resolved = resolve_paths.resolve_pointer(str(self.matter_root), warn=warnings.append)
+        self.assertEqual(Path(resolved["case_data_dir"]), in_matter)
+        self.assertEqual(json.loads(pointer_path.read_text(encoding="utf-8"))["case_data_dir"], "0. CASE DATA")
         self.assertEqual(warnings, [])
 
     def test_migrate_only_allows_an_old_live_derived_database(self):

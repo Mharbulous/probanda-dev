@@ -187,13 +187,14 @@ test("query preserves a valid relative non-standard nominee", () => {
     const result = caseDataQuery(f.matterRoot, "SELECT value FROM marker");
     assert.deepEqual(result.rows, [{ value: "custom" }]);
     assert.equal(result.warning, null);
-    assert.equal(JSON.parse(readFileSync(f.pointerPath, "utf-8")).case_data_dir, custom);
+    assert.equal(JSON.parse(readFileSync(f.pointerPath, "utf-8")).case_data_dir, "custom-data");
   } finally {
     f.cleanup();
   }
 });
 
-test("execute bootstraps the live-derived location and rewrites matter_root", async () => {
+test("execute bootstraps the matter's own 0. CASE DATA folder and rewrites matter_root", async () => {
+  // ADR 0013: a new matter's case data lives inside the matter folder, stored relative.
   const f = liveDerivedFixture({ stored: "", createDatabase: false });
   const { env, cleanup } = isolatedEnv();
   try {
@@ -204,9 +205,11 @@ test("execute bootstraps the live-derived location and rewrites matter_root", as
     );
     assert.equal(result.ok, true);
     assert.deepEqual(caseDataQuery(f.matterRoot, "SELECT value FROM marker").rows, [{ value: "bootstrapped" }]);
+    assert.ok(existsSync(join(f.matterRoot, "0. CASE DATA", "main.sqlite")));
+    assert.ok(!existsSync(f.caseDataDir), "nothing is created under the firm root");
     const healed = JSON.parse(readFileSync(f.pointerPath, "utf-8"));
     assert.equal(healed.matter_root, f.matterRoot);
-    assert.equal(healed.case_data_dir, f.caseDataDir);
+    assert.equal(healed.case_data_dir, "0. CASE DATA");
   } finally {
     cleanup();
     f.cleanup();

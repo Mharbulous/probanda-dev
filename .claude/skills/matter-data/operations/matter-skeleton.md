@@ -11,8 +11,8 @@ skeleton's source is recorded beside it rather than in a separate skill.
    the practitioner the `matter_root` path and copy nothing until they confirm it is
    the new matter's own folder.
 2. **Resolve the template.** It is `<parent of matter_root>\ADMIN\0. TEMPLATE\L### Litigation\`.
-   The parent is the practitioner's document root, the folder that also holds
-   `0. CASE DATA`. In Cowork, request access to the template folder itself, never to
+   The parent is the practitioner's document root, the folder that also holds the
+   firm's `0. CASE DATA` (`_practice\`). In Cowork, request access to the template folder itself, never to
    the document root.
 3. **If the template cannot be listed** (missing, moved, or access refused), stop and
    ask the practitioner where it is. Never build a skeleton from memory, from another

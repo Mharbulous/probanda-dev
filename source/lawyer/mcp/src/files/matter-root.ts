@@ -126,14 +126,19 @@ export function resolveDbPath(root: string): string {
 
 /**
  * The case data root a matter's matter-data folder sits in, for when the per-user probanda.json is
- * absent: its parent, accepted only when that parent is a `0. CASE DATA` folder or the folder
- * COCLERK_CASE_DATA_ROOT names (/matter-data's own layout), and is an existing directory. Anything
- * else is null, never a guess, so the caller's missing-file error stands. Writes nothing.
+ * absent. For a folder under the firm root it is the folder's parent, accepted only when that
+ * parent is a `0. CASE DATA` folder or the folder COCLERK_CASE_DATA_ROOT names. For a matter's own
+ * `0. CASE DATA` folder (ADR 0013) it is the `0. CASE DATA` folder beside the matter folder. Either
+ * must be an existing directory. Anything else is null, never a guess, so the caller's
+ * missing-file error stands. Writes nothing.
  */
 export function caseDataRootFromCaseDataDir(dir: string, env: NodeJS.ProcessEnv): string | null {
-  const parent = dirname(normalize(dir));
+  const normal = normalize(dir);
+  const inMatter = basename(normal).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
+  const parent = inMatter ? join(dirname(dirname(normal)), CASE_DATA_FOLDER) : dirname(normal);
   const override = env.COCLERK_CASE_DATA_ROOT;
   const named =
+    inMatter ||
     basename(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() ||
     (!!override && normalize(override).toLowerCase() === parent.toLowerCase());
   if (!named) return null;

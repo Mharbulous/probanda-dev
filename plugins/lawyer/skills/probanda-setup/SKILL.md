@@ -15,7 +15,7 @@ A missing `probanda.json` means Probanda has not been set up on this device. It 
 - Every root, folder and setting is written only after the practitioner approves it under `/show-me`. Ask one question at a time.
 - Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
-- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, and `_practice\firm\firm.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter.
+- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, and `_practice\firm\firm.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
 - Setup never writes `practice_quirks` or a credential. `practice_quirks` follows practice-data's Practice quirks rules.
 
 ## Step 1 — Confirm this is a new device
@@ -27,7 +27,7 @@ Call `practice_data__config_status`.
 
 ## Step 2 — Find the matter-data root
 
-The root is the practitioner's `0. CASE DATA` folder: the folder that holds `_practice\practice.db` and, beside the matter folders, each matter's matter-data folder. In the default layout it sits in the same document library as the matter folders.
+The root is the practitioner's `0. CASE DATA` folder beside the matter folders: the folder that holds `_practice\practice.db`. In the default layout it sits in the same document library as the matter folders. Each matter's own case data is in a `0. CASE DATA` folder inside that matter (ADR 0013). A matter set up before then may still keep its matter-data folder under this root until it is relocated.
 
 1. **Candidates.** `config_status` lists `candidates` with `source: "scan"`: folders under the user's profile named `0. CASE DATA`, or holding `_practice\practice.db`. The scan follows symlinks and junctions, so it finds a folder in a synced SharePoint or other cloud library reached through a link, and lists it at the path where it was found. A candidate with `practice_db_exists: true` is an existing Probanda root (another device already set it up). `scan_truncated: true` means the scan stopped early and the folder may still exist.
 2. **No candidate, or none is right.** Ask the practitioner where their matter folders are, and have them grant access to that folder with the session's folder-access tool (`request_cowork_directory` in Cowork). If they decline, stop and say that the folder is needed. List it, and look for a `0. CASE DATA` folder. A folder entry whose type is "symlink" or a junction is a folder: list it too. If there is none, propose creating `0. CASE DATA` in the folder that holds the matter folders.

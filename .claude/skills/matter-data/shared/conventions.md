@@ -8,7 +8,7 @@ This file is the **single source of truth** for the cross-cutting semantics ever
 
 ## 1. Environment contract
 
-All database I/O runs through three host-side MCP tools — `matter_data__query` (read), `matter_data__execute` (write), and `matter_data__migrate` (schema upgrade) — served by the `plugins/litigation/mcp` runtime (permission-fatigue conversion, 2026-07-15+; migrate added 2026-07-27). This collapses the prior environment split for database access: the host process reaches the native `0. CASE DATA` binaries directly, so there is no per-session workspace-access prompt for the sibling folder, no in-VM heredoc, and no FUSE-staleness exposure on binary reads — the same tool contract runs identically from a local CLI session and from Cowork. **If these tools are not visible in the current session's tool list, halt immediately and report — never fall back to direct file or database access.**
+All database I/O runs through three host-side MCP tools — `matter_data__query` (read), `matter_data__execute` (write), and `matter_data__migrate` (schema upgrade) — served by the `plugins/litigation/mcp` runtime (permission-fatigue conversion, 2026-07-15+; migrate added 2026-07-27). This collapses the prior environment split for database access: the host process reaches the native `0. CASE DATA` binaries directly, so there is no per-session workspace-access prompt for the case-data folder, no in-VM heredoc, and no FUSE-staleness exposure on binary reads — the same tool contract runs identically from a local CLI session and from Cowork. **If these tools are not visible in the current session's tool list, halt immediately and report — never fall back to direct file or database access.**
 
 `matter_data__migrate` is the only tool that bypasses the schema-version guard, and the bypass is reachable from nowhere else: `query`/`execute` are served by a separate process whose pointer resolver has no such parameter at all. See `../operations/migrate.md`.
 
@@ -31,10 +31,12 @@ In a local command-line environment, the utility scripts under `references/scrip
 | Artifact | Location |
 |---|---|
 | `probanda.json` (pointer) | matter root. A reader falls back to `coclerk.json` (the pre-rename name, kept updated by every pointer write so an older copy of the plugin still finds the matter), then to the legacy `9. AI\coclerk.json` |
-| `main.sqlite`, `law.sqlite`, `privileged.sqlite` | native `0. CASE DATA\<matter_id> <short_name>\` — a **sibling** of the matter folder, inside the SharePoint-synced library |
-| `evidence.sql` (text dump) | beside the binaries, in `0. CASE DATA\<matter_id> <short_name>\` |
+| `main.sqlite`, `law.sqlite`, `privileged.sqlite` | native `<matter folder>\0. CASE DATA\`, inside the matter folder and so inside the SharePoint-synced library (ADR 0013). A matter set up before then keeps them in the firm-level `0. CASE DATA\<matter_id> <short_name>\` until `matter_data__relocate` moves them (`../operations/relocate.md`) |
+| `evidence.sql` (text dump) | beside the binaries, in the matter's `0. CASE DATA\` |
 
-The **staging discipline** is load-bearing, not the folder location. `0. CASE DATA` is itself inside the SharePoint-synced library, so no folder choice avoids the sync exposure — a synced/FUSE-style mount serves stale file-size metadata that corrupts binary SQLite reads and writes (see §1, E2). What keeps the binaries safe is never leaving a live handle on synced storage: temp-copy staging, `DELETE` journal, copy-back. A future "simplifier" MUST NOT operate on the native binaries in place or relocate the temp-staging flow. The pointer-resolution code below carries this same design note at the path constants for the same reason.
+The firm-level `0. CASE DATA\` beside the matter folders holds only the practice stores (`_practice\`).
+
+The **staging discipline** is load-bearing, not the folder location. Every `0. CASE DATA` is inside the SharePoint-synced library, so no folder choice avoids the sync exposure — a synced/FUSE-style mount serves stale file-size metadata that corrupts binary SQLite reads and writes (see §1, E2). What keeps the binaries safe is never leaving a live handle on synced storage: temp-copy staging, `DELETE` journal, copy-back. A future "simplifier" MUST NOT operate on the native binaries in place or relocate the temp-staging flow. The pointer-resolution code below carries this same design note at the path constants for the same reason.
 
 ### 2.2 `probanda.json` pointer form (schema_version 5)
 
@@ -42,14 +44,14 @@ The **staging discipline** is load-bearing, not the folder location. `0. CASE DA
 {
   "schema_version": 5,
   "matter_root": "C:\\...\\<matter folder>",
-  "case_data_dir": "C:\\...\\0. CASE DATA\\<matter folder>",
-  "evidence_sql_path": "..\\0. CASE DATA\\<matter folder>\\evidence.sql"
+  "case_data_dir": "0. CASE DATA",
+  "evidence_sql_path": "0. CASE DATA\\evidence.sql"
 }
 ```
 
 `matter_root` is a **breadcrumb, never a truth**. Every operation obtains the current, proven host-namespace absolute path of the matter folder from the live session and passes that path to the tools. The resolver writes it back for humans and diagnostics; no operation uses the stored value as its next invocation argument. This distinction matters because Cowork's sandbox sees a mounted `/sessions/…` path while the native file tools and matter-data backend use the granted Windows host path.
 
-`case_data_dir` is also a breadcrumb, never a truth: the resolver derives from the live `matter_root` and database identity (`main.matter_metadata`, else the matter folder name). A stored absolute or relative path may nominate a non-standard location, but it wins only when that location contains `main.sqlite`. The selected location is cached for humans and diagnostics; database operations never trust the stored string without that proof. `evidence_sql_path` retains its pre-conversion meaning (§2.1). A pointer without it gets the matter-data folder's `evidence.sql`, stored relative to the matter folder so that it holds under any user profile. It is stored absolute only when the matter-data root is on another drive.
+`case_data_dir` is also a breadcrumb, never a truth. A stored absolute or relative path may nominate a location, but it wins only when that location contains `main.sqlite`. Otherwise the resolver takes the matter's own `0. CASE DATA` when it holds `main.sqlite`, then a not-yet-relocated folder under the firm-level root found by database identity (`main.matter_metadata`, else the matter folder name), and for a new matter the matter's own `0. CASE DATA`. It is stored relative to the matter folder when it is inside it, absolute otherwise. The selected location is cached for humans and diagnostics; database operations never trust the stored string without that proof. `evidence_sql_path` retains its pre-conversion meaning (§2.1). A pointer without it gets the matter-data folder's `evidence.sql`, stored relative to the matter folder so that it holds under any user profile. It is stored absolute only when the matter-data root is on another drive.
 
 `sources.file_path` is one too: report drift you notice mid-operation — `pointer-health.md`.
 
@@ -74,6 +76,8 @@ Pointer resolution, temp-copy staging, `ATTACH`, the schema-version guard, and t
    - **`matter_data__ingest_authority`** — `{ matter_root, result_path, file_path, file_hash, bundled_pages? }`. Writes one extracted legal authority's rows from the extractor's result file, through `matter_data__execute`'s own lock, trigger layer, single transaction and dump. Only [`../operations/ingest-extract.md`](../operations/ingest-extract.md) Path D calls it, and that section is its contract. A result of `ok: false` with `problems` means nothing was written. Any other non-success result falls under the verify-before-retry rule above.
 
    - **`matter_data__migrate`** — `{ matter_root, mode, plan_token?, user_confirmation?, backup_id? }`. The schema-upgrade path; `plan` then `apply`, gated on a plan token from a fresh dry-run (`user_confirmation` echoes the plan's `user_confirmation_required` string). Full contract in `../operations/migrate.md`; run it through the `migration-runner` subagent, not inline.
+
+   - **`matter_data__relocate`** — `{ matter_root, mode }`. Moves a matter's case data from the firm-level root into the matter's own `0. CASE DATA` (ADR 0013); `plan` then `apply`. Full contract in `../operations/relocate.md`.
 
 After taking the live `matter_root`, resolution treats the stored `case_data_dir` only as a proof-gated nomination, derives the live location when it is unusable, and heals the breadcrumb — written to `probanda.json` and, with the same content, to `coclerk.json` (migrate-on-write: a matter still on `coclerk.json` gains `probanda.json` at its first write, and the old name stays updated so an older copy of the plugin keeps working, until a later release removes it). A query never creates an empty database: if resolved `main.sqlite` is absent it fails with **no case database found**. Verify the matter's live `0. CASE DATA` folder and restore `main.sqlite`, or initialize a genuinely new matter.
 

@@ -88,6 +88,23 @@ def case_data_root(matter_root):
     return norm_join(os.path.dirname(os.path.normpath(matter_root)), CASE_DATA_FOLDER)
 
 
+def matter_case_data_dir(matter_root):
+    """The matter's own case-data folder, MATTER_ROOT/0. CASE DATA (ADR 0013)."""
+    return norm_join(matter_root, CASE_DATA_FOLDER)
+
+
+def pointer_case_data_dir(matter_root, case_data_dir):
+    """The pointer's case_data_dir value: relative to the matter root when the folder is
+    inside it, absolute otherwise, as evidence_sql_path is stored."""
+    try:
+        rel = os.path.relpath(case_data_dir, matter_root)
+    except ValueError:
+        return case_data_dir
+    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
+        return case_data_dir
+    return rel
+
+
 def default_evidence_sql(matter_root, case_data_dir):
     """The text dump beside the databases, relative to the matter root so the pointer survives
     a change of user profile; absolute when the two are on different drives."""
@@ -145,6 +162,11 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
     if nominee != legacy_dir and nominee and os.path.exists(norm_join(nominee, 'main.sqlite')):
         return nominee, False
 
+    # The matter's own folder (ADR 0013), then a not-yet-relocated folder under the firm root.
+    in_matter = matter_case_data_dir(matter_root)
+    if os.path.exists(norm_join(in_matter, 'main.sqlite')):
+        return in_matter, bool(stored)
+
     # A matter folder can be renamed independently of its database folder.
     # Search only direct live-root children with the same matter reference,
     # then prove identity from main.sqlite before selecting one.
@@ -166,6 +188,8 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
             if metadata_id and metadata_id.casefold() == matter_id.casefold():
                 return candidate, bool(stored)
 
+    # The firm-root folder named for the matter, as it was derived before ADR 0013. It wins
+    # while it exists, even without main.sqlite, so a matter not yet relocated is rebuilt in place.
     mid, sn = None, None
     for cand in (nominee, legacy_dir):
         if cand:
@@ -174,7 +198,12 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
                 break
     if not mid:
         mid, sn = parse_folder_name(matter_root)
-    derived = norm_join(root, f"{mid} {sn}".strip())
+    firm_folder = norm_join(root, f"{mid} {sn}".strip())
+    if os.path.isdir(firm_folder):
+        return firm_folder, bool(stored and nominee != legacy_dir
+                                 and os.path.normcase(nominee) != os.path.normcase(firm_folder))
+
+    derived = in_matter
     rejected = bool(stored and nominee != legacy_dir
                     and os.path.normcase(nominee) != os.path.normcase(derived))
     return derived, rejected
@@ -230,7 +259,7 @@ def resolve_pointer(matter_root):
     case_data_dir, rejected_nominee = resolve_case_data_dir(
         matter_root, stored, root, legacy_dir)
 
-    # Legacy migration: 9. AI -> native sibling folder.
+    # Legacy migration: 9. AI -> the matter's 0. CASE DATA folder.
     if is_legacy_value(pointer.get('case_data_dir')) or from_legacy:
         os.makedirs(case_data_dir, exist_ok=True)
         if os.path.isdir(legacy_dir):
@@ -239,9 +268,9 @@ def resolve_pointer(matter_root):
                 dst = norm_join(case_data_dir, fn)
                 if os.path.exists(src) and not os.path.exists(dst):
                     shutil.move(src, dst)
-        mid, sn = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
+        mid, _ = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
         if mid:
-            preferred = norm_join(root, f"{mid} {sn}".strip())
+            preferred = matter_case_data_dir(matter_root)
             if preferred != case_data_dir:
                 os.makedirs(os.path.dirname(preferred), exist_ok=True)
                 if not os.path.exists(preferred):
@@ -251,7 +280,7 @@ def resolve_pointer(matter_root):
     normalized = {
         'schema_version': EXPECTED_SCHEMA_VERSION,
         'matter_root': matter_root,
-        'case_data_dir': case_data_dir,
+        'case_data_dir': pointer_case_data_dir(matter_root, case_data_dir),
         'evidence_sql_path': pointer.get(
             'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
     }

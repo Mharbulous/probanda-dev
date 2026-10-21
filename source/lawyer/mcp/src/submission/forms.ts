@@ -7,13 +7,13 @@
 // guard" decision).
 //
 // Output location (#324, keyed by filing id since #1317): <dirname(db_path)>/
-// mockups/Filing <id>/, archive copies in a sibling archive/ -- i.e. inside the matter's
-// matter-data folder, NOT the practitioner's matter workspace. A Cowork
-// Project mounts only the matter folder, so the matter-data folder sits
-// outside every sandbox FUSE mount and is reached only host-side through
-// these tools; keeping the mockups there keeps both the write and any later
-// access clear of the known mount-staleness bug. Deterministic from db_path
-// alone, so the canonical location takes no output-root parameter.
+// mockups/Filing <id>/, archive copies in an archive/ folder beside them -- i.e. inside the
+// matter's matter-data folder (for a new or relocated matter, the matter's own
+// 0. CASE DATA; docs/ADRs/0013-per-matter-case-data-inside-the-matter-folder.md),
+// not the draft folders. They are written and reached host-side through these
+// tools, and a session never reads them itself, which is why render returns
+// the markdown inline. Deterministic from db_path alone, so the canonical
+// location takes no output-root parameter.
 // This canonical copy is unaffected by ADR 0008 (docs/adr/0008-mockup-
 // presentation-copy-relocated-to-draft-folder.md), which only relocates the
 // disposable presentation copy into the mount -- and by ADR 0012 (#466), under

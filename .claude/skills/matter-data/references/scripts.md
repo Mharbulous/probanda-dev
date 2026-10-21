@@ -88,9 +88,10 @@ reasons stated at their own entry below):
   copied to an OS temp directory, operated on, closed, and — for mutating tools
   (`dump`, `rebuild`, `migrate`) — copied back atomically. Native binaries are
   never mutated in place.
-- The binaries live in the **native sibling** `0. CASE DATA\<matter_id>
-  <short_name>\` folder outside the synced matter tree; this placement is
-  load-bearing (see [`../shared/conventions.md`](../shared/conventions.md) §2).
+- The binaries live in the matter's own `0. CASE DATA\` folder (a matter not yet
+  relocated: the firm-level `0. CASE DATA\<matter_id> <short_name>\`). Every
+  location is inside the synced library, so the staging above is what keeps them
+  safe, not the placement (see [`../shared/conventions.md`](../shared/conventions.md) §2).
 
 ## Modules (imported by the CLIs, not run directly)
 
@@ -110,6 +111,7 @@ reasons stated at their own entry below):
 | `dump.py` | Write `evidence.sql` (header `schema v9.0`, three section marker pairs, per-DB `iterdump`). | `python3 dump.py "C:\...\Example Matter"` |
 | `rebuild.py` | Atomic rebuild of the three binaries from `evidence.sql` (native files untouched on failure; validates table counts main≥21 / law≥5 / privileged≥3 — `MIN_TABLES` — and triggers present before move-in). Also the home of the `upgrade_*` in-temp transforms `migrate_engine` imports. | `python3 rebuild.py "C:\...\Example Matter"` |
 | `migrate_engine.py` | **Module, not a CLI.** The engine behind `matter_data__migrate` — chain building, plan token, backup/restore, all-or-nothing native replacement. Imported by the MCP server over `PYTHONPATH`; see `../operations/migrate.md`. | *(not run directly)* |
+| `relocate_case_data.py` | **Module, not a CLI.** The engine behind `matter_data__relocate` (ADR 0013): copies a matter's case data from the firm-level `0. CASE DATA` into the matter's own, verifies every copy, then re-points the pointer; deletes nothing. Imported by the MCP server over `PYTHONPATH`; see `../operations/relocate.md`. | *(not run directly)* |
 | `parties_of_record.py` | Read-only: the parties of record of one proceeding, matched by file number, with counsel and address for service resolved to the per-proceeding override when set, else the party's own value. Returns `ok`, `not_applicable` or `unavailable` with a reason, never a bare empty list, in the drafting runtime's own field names. Reads a temp copy of `main.sqlite` only. Spawned by the drafting runtime over `PYTHONPATH`; see `design-decisions.md` #56. | `python3 parties_of_record.py "...\0. CASE DATA\Example Matter" S-290001` |
 | `resolve_participant.py` | Read-only: resolves a name, surname or file code to the participants it could mean (party, counsel, witness, expert, tribunal member), each with every name, alias and file code on record as `search_terms`. Exact first; then `near`, Levenshtein distance at most 2 on a surname of four letters or more, labelled with its distance. Returns `ok`, `not_found` or `unavailable` with a reason. Reads a temp copy of `main.sqlite` only. Behind the model-facing `matter_data__resolve_participant`, called only by `../operations/participants.md`; see `design-decisions.md` #65, #66. | `python3 resolve_participant.py "...\0. CASE DATA\Example Matter" Quillfeather` |
 | `resolve_authority_source.py` | Read-only: finds one stored authority's file by citation, by its recorded path, then a hash search of the matter tree (`6. LAW` first, 20 s deadline), then a caller-named file, and gives it as a PDF, converting RTF or Word through Microsoft Word into a host-local cache. Returns `ok`, `authority_ambiguous`, `unresolved`, `converter_missing` or `conversion_failed` in the drafting runtime's own field names. Reads a temp copy of `law.sqlite` only. Spawned by the drafting runtime over `PYTHONPATH`; see `design-decisions.md` #61 and `../operations/verify-law.md` §2. | `python3 resolve_authority_source.py < request.json` |

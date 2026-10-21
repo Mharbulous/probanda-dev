@@ -153,10 +153,11 @@ path only, proven before writing.
    `probanda.json` and as `coclerk.json` (migrate-on-write, §2.1 of `../shared/conventions.md`,
    so an older copy of the plugin still finds the matter) — in the schema_version 5 form
    (§2.2): `matter_root` = this session's own absolute host path to the matter folder;
-   `case_data_dir` = the resolved `0. CASE DATA\<matter_id> <short_name>\` path.
+   `case_data_dir` = `"0. CASE DATA"`, the matter's own case-data folder, relative to the
+   matter folder (ADR 0013).
    This stored value is an advisory breadcrumb: subsequent calls derive live
    and select a stored non-standard nominee only when it contains `main.sqlite`;
-   `evidence_sql_path` = `..\0. CASE DATA\<matter_id> <short_name>\evidence.sql`, the
+   `evidence_sql_path` = `"0. CASE DATA\\evidence.sql"`, the
    dump beside the binaries, relative to the matter folder. This is a plain-text
    write via the native file-write tool — not a `matter_data__*` call, and not staged —
    the pointer is a plaintext artifact that lives safely in the synced matter tree
@@ -219,12 +220,10 @@ privileged_qualified = qualify(sections['privileged'], 'privileged')
 
 ## Step 3 — database folders (nothing to create)
 
-Do **not** create either folder, and never request a workspace grant for
-`0. CASE DATA` or its parent: `matter_data__execute` creates both containing
-folders server-side on the first call — the binary copy-back makedirs the
-matter-data sibling folder, and the dump writer puts `evidence.sql` in that same
-folder. This is the §1 guarantee in `../shared/conventions.md`: no
-per-session workspace-access prompt for the sibling folder. If the matter root
+Do **not** create the folder: `matter_data__execute` creates the matter's
+`0. CASE DATA` folder server-side on the first call — the binary copy-back makedirs
+it, and the dump writer puts `evidence.sql` in that same folder. It sits inside the
+matter folder, so the matter's own grant covers it (§1 of `../shared/conventions.md`). If the matter root
 doesn't exist yet, ask the practitioner to create it, then request access.
 
 ---
@@ -275,7 +274,7 @@ sql_script = "\n".join([
 ```
 
 Call `matter_data__execute` with this `sql_script`. On success the binaries already exist
-at native storage under `0. CASE DATA\<matter_id> <short_name>\` (created by the tool) and
+at native storage under the matter's `0. CASE DATA\` (created by the tool) and
 `evidence.sql` has already been regenerated — both are side effects of the call, not
 separate steps.
 

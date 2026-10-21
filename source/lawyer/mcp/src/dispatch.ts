@@ -8,6 +8,7 @@ import { callPracticeTool } from "./tools/practice/index.js";
 import { matter_lookup } from "./tools/practice/reads.js";
 import { caseDataQuery, caseDataExecute } from "./case/backend.js";
 import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
+import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
@@ -179,6 +180,16 @@ export async function callTool(
       userConfirmation: args.user_confirmation as string | undefined,
       backupId: args.backup_id as string | undefined,
     });
+  }
+
+  if (name === "matter_data__relocate") {
+    const mode = args.mode as string;
+    if (!["plan", "apply"].includes(mode)) {
+      throw new ValidationError(
+        `matter_data__relocate: unknown mode ${JSON.stringify(mode)}; expected plan or apply`
+      );
+    }
+    return caseDataRelocate(args.matter_root as string, mode as RelocateMode);
   }
 
   if (name.startsWith("time_pipeline__")) {

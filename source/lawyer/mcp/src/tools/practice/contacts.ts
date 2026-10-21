@@ -5,7 +5,7 @@
 // Reads and the two gap checks use practice.db and the matter's case data only.
 
 import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { caseDataFolder } from "../../case/backend.js";
 import { listCaseParties } from "../../case/list-parties.js";
@@ -233,18 +233,24 @@ export async function contact_checks(
     }
     if (root !== null) {
       const caseDataRoot = root;
-      const children = readdirSync(caseDataRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && existsSync(join(caseDataRoot, entry.name, "main.sqlite")))
-        .map((entry) => entry.name);
+      const holding = (parent: string, sub: string) => readdirSync(parent, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && existsSync(join(parent, entry.name, sub, "main.sqlite")))
+        .map((entry) => ({ name: entry.name, folder: join(parent, entry.name, sub) }));
+      // A matter's own `0. CASE DATA` folder (ADR 0013) comes first, as /matter-data resolves it;
+      // a matter not yet relocated keeps its folder under the firm root.
+      const library = dirname(caseDataRoot);
+      const inMatter = holding(library, "0. CASE DATA");
+      const children = holding(caseDataRoot, "");
       for (const matter of matters) {
         if (!matter.matt_num) {
           miss(matter, "it has no matter number to find its matter-data folder by");
           continue;
         }
         const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
-        const named = children.filter((name) => folderMatterNum(name) === wanted);
-        if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.join(", ")}`);
-        else if (named.length === 1) folders.push([matter, join(caseDataRoot, named[0])]);
+        const own = inMatter.filter((entry) => folderMatterNum(entry.name) === wanted);
+        const named = own.length ? own : children.filter((entry) => folderMatterNum(entry.name) === wanted);
+        if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.map((entry) => entry.folder).join(", ")}`);
+        else if (named.length === 1) folders.push([matter, named[0].folder]);
       }
     }
   }

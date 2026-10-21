@@ -69,6 +69,30 @@ test("config_status reports a missing file and names the candidate root from a m
   assert.equal(existsSync(f.configPath), false, "config_status never creates the file");
 });
 
+test("config_status names the candidate root from a matter whose case data is inside it (ADR 0013)", async (t) => {
+  const f = fixture(t);
+  writeFileSync(
+    join(f.matter, "coclerk.json"),
+    JSON.stringify({ schema_version: 5, case_data_dir: "0. CASE DATA" })
+  );
+  const status = await config_status({ matter_root: f.matter }, f.env);
+  assert.equal(status.candidates.length, 1);
+  assert.equal(status.candidates[0].root, realpathSync.native(f.root), "the library's 0. CASE DATA, not the matter's");
+  assert.equal(status.candidates[0].practice_db_exists, true);
+});
+
+test("the knowledge and open_session fallback finds the firm root from a drafting database in either layout", async (t) => {
+  const f = fixture(t);
+  const { caseDataRootFromDbPath } = await import("../build/files/matter-root.js");
+  const inMatter = join(f.matter, "0. CASE DATA", "submission.sqlite");
+  const sibling = join(f.root, "Example Matter", "submission.sqlite");
+  assert.equal(caseDataRootFromDbPath(inMatter, {}), realpathSync.native(f.root));
+  assert.equal(caseDataRootFromDbPath(sibling, {}), realpathSync.native(f.root));
+  // A matter's own 0. CASE DATA with no firm root beside the matter is never a guess.
+  const lone = join(f.scratch, "lone", "Lone Matter", "0. CASE DATA", "submission.sqlite");
+  assert.equal(caseDataRootFromDbPath(lone, {}), null);
+});
+
 test("config_status reports a file without case_data_root and which keys are missing", async (t) => {
   const f = fixture(t);
   writeConfig(f, { version: 1, person: "pe" });

@@ -727,6 +727,26 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: caseDataPrefixed("relocate"),
+      description:
+        "Move a matter's case data from the firm-level `0. CASE DATA\\<matter_id> <short_name>` folder into the matter's own " +
+        "`0. CASE DATA` folder (ADR 0013). mode 'plan' lists the files, their sizes and the target and writes nothing. " +
+        "mode 'apply' copies both pointer files aside (probanda.json.bak-<ts>, coclerk.json.bak-<ts>), copies the whole " +
+        "folder into a staging folder in the matter, checks every file's sha256 and, for each .sqlite, integrity_check, " +
+        "per-table row counts and user_version against its source, and only then renames the staging folder to " +
+        "`0. CASE DATA` and rewrites both pointer files. It deletes nothing: the old folder is left for the practitioner " +
+        "to delete. On any failure the pointer is unchanged and the staging folder stays, named in the error with the " +
+        "check that failed. Refused when the case data is already in the matter folder, when the current folder has no " +
+        "main.sqlite, or when the matter's `0. CASE DATA` exists and is not empty. After an apply, re-run " +
+        "drafting_forms__open_session and re-plan any migration. Only the /matter-data skill may call this tool -- " +
+        "invoke it (Skill: lawyer:matter-data) and follow its operations/relocate.md.",
+      inputSchema: objectSchema([
+        { name: "matter_root", type: "str" },
+        { name: "mode", type: "str" },
+      ], ["matter_root", "mode"]),
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: caseDataPrefixed("procedural_history_append"),
       description:
         "The only way to write a matter's ProceduralHistory.md (shared/procedural-history.md), at the top of matter_root. " +
@@ -2061,8 +2081,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       description:
         "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the " +
         "database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a " +
-        "revision change, and returns each document's markdown inline alongside its path (issue 337) -- the mockup " +
-        "sits outside every Cowork sandbox mount, so this is the only way to read its work markers. With draft_dir " +
+        "revision change, and returns each document's markdown inline alongside its path (issue 337) -- a session " +
+        "never reads the mockup file itself, so this is the only way to read its work markers. With draft_dir " +
         "or presentation_dir, markdown returns only for the documents named in documents; every other document " +
         "carries markdown_chars, its length, in its place, so to read a document's work markers name its " +
         "document_type in documents. Each mockup " +
@@ -2359,7 +2379,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "server_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never " +
         "fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/" +
         "matter_no always wins over the lookup's. When the case data root resolves neither from the per-user " +
-        "probanda.json nor from the matter's 0. CASE DATA folder, so drafting_data__create_writing would fail, the " +
+        "probanda.json nor from the firm's 0. CASE DATA folder beside the matter folder, so drafting_data__create_writing would fail, the " +
         "response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming " +
         "practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, " +
         "and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is " +
