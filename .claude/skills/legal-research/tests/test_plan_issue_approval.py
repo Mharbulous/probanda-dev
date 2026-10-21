@@ -50,6 +50,14 @@ class PlanIssueApprovalTest(unittest.TestCase):
         self.assertIn("you add no issue of your own", self.step)
         self.assertNotIn("approve it, change it in their own words, or waive it", self.step)
 
+    def test_a_held_job_asks_nothing(self):
+        self.assertIn("**A caller holding a `/draft` job asks nothing.**", self.step)
+        self.assertIn("plan's `scope: in` issues are its internal checklist, and steps 3 to 5 run all of them", self.step)
+        self.assertIn("A `scope: new` issue lies outside the question and is not researched: it is captured\n     and offered", self.step)
+        self.assertIn("may still narrow or waive the job's scope in their own words", self.step)
+        self.assertIn("Otherwise take the practitioner through its issues one at a time:", self.step)
+        self.assertNotIn("held job whose title is an issue approved here", self.step)
+
 
 if __name__ == "__main__":
     unittest.main()

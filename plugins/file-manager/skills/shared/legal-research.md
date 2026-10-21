@@ -73,8 +73,11 @@ and its one step is the plan marker (`/drafting-data`'s `jobs-create.md` §3, "T
 marker"). A skipped issue gets no job, and the jobs need no further approval: the "No"
 is the request. Then re-render the Job Board and stop. Writing the jobs dispatches
 nothing: each job's research runs through the gate when the job is worked. A session
-holding a `/draft` job writes no job: the approved issues are the issues steps 3 to 5
-run. With no board, write nothing, say in one line that the matter has no board to add
+holding a `/draft` job asks no approval and writes no job. Approving the job approved
+every sub-issue its question needs, so the plan's `scope: in` issues are the issues steps
+3 to 5 run. A `scope: new` issue is not researched: capture it as a loose thread by the
+duplicate test below (`/drafting-data` §8 with a job held), relay it word for word, and
+say in one line that it is researched only if they name it. With no board, write nothing, say in one line that the matter has no board to add
 jobs to, and run steps 3 to 5 on the approved issues.
 
 **A caller working a `/draft` job checks its lock before every dispatch.** Immediately
@@ -285,6 +288,17 @@ a Mixed-coverage return (one saying "More research is needed on the following
 issues"), which is not a closed gate even where it reports layers unavailable.
 Verified pinpoints are not a precondition: filing its cited decisions puts on
 disk the full text that verifying them needs.
+
+**On a held job, an open tier is not an answer.** A return to a caller working a `/draft`
+job whose `Gaps` section names a tier not run (`gap: <issue> : tiers not run: <tier>`,
+anything but `none`) is a pipeline step, not an answer: save nothing yet. Run each named
+tier: Westlaw by duty 3 on that issue, legislation by duty 4 for that instrument (its whole
+text), and an UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke the same
+agent with `Re-invocation: yes`, naming the new files. Repeat while a gap names a tier not
+yet run for that issue in this question: each tier runs at most once per issue. A tier
+that stops by the rules above (a Westlaw stop, a refusal the practitioner keeps, a
+fetcher stop) stops as they say. A caller holding no job keeps the single loop above.
+
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.
 

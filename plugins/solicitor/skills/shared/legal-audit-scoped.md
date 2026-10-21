@@ -181,10 +181,15 @@ the offer.
 
 ```
 Issue <n>: <the issue, as a question>
+  scope: in / new
   held: <citation, source layer> ×n / nothing on file
   sources, in order: 6. LAW and case data | commons pool | Westlaw: <the query's subject, in the question's words> | legislation: <citation> ×n / none | audit and note-up
-Completion test: <what the answer must hold: each issue answered with a pinpoint citation, or named as a gap with its research offer>
+Completion test: <what the answer must hold: each scope: in issue answered with a pinpoint citation, or named as a gap only once every source tier has run on it>
 ```
+
+`scope: in` marks an issue the question as asked needs answered to be answered
+completely. `scope: new` marks an issue outside it: a different point, not part of the
+question's answer. The tag says which question an issue serves, never what the law is.
 
 ## Coverage line (mandatory, every scoped return — inventory, note-up and plan alike)
 

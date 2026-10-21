@@ -229,6 +229,14 @@ Decide per issue whether the audit supports a solid statement of law.
   The summary holds only propositions with a pinpoint. A proposition whose authority
   you located but could not pinpoint never enters it: it goes to Step 5 as an offer.
 
+  For each issue the sentence names, write one line under a `Gaps` heading in the
+  notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`, or
+  `gap: <issue> : tiers not run: none` when every tier has run on it. Name each tier as
+  the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
+  <the parts not on disk>]`, `6. LAW: <file> UNREAD`. A tier that ran on part of an
+  instrument or a subject has not run on the rest. The line says what was not searched,
+  never what the law is.
+
 A **preliminary impression** (only on request) uses the identical format as a
 statement of law — principles, pinpoint citations, factual comparison — but expressed
 with less confidence ("the authorities I have located suggest…", "subject to further
@@ -287,7 +295,7 @@ preliminary impression the practitioner asked for), write the notes and the memo
 the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
-   the per-tier notes, every `/ingest` flag, every matter-data
+   the per-tier notes, Step 4's `Gaps` lines, every `/ingest` flag, every matter-data
    flag, and the Step 5 offers. A matter-data flag is a place where the matter's own
    record disagrees with itself or with what you read: two copies of a document that
    differ, a prior answer describing what case data does not show, a missing
@@ -340,7 +348,7 @@ the scratchpad, in this order, and return only item 3:
    Memo scratch: <the path the tool returned for the memo>
    ```
 
-   Then the notes' `Flags` and `Origin` sections and the Step 5 offers, each offer with
+   Then the notes' `Gaps`, `Flags` and `Origin` sections and the Step 5 offers, each offer with
    its `job:` and `steps:` lines, verbatim, because the caller acts on them. Nothing
    else: the coverage line, the confidence table, the per-tier notes and the memo's
    text stay in the two files, and the caller files the memo file and never retypes
