@@ -252,6 +252,9 @@ export async function startFakeCloud(t) {
       res.end(JSON.stringify(reply));
     });
   });
+  // Idle sockets stay open until close(): a store's synchronous Python can block the loop past
+  // Node's 5 s default, and the overdue timer would then reset the next write's socket (#154).
+  server.keepAliveTimeout = 0;
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address();
   cloud.env = { SUPABASE_URL: `http://127.0.0.1:${port}`, LEGAL_COMMONS_SUPABASE_KEY: FAKE_KEY, SUPABASE_SERVICE_ROLE_KEY: "" };

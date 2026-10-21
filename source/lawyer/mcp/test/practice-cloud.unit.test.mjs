@@ -295,3 +295,12 @@ test("seeded items read back as the old rows: tags, state under its old name, li
   assert.equal(store.rows("task")[0].filing_ref, "filing:2");
   assert.equal(store.rows("task")[0].matter_id, "m1");
 });
+
+test("a write after the event loop was blocked past the fake's old 5 s keep-alive timeout still reaches the cloud (#154)", async (t) => {
+  const { cloud, store } = await setup(t);
+  await seedMatter(store);
+  // Blocks the loop as SqlitePracticeKv's synchronous Python does on a loaded runner.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 6000);
+  await writes.upsert_task(store, { matt_num: ".L100", task_type: "client", description: "Settle it" });
+  assert.equal(cloud.writes().length, 2);
+});
