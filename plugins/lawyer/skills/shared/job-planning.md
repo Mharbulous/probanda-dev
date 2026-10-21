@@ -25,6 +25,8 @@ A job whose work is a question about what the law is also states:
 
 At pickup, take-over, restore and a re-taken release, and before each announcement of the plan, compare the steps not yet done with sections 1 and 2. Where they fall short, rewrite only the steps not yet done so that the plan meets them. A step already done is frozen: its words, its place and its stamp are never changed, removed or re-stamped. The write is `/drafting-data` §5's: the pickup rewrite on a ready job with no step done, and the partial replace on a job this session holds, never the whole-list replace, which would discard the stamps. An upgrade adds structure drawn from the job's recorded words and the record, never substance: no position, figure, statement of law or research question beyond what the record holds.
 
+**The plan marker.** A job whose only step is `Create a plan for how to complete this job.` (`/drafting-data` §3, "The plan marker") has no plan: it always falls short of sections 1 and 2, and its upgrade replaces the marker step with the planned steps. The marker is never stamped done, so it carries no `done_at` and the upgrade removes it like any step not yet done. Steps already done are never altered.
+
 An upgrade needs no adoption and no pasting (`shared/paralegal-posture.md` section 3): the session writes the upgraded steps and names them in the announcement, as the pickup review names what it changed.
 
 The upgrade skips a job whose steps are fixed or kept as written: a fixed-text job (the list `draft/references/job-session.md`'s pickup review skips), an intake note-up or grouped intake job, and a job whose steps were split along its item's own numbered or lettered parts (`draft/references/job-session.md`, `draft.note-up`).
