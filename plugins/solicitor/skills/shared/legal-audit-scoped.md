@@ -92,8 +92,9 @@ skipped is reported as skipped, never as silently absent.
 ### Note-up in inventory mode
 
 Inventory reports the note-up **state** it finds; it does not manufacture one. For
-each authority reported: `noted up <date, source>` where a recorded treatment check
-exists (a pool `treatment_chain` result, a verified memo, or a matter-data record),
+each authority reported: `note-up: <date, source>` where a recorded treatment check
+exists (a pool `treatment_chain` result, a verified memo named with its date, or a
+matter-data record),
 otherwise **NOT NOTED UP**. A statute, regulation or rule is noted up by its currency
 check, and doctrine never (`statute-currency.md` → Noting up legislation). Do not
 run a citator sweep across an inventory — nothing here is being relied on yet. Good-law verification is an opinion-mode dispatch.
@@ -233,7 +234,7 @@ constraint.*
 <criterion> — FOUND / GAP
   authority: <full citation>, <pinpoint>     (omit if GAP)
   source: case data / commons / 6. LAW <path>
-  good law: noted up <date, source> / NOT NOTED UP
+  note-up: <date, source> / NOT NOTED UP
   confidence: <one line — what would change this>
 ```
 

@@ -166,7 +166,8 @@ For every authority you intend to rely on:
    pinpoint (para/page). An authority you cannot pinpoint is not one you rely on:
    leave it out of the Step 3 table and carry it to Step 5 as an offer.
 2. **Note it up** in respect of that proposition (commons `treatment_chain`, CanLII
-   citator, or an existing verified memo; for legislation, step e's pointer).
+   citator, or an existing verified memo named with its date; for legislation, step
+   e's pointer). A memo not named with its date is no note-up.
    Record negative or distinguishing treatment. An authority you could not note up is marked NOT NOTED UP and drags
    reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the
@@ -200,7 +201,7 @@ the spawn prompt's `Legislation:` lines (for example `not run: no legislation in
 that did not happen. Then render this
 table, one row per issue:
 
-| Issue | # authorities | Strength (highest court) | Recency (newest / oldest relied on) | Validity (good law?) | Reliability (noted up?) | Distinguishability risk |
+| Issue | # authorities | Strength (highest court) | Recency (newest / oldest relied on) | Validity (treatment it rests on) | Reliability (citator run) | Distinguishability risk |
 |---|---|---|---|---|---|---|
 
 Rubric:
@@ -208,9 +209,16 @@ Rubric:
 - **Strength** — highest level of court among relied-on authorities
   (SCC > BCCA > BCSC > other CA > other superior > tribunal).
 - **Recency** — age of the cases; flag anything whose currency is doubtful.
-- **Validity** — still good law: no unresolved negative treatment on the point.
-- **Reliability** — whether the authorities have been noted up at all (an un-noted
-  authority may be perfectly valid — you simply cannot say so).
+- **Validity** — names what it rests on, in one of three forms: a treating decision
+  you read at a pinpoint ("Followed in *Smith v Jones*, 2024 BCCA 12 at para 30"); a
+  commons `treatment_chain` edge, named as an unverified pool record with its treating
+  authority ("pool record, unverified: followed in *Smith v Jones*, 2024 BCCA 12"); or
+  "unknown". Never a bare "Yes": a citing case nobody read shows nothing about
+  treatment.
+- **Reliability** — names the citator run: its date, the number of citing cases, and
+  how many of them were read ("CanLII citator 2026-10-21: 12 citing, 3 read"), or NOT
+  NOTED UP. Never a bare "Yes". A note-up is not proof of good law, and an un-noted
+  authority may be perfectly valid — you simply cannot say so.
 - **Count** — how many relevant pinpointed authorities are known.
 
 ### Step 4 — Disclosure gate

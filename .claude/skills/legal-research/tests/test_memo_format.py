@@ -22,7 +22,7 @@ BRIEF_BLOCK = """```
 <criterion> — FOUND / GAP
   authority: <full citation>, <pinpoint>     (omit if GAP)
   source: case data / commons / 6. LAW <path>
-  good law: noted up <date, source> / NOT NOTED UP
+  note-up: <date, source> / NOT NOTED UP
   confidence: <one line — what would change this>
 ```"""
 
@@ -100,6 +100,20 @@ class ScopedDispatchTests(unittest.TestCase):
 
     def test_report_brief_template_block_is_unchanged(self):
         self.assertIn(BRIEF_BLOCK, read("legal-audit-scoped.md"))
+
+    def test_a_note_up_is_never_labelled_good_law(self):
+        for name in ("legal-audit-protocol.md", "legal-audit-scoped.md"):
+            self.assertNotIn("good law: noted up", read(name))
+            self.assertIn("verified memo named with its date", flat(read(name)))
+
+
+class ConfidenceTableTests(unittest.TestCase):
+    def test_validity_and_reliability_name_their_basis(self):
+        step_three = flat(between(read("legal-audit-protocol.md"), "### Step 3", "### Step 4"))
+        self.assertIn("| Validity (treatment it rests on) | Reliability (citator run) |", step_three)
+        self.assertEqual(step_three.count('Never a bare "Yes"'), 2)
+        self.assertIn("unverified pool record", step_three)
+        self.assertIn("the number of citing cases, and how many of them were read", step_three)
 
 
 class GateDoctrineTests(unittest.TestCase):
