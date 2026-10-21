@@ -192,7 +192,7 @@ In `unattended` mode go straight to §5.
 
 ## §2 Strict comparison
 
-Model work, for each pair. Read both files page by page, and each exhibit against its counterpart one by one, from the text layer, or from ~150 DPI page renders where a page is scanned (design decision #70). A copy registered with children shows them as rows; read their pages in the file.
+Model work, for each pair. Read both files page by page, and each exhibit against its counterpart one by one. Call `pdf_pages__images` for each PDF first: read a scanned page only from its PNG, and a born-digital page from its text (design decision #71). A copy registered with children shows them as rows; read their pages in the file.
 
 The two files are versions of one document only when every difference is an execution mark: a signature, a completed jurat or commissioning block, a registry filing stamp and its date, a `DRAFT` watermark or header, and up to two added stamp or backing pages. Anything else fails the strict test: a changed, added or missing word, figure or paragraph, a different exhibit, or a handwritten notation beyond those marks.
 

@@ -18,8 +18,8 @@ No step computes or mentions a deadline (`shared/deadline-isolation.md`). No ste
 A job whose work is a question about what the law is also states:
 
 1. **The sources to check, in order:** the matter's `6. LAW` folder and case data, then the shared pool, then the Westlaw query with its approval point, then the legislation fetch, then the audit and note-up (`shared/research-priority.md`).
-2. **That the issue list comes from `/legal-research`'s planning stage.** The plan never lists the issues itself. A job whose research question is recorded needs no approval of its issues: approving the job approved every sub-issue its question needs, and the stage runs as the job's internal checklist (`/legal-research` step 2a). Only an issue outside the recorded question needs the practitioner's word.
-3. **The memo deliverable:** the answer saved in the matter's `6. LAW` folder by `/legal-research`'s "After the answer" rule.
+2. **That the issue list comes from `/legal-research`'s planning stage.** The plan never lists the issues itself. A job whose research question is recorded needs no approval of its issues: approving the job approved every sub-issue its question needs, and the stage runs as the job's internal checklist (`/legal-research` step 2a). Only an issue outside the recorded question needs the practitioner's word. The planner adds no issue to it: its issues are the recorded question's own parts, verbatim (`shared/legal-audit-scoped.md`, `mode: plan`).
+3. **The memo deliverable:** the answer saved in the matter's `6. LAW` folder by `/legal-research`'s "After the answer" rule, and the memo's one Issue is the job's title, verbatim (`shared/research-memo-template.md`, "A job's memo").
 4. **The completion test includes every sub-issue:** each is answered with a pinpoint citation, or left as a gap only once every source tier has run on it (`shared/legal-research.md`, "On a held job, an open tier is not an answer").
 
 ## 3. Upgrading a plan that falls short

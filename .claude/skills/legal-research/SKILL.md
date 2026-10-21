@@ -58,7 +58,8 @@ permitted to make statements of law.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
    research-agent agent."
 2a. Plan, before any search. Spawn `research-agent` with `mode: plan`
-   (`shared/legal-audit-scoped.md`), the question, the factual context, the matter root,
+   (`shared/legal-audit-scoped.md`), the question, the `Job question:` line
+   (`shared/legal-research.md`'s spawn template), the factual context, the matter root,
    the `Preflight:` rows and the issue folders' `6. LAW\` listing
    (`research_filing__list_law_folder`), by file name only.
    - **A caller holding a `/draft` job asks nothing.** The job's recorded question is

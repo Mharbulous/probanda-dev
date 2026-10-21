@@ -191,6 +191,12 @@ Completion test: <what the answer must hold: each scope: in issue answered with 
 completely. `scope: new` marks an issue outside it: a different point, not part of the
 question's answer. The tag says which question an issue serves, never what the law is.
 
+When the spawn prompt's `Job question:` is not `none`, the job question is split only at
+its own question marks, each part quoted verbatim as its issue, in the job question's
+order: one question mark, one issue. These are the only `scope: in` issues.
+You add no issue of your own and reword no part: what a part needs checked goes in its
+`sources, in order` line, and a point outside the job question is a `scope: new` issue.
+
 ## Coverage line (mandatory, every scoped return — inventory, note-up and plan alike)
 
 One line, every tier named, none omitted:

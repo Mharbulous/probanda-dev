@@ -209,6 +209,7 @@ place to read or check decisions: CanLII serves no decision text.
 Question: <the legal question>
 Facts: <the factual context>
 Origin: <draft file path or Writing id>: "<the draft's words the question came from>" / none
+Job question: "<the held job's title, verbatim>" / none
 Matter root: <path>
 Matter: <the live matter's file number, such as 1234.L####>
 Asked by: <the practitioner's name>
@@ -240,6 +241,9 @@ if you do not know the name, ask once.
 id, and quotes the draft's words the question is about, verbatim. A caller that took the
 question from a draft, a `/verify-law` sweep line included, fills it. Every other question
 carries `Origin: none`.
+A caller working a `/draft` job fills `Job question:` with the job's title character for
+character, as its card shows it, and puts the same words in `Question:`. Every other
+caller writes `Job question: none`.
 `Re-invocation` is `no` on the first spawn and `yes` only on the one re-invocation below.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument

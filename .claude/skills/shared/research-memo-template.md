@@ -72,3 +72,22 @@ closes with the authorities relied on:
 When the question splits into issues, write one sequence under each issue's own heading,
 `## Issue <n>: <the issue in a few words>`, with the format's sections one level down (`###`).
 `## Question presented` and `## Authorities` stay at the top level, once each.
+
+**A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
+that question and nothing else. `## Issue` takes the place of `## Question presented`:
+
+```
+## Issue
+
+<the spawn prompt's Job question, verbatim>
+
+### Sub-issue <n>: <the part, verbatim>
+```
+
+The parts are the plan's `scope: in` issues, the job question split only at its own
+question marks, quoted character for character and never paraphrased. With more than one
+part, write one `### Sub-issue` per part, in order, with the format's sections under it
+at `####`. With one part, write no sub-issue heading and put the format's sections at
+`###` under `## Issue`. No other issue or topic heading: a finding beyond the job question
+goes in the notes as a Step 5 offer, never in the memo. `## Authorities` stays at the
+top level, once.

@@ -63,6 +63,7 @@ OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_
 # The single plugin's own identifiers, a tool name and an agent or skill prefix.
 # They are old in any plugin with another name.
 SINGLE_PLUGIN_IDENTIFIERS = (rb"plugin_probanda_", rb"probanda:[A-Za-z]")
+REPLACE_RETRY_SECONDS = 30  # a file watcher or sync client locks a folder for seconds
 # A path a hook runs from the installed plugin's folder.
 HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
 
@@ -354,6 +355,20 @@ def collect(repo, spec):
     return files
 
 
+def rename(src, dst):
+    """Rename `src` to `dst`, waiting out a file watcher, virus scanner or sync client
+    that holds either folder open for a moment: Windows refuses the rename until it lets go."""
+    deadline = time.monotonic() + REPLACE_RETRY_SECONDS
+    while True:
+        try:
+            src.rename(dst)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.5)
+
+
 def write(files, out):
     """Build beside `out`, then swap the finished folder into place, so a reader
     never sees a half-written `out`. Windows cannot rename a folder over an
@@ -377,21 +392,12 @@ def write(files, out):
         if replaced.exists():
             shutil.rmtree(replaced)
         if out.exists():
-            out.rename(replaced)
+            rename(out, replaced)
         try:
-            # A file watcher or virus scanner can hold the freshly written folder
-            # open for a moment, and Windows refuses to rename it until it lets go.
-            for attempt in range(20):
-                try:
-                    building.rename(out)
-                    break
-                except PermissionError:
-                    if attempt == 19:
-                        raise
-                    time.sleep(0.5)
+            rename(building, out)
         except BaseException:
             if replaced.exists():
-                replaced.rename(out)
+                rename(replaced, out)
             raise
     finally:
         if building.exists():

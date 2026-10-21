@@ -26,12 +26,25 @@ class ResearchJobGapsTest(unittest.TestCase):
         self.assertIn("Only an issue outside the recorded question needs the practitioner's word.", section)
         self.assertIn("left as a gap only once every source tier has run on it", section)
 
+    def test_job_planning_adds_no_issue_to_a_recorded_question(self):
+        plan = read("shared", "job-planning.md")
+        section = plan[plan.index("## 2. A research job"):plan.index("## 3.")]
+        self.assertIn("The planner adds no issue to it", section)
+        self.assertIn("the memo's one Issue is the job's title, verbatim", section)
+
     def test_complete_refuses_an_open_tier(self):
         session = read("draft", "references", "job-session.md")
         complete = session[session.index("### Complete"):session.index("## Branch B")]
         self.assertIn("A research job whose last research return carried a `gap:` line naming a tier not run is not completed", complete)
         self.assertIn("unless the practitioner says in their own words to complete the job without it", complete)
         self.assertIn("an unattended run reports and stops", complete)
+
+    def test_complete_compares_memo_headings_with_the_title(self):
+        session = read("draft", "references", "job-session.md")
+        complete = session[session.index("### Complete"):session.index("## Branch B")]
+        self.assertIn("compare the saved memo's headings with the job's title", complete)
+        self.assertIn("one `## Issue` holding the title verbatim", complete)
+        self.assertIn("unless the practitioner says in their own words to complete it as is", complete)
 
 
 if __name__ == "__main__":

@@ -55,13 +55,13 @@ Report, per authority, which arm resolved it (recorded path, or hash-fallback wi
 
 **Hash the original bytes, always.** Resolution matches `file_hash` against the file as it sits on disk — never against converted text (`../shared/extraction-protocol.md`).
 
-**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem. Where host files arrive only over a bridge (Project Cowork), stage a byte-exact copy into the session first (`device_stage_files`) and dispatch that path.
+**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem. A PDF is dispatched as its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (`../references/design-decisions.md` #71): call `pdf_pages__images` for it, and the verifier reads a scanned page only from its PNG. Where host files arrive only over a bridge (Project Cowork), stage a byte-exact copy into the session first (`device_stage_files`), each PNG included, and dispatch that path.
 
 ### RTF pre-processing
 
 Most authority documents here are Westlaw `.doc` files that are actually RTF, and the harness file-read tool **refuses them as binary** — so a verifier handed the raw path can read nothing. Render first, exactly as [`ingest-extract.md`](ingest-extract.md) §"RTF pre-processing" specifies (that file is the single source of truth for the rule): a `.doc` whose header bytes are `{\rtf` is rendered to text in the temp dir by `render_document.py` and the subagent is dispatched against the **rendered text**, while the DB rows keep the original `file_path` and `file_hash`.
 
-If rendering fails, the document is **unresolvable for this pass**: report the renderer's stated reason and escalate its edges with class `source_unresolvable` per §2.3 rather than dispatching a verifier that cannot read. A PDF without a text layer follows the protocol's image rule instead.
+If rendering fails, the document is **unresolvable for this pass**: report the renderer's stated reason and escalate its edges with class `source_unresolvable` per §2.3 rather than dispatching a verifier that cannot read. A PDF takes no RTF rendering: it goes through `pdf_pages__images` as above, and a refusal from that tool makes it unresolvable for this pass in the same way.
 
 ## 3. Dispatch the verifier (session-isolated)
 
@@ -69,7 +69,7 @@ Dispatch the read-only `lawyer:verify-edges` agent, whose body mirrors [`../agen
 
 Provide exactly:
 
-- the **document** — resolved absolute path, plus `title`, `citation`, `disposition`;
+- the **document** — resolved absolute path (for a PDF, its page manifest in its place), plus `title`, `citation`, `disposition`;
 - the **edges** citing it — `concept_id`, `authority_id`, the concept's `name` and `description`, `relationship`, `proposition`, `finding`, `obiter`, `order_terms`, `pinpoint`, `excerpt`, and the current `verified` value. (`pinpoint` and `excerpt`, v8.5, carry the pinpoint and quoted passage a bridged edge was built from — exactly what the verifier needs to check the edge against the document, and local-only, so they never leave this dispatch.)
 - the **treatment vocabulary** — the whole text of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md) as `TREATMENT_VOCABULARY`, which defines each `relationship` the verifier tests.
 
