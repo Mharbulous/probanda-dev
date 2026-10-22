@@ -215,6 +215,79 @@ class SessionLaneGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.strip(), "")
 
+    # The temp marker can be missing, for example after a session resumes on another
+    # host. The lane is then rebuilt from the session transcript.
+    def transcript(self, *entries):
+        path = Path(self.tmp.name) / "transcript.jsonl"
+        path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+        return str(path)
+
+    @staticmethod
+    def typed_entry(text, sidechain=False):
+        return {"type": "user", "isSidechain": sidechain, "message": {"role": "user", "content": text}}
+
+    @staticmethod
+    def tool_use_entry(name, tool_input, sidechain=False):
+        return {"type": "assistant", "isSidechain": sidechain, "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "toolu_1", "name": name, "input": tool_input}]}}
+
+    def with_transcript(self, path, payload):
+        return self.run_hook(dict(payload, transcript_path=path))
+
+    def test_missing_marker_rebuilds_typed_draft_lane(self):
+        path = self.transcript(self.typed_entry(
+            "<command-message>litigator:draft</command-message>\n<command-name>/litigator:draft</command-name>"))
+        start = self.with_transcript(path, {"hook_event_name": "SubagentStart", "agent_id": "agent-1",
+                                            "agent_type": AGENT})
+        self.assertIn("Recorded-only mode", json.loads(start.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(self.marker_lane(), "drafting")
+        stop = self.subagent_stop("due 2026-11-03")
+        self.assertEqual(json.loads(stop.stdout)["decision"], "block")
+        self.assertEqual(self.skill("litigator:publish").returncode, 0)
+
+    def test_missing_marker_rebuilds_skill_call_lane(self):
+        path = self.transcript(self.tool_use_entry("Skill", {"skill": "litigator:draft"}))
+        result = self.with_transcript(path, {"hook_event_name": "PreToolUse", "tool_input": {},
+                                             "tool_name": "mcp__plugin_lawyer_data__practice_data__upsert_deadline"})
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("/draft", result.stderr)
+
+    def test_missing_marker_rebuilds_deadline_lane(self):
+        path = self.transcript(
+            self.tool_use_entry("mcp__plugin_lawyer_data__practice_data__active_deadlines", {}),
+            self.tool_use_entry("Skill", {"skill": "draft"}))
+        result = self.with_transcript(path, {"hook_event_name": "PreToolUse", "tool_name": "Skill",
+                                             "tool_input": {"skill": "draft"}})
+        self.assertEqual(result.returncode, 2)
+
+    def test_missing_marker_rebuilds_clerk_spawn_lane(self):
+        path = self.transcript(self.tool_use_entry("Agent", {"subagent_type": AGENT, "prompt": "x"}))
+        result = self.with_transcript(path, {"hook_event_name": "PreToolUse", "tool_name": "Skill",
+                                             "tool_input": {"skill": "publish"}})
+        self.assertEqual(result.returncode, 2)
+
+    def test_transcript_sidechain_entries_ignored(self):
+        path = self.transcript(self.tool_use_entry("Skill", {"skill": "draft"}, sidechain=True))
+        start = self.with_transcript(path, {"hook_event_name": "SubagentStart", "agent_id": "agent-1",
+                                            "agent_type": AGENT})
+        self.assertIn("Full mode", json.loads(start.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(self.marker_lane(), "deadline")
+
+    def test_empty_transcript_is_a_fresh_session(self):
+        path = self.transcript()
+        start = self.with_transcript(path, {"hook_event_name": "SubagentStart", "agent_id": "agent-1",
+                                            "agent_type": AGENT})
+        self.assertIn("Full mode", json.loads(start.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(self.marker_lane(), "deadline")
+
+    def test_unreadable_transcript_fails_open_without_a_lane_line(self):
+        path = str(Path(self.tmp.name) / "missing.jsonl")
+        start = self.with_transcript(path, {"hook_event_name": "SubagentStart", "agent_id": "agent-1",
+                                            "agent_type": AGENT})
+        self.assertEqual(start.returncode, 0)
+        self.assertNotIn("LANE:", start.stdout)
+        self.assertIn("hook error", start.stderr)
+
     def test_malformed_input_fails_open(self):
         result = subprocess.run([sys.executable, str(SCRIPT)], input="not json",
                                 capture_output=True, text=True, env=self.env)
