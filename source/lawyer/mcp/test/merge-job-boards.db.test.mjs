@@ -412,3 +412,58 @@ test("an unmerged board's page is unchanged: no Writing tag and no merged states
     assert.ok(page.sections[0].tickets.every((x) => !("writing" in x)), file);
   }
 });
+
+// A General Job (a job with no Writing) is drawn on every Writing's board in its proceeding, so it is
+// tagged there and nowhere else (docs/Specs/2026-10-21_general-job-marker-and-terms-spec.md).
+test("board_card ends a General Job's line ` · general` in every lane and on every board, and no Writing Job's", async (t) => {
+  const m = await fixture(t);
+  const card = (filingId, args) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: filingId, ...args }, ASHBOURNE, NOW).card;
+  const jobLine = (text, id) => text.split("\n").find((l) => l.startsWith(`- Job #${id} `));
+  for (const filingId of [1, 2]) {
+    const live = card(filingId, { lanes: ["live"] });
+    assert.ok(jobLine(live, 3).endsWith(" · general"), `Writing ${filingId}'s live lane:\n${live}`);
+    assert.ok(jobLine(card(filingId, { jobs: [3] }), 3).endsWith(" · general"), "the jobs selector");
+  }
+  assert.ok(!card(1, { lanes: ["live"] }).split("\n").some((l) => l.startsWith("- Job #1 ") && l.includes("general")), "a Writing Job carries no tag");
+  assert.ok(!jobLine(card(1, { jobs: [1] }), 1).includes("general"));
+
+  await submissionDataExecute(m.dbPath, "UPDATE tickets SET status = 'completed', completed_at = '2026-10-19 08:30' WHERE id IN (1, 3)");
+  const completed = card(2, { lanes: ["completed"] });
+  assert.equal(jobLine(completed, 3), "- Job #3 Confirm the style of cause · Completed · general");
+  assert.equal(jobLine(card(1, { lanes: ["completed"] }), 1), "- Job #1 Settle the opening · Completed");
+});
+
+test("board_card's merged board keeps the General tag after the job's Writing", async (t) => {
+  const m = await fixture(t);
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  const lines = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["live"] }, ASHBOURNE, NOW).card.split("\n").filter((l) => l.startsWith("- Job #"));
+  assert.deepEqual(
+    lines.map((l) => [l.slice(0, 8), l.endsWith(" · general")]),
+    [["- Job #1", false], ["- Job #3", true], ["- Job #2", false]]
+  );
+  assert.ok(lines[1].startsWith("- Job #3 Confirm the style of cause · Proceeding 1 · "), lines[1]);
+});
+
+test("the page tags a General Job's card General on every Writing's board and on a merged board, and no Writing Job's", async (t) => {
+  const m = await fixture(t);
+  render(m, 1);
+  for (const file of ["Job Board 1.html", "Job Board 2.html"]) {
+    const tickets = readBoardData(join(m.draft, file)).sections[0].tickets;
+    assert.deepEqual(tickets.map((x) => [x.id, x.general === true]).sort(), file === "Job Board 1.html" ? [[1, false], [3, true]] : [[3, true]], file);
+    const nodes = drawPage(join(m.draft, file));
+    const tags = nodes.filter((n) => n.className === "chip general");
+    assert.equal(tags.length, 1, file);
+    assert.equal(tags[0].textContent, "General");
+    assert.ok(nodes.find((n) => n.id === "ticket-3").textContent.includes("General"), file);
+    if (file === "Job Board 1.html") assert.ok(!nodes.find((n) => n.id === "ticket-1").textContent.includes("General"));
+  }
+
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  render(m, 1);
+  const nodes = drawPage(join(m.draft, "Job Board 1.html"));
+  assert.deepEqual(
+    ["ticket-1", "ticket-2", "ticket-3"].map((id) => nodes.find((n) => n.id === id).textContent.includes("General")),
+    [false, false, true],
+    "on a merged board too"
+  );
+});

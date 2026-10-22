@@ -200,6 +200,9 @@
       if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
       var progress = el("span", "progress");
       progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
+      // A General Job (no Writing) is on every Writing's board in its proceeding: tagged so a second
+      // board's copy never reads as a duplicate. Not a subtitle, as board_card's line ends with it.
+      if (t.general) progress.appendChild(el("span", "chip general", "General"));
       // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
       if (t.steps.length > 0) {
         var done = t.steps.filter(function (s) { return s.done_at !== null; }).length;

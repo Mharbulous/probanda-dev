@@ -315,7 +315,8 @@
       "answers": [],
       "sources": [],
       "last_activity_at": null,
-      "active_at": null
+      "active_at": null,
+      "general": true
     },
     {
       "id": 8,

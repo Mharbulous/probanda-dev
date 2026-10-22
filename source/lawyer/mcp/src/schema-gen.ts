@@ -2229,6 +2229,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws " +
         "it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is " +
         "refused (board_merged, naming the survivor), unless that survivor is retired. " +
+        "A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its " +
+        "job line ` · general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and " +
+        "neither does any job on a proceeding_id card, where every job has no Writing. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
         "lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +

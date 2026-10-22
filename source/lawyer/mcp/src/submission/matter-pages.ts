@@ -739,6 +739,12 @@ export function collapsedText(t: WorkBoardTicket): string {
   return [`- Job #${t.id} ${t.title}`, ...(t.writing ? [t.writing] : []), ...(t.subtitle ? [t.subtitle] : []), ...(t.lock_note ? [t.lock_note] : []), chip].join(" · ");
 }
 
+/** The tag that ends a General Job's line in every lane: one with no Writing, drawn on every
+ * Writing's board in its proceeding, so its copy on a second board never reads as a duplicate. */
+function generalTail(t: WorkBoardTicket): string {
+  return t.general ? " · general" : "";
+}
+
 /** Whole minutes as days, hours and minutes, dropping leading zero units only. */
 function elapsedText(minutes: number): string {
   const d = Math.floor(minutes / 1440);
@@ -792,7 +798,7 @@ function sourcesText(sources: WorkBoardTicket["sources"]): string {
  * shelved one, when it was completed or shelved; a superseded one its pointer and reason. `seeds`
  * are the section's open loose threads. */
 function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | null, seeds: WorkBoardData["seeds"]): string[] {
-  const head = collapsedText(t);
+  const head = collapsedText(t) + generalTail(t);
   if (t.category === "superseded") {
     return [head, `  superseded by: ${t.superseded_by === null ? "—" : `#${t.superseded_by.id}`} · reason: ${t.superseded_reason ?? "—"}`];
   }
@@ -963,7 +969,7 @@ export function renderLiveLanes(section: WorkBoardData): string[] {
     if (category === "superseded") lines.push(`## Completed (${jobsIn(section, "completed").length})`, shelvedHeading(section));
     const jobs = jobsIn(section, category);
     lines.push(`## ${heading} (${jobs.length})`);
-    for (const t of jobs) lines.push(collapsedText(t) + tagTail(t, m.rendered));
+    for (const t of jobs) lines.push(collapsedText(t) + tagTail(t, m.rendered) + generalTail(t));
     if (category === "ready") {
       const choice = jobs.find((t) => t.dispatch_skips.length === 0);
       lines.push(`dispatch choice: ${choice === undefined ? "none" : `#${choice.id} ${choice.title}`}`);
@@ -1056,8 +1062,8 @@ function renderBoardCard(
     if (lane === "criteria") lines.push(...goalLines(section));
     if (lane === "live") lines.push(...renderLiveLanes(section));
     if (lane === "proposed") lines.push(proposedHeading(section), ...proposedOf(section).flatMap(proposalLines));
-    if (lane === "completed") lines.push(`## Completed (${jobsIn(section, "completed").length})`, ...jobsIn(section, "completed").map(collapsedText));
-    if (lane === "rejected") lines.push(shelvedHeading(section), ...jobsIn(section, "rejected").map(collapsedText), ...shelvedProposalsOf(section).flatMap(proposalLines));
+    if (lane === "completed") lines.push(`## Completed (${jobsIn(section, "completed").length})`, ...jobsIn(section, "completed").map((t) => collapsedText(t) + generalTail(t)));
+    if (lane === "rejected") lines.push(shelvedHeading(section), ...jobsIn(section, "rejected").map((t) => collapsedText(t) + generalTail(t)), ...shelvedProposalsOf(section).flatMap(proposalLines));
     if (lane === "loose_threads") lines.push(...ideasLines(section, seedsFromJobs));
     if (lane === "attached") lines.push(...attachedLines(attached));
     if (lane === "court_file") lines.push(...courtFileLines(courtFile));

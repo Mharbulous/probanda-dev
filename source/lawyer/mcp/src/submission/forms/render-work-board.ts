@@ -280,6 +280,11 @@ export interface WorkBoardTicket {
   /** A merged board only (combined-board.ts): the Writing the job serves, its filing's title, or
    * `Proceeding <id>` for a job with no filing. Absent on a board holding one section. */
   writing?: string;
+  /** A General Job: one with no Writing (`filing_id` NULL), drawn on every Writing's board in its
+   * proceeding. The page tags its card General and board_card ends its line ` · general`. True only
+   * on a Writing's board, where General and Writing Jobs mix; absent everywhere else, so a Writing
+   * Job's data is unchanged and a pre-filing board, whose every job has no Writing, tags none. */
+  general?: boolean;
 }
 
 export interface WorkBoardSeed {
@@ -1564,7 +1569,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     .map((t) => {
       const ineligible_reasons = ineligibleReasons(t.ticket, filed, printed, titles, inProgress);
       const eligible = ineligible_reasons.length === 0;
-      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed) }, ctx.rendered, idleHours);
+      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered, idleHours);
     });
   // Every open loose thread in the proceeding, so none strands on a sibling filing (ADR 0024 D11).
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);

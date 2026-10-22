@@ -349,7 +349,7 @@ Legal writing for which no venue publishes the form document, even where it pres
 _Avoid_: informal (the tone is often formal); correspondence (narrower; a memo to file is free-form but addressed to no one).
 
 **General Job**:
-A job tied to no Writing (`tickets.filing_id` NULL): shared-substance work done once for every Writing in its proceeding. It is drawn on every live Writing's Job Board in that proceeding, tagged "General" on its card and ending ` · general` on its `drafting_forms__board_card` line, so a second board's copy never reads as a duplicate. Before the proceeding has a Writing it is on the proceeding's own board, and it is never on a **Standalone Job Board**. Also called a **job with no Writing**. Not a **Writing Job**.
+A job tied to no Writing (`tickets.filing_id` NULL): shared-substance work done once for every Writing in its proceeding. It is drawn on every live Writing's Job Board in that proceeding, tagged "General" on its card and ending ` · general` on its `drafting_forms__board_card` line, so a second board's copy never reads as a duplicate. Before the proceeding has a Writing it is on the proceeding's own board, untagged because every job there has no Writing, and it is never on a **Standalone Job Board**. Also called a **job with no Writing**. Not a **Writing Job**.
 _Avoid_: proceeding-scoped job, proceeding-wide job (design prose only); shared job; duplicate.
 
 **Hunch**:
