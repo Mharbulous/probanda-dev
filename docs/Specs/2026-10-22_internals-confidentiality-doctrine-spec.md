@@ -62,3 +62,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD; mark any that differ, and append the table to this spec before changing code.
+
+### §10 Verification against HEAD (2026-10-22, at db52e139)
+
+| Claim in this spec | At HEAD | Verdict |
+|---|---|---|
+| COMMANDMENTS.md is a developer file that no installed skill reads | Not under `plugins/`. Named only in `source/developer/agents/suggestion-oracle.md`, `source/developer/agents/suggestion-planner.md`, the docstring of `source/researcher/hooks/commons-read-only.py`, and a code comment in `source/lawyer/mcp/src/key-request/tools.ts` | Holds. Differs in detail: a lawyer data-server comment also names it, and no skill-tooling agent does |
+| Runtime doctrines live in `lawyer/skills/shared/` | Source is `.claude/skills/shared/`, copied whole into every plugin's `skills/shared/` by `build_plugin.py`. Holds `html-pages.md`, `present-files.md`, `paralegal-posture.md`, `deadline-isolation.md` and 25 others. None covers confidentiality of internals | Holds, at the source path |
+| Leaked file name `Unstructured.md` and folder prefix `UNS` | Every stock type file, e.g. `.claude/skills/draft/references/CAN/BC/BCSC/Documents/unstructured.md`, holds `"folder_code": "UNS", "title": "Unstructured"` | Holds. Fixed by the file-names spec, not this one |
+| /draft's chat rule names Writings in internal terms: "name a Writing by its Job Board, `Job Board <id>: <title>`" | `.claude/skills/draft/SKILL.md:90`, word for word | Holds. Stays under §9: Job Board and Writing are product vocabulary |
+| The SessionStart hook injects lines into every session | Not one hook but four SessionStart scripts in `source/lawyer/plugin.json`: `inject-practice-quirks.py`, `hidden-skills-note.py` and `inject-preferences.py` on every source, `missing-key-note.py` on startup and clear. Only `source/lawyer/hooks/hidden-skills-note.py` always emits | Differs: the doctrine line goes in `hidden-skills-note.py` |
+| Every runtime SKILL.md has a doctrine table | Only `.claude/skills/draft/SKILL.md` and `.claude/skills/prepare/SKILL.md` have one (`\| Doctrine \| Path \| Binds where \|`). The other runtime skills have none | Differs: the two tables gain a row, and every other runtime SKILL.md under `.claude/skills/` gains one binding line |
+| Runtime plugins are lawyer, litigator, researcher, solicitor and file-manager | `source/assignment.json`: solicitor ships no skills. timekeeper ships six skills, none with a doctrine table. Five runtime skills live in `public/plugins/` (`dyu`, `TLDR`, `proof-read`, `legal-citation`, `litigation-fact-extractor`), where no `shared/` folder ships | Differs: solicitor has nothing to bind. timekeeper and the five public skills are left unbound (the public ones would point at a file the public plugin lacks), and the hook line reaches their sessions |
+| `check_plugin.py` is where the lint goes | `scripts/check_plugin.py` exists and checks the built plugins | Holds. The lint is `scripts/check_internals.py`, called from it |
+| Practitioner's words (§2) | A quote from a matter session | Not verifiable in the repo |
