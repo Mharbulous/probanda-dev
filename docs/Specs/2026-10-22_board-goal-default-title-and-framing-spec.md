@@ -53,3 +53,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm where the default description is built (one place or several), where /draft elicits a goal, and the current `set_board_goal` description. Record each as matches / differs.
+
+### Verification against HEAD (fe82e54, 2026-10-22)
+
+| Item | Spec says | HEAD | Result |
+|---|---|---|---|
+| Where the default description is built | "the Goal card, board_summary and board_card goals lane" (three places) | One default per board kind, passed as `fallback` to `fetchBoardGoals` (`source/lawyer/mcp/src/submission/forms/board-goals.ts`): `` `${ctx.filing.title} Drafting` `` for a Writing's board, the board's own title for a Job Board with no Writing, `` `Proceeding ${proceeding.id}` `` for a pre-filing board (`source/lawyer/mcp/src/submission/forms/render-work-board.ts`, `buildWorkBoardData`, `buildJobOnlyBoardData`, `buildPreFilingBoardData`). The Goal card (`templates/job-board/job-board.js` `goalsCard`), board_summary (`submission/matter-pages.ts` `goalsHead`) and board_card (`goalsLines`) all print `goals.description`, so one change in `fetchBoardGoals` reaches all three | differs: one source, not three |
+| When the default shows | "a board with no goal set" | Also on every board with a stored goal but no description: `fetchBoardGoals` returns `stored.description ?? fallback`, and /draft writes every goal with no `description` (`.claude/skills/draft/references/dispatch.md`, "Statement of goals"). So a confirmed goal on a Writing's board also shows `<Writing title> Drafting` | differs: wider than the spec states |
+| Where /draft elicits a goal | /draft goal elicitation text | `.claude/skills/draft/references/dispatch.md` "Statement of goals" runs `.claude/skills/shared/paralegal-posture.md` section 3b, which holds the questions, drafting rules and syntax. Neither steers towards one outcome | matches (no outcome rule) |
+| `set_board_goal` description | default `<Writing title> Drafting`, a Job Board with no Writing's own title, or `Proceeding <id>` | Same text in `source/lawyer/mcp/src/schema-gen.ts` | matches |
+| `note` field on `set_board_goal` | soft warning returned in `note` | `note` exists (a status sentence); no warning logic | matches |
+| Installed-copy paths | UNVERIFIED | Repo paths as above | resolved |
+
+Implementation decision from the verification: no stored goal (no row, or a declined row with no statement and no merged statement) shows `Goal not set` on all three board kinds. A stored statement with no description shows the board's title alone (the Writing's or Job Board's title, or `Proceeding <id>`), never with `Drafting`.
