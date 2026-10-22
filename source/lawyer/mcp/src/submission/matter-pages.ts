@@ -892,21 +892,23 @@ export function criterionLine(c: GoalCriterion, criteria: readonly GoalCriterion
   return `- ${CRITERION_GLYPH[c.state]} ${c.id}: ${c.text}${after}${countText(c)}${items}`;
 }
 
-/** board_summary's Goal line: the statement of goals' description and its status, `none` when none is stored. */
+/** board_summary's Goal line: the board's one goal's description and its status, `none` when none is
+ * stored; while it needs consolidation, the count of earlier statements to combine. */
 function goalsHead(section: WorkBoardData): string {
-  const merged = section.goals.merged ?? [];
-  return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})${merged.length === 0 ? "" : `, plus ${counted(merged.length, "merged statement")}`}`;
+  const toCombine = section.goals.to_combine;
+  return `Goal: ${section.goals.description} (${section.goals.status ?? "none"})${toCombine === undefined ? "" : `, ${counted(toCombine.length, "statement")} to combine`}`;
 }
 
 /** board_card's goals lane: `## Goal (<status>)`, the description, then the statement verbatim when
- * there is one, then each merged board's under `### Merged <n> (<status>)`, n being its merged_index. */
+ * there is one; while the board needs consolidation, each earlier statement under
+ * `### To combine <n> (<status>)`, n being its merged_index. */
 function goalsLines(section: WorkBoardData): string[] {
   const g = section.goals;
   return [
     `## Goal (${g.status ?? "none"})`,
     g.description,
     ...(g.statement === null ? [] : [g.statement]),
-    ...(g.merged ?? []).flatMap((m, i) => [`### Merged ${i + 1} (${m.status})`, m.statement]),
+    ...(g.to_combine ?? []).flatMap((m, i) => [`### To combine ${i + 1} (${m.status})`, m.statement]),
   ];
 }
 

@@ -54,8 +54,8 @@ Non-goals: combining Writings, their documents or their gates; inventing a goal 
 Scope: edit the source files the fix needs (skill text, mcp/src, docs), and write, update and run the tests the fix needs. Out of scope, because the orchestrating session runs them once after every spec lands: `build_plugin.py` and `check_plugin.py`. Out of scope, because `/release` does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive.
 
 ## 9. Open questions
-- Keep absorbed statements as history, or drop them once a combined goal is confirmed?
-- Name of the flag state (`needs_consolidation` is a placeholder).
+- Keep absorbed statements as history, or drop them once a combined goal is confirmed? Answered by Brahm, 2026-10-22: kept under `merged` as history only, never drawn on the Goal card, board_summary or board_card's goals lane once the board holds one goal.
+- Name of the flag state (`needs_consolidation` is a placeholder). Decided at implementation: the goal status `needs_consolidation`. A row written by a merge before this change (`merged` present, no `consolidated_at`) reads the same status. A merge given a goal, and any later own write of `set_board_goal`, stamps `consolidated_at`.
 
 ## 10. Verify against HEAD before building
 Confirm the merge's goal-append code, where `merged` statements are drawn on the Goal card, the location of /draft's merge procedure, and ADR 0010's current wording on goals. Record each as matches / differs.

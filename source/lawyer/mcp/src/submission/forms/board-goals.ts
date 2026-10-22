@@ -8,10 +8,14 @@
 // lane print it. A key whose board no longer exists is never read, since no section is built for it,
 // and the next write removes it.
 //
-// A merged board (docs/ADRs/0010-job-boards-organized-by-goals.md) keeps every goal of both boards:
-// the survivor's own statement stays in the fields above, and each absorbed board's statement is
-// appended, with its own status, to `merged`, tagged with the key it came from. A section of an
-// absorbed board reads its survivor's row.
+// A merged board (docs/ADRs/0010-job-boards-organized-by-goals.md, 2026-10-22 goals amendment) holds
+// one goal, in the fields above. Each earlier statement, the survivor's own and each absorbed board's,
+// is kept under `merged`, with its own status and the key it came from, as history only: it is never
+// drawn once the board holds one goal. A merge given the practitioner's combined goal writes it as
+// confirmed and stamps `consolidated_at`; a merge without one leaves status `needs_consolidation` and
+// no statement, and the next own write of set_board_goal stamps `consolidated_at`. A row with `merged`
+// and no `consolidated_at`, written by a merge before this change, needs consolidation too. A section
+// of an absorbed board reads its survivor's row.
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
@@ -24,15 +28,19 @@ const PROCEEDING_PREFIX = "board_goal:proceeding:";
 
 export type BoardGoalsStatus = "confirmed" | "inferred" | "declined";
 const STATUSES: readonly BoardGoalsStatus[] = ["confirmed", "inferred", "declined"];
+/** A merged board's status until it holds one goal: the merge was given none, or predates this rule. */
+export const NEEDS_CONSOLIDATION = "needs_consolidation";
 
-/** A section's statement of goals as its page, board_summary and board_card read it. `status` null:
- * none is stored. `description` is the stored one, else the board's default. */
+/** A section's statement of goals as its page, board_summary and board_card read it: one goal.
+ * `status` null: none is stored. `description` is the stored one, else the board's default. */
 export interface BoardGoals {
   description: string;
   statement: string | null;
-  status: BoardGoalsStatus | null;
-  /** Each absorbed board's statement, in merge order (ADR 0010). Absent on a board never merged into. */
-  merged?: { statement: string; status: BoardGoalsStatus }[];
+  status: BoardGoalsStatus | typeof NEEDS_CONSOLIDATION | null;
+  /** Only while status is needs_consolidation: the merged board's earlier statements, in `merged`
+   * order (set_board_goal's merged_index), for the session to propose one combined goal from. The page
+   * never draws them. */
+  to_combine?: { statement: string; status: BoardGoalsStatus }[];
 }
 
 /** One absorbed board's statement as a merge stored it: `from` is the goal key it was read from. */
@@ -49,12 +57,19 @@ export interface MergedGoal {
 export interface StoredGoals {
   description: string | null;
   statement: string | null;
-  /** Null only on a survivor with no statement of its own, written by a merge to hold `merged`. */
-  status: BoardGoalsStatus | null;
+  /** Null only on a survivor with no statement of its own, written by a merge before 2026-10-22 to hold `merged`. */
+  status: BoardGoalsStatus | typeof NEEDS_CONSOLIDATION | null;
   approved_at: string | null;
   session_token: string | null;
   updated_at: string;
   merged?: MergedGoal[];
+  /** When the board's one goal replaced its merged statements. */
+  consolidated_at?: string;
+}
+
+/** Whether a stored row needs one combined goal: a merge left it so, or wrote `merged` before 2026-10-22. */
+export function needsConsolidation(stored: StoredGoals): boolean {
+  return stored.status === NEEDS_CONSOLIDATION || ((stored.merged ?? []).length > 0 && stored.consolidated_at == null);
 }
 
 /** The db_meta key of a board: a filing's (a Writing or a Job Board with no Writing), or a pre-filing proceeding's. */
@@ -71,9 +86,9 @@ export function readStored(dbPath: string, key: string): StoredGoals | null {
   } catch {
     throw new DataServerError(`db_meta ${key} is not JSON, so its statement of goals cannot be read`, "invalid_board_goal");
   }
-  const own = parsed.status === null && (parsed.merged ?? []).length > 0 ? [] : [parsed.status];
+  const own = parsed.status === NEEDS_CONSOLIDATION || (parsed.status === null && (parsed.merged ?? []).length > 0) ? [] : [parsed.status];
   if (![...own, ...(parsed.merged ?? []).map((m) => m.status)].every((s) => STATUSES.includes(s as BoardGoalsStatus))) {
-    throw new DataServerError(`db_meta ${key} has a status that is not confirmed, inferred or declined`, "invalid_board_goal");
+    throw new DataServerError(`db_meta ${key} has a status that is not confirmed, inferred, declined or ${NEEDS_CONSOLIDATION}`, "invalid_board_goal");
   }
   return parsed;
 }
@@ -90,18 +105,19 @@ export function survivorGoalsKey(dbPath: string, board: BoardRef, index: BoardIn
 /** The description a board with no statement of goals shows: never a step such as drafting. */
 export const NO_GOAL_DESCRIPTION = "Goal not set";
 
-/** The board's statement of goals, read from its survivor's row. With no statement stored (own or
- * merged) its description is NO_GOAL_DESCRIPTION; with one but no stored description, `title`. */
+/** The board's one statement of goals, read from its survivor's row. With no statement stored its
+ * description is NO_GOAL_DESCRIPTION; with one but no stored description, `title`. A merged board's
+ * earlier statements are read only while it needs consolidation, as `to_combine`. */
 export function fetchBoardGoals(dbPath: string, board: BoardRef, title: string): BoardGoals {
   const stored = readStored(dbPath, survivorGoalsKey(dbPath, board));
   if (stored === null) return { description: NO_GOAL_DESCRIPTION, statement: null, status: null };
-  const merged = (stored.merged ?? []).map((m) => ({ statement: m.statement, status: m.status }));
-  const fallback = stored.statement === null && merged.length === 0 ? NO_GOAL_DESCRIPTION : title;
-  return { description: stored.description ?? fallback, statement: stored.statement, status: stored.status, ...(merged.length > 0 ? { merged } : {}) };
+  const goals = { description: stored.description ?? (stored.statement === null ? NO_GOAL_DESCRIPTION : title), statement: stored.statement };
+  if (!needsConsolidation(stored)) return { ...goals, status: stored.status };
+  return { ...goals, status: NEEDS_CONSOLIDATION, to_combine: (stored.merged ?? []).map((m) => ({ statement: m.statement, status: m.status })) };
 }
 
 /** A soft warning, never a refusal: the goal names a drafting step, or its description joins more than one goal. */
-function framingWarning(statement: string | null, description: string | undefined): string | null {
+export function framingWarning(statement: string | null, description: string | undefined): string | null {
   const step = [statement, description].some((t) => t != null && /\bdraft/i.test(t));
   // Writing titles joined as a merged board's page joins them ("; "), or with " + " or " & ".
   const several = description !== undefined && /;|\s[+&]\s/.test(description);
@@ -220,7 +236,8 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
     .map((r) => r.key)
     .filter((k) => k !== key && !(k.startsWith(PROCEEDING_PREFIX) && index.proceedingSurvives(Number(k.slice(PROCEEDING_PREFIX.length)))));
 
-  // The board's own statement, keeping any merged ones, or one merged statement in its place.
+  // The board's own statement, keeping any merged ones as history and so holding one goal, or one
+  // merged statement in its place.
   const entry =
     `json_object('description', ?, 'statement', ?, 'status', ?, ` +
     `'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW})`;
@@ -229,7 +246,7 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
     at !== undefined
       ? { sql: `json_set(json(?), '$.merged[${at - 1}]', json_set(${entry}, '$.from', ?))`, params: [JSON.stringify(prior), ...entryParams, merged[at - 1].from] }
       : merged.length > 0
-        ? { sql: `json_set(${entry}, '$.merged', json(?))`, params: [...entryParams, JSON.stringify(merged)] }
+        ? { sql: `json_set(${entry}, '$.merged', json(?), '$.consolidated_at', ${NOW})`, params: [...entryParams, JSON.stringify(merged)] }
         : { sql: entry, params: entryParams };
   const written = await submissionDataWriteAll(
     args.db_path,

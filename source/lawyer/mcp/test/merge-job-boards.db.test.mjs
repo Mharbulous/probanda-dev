@@ -1,8 +1,9 @@
 // Merged Job Boards (docs/ADRs/0010-job-boards-organized-by-goals.md): drafting_data__merge_job_boards
 // joins two boards on the practitioner's yes. The survivor is a Writing's board over a Job Board with
 // no Writing over a pre-filing board, then the lower id. One page per survivor draws every board on
-// it as one board, one set of view pages spans its Writings, the absorbed pages go to TRASH, the statements of
-// goals are kept side by side, and the Litigation Strategy groups the merged sections under one heading.
+// it as one board, one set of view pages spans its Writings, the absorbed pages go to TRASH, the board holds
+// one goal with the earlier statements kept as history only, and the Litigation Strategy groups the merged
+// sections under one heading.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -30,7 +31,8 @@ const TOKEN = "tok-merge";
 const code = (expected, message) => (err) => err.code === expected && (message === undefined || message.test(err.message));
 const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 const metaRows = (dbPath, glob) => query(dbPath, "SELECT key, value FROM db_meta WHERE key GLOB ? ORDER BY key", [glob]);
-const merge = (dbPath, boards, confirmed = true) => callTool({}, "drafting_data__merge_job_boards", { db_path: dbPath, boards, confirmed, session_token: TOKEN });
+const merge = (dbPath, boards, confirmed = true, extra = {}) =>
+  callTool({}, "drafting_data__merge_job_boards", { db_path: dbPath, boards, confirmed, session_token: TOKEN, ...extra });
 const setGoal = (dbPath, board, statement, extra = {}) =>
   callTool({}, "drafting_data__set_board_goal", { db_path: dbPath, ...board, statement, status: "inferred", session_token: TOKEN, ...extra });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
@@ -84,26 +86,96 @@ async function fixture(t) {
   return m;
 }
 
-test("the merge keeps the lower-id Writing's board, writes one membership row and keeps both statements of goals", async (t) => {
+const goalsCard = (m) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW).card;
+const goalLine = (m) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"], undefined, undefined, NOW, TOKEN, m.draft).documents.find((d) => d.document_type === "Work_board").board_summary.split("\n").find((l) => l.startsWith("Goal:"));
+
+test("the merge keeps the lower-id Writing's board, writes one membership row and keeps both statements of goals as history, drawn nowhere once the board holds one goal", async (t) => {
   const m = await fixture(t);
   await setGoal(m.dbPath, { filing_id: 1 }, "Goal: obtain the award.");
   await setGoal(m.dbPath, { filing_id: 3 }, "Goal: defeat the counterclaim.");
 
-  const result = await merge(m.dbPath, [{ filing_id: 3 }, { filing_id: 1 }]);
+  const result = await merge(m.dbPath, [{ filing_id: 3 }, { filing_id: 1 }], true, { goal_statement: "Goal: obtain the award and defeat the counterclaim." });
 
   assert.deepEqual(result.survivor, { filing_id: 1, proceeding_id: 1 });
   assert.deepEqual(result.absorbed, { filing_id: 3, proceeding_id: 2 });
-  assert.equal(result.goals, 2);
+  assert.equal(result.goal_status, "confirmed");
   assert.deepEqual(metaRows(m.dbPath, "board_member:*"), [{ key: "board_member:filing:3", value: JSON.stringify({ filing_id: 1, proceeding_id: 1 }) }]);
   assert.deepEqual(metaRows(m.dbPath, "board_goal:*").map((r) => r.key), ["board_goal:filing:1"], "the absorbed board's row moved into the survivor's");
   const stored = JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value);
-  assert.equal(stored.statement, "Goal: obtain the award.");
-  assert.deepEqual(stored.merged.map((g) => [g.from, g.statement, g.status]), [["board_goal:filing:3", "Goal: defeat the counterclaim.", "inferred"]]);
+  assert.equal(stored.statement, "Goal: obtain the award and defeat the counterclaim.");
+  assert.equal(stored.status, "confirmed");
+  assert.ok(stored.approved_at && stored.consolidated_at, "a merge given a goal stamps it approved and consolidated");
+  assert.deepEqual(
+    stored.merged.map((g) => [g.from, g.statement, g.status]),
+    [["board_goal:filing:1", "Goal: obtain the award.", "inferred"], ["board_goal:filing:3", "Goal: defeat the counterclaim.", "inferred"]],
+    "both earlier statements are kept as history"
+  );
   assert.equal(query(m.dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE filing_id = 3")[0].n, 1, "no job is rewritten");
 
-  // The survivor's card reads the board's goals.
-  const { card } = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW);
-  assert.match(card, /## Goal \(inferred\)\n[^\n]*\nGoal: obtain the award\.\n### Merged 1 \(inferred\)\nGoal: defeat the counterclaim\./);
+  // board_card, board_summary and the page's Goal card each draw the one goal and no history.
+  assert.equal(goalsCard(m), "## Goal (confirmed)\nOpening Submissions Package\nGoal: obtain the award and defeat the counterclaim.");
+  assert.equal(goalLine(m), "Goal: Opening Submissions Package (confirmed)");
+  const page = readBoardData(join(m.draft, "Job Board 1.html"));
+  assert.deepEqual(page.sections[0].goals, { description: "Opening Submissions Package", statement: "Goal: obtain the award and defeat the counterclaim.", status: "confirmed" });
+});
+
+test("a merge's goal_statement and goal_description refuse a blank, and goal_description needs goal_statement, writing nothing", async (t) => {
+  const m = await fixture(t);
+  await assert.rejects(merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }], true, { goal_statement: "  " }), code("invalid_statement"));
+  await assert.rejects(merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }], true, { goal_description: "Award" }), code("invalid_description"));
+  await assert.rejects(merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }], true, { goal_statement: "Goal: x.", goal_description: " " }), code("invalid_description"));
+  assert.deepEqual(metaRows(m.dbPath, "board_*"), []);
+  const written = await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }], true, { goal_statement: "Goal: draft the reply.", goal_description: "Award" });
+  assert.match(written.note, /names a drafting step/, "the framing warning of set_board_goal is relayed");
+  assert.equal(JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value).description, "Award");
+});
+
+test("a merge without a goal leaves the board needs_consolidation, drawing one goal and listing the statements to combine until set_board_goal writes one", async (t) => {
+  const m = await fixture(t);
+  await setGoal(m.dbPath, { filing_id: 1 }, "Goal: obtain the award.");
+  await setGoal(m.dbPath, { filing_id: 3 }, "Goal: defeat the counterclaim.");
+  const result = await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  assert.equal(result.goal_status, "needs_consolidation");
+  assert.match(result.note, /ask the practitioner once for one combined goal/);
+
+  const stored = JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value);
+  assert.deepEqual([stored.statement, stored.status, stored.approved_at, stored.consolidated_at], [null, "needs_consolidation", null, undefined]);
+  assert.equal(
+    goalsCard(m),
+    "## Goal (needs_consolidation)\nGoal not set\n### To combine 1 (inferred)\nGoal: obtain the award.\n### To combine 2 (inferred)\nGoal: defeat the counterclaim."
+  );
+  assert.equal(goalLine(m), "Goal: Goal not set (needs_consolidation), 2 statements to combine");
+  const page = readBoardData(join(m.draft, "Job Board 1.html")).sections[0].goals;
+  assert.equal(page.merged, undefined, "the page is sent no merged statement to draw");
+  assert.equal(page.statement, null);
+
+  // The practitioner's one goal clears the flag; the history stays, drawn nowhere.
+  await setGoal(m.dbPath, { filing_id: 1 }, "Goal: obtain the award and defeat the counterclaim.", { status: "confirmed" });
+  const after = JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value);
+  assert.ok(after.consolidated_at);
+  assert.equal(after.merged.length, 2);
+  assert.equal(goalsCard(m), "## Goal (confirmed)\nOpening Submissions Package\nGoal: obtain the award and defeat the counterclaim.");
+  assert.equal(goalLine(m), "Goal: Opening Submissions Package (confirmed)");
+});
+
+test("a board merged before 2026-10-22, holding merged statements, reads needs_consolidation until its own goal is written", async (t) => {
+  const m = await fixture(t);
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  // The row an earlier merge wrote: the survivor's own statement, the absorbed one under `merged`, no consolidated_at.
+  await submissionDataExecute(
+    m.dbPath,
+    `UPDATE db_meta SET value = '${JSON.stringify({
+      description: null, statement: "Goal: obtain the award.", status: "confirmed", approved_at: "2026-10-18T09:00", session_token: TOKEN, updated_at: "2026-10-18T09:00",
+      merged: [{ from: "board_goal:filing:3", description: null, statement: "Goal: defeat the counterclaim.", status: "inferred", approved_at: null, session_token: TOKEN, updated_at: "2026-10-18T09:00" }],
+    })}' WHERE key = 'board_goal:filing:1'`
+  );
+  assert.equal(goalsCard(m), "## Goal (needs_consolidation)\nOpening Submissions Package\nGoal: obtain the award.\n### To combine 1 (inferred)\nGoal: defeat the counterclaim.");
+  assert.equal(goalLine(m), "Goal: Opening Submissions Package (needs_consolidation), 1 statement to combine");
+  const page = readBoardData(join(m.draft, "Job Board 1.html")).sections[0].goals;
+  assert.deepEqual([page.statement, page.merged], ["Goal: obtain the award.", undefined], "the page draws one statement");
+
+  await setGoal(m.dbPath, { filing_id: 1 }, "Goal: obtain the award and defeat the counterclaim.", { status: "declined", statement: null });
+  assert.equal(goalsCard(m), "## Goal (declined)\nGoal not set", "any own write ends the one ask");
 });
 
 test("a merge needs the practitioner's confirmation and refuses a merged, retired, repeated or pre-filing-with-Writing board, writing nothing", async (t) => {
@@ -230,6 +302,7 @@ test("set_board_goal refuses an absorbed board, writes a merged statement by ind
 
   const written = await setGoal(m.dbPath, { filing_id: 1 }, "Goal: defeat the counterclaim in full.", { merged_index: 1 });
   assert.equal(written.statement, "Goal: defeat the counterclaim in full.");
+  assert.equal(JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value).status, "needs_consolidation", "a history write leaves the board needing one goal");
   await setGoal(m.dbPath, { filing_id: 1 }, "Goal: obtain the award.");
   const stored = JSON.parse(metaRows(m.dbPath, "board_goal:*")[0].value);
   assert.equal(stored.statement, "Goal: obtain the award.");

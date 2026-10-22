@@ -23,6 +23,14 @@ The survivor's page first drew each merged board as its own section, each with i
 - The thumbnail strip's viewed order (`board_viewed:*` in `db_meta`, 2026-10-22) is kept per board by its survivor: a page presented through any Writing on the board is recorded on the survivor's row. A merge does not carry the absorbed board's row over, and it is never read again.
 - This is presentation only. Each Writing keeps its own documents, numbering, jobs and criteria, and each filing's gate still blocks only its own filing: one filing's gate being met never marks the other's met.
 
+## Amendment 2026-10-22: a merged board holds one goal
+
+A merge appended the absorbed board's statement of goals to the survivor's, so a merged board showed a list of goals, or none when neither board had one. The practitioner's view is that a merged board serves one objective, and the merge is the moment to state it. This replaces "a list of self-contained goals" and "keeps every ... goal of both" above for merged boards.
+
+- The merge question proposes one combined goal, one outcome sentence, in the same turn (`drafting-data` `jobs-closeout.md` §10d). One bare yes confirms the merge and the goal. A sentence the practitioner types replaces the proposal. `merge_job_boards` writes it as the board's one statement, confirmed, through the practitioner-words gate that `set_board_goal`'s confirmed statement passes.
+- Every earlier statement of both boards, the survivor's own and the absorbed board's, is kept under the survivor's `merged` as history only. Once the board holds one goal, the history is never drawn on the Goal card, board_summary or board_card's goals lane.
+- A merge given no goal leaves the board's goal status `needs_consolidation`. So does a board merged before this amendment that still holds `merged` statements. Such a board's Goal card draws at most its own statement, board_card lists the history as statements to combine, and `/draft` asks once, at the board's next attended Opening, for one combined goal. Any write of the board's own statement ends the status.
+
 ## Considered options
 
 - **Keep one Writing per page and move only jobs**: meets no requirement that the work be seen together, and leaves four view pages per Writing.

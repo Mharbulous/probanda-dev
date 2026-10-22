@@ -1,15 +1,17 @@
 // drafting_data__merge_job_boards (docs/ADRs/0010-job-boards-organized-by-goals.md): joins two Job
 // Boards whose goals the practitioner has confirmed overlap or cohere. The survivor is a Writing's
 // board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id
-// (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, every board it
-// had absorbed is re-pointed to the survivor, and its statement of goals is appended, with its own
-// status, to the survivor's `merged` list and its own row removed. No job, loose thread or Writing
-// row is written: at the next render the survivor's page draws every board on it as one board
-// (combined-board.ts).
+// (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, and every board
+// it had absorbed is re-pointed to the survivor. The merged board holds one goal (ADR 0010, 2026-10-22
+// goals amendment): the practitioner's combined goal_statement, written as confirmed, or with none,
+// status needs_consolidation. Each earlier statement, the survivor's own and the absorbed board's, with
+// its own merged ones, is kept under `merged` as history only, and the absorbed board's row removed.
+// No job, loose thread or Writing row is written: at the next render the survivor's page draws every
+// board on it as one board (combined-board.ts).
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { type MergedGoal, readStored, survivorGoalsKey } from "./board-goals.js";
+import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
 
 const TOOL = "drafting_data__merge_job_boards";
@@ -22,13 +24,18 @@ export interface MergeJobBoardsArgs {
   confirmed: boolean;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The merged board's one goal, the practitioner's words or the proposal they approved with the same
+   * bare yes as the merge. Omitted: the board is left needs_consolidation. */
+  goal_statement?: string;
+  /** The line the closed Goal card shows; only with goal_statement. Omitted: the board's default. */
+  goal_description?: string;
 }
 
 export interface MergeJobBoardsResult {
   survivor: BoardRef;
   absorbed: BoardRef;
-  /** The survivor's statements of goals after the merge: its own, if any, then the merged ones. */
-  goals: number;
+  /** The merged board's goal: confirmed when goal_statement was given, else needs_consolidation. */
+  goal_status: "confirmed" | typeof NEEDS_CONSOLIDATION;
   note: string;
   warning?: string;
 }
@@ -69,6 +76,13 @@ export async function submissionDataMergeJobBoards(args: MergeJobBoardsArgs, env
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
     throw new ValidationError(`${TOOL}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
+  const statement = args.goal_statement;
+  if (statement !== undefined && (typeof statement !== "string" || statement.trim() === "")) {
+    throw new ValidationError(`${TOOL}.goal_statement must be the merged board's one goal, not blank; omit it to leave the board needing one`, "invalid_statement");
+  }
+  if (args.goal_description !== undefined && (statement === undefined || typeof args.goal_description !== "string" || args.goal_description.trim() === "")) {
+    throw new ValidationError(`${TOOL}.goal_description must not be blank, and is given only with goal_statement`, "invalid_description");
+  }
   const [a, b] = args.boards.map((arg, i) => resolve(args.db_path, arg, i));
   const index = new BoardIndex(args.db_path);
   for (const x of [a, b]) {
@@ -81,21 +95,25 @@ export async function submissionDataMergeJobBoards(args: MergeJobBoardsArgs, env
   const survivor = index.survivorOf(aWins ? a : b);
   const absorbed = aWins ? b : a;
 
-  // The survivor's goals row gains the absorbed board's own statement, when it has one, then its merged ones.
+  // The survivor's row holds the one goal; every earlier statement of both boards becomes history.
   const survivorKey = survivorGoalsKey(args.db_path, survivor, index);
   const absorbedKey = survivorGoalsKey(args.db_path, absorbed, index);
-  const target = readStored(args.db_path, survivorKey);
-  const taken = readStored(args.db_path, absorbedKey);
-  const moved: MergedGoal[] = [
-    ...(taken !== null && taken.statement !== null && taken.status !== null
-      ? [{ from: absorbedKey, description: taken.description, statement: taken.statement, status: taken.status, approved_at: taken.approved_at, session_token: taken.session_token ?? args.session_token, updated_at: taken.updated_at }]
+  const history = (key: string, row: StoredGoals | null): MergedGoal[] => [
+    ...(row !== null && row.statement !== null && (row.status === "confirmed" || row.status === "inferred")
+      ? [{ from: key, description: row.description, statement: row.statement, status: row.status, approved_at: row.approved_at, session_token: row.session_token ?? args.session_token, updated_at: row.updated_at }]
       : []),
-    ...(taken?.merged ?? []),
+    ...(row?.merged ?? []),
   ];
-  const merged = [...(target?.merged ?? []), ...moved];
-  const goals = target === null && merged.length === 0
-    ? null
-    : { ...(target ?? { description: null, statement: null, status: null, approved_at: null, session_token: null, updated_at: null }), merged };
+  const taken = readStored(args.db_path, absorbedKey);
+  const merged = [...history(survivorKey, readStored(args.db_path, survivorKey)), ...history(absorbedKey, taken)];
+  const goalStatus = statement === undefined ? NEEDS_CONSOLIDATION : "confirmed";
+  const goals = { description: args.goal_description ?? null, statement: statement ?? null, status: goalStatus, session_token: args.session_token, merged };
+  // Stamped in SQL: approved_at and consolidated_at only with a goal.
+  const now = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+  const stamps =
+    statement === undefined
+      ? `json_set(json(?), '$.approved_at', json('null'), '$.updated_at', ${now})`
+      : `json_set(json(?), '$.approved_at', ${now}, '$.updated_at', ${now}, '$.consolidated_at', ${now})`;
   const value = JSON.stringify({ filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id });
 
   const written = await submissionDataWriteAll(
@@ -103,27 +121,22 @@ export async function submissionDataMergeJobBoards(args: MergeJobBoardsArgs, env
     [
       { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
       ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value, key], expect_changes: 1 })),
-      ...(goals === null
-        ? []
-        : [
-            {
-              // A survivor with no row of its own gets one stamped now, holding only the merged statements.
-              sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${target === null ? "json_set(json(?), '$.updated_at', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'))" : "json(?)"})`,
-              params: [survivorKey, JSON.stringify(goals)],
-              expect_changes: 1,
-            },
-          ]),
+      { sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${stamps})`, params: [survivorKey, JSON.stringify(goals)], expect_changes: 1 },
       ...(taken === null ? [] : [{ sql: "DELETE FROM db_meta WHERE key = ?", params: [absorbedKey], expect_changes: 1 }]),
     ],
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
-  const count = (goals?.statement != null ? 1 : 0) + merged.length;
+  const framing = statement === undefined ? null : framingWarning(statement, args.goal_description);
+  const goalNote =
+    statement === undefined
+      ? `It has no goal yet (${NEEDS_CONSOLIDATION}): at its next /draft opening, ask the practitioner once for one combined goal.`
+      : "Its one goal is recorded as confirmed.";
   return {
     survivor,
     absorbed,
-    goals: count,
-    note: `${label(absorbed)} is merged into ${label(survivor)}, which now holds ${count} statement${count === 1 ? "" : "s"} of goals. Re-render to draw the merged page.`,
+    goal_status: goalStatus,
+    note: `${label(absorbed)} is merged into ${label(survivor)}. ${goalNote} Re-render to draw the merged page.${framing === null ? "" : ` ${framing}`}`,
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }
