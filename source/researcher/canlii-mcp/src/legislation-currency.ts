@@ -3,12 +3,14 @@
 // Leg 1 of .claude/skills/shared/statute-currency.md, as code. The rules are
 // .claude/skills/shared/research-paralegal/legislation-currency.md; this module
 // applies them and nothing else. It reports CanLII metadata about each
-// instrument's own record and never states what an instrument says.
+// instrument's own record and, for a current B.C. Reg., the amendments after its
+// marker (amendments.ts). It never states what an instrument says.
 import {
 	LegislationItemResponseSchema,
 	LegislationMetadataSchema,
 	LegislationResponseSchema,
 } from "./schema.js";
+import { amendmentsAfterMarker, regulationNumber, unknown, type Amendment, type GetText } from "./amendments.js";
 
 export type Currency = "current" | "repealed" | "archived" | "not-found" | "validation_unavailable";
 
@@ -16,6 +18,8 @@ export interface InstrumentInput {
 	citation: string;
 	title: string;
 	jurisdiction: string;
+	/** The filed consolidation's "current to" date (YYYY-MM-DD), when the caller holds one. */
+	currency_marker?: string;
 }
 
 export interface NearItem {
@@ -44,6 +48,12 @@ export interface CurrencyResult {
 	url: string | null;
 	near_items: NearItem[];
 	error: string | null;
+	marker_date: string | null;
+	marker_source: "currency_marker" | "canlii_startDate" | null;
+	fetched_on: string;
+	bulletin_current_to: string | null;
+	amendments_after_marker: Amendment[] | "unknown";
+	amendments_note: string;
 }
 
 /** Reads one CanLII API path (e.g. `legislationBrowse/en/bcs/`) and returns its JSON. Throws on failure. */
@@ -83,7 +93,7 @@ function errorText(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
-function blank(instrument: InstrumentInput, key: string, inputs: number[]): CurrencyResult {
+function blank(instrument: InstrumentInput, key: string, inputs: number[], today: string): CurrencyResult {
 	return {
 		key, inputs,
 		citation: instrument.citation, title: instrument.title, jurisdiction: instrument.jurisdiction,
@@ -92,22 +102,35 @@ function blank(instrument: InstrumentInput, key: string, inputs: number[]): Curr
 		returned_title: null, returned_citation: null,
 		repealed: null, startDate: null, endDate: null, dateScheme: null, url: null,
 		near_items: [], error: null,
+		marker_date: null, marker_source: null, fetched_on: today,
+		...unknown("no amendment check: the instrument is not current"),
 	};
 }
 
 type Item = { databaseId: string; legislationId: string; title: string; citation: string };
 type Database = { databaseId: string; name: string; jurisdiction: string };
 
+/**
+ * `getText` reads BC Laws pages for the amendment check; `today` (YYYY-MM-DD) is
+ * the date the check runs.
+ */
 export async function checkLegislationCurrency(
 	instruments: InstrumentInput[],
 	getJson: GetJson,
+	getText: GetText,
+	today: string,
 ): Promise<{ instruments: CurrencyResult[] }> {
 	const groups = new Map<string, { instrument: InstrumentInput; inputs: number[] }>();
 	instruments.forEach((instrument, index) => {
 		const key = instrumentKey(instrument);
 		const group = groups.get(key);
-		if (group) group.inputs.push(index);
-		else groups.set(key, { instrument, inputs: [index] });
+		if (group) {
+			group.inputs.push(index);
+			// Inputs naming one Act with different markers: the earliest checks the most.
+			const marker = instrument.currency_marker;
+			const held = group.instrument.currency_marker;
+			if (marker && (!held || marker < held)) group.instrument = { ...group.instrument, currency_marker: marker };
+		} else groups.set(key, { instrument, inputs: [index] });
 	});
 
 	let databases: Database[];
@@ -118,7 +141,7 @@ export async function checkLegislationCurrency(
 		const detail = `get_legislation_databases: ${errorText(error)}`;
 		return {
 			instruments: [...groups.entries()].map(([key, { instrument, inputs }]) => ({
-				...blank(instrument, key, inputs), currency: "validation_unavailable" as const, error: detail,
+				...blank(instrument, key, inputs, today), currency: "validation_unavailable" as const, error: detail,
 			})),
 		};
 	}
@@ -136,11 +159,43 @@ export async function checkLegislationCurrency(
 		return pending;
 	};
 
+	const pages = new Map<string, Promise<string>>();
 	const results: CurrencyResult[] = [];
 	for (const [key, { instrument, inputs }] of groups) {
-		results.push(await checkOne(instrument, key, inputs, databases, listing, getJson));
+		const result = await checkOne(instrument, key, inputs, databases, listing, getJson, today);
+		if (result.currency === "current") await checkAmendments(result, instrument, today, getText, pages);
+		results.push(result);
 	}
 	return { instruments: results };
+}
+
+/** Sets the marker and the amendments after it on a `current` result. Never changes `currency`. */
+async function checkAmendments(
+	result: CurrencyResult,
+	instrument: InstrumentInput,
+	today: string,
+	getText: GetText,
+	pages: Map<string, Promise<string>>,
+): Promise<void> {
+	if (instrument.currency_marker) {
+		result.marker_date = instrument.currency_marker;
+		result.marker_source = "currency_marker";
+	} else if (result.startDate) {
+		result.marker_date = result.startDate;
+		result.marker_source = "canlii_startDate";
+	}
+	const number = regulationNumber(instrument.citation);
+	let report;
+	if (instrument.jurisdiction.trim().toLowerCase() !== "bc" || !number) {
+		report = unknown("no amendment source: only a B.C. Reg. citation is checked, against BC Laws' " +
+			"Cumulative B.C. Regulations Bulletin");
+	} else if (!result.marker_date) {
+		report = unknown("no marker date: the caller gave no currency_marker and CanLII returned no startDate");
+	} else {
+		report = await amendmentsAfterMarker(number, result.marker_date, today,
+			url => withRetry(() => getText(url)), pages);
+	}
+	Object.assign(result, report);
 }
 
 async function checkOne(
@@ -150,8 +205,9 @@ async function checkOne(
 	databases: Database[],
 	listing: (databaseId: string) => Promise<Item[]>,
 	getJson: GetJson,
+	today: string,
 ): Promise<CurrencyResult> {
-	const result = blank(instrument, key, inputs);
+	const result = blank(instrument, key, inputs, today);
 	const jurisdiction = instrument.jurisdiction.trim().toLowerCase();
 	const kept = databases.filter(db => db.jurisdiction.toLowerCase() === jurisdiction);
 

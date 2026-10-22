@@ -398,8 +398,12 @@ server.tool(
 	"Report whether each cited statute, regulation or rule of court exists in CanLII's legislation databases " +
 	"and is unrepealed: currency is current, repealed, archived, not-found or validation_unavailable. " +
 	"Pass the instrument as consolidated, never an amending regulation. Inputs naming the same instrument " +
-	"are checked once and returned as one result listing their input indexes. Metadata only: it states " +
-	"nothing about what an instrument says, and only `current` reads as confirmed.",
+	"are checked once and returned as one result listing their input indexes. For a current B.C. Reg., it " +
+	"also lists from BC Laws' Cumulative B.C. Regulations Bulletin the regulations taking effect after the " +
+	"marker date (the caller's currency_marker, else CanLII's startDate), with the provisions each amends " +
+	"quoted from its text, or `unknown` with the reason. `current` alone never shows the filed text is in " +
+	"force: read it with marker_date and amendments_after_marker. It states nothing about what an " +
+	"instrument says.",
 	{
 		instruments: z.array(z.object({
 			citation: z.string().min(1).max(200)
@@ -408,6 +412,8 @@ server.tool(
 				.describe("The instrument's title as the caller has it"),
 			jurisdiction: z.string().regex(/^[a-zA-Z]{2,3}$/)
 				.describe("CanLII jurisdiction code (e.g. 'bc', 'ca')"),
+			currency_marker: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+				.describe("The filed consolidation's \"current to\" date (YYYY-MM-DD), when the caller holds one"),
 		})).min(1).max(50),
 	},
 	async ({ instruments }) => {
@@ -420,7 +426,11 @@ server.tool(
 				const response = await apiFetch(`https://api.canlii.org/v1/${path}?${params.toString()}`);
 				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				return response.json();
-			});
+			}, async (url) => {
+				const response = await fetch(url);
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
+				return response.text();
+			}, new Date().toLocaleDateString("en-CA"));
 			for (const result of report.instruments) {
 				if (result.error) result.error = sanitizeError(result.error);
 			}

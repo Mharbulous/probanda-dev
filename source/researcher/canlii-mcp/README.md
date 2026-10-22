@@ -15,7 +15,7 @@ Vendored from [Mharbulous/canlii-mcp](https://github.com/Mharbulous/canlii-mcp) 
 | `get_legislation_databases` | The legislation database IDs |
 | `browse_legislation` | Legislation items in one database, filtered by `titleContains` and paginated |
 | `get_legislation_regulation_metadata` | One instrument's canlii.org URL, citation, dates and table of contents |
-| `legislation_currency` | Whether each cited instrument is current, repealed, archived or not found, by the rules in `.claude/skills/shared/research-paralegal/legislation-currency.md`; one check per instrument however many inputs name it |
+| `legislation_currency` | Whether each cited instrument is current, repealed, archived or not found, by the rules in `.claude/skills/shared/research-paralegal/legislation-currency.md`; one check per instrument however many inputs name it; for a current B.C. Reg., also the amending regulations BC Laws' Cumulative B.C. Regulations Bulletin lists after its marker date, with their amended provisions quoted from the B.C. Gazette Part II text |
 | `configure_credential` | Validates a CanLII API key, then saves it DPAPI-encrypted for later sessions |
 | `configure_status` | Whether a key is configured, and whether it came from the environment or the saved credential |
 
