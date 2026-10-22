@@ -34,7 +34,8 @@ import { win32 as pathWin32 } from "node:path";
 import { DataServerError } from "../errors.js";
 import { orphanClaims, readLockKey, removeLockIfKey } from "../lock-claim.js";
 
-const LOCK_ATTEMPTS = 5;
+// 10 s, not the other locks' 2 s: parallel job helpers write to one drafting database at once.
+const LOCK_ATTEMPTS = 25;
 const LOCK_RETRY_MS = 400;
 
 // 15 minutes, mirroring case-lock.ts: set by the longest legitimate holder
