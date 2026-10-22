@@ -31,6 +31,9 @@ chain; a bill of costs is now `/calculate` then `/publish` with `publish-boc`.
 | "Draft a response to counterclaim for [matter]" | `full` | classify: regular, form-4, none -> full |
 | "Prepare a general requisition in Form 17" | `generate` | classify: regular, form-17 (generate_only) -> generate |
 | "Prepare a default judgment in Form 8" | `generate` | classify: regular, form-8 (generate_only) -> generate |
+| "Prepare a notice of hearing of application" | `generate` | classify: regular, form-33.01 (generate_only) -> generate |
+| "Reset the application that was adjourned generally" | `generate` | classify: regular, form-33.01 (generate_only) -> generate |
+| "Prepare the application record cover" | `generate` | classify: regular, form-30.001 (generate_only) -> generate |
 | "Amend the NOCC for [matter]" | `amend` | classify: amend (short-circuit) |
 | "I need to amend a pleading" | `amend` | classify: amend (short-circuit) |
 | "Rule 6-1 amendment to the statement of defence" | `amend` | classify: amend (short-circuit) |
@@ -83,6 +86,8 @@ Each REGISTRY entry's `template` field must point to an existing file:
 | `templates/form-8.docx` | YES |
 | `templates/affidavit.dotx` | YES |
 | `templates/form-33.dotx` | YES |
+| `templates/form-33.01.docx` | YES |
+| `templates/form-30.001.docx` | YES |
 
 ## Trigger Eval Target
 

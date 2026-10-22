@@ -40,6 +40,10 @@ from fill_subs import (
     _FORM8_COSTS_SENTENCE, build_subs_form17, build_subs_form8,
 )
 from fill_subs_form33 import _format_party_list, build_subs_form33
+from fill_subs_hearing import (
+    build_subs_form33_01, boxes_form33_01, build_subs_form30_001,
+    boxes_form30_001, party_rows_form30_001, mark_boxes,
+)
 from fill_subs_affidavits import (
     build_subs_affidavit, _subs_service_affidavit_common, _subs_service_facts,
     build_subs_afs, build_subs_aos,
@@ -111,6 +115,12 @@ def fill(template_path: Path, context: dict, body_text: str, out_path: Path,
         'form-33':   build_subs_form33,
         'form-17':   build_subs_form17,
         'form-8':    build_subs_form8,
+        'form-33.01':  build_subs_form33_01,
+        'form-30.001': build_subs_form30_001,
+    }
+    _BOX_MARKERS = {
+        'form-33.01':  boxes_form33_01,
+        'form-30.001': boxes_form30_001,
     }
     subs = _SUBS_BUILDERS[form](context)
     subs = {k: str(v) for k, v in subs.items()}
@@ -123,6 +133,11 @@ def fill(template_path: Path, context: dict, body_text: str, out_path: Path,
     # defendant) into this form's caption block, at its own role anchor
     _insert_additional_captions(body, form,
                                 context.get('additional_captions') or [])
+
+    # Phase 1.6: Forms 33.01 and 30.001 check the boxes the context names,
+    # matched on the template's own label text, before substitution moves it.
+    if form in _BOX_MARKERS:
+        mark_boxes(body, _BOX_MARKERS[form](context))
 
     # Phase 2: substitute scalars
     # Pop caption placeholders — they need multi-paragraph insertion, not text substitution
@@ -165,6 +180,10 @@ def fill(template_path: Path, context: dict, body_text: str, out_path: Path,
             if str(interpreter).strip().lower() not in ('yes', 'true', '1'):
                 _remove_interpreter_endorsement(body)
 
+    # Phase 4a: Form 30.001's party blocks, one per party given
+    if form == 'form-30.001':
+        _repeat_marked_block(body, 'party', party_rows_form30_001(context))
+
     _strip_block_markers(body)
 
     members['word/document.xml'] = etree.tostring(
@@ -191,7 +210,7 @@ def main() -> int:
                    help='Path to template (default: templates/032-noa.docx)')
     p.add_argument('--form', default='noa',
                    help=('Form type: noa, affidavit, petition, nocc, otsc, rtc, '
-                         'form-17, form-8 (default: noa)'))
+                         'form-17, form-8, form-33.01, form-30.001 (default: noa)'))
     args = p.parse_args()
 
     template_path = Path(args.template) if args.template else TEMPLATE

@@ -22,6 +22,8 @@ FORM_CAPTION_PLACEHOLDERS: dict[str, tuple[str, ...]] = {
     'form-33':   ('[CAPTION ORIGINATING PARTY]', '[CAPTION RESPONDING PARTY]'),
     'form-17':   ('[PLAINTIFF / PETITIONER NAME(S)]', '[DEFENDANT / RESPONDENT NAME(S)]'),
     'form-8':    ('[PLAINTIFF / PETITIONER NAME(S)]', '[DEFENDANT / RESPONDENT NAME(S)]'),
+    'form-33.01':  ('[PLAINTIFF / PETITIONER NAME(S)]', '[DEFENDANT / RESPONDENT NAME(S)]'),
+    'form-30.001': ('[PLAINTIFF / PETITIONER NAME(S)]', '[DEFENDANT / RESPONDENT NAME(S)]'),
 }
 
 # The caption role paragraph each form's extra style-of-cause parties are
@@ -41,6 +43,8 @@ FORM_CAPTION_ROLE_ANCHORS: dict[str, str] = {
     'form-33':   '[RESPONDING PARTY]',
     'form-17':   '[DEFENDANT]',
     'form-8':    '[DEFENDANT]',
+    'form-33.01':  '[DEFENDANT]',
+    'form-30.001': '[DEFENDANT]',
 }
 
 

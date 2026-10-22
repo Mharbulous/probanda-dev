@@ -3,6 +3,7 @@
 // skills tree, so the record and the identity files are the fixture's, never the checkout's.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { knowledgeFixture } from "./helpers/knowledge-fixture.mjs";
@@ -129,4 +130,25 @@ test("the warning names no deadline and no date but the commencement date", (t) 
   const { warning } = formCurrency("form-32", TODAY, f.seams);
   assert.doesNotMatch(warning, /deadline/i);
   assert.deepEqual(warning.match(/\d{4}-\d{2}-\d{2}/g), ["2026-10-01"]);
+});
+
+// Forms 33.01 and 30.001 resolve by their registry keys to the identity files /publish ships.
+const SHIPPED_DOCUMENTS = new URL("../../../../.claude/skills/publish/references/CAN/BC/BCSC/Documents/", import.meta.url);
+
+test("the shipped Form 33.01 and Form 30.001 identity files are clear", (t) => {
+  const f = knowledgeFixture(t);
+  f.shipped("docket-clerk/rule-freshness.json", record());
+  for (const key of ["form-33.01", "form-30.001"]) {
+    f.shipped(`publish/CAN/BC/BCSC/Documents/${key}.md`, readFileSync(new URL(`${key}.md`, SHIPPED_DOCUMENTS), "utf8"));
+  }
+  const noha = formCurrency("form-33.01", TODAY, f.seams);
+  assert.equal(noha.form_number, "33.01");
+  assert.equal(noha.identity_file, "publish/CAN/BC/BCSC/Documents/form-33.01.md");
+  assert.deepEqual(noha.conformed_to, [REG]);
+  assert.deepEqual(noha.unconformed, []);
+  assert.equal(noha.warning, null);
+  const cover = formCurrency("form-30.001", TODAY, f.seams);
+  assert.equal(cover.form_number, "30.001");
+  assert.equal(cover.identity_file, "publish/CAN/BC/BCSC/Documents/form-30.001.md");
+  assert.equal(cover.warning, null);
 });

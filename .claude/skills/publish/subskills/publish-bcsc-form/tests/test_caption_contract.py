@@ -196,12 +196,36 @@ RENDER_CONTEXT = {
         {"description": "Notice of Civil Claim", "stamp_date": "August 1, 2026"}
     ],
     "unfiled_documents": [],
+    "application_respondents": "Beta Company Ltd.",
+    "applicant_parties": "Alpha Company Ltd.",
+    "hearing_place": "800 Smithe Street, Vancouver",
+    "hearing_day": "August 20, 2026",
+    "hearing_time": "9:45 a.m.",
+    "notice_served_dates": "August 2, 2026",
+    "response_served_dates": "August 9, 2026",
+    "agreed_time_estimate": "one hour",
+    "applicant_estimate_minutes": "60",
+    "respondent_estimate_minutes": "45",
+    "orders_sought": "Paragraphs 1 and 2",
+    "signatory_name": "Alex Example",
+    "record_type": "APPLICATION RECORD",
+    "rule_reference": "(RULE 8-1 (15))",
+    "parties": [
+        {"name": "Alpha Company Ltd.", "counsel": "Alex Example",
+         "address": "123 Example Street", "contact": "alex@example.test"}
+    ],
+    "appearance_type": "Hearing",
+    "appearance_date_time": "August 20, 2026 at 9:45 a.m.",
+    "appearance_place": "800 Smithe Street, Vancouver",
+    "plaintiff_time_estimate": "one hour",
+    "defendant_time_estimate": "45 minutes",
+    "provided_by": "Alpha Company Ltd.",
 }
 
 
 class CaptionContractTests(unittest.TestCase):
     def test_all_template_captions_use_prescribed_case_and_no_colons(self) -> None:
-        self.assertEqual(11, len(TEMPLATES))
+        self.assertEqual(13, len(TEMPLATES))
         for path in TEMPLATES:
             with self.subTest(template=path.name), zipfile.ZipFile(path) as package:
                 document = etree.fromstring(package.read("word/document.xml"))
