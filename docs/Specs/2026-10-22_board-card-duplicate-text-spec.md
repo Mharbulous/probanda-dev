@@ -49,3 +49,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD; mark any that differ, and append the table to this spec before changing code.
+
+## 11. Verification against HEAD (2026-10-22, at 846073c)
+
+| Claim | At HEAD | Where |
+|---|---|---|
+| `drafting_forms__board_card` is the lawyer data server's | Confirmed | `source/lawyer/mcp/src/submission/matter-pages.ts`, `submissionFormsBoardCard` |
+| The criteria lane prints `(unmet <u>, met <m>, total <t>)` then the items | Confirmed. `countText` prints the counts and `criterionLine` joins `c.items` with `; ` after ` — `, with no check for repeats | `matter-pages.ts`, `countText`, `criterionLine`, `goalLines` |
+| `open-items` is an inventory criterion | Confirmed | `source/lawyer/mcp/src/submission/forms/render-work-board.ts`, `openItems`, `inventoryCriterion` |
+| Items carry a separate document title | Differs. An item is one string, the entry's count-free row identity. Where a document's label appears, it is part of that string (for example `<label>, paragraph <n>: linked fact`). So "identical (document title, text)" means an identical item string | `forms/proposal-inventory.ts`, `ProposalEntry.item`, `CriterionEntry.item` |
+| Root cause | Confirmed. `inventoryCriterion` merges entries by row (`proposalKey` for a generating entry, `<marker>:<table>:<id>` for any other), never by text, so two rows whose item strings match both print in full | `render-work-board.ts`, `inventoryCriterion` |
+| §9: can identical-text flags come from separate positions? | Yes. Two items under one criterion never share a merge key, so identical text always means two different rows (or two glyphs on one row). The locator in §4 is therefore required. The merge key is the locator: it is the only per-item position the inventory holds | `render-work-board.ts`, `inventoryCriterion` |
+| Counts | Unaffected by the fix: `outstanding` and `items.length` are computed before printing | `matter-pages.ts`, `countText` |
+| The HTML board reads `criteria[].items` | Confirmed. It also receives any extra field on a criterion in its data, and ignores one it does not read | `src/templates/job-board/job-board.js` |
