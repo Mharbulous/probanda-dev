@@ -93,6 +93,13 @@ test("a term hit returns each section holding it, whole, with its heading", (t) 
   );
   assert.deepEqual(r.hits[0].matched, ["arbitrator"]);
   assert.equal(r.hits[0].page, null);
+  // Line numbers are the file's own, counting the filed page's header.
+  assert.deepEqual(r.hits[0].line_range, { first: 30, last: 31 });
+  assert.deepEqual(r.hits[0].heading_path, ["Part 2 — Proceedings", "Referral to an arbitrator"]);
+  assert.equal(r.hits[0].truncated, false);
+  assert.equal(r.hits[0].currency_marker, "current to September 30, 2026");
+  assert.equal(r.currency_marker, "current to September 30, 2026");
+  assert.equal(r.sectioning, "headings");
 });
 
 test("a search with no hit still reports every section searched, by block", (t) => {
@@ -107,8 +114,9 @@ test("a search with no hit still reports every section searched, by block", (t) 
     ],
   });
   assert.equal(r.terms.length, 2);
-  // The title, citation, currency line and the glued table of contents are searched but unsectioned.
-  assert.equal(r.unsectioned_lines, 7);
+  // The title, citation, currency line, the glued table of contents and the two Part headings are
+  // searched but unsectioned.
+  assert.equal(r.unsectioned_lines, 8);
   assert.ok(r.lines_searched > 30);
   assert.match(r.sha256, /^[0-9a-f]{64}$/);
 });
@@ -210,5 +218,173 @@ test("the tool is registered read-only with matter_root and path required", () =
   assert.ok(def);
   assert.deepEqual(def.annotations, { readOnlyHint: true, openWorldHint: false });
   assert.deepEqual(def.inputSchema.required, ["matter_root", "path"]);
-  assert.deepEqual(Object.keys(def.inputSchema.properties), ["matter_root", "path", "terms", "regex", "pages"]);
+  assert.deepEqual(Object.keys(def.inputSchema.properties), ["matter_root", "path", "terms", "regex", "pages", "pinpoint"]);
+});
+
+// Rule-level sections (docs/Specs/2026-10-22_legislation-search-rule-sections-spec.md). The fixture is
+// synthetic court rules in the shape of a filed BC Rules page: a header, a table of contents of Part
+// and Rule headings, then each `Rule N-N — Title` heading with `(n)` subrules under bold or plain
+// sub-headings, an amendment note, and Rule 4-2 long enough to pass the 6,000-character cap.
+const filler = (n) => " The fixture text continues without stating anything.".repeat(n);
+const RULE_LINES = [
+  "---",
+  'url: "https://fixture.test/rules"',
+  'currency_marker: "current to October 1, 2026"',
+  "---",
+  "Fixture Court Rules",
+  "B.C. Reg. 999/2099",
+  "Contents",
+  "Part 1 — Interpretation",
+  "Rule 1-1 — Definitions",
+  "Part 4 — Documents",
+  "Rule 4-1 — Form of Documents",
+  "Rule 4-2 — Address for Service",
+  "Part 1 — Interpretation",
+  "Rule 1-1 — Definitions",
+  "Definitions",
+  '(1) In these rules, "fixture" means a synthetic text.',
+  "Part 4 — Documents",
+  "Rule 4-1 — Form of Documents",
+  "**Paper size**",
+  "(1) A document must be on letter size paper.",
+  "Rule 4-2 — Address for Service",
+  "Address for service required",
+  `(1) Each party must have an address for service.${filler(20)}`,
+  `(2) An address for service may be a postal address.${filler(20)}`,
+  "30 days after it is given, an unused address lapses.",
+  `(3) An address for service may include an email address.${filler(20)}`,
+  `(4) A lawyer's office may be an address for service.${filler(20)}`,
+  `(5) An address for service must be in the province.${filler(130)}`,
+  "**Change of address**",
+  "(6) A party may change its address for service by filing a notice.",
+  "[am. B.C. Reg. 1/2099, s. 1.]",
+  "Accessible address",
+  "(7) An address must be accessible during business hours.",
+  "Part 5 — Case Planning",
+  "Rule 5-1 — Fixture Conference",
+  "(1) A party may request a fixture conference.",
+  "",
+];
+const lineOf = (text) => RULE_LINES.lastIndexOf(text) + 1;
+
+function rulesFile(s) {
+  const file = join(s.law, "Fixture Court Rules.md");
+  writeFileSync(file, RULE_LINES.join("\n"));
+  return file;
+}
+
+test("a pinpoint Rule 4-2(6) returns that subrule alone, with its heading path and line range", (t) => {
+  const s = setup(t);
+  const r = legislationSearch(s.matter, rulesFile(s), undefined, undefined, undefined, {}, "Rule 4-2(6)");
+  assert.equal(r.pinpoint, "Rule 4-2(6)");
+  assert.equal(r.hits.length, 1);
+  const h = r.hits[0];
+  assert.equal(h.section, "4-2");
+  assert.equal(h.subsection, "6");
+  assert.equal(h.heading, "Rule 4-2 — Address for Service");
+  assert.deepEqual(h.heading_path, ["Part 4 — Documents", "Rule 4-2 — Address for Service", "Change of address"]);
+  assert.equal(
+    h.text,
+    "**Change of address**\n(6) A party may change its address for service by filing a notice.\n[am. B.C. Reg. 1/2099, s. 1.]"
+  );
+  assert.deepEqual(h.line_range, { first: lineOf("**Change of address**"), last: lineOf("[am. B.C. Reg. 1/2099, s. 1.]") });
+  assert.equal(h.truncated, false);
+  assert.equal(h.currency_marker, "current to October 1, 2026");
+
+  // The table of contents entry for Rule 4-2 is not returned as the provision.
+  const whole = legislationSearch(s.matter, rulesFile(s), undefined, undefined, undefined, {}, "R 4-2");
+  assert.equal(whole.hits.length, 1);
+  assert.equal(whole.hits[0].subsection, null);
+  assert.equal(whole.hits[0].truncated, true);
+  assert.equal(whole.hits[0].text.length, 6000);
+
+  assert.deepEqual(legislationSearch(s.matter, rulesFile(s), undefined, undefined, undefined, {}, "Rule 9-9").hits, []);
+  assert.deepEqual(legislationSearch(s.matter, rulesFile(s), undefined, undefined, undefined, {}, "Rule 4-2(9)").hits, []);
+});
+
+test("rules: sections open at each Rule heading, a table of contents is its own block, and body numbers stay body", (t) => {
+  const s = setup(t);
+  const r = legislationSearch(s.matter, rulesFile(s), ["no such phrase"]);
+  assert.equal(r.sectioning, "headings");
+  assert.deepEqual(r.sections_searched, {
+    count: 7,
+    blocks: [
+      { block: 1, heading: "Rule 1-1 — Definitions", first: "1-1", last: "4-2", count: 3 },
+      { block: 2, heading: "Rule 1-1 — Definitions", first: "1-1", last: "5-1", count: 4 },
+    ],
+  });
+  const lapse = legislationSearch(s.matter, rulesFile(s), ["unused address lapses"]);
+  assert.deepEqual(lapse.hits.map((h) => [h.section, h.subsection]), [["4-2", "2"]]);
+});
+
+test("a phrase returns several sections, none over the cap, each flagged truncated or not", (t) => {
+  const s = setup(t);
+  const r = legislationSearch(s.matter, rulesFile(s), ["address for service"]);
+  // Rule 4-2 is over the cap, so its matching subsections come back one by one; the table of
+  // contents line and the rule's own heading line also hold the phrase.
+  assert.deepEqual(
+    r.hits.map((h) => [h.block, h.section, h.subsection]),
+    [
+      [1, "4-2", null],
+      [2, "4-2", null],
+      [2, "4-2", "1"],
+      [2, "4-2", "2"],
+      [2, "4-2", "3"],
+      [2, "4-2", "4"],
+      [2, "4-2", "5"],
+      [2, "4-2", "6"],
+    ]
+  );
+  for (const h of r.hits) {
+    assert.ok(h.text.length <= 6000);
+    assert.equal(typeof h.truncated, "boolean");
+    assert.equal(h.currency_marker, "current to October 1, 2026");
+  }
+  assert.deepEqual(r.hits.map((h) => h.truncated), [false, false, false, false, false, false, true, false]);
+  // The plain sub-heading above (1) opens that subrule, not the rule's lead.
+  assert.deepEqual(r.hits[2].heading_path, ["Part 4 — Documents", "Rule 4-2 — Address for Service", "Address for service required"]);
+  assert.equal(r.hits[1].text, "Rule 4-2 — Address for Service");
+});
+
+test("a pinpoint resolves a statute section and subsection, and stands alone", (t) => {
+  const s = setup(t);
+  const sub = legislationSearch(s.matter, s.act, undefined, undefined, undefined, {}, "s 5(2)");
+  assert.deepEqual(sub.hits.map((h) => [h.section, h.subsection, h.text]), [["5", "2", "(2) An arbitrator's report binds the parties."]]);
+  assert.deepEqual(sub.hits[0].line_range, { first: 31, last: 31 });
+  const first = legislationSearch(s.matter, s.act, undefined, undefined, undefined, {}, "section 3(1)");
+  assert.equal(first.hits[0].text, "3 (1) A proceeding is commenced by filing a notice.");
+  const whole = legislationSearch(s.matter, s.act, undefined, undefined, undefined, {}, "s. 2.1");
+  assert.deepEqual(whole.hits.map((h) => [h.section, h.heading, h.text]), [["2.1", "Fixture rule", "2.1 A party may apply to the court."]]);
+
+  assert.equal(codeOf(() => legislationSearch(s.matter, s.act, ["court"], undefined, undefined, {}, "s 5")), "invalid_argument");
+  assert.equal(codeOf(() => legislationSearch(s.matter, s.act, undefined, undefined, undefined, {}, "paragraph five")), "invalid_argument");
+});
+
+test("text with no section headings falls back to 40-line chunks with line ranges, and says so", (t) => {
+  const s = setup(t);
+  const file = join(s.law, "Fixture Notes.txt");
+  writeFileSync(file, Array.from({ length: 100 }, (_, i) => `Clause text ${i + 1} about notices.`).join("\n"));
+  const r = legislationSearch(s.matter, file, ["notices"]);
+  assert.equal(r.sectioning, "fixed_chunks");
+  assert.deepEqual(
+    r.hits.map((h) => [h.section, h.line_range]),
+    [
+      [null, { first: 1, last: 40 }],
+      [null, { first: 41, last: 80 }],
+      [null, { first: 81, last: 100 }],
+    ]
+  );
+  assert.equal(r.unsectioned_lines, 100);
+  assert.equal(r.currency_marker, null);
+  for (const h of r.hits) assert.equal(h.currency_marker, null);
+});
+
+test("with no filed header, the currency marker is the text's own \"current to\" line", (t) => {
+  const s = setup(t);
+  const file = join(s.law, "Fixture Act.txt");
+  writeFileSync(file, ACT.split("\n").slice(7).join("\n"));
+  const r = legislationSearch(s.matter, file, ["arbitrator"]);
+  assert.equal(r.currency_marker, "This Act is current to September 30, 2026");
+  assert.equal(r.hits[0].currency_marker, "This Act is current to September 30, 2026");
+  assert.deepEqual(r.hits[0].line_range, { first: 23, last: 24 });
 });

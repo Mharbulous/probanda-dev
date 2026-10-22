@@ -8,6 +8,11 @@
 // `privileged`/`disclosed` tree (Brahm's decision, 2026-10-06): a statute held by case data may be
 // pages of a book of authorities filed outside `6. LAW`, and `pages` narrows a PDF to its range
 // (PDF and .docx text awaits the in-server extractor: see FOLLOW-UP below).
+//
+// Rule-level sections (docs/Specs/2026-10-22_legislation-search-rule-sections-spec.md): a court
+// rules file opens a section at each `Rule N-N` heading line, a section longer than the cap comes
+// back as its matching subsections, `pinpoint` resolves `Rule 4-2(6)` or `s 3(2)` directly, and
+// text with no section headings is cut into fixed-size chunks with their line ranges.
 
 import { createHash } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
@@ -25,15 +30,25 @@ const EXTRACTED_EXTENSIONS = new Set([".pdf", ".docx"]);
 // As research_filing__law_folder_text: a PDF with less text than this per page is taken as scanned.
 const SCANNED_BYTES_PER_PAGE = 500;
 const MAX_TERMS = 50;
-// One hit's section text is cut here; statute sections are short, a schedule's table may not be.
+// One hit's text is cut here; statute sections are short, a rule or a schedule's table may not be.
 const MAX_SECTION_CHARS = 6000;
 // A section number on a line of its own text: `12`, `12.1`, `9-6`, then whitespace and more text.
 // A table of contents glues the number to the title (`94Page limits`), so it never matches.
 const SECTION_LINE = /^(\d+(?:-\d+)?(?:\.\d+)?)\s+\S/;
+// A court rule's heading line: `Rule 4-2 — Address for Service`.
+const RULE_HEADING = /^Rule\s+(\d+-\d+)(?![\d(-])/i;
+// A Part or Division heading line: `Part 4 — Documents`, `Division 2`.
+const PART_HEADING = /^(Part|Division)\s+\d+(?:\.\d+)?(?!\d)/i;
+// A subsection or subrule opens a line, after its section number on the section's first line.
+const SUBSECTION_LINE = /^(?:\d+(?:-\d+)?(?:\.\d+)?\s+)?\((\d+(?:\.\d+)?)\)(?=\s|$)/;
+const PINPOINT =
+  /^\s*(?:(?:rule|r\.?)\s*(\d+-\d+)|(?:section|sec\.?|ss?\.?)\s*(\d+(?:\.\d+)?)|(\d+(?:-\d+)?(?:\.\d+)?))\s*(?:\(\s*(\d+(?:\.\d+)?)\s*\))?\s*$/i;
 // A number further than this above the last section read is body text (a year, a sum), not a section.
 const MAX_SECTION_JUMP = 50;
 // A heading is a short line with no closing punctuation and no bracket at either end.
 const MAX_HEADING_CHARS = 120;
+// Text with no section heading is returned in chunks of this many lines.
+const CHUNK_LINES = 40;
 
 export interface LegislationSearchSeams {
   /** One string per page of a `.pdf` (or one for a `.docx`); throws a DataServerError when unreadable. */
@@ -57,24 +72,38 @@ function noPageExtractor(path: string): string[] {
 
 interface Line {
   text: string;
+  /** The text without markdown heading marks and bold, for recognising headings and numbers only. */
+  plain: string;
   page: number | null;
+  line: number;
 }
 
 interface Chunk {
   block: number;
   section: string | null;
   heading: string | null;
+  path: string[];
+  lines: Line[];
+}
+
+interface Part {
+  subsection: string | null;
+  subheading: string | null;
   lines: Line[];
 }
 
 export interface LegislationHit {
   block: number;
   section: string | null;
+  subsection: string | null;
   heading: string | null;
+  heading_path: string[];
   page: number | null;
+  line_range: { first: number; last: number };
   matched: string[];
   text: string;
-  truncated?: true;
+  truncated: boolean;
+  currency_marker: string | null;
 }
 
 export interface SectionBlock {
@@ -92,6 +121,9 @@ export interface LegislationSearchResult {
   pages: { first: number; last: number } | null;
   terms: string[];
   regex: string | null;
+  pinpoint: string | null;
+  currency_marker: string | null;
+  sectioning: "headings" | "fixed_chunks";
   lines_searched: number;
   sections_searched: { count: number; blocks: SectionBlock[] };
   unsectioned_lines: number;
@@ -100,8 +132,10 @@ export interface LegislationSearchResult {
 
 /**
  * Search the text of the file at `path`, inside the matter at `matterRoot`, for any of `terms`
- * (literal, case-insensitive) and for `regex` (case-insensitive). At least one of the two is required.
- * Returns each section holding a match, whole, with the section numbers read and every line counted.
+ * (literal, case-insensitive) and for `regex` (case-insensitive), or resolve one `pinpoint`
+ * (`Rule 4-2(6)`, `s 3(2)`). Terms and regex may be combined; a pinpoint stands alone.
+ * Returns each section holding a match, whole up to the cap, with the section numbers read and
+ * every line counted.
  */
 export function legislationSearch(
   matterRoot: string,
@@ -109,39 +143,78 @@ export function legislationSearch(
   terms: unknown,
   regex: unknown,
   pages: unknown,
-  seams: LegislationSearchSeams = {}
+  seams: LegislationSearchSeams = {},
+  pinpoint?: unknown
 ): LegislationSearchResult {
   const file = resolveMatterFile(matterRoot, path);
   const termList = checkTerms(terms);
   const pattern = checkRegex(regex);
-  if (termList.length === 0 && pattern === null) {
-    throw new DataServerError("give terms, a regex, or both", "invalid_argument");
+  const pin = checkPinpoint(pinpoint);
+  if (pin !== null && (termList.length > 0 || pattern !== null)) {
+    throw new DataServerError("a pinpoint stands alone: give it without terms or a regex", "invalid_argument");
+  }
+  if (termList.length === 0 && pattern === null && pin === null) {
+    throw new DataServerError("give terms, a regex, or both, or a pinpoint", "invalid_argument");
   }
   const ext = pathWin32.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
   const bytes = readFileSync(file);
-  const { lines, source } = textLines(file, ext, bytes, range, seams);
+  const { lines, source, marker } = textLines(file, ext, bytes, range, seams);
+  const currency = marker ?? lines.find((l) => /\bcurrent to\b/i.test(l.text))?.text ?? null;
 
-  const chunks = sectionChunks(lines);
+  const chunks = fixedChunks(sectionChunks(lines));
   const hits: LegislationHit[] = [];
-  for (const chunk of chunks) {
-    const body = chunk.lines.map((l) => l.text).join("\n");
+  const hit = (chunk: Chunk, part: Part | null, matched: string[]): void => {
+    const partLines = part?.lines ?? chunk.lines;
+    const body = partLines.map((l) => l.text).join("\n");
+    const headingPath = [...chunk.path];
+    if (chunk.heading !== null) headingPath.push(chunk.heading);
+    if (part?.subheading) headingPath.push(part.subheading);
+    hits.push({
+      block: chunk.block,
+      section: chunk.section,
+      subsection: part?.subsection ?? null,
+      heading: chunk.heading,
+      heading_path: headingPath,
+      page: partLines[0]?.page ?? null,
+      line_range: { first: partLines[0].line, last: partLines[partLines.length - 1].line },
+      matched,
+      text: body.length > MAX_SECTION_CHARS ? body.slice(0, MAX_SECTION_CHARS) : body,
+      truncated: body.length > MAX_SECTION_CHARS,
+      currency_marker: currency,
+    });
+  };
+  const matchesIn = (ls: Line[]): string[] => {
+    const body = ls.map((l) => l.text).join("\n");
     const lower = body.toLowerCase();
     const matched = termList.filter((t) => lower.includes(t.toLowerCase()));
     if (pattern !== null && pattern.test(body)) matched.push(`/${pattern.source}/`);
+    return matched;
+  };
+
+  for (const chunk of chunks) {
+    if (pin !== null) {
+      // A rule that is only its heading line is a table of contents entry, not the provision.
+      const tocEntry = chunk.lines.length === 1 && chunk.lines[0].plain === chunk.heading;
+      if (chunk.section !== pin.section || tocEntry) continue;
+      if (pin.subsection === null) {
+        hit(chunk, null, [pin.text]);
+      } else {
+        const part = subsectionParts(chunk).find((p) => p.subsection === pin.subsection);
+        if (part !== undefined) hit(chunk, part, [pin.text]);
+      }
+      continue;
+    }
+    const matched = matchesIn(chunk.lines);
     if (matched.length === 0) continue;
-    const hit: LegislationHit = {
-      block: chunk.block,
-      section: chunk.section,
-      heading: chunk.heading,
-      page: chunk.lines[0]?.page ?? null,
-      matched,
-      text: body.length > MAX_SECTION_CHARS ? body.slice(0, MAX_SECTION_CHARS) : body,
-    };
-    if (body.length > MAX_SECTION_CHARS) hit.truncated = true;
-    hits.push(hit);
+    const long = chunk.lines.map((l) => l.text).join("\n").length > MAX_SECTION_CHARS;
+    const parts = long ? subsectionParts(chunk) : [];
+    const partHits = parts.length > 1 ? parts.map((p) => [p, matchesIn(p.lines)] as const).filter(([, m]) => m.length > 0) : [];
+    if (partHits.length === 0) hit(chunk, null, matched);
+    else for (const [p, m] of partHits) hit(chunk, p, m);
   }
 
+  const sectioned = chunks.some((c) => c.section !== null);
   return {
     path: file,
     sha256: createHash("sha256").update(bytes).digest("hex"),
@@ -149,6 +222,9 @@ export function legislationSearch(
     pages: range,
     terms: termList,
     regex: pattern === null ? null : pattern.source,
+    pinpoint: pin === null ? null : pin.text,
+    currency_marker: currency,
+    sectioning: sectioned ? "headings" : "fixed_chunks",
     lines_searched: lines.length,
     sections_searched: sectionBlocks(chunks),
     unsectioned_lines: chunks.filter((c) => c.section === null).reduce((n, c) => n + c.lines.length, 0),
@@ -194,6 +270,18 @@ function checkRegex(regex: unknown): RegExp | null {
   }
 }
 
+function checkPinpoint(pinpoint: unknown): { text: string; section: string; subsection: string | null } | null {
+  if (pinpoint === undefined) return null;
+  const m = typeof pinpoint === "string" ? PINPOINT.exec(pinpoint) : null;
+  if (m === null) {
+    throw new DataServerError(
+      `pinpoint must read like "Rule 4-2", "Rule 4-2(6)", "s 3" or "s 3(2)": ${String(pinpoint)}`,
+      "invalid_argument"
+    );
+  }
+  return { text: (pinpoint as string).trim(), section: m[1] ?? m[2] ?? m[3], subsection: m[4] ?? null };
+}
+
 function checkPages(pages: unknown, ext: string): { first: number; last: number } | null {
   if (pages === undefined) return null;
   if (ext !== ".pdf") throw new DataServerError("pages applies only to a PDF", "invalid_argument");
@@ -205,31 +293,44 @@ function checkPages(pages: unknown, ext: string): { first: number; last: number 
   return { first, last };
 }
 
+/** Markdown heading marks and bold or underline markers off, for recognising a line's shape. */
+function plainText(text: string): string {
+  return text.replace(/^#{1,6}\s+/, "").replace(/\*\*|__/g, "").trim();
+}
+
 function textLines(
   file: string,
   ext: string,
   bytes: Buffer,
   range: { first: number; last: number } | null,
   seams: LegislationSearchSeams
-): { lines: Line[]; source: LegislationSearchResult["source"] } {
-  const split = (text: string, page: number | null): Line[] =>
+): { lines: Line[]; source: LegislationSearchResult["source"]; marker: string | null } {
+  // `base` is the number of lines above this text, so each line keeps its own line number.
+  const split = (text: string, page: number | null, base: number): Line[] =>
     text
       .split(/\r?\n|\f/)
-      .map((t) => t.trim())
-      .filter((t) => t !== "")
-      .map((t) => ({ text: t, page }));
+      .map((t, i) => ({ text: t.trim(), plain: plainText(t), page, line: base + i + 1 }))
+      .filter((l) => l.text !== "");
 
   let lines: Line[];
+  let marker: string | null = null;
   let source: LegislationSearchResult["source"];
   if (TEXT_EXTENSIONS.has(ext)) {
     source = ext === ".md" ? "md" : "txt";
-    lines = split(stripFrontMatter(bytes.toString("utf-8")), null);
+    const front = frontMatter(bytes.toString("utf-8"));
+    marker = front.marker;
+    lines = split(front.body, null, front.lines);
   } else if (HTML_EXTENSIONS.has(ext)) {
     source = "html";
-    lines = split(htmlBlocks(bytes.toString("utf-8")).join("\n"), null);
+    lines = split(htmlBlocks(bytes.toString("utf-8")).join("\n"), null, 0);
   } else if (EXTRACTED_EXTENSIONS.has(ext)) {
     source = ext === ".pdf" ? "pdf" : "docx";
-    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text, i) => ({ text, page: i + 1 }));
+    let base = 0;
+    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text, i) => {
+      const page = { text, page: i + 1, base };
+      base += text.split(/\r?\n|\f/).length;
+      return page;
+    });
     if (range !== null) {
       if (range.last > pageTexts.length) {
         throw new DataServerError(`pages ${range.first}-${range.last} run past the file's ${pageTexts.length} pages`, "invalid_argument");
@@ -243,18 +344,31 @@ function textLines(
         "ocr_unavailable"
       );
     }
-    lines = pageTexts.flatMap((p) => split(p.text, source === "pdf" ? p.page : null));
+    lines = pageTexts.flatMap((p) => split(p.text, source === "pdf" ? p.page : null, p.base));
   } else {
     throw new DataServerError(`unsupported file type: ${ext || "no extension"}`, "unsupported_type");
   }
   if (lines.length === 0) throw new DataServerError("the file holds no text", "no_text");
-  return { lines, source };
+  return { lines, source, marker };
 }
 
-/** research_filing__file_fetched writes a `---` header above a filed page's text. */
-function stripFrontMatter(text: string): string {
+/**
+ * research_filing__file_fetched writes a `---` header above a filed page's text. The header is not
+ * searched; its `currency_marker` is returned with every result.
+ */
+function frontMatter(text: string): { body: string; lines: number; marker: string | null } {
   const m = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text);
-  return m === null ? text : text.slice(m[0].length);
+  if (m === null) return { body: text, lines: 0, marker: null };
+  const raw = /^currency_marker:[ \t]*(.*?)\s*$/m.exec(m[0])?.[1] ?? "";
+  let marker: string | null = raw === "" || raw === "null" ? null : raw;
+  if (marker !== null && marker.startsWith('"')) {
+    try {
+      marker = JSON.parse(marker) as string;
+    } catch {
+      // Not JSON: the header's own text is the marker.
+    }
+  }
+  return { body: text.slice(m[0].length), lines: m[0].split("\n").length - 1, marker };
 }
 
 function sectionKey(num: string): number[] {
@@ -275,53 +389,125 @@ function isHeading(text: string): boolean {
   );
 }
 
+function ruleHeading(line: Line): string | null {
+  return isHeading(line.plain) ? (RULE_HEADING.exec(line.plain)?.[1] ?? null) : null;
+}
+
+function isPartHeading(line: Line): boolean {
+  return isHeading(line.plain) && PART_HEADING.test(line.plain);
+}
+
 /**
  * Split the lines into chunks, one per section, with lines before a block's first section as an
- * unsectioned chunk. A number above the last one read (within MAX_SECTION_JUMP of its leading part)
- * opens the next section; a number that drops back to a block's first number (`1`, `1-1`) opens a
- * new block, as a schedule or form does; any other number is body text. The short line before a
- * section number is taken as that section's heading.
+ * unsectioned chunk. A section opens at a `Rule N-N` heading line or at a line that begins with a
+ * section number; in a file with rule headings only an `N-N` number opens one. A number above the
+ * last one read (within MAX_SECTION_JUMP of its leading part) opens the next section; a number that
+ * drops back to a block's first number (`1`, `1-1`) opens a new block, as a schedule, form or table
+ * of contents does; any other number is body text. The short line before a section number is taken
+ * as that section's heading, and the Part and Division headings above it as its path; each of those
+ * heading lines is an unsectioned chunk of its own.
  */
 function sectionChunks(lines: Line[]): Chunk[] {
+  const rules = lines.some((l) => ruleHeading(l) !== null);
   const chunks: Chunk[] = [];
   let block = 1;
   let last: number[] | null = null;
-  let current: Chunk = { block, section: null, heading: null, lines: [] };
-  const open = (section: string, line: Line): void => {
-    let heading: string | null = null;
+  let part: string | null = null;
+  let division: string | null = null;
+  let current: Chunk = { block, section: null, heading: null, path: [], lines: [] };
+  const open = (section: string, line: Line, isRule: boolean): void => {
+    let heading: string | null = isRule ? line.plain : null;
     const prev = current.lines[current.lines.length - 1];
-    if (prev !== undefined && isHeading(prev.text) && (current.section !== null || current.lines.length > 1)) {
-      heading = prev.text;
+    if (
+      !isRule &&
+      prev !== undefined &&
+      isHeading(prev.plain) &&
+      !isPartHeading(prev) &&
+      (current.section !== null || current.lines.length > 1)
+    ) {
+      heading = prev.plain;
       current.lines.pop();
     }
     if (current.lines.length > 0) chunks.push(current);
-    current = { block, section, heading, lines: [line] };
+    const path = [part, division].filter((p): p is string => p !== null);
+    current = { block, section, heading, path, lines: [line] };
   };
 
   for (const line of lines) {
-    const m = SECTION_LINE.exec(line.text);
-    if (m === null) {
+    if (isPartHeading(line)) {
+      if (/^part/i.test(line.plain)) {
+        part = line.plain;
+        division = null;
+      } else {
+        division = line.plain;
+      }
+      // A Part or Division heading belongs to no section: it starts an unsectioned chunk.
+      if (current.lines.length > 0) chunks.push(current);
+      current = { block, section: null, heading: null, path: [], lines: [line] };
+      continue;
+    }
+    const rule = ruleHeading(line);
+    const m = rule === null ? SECTION_LINE.exec(line.plain) : null;
+    const num = rule ?? (m !== null && (!rules || m[1].includes("-")) ? m[1] : null);
+    if (num === null) {
       current.lines.push(line);
       continue;
     }
-    const key = sectionKey(m[1]);
-    const restart = key.every((n) => n === 1) && !m[1].includes(".");
-    if (last === null) {
+    const key = sectionKey(num);
+    const restart = key.every((n) => n === 1) && !num.includes(".");
+    if (last === null || (compareKeys(key, last) > 0 && key[0] - last[0] <= MAX_SECTION_JUMP)) {
       last = key;
-      open(m[1], line);
-    } else if (compareKeys(key, last) > 0 && key[0] - last[0] <= MAX_SECTION_JUMP) {
-      last = key;
-      open(m[1], line);
+      open(num, line, rule !== null);
     } else if (restart && compareKeys(key, last) < 0) {
       block += 1;
       last = key;
-      open(m[1], line);
+      open(num, line, rule !== null);
     } else {
       current.lines.push(line);
     }
   }
   if (current.lines.length > 0) chunks.push(current);
   return chunks;
+}
+
+/** Unsectioned text longer than CHUNK_LINES is cut into chunks of that many lines. */
+function fixedChunks(chunks: Chunk[]): Chunk[] {
+  return chunks.flatMap((c) => {
+    if (c.section !== null || c.lines.length <= CHUNK_LINES) return [c];
+    const out: Chunk[] = [];
+    for (let i = 0; i < c.lines.length; i += CHUNK_LINES) out.push({ ...c, lines: c.lines.slice(i, i + CHUNK_LINES) });
+    return out;
+  });
+}
+
+/**
+ * A section's lines split at each subsection, `(1)`, `(2)`, in rising order: the lines before the
+ * first are a lead part. A heading line just above a subsection is that subsection's heading.
+ */
+function subsectionParts(chunk: Chunk): Part[] {
+  const parts: Part[] = [{ subsection: null, subheading: null, lines: [] }];
+  let last: number[] | null = null;
+  for (const line of chunk.lines) {
+    const m = SUBSECTION_LINE.exec(line.plain);
+    const key = m === null ? null : sectionKey(m[1]);
+    if (m === null || key === null || (last !== null && compareKeys(key, last) <= 0)) {
+      parts[parts.length - 1].lines.push(line);
+      continue;
+    }
+    last = key;
+    const prev = parts[parts.length - 1];
+    const tail = prev.lines[prev.lines.length - 1];
+    const lines: Line[] = [];
+    let subheading: string | null = null;
+    if (tail !== undefined && prev.lines.length > 1 && isHeading(tail.plain)) {
+      prev.lines.pop();
+      lines.push(tail);
+      subheading = tail.plain;
+    }
+    lines.push(line);
+    parts.push({ subsection: m[1], subheading, lines });
+  }
+  return parts.filter((p) => p.lines.length > 0);
 }
 
 function sectionBlocks(chunks: Chunk[]): { count: number; blocks: SectionBlock[] } {

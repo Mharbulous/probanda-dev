@@ -638,7 +638,7 @@ export async function callTool(
   }
 
   if (name === "research_filing__legislation_search") {
-    return legislationSearch(args.matter_root as string, args.path as string, args.terms, args.regex, args.pages);
+    return legislationSearch(args.matter_root as string, args.path as string, args.terms, args.regex, args.pages, {}, args.pinpoint);
   }
 
   if (name === "research_filing__file_fetched") {
