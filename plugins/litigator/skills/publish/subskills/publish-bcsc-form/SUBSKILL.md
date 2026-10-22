@@ -58,6 +58,8 @@ Resolve the paths relative to this subskill's folder.
 | `form-16` | `forms/016-AOS/style-guide.md` |
 | `affidavit` | `forms/109-AFF/style-guide.md` |
 | `form-123` | `forms/123-OTSC/style-guide.md` |
+| `form-33.01` | `forms/033.01-NOHA/style-guide.md` |
+| `form-30.001` | `forms/030.001-REC/style-guide.md` |
 
 Forms 62 and 63 are excluded from this routing and from this subskill
 altogether: a bill of costs belongs to the sibling subskill `publish-boc`,
@@ -321,6 +323,8 @@ In Cowork, skip this check: the sandbox cannot see the draft folder. The harness
 | Affidavit of Ordinary Service (Form 16) | Rule 4-6(1) | `subskills/publish-bcsc-form/templates/016-aos.docx` | `fill_plain.py --form aos` | Generate only; substituted-service variant (Rule 4-4 + 22-3(1)) requires the entered order |
 | Affidavit (Form 109) | Rule 22-2 | `subskills/publish-bcsc-form/templates/affidavit.dotx` | `fill_plain.py --form affidavit` | A supporting affidavit of a Form 32 or 33 `/draft` holds: `asmaff` fills its text from `/draft`'s emitted file. An affidavit with no host filing `/draft` holds: Generate only, its substance hand-authored into document.xml using the template's LEAPBCParaNum styles (#1371's interim route) |
 | Application Response (Form 33) | Rule 8-1(9)-(10) | `subskills/publish-bcsc-form/templates/form-33.dotx` | `fill_plain.py --form form-33` | Generate + `asm33` Assemble |
+| Notice of Hearing of Application (Form 33.01) | Rule 8-1(14.4)(a) | `subskills/publish-bcsc-form/templates/form-33.01.docx` | `fill_plain.py --form form-33.01` | Generate only; also the reset of an application adjourned generally (Rule 8-1(21.1)) |
+| Record cover (Form 30.001) | Rule 8-1(15) | `subskills/publish-bcsc-form/templates/form-30.001.docx` | `fill_plain.py --form form-30.001` | Generate only; the record type and rule reference are given, so a petition record (Rule 16-1(11)) uses it too |
 
 Each form's version, and the amending regulations its template, emitter and type file conform to (`conformed_to:`), are recorded on its identity file in `/publish`'s knowledge tree, as `/publish`'s "Form identity" section describes. A form is conformed to an amendment only in a plugin release. A session that meets a `form_currency` warning says it, and the practitioner can ask for the release with `/lawyer:suggestion` naming the form and the amending regulation.
 

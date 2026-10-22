@@ -2004,6 +2004,22 @@ class TestLetterStockJobIdioms(unittest.TestCase):
         gate = self.GATE.read_text(encoding="utf-8").replace("\r\n", "\n")
         self.assertIn("'Draft the letter', 'Deliver', 'Pre-send gate')", gate[gate.index("## 14."):])
 
+    def test_the_gate_jobs_nothing_open_read_leaves_out_every_stock_job_of_amended_rule_8_1(self):
+        gate = self.GATE.read_text(encoding="utf-8").replace("\r\n", "\n")
+        read = re.findall(r"^```sql\n(.*?)\n```$", gate[gate.index("## 14."):], re.S | re.M)[0]
+        con = self._db("gate.sqlite")
+        con.execute("DELETE FROM tickets")
+        stock = ["Serve the application", "Serve the response", "Set down for hearing", "Reply affidavits",
+                 "File the served response", "Reset for hearing", "Application book", "File and serve",
+                 "Serve the application on the new defendant", "Serve the response by email"]
+        for i, title in enumerate(stock, 30):
+            con.execute("INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, kind, billing_anchor, created) "
+                        "VALUES (?, 1, 7, ?, 'x', 'work', 'L8212|x', '2026-10-21T10:00')", (i, title))
+        self.assertEqual(con.execute(read).fetchall(), [])
+        con.execute("INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, kind, billing_anchor, created) "
+                    "VALUES (50, 1, 7, 'Draft Part 2', 'x', 'work', 'L8212|x', '2026-10-21T10:00')")
+        self.assertEqual(con.execute(read).fetchall(), [(50, "Draft Part 2", "queued")])
+
 
 class TestOwnJobReleaseAndShelve(unittest.TestCase):
     """jobs-run.md section 10's release and jobs-closeout.md section 10a's own-job shelving, run as

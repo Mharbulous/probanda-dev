@@ -9,17 +9,17 @@ The checks themselves are `references/pre-filing-checks.md`; the tool is `drafti
 
 ```sql
 SELECT id, title, status FROM tickets WHERE filing_id = 7 AND status IN ('queued', 'wip') AND rejected_at IS NULL AND deleted_at IS NULL
-  AND title NOT IN ('Availability letter', 'Application book', 'Draft the Writing', 'Draft the letter', 'Deliver', 'Pre-send gate')
-  AND substr(title, 1, 14) <> 'File and serve';
+  AND title NOT IN ('Availability letter', 'Application book', 'Set down for hearing', 'Reply affidavits', 'File the served response', 'Reset for hearing', 'Draft the Writing', 'Draft the letter', 'Deliver', 'Pre-send gate')
+  AND substr(title, 1, 14) <> 'File and serve' AND substr(title, 1, 21) <> 'Serve the application' AND substr(title, 1, 18) <> 'Serve the response';
 ```
 
-`AND rejected_at IS NULL` is load-bearing: a shelved job stays `queued` with `rejected_at` stamped (§10a), so without it a Writing whose only remaining job the practitioner shelved counts as still open and never gets its gate job. The `title` clauses leave out §3b's stock bundle jobs, which are not drafting work, a hand-outlined `File and serve …` job included: an availability letter still queued or in progress must not hold the gate job back, and neither do the two letter jobs, `Draft the letter` and `Deliver`, nor an Unstructured Writing's `Draft the Writing`, which are stock jobs too, nor §14a's `Pre-send gate`, which only the Sent write writes. §3c's `Prepare the review pages` and `Counsel's review of …` jobs are drafting work and count here like any other job, so the gate job cannot be created while the review is open.
+`AND rejected_at IS NULL` is load-bearing: a shelved job stays `queued` with `rejected_at` stamped (§10a), so without it a Writing whose only remaining job the practitioner shelved counts as still open and never gets its gate job. The `title` clauses leave out §3b's stock bundle jobs, which are not drafting work, a hand-outlined `File and serve …`, `Serve the application …` or `Serve the response …` job included: an availability letter still queued or in progress must not hold the gate job back, and neither do the two letter jobs, `Draft the letter` and `Deliver`, nor an Unstructured Writing's `Draft the Writing`, which are stock jobs too, nor §14a's `Pre-send gate`, which only the Sent write writes. §3c's `Prepare the review pages` and `Counsel's review of …` jobs are drafting work and count here like any other job, so the gate job cannot be created while the review is open.
 
 If that returns no rows, and no job titled `Pre-filing consistency gate` already exists on the Writing with a status other than `superseded`, deleted jobs (§10a) aside, create one through §3's two-call idiom — `kind = 'work'`, `billing_anchor` copied from the job just completed, `priority` one above the Writing's highest, and this fixed intent:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 7, 'Pre-filing consistency gate', 'Run the pre-filing checks on the assembled package and clear or waive every failure before the Writing is presented as ready to file.', 'work', 9, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 7, 'Pre-filing consistency gate', 'Run the pre-filing checks on the assembled package and clear or waive every failure before the Writing is presented as ready to file or serve.', 'work', 9, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 ```
 
 Recover its id (§3 call 2), then one step per check id, in `pre-filing-checks.md` order, each ending `not yet run`:
@@ -79,7 +79,7 @@ One waiver per step. A waived step is never re-opened by a later run: a re-run r
 
 **Fix instead of waive.** A finding the practitioner wants fixed is a new job they outline (Branch B); the gate job is left `wip` under this session's lock (§10). Once the fix job completes, its completing session finds the gate job already present, and the next step-9 session takes it over (§4's take-over variant), re-runs the tool, and rewrites every non-waived step.
 
-**Completion.** §9 as usual, only once every step carries `done_at` — every check passed, was `n/a`, or was waived. Only then may `/draft` present the Writing as ready to file and, on the practitioner's instruction, record its filing date through `drafting_data__record_filed` (`filing-checklists.md` §11).
+**Completion.** §9 as usual, only once every step carries `done_at` — every check passed, was `n/a`, or was waived. Only then may `/draft` present the Writing as ready to file, or a notice of application or application response as ready to serve, and, on the practitioner's instruction, record its filing date through `drafting_data__record_filed` or its service date through `drafting_data__record_served` (`filing-checklists.md` §11).
 
 **Re-running a stale gate: supersede, then create afresh** (the 2026-09-21 design §2.5). A completed gate job is never re-opened. When its checks ran before the latest changes and the practitioner says yes to re-running them, supersede it. Never do this on a session's own initiative:
 

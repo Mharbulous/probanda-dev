@@ -220,7 +220,7 @@ _Avoid_: shelve (an angle not pursued); complete (no work was done); auto-close.
 
 **Completion criteria**:
 The one card at the top of a Writing's Job Board: headed `Completion Criteria`, with the Writing kind's criteria beneath it. It is complete only when every criterion reads met at once. Derived at every render, never stored, and it makes no readiness claim of its own.
-_Avoid_: Goal; Goal card; objective; milestone; "ready to file" (the card never says it while a gate step is open).
+_Avoid_: Goal; Goal card; objective; milestone; "ready to file" or "ready to serve" (the card never says either while a gate step is open).
 
 **Component**:
 A part of a Mockup — caption (style of proceeding), orders, paragraphs, excerpts, signature block, address for service, frontmatter header. Shared Components render through one **component engine** each so every Mockup presents them identically.
@@ -334,7 +334,7 @@ _Avoid_: package (one kind of Filing); instrument; application (one kind of Writ
 
 **Filing-ready declaration**:
 The state in which every drafting criterion reads met. It triggers the noting-up sweep, the evidence-concerns pass and court-ready assembly at the next session's Opening, announced in one line. It is withdrawn when any drafting criterion flips back, and it recurs. The approval to file remains the practitioner's act.
-_Avoid_: approval to file; ready to file; sign-off.
+_Avoid_: approval to file; ready to file; approval to serve; ready to serve; sign-off.
 
 **Final review**:
 The practitioner's own reading of the content in context, whoever wrote it, done holistically and last, one Writing at a time. Until it is done, every statement of law, statement of fact, proposition, postulate, submission, order sought, clause, prose slot and rhetorical paragraph on a Writing for delivery (a Filing, or a Writing that is sent) carries 🧐 on its line once no other work marker on that line does (on a merged Notice of Application fact line, every object's markers count), and the Goal card cannot read ready. An approval is a `review_approvals` row holding a snapshot of the object's stored fields (text, excerpt, pinpoint, never rendered wording); 🧐 fires again whenever the stored fields differ from the latest snapshot, computed at render, never stored. Rendered for the human on every mockup of a Writing for delivery, never on a filed or sent face. A client letter is not a Writing and carries no 🧐: it is kept out of this database as solicitor-client material, not exempted from review. Rules: `.claude/skills/drafting-data/references/work-markers.md` row 🧐; storage: `references/review.md`. Internal names: `review_approvals`, `review_points`, criterion id `counsel-review`, `counselReviewMarker`.

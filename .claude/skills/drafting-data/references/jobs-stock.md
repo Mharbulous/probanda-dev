@@ -7,8 +7,8 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 
 | Writing kind | Stock jobs, in the stage `/prepare` offers them |
 |---|---|
-| Notice of Application | `Availability letter` (opening stage), `File and serve` (after the gate job completes), `Application book` (after responses arrive) |
-| Application Response | `File and serve` (after the gate job completes) |
+| Notice of Application | `Availability letter` (opening stage), `Serve the application` (after the gate job completes), `Set down for hearing` and optionally `Reply affidavits` (once each response is in or its time has run), `Application book` (after set-down), `Reset for hearing` (once adjourned generally). `File and serve` (after the gate job completes) only for a notice filed under the rule before B.C. Reg. 105/2026 |
+| Application Response | `Serve the response` (after the gate job completes), `File the served response` (once the notice of hearing is filed or served). `File and serve` (after the gate job completes) only for a response filed under the rule before B.C. Reg. 105/2026 |
 | A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Draft the letter` and `Deliver`, both at the letter's save (ADR 0024 D10) |
 | `internal-memo` | `Draft the letter` and `Deliver`, both at the memo's save, with the memo's own intents and steps below (#1161: a memo is sent like a letter) |
 | `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) | `Draft the Writing` and `Deliver`, both at the Writing's save |
@@ -23,7 +23,9 @@ Opening a Job Board with no Writing (`drafting_data__create_job_board`) writes n
 - Step 1: `Draft the chambers-availability letter`
 - Scope: `('filing_prose', NULL)` and `('filing_recipients', NULL)`, as `Draft the letter`'s. An `entity_id` of NULL covers the whole table within the job's proceeding, and the letter is a Writing on the proceeding of this job's own Writing, so the letter's prose and recipient writes pass the scope read under this job.
 
-**`File and serve`.** Modelled on §14's gate job. Filing or service work outlined outside this stock job takes a title starting `File and serve` too, so `/draft`'s Dispatch recognises it and skips it while the `gate` criterion is unmet.
+**Amended Rule 8-1 (B.C. Reg. 105/2026, in force 2026-10-01).** A notice of application and an application response are served unfiled, and filed later: the notice at set-down with a notice of hearing of application (Form 33.01), the response after set-down (8-1 (3), (9), (14.1)-(14.7)). The jobs below follow that order. `File and serve` files and then serves, the order before that amendment, and stays only for a Writing filed under that rule. The service jobs record the service through `drafting_data__record_served` (`filing-checklists.md` §11), which freezes the Writing as served. Its registry filing later is a step of `Set down for hearing` or `File the served response`, saved as an unlinked `documents` row as `File and serve`'s affidavit of service is, and never a lifecycle state.
+
+**`File and serve`.** Modelled on §14's gate job. Filing or service work outlined outside this stock job takes a title starting `File and serve`, `Serve the application` or `Serve the response` too, so `/draft`'s Dispatch recognises it and skips it while the `gate` criterion is unmet.
 
 - Intent: `File this Writing in the registry, serve it, and record the filing date and any affidavit of service.`
 - Step 1: `File in the registry and record the filing date`
@@ -31,12 +33,68 @@ Opening a Job Board with no Writing (`drafting_data__create_job_board`) writes n
 - Step 3: `Affidavit of service, or n/a`
 - Scope: `('filings', <the lead Writing's id>)` and `('documents', NULL)`. The filing date is written by `drafting_data__record_filed` (`filing-checklists.md` §11). The affidavit of service is a `documents` row produced by `/publish` form 015 or 016 and is **not** linked to the filed Writing, because the filed-date triggers refuse any `filing_documents` change once `filed_on` is set. Step 3 closes as `Affidavit of service: n/a` where none is sworn, by rewriting its text and stamping `done_at` as §14 closes an `n/a` check.
 
-**`Application book`.**
+**`Serve the application`.** Like `File and serve`, it waits on the gate.
 
-- Intent: `Prepare the application book: render its title page and index, then bind them with the documents and fill in the page numbers.`
-- Step 1: `Render the title page and index`
-- Step 2: `Bind the book and fill in the page numbers`
-- No scope rows: `/publish` and `/assemble` write nothing to this database, and the book's index membership is derived at assembly time.
+- Intent: `Serve a copy of this unfiled notice of application, with the affidavits and other materials it relies on, on every party of record and every other person the orders sought may affect, and record the service.`
+- Step 1: `Serve the unfiled notice and its affidavits and materials on each person entitled to them`
+- Step 2: `Record the notice as served, with the copy served`
+- Step 3: `Affidavit of service, or n/a`
+- Scope: `('filings', <the lead Writing's id>)` and `('documents', NULL)`. Step 2 is `drafting_data__record_served`. Step 3 is as `File and serve`'s.
+
+On a contempt application, Step 1 instead reads `Serve the unfiled notice and its affidavits and materials on each person entitled to them, and on the alleged contemnor by personal service` (Rule 22-8 (11)). The title, intent and other steps are unchanged.
+
+**`Serve the response`.** Like `File and serve`, it waits on the gate.
+
+- Intent: `Serve a copy of this unfiled application response, with any affidavits and other materials not already served, on the applicant and every other party of record, and record the service.`
+- Step 1: `Serve the unfiled response and its affidavits and materials on the applicant and each other party of record`
+- Step 2: `Record the response as served, with the copy served`
+- Step 3: `Affidavit of service, or n/a`
+- Scope: `('filings', <the lead Writing's id>)` and `('documents', NULL)`. Step 2 is `drafting_data__record_served`. Step 3 is as `File and serve`'s.
+
+**`Set down for hearing`.**
+
+- Intent: `Set this application down for hearing: file a notice of hearing of application with the served notice and the originals of its served affidavits and materials, then serve the filed notice of hearing on each application respondent.`
+- Step 1: `Prepare the notice of hearing of application (Form 33.01)`
+- Step 2: `File it with the served notice of application and the originals of its served affidavits and materials not yet filed`
+- Step 3: `Record the hearing date and time it sets, and save the filed copies`
+- Step 4: `Serve the filed notice of hearing on each application respondent`
+- Step 5: `Affidavit of service, or n/a`
+- Scope: `('hearing_details', NULL)` and `('documents', NULL)`. Step 3 records the hearing date by `filing-checklists.md` §2, and saves each filed copy as an unlinked `documents` row. It never writes `filed_on`, which holds the service date.
+
+**`Reply affidavits`.** Optional.
+
+- Intent: `Serve the applicant's reply affidavits on each application respondent, then file their originals before the hearing.`
+- Step 1: `Serve the reply affidavits on each application respondent`
+- Step 2: `File the originals of the served reply affidavits`
+- Step 3: `Affidavit of service, or n/a`
+- Scope: `('documents', NULL)`
+
+**`File the served response`.**
+
+- Intent: `File the served application response, with the originals of its served affidavits and other materials not yet filed, after the notice of hearing is filed and before the hearing, and bring copies to the hearing.`
+- Step 1: `File the served response with the originals of its served affidavits and materials not yet filed`
+- Step 2: `Save the filed copies`
+- Step 3: `Bring copies of the filed materials to the hearing`
+- Scope: `('documents', NULL)`. Step 2 saves each filed copy as an unlinked `documents` row.
+
+**`Application book`.** Its steps follow amended Rule 8-1 (15), (15.1) and (17). Steps 2 and 3 are `/assemble`'s `assemble-bcsc-record`.
+
+- Intent: `Prepare the application record: its Form 30.001 cover and index, bound with the filed notice of application, the responses served on the applicant and the filed and served evidence relied on; serve the index; and provide the record, with a marked copy of the notice, to the registry.`
+- Step 1: `Render the cover page (Form 30.001) and the index`
+- Step 2: `Bind the record in the rule's order and fill in the page numbers`
+- Step 3: `Prepare a separate copy of the filed notice with the orders sought in Part 1 marked`
+- Step 4: `Serve the index on each application respondent`
+- Step 5: `Provide the record and the marked copy to the registry`
+- No scope rows: `/publish` and `/assemble` write nothing to this database, and the record's contents are chosen at assembly time.
+
+**`Reset for hearing`.** For a notice of application adjourned generally, which stays live and is never retired (8-1 (21.1)).
+
+- Intent: `Reset this application, adjourned generally, for hearing: file a notice of hearing of application and serve the filed copy on each application respondent.`
+- Step 1: `Prepare the notice of hearing of application (Form 33.01)`
+- Step 2: `File it and record the new hearing date and time`
+- Step 3: `Serve the filed notice of hearing on each application respondent`
+- Step 4: `Affidavit of service, or n/a`
+- Scope: `('hearing_details', NULL)` and `('documents', NULL)`
 
 **`Draft the letter`.** One step. Written at a letter's or a memo's save, `filing_id` the Writing's own id. Not written when the save happens under the `Availability letter` job, which stands in for it.
 
@@ -74,7 +132,7 @@ The memo's save follows the letter save idiom below with this text in place of t
 
 The Writing's save follows the letter save idiom below with this job's title, intent and step in place of `Draft the letter`'s, its two extra scope rows added to call 3, and `Deliver` blocked by it.
 
-**These six jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all six by the same titles, and §14a's `Pre-send gate` job too.)
+**These twelve jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all twelve by the same titles, and §14a's `Pre-send gate` job too.)
 
 ### Letter save idiom
 

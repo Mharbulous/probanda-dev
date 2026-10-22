@@ -22,6 +22,6 @@ Passed or not applicable: one line each. Show the exhibit index table once. Whet
 
 ## Refusal
 
-While any step is open: never say "ready to file," never present the assembled documents as final, never record the Writing as filed. Name the open checks and stop. A session asked "is it ready to file?" with a step open answers with the open step and the finding, never with yes.
+While any step is open: never say "ready to file" or "ready to serve," never present the assembled documents as final, never record the Writing as served or filed. Name the open checks and stop. A session asked "is it ready to file?" or "is it ready to serve?" with a step open answers with the open step and the finding, never with yes.
 
-Once every step is closed, present the filing as ready for the practitioner's final approval to file, listing every waived check and its reason in that same message.
+Once every step is closed, present the filing as ready for the practitioner's final approval to file, or a notice of application or application response as ready for their final approval to serve (amended Rule 8-1 serves it before it is filed), listing every waived check and its reason in that same message.

@@ -3,9 +3,9 @@ name: prepare
 description: >
   Open a BCSC application at bundle level and outline its surrounding work as jobs: the forum,
   the lead Writing (a Notice of Application or an Application Response), its drafting jobs, and
-  the stock jobs for the availability letter, filing and service, and the application book.
-  Re-run in stages: at the opening, after the pre-filing gate job completes, and after responses
-  arrive. Outlining only: it drafts no document, is never assigned a job, and never touches
+  the stock jobs for the availability letter, service, set-down, filing and the application
+  record under amended Rule 8-1. Re-run in stages: at the opening, after the pre-filing gate job
+  completes, once responses are in, after set-down, and after an adjournment generally. Outlining only: it drafts no document, is never assigned a job, and never touches
   dates. Drafting a Writing's substance or working a job -> /draft. A date or deadline ->
   the docket-clerk agent, in a separate session.
 ---
@@ -60,13 +60,17 @@ Anything else the practitioner raises is a job to outline, or an idea to capture
 
 ## 4. Stages
 
-Post-gate work cannot sit on the board from the start. A waits-on link to a gate job that does not exist yet cannot be written, and file and serve has nothing to follow until a gate has passed. So `/prepare` is re-run in stages, each one its own outlining session. Each stage offers only the stock job for its stage (section 6).
+Post-gate work cannot sit on the board from the start. A waits-on link to a gate job that does not exist yet cannot be written, and service has nothing to follow until a gate has passed. Amended Rule 8-1 (B.C. Reg. 105/2026) serves a notice of application or application response unfiled, and files it later. So `/prepare` is re-run in stages, each one its own outlining session. Each stage offers only the stock job for its stage (section 6).
 
 | Stage | Triggered when | Notice of Application | Application Response |
 |---|---|---|---|
 | 1. Opening | The bundle is being opened: no lead Writing yet, or the practitioner opens the bundle on an existing one | Forum when unset, the Writing, its drafting jobs, `Availability letter` | Forum when unset, the Writing, its drafting jobs |
-| 2. After the gate | The lead Writing's Job Board shows its pre-filing consistency gate job completed (`drafting_forms__board_card` with `lanes: ["completed"]`) | `File and serve` | `File and serve` |
-| 3. After responses | The practitioner says the responses have arrived. Never inferred | `Application book` | None. The book is applicant-only |
+| 2. After the gate | The lead Writing's Job Board shows its pre-filing consistency gate job completed (`drafting_forms__board_card` with `lanes: ["completed"]`) | `Serve the application` | `Serve the response` |
+| 3. Responses in | The practitioner says each response is in, or its time has run. Never inferred | `Set down for hearing`, and `Reply affidavits` if the practitioner wants it | `File the served response`, once the practitioner says the notice of hearing was filed or served |
+| 4. After set-down | The lead Writing's Job Board shows `Set down for hearing` completed | `Application book` | None. The record is applicant-only |
+| 5. Adjourned generally | The practitioner says the application was adjourned generally. Never inferred | `Reset for hearing` | None |
+
+A notice of application adjourned generally stays live and is never retired. An application without notice takes no service job. `File and serve` is offered at stage 2 in place of the service job only where the practitioner says the Writing was filed under Rule 8-1 as it stood before B.C. Reg. 105/2026.
 
 Read the stage off `drafting_forms__board_card`, with `lanes: ["live"]` for the live lanes and `lanes: ["completed"]` for completed jobs, and the practitioner's own words, never off a date. A stage whose stock job the lead Writing's board already shows, in any state but superseded, does not offer it again.
 
@@ -87,12 +91,13 @@ Fixed-text jobs, offered per Writing kind and per stage:
 
 | Writing kind | Stock jobs |
 |---|---|
-| Notice of Application | `Availability letter` (stage 1), `File and serve` (stage 2), `Application book` (stage 3) |
-| Application Response | `File and serve` (stage 2) |
+| Notice of Application | `Availability letter` (stage 1), `Serve the application` (stage 2), `Set down for hearing` and `Reply affidavits` (stage 3), `Application book` (stage 4), `Reset for hearing` (stage 5). `File and serve` (stage 2) only for a notice filed under the rule before B.C. Reg. 105/2026 |
+| Application Response | `Serve the response` (stage 2), `File the served response` (stage 3). `File and serve` (stage 2) only for a response filed under the rule before B.C. Reg. 105/2026 |
 
 - **Their text is `/drafting-data` §3b's**, the whole record of each job's title, intent and steps. Take it from there at the moment of writing, character for character. Never reword, shorten or restate it, and never compose steps of your own for one. A practitioner who wants different words is outlining an ordinary job in their own words, which is not a stock job.
 - **Offered at the closing read-back** as cards beside the practitioner's own jobs, each carrying its fixed title. The practitioner picks or declines each. The pick is the approval, as on the fast path. A declined stock job is not written. No card starts picked.
 - **Written through `/drafting-data` §3b**, which fixes their scope to the lead Writing and how each is written.
+- **A contempt application** takes `Serve the application` with §3b's contempt step, which adds personal service on the alleged contemnor.
 - **The availability letter** is drafted by a `/draft` session that takes the job from the board. Sending it is the practitioner's step. `/prepare` never proposes hearing dates.
 
 ## 7. Persistence rule
