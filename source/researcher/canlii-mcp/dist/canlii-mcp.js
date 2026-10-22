@@ -77,10 +77,10 @@ var require_code = __commonJS({
       }
       get names() {
         var _a;
-        return (_a = this._names) !== null && _a !== void 0 ? _a : this._names = this._items.reduce((names, c) => {
+        return (_a = this._names) !== null && _a !== void 0 ? _a : this._names = this._items.reduce((names2, c) => {
           if (c instanceof Name)
-            names[c.str] = (names[c.str] || 0) + 1;
-          return names;
+            names2[c.str] = (names2[c.str] || 0) + 1;
+          return names2;
         }, {});
       }
     };
@@ -406,11 +406,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n;
       }
-      optimizeNames(names, constants) {
-        if (!names[this.name.str])
+      optimizeNames(names2, constants) {
+        if (!names2[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names2, constants);
         return this;
       }
       get names() {
@@ -427,15 +427,15 @@ var require_codegen = __commonJS({
       render({ _n }) {
         return `${this.lhs} = ${this.rhs};` + _n;
       }
-      optimizeNames(names, constants) {
-        if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
+      optimizeNames(names2, constants) {
+        if (this.lhs instanceof code_1.Name && !names2[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names2, constants);
         return this;
       }
       get names() {
-        const names = this.lhs instanceof code_1.Name ? {} : { ...this.lhs.names };
-        return addExprNames(names, this.rhs);
+        const names2 = this.lhs instanceof code_1.Name ? {} : { ...this.lhs.names };
+        return addExprNames(names2, this.rhs);
       }
     };
     var AssignOp = class extends Assign {
@@ -491,8 +491,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names2, constants) {
+        this.code = optimizeExpr(this.code, names2, constants);
         return this;
       }
       get names() {
@@ -521,20 +521,20 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names2, constants))
             continue;
-          subtractNames(names, n.names);
+          subtractNames(names2, n.names);
           nodes.splice(i, 1);
         }
         return nodes.length > 0 ? this : void 0;
       }
       get names() {
-        return this.nodes.reduce((names, n) => addNames(names, n.names), {});
+        return this.nodes.reduce((names2, n) => addNames(names2, n.names), {});
       }
     };
     var BlockNode = class extends ParentNode {
@@ -579,20 +579,20 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         var _a;
-        this.else = (_a = this.else) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a = this.else) === null || _a === void 0 ? void 0 : _a.optimizeNames(names2, constants);
+        if (!(super.optimizeNames(names2, constants) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names2, constants);
         return this;
       }
       get names() {
-        const names = super.names;
-        addExprNames(names, this.condition);
+        const names2 = super.names;
+        addExprNames(names2, this.condition);
         if (this.else)
-          addNames(names, this.else.names);
-        return names;
+          addNames(names2, this.else.names);
+        return names2;
       }
     };
     If.kind = "if";
@@ -607,10 +607,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names2, constants) {
+        if (!super.optimizeNames(names2, constants))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names2, constants);
         return this;
       }
       get names() {
@@ -631,8 +631,8 @@ var require_codegen = __commonJS({
         return `for(${varKind} ${name}=${from}; ${name}<${to}; ${name}++)` + super.render(opts);
       }
       get names() {
-        const names = addExprNames(super.names, this.from);
-        return addExprNames(names, this.to);
+        const names2 = addExprNames(super.names, this.from);
+        return addExprNames(names2, this.to);
       }
     };
     var ForIter = class extends For {
@@ -646,10 +646,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names2, constants) {
+        if (!super.optimizeNames(names2, constants))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names2, constants);
         return this;
       }
       get names() {
@@ -691,20 +691,20 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         var _a, _b;
-        super.optimizeNames(names, constants);
-        (_a = this.catch) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names2, constants);
+        (_a = this.catch) === null || _a === void 0 ? void 0 : _a.optimizeNames(names2, constants);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names2, constants);
         return this;
       }
       get names() {
-        const names = super.names;
+        const names2 = super.names;
         if (this.catch)
-          addNames(names, this.catch.names);
+          addNames(names2, this.catch.names);
         if (this.finally)
-          addNames(names, this.finally.names);
-        return names;
+          addNames(names2, this.finally.names);
+        return names2;
       }
     };
     var Catch = class extends BlockNode {
@@ -988,15 +988,15 @@ var require_codegen = __commonJS({
       }
     };
     exports.CodeGen = CodeGen;
-    function addNames(names, from) {
+    function addNames(names2, from) {
       for (const n in from)
-        names[n] = (names[n] || 0) + (from[n] || 0);
-      return names;
+        names2[n] = (names2[n] || 0) + (from[n] || 0);
+      return names2;
     }
-    function addExprNames(names, from) {
-      return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
+    function addExprNames(names2, from) {
+      return from instanceof code_1._CodeOrName ? addNames(names2, from.names) : names2;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names2, constants) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1012,18 +1012,18 @@ var require_codegen = __commonJS({
       }, []));
       function replaceName(n) {
         const c = constants[n.str];
-        if (c === void 0 || names[n.str] !== 1)
+        if (c === void 0 || names2[n.str] !== 1)
           return n;
-        delete names[n.str];
+        delete names2[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names2[c.str] === 1 && constants[c.str] !== void 0);
       }
     }
-    function subtractNames(names, from) {
+    function subtractNames(names2, from) {
       for (const n in from)
-        names[n] = (names[n] || 0) - (from[n] || 0);
+        names2[n] = (names2[n] || 0) - (from[n] || 0);
     }
     function not(x) {
       return typeof x == "boolean" || typeof x == "number" || x === null ? !x : (0, code_1._)`!${par(x)}`;
@@ -1221,7 +1221,7 @@ var require_names = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var names = {
+    var names2 = {
       // validation function arguments
       data: new codegen_1.Name("data"),
       // data passed to validation function
@@ -1250,7 +1250,7 @@ var require_names = __commonJS({
       jsonLen: new codegen_1.Name("jsonLen"),
       jsonPart: new codegen_1.Name("jsonPart")
     };
-    exports.default = names;
+    exports.default = names2;
   }
 });
 
@@ -6643,10 +6643,10 @@ var require_formats = __commonJS({
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
-    var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+    var DATE2 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     function date3(str) {
-      const matches = DATE.exec(str);
+      const matches = DATE2.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -21249,6 +21249,145 @@ $plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 
 [Console]::Out.Write([Convert]::ToBase64String($plain))
 `;
 
+// src/amendments.ts
+var BCLAWS = "https://www.bclaws.gov.bc.ca";
+var GAZETTE_PATH = /^\/civix\/document\/id\/lc\/bcgaz2\/[A-Za-z0-9_.\-]+$/;
+var MONTHS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december"
+];
+var DATE = "(January|February|March|April|May|June|July|August|September|October|November|December) (\\d{1,2}), (\\d{4})";
+function bulletinUrl(year) {
+  return `${BCLAWS}/civix/document/id/regulationbulletin/regulationbulletin/${year}cumulati`;
+}
+function htmlText(html) {
+  return html.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&#8212;/g, "\u2014").replace(/&#8211;/g, "\u2013").replace(/&#8209;/g, "-").replace(/&#47;/g, "/").replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code))).replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+}
+function isoDate(month, day, year) {
+  return `${year}-${String(MONTHS.indexOf(month.toLowerCase()) + 1).padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+function firstDate(text) {
+  const found = new RegExp(DATE).exec(text);
+  return found ? isoDate(found[1], found[2], found[3]) : null;
+}
+function regulationNumber(citation) {
+  return /\bReg\.?\s*(\d+\/\d{2,4})(?!\d)/i.exec(citation)?.[1] ?? null;
+}
+function names(text, number3) {
+  return new RegExp(`(?<!\\d)${number3.replace("/", "\\/")}(?!\\d)`).test(text);
+}
+function parseBulletin(html, year) {
+  const text = htmlText(html);
+  if (!text.includes(`Cumulative B.C. Regulations Bulletin ${year}`)) {
+    return `the page does not read as the Cumulative B.C. Regulations Bulletin ${year}`;
+  }
+  const marker = new RegExp(`current to ${DATE}`).exec(text);
+  if (!marker) return `the Cumulative B.C. Regulations Bulletin ${year} states no "current to" date`;
+  const rows = [];
+  for (const [, row] of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => cell[1]);
+    if (cells.length !== 4) continue;
+    const instrument = htmlText(cells[2]);
+    if (!/^\d+\/\d{2,4}$/.test(instrument)) continue;
+    const href = /<a\s[^>]*href="([^"]+)"/i.exec(cells[2])?.[1] ?? null;
+    rows.push({
+      description: htmlText(cells[1]),
+      instrument: `B.C. Reg. ${instrument}`,
+      href: href && GAZETTE_PATH.test(href) ? href : null,
+      deposit_date: firstDate(htmlText(cells[3])),
+      bulletin_url: bulletinUrl(year)
+    });
+  }
+  return { current_to: isoDate(marker[1], marker[2], marker[3]), rows };
+}
+var OPERATIVE = /\b(?:is|are) (?:amended|repealed|added)\b(?: to [^:.,;]+)?/;
+function parseAmendingSections(html, number3) {
+  const segments = html.split(/<p[^>]*class="SchHeading"[^>]*>\s*Schedule/i);
+  const found = [];
+  for (const segment of segments) {
+    const sections = [...segment.matchAll(/<p[^>]*class="amendsec"[^>]*>([\s\S]*?)<\/p>/gi)].map((section) => htmlText(section[1]));
+    if (sections.length === 0 || !names(sections[0], number3)) continue;
+    for (const section of sections) {
+      const verb = OPERATIVE.exec(section);
+      found.push(verb ? section.slice(0, verb.index + verb[0].length) : section);
+    }
+  }
+  return found.length > 0 ? found : `the amending text has no amending section that names ${number3}`;
+}
+async function amendmentsAfterMarker(number3, markerDate, today, getText, pages) {
+  const read = (url) => {
+    let pending = pages.get(url);
+    if (!pending) {
+      pending = getText(url);
+      pages.set(url, pending);
+    }
+    return pending;
+  };
+  const first = Number(markerDate.slice(0, 4)) - 1;
+  const last = Number(today.slice(0, 4));
+  const rows = [];
+  let currentTo = "";
+  for (let year = first; year <= last; year++) {
+    let parsed;
+    try {
+      parsed = parseBulletin(await read(bulletinUrl(year)), year);
+    } catch (error2) {
+      return unknown2(`Cumulative B.C. Regulations Bulletin ${year} (${bulletinUrl(year)}) could not be read: ${errorText(error2)}`);
+    }
+    if (typeof parsed === "string") return unknown2(parsed);
+    rows.push(...parsed.rows.filter((row) => names(row.description, number3)));
+    currentTo = parsed.current_to;
+  }
+  const amendments = [];
+  for (const row of rows) {
+    const effective = [...row.description.matchAll(new RegExp(`effective ${DATE}`, "g"))].map((found) => isoDate(found[1], found[2], found[3]));
+    const after = effective.length > 0 ? effective.some((date3) => date3 > markerDate) : (row.deposit_date ?? "") > markerDate;
+    if (!after) continue;
+    const amendment = {
+      instrument: row.instrument,
+      effective_date: effective[0] ?? null,
+      deposit_date: row.deposit_date,
+      bulletin_text: row.description,
+      provisions_amended: "unknown",
+      provisions_reason: null,
+      source_url: row.href ? BCLAWS + row.href : row.bulletin_url
+    };
+    if (!row.href) {
+      amendment.provisions_reason = "the bulletin links no B.C. Gazette Part II text for this regulation";
+    } else {
+      try {
+        const sections = parseAmendingSections(await read(amendment.source_url), number3);
+        if (typeof sections === "string") amendment.provisions_reason = sections;
+        else amendment.provisions_amended = sections;
+      } catch (error2) {
+        amendment.provisions_reason = `the amending text could not be read: ${errorText(error2)}`;
+      }
+    }
+    amendments.push(amendment);
+  }
+  return {
+    bulletin_current_to: currentTo,
+    amendments_after_marker: amendments,
+    amendments_note: `Checked the Cumulative B.C. Regulations Bulletins ${first} to ${last} for regulations deposited from ${first}-01-01 to ${currentTo}. Regulations deposited outside those dates are outside this check.`
+  };
+}
+function unknown2(reason) {
+  return { bulletin_current_to: null, amendments_after_marker: "unknown", amendments_note: reason };
+}
+function errorText(error2) {
+  return error2 instanceof Error ? error2.message : String(error2);
+}
+
 // src/legislation-currency.ts
 var NEAR_ITEMS_CAP = 10;
 function normalizeCitation(text) {
@@ -21271,10 +21410,10 @@ function isRepealed(repealed, endDate) {
   const flag = repealed?.trim() ?? "";
   return flag !== "" && flag.toUpperCase() !== "NO" || (endDate?.trim() ?? "") !== "";
 }
-function errorText(error2) {
+function errorText2(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
 }
-function blank(instrument, key, inputs) {
+function blank(instrument, key, inputs, today) {
   return {
     key,
     inputs,
@@ -21293,26 +21432,34 @@ function blank(instrument, key, inputs) {
     dateScheme: null,
     url: null,
     near_items: [],
-    error: null
+    error: null,
+    marker_date: null,
+    marker_source: null,
+    fetched_on: today,
+    ...unknown2("no amendment check: the instrument is not current")
   };
 }
-async function checkLegislationCurrency(instruments, getJson) {
+async function checkLegislationCurrency(instruments, getJson, getText, today) {
   const groups = /* @__PURE__ */ new Map();
   instruments.forEach((instrument, index) => {
     const key = instrumentKey(instrument);
     const group = groups.get(key);
-    if (group) group.inputs.push(index);
-    else groups.set(key, { instrument, inputs: [index] });
+    if (group) {
+      group.inputs.push(index);
+      const marker = instrument.currency_marker;
+      const held = group.instrument.currency_marker;
+      if (marker && (!held || marker < held)) group.instrument = { ...group.instrument, currency_marker: marker };
+    } else groups.set(key, { instrument, inputs: [index] });
   });
   let databases;
   try {
     const data = await withRetry(() => getJson("legislationBrowse/en/"));
     databases = LegislationResponseSchema.parse(data).legislationDatabases;
   } catch (error2) {
-    const detail = `get_legislation_databases: ${errorText(error2)}`;
+    const detail = `get_legislation_databases: ${errorText2(error2)}`;
     return {
       instruments: [...groups.entries()].map(([key, { instrument, inputs }]) => ({
-        ...blank(instrument, key, inputs),
+        ...blank(instrument, key, inputs, today),
         currency: "validation_unavailable",
         error: detail
       }))
@@ -21327,14 +21474,42 @@ async function checkLegislationCurrency(instruments, getJson) {
     }
     return pending;
   };
+  const pages = /* @__PURE__ */ new Map();
   const results = [];
   for (const [key, { instrument, inputs }] of groups) {
-    results.push(await checkOne(instrument, key, inputs, databases, listing, getJson));
+    const result = await checkOne(instrument, key, inputs, databases, listing, getJson, today);
+    if (result.currency === "current") await checkAmendments(result, instrument, today, getText, pages);
+    results.push(result);
   }
   return { instruments: results };
 }
-async function checkOne(instrument, key, inputs, databases, listing, getJson) {
-  const result = blank(instrument, key, inputs);
+async function checkAmendments(result, instrument, today, getText, pages) {
+  if (instrument.currency_marker) {
+    result.marker_date = instrument.currency_marker;
+    result.marker_source = "currency_marker";
+  } else if (result.startDate) {
+    result.marker_date = result.startDate;
+    result.marker_source = "canlii_startDate";
+  }
+  const number3 = regulationNumber(instrument.citation);
+  let report;
+  if (instrument.jurisdiction.trim().toLowerCase() !== "bc" || !number3) {
+    report = unknown2("no amendment source: only a B.C. Reg. citation is checked, against BC Laws' Cumulative B.C. Regulations Bulletin");
+  } else if (!result.marker_date) {
+    report = unknown2("no marker date: the caller gave no currency_marker and CanLII returned no startDate");
+  } else {
+    report = await amendmentsAfterMarker(
+      number3,
+      result.marker_date,
+      today,
+      (url) => withRetry(() => getText(url)),
+      pages
+    );
+  }
+  Object.assign(result, report);
+}
+async function checkOne(instrument, key, inputs, databases, listing, getJson, today) {
+  const result = blank(instrument, key, inputs, today);
   const jurisdiction = instrument.jurisdiction.trim().toLowerCase();
   const kept = databases.filter((db) => db.jurisdiction.toLowerCase() === jurisdiction);
   const items = [];
@@ -21343,7 +21518,7 @@ async function checkOne(instrument, key, inputs, databases, listing, getJson) {
       for (const item of await listing(database.databaseId)) items.push({ ...item, database });
     } catch (error2) {
       result.currency = "validation_unavailable";
-      result.error = `browse_legislation ${database.databaseId}: ${errorText(error2)}`;
+      result.error = `browse_legislation ${database.databaseId}: ${errorText2(error2)}`;
       return result;
     }
   }
@@ -21367,7 +21542,7 @@ async function checkOne(instrument, key, inputs, databases, listing, getJson) {
     metadata = LegislationMetadataSchema.parse(data);
   } catch (error2) {
     result.currency = "validation_unavailable";
-    result.error = `get_legislation_regulation_metadata ${match.databaseId}/${match.legislationId}: ${errorText(error2)}`;
+    result.error = `get_legislation_regulation_metadata ${match.databaseId}/${match.legislationId}: ${errorText2(error2)}`;
     return result;
   }
   result.returned_title = metadata.title;
@@ -21627,12 +21802,13 @@ server.tool(
 );
 server.tool(
   "legislation_currency",
-  "Report whether each cited statute, regulation or rule of court exists in CanLII's legislation databases and is unrepealed: currency is current, repealed, archived, not-found or validation_unavailable. Pass the instrument as consolidated, never an amending regulation. Inputs naming the same instrument are checked once and returned as one result listing their input indexes. Metadata only: it states nothing about what an instrument says, and only `current` reads as confirmed.",
+  "Report whether each cited statute, regulation or rule of court exists in CanLII's legislation databases and is unrepealed: currency is current, repealed, archived, not-found or validation_unavailable. Pass the instrument as consolidated, never an amending regulation. Inputs naming the same instrument are checked once and returned as one result listing their input indexes. For a current B.C. Reg., it also lists from BC Laws' Cumulative B.C. Regulations Bulletin the regulations taking effect after the marker date (the caller's currency_marker, else CanLII's startDate), with the provisions each amends quoted from its text, or `unknown` with the reason. `current` alone never shows the filed text is in force: read it with marker_date and amendments_after_marker. It states nothing about what an instrument says.",
   {
     instruments: external_exports.array(external_exports.object({
       citation: external_exports.string().min(1).max(200).describe("The instrument's citation as consolidated, as the caller stores it (e.g. 'SBC 2012, c 13')"),
       title: external_exports.string().max(300).describe("The instrument's title as the caller has it"),
-      jurisdiction: external_exports.string().regex(/^[a-zA-Z]{2,3}$/).describe("CanLII jurisdiction code (e.g. 'bc', 'ca')")
+      jurisdiction: external_exports.string().regex(/^[a-zA-Z]{2,3}$/).describe("CanLII jurisdiction code (e.g. 'bc', 'ca')"),
+      currency_marker: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe(`The filed consolidation's "current to" date (YYYY-MM-DD), when the caller holds one`)
     })).min(1).max(50)
   },
   async ({ instruments }) => {
@@ -21645,7 +21821,11 @@ server.tool(
         const response = await apiFetch(`https://api.canlii.org/v1/${path}?${params.toString()}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
-      });
+      }, async (url) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.text();
+      }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-CA"));
       for (const result of report.instruments) {
         if (result.error) result.error = sanitizeError(result.error);
       }
