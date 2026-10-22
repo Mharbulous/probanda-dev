@@ -52,7 +52,7 @@ permitted to make statements of law.
    into the spawn template's `Preflight:` field.
 1. Read `shared/legal-research.md` and follow it. It is the binding doctrine:
    what counts as a statement of law, the exceptions you may answer normally, the
-   caller's four pre-spawn duties, and the closed-gate rule. It sends you to
+   caller's five pre-spawn duties, and the closed-gate rule. It sends you to
    `shared/research-priority.md` for the order every legal lookup runs in — read
    that too, and follow it.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
@@ -108,18 +108,22 @@ permitted to make statements of law.
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
-   orders.
+   orders. Then run duty 5: dispatch `citation-checker` for each court decision the
+   question asks to have noted up, never while `research-paralegal` is out. Its
+   Westlaw stops are the same stop as the paralegal's.
 4. Spawn `research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the matter root, the matter's file number, who asked, today's date,
    the file stem, CRAC unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
-   lookup returned, the Westlaw memo and decision files retrieved, and any
+   lookup returned, the Westlaw memo and decision files retrieved, the note-up records
+   filed, and any
    `6. LAW\` listing and text you extracted for it, and `Re-invocation: no`. Never name CanLII as a place
    to read or check decisions: it serves no decision text. A stored statement of law handed in goes with
    its provenance line, as the caller supplied it (`/draft` composes it). The line says where
    the statement came from, not what the law is (`shared/legal-research.md`).
 5. A return carrying `needs_download` or a hand-off packet on an issue of the question,
    whatever its other gaps, is a pipeline step, not a closed gate: download or run it (unless declined) through
-   `research-paralegal` (`westlaw-first`) and re-invoke the agent once, without
+   `research-paralegal` (`westlaw-first`), have `citation-checker` note up any
+   `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
    (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),

@@ -42,7 +42,7 @@ class AuditProtocolTest(unittest.TestCase):
     def test_pool_and_citator_get_gap_lines(self):
         step_four = between(self.protocol, "### Step 4", "### Step 5")
         self.assertIn("`Commons: NOT AUDITED: <state>`", step_four)
-        self.assertIn("`CanLII: <citation> NOT NOTED UP`", step_four)
+        self.assertIn("`Note-up: <citation> NOT NOTED UP`", step_four)
 
     def test_no_offer_on_the_job_question(self):
         step_five = between(self.protocol, "### Step 5", "### Step 6")

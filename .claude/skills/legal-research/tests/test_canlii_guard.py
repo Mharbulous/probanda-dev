@@ -41,13 +41,19 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
     def test_device_bridged_research_call_is_blocked(self):
         self.assertBlocked(call(BRIDGED + "search"))
 
-    def test_plugin_agent_citator_call_is_allowed(self):
-        # Inside an agent CanLII is note-up only (test_westlaw_first.py pins the
-        # in-agent block).
+    def test_citation_checker_citator_call_is_allowed(self):
+        # Inside an agent CanLII is note-up only, and only citation-checker notes up
+        # (test_westlaw_first.py pins the in-agent block).
+        result = call(LOCAL + "get_case_citator", agent_id="a1b2",
+                      agent_type="researcher:citation-checker")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_other_plugin_agent_citator_call_is_blocked(self):
         for agent_type in ("researcher:research-agent", "researcher:research-paralegal"):
             with self.subTest(agent_type=agent_type):
                 result = call(LOCAL + "get_case_citator", agent_id="a1b2", agent_type=agent_type)
-                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("citation-checker", result.stderr)
 
     def test_raw_legislation_tools_are_blocked_in_every_agent(self):
         # The paralegal's legislation-currency mode retired into legislation_currency

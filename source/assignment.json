@@ -81,6 +81,7 @@
         "verify-law"
       ],
       "agents": [
+        "citation-checker",
         "equivalence-checker",
         "legislation-fetcher",
         "research-agent",

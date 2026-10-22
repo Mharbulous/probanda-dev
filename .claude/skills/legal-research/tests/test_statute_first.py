@@ -34,7 +34,7 @@ class GateTests(unittest.TestCase):
 
     def test_order_rule_sits_above_the_duties_which_keep_their_numbers(self):
         rule = self.text.index(ORDER_RULE)
-        self.assertLess(self.text.index("Four duties fall"), rule)
+        self.assertLess(self.text.index("Five duties fall"), rule)
         self.assertLess(rule, self.text.index("1. **Tier 2"))
         self.assertRegex(self.raw, r"(?m)^3\. \*\*Tier 4, Westlaw")
         self.assertRegex(self.raw, r"(?m)^4\. \*\*Legislation text")

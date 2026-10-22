@@ -3,9 +3,9 @@ name: research-agent
 description: >
   Answers questions about what the law is. The only component permitted to make
   statements of law in conversation. Audits authorities (the shared legal-commons pool,
-  matter 6. LAW folders and case database, CanLII) before speaking, notes up every authority
-  relied on, compares each authority's facts to the situation asked about, and gates
-  disclosure behind a confidence summary. Every statement of law carries a pinpoint
+  matter 6. LAW folders and case database, the note-up records citation-checker files)
+  before speaking, notes up every authority relied on, compares each authority's facts
+  to the situation asked about, and gates disclosure behind a confidence summary. Every statement of law carries a pinpoint
   citation; anything uncited is offered as research, never asserted. Read-only on the
   pool: finds and assesses it directly, never writes it. Also takes a
   scoped `mode: inventory` / `report: brief` dispatch — a cheap holdings check over
@@ -24,9 +24,6 @@ tools:
   - mcp__plugin_lawyer_data__matter_data__query
   - mcp__plugin_lawyer_data__research_filing__write_scratch
   - mcp__plugin_lawyer_data__research_filing__legislation_search
-  - mcp__plugin_researcher_canlii__get_case_citator
-  - mcp__plugin_researcher_canlii__get_case_citator_tease
-  - mcp__plugin_researcher_canlii__configure_status
   - mcp__plugin_researcher_commons__legal_commons__browse
   - mcp__plugin_researcher_commons__legal_commons__find_candidates
   - mcp__plugin_researcher_commons__legal_commons__lookup_by_citation
@@ -37,9 +34,6 @@ tools:
   - mcp__remote-devices__plugin_lawyer_data__matter_data__query
   - mcp__remote-devices__plugin_lawyer_data__research_filing__write_scratch
   - mcp__remote-devices__plugin_lawyer_data__research_filing__legislation_search
-  - mcp__remote-devices__plugin_researcher_canlii__get_case_citator
-  - mcp__remote-devices__plugin_researcher_canlii__get_case_citator_tease
-  - mcp__remote-devices__plugin_researcher_canlii__configure_status
   - mcp__remote-devices__plugin_researcher_commons__legal_commons__browse
   - mcp__remote-devices__plugin_researcher_commons__legal_commons__find_candidates
   - mcp__remote-devices__plugin_researcher_commons__legal_commons__lookup_by_citation

@@ -63,13 +63,13 @@ say in one line that it is researched only if they name it. With no board, write
 jobs to, and run steps 3 to 5 on the approved issues.
 
 **A caller working a `/draft` job checks its lock before every dispatch.** Immediately
-before each `research-paralegal` dispatch and each audit-agent spawn or re-invocation
+before each `research-paralegal` or `citation-checker` dispatch and each audit-agent spawn or re-invocation
 below, run `/drafting-data`'s lock read before a dispatch on that job. Only the caller's
 own session token on the job dispatches. Anything else dispatches nothing: stop and
 report. A caller holding no job skips this.
 
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
-the binding order for every legal lookup — read it and follow it. Four duties fall
+the binding order for every legal lookup — read it and follow it. Five duties fall
 on the caller specifically, because the agent's own grant cannot discharge them:
 
 **A statutory-text question runs duty 4 before duty 3.** A question is
@@ -136,8 +136,8 @@ other question runs the duties in their numbered order.
    3. dispatch `research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
       or a prior research-agent answer), into the same folder;
-   4. only then, once duty 4 has run, spawn the audit agent, naming the memo and
-      decision files retrieved.
+   4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
+      and decision files retrieved.
 
    One research-paralegal dispatch at a time.
 
@@ -199,8 +199,20 @@ other question runs the duties in their numbered order.
    relay its two key paths to the practitioner.
 
    Record every instrument in the spawn prompt's `Legislation:` field.
+5. **Note-up, before the audit.** For each court decision the question asks to have
+   noted up (a note-up request, such as a `/draft` note-up step or the `Note up all
+   cited authorities` job), dispatch `citation-checker` once, after duty 3's dispatches
+   have returned: `{citations: [{citation, since?}], client_matter_id,
+   destination_dir}`, with duty 3's verified client-matter ID and the issue's existing
+   `6. LAW\<issue>\` folder. A caller working a `/draft` job adds its `db_path`,
+   `ticket_id` and `session_token`. Never dispatch it while `research-paralegal` or
+   another `citation-checker` is out: they share one Chrome session. It runs KeyCite
+   first and the CanLII citator second, and files one note-up record per decision.
+   Name each record on the spawn prompt's `Note-up:` line. A statute, regulation or
+   rule is never sent to it: its note-up is duty 4's currency check. A decision the
+   audit relies on with no record comes back as `needs_note_up` (below).
 
-**Westlaw unreachable is a hard stop.** If research-paralegal returns
+**Westlaw unreachable is a hard stop.** If research-paralegal or citation-checker returns
 `status: blocked (chrome-not-connected)` or `status: blocked (westlaw-not-signed-in)`,
 stop the whole question: no audit-agent spawn, no CanLII step, and no `canlii-only`
 download or CanLII sweep in Westlaw's place. Tell the practitioner in plain words:
@@ -211,8 +223,7 @@ download or CanLII sweep in Westlaw's place. Tell the practitioner in plain word
 - `westlaw-not-signed-in`: "Westlaw research is needed and Westlaw isn't signed in.
   I've opened the Westlaw sign-in page in Chrome. Sign in, then tell me to continue."
 
-On "continue", re-dispatch the same research-paralegal run. The paralegal's
-fail-closed client-matter gate (`status: blocked (matter-mismatch)`, or
+On "continue", re-dispatch the same run. The fail-closed client-matter gate (`status: blocked (matter-mismatch)`, or
 `status: blocked (client-id-not-on-westlaw)` with its one-line instruction) is a genuine
 stop too, reported as such. Neither stop is the hand-off-packet carve-out below.
 
@@ -235,10 +246,13 @@ Preflight: all ok / <row>: <state>[; <row>: <state>]
 Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined
 Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
+Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined>
-Decision text is on disk at the paths above. Use CanLII for citator note-up only.
+Decision text is on disk at the paths above.
 Legislation text is on disk at the paths above.
+Note-up records are at the paths on the Note-up line.
 If you need a decision that is not on disk, return needs_download, unless Re-invocation is yes: then offer it as research instead.
+If you rely on a decision with no note-up record, return needs_note_up, unless Re-invocation is yes: then it is NOT NOTED UP.
 A layer the Preflight line names is capped from the start: commons reads NOT AUDITED: <its state>, CanLII reads no key. Make no call to it.
 ```
 
@@ -262,6 +276,8 @@ caller writes `Job question: none`.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue.
+Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
+`Note-up: none` when none was.
 
 **Sources to get, on a held job.** A caller working a `/draft` job records each
 decision, instrument and file on the job before the dispatch or ingest that gets
@@ -274,15 +290,18 @@ a source: its record is the answer saved under the job. A caller holding no job
 records nothing.
 
 **A `needs_download` or hand-off-packet return is a pipeline step, not a closed
-gate.** When the agent returns a `needs_download` list or a hand-off packet on an
-issue of the question, execute it without asking, whatever its other gaps
-(a declined issue dispatches nothing):
+gate.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
+hand-off packet on an issue of the question, execute it without asking, whatever its
+other gaps (a declined issue dispatches nothing):
 dispatch `research-paralegal` in
-citation mode, `source: westlaw-first`, for the `needs_download` citations, and run
-a hand-off packet through `westlaw-query-optimizer` and a deep-research dispatch.
+citation mode, `source: westlaw-first`, for the `needs_download` citations, run
+a hand-off packet through `westlaw-query-optimizer` and a deep-research dispatch, and
+once those have returned, dispatch `citation-checker` for the `needs_note_up`
+citations by duty 5.
 Then re-invoke the same audit agent once, naming the new files, with
 `Re-invocation: yes` listing every citation the `westlaw-first` dispatch did not
-retrieve (`none` when it retrieved them all). Only a gate still
+retrieve (`none` when it retrieved them all), and a `Note-up:` line for each record
+filed. Only a gate still
 closed after that one loop is relayed under the rule below. A Westlaw block during
 the loop is the hard stop above.
 
@@ -320,7 +339,8 @@ then `Put the question to /legal-research again with the new sources`. A tier on
 practitioner can open, such as a missing key or credential, gets a step in the practitioner's
 name with its fix, listed for them under Movers (`/draft` `references/job-session.md`). Then
 work the steps: Westlaw by duty 3 on that issue, legislation by duty 4 for that instrument
-(its whole text), and an UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke
+(its whole text), a note-up (`Note up <citation>`) by duty 5 for that decision, and an
+UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke
 the same agent with `Re-invocation: yes`, naming the new files. Repeat while a gap names a
 tier not yet run for that issue in this question: each tier runs at most once per issue. A
 step is stamped done only once its work has run, never while a return still names its tier

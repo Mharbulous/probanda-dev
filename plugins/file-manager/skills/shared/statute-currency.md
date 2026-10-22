@@ -100,8 +100,9 @@ points here rather than restating it.
   stored result, so 📇 returns until the check runs for the enactment as now named.
 - **Doctrine:** an authority of kind doctrine (a secondary authority) is never noted
   up and never carries 📇.
-- **Case law** is unchanged: the CanLII citator (`legal-audit-protocol.md` step e),
-  its outcome stored as the authority's treatment.
+- **Case law** is noted up by `citation-checker`'s record (`legal-audit-protocol.md`
+  step e), and the treatment research-agent reads from it is stored as the authority's
+  treatment.
 
 ## Professional-conduct frame
 

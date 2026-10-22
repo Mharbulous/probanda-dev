@@ -6,9 +6,9 @@ Two guards over the CanLII research tools:
 
 - The main session never calls them. A main-session call is the closed-gate
   bypass recorded in #491.
-- Inside a subagent, CanLII is note-up only. CanLII's API returns no decision
-  text, so any other tool is an attempt to find or read a decision through
-  CanLII (the CanLII-first failure).
+- Inside a subagent, CanLII is note-up only, and only citation-checker notes
+  up. CanLII's API returns no decision text, so any other tool is an attempt
+  to find or read a decision through CanLII (the CanLII-first failure).
 
 legislation_currency runs anywhere, the main session included: it is leg 1 of
 shared/statute-currency.md as one deterministic call, reports metadata about an
@@ -24,8 +24,8 @@ Decision rule
   2. The call comes from an agent the researcher plugin ships (hook
      input has agent_id, and agent_type carries the researcher:
      prefix):
-     a. citator tool                                             -> allow.
-     b. any other CanLII tool                                    -> block (exit 2).
+     a. citator tool, from citation-checker                      -> allow.
+     b. any other CanLII tool, or the citator from another agent -> block (exit 2).
   3. Otherwise (main session, or any other subagent)             -> block (exit 2).
 
 Registered in source/researcher/plugin.json. Fails OPEN on any
@@ -40,14 +40,15 @@ SETUP_TOOLS = {"configure_status", "configure_credential"}
 CURRENCY_TOOL = "legislation_currency"
 CITATOR_TOOLS = {"get_case_citator", "get_case_citator_tease"}
 RESEARCH_AGENT_PREFIXES = ("researcher:",)
+NOTE_UP_AGENT = "researcher:citation-checker"
 
-BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside research-agent (citator only), never in the main session.
+BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside citation-checker (citator only), never in the main session.
 A statute-currency check is the canlii legislation_currency tool, which runs here.
 A question about what the law is goes through /legal-research. If its agent's gate closed, relay the agent's confidence summary and research offers verbatim and stop. A closed gate is never a licence to research or answer the question yourself.
 If the research agent is unavailable, report that the Probanda plugin needs a re-import and full app restart, and stop."""
 
 IN_AGENT_BLOCK_MESSAGE = """Blocked: CanLII has no decision text. Its API returns index metadata and citator links only. Do not call CanLII to find, read, or check the content of any decision. If you need a decision that is not on disk, stop and return `needs_download: [citations]`. The caller downloads it from Westlaw and re-invokes you once, with `Re-invocation: yes` in the spawn prompt. On that re-invocation, never return `needs_download`: offer the decision as research instead.
-Inside this agent only the CanLII citator (get_case_citator, get_case_citator_tease) and configure_status run."""
+The CanLII citator (get_case_citator, get_case_citator_tease) runs only inside citation-checker, which notes up decisions for the /legal-research gate. configure_status runs anywhere."""
 
 
 def main():
@@ -57,7 +58,7 @@ def main():
         return 0
     agent_type = payload.get("agent_type") or ""
     if payload.get("agent_id") and agent_type.startswith(RESEARCH_AGENT_PREFIXES):
-        if match.group(1) in CITATOR_TOOLS:
+        if match.group(1) in CITATOR_TOOLS and agent_type == NOTE_UP_AGENT:
             return 0
         sys.stderr.write(IN_AGENT_BLOCK_MESSAGE + "\n")
         return 2

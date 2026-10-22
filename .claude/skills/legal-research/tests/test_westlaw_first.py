@@ -26,6 +26,10 @@ RESEARCH_LAWYER = LITIGATION / "agents" / "research-agent.md"
 PARALEGAL_COPIES = (
     LITIGATION / "agents" / "research-paralegal.md",
 )
+CITATION_CHECKER = LITIGATION / "agents" / "citation-checker.md"
+# Every agent that drives the shared Chrome session to reach Westlaw.
+CHROME_AGENTS = PARALEGAL_COPIES + (CITATION_CHECKER,)
+NOTE_UP_PLAYBOOK = SHARED / "citation-checker" / "note-up.md"
 HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
 CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "index.ts"
 CANLII_DIST = LITIGATION / "canlii-mcp" / "dist" / "canlii-mcp.js"
@@ -125,8 +129,13 @@ def plugin_files():
 
 
 class AuditAgentGrantAndShimTests(unittest.TestCase):
-    def test_research_lawyer_canlii_grant_is_the_citator_allow_list_under_both_names(self):
+    def test_research_lawyer_holds_no_canlii_tool(self):
+        # Noting up moved to citation-checker (2026-10-22): the audit agent reads its records.
         tools = granted_tools(RESEARCH_LAWYER)
+        self.assertEqual([tool for tool in tools if CANLII_TOOL_RE.match(tool)], [])
+
+    def test_citation_checker_canlii_grant_is_the_citator_allow_list_under_both_names(self):
+        tools = granted_tools(CITATION_CHECKER)
         canlii = {m.group(1) for m in map(CANLII_TOOL_RE.match, tools) if m}
         self.assertEqual(canlii, CITATOR_ALLOW_LIST)
         for name in CITATOR_ALLOW_LIST:
@@ -172,9 +181,10 @@ class DoctrineTests(unittest.TestCase):
         text = read(SHARED / "legal-research.md")
         before_spawn = text[text.index("**Before spawning, run what the agent cannot.**"):
                             text.index("**When the gate closes, closed is the answer.**")]
-        self.assertIn("Four duties fall", before_spawn)
+        self.assertIn("Five duties fall", before_spawn)
         self.assertRegex(before_spawn, r"(?m)^3\. \*\*Tier 4, Westlaw")
         self.assertRegex(before_spawn, r"(?m)^4\. \*\*Legislation text")
+        self.assertRegex(before_spawn, r"(?m)^5\. \*\*Note-up, before the audit")
         self.assertIn(
             "A `needs_download` or hand-off-packet return is a pipeline step, not a closed gate.",
             flat(before_spawn),
@@ -263,12 +273,12 @@ class DoctrineTests(unittest.TestCase):
         self.assertIn("stop the whole question", gate)
         for path in (SHARED / "research-paralegal" / "citation-download.md",
                      SHARED / "research-paralegal" / "westlaw-deep-research.md",
-                     SHARED / "legal-research.md", *PARALEGAL_COPIES):
+                     SHARED / "legal-research.md", *CHROME_AGENTS):
             text = read(path)
             for status in ("blocked (chrome-not-connected)", "blocked (westlaw-not-signed-in)"):
                 with self.subTest(path=path.name, status=status):
                     self.assertIn(status, text)
-        for path in PARALEGAL_COPIES:
+        for path in CHROME_AGENTS:
             with self.subTest(path=str(path)):
                 check = flat(read(path))
                 navigate = check.index("Navigate a tab to `https://nextcanada.westlaw.com`")
@@ -283,12 +293,43 @@ class DoctrineTests(unittest.TestCase):
             with self.subTest(playbook=name):
                 self.assertNotIn("Chrome is not connected, return", text)
                 self.assertIn("Chrome reach ladder", text)
-        for path in PARALEGAL_COPIES:
+        for path in CHROME_AGENTS:
             text = flat(read(path))
             for phrase in ("Chrome reach ladder", "createIfEmpty", "chrome-tools-absent", "tried:"):
                 with self.subTest(path=path.name, phrase=phrase):
                     self.assertIn(phrase, text)
             self.assertIn("ToolSearch", granted_tools(path))
+
+
+class NoteUpRoutingTests(unittest.TestCase):
+    def test_the_gate_routes_every_note_up_to_citation_checker(self):
+        text = read(SHARED / "legal-research.md")
+        self.assertNotIn("Use CanLII for citator note-up only", text)
+        duty_5 = flat(text[text.index("5. **Note-up, before the audit"):
+                           text.index("**Westlaw unreachable is a hard stop.**")])
+        self.assertIn("dispatch `citation-checker`", duty_5)
+        self.assertIn("never sent to it", duty_5)
+        self.assertIn("citation-checker returns", flat(text))
+        template = text[text.index("**Spawn the agent from this template.**"):
+                        text.index("**A `needs_download` or hand-off-packet return")]
+        self.assertEqual(len([l for l in template.splitlines() if l.startswith("Note-up:")]), 1)
+
+    def test_keycite_runs_before_the_canlii_citator(self):
+        rows = [line for line in read(NOTE_UP_PLAYBOOK).splitlines()
+                if re.match(r"^\|\s*\d+\s*\|", line)]
+        self.assertIn("KeyCite", rows[0])
+        self.assertIn("CanLII", rows[1])
+        self.assertIn("no CanLII call in its place", flat(read(NOTE_UP_PLAYBOOK)))
+
+    def test_citation_checker_never_classifies_treatment(self):
+        text = flat(read(CITATION_CHECKER))
+        self.assertIn("never classifies treatment", text)
+        self.assertIn("Never open, read, quote or summarize a citing decision", text)
+
+    def test_research_agent_has_no_note_up_mode(self):
+        scoped = read(SHARED / "legal-audit-scoped.md")
+        self.assertNotIn("## `mode: note-up`", scoped)
+        self.assertIn("needs_note_up", read(SHARED / "legal-audit-protocol.md"))
 
 
 class CanliiServerTests(unittest.TestCase):
@@ -307,7 +348,7 @@ class CanliiServerTests(unittest.TestCase):
 
 
 class InAgentHookTests(unittest.TestCase):
-    AUDIT_AGENTS = ("researcher:research-agent",)
+    AUDIT_AGENTS = ("researcher:research-agent", "researcher:citation-checker")
 
     def test_audit_agents_are_blocked_from_every_non_citator_canlii_tool(self):
         for agent_type in self.AUDIT_AGENTS:
@@ -319,12 +360,17 @@ class InAgentHookTests(unittest.TestCase):
                         self.assertIn("CanLII has no decision text", result.stderr)
                         self.assertIn("needs_download", result.stderr)
 
-    def test_audit_agents_keep_the_citator(self):
-        for agent_type in self.AUDIT_AGENTS:
-            for tool in ("get_case_citator", "get_case_citator_tease", "configure_status"):
+    def test_only_citation_checker_keeps_the_citator(self):
+        for tool in ("get_case_citator", "get_case_citator_tease", "configure_status"):
+            with self.subTest(tool=tool):
+                result = run_hook(LOCAL + tool, agent_id="a1",
+                                  agent_type="researcher:citation-checker")
+                self.assertEqual(result.returncode, 0, result.stderr)
+        for agent_type in ("researcher:research-agent", "researcher:research-paralegal"):
+            for tool in ("get_case_citator", "get_case_citator_tease"):
                 with self.subTest(agent_type=agent_type, tool=tool):
                     result = run_hook(LOCAL + tool, agent_id="a1", agent_type=agent_type)
-                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.returncode, 2, result.stderr)
 
     def test_research_paralegal_no_longer_keeps_the_legislation_tools(self):
         # Its legislation-currency mode retired into legislation_currency (2026-10-06).

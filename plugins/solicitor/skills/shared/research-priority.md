@@ -13,7 +13,7 @@ It governs *answering*. It does not govern *verification*: good-law checks
 (note-up, citator, treatment chain) run wherever they are available, at any tier.
 Judicial consideration of legislation is answering (`statute-currency.md`).
 
-## The four tiers, and CanLII note-up
+## The four tiers, and note-up
 
 | Tier | Layer | Access path | Cost |
 |---|---|---|---|
@@ -24,7 +24,8 @@ Judicial consideration of legislation is answering (`statute-currency.md`).
 
 | Row | Source | Use | Cost |
 |---|---|---|---|
-| Note-up (citator) only | CanLII | CanLII's API returns no decision text. It cannot tell you what a case says. Never use it to find, read or summarize a decision. Its citator (citing and cited cases) notes up an authority whose text was read at tiers 1–4. | free, needs a key |
+| Note-up (citator) | Westlaw KeyCite Canada | Run first by `citation-checker`, dispatched by the `/legal-research` caller. It records KeyCite's flag, History and Citing References word for word, and never a treatment of its own. | subscription, in-plan content only |
+| Note-up (citator) only | CanLII | CanLII's API returns no decision text. It cannot tell you what a case says. Never use it to find, read or summarize a decision. Its citator (citing cases) is run second by `citation-checker` to note up an authority whose text was read at tiers 1–4. | free, needs a key |
 
 **Westlaw unreachable is a hard stop, never a descent to CanLII.** When Chrome is
 not connected or Westlaw is not signed in, research stops and the practitioner is
@@ -42,7 +43,8 @@ Tier 2 sits above tier 3 deliberately: a pooled principle carries its authoritie
 and criteria and has already been through a severance and adjudication pipeline,
 whereas an un-ingested file in `6. LAW\` has not yet been read into any layer.
 
-CanLII is never an answering source, and it is the note-up tool at every tier.
+CanLII is never an answering source. Noting up is `citation-checker`'s work at every
+tier, KeyCite first and the CanLII citator second.
 A tier-1 or tier-2 hit that has never been noted up is still an answer whose
 reliability is capped — say so rather than descending the ladder for its own sake.
 
