@@ -56,3 +56,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm the tool name, its current input schema, where the scratch folder is chosen, and which skill files describe the stage-and-grep recipe. Record any difference in a table appended to this spec.
+
+## 11. Verification against HEAD (2026-10-22, at 871abb8)
+
+| Item | Spec says | HEAD | Difference |
+|---|---|---|---|
+| Tool name | `research_filing__law_folder_text` in the `lawyer` data server | Same: schema in `source/lawyer/mcp/src/schema-gen.ts`, dispatch in `source/lawyer/mcp/src/dispatch.ts`, handler `lawFolderText` in `source/lawyer/mcp/src/files/research-filing.ts` | None |
+| Input schema | `matter_root`, `destination_dir` only | Same: both required, `additionalProperties: false`, so `filename` is refused as unknown | None |
+| Scratch folder | "a scratch folder" | `researchScratchDir`: `<matter_root>\<its one 0. DRAFT* folder>\AI Scratchpad\research-agent\law-text\<path below 6. LAW>\<file>.txt`, replaced on each call | None. A pattern call needs no `0. DRAFT` folder, since it writes nothing |
+| Extraction | Converts every file | `extractText` (`src/files/text-extract.ts`) per file; `.htm`/`.html` are copied raw (`method: copy`) in whole-folder mode | Whole-folder mode still copies `.html` raw; criterion 4 keeps that. The html rule is applied to the new `file` and `pattern` inputs only |
+| Re-extraction | Should skip a file extracted at the same size and mtime | No cache: every call re-extracts every file | To build: an in-process cache keyed by path, size and mtime, which writes nothing |
+| Stage-and-grep recipe | legal-research doctrine and research-priority | `.claude/skills/shared/legal-research.md` duty 2 (Tier 3) stages the rows' `text_path` files with `device_stage_files`. No skill text names a grep step: that was the session's own workaround. `shared/research-priority.md` does not mention `law_folder_text` or staging | research-priority needs no edit. Only duty 2 changes |
+| Existing tests | n/a | `source/lawyer/mcp/test/research-filing-law-text.db.test.mjs` (3 tests, all pass locally at HEAD); `.claude/skills/legal-research/tests/test_law_folder_text.py` locks duty 2's wording | Issue #168: the CI run fails two of the three because `build/files/extract/pdfium.wasm` is missing in that run (`extractor_unavailable ... ENOENT pdfium.wasm`). That is the CI build step, not `law_folder_text`, and does not block criterion 4 |
