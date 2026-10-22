@@ -1,6 +1,6 @@
 # Plan: BCSC applications on amended Rule 8-1 (B.C. Reg. 105/2026)
 
-**Status (2026-10-21).** Approved by Brahm in outline. Four questions are open (end of this file). Nothing is built.
+**Status (2026-10-21).** Approved by Brahm. All four questions are answered, each with the recommended option (end of this file). Nothing is built.
 
 ## Context
 
@@ -278,6 +278,8 @@ Run, in order:
 - **A stale pointer.** `form-currency.ts` points at `publish/subskills/publish-bcsc-form/references/form-update.md`. The checklist is actually at `.claude/commands/form-update.md`.
 
 ## Questions for Brahm
+
+**Answered 2026-10-21.** Brahm chose the recommended option on all four: Served until Heard with no Filed state, keep an adjourned-generally Notice of Application live, keep `File and serve` for notices filed before 2026-10-01 and offer no service job for an application without notice, and let anyone record service.
 
 1. **Is the registry filing of a served Writing a lifecycle state?**
    - Recommended: no. Filing is a step in the set-down or 14.7 job, with an unlinked `documents` copy, and the board reads "Served" until "Heard".
