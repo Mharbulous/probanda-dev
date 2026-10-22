@@ -1665,8 +1665,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
         "a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. " +
         "The survivor's page then draws the merged boards as one board: one Completion Criteria card and one set of " +
-        "lanes holding every board's jobs, each job naming the Writing it serves, and board_summary and board_card read " +
-        "that one board by any of its Writings' ids. Criteria combine by id and read unmet while any Writing's is unmet; " +
+        "lanes holding every board's jobs, each job naming the Writing it serves. board_summary reads that one board by " +
+        "any of its Writings' ids, and board_card by the survivor's (an absorbed board's refuses board_merged). Criteria combine by id and read unmet while any Writing's is unmet; " +
         "each Writing's own gate still blocks only its own filing. One set of view pages spans all its Writings, named " +
         "by the survivor's id; the absorbed board's " +
         "pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the " +
@@ -2227,7 +2227,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       description:
         "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when " +
         "opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws " +
-        "it, by any of its Writings' ids, each job line naming its Writing after its title. " +
+        "it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is " +
+        "refused (board_merged, naming the survivor), unless that survivor is retired. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
         "lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +

@@ -15,7 +15,7 @@ ADR 0033 (CoClerk, 2026-10-05 amendment) drew one Job Board page per live Writin
 
 ## Amendment 2026-10-21: a merged board is drawn as one board
 
-The survivor's page first drew each merged board as its own section, each with its own Completion Criteria card and lanes, so the page held two of every panel. It now draws one board: one Completion Criteria card and one panel per lane, holding every Writing's jobs, each job once and naming the Writing it serves. board_summary and board_card read the same one board by any of its Writings' ids.
+The survivor's page first drew each merged board as its own section, each with its own Completion Criteria card and lanes, so the page held two of every panel. It now draws one board: one Completion Criteria card and one panel per lane, holding every Writing's jobs, each job once and naming the Writing it serves. board_summary reads the same one board by any of its Writings' ids. board_card reads it by the survivor's id and refuses an absorbed board's (`board_merged`, naming the survivor), so the absorbed board shows no card of its own, unless the survivor is retired.
 
 - Criteria combine by id. A combined criterion is unmet while any Writing's is unmet, pending while any is pending, and met only when every Writing's is met. Where the Writings word it differently (a pre-filing and a pre-send gate), each Writing's wording is shown, named by its Writing. A criterion only one Writing holds names that Writing.
 - A deadline criterion is never combined: each Writing keeps its own, named by its Writing.

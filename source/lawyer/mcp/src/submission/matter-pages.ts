@@ -1093,13 +1093,30 @@ export interface BoardCardResult {
   card: string;
 }
 
+/** A board as board_card's refusal names it. */
+function boardLabel(board: BoardRef): string {
+  return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Job Board ${board.filing_id}`;
+}
+
+/** Refuses a card on a board a merge absorbed (docs/ADRs/0010): its jobs are read on its survivor's
+ * card. A retired survivor has no page of its own, so the absorbed board's card still reads the board. */
+function refuseAbsorbedCard(dbPath: string, board: BoardRef): void {
+  const index = new BoardIndex(dbPath);
+  if (!index.absorbed(board)) return;
+  const survivor = index.survivorOf(board);
+  if (survivor.filing_id !== null && fetchFiling(dbPath, survivor.filing_id).retired_on) return;
+  const by = survivor.filing_id === null ? `proceeding_id ${survivor.proceeding_id}` : `filing_id ${survivor.filing_id}`;
+  throw new ValidationError(`drafting_forms__board_card: ${boardLabel(board)} is merged into ${boardLabel(survivor)}; read the card by ${by}`, "board_merged");
+}
+
 /**
  * drafting_forms__board_card: what one section's cards hold when opened, read-only. The section is
  * built as the matter pages build it -- a filing's from the inventory its last render saved, a
  * proceeding with no filing's from its jobs and loose threads -- so the card reads the inventory the
  * session's latest board_summary came from, with the current job and rejection rows, and `dates`'
  * linked deadlines as its criteria. On a merged board the card reads the whole board as the page
- * draws it (boardSectionOf), by any of its sections' ids. Writes nothing, moves no revision and writes no page.
+ * draws it (boardSectionOf), by its survivor's id; an absorbed board's id refuses board_merged. Writes
+ * nothing, moves no revision and writes no page.
  */
 export function submissionFormsBoardCard(
   args: BoardCardArgs,
@@ -1133,12 +1150,14 @@ export function submissionFormsBoardCard(
   let section: WorkBoardData;
   if (args.filing_id !== undefined) {
     const filing = fetchFiling(args.db_path, args.filing_id);
+    refuseAbsorbedCard(args.db_path, { filing_id: filing.id, proceeding_id: filing.proceeding_id });
     section = boardSectionOf(args.db_path, filingBoardData(args.db_path, filing, fetchProceeding(args.db_path, filing.proceeding_id), client, now, revision, dates), client, now, revision, dates);
   } else {
     const proceeding = fetchProceeding(args.db_path, args.proceeding_id as number);
     if (fetchAllFilingsForProceeding(args.db_path, proceeding.id).length > 0) {
       throw new ValidationError(`Proceeding ${proceeding.id} has a filing, so its jobs are on each filing's Job Board -- read a card by filing_id instead`);
     }
+    refuseAbsorbedCard(args.db_path, { filing_id: null, proceeding_id: proceeding.id });
     if (lanes.includes("criteria") || lanes.includes("proposed")) {
       throw new ValidationError(`drafting_forms__board_card: proceeding ${proceeding.id} has no filing, so its section has no completion criteria and no Proposed lane`);
     }
