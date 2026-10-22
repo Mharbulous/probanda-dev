@@ -67,3 +67,26 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm that the merge_job_boards description and §10d still conflict, that the `board_member:` row is written as quoted, and where the page writer and board_card decide a board's pages. Record each finding as matches / differs.
+
+## 11. Verification against HEAD (80ed4de5, 2026-10-21)
+
+Most of this spec landed before it was handed over: 7f26c0ae pooled a merged board's sections into one (`source/lawyer/mcp/src/submission/forms/combined-board.ts`), and 84f46602 aligned the tool descriptions, ADR 0010 (2026-10-21 amendment), `jobs-closeout.md` §10d and `shared/html-pages.md`. Both shipped in Lawyer 0.5.7. Only the gaps below are built.
+
+| §10 check | Finding |
+|---|---|
+| merge_job_boards description and §10d conflict | differs: at HEAD both say one board, one Completion Criteria card and one set of lanes, each job naming its Writing (`schema-gen.ts` merge_job_boards, `jobs-closeout.md` §10d) |
+| `board_member:` row written as quoted | matches: `board_member:filing:<A>` = `{"filing_id":<S>,"proceeding_id":<P>}` (`merge-job-boards.ts`, `board-members.ts`) |
+| Where the page writer decides a board's pages | `matter-pages.ts` `pageGroups` groups every live section by `BoardIndex.survivorOf`, one page and one view-page set per survivor; every page write (render, render job, bootstrap, open_session) goes through `writeMatterPages` |
+| Where board_card decides its section | `matter-pages.ts` `submissionFormsBoardCard` reads `boardSectionOf`, which pools the survivor's group for any member, the absorbed board included |
+| Why the row did not stop A's page (§4) | not reproduced: the 0.5.6 bundle already grouped pages by survivor, in the same commit (70d90d4b) that added the merge tool, and HEAD's test writes no absorbed page. Assumed, unverified: the render ran on a data server process older than the merge code |
+
+| §8 criterion | At HEAD |
+|---|---|
+| 1. No Job Board or view page for the absorbed board from render or open_session | already met: one writer, pages per survivor; the absorbed board's old pages go to TRASH through the sweep, and its `job_board_paths` / `view_page_paths` entries name the survivor's files |
+| 2. board_card on the survivor lists both Writings' jobs in one set of lanes, each job with no Writing once | already met (`combineSections`, test "board_card and board_summary read the merged board") |
+| 3. board_card on the absorbed board refuses `board_merged`, naming the survivor | gap: it returns the pooled board |
+| 4. One Completion Criteria card and one thumbnail row on the survivor's page | card already met and tested; thumbnail row met (one `writings` strip, the members' Writings in order) but not tested: gap in tests only |
+| 5. No merge or render writes `tickets`, `seeds` or `board_attachments` | already met in code (the merge writes `db_meta` only); asserted only for `tickets` after the merge: gap in tests only |
+| 6. Tool description and §10d describe the same result | already met, except the board_card behaviour that changes with criterion 3 |
+
+§9 first question: answered by HEAD and kept. Criteria combine by id, each text naming its Writing where they differ (ADR 0010, 2026-10-21 amendment), not per-Writing groups. board_summary on a merged board is the pooled board's summary, whichever Writing rendered.
