@@ -54,3 +54,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm the tool name, its input schema, how it reads a filed `.md` file, and whether it already has any section logic. Record differences in a table appended to this spec.
+
+### Verification against HEAD (2026-10-22, at 871abb8)
+
+| Item | Spec says | HEAD has | Difference |
+|---|---|---|---|
+| Tool name | `mcp__remote-devices__plugin_lawyer_data__research_filing__legislation_search` | `research_filing__legislation_search` in the `lawyer` `data` server (`source/lawyer/mcp/src/schema-gen.ts`, dispatched in `src/dispatch.ts`); the `remote-devices` prefix is the host's wrapper | None |
+| Handler | Unverified path | `source/lawyer/mcp/src/files/legislation-search.ts`, tests in `source/lawyer/mcp/test/research-filing-legislation-search.unit.test.mjs` | Path now known |
+| Input schema | Not stated | `{matter_root, path, terms?, regex?, pages?}`, `matter_root` and `path` required; terms and regex OR-ed, at least one required; no pinpoint input | No pinpoint query |
+| How it reads a filed `.md` | Not stated | UTF-8, the `---` front matter skipped, split into trimmed non-blank lines; line numbers are not kept | No line ranges |
+| Section logic | "returned a single huge unsectioned block" | Sections open only at a line beginning with a number (`12`, `12.1`, `9-6`); a `Rule 4-2 — ...` heading line and `(6)` subrule lines are not recognised, so a Rules file with no number-led lines is one unsectioned chunk; a hit is the whole section cut at 6,000 characters | Confirms the problem: no rule headings, no subsections, no Part/Division path, no fixed-size fallback |
+| Truncation flag | "say when truncated" | `truncated: true` only when cut, absent otherwise | Not flagged when not truncated |
+| Currency marker | Returned with every result | Not returned; the front matter (which holds `currency_marker`) is skipped | Missing |
+| Callers | `/legal-research` | `research-agent` holds the tool; `.claude/skills/shared/legal-audit-protocol.md` (negative-proposition search record) and `.claude/skills/legal-research/tests/test_statute_first.py` reference it | The search record's `sections <first>–<last> (<count>)` shape must keep working |
