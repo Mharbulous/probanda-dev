@@ -398,7 +398,7 @@ test("render refuses mockup mode on a retired filing, writing nothing but return
     const [header, todo, goal, state, ...rest] = board.board_summary.split("\n");
     assert.match(header, /^# Job Board — Matter L4801 · Client Ashbourne \(2417\) · Rev \d+$/);
     assert.equal(todo, "To Do: This matter's to-dos were not read.");
-    assert.equal(goal, "Goal: Opening Submissions Package Drafting (none)", "no statement of goals is stored, so the board's default reads none");
+    assert.equal(goal, "Goal: Goal not set (none)", "no statement of goals is stored, so the board's default reads none");
     assert.equal(state, "State: Retired 2026-09-10 — Retired on 2026-09-10 — decided", "expected the board's own state to read Retired");
     assert.deepEqual(rest, [], "no criteria and no lane");
     assert.equal(board.board_summary.includes("🎯"), false);

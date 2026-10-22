@@ -5,10 +5,19 @@
 // filing's own gate row and pre_filing_check are untouched, so one filing's gate never meets
 // another's. A deadline criterion is never combined: on an id two Writings share, the later one's
 // becomes `<id>@filing:<n>`. One section passes through as the same object, so an unmerged board is
-// unchanged.
+// unchanged. The page's copy (2026-10-22 amendment) names no Writing on its Completion Criteria card:
+// one lifecycle state, one wording per criterion, and an item two Writings share printed once.
 
 import { submissionDataQuery } from "../backend.js";
+import { LIFECYCLE_LABELS, type LifecycleState } from "./lifecycle.js";
 import type { GoalCriterion, GoalState, WorkBoardData, WorkBoardEdge, WorkBoardTicket } from "./render-work-board.js";
+
+/** A criterion as the page draws it: `counts` holds the underlying items and suppressed items where
+ * the page prints an item two Writings share once, so its labels still count every one. */
+export type PageCriterion = GoalCriterion & { counts?: { items: number; suppressed: number } };
+
+/** The page's one wording for a gate criterion whose Writings' gates differ. */
+const GATE_TEXT = "The pre-filing and pre-send checks are passed or waived";
 
 /** A section's Writing as a job's tag and a criterion's prefix names it. */
 function writingOf(section: WorkBoardData): string {
@@ -46,9 +55,38 @@ export function combinedDeadlineIds(sections: readonly WorkBoardData[]): Map<str
   });
 }
 
-/** The Goal-bearing sections' criteria as one list, in first-appearance order. */
-function combinedCriteria(goaled: WorkBoardData[], deadlineIds: Map<string, string>[]): GoalCriterion[] {
-  const several = goaled.length > 1;
+/** The least advanced lifecycle among the sections that have one, in lifecycle order; null when none has one. */
+function leastAdvanced(sections: WorkBoardData[]): LifecycleState | null {
+  const order = Object.keys(LIFECYCLE_LABELS) as LifecycleState[];
+  const states = sections.map((s) => s.meta.state).filter((x): x is LifecycleState => x !== null && x !== undefined);
+  return states.length === 0 ? null : order[Math.min(...states.map((x) => order.indexOf(x)))];
+}
+
+/** A combined criterion's items as the page prints them: an item whose text an earlier Writing's
+ * items already hold is dropped, with its `replaces` and `locators` entries; `counts` keeps the totals. */
+function pageItems(held: { c: GoalCriterion }[], combined: GoalCriterion): PageCriterion {
+  const seen = new Set<string>();
+  const keep: boolean[] = [];
+  for (const { c } of held) {
+    const own = c.items.map((item) => !seen.has(item));
+    c.items.forEach((item) => seen.add(item));
+    keep.push(...own);
+  }
+  if (keep.every(Boolean)) return combined;
+  const pick = <T>(list: T[]) => list.filter((_, i) => keep[i]);
+  return {
+    ...combined,
+    items: pick(combined.items),
+    ...(combined.replaces ? { replaces: pick(combined.replaces) } : {}),
+    ...(combined.locators ? { locators: pick(combined.locators) } : {}),
+    counts: { items: combined.items.length, suppressed: (combined.replaces ?? []).filter((r) => r !== null).length },
+  };
+}
+
+/** The Goal-bearing sections' criteria as one list, in first-appearance order. On the page no text
+ * names a Writing. */
+function combinedCriteria(goaled: WorkBoardData[], deadlineIds: Map<string, string>[], page: boolean): PageCriterion[] {
+  const several = goaled.length > 1 && !page;
   const tag = (s: WorkBoardData, text: string) => (several ? `${writingOf(s)}: ${text}` : text);
   const order: string[] = [];
   const byId = new Map<string, { section: WorkBoardData; c: GoalCriterion }[]>();
@@ -79,15 +117,17 @@ function combinedCriteria(goaled: WorkBoardData[], deadlineIds: Map<string, stri
     const texts = new Set(held.map((h) => h.c.text));
     const withReplaces = held.some((h) => h.c.replaces !== undefined);
     const withLocators = held.some((h) => h.c.locators !== undefined);
-    return {
+    const pageText = id === "gate" ? GATE_TEXT : [...texts].join("; ");
+    const combined: GoalCriterion = {
       ...first.c,
-      text: texts.size === 1 ? first.c.text : held.map((h) => tag(h.section, h.c.text)).join("; "),
+      text: texts.size === 1 ? first.c.text : page ? pageText : held.map((h) => tag(h.section, h.c.text)).join("; "),
       state: worst(held.map((h) => h.c.state)),
       outstanding: held.reduce((n, h) => n + h.c.outstanding, 0),
       items: held.flatMap((h) => h.c.items.map((item) => tag(h.section, item))),
       ...(withReplaces ? { replaces: held.flatMap((h) => h.c.replaces ?? h.c.items.map(() => null)) } : {}),
       ...(withLocators ? { locators: held.flatMap((h) => h.c.locators ?? h.c.items.map(() => null)) } : {}),
     };
+    return page ? pageItems(held, combined) : combined;
   });
 }
 
@@ -102,8 +142,11 @@ function writingTags(dbPath: string, ids: number[]): Map<number, string> {
   return new Map(found.map((r) => [r.id, r.title ?? `Proceeding ${r.proceeding_id}`]));
 }
 
-/** A merged board's sections as one: the first section's, the survivor's, with every section's rows. */
-export function combineSections(dbPath: string, sections: WorkBoardData[]): WorkBoardData {
+/** A merged board's sections as one: the first section's, the survivor's, with every section's rows.
+ * `page` gives the HTML page's copy, whose Completion Criteria card names no Writing: its state is the
+ * least advanced lifecycle among the Writings, with no date. board_summary and board_card read the
+ * other copy, which names each Writing so a session can route work. */
+export function combineSections(dbPath: string, sections: WorkBoardData[], page = false): WorkBoardData {
   if (sections.length < 2) return sections[0];
   const [first] = sections;
   const pooled = distinct(sections.map((s) => s.tickets));
@@ -124,13 +167,13 @@ export function combineSections(dbPath: string, sections: WorkBoardData[]): Work
 
   const goaled = sections.filter((s) => s.goal !== undefined);
   const deadlineIds = combinedDeadlineIds(goaled);
-  const goalTexts = goaled.filter((s) => s.goal?.text != null).map((s) => (goaled.length > 1 ? `${writingOf(s)}: ${s.goal?.text}` : (s.goal?.text as string)));
+  const goalTexts = [...new Set(goaled.filter((s) => s.goal?.text != null).map((s) => (goaled.length > 1 && !page ? `${writingOf(s)}: ${s.goal?.text}` : (s.goal?.text as string))))];
   const goal =
     goaled.length === 0
       ? {}
       : {
           goal: { sentence: (goaled[0].goal as NonNullable<WorkBoardData["goal"]>).sentence, state: worst(goaled.map((s) => (s.goal as NonNullable<WorkBoardData["goal"]>).state)), text: goalTexts.length === 0 ? null : goalTexts.join("; ") },
-          criteria: combinedCriteria(goaled, deadlineIds),
+          criteria: combinedCriteria(goaled, deadlineIds, page),
         };
 
   const proposalSeen = new Set<string>();
@@ -144,13 +187,14 @@ export function combineSections(dbPath: string, sections: WorkBoardData[]): Work
     });
   const ingest = sections.filter((s) => s.meta.ingest_inputs !== undefined).map((s) => s.meta.ingest_inputs as NonNullable<WorkBoardData["meta"]["ingest_inputs"]>);
   const { ingest_inputs: _ingest, job_only: _jobOnly, ...meta } = first.meta;
+  const least = page ? leastAdvanced(sections) : null;
 
   return {
     ...first,
     meta: {
       ...meta,
       filing: sections.map(writingOf).join("; "),
-      state_label: sections.map((s) => `${writingOf(s)}: ${s.meta.state_since === null ? s.meta.state_label : `${s.meta.state_label} ${s.meta.state_since}`}`).join(" · "),
+      state_label: least !== null ? LIFECYCLE_LABELS[least] : sections.map((s) => `${writingOf(s)}: ${s.meta.state_since === null ? s.meta.state_label : `${s.meta.state_label} ${s.meta.state_since}`}`).join(" · "),
       state_since: null,
       ready_to_retire: false,
       ...(ingest.length > 0 ? { ingest_inputs: { folders: [...new Set(ingest.flatMap((i) => i.folders))], ready_jobs: [...new Set(ingest.flatMap((i) => i.ready_jobs))] } } : {}),

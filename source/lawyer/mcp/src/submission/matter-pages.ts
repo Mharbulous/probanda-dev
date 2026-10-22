@@ -38,8 +38,8 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { fileOpsTrash, type TrashResult } from "../file_ops/trash.js";
 import { attachedDrafts } from "./board-attachments.js";
 import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./forms/board-members.js";
+import { docItemKey, orderStrip, readViewed, viewItemKey } from "./forms/board-viewed.js";
 import { combinedDeadlineIds, combineSections } from "./forms/combined-board.js";
-import type { WritingLabel } from "./forms/writing-label.js";
 import { courtFileAffidavits, type CourtFileAffidavit } from "./court-file-affidavits.js";
 import {
   buildContext,
@@ -80,6 +80,7 @@ import {
   type GoalState,
   type WorkBoardData,
   type WorkBoardEdge,
+  type StripItem,
   type WorkBoardTicket,
 } from "./forms/render-work-board.js";
 import { renderWorkBoardHtml } from "./forms/workboard-shell.js";
@@ -437,7 +438,7 @@ export function buildMatterPages(
   const { only } = reuse;
   const groupsWritten = only === undefined ? groups : groups.filter((g) => g.members.some((m) => m.filing?.id === only));
   const viewsWritten = views.filter((v) => groupsWritten.includes(v.group));
-  const sectionOf = (m: Member): { section: WorkBoardData; writings: WritingLabel[] } => {
+  const sectionOf = (m: Member): { section: WorkBoardData; writings: StripItem[] } => {
     if (m.filing === null) {
       const p = m.proceeding;
       return {
@@ -450,17 +451,23 @@ export function buildMatterPages(
     }
     // A Job Board with no Writing has no mockup folder, so none is looked up for it.
     const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(mockupDir(dbPath, m.filing.id));
+    const filingId = m.filing.id;
     return {
       section: own?.meta.filing_id === m.filing.id ? own : filingBoardData(dbPath, m.filing, m.proceeding, client, now, revision, dates, manifest),
-      writings: (manifest?.files ?? []).map((f) => f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
+      writings: (manifest?.files ?? []).map((f) => ({
+        kind: "writing" as const,
+        key: docItemKey(filingId, f.file_name),
+        viewed: false,
+        ...(f.label ?? { short: stem(f.file_name), long: stem(f.file_name) }),
+      })),
     };
   };
   const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos), templates.matterBoard);
   const jobBoards = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
     const raw = built.map((b) => b.section);
-    // A merged board is drawn as one board (docs/ADRs/0010, 2026-10-21 amendment).
-    const board = combineSections(dbPath, raw);
+    // A merged board is drawn as one board, its Completion Criteria card naming no Writing (docs/ADRs/0010, 2026-10-21 and 2026-10-22 amendments).
+    const board = combineSections(dbPath, raw, true);
     const sections = [board];
     const { proceeding, filing } = group.members[0];
     // A page that is not its one section's own: merged, or named by a retired survivor.
@@ -470,8 +477,14 @@ export function buildMatterPages(
       ...(named ? { board: group.board } : {}),
       sections,
       dates: combinedPageDates(dates, raw, board),
-      writings: built.flatMap((b) => b.writings),
-      views: views.filter((v) => v.group === group).map((v) => ({ name: v.page.name, file: v.file })),
+      // The viewed thumbnails first, most recently viewed first, then the rest in their own order.
+      strip: orderStrip(
+        [
+          ...built.flatMap((b) => b.writings),
+          ...views.filter((v) => v.group === group).map((v): StripItem => ({ kind: "view", key: viewItemKey(v.page.name), viewed: false, name: v.page.name, file: v.file })),
+        ],
+        readViewed(dbPath, group.board)
+      ),
       attached: sections.flatMap((s) => attachedDrafts(draftDir, s)),
       court_file: raw.flatMap((s) =>
         s.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null)

@@ -469,16 +469,13 @@ export interface MatterJobBoardData {
   sections: WorkBoardData[];
   /** The matter's dates (ADR 0013, 2026-10-04 amendments): drawn on the page, in no section. */
   dates: PageDates;
-  /** Each live Writing's label from the last render's manifest, in that render's document order
-   * (venue document, then companions): `short` is drawn on the tile, `long` is its
-   * `title`; a manifest entry with no label gives the file name for both. Drawn on the page, in no
-   * section; empty on a pre-filing page, on a never-rendered filing, and on one whose manifest
-   * predates the inventory field. */
-  writings: WritingLabel[];
-  /** The filing's view pages (../view-pages.ts VIEW_PAGES), in registry order: each page's name and
-   * its sibling file's name, drawn after the Writings as a tile, never a link. Empty on a pre-filing
-   * page; a retired filing has no page and no view pages. */
-  views: { name: string; file: string }[];
+  /** The board's thumbnails, drawn on the page in one row, in no section: the viewed ones first, most
+   * recently viewed first (board-viewed.ts), then the never-viewed ones, each live Writing's documents
+   * in its last render's document order and then the view pages in registry order. A Writing's
+   * document gives its manifest label: `short` is drawn on the tile, `long` is its `title`; an entry
+   * with no label gives the file name for both. A view page (../view-pages.ts VIEW_PAGES) gives its
+   * name and its sibling file's name, and is never a link. Empty on a pre-filing page. */
+  strip: StripItem[];
   /** The section's attachments as found on disk when the page was written (../board-attachments.ts),
    * drawn in the Attached lane as plain text, never a link (shared/html-pages.md, "Cards only, no link"). */
   attached: AttachedDraft[];
@@ -487,6 +484,11 @@ export interface MatterJobBoardData {
    * there is one. Empty on a pre-filing page. */
   court_file?: CourtFileAffidavit[];
 }
+
+/** One thumbnail on a Job Board's strip: `key` is its board-viewed.ts item key, `viewed` whether it was ever viewed. */
+export type StripItem =
+  | ({ kind: "writing"; key: string; viewed: boolean } & WritingLabel)
+  | { kind: "view"; key: string; viewed: boolean; name: string; file: string };
 
 /** A board attachment as found on disk at a page write or a board_card read (ADR 0042). */
 export interface AttachedDraft {
@@ -1649,7 +1651,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,
-    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, `${ctx.filing.title} Drafting`),
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, ctx.filing.title),
     goal,
     criteria,
   };
