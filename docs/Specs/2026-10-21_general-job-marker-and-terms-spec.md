@@ -50,3 +50,13 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm that jobs with `filing_id` NULL still render on every Writing's board untagged, and that the quoted wording still stands. Record each as matches / differs.
+
+## 11. Verification against HEAD (80ed4de5, 2026-10-21)
+
+| Claim | Where checked | Result |
+|---|---|---|
+| A job with `filing_id` NULL renders on every Writing's board in its proceeding | `source/lawyer/mcp/src/submission/forms/render-work-board.ts` `onFilingBoard` (`rowFilingId === filingId \|\| rowFilingId === null`), used by the Writing board's ticket filter | matches |
+| It renders untagged | `collapsedText`, `renderLiveLanes` and `jobCardLines` in `source/lawyer/mcp/src/submission/matter-pages.ts`, and the card summary in `source/lawyer/mcp/src/templates/job-board/job-board.js`: no General marker. On a merged board (`forms/combined-board.ts`) such a job carries only its `Proceeding <id>` Writing tag | matches |
+| "A job with no filing is on every filing's page in its proceeding" | `.claude/skills/shared/html-pages.md` | matches |
+| "Proceeding scope (`filing_id` NULL)" in jobs-closeout.md §10c | `.claude/skills/drafting-data/references/jobs-closeout.md` §10c | matches |
+| Paths given as seen in the installed copy | source lives under `source/lawyer/mcp/src/` (the template at `src/templates/job-board/job-board.js`) | differs in prefix only |
