@@ -63,3 +63,25 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD; mark any that differ, and append the table to this spec before changing code.
+
+## 11. Verification against HEAD (db52e139, 2026-10-22)
+
+| Claim | At HEAD | Where |
+|---|---|---|
+| The fix belongs to the lawyer data server's `drafting_forms__render` | Confirmed. Litigator is now 0.8.3, not 0.8.2. | `source/lawyer/mcp/src/submission/forms.ts` `submissionFormsRender` |
+| An Unstructured Writing's mockup is `Unstructured.md` | Confirmed. A general Writing's file name is its stored layout's `title`, which every stock type sets to `Unstructured`. | `forms.ts` `venueDocumentsForFiling` |
+| The canonical mockup is at `<case data>\mockups\Filing <id>\` | Confirmed. | `render-manifest.ts` `mockupsRoot`, `mockupDir`, `mockupDirForRender` |
+| The presentation copy goes to `0. DRAFT\UNS <title>\` | Confirmed. The folder is `<folder_code> <title>` for every type, structured or not (`NOA <title>` too). | `forms.ts` `presentationFolder`, `presentationDirFromDraft` |
+| The front matter already holds `Document Name: <Writing title>` | Confirmed. | `forms/render-general.ts` (`documentName: ctx.filing.title`), `forms/components.ts` |
+| Structured types are named after the document | Confirmed (`Notice of Application.md`, `Written Arguments.md`, `Affidavit #N of <deponent>.md`). | `forms/filler-registry.ts`, `forms.ts` |
+| The stock type file carries `"folder_code": "UNS", "title": "Unstructured"` | Confirmed in all 17 stock type files (`unstructured.md` at each venue, `unstructured-<recipient>.md` under `_NoVenue`). | `.claude/skills/draft/references/CAN/BC/**/Documents/unstructured*.md` |
+| `render` names the document type `General_writing` | Confirmed. It is the `documents` filter's name and the response's `document_type`, which are tool parameters, not file names. | `forms.ts` `venueDocumentsForFiling`, `selectDocuments` |
+| `folder_code` is read in `declared-layout.ts` | Confirmed, as a required field. Its only other readers are the presentation folder name and the Job Board strip label. | `src/knowledge/declared-layout.ts`, `forms.ts` |
+| The case-data location rests on the FUSE bug (#324) | Confirmed in the code comments and tool descriptions. ADR 0013 already records that the location never protected against it. | `forms.ts` header, `schema-gen.ts`, `docs/ADRs/0013-...md` |
+
+Found beyond the spec, all user-visible and all fixed under §4 (e) and §9:
+
+- The Job Board's Writings strip labels a general Writing's thumbnail with its `folder_code` (`UNS`). (`forms.ts`)
+- Archived copies are named by the document type: `archive\General_writing @rev<N> <time>.md`. (`forms.ts` `archiveFile`)
+- Each Writing's Job Board page and view pages sit at the top of `0. DRAFT` named by its filing id: `Job Board <id>.html`, `<page> - Job Board <id>.html`. (`matter-pages.ts`, `view-pages.ts`)
+- `publish_vaniac_package` requires the Writing folder to be named `SUB <filing folder>`. (`publish-tools.ts` `vaniacFilingFolder`)
