@@ -52,6 +52,7 @@ terms:
   - Final review
   - Form-bound writing
   - Free-form writing
+  - General Job
   - Hunch
   - Instrument
   - Issue
@@ -142,6 +143,7 @@ terms:
   - Verified
   - Work marker
   - Writing
+  - Writing Job
   - Written Argument
 ---
 
@@ -345,6 +347,10 @@ _Avoid_: court form (names the filed artifact, not the kind of writing); templat
 **Free-form writing**:
 Legal writing for which no venue publishes the form document, even where it prescribes the structure: demand letters, letters to opposing counsel, client reporting letters, memos to file, a VanIAC written argument laid out to VanIAC's rules.
 _Avoid_: informal (the tone is often formal); correspondence (narrower; a memo to file is free-form but addressed to no one).
+
+**General Job**:
+A job tied to no Writing (`tickets.filing_id` NULL): shared-substance work done once for every Writing in its proceeding. It is drawn on every live Writing's Job Board in that proceeding, tagged "General" on its card and ending ` · general` on its `drafting_forms__board_card` line, so a second board's copy never reads as a duplicate. Before the proceeding has a Writing it is on the proceeding's own board, and it is never on a **Standalone Job Board**. Also called a **job with no Writing**. Not a **Writing Job**.
+_Avoid_: proceeding-scoped job, proceeding-wide job (design prose only); shared job; duplicate.
 
 **Hunch**:
 A first impression drawn only from what the model already knew before the session began — nothing in the session (no file, tool result, or line of conversation) was consulted. For a view of the law, every impression outside the research-agent is a hunch, whatever it rests on.
@@ -713,6 +719,10 @@ _Avoid_: badge (one marker); glyph; readiness decoration; checklist; status labe
 **Writing**:
 Any legal writing `/draft` drafts in a proceeding: a Filing, a demand letter, a letter to opposing counsel, a memo to file. It carries its own metadata, its selection and order of the proceeding's shared substance, and its mockups. Every Writing belongs to exactly one proceeding, which may have no forum. Every Writing is either **Form-bound writing** or **Free-form writing**. On a separate axis, every Writing is either a **Structured Writing** or an **Unstructured Writing**. A client letter is not a Writing: it is solicitor-client material, drafted from guidance only, with no Job Board or Goal card. Internal names are unchanged: a Writing is stored as a `filings` row, with its `kind` values, except that a `filings` row of the reserved kind `task-board` is a **Standalone Job Board** and never a Writing. Lowercase "filing" in this glossary means only the act of delivering a Writing to a registry or forum, never the Writing itself.
 _Avoid_: filing for a Writing (filing is the act of delivery to a registry or forum); document (reserved for the evidence-side **Document**); draft (a rendered-for-review file of a Writing).
+
+**Writing Job**:
+A job tied to one Writing (`tickets.filing_id` that Writing's id), drawn only on that Writing's Job Board and untagged. A job on a **Standalone Job Board** names that board's id and is neither a Writing Job nor a **General Job**.
+_Avoid_: filing job; Writing-scoped ticket.
 
 **Written Argument**:
 The VanIAC Writing member that carries the submissions. Not a prescribed court form.
