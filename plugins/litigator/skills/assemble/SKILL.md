@@ -2,8 +2,8 @@
 name: assemble
 description: >
   Bind finished documents into one PDF: an affidavit with its stamped,
-  paginated exhibits, a letter with its enclosures, a BCCA book, a bill of
-  costs, or a VanIAC package.
+  paginated exhibits, a letter with its enclosures, a BCCA book, a BCSC
+  application record, a bill of costs, or a VanIAC package.
   Filling a form or rendering a document -> /publish.
 ---
 
@@ -49,6 +49,12 @@ are `/publish` (`publish-bcca-book`, `publish-bcca-factum`).
   Book and Book of Authorities PDFs, numbered and bookmarked. Routed to by
   the explicit `assemble-bcca-book` token, or by a practitioner asking to
   bind a response book.
+- `subskills/assemble-bcsc-record/SUBSKILL.md` -- binds a BC Supreme Court
+  application record (Rule 8-1 (15)): the Form 30.001 cover, an index and the
+  documents in the rule's order, numbered and bookmarked, plus the index alone
+  for service and the copy of the notice with its orders sought marked.
+  Routed to by the explicit `assemble-bcsc-record` token, by the Application
+  book job, or by a practitioner asking to bind an application record.
 - `subskills/assemble-vaniac-package/SUBSKILL.md` -- gathers a VanIAC
   package's cited exhibits into its `Package` folder, then binds the whole
   package into one PDF with divider pages and the index page numbers filled.
