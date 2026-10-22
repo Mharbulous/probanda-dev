@@ -16,7 +16,7 @@ const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
 test("the Job Board renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "8ba182a2711be52b7cb73fdcc6a6e6e3ac80db41199f1f000b157723b9d1af9a", "Job Board");
+  assertSha256Pin(renderWorkBoardHtml(DATA), "7697f039c28e3734424a738fa3a11b02474a3d4fa4f8e6fa9cec52918b5e42ae", "Job Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {
