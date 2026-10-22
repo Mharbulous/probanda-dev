@@ -150,8 +150,8 @@ test("renders the Job Board's data", async () => {
     assert.equal(wip.locked_at, "2026-09-02T10:05");
     assert.equal("plan" in wip, false, "a job's plan is its steps");
     assert.deepEqual(wip.steps, [
-      { ordinal: 1, text: "Audit the exhibit list", done_at: "2026-09-02T10:10" },
-      { ordinal: 2, text: "Reconcile against the disclosure log", done_at: null },
+      { ordinal: 1, text: "Audit the exhibit list", done_at: "2026-09-02T10:10", status: null, wait_until: null, status_note: null },
+      { ordinal: 2, text: "Reconcile against the disclosure log", done_at: null, status: null, wait_until: null, status_note: null },
     ]);
 
     assert.equal(ticketIn(data, 9).circular, true, "the mutual-block pair is labelled circular");

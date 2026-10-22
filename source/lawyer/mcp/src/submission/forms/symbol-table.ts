@@ -909,6 +909,19 @@ export const PLACEMENTS: readonly PlacementRow[] = [
   { glyph: "🧩", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" },
 ];
 
+/** A job step's glyph on the Job Board and its card (schema v78), in step context only: these are not
+ * mockup markers and never print on a mockup. ⏳ here is a step waiting on an external process the
+ * session will check again; the admission ladder's ⏳ and the criterion's ⏳ keep their own senses.
+ * step-state.ts picks one per step. */
+export const STEP_GLYPHS = {
+  open: "☐",
+  done: "☑",
+  retry: "↻",
+  cancelled: "☒",
+  deferred: "⏸",
+  waiting: "⏳",
+} as const;
+
 /** Glyphs longest first, so a sequence that begins with a shorter glyph's code points is matched
  * whole. */
 const GLYPHS_LONGEST_FIRST = SYMBOLS.map((s) => s.glyph).sort((a, b) => b.length - a.length);

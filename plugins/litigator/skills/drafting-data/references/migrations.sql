@@ -4992,3 +4992,34 @@ UPDATE db_meta SET value = '76' WHERE key = 'schema_version';
 ALTER TABLE facts ADD COLUMN procedural_on TEXT CHECK (procedural_on IS NULL OR procedural_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]');
 
 UPDATE db_meta SET value = '77' WHERE key = 'schema_version';
+
+-- MIGRATE 77 -> 78
+-- A job step can say more than open or done (Brahm, 2026-10-21). A step that could not be done (a
+-- missing credential, an unreachable source) was stamped done so the plan moved on, and the frozen
+-- stamp then reported work that never ran; a step waiting on an external run could show no wait.
+--
+-- ticket_steps gains three nullable columns:
+-- 1. status: NULL is today's meaning (open until done_at is set). 'retry' is a step blocked by a
+--    missing credential or an unreachable source, to be tried again. 'cancelled' and 'deferred' are
+--    a step the practitioner chose to drop or put off, and only on the practitioner's words.
+--    'waiting' is a step waiting on an external process the session will check again.
+-- 2. wait_until: on a waiting step, the minute (YYYY-MM-DDTHH:MM local time, by a CHECK) at which the
+--    session checks the process again. A wake-up time for checking a process, never a deadline and
+--    never time remaining: nothing computes from it beyond that check, and once it has passed the
+--    step reads as open again.
+-- 3. status_note: the practitioner's own words for a cancelled or deferred step.
+--
+-- done_at stays the only meaning of done, and a stamped step takes no status: every stamp already
+-- written stays frozen. Written only by drafting_data__set_step, under the job's lock.
+--
+-- These columns deepen drafting-data's reliance on the commandments' Exception by Brahm's express
+-- ruling of 2026-10-21.
+--
+-- Job process state (ADR 0009), so no revision triggers. Additive: three ADD COLUMNs, no rebuild.
+-- Every existing step reads NULL in all three, so it keeps its two-state meaning; no row changes and
+-- no revision moves.
+ALTER TABLE ticket_steps ADD COLUMN status TEXT CHECK (status IS NULL OR status IN ('retry', 'cancelled', 'deferred', 'waiting'));
+ALTER TABLE ticket_steps ADD COLUMN wait_until TEXT CHECK (wait_until IS NULL OR wait_until GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]');
+ALTER TABLE ticket_steps ADD COLUMN status_note TEXT;
+
+UPDATE db_meta SET value = '78' WHERE key = 'schema_version';

@@ -295,6 +295,8 @@ Admission emoji (🎾 ⏳ 🤝 🙅🏻‍♂️ 🫸 🤷 ⏰ ⚡️ 🕹️ �
 
 The other markers' predicates are each symbol's `condition` in `source/lawyer/mcp/src/submission/forms/symbol-table.ts`, one row per symbol; that file is the single source.
 
+**Job step glyphs** (schema v78, step context only, never a mockup marker; `STEP_GLYPHS` in `symbol-table.ts`, semantics `references/jobs-run.md` §6b): ☐ open · ☑ done (`done_at` set, always wins) · ↻ retry, blocked by a missing credential or an unreachable source · ☒ cancelled and ⏸ deferred, only on the practitioner's words · ⏳ waiting on an external process, printed `⏳ until HH:MM`, the minute to check it and never a deadline; once that minute has passed the step prints ☐. The admission ladder's ⏳ (response period running) and the criterion ⏳ keep their own senses.
+
 ## Seams — glossary
 
 | Term | Meaning |

@@ -46,11 +46,11 @@ const FIXTURES = {
 /** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011). */
 const PINS = {
-  "Procedural History": "365b48cc75e2619772712e5aa6e136379858e561d2ac87b53a9e26050249e56c",
-  "Material Facts": "12e0e689e544795536479bb598699fa635cb2b4c00d140d1dea9a86564d136e0",
-  "Raw Research": "2fbcdabaf808ffbb6e5ba5af9cb88dd9b86ac6e16b2e7bd62125a1c60e9c7467",
-  Arguments: "d59b25d2ddf076c2b6225eee2eb3b9b3b5400f6e892d058e619e731d6939825f",
-  "Loose Threads": "e929662fda806198cb12d9164ee6f365027514716793813060eb76aadfc1aee8",
+  "Procedural History": "464d015ca1fb3901ef7b40bca293d96908ba28f53f557ae500994f340316c215",
+  "Material Facts": "955b762ab670b677d4aa3ec3fe42628559b53b6318a18a1ae67d76a899729fc6",
+  "Raw Research": "f16317970c4b86a3a8fba7464ddfa14cd8af58ed82b2f2b5833d580f42fdc864",
+  Arguments: "d467d60950f6dd8d18eeced91d6195e723e460fb9a1ff9538c3d758fb36ec74e",
+  "Loose Threads": "721b86eeb0ee11326e5905eb01605b90ceaeba4623c47619d6a95d3c4295f7aa",
 };
 
 for (const page of VIEW_PAGES) {

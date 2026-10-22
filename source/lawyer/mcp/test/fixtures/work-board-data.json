@@ -169,12 +169,18 @@
         {
           "ordinal": 1,
           "text": "Audit the exhibit list",
-          "done_at": "2026-09-02T10:10"
+          "done_at": "2026-09-02T10:10",
+          "status": null,
+          "wait_until": null,
+          "status_note": null
         },
         {
           "ordinal": 2,
           "text": "Reconcile against the disclosure log",
-          "done_at": null
+          "done_at": null,
+          "status": null,
+          "wait_until": null,
+          "status_note": null
         }
       ],
       "proposal_keys": [],

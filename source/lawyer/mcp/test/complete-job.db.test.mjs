@@ -17,7 +17,8 @@ import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-complete-job-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
+const { submissionDataCompleteJob } = await import("../build/submission/forms/complete-job.js");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { callTool, createDispatchContext } = await import("../build/index.js");
@@ -199,4 +200,100 @@ test("render's Job Board reports pages_written: false without draft_dir, true wi
 
   const written = boardOf(submissionFormsRender(m.dbPath, 1, {}, "mockup", ["Work_board"], undefined, undefined, undefined, undefined, m.draft));
   assert.equal(written.pages_written, true);
+});
+
+// Step states (schema v78): a job with any step open, to be retried or waiting is refused with
+// steps_open, naming each one, and nothing is written; one whose only steps not done were cancelled or
+// deferred on the practitioner's words completes.
+const STEPS = "INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at, status, wait_until, status_note) VALUES";
+
+test("a held job with a step open, to be retried, waiting or past its wait is refused with steps_open, naming each, writing nothing", async (t) => {
+  const { m, complete } = await heldJob(
+    t,
+    `${STEPS} (1, 1, 'Read the file', '2026-09-23T10:05', NULL, NULL, NULL),
+       (1, 2, 'Draft the memo', NULL, NULL, NULL, NULL),
+       (1, 3, 'Search the pool', NULL, 'retry', NULL, NULL),
+       (1, 4, 'Run the Westlaw query', NULL, 'waiting', '2099-01-01T09:00', NULL),
+       (1, 5, 'Download the memo', NULL, 'waiting', '2020-01-01T09:00', NULL),
+       (1, 6, 'Note up', NULL, 'cancelled', NULL, 'Skip it.');`
+  );
+  const page = join(m.draft, OPENING_PAGE);
+  unlinkSync(page);
+
+  const result = await complete();
+
+  assert.equal(result.outcome, "steps_open");
+  assert.equal(result.changes, 0);
+  assert.equal(result.pages_written, false);
+  assert.deepEqual(result.open_steps, [
+    { ordinal: 2, text: "Draft the memo", state: "open" },
+    { ordinal: 3, text: "Search the pool", state: "retry" },
+    { ordinal: 4, text: "Run the Westlaw query", state: "waiting" },
+    { ordinal: 5, text: "Download the memo", state: "waiting" },
+  ]);
+  for (const name of ["Draft the memo", "Search the pool", "Run the Westlaw query", "Download the memo"]) assert.ok(result.note.includes(name), result.note);
+  assert.equal(result.note.includes("Note up"), false, "a cancelled step is resolved");
+  assert.equal(row(m.dbPath, 1).status, "wip");
+  assert.equal(existsSync(page), false, "no page written");
+});
+
+test("a held job whose only steps not done were cancelled or deferred on the practitioner's words completes", async (t) => {
+  const { m, complete } = await heldJob(
+    t,
+    `${STEPS} (1, 1, 'Read the file', '2026-09-23T10:05', NULL, NULL, NULL),
+       (1, 2, 'Run the Westlaw query', NULL, 'cancelled', NULL, 'We have enough.'),
+       (1, 3, 'Note up', NULL, 'deferred', NULL, 'After the reply.');`
+  );
+  const result = await complete();
+  assert.equal(result.outcome, "completed");
+  assert.equal(result.changes, 1);
+  assert.equal(result.open_steps, undefined);
+  assert.equal(row(m.dbPath, 1).status, "completed");
+});
+
+/** A held job with two stamped steps (and optionally one unstamped) on a database migrated to `version`. */
+async function twoStateJob(t, version, extra = "") {
+  const dir = mkdtempSync(join(tmpdir(), "coclerk-complete-job-v77-"));
+  t.after(async () => {
+    await awaitBackgroundJobs();
+    rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  });
+  const dbPath = join(dir, "submission.sqlite");
+  const draft = join(dir, "0. DRAFT");
+  mkdirSync(draft);
+  submissionDbAt(dbPath, version);
+  await submissionDataExecute(
+    dbPath,
+    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', 'CAN/BC/Vancouver-International-Arbitration-Centre');
+     INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');
+     ${TICKET}, locked_by, locked_at) VALUES (1, 1, 1, 'Settle the opening', 'Draft it.', 'wip', 0, 'work', 'L9999|opening', '2026-09-23 10:00', 'sess-a1', '2026-09-23 10:01');
+     INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Read the file', '2026-09-23T10:05'), (1, 2, 'Draft it', '2026-09-23T10:30')${extra};`
+  );
+  return { dbPath, draft, complete: () => submissionDataCompleteJob({ db_path: dbPath, ticket_id: 1, session_token: "sess-a1", draft_dir: draft }) };
+}
+
+test("an old two-state job with every step stamped completes on a v77 database and on one migrated to v78", async (t) => {
+  const old = await twoStateJob(t, 77);
+  assert.equal((await old.complete()).outcome, "completed");
+  assert.equal(row(old.dbPath, 1).status, "completed");
+
+  const migrated = await twoStateJob(t, 77);
+  submissionDbAt(migrated.dbPath, 78);
+  assert.deepEqual(
+    submissionDataQuery(migrated.dbPath, "SELECT ordinal, done_at, status, wait_until, status_note FROM ticket_steps ORDER BY ordinal").rows,
+    [
+      { ordinal: 1, done_at: "2026-09-23T10:05", status: null, wait_until: null, status_note: null },
+      { ordinal: 2, done_at: "2026-09-23T10:30", status: null, wait_until: null, status_note: null },
+    ],
+    "the hop keeps every stamp and adds nothing"
+  );
+  assert.equal((await migrated.complete()).outcome, "completed");
+});
+
+test("on a v77 database an unstamped step is open, so the job is refused", async (t) => {
+  const old = await twoStateJob(t, 77, ", (1, 3, 'File it', NULL)");
+  const result = await old.complete();
+  assert.equal(result.outcome, "steps_open");
+  assert.deepEqual(result.open_steps, [{ ordinal: 3, text: "File it", state: "open" }]);
+  assert.equal(row(old.dbPath, 1).status, "wip");
 });

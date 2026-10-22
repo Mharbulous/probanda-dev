@@ -37,6 +37,7 @@ import {
   withNoteUpSteps,
 } from "./proposal-inventory.js";
 import { ticketSourcesHeld } from "./track-source.js";
+import { type StepStateFields, stepResolved } from "./step-state.js";
 import { boardAttachmentsHeld, deletedAtHeld, fetchHearingDate, isJobOnlyBoard, JOB_BOARD_KIND, liveSeedClause, liveTicketClause, seedClosedColumns, ticketAnswersHeld, type FilingRow, type ProceedingRow } from "./query.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WritingLabel } from "./writing-label.js";
@@ -93,6 +94,10 @@ interface StepRow {
   ordinal: number;
   text: string;
   done_at: string | null;
+  /** Schema v78; absent on a database held below it. */
+  status?: string | null;
+  wait_until?: string | null;
+  status_note?: string | null;
 }
 
 interface ScopeRow {
@@ -231,7 +236,10 @@ export interface WorkBoardTicket {
   conflicts: WorkBoardEdge[];
   /** True only on a waiting ticket whose blockers lead back to itself -- a charting defect the board labels. */
   circular: boolean;
-  steps: { ordinal: number; text: string; done_at: string | null }[];
+  /** status, wait_until and status_note are null on a step with none, and on a database held below
+   * v78 (step-state.ts reads them; a board fixture may leave them out). wait_until is the minute to
+   * check a process, never a deadline. */
+  steps: { ordinal: number; text: string; done_at: string | null; status?: string | null; wait_until?: string | null; status_note?: string | null }[];
   /** The Proposal keys this ticket holds, so the board can say which work is already outlined. */
   proposal_keys: string[];
   /** Each held key's item as its ticket_proposals row stored it, keyed as in `proposal_keys` -- the
@@ -531,12 +539,13 @@ function reachesItself(startId: number, blockersOf: Map<number, number[]>): bool
   return false;
 }
 
-/** A job whose plan ran to the end: at least one step, every step stamped. */
-const allStepsDone = (steps: readonly { done_at: string | null }[]): boolean => steps.length > 0 && steps.every((s) => s.done_at !== null);
+/** A job whose plan ran to the end: at least one step, every step done, or dropped or put off on the
+ * practitioner's words (step-state.ts). */
+const allStepsDone = (steps: readonly StepStateFields[]): boolean => steps.length > 0 && steps.every(stepResolved);
 
 /** A job that holds its scope's material: in progress by status, not category, so a shelved job with
  * open steps still holds it under its lock. A job with every step done holds none. */
-const holdsMaterial = (t: { status: TicketStatus; steps: readonly { done_at: string | null }[] }): boolean => t.status === "wip" && !allStepsDone(t.steps);
+const holdsMaterial = (t: { status: TicketStatus; steps: readonly StepStateFields[] }): boolean => t.status === "wip" && !allStepsDone(t.steps);
 
 /** The latest of minute-precision local stamps written with a `T` or a space (`2026-10-02T09:00`,
  * `2026-10-02 09:00`), compared with that separator made equal; null when none is given. */
@@ -709,7 +718,14 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
       blocked_by: blockedBy,
       conflicts: conflictPartners,
       circular: category === "waiting" && reachesItself(t.id, blockersOf),
-      steps: [...(stepsByTicket.get(t.id) ?? [])].sort((a, b) => a.ordinal - b.ordinal).map((s) => ({ ordinal: s.ordinal, text: s.text, done_at: s.done_at })),
+      steps: [...(stepsByTicket.get(t.id) ?? [])].sort((a, b) => a.ordinal - b.ordinal).map((s) => ({
+        ordinal: s.ordinal,
+        text: s.text,
+        done_at: s.done_at,
+        status: s.status ?? null,
+        wait_until: s.wait_until ?? null,
+        status_note: s.status_note ?? null,
+      })),
       proposal_keys: (proposalsByTicket.get(t.id) ?? []).map((p) => p.proposal_key),
       proposal_items: Object.fromEntries((proposalsByTicket.get(t.id) ?? []).map((p) => [p.proposal_key, p.item])),
       superseded_reason: supersededReason(t, retiredOn),

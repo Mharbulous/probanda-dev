@@ -1563,6 +1563,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
         "a job's unchanged plan is approved through drafting_data__approve_plan, " +
         "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +
+        "a job step's status is set through drafting_data__set_step, " +
         "and a job is deleted through drafting_data__delete_job. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
@@ -1869,6 +1870,42 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("set_step"),
+      description:
+        "Set one step's status on the job (a tickets row) this session holds, in one call: the guarded write, then the " +
+        "confirm-read. status is open (clears the status), retry (the step is blocked by a missing credential or an " +
+        "unreachable source and is tried again later; such a step is never stamped done), cancelled or deferred (only on " +
+        "the practitioner's own words, passed verbatim as practitioner_words and stored with the step), or waiting (the " +
+        "step waits on an external process, such as a Westlaw run: wait_until is set to now plus wait_minutes, default 5, " +
+        "and the result's note says `setting timer for N minutes`). wait_until is the minute the session checks the " +
+        "process again: never a deadline and never time remaining, never shown as a countdown, and never put in a " +
+        "handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen and " +
+        "takes no status. The write matches only a job holding this session's token. session_token is the one " +
+        "drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off " +
+        "the confirm-read: set (changes 1), not_held (the job is not this session's: taken over, shelved or completed), " +
+        "done (the step is done and was left as it is), no_match (no such step, or the guards matched nothing). Never " +
+        "retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_ordinal, " +
+        "invalid_session_token, invalid_status, invalid_wait_minutes, practitioner_words_required, " +
+        "invalid_practitioner_words, not_found, schema_below_v78 (say once that the matter's database needs the v78 " +
+        "migration, and leave the step open). Returns ticket_id, ordinal, outcome, changes, done_at, status, wait_until, " +
+        "status_note, locked_by and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          ordinal: { type: "number" },
+          session_token: { type: "string" },
+          status: { type: "string", enum: ["open", "retry", "cancelled", "deferred", "waiting"] },
+          wait_minutes: { type: "number" },
+          practitioner_words: { type: "string" },
+        },
+        required: ["db_path", "ticket_id", "ordinal", "session_token", "status"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description:
         "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. " +
@@ -1926,18 +1963,21 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       name: submissionDataPrefixed("complete_job"),
       description:
         "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, " +
-        "then the completion, both guarded on this session's token, then the confirm-read. A wip conflict partner is never " +
+        "then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its " +
+        "steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and " +
+        "the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's " +
+        "words (drafting_data__set_step) counts as resolved. A wip conflict partner is never " +
         "touched. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; draft_dir is " +
         "the draft_dir open_session returned. The outcome is read off the confirm-read: completed (status completed, no " +
         "lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is " +
-        "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing). Only when this " +
+        "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this " +
         "call completed the job (changes 1) are the matter's Job Board pages and Litigation Strategy rewritten, by the render a " +
         "session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its " +
         "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job " +
         "Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
         "write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, " +
         "changes, status, completed_at, locked_by, rejected_at, pages_written, job_board_path (the rendered filing's or " +
-        "proceeding's Job Board page), board_changed, board_moves, pages_refused and a note.",
+        "proceeding's Job Board page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -2248,7 +2288,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Progress job, the last activity being the latest of its lock, its done steps, the loose threads " +
         "captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held " +
         "key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), " +
-        "`  scope: … · waits on: … · either-or: …`, `  steps:` when it has steps, `  loose threads:` with each open loose thread " +
+        "`  scope: … · waits on: … · either-or: …`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by " +
+        "` · `, the glyph ☑ done (followed by ` (<done_at>)`), ☐ open, ↻ to be retried, ☒ cancelled or ⏸ deferred (each " +
+        "followed by ` (\"<the practitioner's words>\")`), or `⏳ until <HH:MM>` waiting, the minute the process is next " +
+        "checked and never a deadline; a waiting step whose minute has passed prints ☐, `  loose threads:` with each open loose thread " +
         "captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it " +
         "(`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open " +
         "(`☐ <kind>: <label>`) or closed not retrieved (`☒ <kind>: <label> (not retrieved: <reason>)`), which are the job's " +

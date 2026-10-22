@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 77
+-- Current version: db_meta.schema_version = 78
 
 
 CREATE TABLE db_meta (
@@ -304,7 +304,7 @@ CREATE TABLE ticket_steps (
     ticket_id INTEGER NOT NULL REFERENCES tickets(id),
     ordinal   INTEGER NOT NULL,
     text      TEXT NOT NULL,
-    done_at   TEXT,
+    done_at   TEXT, status TEXT CHECK (status IS NULL OR status IN ('retry', 'cancelled', 'deferred', 'waiting')), wait_until TEXT CHECK (wait_until IS NULL OR wait_until GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]'), status_note TEXT,
     PRIMARY KEY (ticket_id, ordinal)
 );
 

@@ -147,7 +147,7 @@ Whenever the practitioner asks to be shown a Job or Jobs, display each one in th
 
 - The heading is `### Job N: title`.
 - The intent is one blockquote line beginning `Intent:`.
-- Each step is on its own line, starting with ✅ (U+2705) when done or ⬜ when not. The emoji replaces the bullet: never a markdown bullet and an emoji together (`- ✅`), and never ☑️ or ☐.
+- Each step is on its own line, starting with ✅ (U+2705) when done or ⬜ when open. A step the card prints with another status keeps the card's glyph: ↻ to be retried, ☒ cancelled, ⏸ deferred, each followed by the practitioner's words in parentheses where the card gives them, and ⏳ waiting, followed by `until HH:MM` as the card gives it, a plain time to check the process and never a countdown. A step the card prints ☐ is ⬜. The emoji replaces the bullet: never a markdown bullet and an emoji together (`- ✅`), and never ☑️ or ☐.
 - Steps are tight: end each step line with two trailing spaces (a hard line break), with no blank line between steps.
 - A done step ends with its done time in parentheses, `(done HH:MM)`, with the date before the time when it was not done today.
 - After the steps comes the status line: `Job completed.` for a Completed job, otherwise the card's lane label (Ready, In Progress, Blocked, Bring Forward, Shelved or Superseded).

@@ -5083,5 +5083,80 @@ class TestV77FactProceduralOn(unittest.TestCase):
         self.assertIn("procedural_on", [r[1] for r in con.execute("PRAGMA table_info(facts)")])
 
 
+class TestV78StepStatus(unittest.TestCase):
+    """v78: a job step can be to be retried, cancelled, deferred or waiting (Brahm, 2026-10-21).
+    ticket_steps gains status, wait_until and status_note, all NULL on every existing step, so every
+    stamp keeps its meaning and no revision moves."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, locked_by, locked_at)
+            VALUES (1, 1, 'Research it', 'Find the test.', 'wip', 'work', 'L0000|x', '2026-10-21T09:00', 'sess-a1', '2026-10-21T09:01');
+        INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Search the pool', '2026-10-21T09:10'), (1, 2, 'Run the Westlaw query', NULL);
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    @staticmethod
+    def _revision(con):
+        return int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=77)[-1], (76, 77))
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(self.SEED)
+        con.commit()
+        self.revision = self._revision(con)
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 78})["applied"], [{"from": 77, "to": 78}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_every_existing_step_keeps_its_stamp_and_reads_null_in_the_new_columns(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 78)
+        self.assertEqual(self._revision(con), self.revision, "the hop moves no revision")
+        self.assertEqual(
+            con.execute("SELECT ordinal, text, done_at, status, wait_until, status_note FROM ticket_steps ORDER BY ordinal").fetchall(),
+            [(1, "Search the pool", "2026-10-21T09:10", None, None, None), (2, "Run the Westlaw query", None, None, None, None)],
+        )
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_the_checks_hold_the_status_and_the_wake_minute(self):
+        con = self._hop()
+        con.execute("UPDATE ticket_steps SET status = 'waiting', wait_until = '2026-10-21T09:15' WHERE ticket_id = 1 AND ordinal = 2")
+        con.commit()
+        self.assertEqual(self._revision(con), self.revision, "a step status is job process state")
+        for status in ("retry", "cancelled", "deferred"):
+            con.execute("UPDATE ticket_steps SET status = ? WHERE ticket_id = 1 AND ordinal = 2", (status,))
+        for bad in ("done", "open", ""):
+            with self.assertRaises(sqlite3.IntegrityError):
+                con.execute("UPDATE ticket_steps SET status = ? WHERE ticket_id = 1 AND ordinal = 2", (bad,))
+        for bad in ("2026-10-21 09:15", "09:15", "2026-10-21"):
+            with self.assertRaises(sqlite3.IntegrityError):
+                con.execute("UPDATE ticket_steps SET wait_until = ? WHERE ticket_id = 1 AND ordinal = 2", (bad,))
+
+    def test_the_copy_aside_holds_the_pre_migration_steps(self):
+        self._hop()
+        backups = backups_of(self.db_path)
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(schema_version(backups[0]), 77)
+        con = sqlite3.connect(str(backups[0]))
+        self.addCleanup(con.close)
+        self.assertNotIn("status", [r[1] for r in con.execute("PRAGMA table_info(ticket_steps)")])
+
+    def test_a_fresh_database_holds_the_columns(self):
+        engine.run({"db_path": str(self.db_path)})
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        columns = [r[1] for r in con.execute("PRAGMA table_info(ticket_steps)")]
+        for column in ("status", "wait_until", "status_note"):
+            self.assertIn(column, columns)
+
+
 if __name__ == "__main__":
     unittest.main()

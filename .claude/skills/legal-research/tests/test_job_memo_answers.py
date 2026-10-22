@@ -100,5 +100,34 @@ class JobPlanningTest(unittest.TestCase):
         self.assertIn("It is also the write that adds a step for each tier a held research job's return names as not run", jobs_run)
 
 
+class StepStatusTextTest(unittest.TestCase):
+    """Pins for the step statuses (schema v78): a blocked step is ↻, never stamped done; a held
+    job's Westlaw step waits as ⏳ in 5-minute checks with one paralegal out; and the wake-up minute
+    is never a deadline."""
+
+    def test_a_blocked_step_is_retry_never_done(self):
+        six = between(flat(read("drafting-data", "references", "jobs-run.md")), "## 6. Step progress", "## 6a.")
+        self.assertIn("A step blocked by a missing credential or an unreachable source is set to ↻ with `drafting_data__set_step` (§6b), never stamped ☑.", six)
+
+    def test_the_westlaw_wait_is_a_five_minute_check(self):
+        tier_four = between(flat(read("shared", "legal-research.md")), "**On a held job, the Westlaw wait is a ⏳ step.**", "Where tiers 1–3")
+        self.assertIn("set that step ⏳ for 5 minutes", tier_four)
+        self.assertIn("When the time has passed, check whether the paralegal has returned and its memo is filed", tier_four)
+        self.assertIn("If not, set the step ⏳ for 5 minutes again.", tier_four)
+        self.assertIn("Never dispatch a second `research-paralegal` while one is out.", tier_four)
+        self.assertIn("A `status: blocked (...)` return sets the step ↻ (`status: retry`), never done.", tier_four)
+        step_three = between(flat(read("legal-research", "SKILL.md")), "3. Run Westlaw before the audit", "Then run the doctrine's duty 4")
+        self.assertIn("after launching the query set its step ⏳ for 5 minutes", step_three)
+        self.assertIn("check whether the run has finished and can be downloaded", step_three)
+        self.assertIn("If not, set the step ⏳ for 5 minutes again.", step_three)
+        self.assertIn("Never dispatch a second `research-paralegal` while one is out.", step_three)
+
+    def test_the_wait_is_never_a_deadline(self):
+        isolation = flat(read("shared", "deadline-isolation.md"))
+        rule = between(isolation, "**A step's wait is a time to check a process, not a deadline.**", "**Hearing dates on the Job Board page**")
+        self.assertIn("never as time remaining or a countdown", rule)
+        self.assertIn("It is never a deadline, and it never goes into a handover or a captured idea.", rule)
+
+
 if __name__ == "__main__":
     unittest.main()

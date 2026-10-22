@@ -133,7 +133,19 @@ other question runs the duties in their numbered order.
    4. only then, once duty 4 has run, spawn the audit agent, naming the memo and
       decision files retrieved.
 
-   One research-paralegal dispatch at a time. Where tiers 1–3
+   One research-paralegal dispatch at a time.
+
+   **On a held job, the Westlaw wait is a ⏳ step.** After dispatching
+   `research-paralegal` in the background for a held job's Westlaw step, set that step
+   ⏳ for 5 minutes (`drafting_data__set_step`, `status: waiting`, `/drafting-data`
+   `references/jobs-run.md` §6b). When the time has passed, check whether the paralegal
+   has returned and its memo is filed in the issue's `6. LAW` folder. If not, set the step
+   ⏳ for 5 minutes again. Never dispatch a second `research-paralegal` while one is out.
+   Once the memo is filed, stamp the step done. A `status: blocked (...)` return sets the
+   step ↻ (`status: retry`), never done. The ⏳ minute is a time to check the run, never a
+   deadline (`shared/deadline-isolation.md`).
+
+   Where tiers 1–3
    hold pinpointable text answering an issue, skip this duty for it, recording on
    its spawn `Westlaw:` line each file and paragraph or
    page you read that answers it:
@@ -306,7 +318,10 @@ the same agent with `Re-invocation: yes`, naming the new files. Repeat while a g
 tier not yet run for that issue in this question: each tier runs at most once per issue. A
 step is stamped done only once its work has run, never while a return still names its tier
 not run. A tier that stops by the rules above (a Westlaw stop, a refusal the practitioner
-keeps, a fetcher stop) stops as they say, and its step stays open. Once no gap names a tier
+keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
+(`drafting_data__set_step`, `status: retry`) while a missing credential or an unreachable
+source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
+(duty 3). Once no gap names a tier
 this session can run, persist the last return by the order below: its Conclusion answers
 the question, and the job stays open on each step not yet done (`/draft`
 `references/job-session.md`, Complete). A caller holding no job keeps the single loop above.

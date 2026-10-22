@@ -97,7 +97,12 @@ permitted to make statements of law.
    practitioner in plain words that Westlaw research is needed and Chrome isn't
    connected, or that Westlaw isn't signed in and the sign-in page is open in
    Chrome, and to tell you to continue once signed in. On "continue", re-dispatch
-   the same run. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
+   the same run. On a held job, after launching the query set its step ⏳ for 5 minutes, as the
+   doctrine's duty 3 says ("On a held job, the Westlaw wait is a ⏳ step"). When the time has passed, check whether
+   the run has finished and can be downloaded: the paralegal has returned and its memo is
+   filed in the `6. LAW` folder. If not, set the step ⏳ for 5 minutes again. Never
+   dispatch a second `research-paralegal` while one is out. A `blocked (...)` return sets
+   the step ↻, never done. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A

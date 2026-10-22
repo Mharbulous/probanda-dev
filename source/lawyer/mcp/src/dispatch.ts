@@ -31,6 +31,7 @@ import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/fo
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
+import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
 import { submissionDataSetBoardGoal, type SetBoardGoalArgs } from "./submission/forms/board-goals.js";
@@ -273,6 +274,9 @@ export async function callTool(
 
   if (name === "drafting_data__track_source") {
     return submissionDataTrackSource(args as unknown as TrackSourceArgs);
+  }
+  if (name === "drafting_data__set_step") {
+    return submissionDataSetStep(args as unknown as SetStepArgs);
   }
 
   if (name === "drafting_data__release_job") {

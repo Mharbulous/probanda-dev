@@ -83,6 +83,7 @@ import {
   type WorkBoardTicket,
 } from "./forms/render-work-board.js";
 import { renderWorkBoardHtml } from "./forms/workboard-shell.js";
+import { stepGlyphText, stepView } from "./forms/step-state.js";
 import { deadlineCriteria, type MatterDates, type PageDates, pageDates } from "./matter-dates.js";
 import type { MatterTodos } from "./matter-todos.js";
 import { mockupDir, mockupsRoot, readManifest, type RenderManifest, sha256 } from "./render-manifest.js";
@@ -793,11 +794,20 @@ function sourcesText(sources: WorkBoardTicket["sources"]): string {
   return [`${got} of ${sources.length} got`, ...rest].join(" · ");
 }
 
+/** A step as board_card prints it: its ordinal, its glyph (step-state.ts, at the section's Rendered
+ * minute), its text, then on a done step its stamp and on a step dropped or put off the
+ * practitioner's words. A waiting step's minute is the time it is next checked, never a deadline. */
+function stepText(s: WorkBoardTicket["steps"][number], rendered: string): string {
+  const view = stepView(s, rendered);
+  const tail = view === "done" ? ` (${s.done_at})` : (view === "cancelled" || view === "deferred") && s.status_note ? ` (${JSON.stringify(s.status_note)})` : "";
+  return `${s.ordinal} ${stepGlyphText(s, rendered)} ${s.text}${tail}`;
+}
+
 /** A job as board_card prints it. A live, completed or shelved job carries its detail, ending with
  * the open loose threads captured from it, the answers saved for it and its sources to get, then, on a completed or
  * shelved one, when it was completed or shelved; a superseded one its pointer and reason. `seeds`
  * are the section's open loose threads. */
-function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | null, seeds: WorkBoardData["seeds"]): string[] {
+function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | null, seeds: WorkBoardData["seeds"], rendered: string): string[] {
   const head = collapsedText(t) + generalTail(t);
   if (t.category === "superseded") {
     return [head, `  superseded by: ${t.superseded_by === null ? "—" : `#${t.superseded_by.id}`} · reason: ${t.superseded_reason ?? "—"}`];
@@ -812,7 +822,7 @@ function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardProposal> | 
   if (t.proposal_keys.length > 0) lines.push(`  keys: ${t.proposal_keys.map((key) => keyText(key, t.proposal_items[key], derived)).join("; ")}`);
   lines.push(`  scope: ${t.scope.length === 0 ? "—" : t.scope.join(", ")} · waits on: ${edgeText(t.blocked_by)} · either-or: ${edgeText(t.conflicts)}`);
   if (t.steps.length > 0) {
-    lines.push(`  steps: ${t.steps.map((s) => `${s.ordinal} ${s.done_at === null ? "☐" : "☑"} ${s.text}${s.done_at === null ? "" : ` (${s.done_at})`}`).join(" · ")}`);
+    lines.push(`  steps: ${t.steps.map((s) => stepText(s, rendered)).join(" · ")}`);
   }
   const own = seeds.filter((s) => s.origin_ticket_id === t.id);
   if (own.length > 0) lines.push(`  loose threads: ${own.map((s) => `loose thread ${s.id}: ${JSON.stringify(s.idea)} (${s.created})`).join("; ")}`);
@@ -1053,7 +1063,7 @@ function renderBoardCard(
 ): string {
   const derived = derivedOf(section);
   const lines: string[] = [];
-  for (const t of section.tickets) if (jobs.includes(t.id)) lines.push(...jobCardLines(t, derived, section.seeds));
+  for (const t of section.tickets) if (jobs.includes(t.id)) lines.push(...jobCardLines(t, derived, section.seeds, section.meta.rendered));
   for (const lane of CARD_LANES) {
     if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== undefined)) continue;
     // A Job Board with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
@@ -1071,7 +1081,7 @@ function renderBoardCard(
   if (key !== undefined) {
     const holder = section.tickets.find((t) => LIVE.has(t.category) && t.proposal_keys.includes(key));
     const proposal = section.proposals.find((p) => p.key === key);
-    if (holder !== undefined) lines.push(...jobCardLines(holder, derived, section.seeds));
+    if (holder !== undefined) lines.push(...jobCardLines(holder, derived, section.seeds, section.meta.rendered));
     else if (proposal === undefined) lines.push(`(no job or Proposal carries ${key})`);
     else lines.push(proposal.lane === "rejected" ? shelvedHeading(section) : proposedHeading(section), ...proposalLines(proposal));
   }

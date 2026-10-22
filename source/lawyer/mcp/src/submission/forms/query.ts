@@ -605,6 +605,19 @@ export function bfOnHeld(dbPath: string): boolean {
   return held;
 }
 
+/** Databases known to hold `ticket_steps.status` (schema v78). Only a present column is remembered,
+ * as for `deleted_at`. */
+const stepStatusHeldDbs = new Set<string>();
+
+/** Whether `ticket_steps.status` exists (with `wait_until` and `status_note`). Before v78 a step is
+ * open or done and nothing else. */
+export function stepStatusHeld(dbPath: string): boolean {
+  if (stepStatusHeldDbs.has(dbPath)) return true;
+  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('ticket_steps') WHERE name = 'status'")[0].n > 0;
+  if (held) stepStatusHeldDbs.add(dbPath);
+  return held;
+}
+
 /** Databases known to hold `documents.exhibit_letters` (schema v56). Only a present column is
  * remembered, as for `deleted_at`. */
 const exhibitLettersHeldDbs = new Set<string>();

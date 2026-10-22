@@ -56,7 +56,7 @@ const GOLDEN = {
 };
 
 /** sha256 of renderPracticeBoardHtml(GOLDEN), taken from the inline-string shell before the move to templates. */
-const PAGE_PIN = "0beed7e66657e623627d4f010458e7fde25166f891f29aa941d9a3c243688a71";
+const PAGE_PIN = "007e8035a6b365b539ee103bfca89eb72785698ee5777e7b5cbd6b3f363b85f8";
 
 test("buildPracticeBoardData places each item by its stored date against the injected today", async (t) => {
   assert.deepEqual(await buildPracticeBoardData(await fixtureStore(t), NOW), GOLDEN);

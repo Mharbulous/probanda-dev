@@ -177,6 +177,20 @@
     // is never reordered.
     function byId(a, b) { return a.id - b.id; }
 
+    // A step's state (step-state.ts, schema v78): done always wins; a waiting step whose minute has
+    // come, by this browser's clock, reads as open again.
+    function localMinute() {
+      var d = new Date();
+      function two(n) { return (n < 10 ? "0" : "") + n; }
+      return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes());
+    }
+    function stepState(s) {
+      if (s.done_at !== null) return "done";
+      if (s.status === "waiting") return s.wait_until && s.wait_until.replace(" ", "T").slice(0, 16) > localMinute() ? "waiting" : "open";
+      if (s.status === "retry" || s.status === "cancelled" || s.status === "deferred") return s.status;
+      return "open";
+    }
+
     function ticketCard(t) {
       var card = el("details", "ticket");
       card.setAttribute("name", "board");
@@ -222,14 +236,14 @@
         var ol = el("ol", "steps");
         var nextMarked = false;
         t.steps.forEach(function (s) {
-          var cls = "";
-          if (s.done_at !== null) {
-            cls = "done";
-          } else if (!nextMarked) {
-            cls = "next";
+          var cls = stepState(s);
+          if (cls === "open") {
+            cls = nextMarked ? "" : "next";
             nextMarked = true;
           }
-          ol.appendChild(el("li", cls, s.text));
+          var li = ol.appendChild(el("li", cls, s.text));
+          // The minute the session checks the process again, as a plain time: never a countdown.
+          if (cls === "waiting") li.appendChild(el("span", "until", " until " + s.wait_until.slice(11, 16)));
         });
         body.appendChild(ol);
       }

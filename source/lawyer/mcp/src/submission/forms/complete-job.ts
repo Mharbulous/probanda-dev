@@ -8,11 +8,17 @@
 // proceeding has a filing, that filing's render is used: any render rewrites every page, and
 // job_board_path is the rendered filing's page. Only a proceeding with no filing at all goes through
 // the proceeding's render, and job_board_path is then the proceeding's page.
+//
+// Before either statement, a job this session holds is read for its steps: while any step is open,
+// waiting or to be retried (step-state.ts, schema v78) nothing is written and the outcome is
+// steps_open, naming each one. A step the practitioner dropped or put off (drafting_data__set_step
+// with their words) is resolved. On a database held below v78 every unstamped step is open.
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { type ClientContext, type RenderedDocument, submissionFormsRender, submissionFormsRenderProceedingBoard } from "../forms.js";
-import { fetchAllFilingsForProceeding, isJobOnlyBoard, liveTicketClause } from "./query.js";
+import { fetchAllFilingsForProceeding, isJobOnlyBoard, liveTicketClause, stepStatusHeld } from "./query.js";
+import { type StepStateFields, stepResolved } from "./step-state.js";
 import type { BoardMove } from "../matter-pages.js";
 import type { MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
@@ -31,7 +37,7 @@ export interface CompleteJobArgs {
 
 export interface CompleteJobResult {
   ticket_id: number;
-  outcome: "completed" | "not_held" | "shelved" | "no_match";
+  outcome: "completed" | "not_held" | "shelved" | "no_match" | "steps_open";
   /** Queued conflict partners this call superseded. */
   superseded: number;
   /** Rows the completion changed: 1 when this call completed the job, 0 otherwise. */
@@ -46,6 +52,8 @@ export interface CompleteJobResult {
   job_board_path?: string;
   board_changed?: boolean;
   board_moves?: BoardMove[];
+  /** On steps_open: each step not yet resolved, in plan order. Nothing was written. */
+  open_steps?: { ordinal: number; text: string; state: string }[];
   /** Present when the page rewrite refused: the Job Board is stale. The completion stands. */
   pages_refused?: { code: string; message: string };
   note: string;
@@ -100,6 +108,38 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
   }
 }
 
+interface OpenStepRow extends StepStateFields {
+  ordinal: number;
+  text: string;
+}
+
+/** The steps_open refusal for a job this session holds with any step not resolved; null otherwise,
+ * and for a job it does not hold, whose outcome the guarded statements then report. */
+function openSteps(dbPath: string, id: number, token: string): CompleteJobResult | null {
+  const [job] = submissionDataQuery(dbPath, "SELECT status, locked_by, rejected_at FROM tickets WHERE id = ?", [id]).rows as unknown as { status: string; locked_by: string | null; rejected_at: string | null }[];
+  if (job === undefined || job.locked_by !== token) return null;
+  const columns = stepStatusHeld(dbPath) ? "ordinal, text, done_at, status, wait_until" : "ordinal, text, done_at";
+  const steps = submissionDataQuery(dbPath, `SELECT ${columns} FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal`, [id]).rows as unknown as OpenStepRow[];
+  const open = steps.filter((s) => !stepResolved(s)).map((s) => ({ ordinal: s.ordinal, text: s.text, state: s.status === "retry" ? "retry" : s.status === "waiting" ? "waiting" : "open" }));
+  if (open.length === 0) return null;
+  return {
+    ticket_id: id,
+    outcome: "steps_open",
+    superseded: 0,
+    changes: 0,
+    status: job.status,
+    completed_at: null,
+    locked_by: job.locked_by,
+    rejected_at: job.rejected_at,
+    pages_written: false,
+    open_steps: open,
+    note:
+      `Job ${id} was not completed and nothing was written: ${open.length === 1 ? "step" : "steps"} ` +
+      `${open.map((s) => `${s.ordinal} "${s.text}" (${s.state})`).join(", ")} ${open.length === 1 ? "is" : "are"} not done. ` +
+      "Finish each one, or, on the practitioner's own words, set it cancelled or deferred with drafting_data__set_step, then complete.",
+  };
+}
+
 /** drafting_data__complete_job. Every validation refusal writes nothing; a page refusal is reported, never thrown. */
 export async function submissionDataCompleteJob(
   args: CompleteJobArgs,
@@ -114,6 +154,8 @@ export async function submissionDataCompleteJob(
   }
   const id = args.ticket_id;
   const token = args.session_token;
+  const open = openSteps(args.db_path, id, token);
+  if (open !== null) return open;
   const written = await submissionDataWriteAll(
     args.db_path,
     [

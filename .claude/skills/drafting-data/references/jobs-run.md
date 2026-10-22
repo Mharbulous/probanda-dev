@@ -170,6 +170,19 @@ That `EXISTS` is §5's guard in its child-table shape — the same clause, on a 
 
 **No confirm-read here: read `changes` on each tick.** `changes` 1 means the stamp landed. `changes` 0 means it matched nothing, which means the holder changed: stop, and run §2's scope read, whose row says why. That misses a wrong but valid ordinal, which matches one row: read `ordinal, text` first.
 
+**Stamp only work that ran.** A step blocked by a missing credential or an unreachable source is set to ↻ with `drafting_data__set_step` (§6b), never stamped ☑. A stamp is frozen once written, so a step stamped without its work would report that work done for good.
+
+## 6b. Step status
+
+A step not yet done can carry one status besides open (schema v78), set by `drafting_data__set_step` with `db_path`, `ticket_id`, `ordinal`, `session_token` and `status`, under the same holder guard as §6. A done step is frozen and takes none. The glyphs are ☐ open, ☑ done, ↻ retry, ☒ cancelled, ⏸ deferred and ⏳ waiting:
+
+- **`retry` ↻**: the step is blocked by a missing credential or an unreachable source. It is tried again once the block clears, and is then stamped ☑ when its work runs.
+- **`cancelled` ☒** and **`deferred` ⏸**: the practitioner chose to drop the step or put it off. Set only on the practitioner's own words, passed verbatim as `practitioner_words`, which the card prints after the step. A session never sets either on its own judgment.
+- **`waiting` ⏳**: the step waits on an external process, such as a Westlaw run. `wait_minutes` (default 5) sets `wait_until` to now plus that many minutes, and the result says `setting timer for N minutes`. `wait_until` is a wake-up time to check whether the process has finished. It is never a deadline or time remaining, is never shown as a countdown, and never goes into a handover or a loose thread. When the minute has passed, the step reads ☐ again and the session checks the process.
+- **`open`** clears the status.
+
+A step is resolved when it is done, cancelled or deferred. Gate steps never take a status: a gate waiver stays in the step's text (`references/jobs-gate.md`).
+
 ## 6a. Session-active stamp
 
 Reading, research and conversation record no progress, so a holder busy with them reads as idle. The session-active stamp shows that the holder is still working. It is one `db_meta` row per job, `job_active:<id>`, holding the minute. It is written as the last write of every turn in which this session held the job and worked on it, whether by reading, research, drafting or conversation about it. A turn that did not touch the job writes nothing:
@@ -326,6 +339,7 @@ and returns its outcome:
 
 - **`completed`** (`status = 'completed'` with `locked_by` NULL) means **the job is complete**. `changes` 1 means this call completed it. `changes` 0 means a successor's completion after a take-over left the same row, and this call wrote nothing. The end state is the same either way, so on either reading the session runs §14's open-jobs read next, before presenting, even with other jobs open (then no write).
 - **`not_held`** — another session's token is on the row: a take-over (§4). **`shelved`** — `locked_by` NULL with `rejected_at` stamped: a §10a shelving. **`no_match`** — neither statement matched, and the returned row shows why. On any of these neither statement landed: report which one it was and stop.
+- **`steps_open`** — before either statement, the tool read a step not resolved (§6b): ☐, ↻ or ⏳, a ⏳ whose minute has passed included, and wrote nothing. `open_steps` names each one. Finish each, or, on the practitioner's own words, set it ☒ or ⏸ with `drafting_data__set_step`, then complete. On a database held below v78 every unstamped step is open.
 
 Only when `changes` is 1 does the call rewrite the matter's pages, by the render a session runs with `draft_dir`, and it returns `pages_written`, `job_board_path`, `board_changed` and `board_moves`, so no separate render is needed after it. When the result says `pages_written: false` after a completion this call made, say the Job Board was not refreshed and quote `pages_refused` verbatim. The completion stands either way.
 

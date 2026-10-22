@@ -22,7 +22,7 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 
 const { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedTickets, seedProposalCases, assertMatchesGolden, readBoardData, sectionOf, jobBoardPages, boardDataOf, ASHBOURNE, draftFolder } =
   await import("./fixtures/forms-render-seeds.mjs");
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsRenderProceedingBoard } = await import("../build/submission/forms.js");
 const { fetchProceeding, fetchRevision } = await import("../build/submission/forms/query.js");
@@ -1372,4 +1372,86 @@ test("an old page file outside any matter with a coclerk.json is reported as ski
   } finally {
     f.cleanup();
   }
+});
+
+// Step states (schema v78): board_card prints each step's glyph at the section's Rendered minute,
+// a waiting step with the plain minute it is next checked, and one whose minute has passed as open;
+// the Job Board page draws the same states as classes, with `until HH:MM` beside a waiting step.
+async function stepStatesBoard(t) {
+  const { f } = await heldJobBoard(t);
+  await submissionDataExecute(
+    f.dbPath,
+    `DELETE FROM ticket_steps WHERE ticket_id = 1;
+     INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at, status, wait_until, status_note) VALUES
+       (1, 1, 'Read the file', '2026-01-16T09:10', NULL, NULL, NULL),
+       (1, 2, 'Search the pool', NULL, 'retry', NULL, NULL),
+       (1, 3, 'Note up the case', NULL, 'cancelled', NULL, 'Not needed now.'),
+       (1, 4, 'Check the regulation', NULL, 'deferred', NULL, 'After the reply.'),
+       (1, 5, 'Run the Westlaw query', NULL, 'waiting', '2099-01-16T12:30', NULL),
+       (1, 6, 'Download the memo', NULL, 'waiting', '2020-01-16T11:00', NULL),
+       (1, 7, 'Draft the answer', NULL, NULL, NULL, NULL);`
+  );
+  return f;
+}
+
+test("board_card prints each step state's glyph, the minute beside a waiting step, and a passed wait as open", async (t) => {
+  const f = await stepStatesBoard(t);
+  const steps = proceedingCard(f).split("\n").find((l) => l.startsWith("  steps: "));
+  assert.equal(
+    steps,
+    "  steps: " +
+      [
+        "1 ☑ Read the file (2026-01-16T09:10)",
+        "2 ↻ Search the pool",
+        '3 ☒ Note up the case ("Not needed now.")',
+        '4 ⏸ Check the regulation ("After the reply.")',
+        "5 ⏳ until 12:30 Run the Westlaw query",
+        "6 ☐ Download the memo",
+        "7 ☐ Draft the answer",
+      ].join(" · ")
+  );
+  // The minute is the next check, at the Rendered minute: on the day itself it still waits until it comes.
+  await submissionDataExecute(f.dbPath, "UPDATE ticket_steps SET wait_until = '2026-01-16T12:30' WHERE ticket_id = 1 AND ordinal = 6;");
+  assert.ok(proceedingCard(f).includes("6 ⏳ until 12:30 Download the memo"));
+  await submissionDataExecute(f.dbPath, "UPDATE ticket_steps SET wait_until = '2026-01-16T12:00' WHERE ticket_id = 1 AND ordinal = 6;");
+  assert.ok(proceedingCard(f).includes("6 ☐ Download the memo"), "a wait whose minute has come reads as open");
+  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 1/7 · idle 2 h 40 min, about 14%", "progress counts done steps only");
+});
+
+test("the Job Board page draws each step state as a class, with until HH:MM beside a waiting step, and a passed wait as open", async (t) => {
+  const f = await stepStatesBoard(t);
+  const { draft } = draftFolder(f);
+  submissionFormsRenderProceedingBoard(f.dbPath, 1, {}, NOON, "tok", draft);
+  const page = join(draft, "Job Board - proceeding 1.html");
+  const ticket = readBoardData(page).sections[0].tickets.find((x) => x.id === 1);
+  assert.deepEqual(ticket.steps[4], { ordinal: 5, text: "Run the Westlaw query", done_at: null, status: "waiting", wait_until: "2099-01-16T12:30", status_note: null });
+  const card = drawPage(page).main.all().find((n) => n.tag === "details" && n.id === "ticket-1").all();
+  const items = card.filter((n) => n.tag === "li" && n.parent.className === "steps").slice(0, 7);
+  assert.deepEqual(
+    items.map((n) => [n.className, n.textContent]),
+    [
+      ["done", "Read the file"],
+      ["retry", "Search the pool"],
+      ["cancelled", "Note up the case"],
+      ["deferred", "Check the regulation"],
+      ["waiting", "Run the Westlaw query until 12:30"],
+      ["next", "Download the memo"],
+      ["", "Draft the answer"],
+    ]
+  );
+  assert.ok(card.some((n) => n.className === "until" && n.textContent === " until 12:30"));
+});
+
+test("a step on a database held below v78 reads as open or done", async (t) => {
+  const f = seededDbFixture();
+  t.after(() => f.cleanup());
+  submissionDbAt(f.dbPath, 77);
+  await submissionDataExecute(
+    f.dbPath,
+    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
+     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, plan_approved_at, created)
+       VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
+     INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Read the file', '2026-01-16T09:10'), (1, 2, 'Run the research', NULL);`
+  );
+  assert.ok(proceedingCard(f).includes("  steps: 1 ☑ Read the file (2026-01-16T09:10) · 2 ☐ Run the research"), proceedingCard(f));
 });
