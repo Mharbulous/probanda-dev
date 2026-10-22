@@ -373,6 +373,54 @@ test("combineSections pools criteria by id, unmet while any Writing's is unmet, 
   assert.equal(a.tickets[0].writing, undefined, "the sections themselves are not changed");
 });
 
+test("the page's copy of a merged board names no Writing on its Criteria card: one least-advanced state, one wording, a shared item once", async (t) => {
+  const m = await fixture(t);
+  const a = section(1, 1, "Opening Submissions Package", [
+    criterion("gate", "The pre-filing checks are passed or waived", "unmet", ["Pre-filing gate", "step 2"]),
+    criterion("open-items", "No open items", "met"),
+    criterion("deadline:hearing", "Hearing", "unmet", [], "practice"),
+  ]);
+  const b = section(3, 2, "Counterclaim Submissions", [
+    criterion("gate", "The pre-send checks are passed or waived", "unmet", ["Pre-filing gate"]),
+    criterion("deadline:hearing", "Hearing", "met", [], "practice"),
+  ]);
+  b.meta = { ...b.meta, state: "filed", state_label: "Filed", state_since: "2026-10-01" };
+  a.goal.text = "Drafting conditions hold.";
+  b.goal.text = "Filed on 2026-10-01";
+
+  const page = combineSections(m.dbPath, [a, b], true);
+  const agent = combineSections(m.dbPath, [a, b]);
+  assert.equal(page.meta.state_label, "Drafting", "the least advanced of Drafting and Filed");
+  assert.equal(page.meta.state_since, null);
+  const gate = page.criteria.find((c) => c.id === "gate");
+  assert.equal(gate.text, "The pre-filing and pre-send checks are passed or waived");
+  assert.deepEqual(gate.items, ["Pre-filing gate", "step 2"], "an item both Writings hold prints once, with no prefix");
+  assert.equal(gate.outstanding, agent.criteria.find((c) => c.id === "gate").outstanding, "the count is board_card's");
+  assert.deepEqual(gate.counts, { items: 3, suppressed: 0 });
+  assert.deepEqual(page.criteria.map((c) => c.text), ["The pre-filing and pre-send checks are passed or waived", "No open items", "Hearing", "Hearing"]);
+  assert.equal(page.goal.text, "Drafting conditions hold.; Filed on 2026-10-01");
+  const card = JSON.stringify([page.meta.state_label, page.goal, page.criteria]);
+  for (const title of ["Opening Submissions Package", "Counterclaim Submissions"]) assert.ok(!card.includes(title), `the card names no ${title}`);
+
+  assert.equal(agent.meta.state_label, "Opening Submissions Package: Drafting · Counterclaim Submissions: Filed 2026-10-01", "board_summary's copy is unchanged");
+  assert.equal(agent.criteria.find((c) => c.id === "gate").text, "Opening Submissions Package: The pre-filing checks are passed or waived; Counterclaim Submissions: The pre-send checks are passed or waived");
+  assert.equal(combineSections(m.dbPath, [a], true), a, "one section is the same object on the page too");
+});
+
+test("a merged page's Completion Criteria card shows one state and no Writing title; board_card still names each Writing", async (t) => {
+  const m = await fixture(t);
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  render(m, 1);
+  const criteria = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["criteria"] }, ASHBOURNE, NOW).card;
+  assert.match(criteria, /Opening Submissions Package: .*; Counterclaim Submissions: /, "board_card keeps the Writing labels");
+  const nodes = drawPage(join(m.draft, "Job Board 1.html"));
+  const card = nodes.find((n) => n.id === "goal");
+  assert.ok(card, "the merged page draws a Completion Criteria card");
+  assert.equal(card.all().find((n) => n.className === "lifecycle").textContent, "Drafting");
+  assert.equal(card.all().find((n) => n.className === "text").textContent, "No completion criteria are declared for this type of Writing.", "the Writings' one card text prints once");
+  for (const title of ["Opening Submissions Package", "Counterclaim Submissions"]) assert.ok(!card.textContent.includes(title), `the card names no ${title}`);
+});
+
 test("a merged page draws one board: one Criteria card, one panel per lane, no per-Writing heading, no repeated id", async (t) => {
   const m = await fixture(t);
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);

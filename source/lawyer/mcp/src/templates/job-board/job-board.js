@@ -496,16 +496,18 @@
       if (d.flag) node.appendChild(el("span", "dflag", d.flag));
     }
     // A criterion's fold-out label. Markers print only where work is open, so the board counts the
-    // unmet items and never a total. A row with nothing outstanding holds informational lines.
+    // unmet items and never a total. A row with nothing outstanding holds informational lines. On a
+    // merged board an item two Writings share prints once; `counts` then still counts every one.
     function itemsLabel(c) {
+      var total = c.counts ? c.counts.items : c.items.length;
       if (c.source !== "inventory" && c.outstanding === 0) {
-        return "Show " + c.items.length + (c.items.length === 1 ? " note" : " notes");
+        return "Show " + total + (total === 1 ? " note" : " notes");
       }
       var label = c.outstanding + (c.outstanding === 1 ? " item is unmet" : " items are unmet");
       if (c.source !== "inventory") return label;
       // Relies on inventoryCriterion listing the open items first, then the shelved, then the suppressed.
-      var suppressed = c.replaces ? c.replaces.filter(function (r) { return r !== null; }).length : 0;
-      var shelved = c.items.length - c.outstanding - suppressed;
+      var suppressed = c.counts ? c.counts.suppressed : c.replaces ? c.replaces.filter(function (r) { return r !== null; }).length : 0;
+      var shelved = total - c.outstanding - suppressed;
       if (shelved > 0) label += ", " + shelved + " shelved";
       return suppressed > 0 ? label + ", " + suppressed + " suppressed" : label;
     }
@@ -517,6 +519,7 @@
       var head = el(expands ? "summary" : "div", "head");
       head.appendChild(el("span", "sentence", goal.sentence));
       // The Writing's lifecycle state beside the sentence, so it shows whether the card is open or closed.
+      // A merged board's is one state, its Writings' least advanced, finished on the server.
       head.appendChild(document.createTextNode(" "));
       head.appendChild(el("span", "lifecycle", stateText(data.meta)));
       if (goal.text !== null) head.appendChild(el("span", "text", goal.text));
