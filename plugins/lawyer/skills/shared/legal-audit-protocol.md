@@ -148,7 +148,10 @@ Step 5 offers the search. In the memo, an answered negative carries its search a
 pinpoint, in one line: `full-text search of <instrument>, ss. <first>–<last>, for <terms>: no section`.
 An instrument the question needs that no `Legislation:` line names, such as a companion
 statute the question reaches only by its subject, is a Step 5 offer naming it, never
-searched or inferred here.
+searched or inferred here. To read one provision of an instrument on disk, pass its
+number to the same tool as `pinpoint` alone (`Rule 4-2(6)`, `s 3(2)`): it returns that
+rule, section or subsection verbatim with its heading path, line range and currency
+marker.
 
 **`needs_download` — return at once.** When your tier 1–3 pass and the spawn
 prompt's Westlaw files leave a decision you need unread because its text is not

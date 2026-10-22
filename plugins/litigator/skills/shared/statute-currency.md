@@ -119,8 +119,15 @@ lookup — tool absent, unconfigured, or erroring after a retry — is
   applies the rules in `shared/research-paralegal/legislation-currency.md` to
   CanLII's legislation metadata in code and reports a `currency` value per
   instrument. The `/legal-research` gate calls it; only `current` reads as
-  confirmed. (It replaced `research-paralegal`'s legislation-currency mode on
-  2026-10-06.)
+  confirmed for leg 1. A bare `current` never shows that the filed text is in
+  force: for a B.C. regulation the tool also returns `marker_date` and
+  `amendments_after_marker`, the amending regulations BC Laws lists as taking
+  effect after the consolidation's date, each with the provisions it amends
+  quoted from its text, or `unknown` with the reason. A listed amendment naming
+  a relied-on provision leaves that provision's leg 3 unchecked until it is
+  read. `unknown` means the tool made no such check, and leg 3 is checked from
+  the filed Point in Time page and bulletin as before. (It replaced `research-paralegal`'s legislation-currency
+  mode on 2026-10-06.)
 - **The general renderer's filed-render gate** (`currency_gate_failed`,
   `source/lawyer/mcp/src/submission/forms.ts`) — reads the currency result
   stored through `/drafting-data` on the relied-on authority and refuses an unsent Writing's filed face while

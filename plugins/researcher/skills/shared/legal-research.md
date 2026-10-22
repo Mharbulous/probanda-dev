@@ -120,7 +120,13 @@ other question runs the duties in their numbered order.
    `device_stage_files` call, the calls in parallel, confirm every file staged,
    and name the staged paths. Stage each manifest's PNGs the same way and name
    their staged paths in the manifest. Never stage or convert the `6. LAW` files
-   themselves.
+   themselves. When only some lines of one filed file are needed, such as one
+   provision to quote into the spawn prompt, call `law_folder_text` with `file`
+   and a `pattern` instead of extracting and staging the folder: the matching
+   lines come back inline with their line numbers and context, beside the file's
+   first lines and its manifest currency marker, and nothing is written or
+   staged. Pass that currency marker on with the lines. An HTML page is never
+   matched: the tool searches its `.md` or `.txt` sibling or refuses.
 3. **Tier 4, Westlaw — before the audit, never after it.** After tiers 1–3, for
    each issue no pinpointable text on disk answers, run Westlaw without asking unless the practitioner declined it this run:
    1. run the `westlaw-query-optimizer` subskill on the question;
@@ -179,7 +185,8 @@ other question runs the duties in their numbered order.
      `official: false`, whatever its source. Only with no copy is the instrument unread.
 
    Then, still before the audit, call the canlii `legislation_currency` tool once,
-   with the citation, title and jurisdiction of every instrument in issue,
+   with the `currency_marker` (as `YYYY-MM-DD`) of each instrument filed with one,
+   and the citation, title and jurisdiction of every instrument in issue,
    whatever the fetcher returned for it: CanLII's metadata can show a repeal where no
    text was filed. It is a tool call, not an agent, so it waits for no Westlaw run.
    Then hold one legislation record per instrument,
@@ -458,7 +465,7 @@ it is relayed as before this step existed.
 **Statute currency.** In a research question the check runs at the end of duty 4.
 When a caller such as `/draft` asks for a currency check on its own, call the canlii
 `legislation_currency` tool with each instrument's citation, title and jurisdiction,
-and hold the same legislation record per instrument as duty 4 does.
+and its `currency_marker` when one is filed, and hold the same legislation record per instrument as duty 4 does.
 
 **One currency check per Act.** The caller may name, with each instrument, the
 provisions (pinpoints) it needs. Instruments sharing the tool's `key` (the
@@ -471,8 +478,12 @@ that one record.
 
 Save all a `legislation_currency` call returns by step 1's tool and folder
 (`6. LAW\` if no audit agent ran) as `YYYY-MM-DD statute-currency check.md`. Only
-`current` reads as confirmed. Any other value, or a call that fails, reads
-unconfirmed (`shared/statute-currency.md`). This runs in the same `/legal-research`
+`current` reads as confirmed for the instrument. Any other value, or a call that
+fails, reads unconfirmed (`shared/statute-currency.md`). A bare `current` never
+shows that the filed text is in force: read it with the result's `marker_date` and
+`amendments_after_marker`. A listed amendment whose quoted provisions name a
+provision the caller relies on leaves that provision unchecked until its amending
+text is read. This runs in the same `/legal-research`
 call as any verification of a statement on the instrument. The filed file's own
 "current to" marker is leg 3 of `shared/statute-currency.md` and never confirms on
 its own.
@@ -484,3 +495,7 @@ instrument, `none` for a field with no value:
 Legislation records:
 - citation: <citation> | title: <title> | path: <path> | sha256: <sha256> | currency_marker: <marker> | currency: <value> | official: <true / false> | key: <key> | provisions: <pinpoint>; <pinpoint> / none
 ```
+
+Under each record line, relay the result's `marker_date` and each
+`amendments_after_marker` entry (instrument, effective date and the quoted
+provisions), or `amendments: unknown` with its `amendments_note`, word for word.
