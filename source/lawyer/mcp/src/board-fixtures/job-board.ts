@@ -943,30 +943,46 @@ export const JOB_BOARD_FIXTURE: MatterJobBoardData = {
     ],
     "criteria": {}
   },
-  "writings": [
+  "strip": [
     {
+      "kind": "writing",
+      "key": "doc:1:notice-of-application.md",
+      "viewed": false,
       "short": "NOA",
       "long": "Notice of Application"
-    }
-  ],
-  "views": [
+    },
     {
+      "kind": "view",
+      "key": "view:Procedural History",
+      "viewed": false,
       "name": "Procedural History",
       "file": "Procedural History - Job Board 1.html"
     },
     {
+      "kind": "view",
+      "key": "view:Material Facts",
+      "viewed": false,
       "name": "Material Facts",
       "file": "Material Facts - Job Board 1.html"
     },
     {
+      "kind": "view",
+      "key": "view:Raw Research",
+      "viewed": false,
       "name": "Raw Research",
       "file": "Raw Research - Job Board 1.html"
     },
     {
+      "kind": "view",
+      "key": "view:Arguments",
+      "viewed": false,
       "name": "Arguments",
       "file": "Arguments - Job Board 1.html"
     },
     {
+      "kind": "view",
+      "key": "view:Loose Threads",
+      "viewed": false,
       "name": "Loose Threads",
       "file": "Loose Threads - Job Board 1.html"
     }

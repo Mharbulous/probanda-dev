@@ -136,10 +136,10 @@
     // This filing's deadline criteria's dates, by criterion id, joined to its Goal card here.
     var when = pageDates && smeta.filing_id !== null ? pageDates.criteria[String(smeta.filing_id)] || {} : {};
     // The board's Goal card, Writings strip and page-wide lanes draw once, with the first section.
-    drawSection(section, board, when, i === 0 ? data.writings || [] : [], i === 0 ? data.views || [] : [], i === 0 ? data.attached || [] : [], i === 0 ? data.court_file || [] : [], i === 0);
+    drawSection(section, board, when, i === 0 ? data.strip || [] : [], i === 0 ? data.attached || [] : [], i === 0 ? data.court_file || [] : [], i === 0);
   });
 
-  function drawSection(data, board, when, writings, views, attached, courtFile, firstSection) {
+  function drawSection(data, board, when, items, attached, courtFile, firstSection) {
     function link(id) {
       var a = el("a", "", "Job #" + id);
       a.href = "#ticket-" + id;
@@ -621,34 +621,37 @@
 
     if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
 
-    // The filing's Writings, in its last render's document order, between the Goal card and Ready:
-    // each tile shows its short label, and a screen reader reads the fuller one instead. On hover the
-    // fuller one shows in a single tooltip on the body. A Writing's tile is no control. After them,
-    // each of the filing's view pages draws as a tile of the same size, also no control.
-    if (writings.length > 0 || views.length > 0) {
+    // The board's thumbnails in one row between the Goal card and Ready, in the order the server gave:
+    // the viewed ones first, most recently viewed first, then the never-viewed ones, the Writings'
+    // documents before the view pages. A Writing's tile shows its short label, and a screen reader
+    // reads the fuller one instead. On hover the fuller one shows in a single tooltip on the body. A
+    // view page's tile is the same size and badged; it is dashed until it is first viewed. No tile is
+    // a control.
+    if (items.length > 0) {
       var strip = el("ol", "writings");
       strip.setAttribute("aria-label", "Writings");
-      writings.forEach(function (w) {
-        var li = el("li", "writing");
-        li.setAttribute("data-long", w.long);
-        var label = el("span", "label", w.short);
-        label.setAttribute("aria-hidden", "true");
-        li.appendChild(label);
-        li.appendChild(el("span", "sr", w.long));
-        strip.appendChild(li);
-      });
-      views.forEach(function (v) {
-        var li = el("li", "writing view");
-        var long = v.name + " (view page: ask a session to show it)";
-        li.setAttribute("data-long", long);
+      items.forEach(function (item) {
+        if (item.kind === "writing") {
+          var li = el("li", "writing");
+          li.setAttribute("data-long", item.long);
+          var label = el("span", "label", item.short);
+          label.setAttribute("aria-hidden", "true");
+          li.appendChild(label);
+          li.appendChild(el("span", "sr", item.long));
+          strip.appendChild(li);
+          return;
+        }
+        var tile = el("li", item.viewed ? "writing view" : "writing view unviewed");
+        var long = item.name + " (view page: ask a session to show it)";
+        tile.setAttribute("data-long", long);
         var badge = el("span", "badge", "view");
         badge.setAttribute("aria-hidden", "true");
-        li.appendChild(badge);
-        var label = el("span", "label", v.name);
-        label.setAttribute("aria-hidden", "true");
-        li.appendChild(label);
-        li.appendChild(el("span", "sr", long));
-        strip.appendChild(li);
+        tile.appendChild(badge);
+        var name = el("span", "label", item.name);
+        name.setAttribute("aria-hidden", "true");
+        tile.appendChild(name);
+        tile.appendChild(el("span", "sr", long));
+        strip.appendChild(tile);
       });
       board.appendChild(strip);
 
@@ -703,7 +706,7 @@
     // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
     // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
     // Either way the count is the open threads'.
-    var threadsPage = (window.WORKBOARD.views || []).filter(function (v) { return v.name === "Loose Threads"; })[0];
+    var threadsPage = (window.WORKBOARD.strip || []).filter(function (v) { return v.kind === "view" && v.name === "Loose Threads"; })[0];
     if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
       var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
       section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);

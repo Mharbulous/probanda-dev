@@ -60,18 +60,18 @@ main>.writing-title{margin:28px 0 8px;font-family:var(--sans-heading);font-weigh
 .goal .deadline{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-top:6px;font-size:13.5px}
 .goal .date{font-family:var(--mono);font-size:12px;white-space:nowrap}
 .goal .dflag{font-family:var(--mono);font-size:11.5px;white-space:nowrap;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
-/* The filing's Writings, one page-shaped thumbnail each, in one row that never wraps and scrolls
-   sideways inside itself. Every thumbnail is the same fixed size; its short label clamps to four
-   lines with an ellipsis. The fuller description is read out from a visually hidden span and, on
-   hover, shown in one tooltip in the Goal card's own colours, outside the strip, which would clip it.
-   A Writing's tile is no control. After the Writings, each of the filing's view pages has a tile of
-   the same size, dashed and badged "view", that is no control either: a link would resolve against a
-   previewed card's web origin, so a session presents the view page on request. */
+/* The board's thumbnails, one page-shaped tile each for every Writing's document and every view page,
+   in one row that never wraps and scrolls sideways inside itself, the most recently viewed first.
+   Every thumbnail is the same fixed size; its short label clamps to four lines with an ellipsis. The
+   fuller description is read out from a visually hidden span and, on hover, shown in one tooltip in
+   the Goal card's own colours, outside the strip, which would clip it. A view page's tile is badged
+   "view", and dashed only while it has never been viewed. No tile is a control: a link would resolve
+   against a previewed card's web origin, so a session presents the page on request. */
 .writings{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;list-style:none;margin:0;padding:4px 2px 8px;align-items:flex-start}
 .writing{position:relative;flex:0 0 88px;box-sizing:border-box;aspect-ratio:8.5/11;background:var(--card);border:1px solid var(--frame);border-radius:3px;padding:8px 6px;text-align:center;font-size:13px;line-height:1.3;overflow:hidden}
 .writing .label{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
 .writing .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.writing.view{border-style:dashed}
+.writing.view.unviewed{border-style:dashed}
 .writing.view .badge{display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px;color:var(--accent)}
 .tip{position:fixed;z-index:10;pointer-events:none;max-width:32ch;background:var(--ink);color:var(--paper);font-family:var(--sans-heading);font-weight:600;font-size:13px;line-height:1.3;padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
 .tip[hidden]{display:none}

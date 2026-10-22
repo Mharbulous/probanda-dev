@@ -640,16 +640,16 @@ test("a filing's Job Board page draws its Writings in the render's order between
   assert.ok(strip.children.every((li) => li.tag === "li"));
   assert.deepEqual(
     strip.children.slice(tiles.length).map((li) => [li.className, li.querySelector(".label").textContent]),
-    VIEW_PAGES.map((page) => ["writing view", page.name]),
-    "after the Writings, one view tile per view page, in registry order"
+    VIEW_PAGES.map((page) => ["writing view unviewed", page.name]),
+    "after the Writings, one view tile per view page, in registry order, dashed while never viewed"
   );
   const goal = nodes.findIndex((n) => n.className === "goal");
   const ready = nodes.findIndex((n) => n.tag === "section" && n.id === "ready");
   assert.ok(goal >= 0 && goal < nodes.indexOf(strip) && nodes.indexOf(strip) < ready, "the strip sits after the Goal card and before Ready");
 
   const file = join(draft, "no-writings.html");
-  writeFileSync(file, renderWorkBoardHtml({ ...readBoardData(join(draft, OPENING_PAGE)), writings: undefined, views: undefined }), "utf-8");
-  assert.equal(drawPage(file).main.all().some((n) => n.className === "writings"), false, "no writings or views key draws no strip");
+  writeFileSync(file, renderWorkBoardHtml({ ...readBoardData(join(draft, OPENING_PAGE)), strip: undefined }), "utf-8");
+  assert.equal(drawPage(file).main.all().some((n) => n.className === "writings"), false, "no strip key draws no strip");
 });
 
 test("a malformed state sidecar reads as no section recorded", async () => {

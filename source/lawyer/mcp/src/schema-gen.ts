@@ -2072,6 +2072,31 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("record_viewed"),
+      description:
+        "Record that the practitioner was just shown pages, so the Job Board's thumbnails put the most recently " +
+        "viewed first and a view page's tile stops being dashed. Call it right after presenting a view page or a " +
+        "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Job " +
+        "Board or Litigation Strategy page. Each path is matched by its file name to a thumbnail: a board's view " +
+        "page (view_page_paths), or a live Writing's document by its mockup or presentation copy, by its folder too " +
+        "when several Writings' documents share the name. Each moves to the front of its board's order, so the last " +
+        "path ends up first. One db_meta row per board, key `board_viewed:filing:<id>` or " +
+        "`board_viewed:proceeding:<id>` by the board's survivor, value a JSON array of item keys, most recent first, " +
+        "with no time. It moves no revision, touches no job, and does not rewrite the page: the order shows the " +
+        "next time the page is written. Refusals write nothing: invalid_paths, not_a_strip_item, ambiguous_path. " +
+        "Returns keys (the rows written) and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          paths: { type: "array", items: { type: "string" } },
+        },
+        required: ["db_path", "paths"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("resnapshot_writing"),
       description:
         "Re-snapshot a Writing's stored layout (the dedicated re-snapshot write), run only on the practitioner's explicit " +

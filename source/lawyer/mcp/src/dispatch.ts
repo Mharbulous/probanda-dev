@@ -36,6 +36,7 @@ import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
 import { submissionDataSetBoardGoal, type SetBoardGoalArgs } from "./submission/forms/board-goals.js";
+import { submissionDataRecordViewed, type RecordViewedArgs } from "./submission/forms/board-viewed.js";
 import { submissionDataDeleteJob, type DeleteJobArgs } from "./submission/forms/delete-job.js";
 import { submissionDataRecordSent, type RecordSentArgs } from "./submission/forms/sent-write.js";
 import { resnapshotWriting } from "./submission/writing-snapshot.js";
@@ -290,6 +291,10 @@ export async function callTool(
 
   if (name === "drafting_data__set_board_goal") {
     return submissionDataSetBoardGoal(args as unknown as SetBoardGoalArgs);
+  }
+
+  if (name === "drafting_data__record_viewed") {
+    return submissionDataRecordViewed(args as unknown as RecordViewedArgs);
   }
 
   if (name === "drafting_data__delete_job") {

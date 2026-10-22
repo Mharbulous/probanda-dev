@@ -185,8 +185,7 @@ test("with draft_dir the render writes the board's page among the matter's pages
 
   const data = readBoardData(page);
   assert.deepEqual(data.sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[f.boardId, 1]], "its own section alone");
-  assert.deepEqual(data.writings, [], "no Writings strip");
-  assert.deepEqual(data.views, [], "no view page links");
+  assert.deepEqual(data.strip, [], "no Writings strip and no view page tiles");
   assert.deepEqual(data.court_file, []);
   const section = data.sections[0];
   assert.equal(section.meta.job_only, true);

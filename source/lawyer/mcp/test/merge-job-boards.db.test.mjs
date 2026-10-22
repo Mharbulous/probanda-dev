@@ -167,7 +167,7 @@ test("one page draws the merged boards as one board, each job once, with one set
     [[1, "Opening Submissions Package"], [3, "Proceeding 1"], [2, "Counterclaim Submissions"]],
     "each job once, tagged with its Writing"
   );
-  assert.deepEqual(page.views.map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => `${n} - Job Board 1.html`));
+  assert.deepEqual(page.strip.filter((v) => v.kind === "view").map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => `${n} - Job Board 1.html`));
   assert.equal(readBoardData(join(m.draft, "Job Board 2.html")).board, undefined, "an unmerged page carries no board key");
 
   const views = result.view_page_paths.filter((v) => v.path.includes("Job Board 1.html"));
