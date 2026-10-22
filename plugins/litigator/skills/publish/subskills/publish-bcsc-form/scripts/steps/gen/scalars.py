@@ -110,6 +110,47 @@ FORM_SCALARS = {
             ("amount", "Exact costs amount to insert before 'to be assessed'"),
         ],
     },
+    # Form 33.01: every date, time, place and estimate is the practitioner's
+    # own content, copied as given. A blank field keeps the form's own blank.
+    "form-33.01": {
+        "fields": [
+            ("application_respondents", "Name(s) of the application respondent(s), for the 'To:' line"),
+            ("applicant_parties", "Party(ies) whose notice of application is set down"),
+            ("notice_dated", "Date the notice of application bears (e.g. 'October 14, 2026')"),
+            ("hearing_place", "Address of the courthouse where the application will be heard"),
+            ("hearing_day", "Hearing date (e.g. 'November 3, 2026')"),
+            ("hearing_time", "Time of day of the hearing (e.g. '9:45 a.m.')"),
+            ("notice_served_dates", "Date(s) the notice of application was served (blank to leave the box unchecked)"),
+            ("response_served_dates", "Date(s) each application response was served (blank if none)"),
+            ("no_response_time_expired", "Has no application response been served and the time to serve one expired? (yes/no)"),
+            ("hearing_date_basis", "Date of hearing box: agreed / not_agreed / unopposed"),
+            ("agreed_time_estimate", "Agreed time estimate (e.g. '30 minutes'; blank if not agreed)"),
+            ("applicant_estimate_minutes", "If not agreed: the applicant's time estimate in minutes"),
+            ("respondent_estimate_minutes", "If not agreed: the application respondent's time estimate in minutes"),
+            ("respondent_gave_no_estimate", "If not agreed: has the application respondent given no time estimate? (yes/no)"),
+            ("associate_judge", "Is this matter within the jurisdiction of an associate judge? (yes/no)"),
+            ("summary_trial", "Is the application a summary trial under Rule 9-7? (yes/no)"),
+            ("final_order", "Is the application seeking a final order? (yes/no)"),
+            ("injunctive_relief", "Is the application seeking injunctive relief? (yes/no)"),
+            ("orders_sought", "Paragraph numbers of the orders from the notice of application, and any additional proposed terms sought by consent"),
+            ("signatory", "Who signs: applicant / lawyer"),
+            ("signatory_name", "Typed name of the signatory"),
+        ],
+    },
+    "form-30.001": {
+        "fields": [
+            ("record_type", "Type of record, as the cover heads it (e.g. 'APPLICATION RECORD')"),
+            ("rule_reference", "Rule reference line (e.g. '(RULE 8-1 (15))')"),
+            ("parties", "Each party's block: name, counsel (if applicable), address for delivery, and telephone and fax/e-mail"),
+            ("appearance_type", "Appearance type (e.g. 'Hearing')"),
+            ("appearance_date_time", "Date and time of the appearance"),
+            ("appearance_place", "Place of the appearance"),
+            ("plaintiff_time_estimate", "Time estimate of the plaintiff"),
+            ("defendant_time_estimate", "Time estimate of the defendant"),
+            ("heard_before", "To be heard before: judge / associate_judge / registrar"),
+            ("provided_by", "Who provides the record"),
+        ],
+    },
     "affidavit": {
         "fields": DEPONENT_FIELDS + [
             ("interpreter_required", "Does the deponent require an interpreter? (yes/no, default: no)"),
@@ -209,6 +250,7 @@ LIST_FIELDS = {
     "filed_documents": ("description", "stamp_date"),
     "unfiled_documents": ("description",),
     "service_exhibits": ("description",),
+    "parties": ("name",),
 }
 
 # Accepted spellings of the affidavit date. The substituted-service file name

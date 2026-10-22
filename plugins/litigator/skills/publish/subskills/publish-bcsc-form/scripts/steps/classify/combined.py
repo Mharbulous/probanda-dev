@@ -85,6 +85,11 @@ If the user mentions "notice of civil claim", "NOCC", or "Form 1", return form-1
 If the user mentions "response to counterclaim" or "Form 4", return form-4.
 If the user mentions "requisition", "requisition – general", or "Form 17", return form-17.
 If the user mentions "default judgment", "default judgement", or "Form 8", return form-8.
+If the user mentions "notice of hearing of application", "notice of hearing", or "Form 33.01",
+return form-33.01. Resetting an application adjourned generally (Rule 8-1 (21.1)) is also
+form-33.01.
+If the user mentions an "application record cover", a "record cover", or "Form 30.001", return
+form-30.001.
 If the user mentions "affidavit of personal service", "Form 15", or describes service
 effected personally (personally served, handed to the person, left with the person),
 return form-15.
