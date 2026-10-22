@@ -765,7 +765,13 @@ test("a line printing 🧩 records a non-generating entry and derives no Proposa
 // #1219: every blank field on one bespoke form is its own open item, as #1213 made each general
 // Writing's gap its own. Keyed on the filing alone, the Work Board merged them into one.
 const NOA_GAPS = ["Name of applicant", "Parties to be served", "Time estimate"];
-const AR_GAPS = ["Name of application respondent", "Name of applicant", "Date the notice of application was filed", "Time estimate"];
+const AR_GAPS = [
+  "Name of application respondent",
+  "Name of applicant",
+  "Date of the notice of application",
+  "Time estimate",
+  "Whether the application respondent agrees with the applicant's hearing date",
+];
 
 /** The open-items criterion of the filing just rendered, with its items narrowed to the form's own blank fields. */
 function openGaps(dbPath, gaps) {
@@ -795,7 +801,8 @@ test("each blank field on a Notice of Application and an Application Response is
       fill: ["INSERT INTO hearing_details (filing_id, time_estimate_minutes) VALUES (1, 30);", "Time estimate"],
       fillRest:
         "UPDATE parties SET is_client = 1 WHERE id = (SELECT MIN(id) FROM parties); UPDATE parties SET is_applicant = 1 WHERE id = (SELECT MAX(id) FROM parties);" +
-        " UPDATE documents SET document_date = '2026-09-01' WHERE id IN (SELECT document_id FROM opposing_orders);",
+        " UPDATE documents SET document_date = '2026-09-01' WHERE id IN (SELECT document_id FROM opposing_orders);" +
+        " UPDATE hearing_details SET hearing_date_position = 'none_proposed' WHERE filing_id = 1;",
     },
   ];
   for (const { seed, gaps, blank, fill: [fillSql, filled], fillRest } of cases) {

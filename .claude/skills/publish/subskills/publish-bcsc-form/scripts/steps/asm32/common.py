@@ -237,14 +237,16 @@ def transform(parsed: dict, base: dict) -> tuple[dict, str, list[str]]:
     est = _estimate_hours(front["time_estimate"])
     if est is not None and est > 2:
         warnings.append(
-            "time_estimate exceeds 2 hours: Rule 8-1(16) written-argument "
-            "obligations apply (advisory only)")
-    words = sum(len(x.split()) for x in
-                part1 + sections["Part 2"] + sections["Part 3"])
-    if words > 4500:
+            "time_estimate exceeds 2 hours: a registrar must fix the hearing "
+            "date and time (Rule 8-1(14.3)), and the notice of hearing must be "
+            "filed and served within 7 days after the registrar fixes it and at "
+            "least 14 days before the hearing (Rule 8-1(14.5)(b)); Rule 8-1(16) "
+            "does not limit written argument (advisory only)")
+    elif est is not None:
         warnings.append(
-            "Form 32 may exceed the Rule 8-1(4) 10-page cap; "
-            "assemble-time estimate is warning only")
+            "time_estimate is 2 hours or less: no written argument beyond the "
+            "notice of application may be filed or submitted without leave of "
+            "the court (Rule 8-1(16)) (advisory only)")
     return additions, "\n".join(body).rstrip() + "\n", warnings
 
 

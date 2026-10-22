@@ -178,7 +178,7 @@ Draft paragraphs discussing cases that applied the legal tests from Block B in f
 ## Response Format
 Return a JSON object:
 {{"kind": "step_result", "data": {{"paragraphs": [
-  {{"text": "The Court's jurisdiction to grant the order sought...", "citation": "Supreme Court Civil Rules, Rule 8-1(1)"}},
+  {{"text": "The Court's jurisdiction to grant the order sought...", "citation": "Supreme Court Civil Rules, Rule 10-4"}},
   {{"text": "The test for granting interlocutory relief...", "citation": "Smith v Jones, 2023 BCSC 456 at para 23"}}
 ]}}}}
 

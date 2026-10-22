@@ -134,7 +134,7 @@ REGISTRY = {
     },
     "form-33": {
         "name": "Application Response (Form 33)",
-        "rule": "Rule 8-1(6)",
+        "rule": "Rule 8-1(9)-(10)",
         "template": "templates/form-33.dotx",
         "fill_script": "fill_plain.py",
         "fill_form_arg": "form-33",
@@ -767,7 +767,7 @@ def cmd_step(session_id: str, result_json: str) -> dict:
         for _k in ("page_count", "pdf_path", "tail_text", "compliance_table",
                    "context_path", "versioned_from", "clean_path",
                    "clean_versioned_from", "verify_passed", "verify_warnings",
-                   "warnings", "cover"):
+                   "warnings", "cover", "advisories"):
             if ctx.get(_k) is not None:
                 result_action[_k] = ctx[_k]
         # Cleanup session on completion (Section 3.1.3) -- unless the output

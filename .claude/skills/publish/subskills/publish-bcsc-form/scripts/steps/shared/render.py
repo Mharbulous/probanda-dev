@@ -215,3 +215,14 @@ def extract_form32_tail(docx_path: Path) -> str:
         if in_tail and text.strip():
             lines.append(text.strip())
     return "\n".join(lines)
+
+
+def page_limit_advisories(form: str, rule: str, page_count: int, cover: bool) -> list[str]:
+    """The 10-page limit of Rule 8-1(4) and (10) as an advisory: it never blocks the publish. The NOT
+    FINAL cover page is not counted. A Form 32 draft order is a separate document, never in the
+    rendered form, so it is not counted either."""
+    pages = page_count - (1 if cover else 0)
+    if pages <= 10:
+        return []
+    return [f"{form} runs to {pages} pages, over the 10-page limit of {rule}; "
+            "the cover page is not counted (advisory only)"]

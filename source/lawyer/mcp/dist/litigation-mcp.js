@@ -1,4 +1,4 @@
-// build-stamp: 7af7a12ac22a
+// build-stamp: 4b5588d507c9
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77674,7 +77674,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Job Board with no Writing is created through drafting_data__create_job_board, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, a drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, and a job is deleted through drafting_data__delete_job. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Job Board with no Writing is created through drafting_data__create_job_board, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, a drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, a job step's status is set through drafting_data__set_step, and a job is deleted through drafting_data__delete_job. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77857,6 +77857,25 @@ function submissionDataToolDefinitions() {
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
+      name: submissionDataPrefixed("set_step"),
+      description: "Set one step's status on the job (a tickets row) this session holds, in one call: the guarded write, then the confirm-read. status is open (clears the status), retry (the step is blocked by a missing credential or an unreachable source and is tried again later; such a step is never stamped done), cancelled or deferred (only on the practitioner's own words, passed verbatim as practitioner_words and stored with the step), or waiting (the step waits on an external process, such as a Westlaw run: wait_until is set to now plus wait_minutes, default 5, and the result's note says `setting timer for N minutes`). wait_until is the minute the session checks the process again: never a deadline and never time remaining, never shown as a countdown, and never put in a handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen and takes no status. The write matches only a job holding this session's token. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: set (changes 1), not_held (the job is not this session's: taken over, shelved or completed), done (the step is done and was left as it is), no_match (no such step, or the guards matched nothing). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_ordinal, invalid_session_token, invalid_status, invalid_wait_minutes, practitioner_words_required, invalid_practitioner_words, not_found, schema_below_v78 (say once that the matter's database needs the v78 migration, and leave the step open). Returns ticket_id, ordinal, outcome, changes, done_at, status, wait_until, status_note, locked_by and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          ordinal: { type: "number" },
+          session_token: { type: "string" },
+          status: { type: "string", enum: ["open", "retry", "cancelled", "deferred", "waiting"] },
+          wait_minutes: { type: "number" },
+          practitioner_words: { type: "string" }
+        },
+        required: ["db_path", "ticket_id", "ordinal", "session_token", "status"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description: "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. Only the status (back to queued) and the lock change; the plan, its approval, the steps and their stamps, scope and proposals stay. By default the write matches only a wip job holding this session's token. expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with jobs), releases another session's job instead, and the write lands only while that holder is still on the row and the job is not shelved; pass it only after the practitioner chose Return it to Ready on /draft's take-over form. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: released (changes 1), taken_over (another holder is on the row, or with expected_holder the holder changed since the card was read: nothing was written; re-render), shelved (no lock, rejected_at set), completed, no_match (the guards matched nothing, and the returned status shows why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at and a note.",
       inputSchema: {
@@ -77889,7 +77908,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("complete_job"),
-      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. A wip conflict partner is never touched. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; draft_dir is the draft_dir open_session returned. The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing). Only when this call completed the job (changes 1) are the matter's Job Board pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, job_board_path (the rendered filing's or proceeding's Job Board page), board_changed, board_moves, pages_refused and a note.",
+      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's words (drafting_data__set_step) counts as resolved. A wip conflict partner is never touched. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; draft_dir is the draft_dir open_session returned. The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this call completed the job (changes 1) are the matter's Job Board pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, job_board_path (the rendered filing's or proceeding's Job Board page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78005,7 +78024,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its job line ` \xB7 general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and neither does any job on a proceeding_id card, where every job has no Writing. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty loose_threads_from_jobs, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job, the last activity being the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by ` \xB7 `, the glyph \u2611 done (followed by ` (<done_at>)`), \u2610 open, \u21BB to be retried, \u2612 cancelled or \u23F8 deferred (each followed by ` (\"<the practitioner's words>\")`), or `\u23F3 until <HH:MM>` waiting, the minute the process is next checked and never a deadline; a waiting step whose minute has passed prints \u2610, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; from \u2026])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each ending ` \xB7 rank <N> \xB7 <group label>[ \xB7 job: \"<job description>\"] \xB7 <reason>` or ` \xB7 unranked`; attached, `## Attached (n)` and each draft attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> \xB7 <client letter|reply> \xB7 <stored path> \xB7 attached <date>`, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder`, ` \xB7 unreadable (<error code>)`, or on a client letter ` \xB7 review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -81379,6 +81398,14 @@ ol.steps li.done::before{border-color:var(--done);background-color:var(--done);b
 :root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 ol.steps li.next{font-weight:500}
 ol.steps li.next::before{border-color:var(--ink)}
+ol.steps li.retry::before,ol.steps li.cancelled::before,ol.steps li.deferred::before,ol.steps li.waiting::before{border:none;font-size:13px;line-height:14px;text-align:center}
+ol.steps li.retry::before{content:"\\21BB"}
+ol.steps li.cancelled::before{content:"\\2612"}
+ol.steps li.deferred::before{content:"\\23F8"}
+ol.steps li.waiting::before{content:"\\23F3"}
+ol.steps li.cancelled,ol.steps li.deferred{color:var(--muted)}
+ol.steps li.cancelled{text-decoration:line-through;text-decoration-color:var(--line-strong)}
+ol.steps li .until{color:var(--muted);font-variant-numeric:tabular-nums}
 p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
 
 /* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
@@ -84009,6 +84036,14 @@ var PLACEMENTS = [
   { glyph: "\u{1F9E9}", documents: ["Witness_statement"], text: "as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it" },
   { glyph: "\u{1F9E9}", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" }
 ];
+var STEP_GLYPHS = {
+  open: "\u2610",
+  done: "\u2611",
+  retry: "\u21BB",
+  cancelled: "\u2612",
+  deferred: "\u23F8",
+  waiting: "\u23F3"
+};
 var GLYPHS_LONGEST_FIRST = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length);
 function splitGlyphs(run) {
   const out = [];
@@ -85458,6 +85493,13 @@ function bfOnHeld(dbPath) {
   if (held) bfOnHeldDbs.add(dbPath);
   return held;
 }
+var stepStatusHeldDbs = /* @__PURE__ */ new Set();
+function stepStatusHeld(dbPath) {
+  if (stepStatusHeldDbs.has(dbPath)) return true;
+  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('ticket_steps') WHERE name = 'status'")[0].n > 0;
+  if (held) stepStatusHeldDbs.add(dbPath);
+  return held;
+}
 var exhibitLettersHeldDbs = /* @__PURE__ */ new Set();
 function exhibitLettersHeld(dbPath) {
   if (exhibitLettersHeldDbs.has(dbPath)) return true;
@@ -85693,7 +85735,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "7af7a12ac22a";
+var BUILD_STAMP = false ? null : "4b5588d507c9";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -85737,7 +85779,7 @@ function buildStampStatus(env = process.env) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 77;
+var BAKED_SCHEMA_VERSION = false ? null : 79;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -91014,6 +91056,22 @@ async function submissionDataTrackSource(args, env = process.env) {
   };
 }
 
+// src/submission/forms/step-state.ts
+var minute = (stamp2) => stamp2.replace(" ", "T").slice(0, 16);
+function stepView(s3, now) {
+  if (s3.done_at !== null) return "done";
+  if (s3.status === "waiting") return s3.wait_until && minute(s3.wait_until) > minute(now) ? "waiting" : "open";
+  if (s3.status === "retry" || s3.status === "cancelled" || s3.status === "deferred") return s3.status;
+  return "open";
+}
+function stepResolved(s3) {
+  return s3.done_at !== null || s3.status === "cancelled" || s3.status === "deferred";
+}
+function stepGlyphText(s3, now) {
+  const view = stepView(s3, now);
+  return view === "waiting" ? `${STEP_GLYPHS.waiting} until ${minute(s3.wait_until).slice(11)}` : STEP_GLYPHS[view];
+}
+
 // src/submission/forms/render-work-board.ts
 function rows5(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -91054,7 +91112,7 @@ function reachesItself(startId, blockersOf) {
   }
   return false;
 }
-var allStepsDone = (steps) => steps.length > 0 && steps.every((s3) => s3.done_at !== null);
+var allStepsDone = (steps) => steps.length > 0 && steps.every(stepResolved);
 var holdsMaterial = (t3) => t3.status === "wip" && !allStepsDone(t3.steps);
 function latestStamp(stamps) {
   let latest = null;
@@ -91160,7 +91218,14 @@ function buildProceedingBoard(dbPath, proceedingId, today4 = localToday()) {
       blocked_by: blockedBy,
       conflicts: conflictPartners,
       circular: category === "waiting" && reachesItself(t3.id, blockersOf),
-      steps: [...stepsByTicket.get(t3.id) ?? []].sort((a3, b3) => a3.ordinal - b3.ordinal).map((s3) => ({ ordinal: s3.ordinal, text: s3.text, done_at: s3.done_at })),
+      steps: [...stepsByTicket.get(t3.id) ?? []].sort((a3, b3) => a3.ordinal - b3.ordinal).map((s3) => ({
+        ordinal: s3.ordinal,
+        text: s3.text,
+        done_at: s3.done_at,
+        status: s3.status ?? null,
+        wait_until: s3.wait_until ?? null,
+        status_note: s3.status_note ?? null
+      })),
       proposal_keys: (proposalsByTicket.get(t3.id) ?? []).map((p3) => p3.proposal_key),
       proposal_items: Object.fromEntries((proposalsByTicket.get(t3.id) ?? []).map((p3) => [p3.proposal_key, p3.item])),
       superseded_reason: supersededReason(t3, retiredOn),
@@ -91672,7 +91737,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
   const tickets = board.tickets.filter((t3) => onFilingBoard(t3.filing_id, ctx.filing.id)).map((t3) => {
     const ineligible_reasons = ineligibleReasons(t3.ticket, filed, printed, titles, inProgress2);
     const eligible = ineligible_reasons.length === 0;
-    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed) }, ctx.rendered, idleHours);
+    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered, idleHours);
   });
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
@@ -92204,6 +92269,95 @@ async function submissionDataApprovePlan(args, env = process.env) {
   };
 }
 
+// src/submission/forms/set-step.ts
+var TOOL10 = "drafting_data__set_step";
+var STATUSES2 = ["open", "retry", "cancelled", "deferred", "waiting"];
+var DEFAULT_WAIT_MINUTES = 5;
+var WAIT_MINUTES_MAX = 1440;
+var WORDS_MAX = 500;
+async function submissionDataSetStep(args, env = process.env) {
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ordinal) || args.ordinal <= 0) throw new ValidationError(`${TOOL10}.ordinal must be a positive integer`, "invalid_ordinal");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  if (typeof args.status !== "string" || !STATUSES2.includes(args.status)) {
+    throw new ValidationError(`${TOOL10}.status must be one of ${STATUSES2.join(", ")}; nothing was written`, "invalid_status");
+  }
+  const status2 = args.status;
+  if (args.wait_minutes !== void 0 && (status2 !== "waiting" || !Number.isInteger(args.wait_minutes) || args.wait_minutes < 1 || args.wait_minutes > WAIT_MINUTES_MAX)) {
+    throw new ValidationError(`${TOOL10}.wait_minutes is a whole number of minutes from 1 to ${WAIT_MINUTES_MAX}, and only with status waiting; nothing was written`, "invalid_wait_minutes");
+  }
+  const owesWords = status2 === "cancelled" || status2 === "deferred";
+  const words = typeof args.practitioner_words === "string" ? args.practitioner_words.trim() : "";
+  if (owesWords && (words === "" || words.length > WORDS_MAX)) {
+    throw new ValidationError(
+      `${TOOL10}: a step is set ${status2} only on the practitioner's own words, passed verbatim as practitioner_words (1 to ${WORDS_MAX} characters); nothing was written`,
+      "practitioner_words_required"
+    );
+  }
+  if (!owesWords && args.practitioner_words !== void 0) {
+    throw new ValidationError(`${TOOL10}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
+  }
+  const id = args.ticket_id;
+  const ordinal = args.ordinal;
+  const token = args.session_token;
+  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
+    throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
+  }
+  if (!stepStatusHeld(args.db_path)) {
+    throw new ValidationError(
+      `${TOOL10}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
+      "schema_below_v78"
+    );
+  }
+  const minutes = status2 === "waiting" ? args.wait_minutes ?? DEFAULT_WAIT_MINUTES : null;
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    [
+      {
+        sql: `UPDATE ticket_steps SET status = ?, wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)`,
+        params: [status2 === "open" ? null : status2, owesWords ? words : null, id, ordinal, id, token]
+      }
+    ],
+    env
+  );
+  const changes = written.ok ? written.results[0].changes : written.changes;
+  const [step2] = submissionDataQuery(args.db_path, "SELECT done_at, status, wait_until, status_note FROM ticket_steps WHERE ticket_id = ? AND ordinal = ?", [id, ordinal]).rows;
+  const [job] = submissionDataQuery(args.db_path, "SELECT locked_by FROM tickets WHERE id = ?", [id]).rows;
+  let outcome;
+  let note;
+  if (step2 === void 0) {
+    outcome = "no_match";
+    note = `Nothing was written: job ${id} has no step ${ordinal}. Read the job's steps off its card and never re-run against a guess.`;
+  } else if (job.locked_by !== token) {
+    outcome = "not_held";
+    note = `Nothing was written: job ${id} is not held by this session (taken over, shelved or completed). Report it and stop.`;
+  } else if (step2.done_at !== null) {
+    outcome = "done";
+    note = `Nothing was written: step ${ordinal} of job ${id} is done (${step2.done_at}), and a done step stays as it is.`;
+  } else if (changes === 1) {
+    outcome = "set";
+    note = status2 === "waiting" ? `setting timer for ${minutes} minutes: step ${ordinal} of job ${id} waits until ${(step2.wait_until ?? "").slice(11)}. Then check whether the process has finished; this is never a deadline.` : `Step ${ordinal} of job ${id} is ${status2}.`;
+  } else {
+    outcome = "no_match";
+    note = `Nothing was written: the guards on step ${ordinal} of job ${id} matched nothing. Report it and stop; never re-run.`;
+  }
+  return {
+    ticket_id: id,
+    ordinal,
+    outcome,
+    changes,
+    done_at: step2?.done_at ?? null,
+    status: step2?.status ?? null,
+    wait_until: step2?.wait_until ?? null,
+    status_note: step2?.status_note ?? null,
+    locked_by: job.locked_by,
+    note,
+    ...written.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
 import { existsSync as existsSync30, mkdirSync as mkdirSync14, readdirSync as readdirSync17, readFileSync as readFileSync24, realpathSync as realpathSync8, renameSync as renameSync7, unlinkSync as unlinkSync6, writeFileSync as writeFileSync9 } from "node:fs";
@@ -92258,8 +92412,21 @@ function rows7(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails(dbPath, filingId) {
-  const found = rows7(dbPath, "SELECT time_estimate_minutes FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows7(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
+}
+function hearingDateSentence(hearing) {
+  const date3 = hearing?.proposed_hearing;
+  switch (hearing?.hearing_date_position) {
+    case "none_proposed":
+      return "";
+    case "agree":
+      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
+    case "propose_other":
+      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
+    default:
+      return null;
+  }
 }
 function formatTimeEstimate(minutes) {
   const hours = Math.floor(minutes / 60);
@@ -92440,17 +92607,23 @@ function renderApplicationResponse(ctx) {
   lines2.push("");
   const clientName = client?.name ?? gapMarker("gap");
   const applicantName = applicant?.name ?? gapMarker("gap");
-  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
   const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
   recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
   recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, filedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date the notice of application was filed" });
+  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
   recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
   lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
   lines2.push(
-    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, filed ${filedOn}.`
+    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
   );
   lines2.push("");
+  if (hearingDate !== "") {
+    lines2.push(hearingDate);
+    lines2.push("");
+  }
   lines2.push(`The application respondent estimates that the application will take ${estimate}`);
   lines2.push("");
   const consented = positions.filter((p3) => p3.position === "consented");
@@ -95046,7 +95219,7 @@ function combineSections(dbPath, sections) {
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync14 } from "node:fs";
 import { join as join28 } from "node:path";
-var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
+var STATUSES3 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
 var RANK = { FILED: 3, SIGNED: 2, AFFIRMED: 2, SWORN: 2, UNFILED: 1, UNSIGNED: 0, UNSWORN: 0 };
@@ -95054,7 +95227,7 @@ var AFFIDAVIT_NAME = /^(\d{4}-\d{2}-\d{2}) AFF#?(\d+)(?: of)? (\S+)(.*)\.(?:pdf|
 function parseAffidavitName(fileName) {
   const m3 = AFFIDAVIT_NAME.exec(fileName);
   if (m3 === null) return null;
-  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES2.includes(t3));
+  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES3.includes(t3));
   return { file_name: fileName, date: m3[1], number: m3[2], deponent_code: m3[3], status: markers.length > 0 ? markers[markers.length - 1] : null };
 }
 function deponentCode(name) {
@@ -95711,6 +95884,20 @@ var job_board_js_default = `(function () {
     // is never reordered.
     function byId(a, b) { return a.id - b.id; }
 
+    // A step's state (step-state.ts, schema v78): done always wins; a waiting step whose minute has
+    // come, by this browser's clock, reads as open again.
+    function localMinute() {
+      var d = new Date();
+      function two(n) { return (n < 10 ? "0" : "") + n; }
+      return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes());
+    }
+    function stepState(s) {
+      if (s.done_at !== null) return "done";
+      if (s.status === "waiting") return s.wait_until && s.wait_until.replace(" ", "T").slice(0, 16) > localMinute() ? "waiting" : "open";
+      if (s.status === "retry" || s.status === "cancelled" || s.status === "deferred") return s.status;
+      return "open";
+    }
+
     function ticketCard(t) {
       var card = el("details", "ticket");
       card.setAttribute("name", "board");
@@ -95734,6 +95921,9 @@ var job_board_js_default = `(function () {
       if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
       var progress = el("span", "progress");
       progress.appendChild(el("span", "chip " + CHIPS[t.category][0], CHIPS[t.category][1]));
+      // A General Job (no Writing) is on every Writing's board in its proceeding: tagged so a second
+      // board's copy never reads as a duplicate. Not a subtitle, as board_card's line ends with it.
+      if (t.general) progress.appendChild(el("span", "chip general", "General"));
       // No bar and no count on a ticket with no steps -- "0/0" beside an empty bar is noise.
       if (t.steps.length > 0) {
         var done = t.steps.filter(function (s) { return s.done_at !== null; }).length;
@@ -95753,14 +95943,14 @@ var job_board_js_default = `(function () {
         var ol = el("ol", "steps");
         var nextMarked = false;
         t.steps.forEach(function (s) {
-          var cls = "";
-          if (s.done_at !== null) {
-            cls = "done";
-          } else if (!nextMarked) {
-            cls = "next";
+          var cls = stepState(s);
+          if (cls === "open") {
+            cls = nextMarked ? "" : "next";
             nextMarked = true;
           }
-          ol.appendChild(el("li", cls, s.text));
+          var li = ol.appendChild(el("li", cls, s.text));
+          // The minute the session checks the process again, as a plain time: never a countdown.
+          if (cls === "waiting") li.appendChild(el("span", "until", " until " + s.wait_until.slice(11, 16)));
         });
         body.appendChild(ol);
       }
@@ -96317,6 +96507,14 @@ ol.steps li.done::before{border-color:var(--done);background-color:var(--done);b
 :root[data-theme="dark"] ol.steps li.done::before{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 6.2l2.3 2.3L9.5 3.7' fill='none' stroke='%230E2224' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 ol.steps li.next{font-weight:500}
 ol.steps li.next::before{border-color:var(--ink)}
+ol.steps li.retry::before,ol.steps li.cancelled::before,ol.steps li.deferred::before,ol.steps li.waiting::before{border:none;font-size:13px;line-height:14px;text-align:center}
+ol.steps li.retry::before{content:"\\21BB"}
+ol.steps li.cancelled::before{content:"\\2612"}
+ol.steps li.deferred::before{content:"\\23F8"}
+ol.steps li.waiting::before{content:"\\23F3"}
+ol.steps li.cancelled,ol.steps li.deferred{color:var(--muted)}
+ol.steps li.cancelled{text-decoration:line-through;text-decoration-color:var(--line-strong)}
+ol.steps li .until{color:var(--muted);font-variant-numeric:tabular-nums}
 p.sources-head{margin:12px 0 5px;font-size:12px;color:var(--muted)}
 
 /* A deleted job (schema v54): one struck red line in Completed, never a card. pre-wrap keeps the
@@ -98047,6 +98245,9 @@ function collapsedText(t3) {
   const chip = t3.steps.length > 0 ? `${CHIP_LABELS[t3.category]} ${done}/${t3.steps.length}` : CHIP_LABELS[t3.category];
   return [`- Job #${t3.id} ${t3.title}`, ...t3.writing ? [t3.writing] : [], ...t3.subtitle ? [t3.subtitle] : [], ...t3.lock_note ? [t3.lock_note] : [], chip].join(" \xB7 ");
 }
+function generalTail(t3) {
+  return t3.general ? " \xB7 general" : "";
+}
 function elapsedText(minutes) {
   const d3 = Math.floor(minutes / 1440);
   const h3 = Math.floor(minutes % 1440 / 60);
@@ -98079,8 +98280,13 @@ function sourcesText(sources) {
   const rest = sources.filter((s3) => s3.outcome !== "got").map((s3) => s3.outcome === null ? `\u2610 ${s3.kind}: ${s3.label}` : `\u2612 ${s3.kind}: ${s3.label} (not retrieved${s3.reason === null ? "" : `: ${s3.reason}`})`);
   return [`${got} of ${sources.length} got`, ...rest].join(" \xB7 ");
 }
-function jobCardLines(t3, derived, seeds) {
-  const head = collapsedText(t3);
+function stepText(s3, rendered) {
+  const view = stepView(s3, rendered);
+  const tail = view === "done" ? ` (${s3.done_at})` : (view === "cancelled" || view === "deferred") && s3.status_note ? ` (${JSON.stringify(s3.status_note)})` : "";
+  return `${s3.ordinal} ${stepGlyphText(s3, rendered)} ${s3.text}${tail}`;
+}
+function jobCardLines(t3, derived, seeds, rendered) {
+  const head = collapsedText(t3) + generalTail(t3);
   if (t3.category === "superseded") {
     return [head, `  superseded by: ${t3.superseded_by === null ? "\u2014" : `#${t3.superseded_by.id}`} \xB7 reason: ${t3.superseded_reason ?? "\u2014"}`];
   }
@@ -98090,7 +98296,7 @@ function jobCardLines(t3, derived, seeds) {
   if (t3.proposal_keys.length > 0) lines2.push(`  keys: ${t3.proposal_keys.map((key) => keyText(key, t3.proposal_items[key], derived)).join("; ")}`);
   lines2.push(`  scope: ${t3.scope.length === 0 ? "\u2014" : t3.scope.join(", ")} \xB7 waits on: ${edgeText(t3.blocked_by)} \xB7 either-or: ${edgeText(t3.conflicts)}`);
   if (t3.steps.length > 0) {
-    lines2.push(`  steps: ${t3.steps.map((s3) => `${s3.ordinal} ${s3.done_at === null ? "\u2610" : "\u2611"} ${s3.text}${s3.done_at === null ? "" : ` (${s3.done_at})`}`).join(" \xB7 ")}`);
+    lines2.push(`  steps: ${t3.steps.map((s3) => stepText(s3, rendered)).join(" \xB7 ")}`);
   }
   const own = seeds.filter((s3) => s3.origin_ticket_id === t3.id);
   if (own.length > 0) lines2.push(`  loose threads: ${own.map((s3) => `loose thread ${s3.id}: ${JSON.stringify(s3.idea)} (${s3.created})`).join("; ")}`);
@@ -98186,7 +98392,7 @@ function renderLiveLanes(section2) {
     if (category === "superseded") lines2.push(`## Completed (${jobsIn(section2, "completed").length})`, shelvedHeading(section2));
     const jobs2 = jobsIn(section2, category);
     lines2.push(`## ${heading} (${jobs2.length})`);
-    for (const t3 of jobs2) lines2.push(collapsedText(t3) + tagTail(t3, m3.rendered));
+    for (const t3 of jobs2) lines2.push(collapsedText(t3) + tagTail(t3, m3.rendered) + generalTail(t3));
     if (category === "ready") {
       const choice = jobs2.find((t3) => t3.dispatch_skips.length === 0);
       lines2.push(`dispatch choice: ${choice === void 0 ? "none" : `#${choice.id} ${choice.title}`}`);
@@ -98235,7 +98441,7 @@ function ideasLines(section2, fromJobs) {
 function renderBoardCard(section2, jobs2, lanes, key, seedsFromJobs, attached = [], courtFile = []) {
   const derived = derivedOf(section2);
   const lines2 = [];
-  for (const t3 of section2.tickets) if (jobs2.includes(t3.id)) lines2.push(...jobCardLines(t3, derived, section2.seeds));
+  for (const t3 of section2.tickets) if (jobs2.includes(t3.id)) lines2.push(...jobCardLines(t3, derived, section2.seeds, section2.meta.rendered));
   for (const lane of CARD_LANES) {
     if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== void 0)) continue;
     if (section2.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
@@ -98243,8 +98449,8 @@ function renderBoardCard(section2, jobs2, lanes, key, seedsFromJobs, attached = 
     if (lane === "criteria") lines2.push(...goalLines(section2));
     if (lane === "live") lines2.push(...renderLiveLanes(section2));
     if (lane === "proposed") lines2.push(proposedHeading(section2), ...proposedOf(section2).flatMap(proposalLines));
-    if (lane === "completed") lines2.push(`## Completed (${jobsIn(section2, "completed").length})`, ...jobsIn(section2, "completed").map(collapsedText));
-    if (lane === "rejected") lines2.push(shelvedHeading(section2), ...jobsIn(section2, "rejected").map(collapsedText), ...shelvedProposalsOf(section2).flatMap(proposalLines));
+    if (lane === "completed") lines2.push(`## Completed (${jobsIn(section2, "completed").length})`, ...jobsIn(section2, "completed").map((t3) => collapsedText(t3) + generalTail(t3)));
+    if (lane === "rejected") lines2.push(shelvedHeading(section2), ...jobsIn(section2, "rejected").map((t3) => collapsedText(t3) + generalTail(t3)), ...shelvedProposalsOf(section2).flatMap(proposalLines));
     if (lane === "loose_threads") lines2.push(...ideasLines(section2, seedsFromJobs));
     if (lane === "attached") lines2.push(...attachedLines(attached));
     if (lane === "court_file") lines2.push(...courtFileLines(courtFile));
@@ -98252,7 +98458,7 @@ function renderBoardCard(section2, jobs2, lanes, key, seedsFromJobs, attached = 
   if (key !== void 0) {
     const holder = section2.tickets.find((t3) => LIVE.has(t3.category) && t3.proposal_keys.includes(key));
     const proposal = section2.proposals.find((p3) => p3.key === key);
-    if (holder !== void 0) lines2.push(...jobCardLines(holder, derived, section2.seeds));
+    if (holder !== void 0) lines2.push(...jobCardLines(holder, derived, section2.seeds, section2.meta.rendered));
     else if (proposal === void 0) lines2.push(`(no job or Proposal carries ${key})`);
     else lines2.push(proposal.lane === "rejected" ? shelvedHeading(section2) : proposedHeading(section2), ...proposalLines(proposal));
   }
@@ -98977,7 +99183,8 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
 function rows18(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
-var NOTICE_DATE_PLACEHOLDER = "[date]";
+var NOTICE_DATE_PLACEHOLDER = "[notice date]";
+var HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
 function formatTimeEstimate4(minutes) {
@@ -99060,9 +99267,9 @@ function renderForm33FiledFace(ctx, warnings) {
   }
   if (respondedTo.document_date === null) {
     if (warnings === void 0) {
-      throw new ValidationError(`Filing ${ctx.filing.id}: the served notice document (id ${respondedTo.id}) has no document_date -- cannot fill "notice_filed".`);
+      throw new ValidationError(`Filing ${ctx.filing.id}: the served notice document (id ${respondedTo.id}) has no document_date -- cannot fill "notice_dated".`);
     }
-    warnings.push({ kind: "missing_datum", field_or_id: "notice_filed", message: `Date the notice of application was filed: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
+    warnings.push({ kind: "missing_datum", field_or_id: "notice_dated", message: `Date of the notice of application: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
   }
   if (positions.length === 0) {
     throw new ValidationError(`Filing ${ctx.filing.id}: no positions taken on any order of the served notice -- nothing to assemble.`);
@@ -99154,9 +99361,24 @@ function renderForm33FiledFace(ctx, warnings) {
       message: `Factual basis (Part 4): no facts are recorded, and counsel has recorded no decision that the response pleads none. Part 4 shows ${NO_FACTUAL_BASIS2}.`
     });
   }
+  const hearingDate = hearingDateSentence(hearing);
+  if (hearingDate === null) {
+    if (warnings === void 0) {
+      throw new ValidationError(
+        `Filing ${ctx.filing.id}: hearing_details.hearing_date_position is not set, or is 'agree' or 'propose_other' with no proposed_hearing -- cannot fill "hearing_date" (Rule 8-1(10)(b)(iv)).`
+      );
+    }
+    warnings.push({
+      kind: "missing_datum",
+      field_or_id: "hearing_date",
+      message: `Whether the application respondent agrees with the applicant's hearing date: not recorded. The form shows ${HEARING_DATE_PLACEHOLDER}.`
+    });
+  }
   const front = [
     "---",
-    `notice_filed: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
+    `notice_dated: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
+    // "Nil." when the applicant proposed no date: the form then prints no hearing-date line.
+    `hearing_date: ${hearingDate === "" ? "Nil." : hearingDate ?? `The application respondent(s) ${HEARING_DATE_PLACEHOLDER}.`}`,
     `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate4(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
     `orders: ${JSON.stringify(orders)}`,
     ...pureLawOn !== null ? ["pure_law_confirmed: true"] : [],
@@ -101207,7 +101429,7 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL10 = "drafting_data__complete_job";
+var TOOL11 = "drafting_data__complete_job";
 var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
   try {
@@ -101241,13 +101463,36 @@ function rewritePages(args, read3, client, todos, dates) {
     return { pages_written: false, pages_refused: { code: err.code, message: err.message } };
   }
 }
+function openSteps(dbPath, id, token) {
+  const [job] = submissionDataQuery(dbPath, "SELECT status, locked_by, rejected_at FROM tickets WHERE id = ?", [id]).rows;
+  if (job === void 0 || job.locked_by !== token) return null;
+  const columns = stepStatusHeld(dbPath) ? "ordinal, text, done_at, status, wait_until" : "ordinal, text, done_at";
+  const steps = submissionDataQuery(dbPath, `SELECT ${columns} FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal`, [id]).rows;
+  const open = steps.filter((s3) => !stepResolved(s3)).map((s3) => ({ ordinal: s3.ordinal, text: s3.text, state: s3.status === "retry" ? "retry" : s3.status === "waiting" ? "waiting" : "open" }));
+  if (open.length === 0) return null;
+  return {
+    ticket_id: id,
+    outcome: "steps_open",
+    superseded: 0,
+    changes: 0,
+    status: job.status,
+    completed_at: null,
+    locked_by: job.locked_by,
+    rejected_at: job.rejected_at,
+    pages_written: false,
+    open_steps: open,
+    note: `Job ${id} was not completed and nothing was written: ${open.length === 1 ? "step" : "steps"} ${open.map((s3) => `${s3.ordinal} "${s3.text}" (${s3.state})`).join(", ")} ${open.length === 1 ? "is" : "are"} not done. Finish each one, or, on the practitioner's own words, set it cancelled or deferred with drafting_data__set_step, then complete.`
+  };
+}
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
+  const open = openSteps(args.db_path, id, token);
+  if (open !== null) return open;
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -101270,7 +101515,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read3.status === "completed" && read3.locked_by === null) {
@@ -101303,14 +101548,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL11 = "drafting_data__release_job";
+var TOOL12 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL12}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL11}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL12}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -101321,7 +101566,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read3] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL12}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read3.locked_by !== null && (holder === null ? read3.locked_by === args.session_token : read3.locked_by.endsWith(holder));
   let outcome;
@@ -101356,15 +101601,15 @@ async function submissionDataReleaseJob(args, env = process.env) {
 }
 
 // src/submission/forms/delete-job.ts
-var TOOL12 = "drafting_data__delete_job";
+var TOOL13 = "drafting_data__delete_job";
 var STAMP = "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND locked_by = ?))";
 async function submissionDataDeleteJob(args, env = process.env) {
   const ids = args.ticket_ids;
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => Number.isInteger(id) && id > 0) || new Set(ids).size !== ids.length) {
-    throw new ValidationError(`${TOOL12}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
+    throw new ValidationError(`${TOOL13}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
   }
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL13}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -113872,7 +114117,7 @@ function sectionBlocks(chunks) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL13 = "research_filing__save_answer";
+var TOOL14 = "research_filing__save_answer";
 var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
@@ -113881,20 +114126,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL13} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named < 3) throw new ValidationError(`${TOOL14} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL13}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL14}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL13}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL14}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL13}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL14}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL13}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL14}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -114374,6 +114619,9 @@ async function callTool(context, name, rawArgs) {
   }
   if (name === "drafting_data__track_source") {
     return submissionDataTrackSource(args);
+  }
+  if (name === "drafting_data__set_step") {
+    return submissionDataSetStep(args);
   }
   if (name === "drafting_data__release_job") {
     return submissionDataReleaseJob(args);

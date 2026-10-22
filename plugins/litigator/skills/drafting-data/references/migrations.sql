@@ -5023,3 +5023,24 @@ ALTER TABLE ticket_steps ADD COLUMN wait_until TEXT CHECK (wait_until IS NULL OR
 ALTER TABLE ticket_steps ADD COLUMN status_note TEXT;
 
 UPDATE db_meta SET value = '78' WHERE key = 'schema_version';
+
+-- MIGRATE 78 -> 79
+-- Form 33 as substituted by B.C. Reg. 105/2026 (in force 2026-10-01): under
+-- new Rule 8-1(10)(b)(iv) an application response indicates whether the
+-- respondent agrees with the applicant's proposed hearing date, if any. The
+-- form prints one of "agree to the applicant's hearing date of [date]" and
+-- "do not agree to the applicant's hearing date and propose the following
+-- date(s): [date(s)]".
+--
+-- hearing_details gains hearing_date_position on the response's own row:
+-- 'agree', 'propose_other', or 'none_proposed' when the applicant proposed no
+-- date, so the form prints neither line. NULL is not yet decided. The date
+-- that prints is that row's proposed_hearing (hop 61 -> 62): the applicant's
+-- date on 'agree', the respondent's own date(s) on 'propose_other'.
+--
+-- Added on Brahm's instruction of 2026-10-21 to conform Form 33 end to end.
+-- ADD COLUMN, no rebuild: every existing row reads NULL. The hop moves no
+-- revision: it writes no row.
+ALTER TABLE hearing_details ADD COLUMN hearing_date_position TEXT CHECK (hearing_date_position IS NULL OR hearing_date_position IN ('agree', 'propose_other', 'none_proposed'));
+
+UPDATE db_meta SET value = '79' WHERE key = 'schema_version';

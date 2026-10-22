@@ -61,7 +61,7 @@ Structure: one section per order from Part 1.
 
 For each order:
 
-**A. Sources of authority** -- Identify the primary statutory or rule authority (e.g., Supreme Court Civil Rules, Rule 8-1(1)). Cite alternative sources if relevant.
+**A. Sources of authority** -- Identify the primary statutory or rule authority (e.g., Supreme Court Civil Rules, Rule 10-4). Cite alternative sources if relevant.
 
 **B. Legal test** -- State the applicable legal test. Use direct quotes from the authorities where available. Cite with pinpoint references.
 
@@ -71,8 +71,8 @@ For each order:
 ORDER 1: Injunction restraining the Defendant from entering the premises
 
 The Court's jurisdiction to grant an interlocutory injunction is found in
-Supreme Court Civil Rules, Rule 8-1(1) and the Supreme Court Act, RSBC
-1996, c 443, s 39.
+Supreme Court Civil Rules, Rule 10-4 and the Law and Equity Act, RSBC
+1996, c 253, s 39.
 
 The test for granting an interlocutory injunction was stated in RJR-MacDonald
 Inc v Canada (Attorney General), [1994] 1 SCR 311 at 334: the applicant must

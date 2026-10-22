@@ -33,8 +33,10 @@ def calls_script(ctx):
     # Assemble-for-verification: render the assembled DOCX, report the true
     # page count (Rule 8-1(4)), the cover included when there is one, and
     # extract the tail for a truthful G6 preview.
-    from steps.shared.render import render_to_pdf, extract_form32_tail
+    from steps.shared.render import page_limit_advisories, render_to_pdf, extract_form32_tail
     pdf_path, page_count = render_to_pdf(out)
     ctx["pdf_path"] = str(pdf_path)
     ctx["page_count"] = page_count
+    # Advisories never block the publish and never add the cover (assembly-input-contract.md).
+    ctx["advisories"] = ctx.get("asm32_warnings", []) + page_limit_advisories("Form 32", "Rule 8-1(4)", page_count, ctx["cover"])
     ctx["tail_text"] = extract_form32_tail(out)

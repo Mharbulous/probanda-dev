@@ -97,7 +97,8 @@ def substitute_text(body: etree._Element, subs: dict[str, str]) -> None:
 
 def substitute_form33_position_sentences(body: etree._Element,
                                          subs: dict[str, str]) -> None:
-    """Replace the two Form 33 position sentences, which span Word runs."""
+    """Replace the Form 33 position and hearing-date sentences, which span Word
+    runs. A replacement of None removes the paragraph."""
     keys = [key for key in subs if key.startswith(
         'The application respondent(s)')]
     for key in keys:
@@ -105,6 +106,9 @@ def substitute_form33_position_sentences(body: etree._Element,
         for para in body.iter(WN('p')):
             if _para_text(para) != key:
                 continue
+            if replacement is None:
+                para.getparent().remove(para)
+                break
             for child in list(para):
                 if child.tag != WN('pPr'):
                     para.remove(child)

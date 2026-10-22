@@ -31,9 +31,11 @@ def calls_script(ctx):
     from fill_cover import add_cover
     ctx["cover"] = add_cover(out, warnings)
     # Assemble-for-verification: render the assembled DOCX and report the true
-    # page count (Rule 8-1(4)), the cover included when there is one. The
+    # page count (Rule 8-1(10)), the cover included when there is one. The
     # respondent side has no gate layer, so no tail preview is produced.
-    from steps.shared.render import render_to_pdf
+    from steps.shared.render import page_limit_advisories, render_to_pdf
     pdf_path, page_count = render_to_pdf(out)
     ctx["pdf_path"] = str(pdf_path)
     ctx["page_count"] = page_count
+    # Advisories never block the publish and never add the cover (assembly-input-contract.md).
+    ctx["advisories"] = ctx.get("asm33_warnings", []) + page_limit_advisories("Form 33", "Rule 8-1(10)", page_count, ctx["cover"])

@@ -481,7 +481,7 @@ test("BCSC Application Response renders clean from checklist-only population (is
       INSERT INTO filing_positions (filing_id, opposing_order_id, position, proposed_terms)
         VALUES (1, 1, 'opposed', NULL);
 
-      INSERT INTO hearing_details (filing_id, time_estimate_minutes) VALUES (1, 60);
+      INSERT INTO hearing_details (filing_id, time_estimate_minutes, proposed_hearing, hearing_date_position) VALUES (1, 60, '2026-11-02', 'agree');
 
       -- court_record links the fact to the affidavit proving it (issue
       -- #360/#362) -- silences 👤 no-witness the same way the other kinds'

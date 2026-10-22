@@ -14,7 +14,9 @@
 | | **APPLICATION RESPONSE** | |
 
 Application response of: the Defendant, Reece Ferris
-THIS IS A RESPONSE TO the notice of application of the Plaintiff, Adaeze Okonkwo, filed 2026-08-01.
+THIS IS A RESPONSE TO the notice of application of the Plaintiff, Adaeze Okonkwo, dated 2026-08-01.
+
+The application respondent(s) agree to the applicant's hearing date of 2026-09-15.
 
 The application respondent estimates that the application will take 1 hour 30 minutes
 

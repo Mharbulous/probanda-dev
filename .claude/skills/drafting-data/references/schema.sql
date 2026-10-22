@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 78
+-- Current version: db_meta.schema_version = 79
 
 
 CREATE TABLE db_meta (
@@ -351,7 +351,7 @@ CREATE TABLE hearing_details (
     hearing_time          TEXT,
     time_estimate_minutes INTEGER,
     associate_judge       INTEGER CHECK (associate_judge IN (0, 1)) -- NULL = not yet determined (#451)
-, proposed_hearing TEXT);
+, proposed_hearing TEXT, hearing_date_position TEXT CHECK (hearing_date_position IS NULL OR hearing_date_position IN ('agree', 'propose_other', 'none_proposed')));
 
 CREATE TRIGGER rev_parties_ins AFTER INSERT ON parties BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 

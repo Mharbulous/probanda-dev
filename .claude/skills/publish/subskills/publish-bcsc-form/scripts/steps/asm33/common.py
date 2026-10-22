@@ -26,7 +26,7 @@ def parse_form33(path: Path) -> dict:
         if ": " not in line:
             raise ValueError(f"malformed frontmatter line: {line!r}")
         key, raw = line.split(": ", 1)
-        if key in front or key not in {"notice_filed", "time_estimate", "orders", "pure_law_confirmed"}:
+        if key in front or key not in {"notice_dated", "hearing_date", "time_estimate", "orders", "pure_law_confirmed"}:
             raise ValueError(f"unknown/duplicate frontmatter key: {key}")
         if key in {"orders", "pure_law_confirmed"}:
             try:
@@ -35,9 +35,11 @@ def parse_form33(path: Path) -> dict:
                 raise ValueError(f"{key} must be JSON-compatible YAML") from exc
         else:
             front[key] = raw
-    for key in ("notice_filed", "time_estimate", "orders"):
+    for key in ("notice_dated", "hearing_date", "time_estimate", "orders"):
         if key not in front:
             raise ValueError(f"missing frontmatter key: {key}")
+    if front["hearing_date"] != "Nil." and not front["hearing_date"].startswith("The application respondent(s) "):
+        raise ValueError("hearing_date must be Nil. or the Form 33 sentence beginning 'The application respondent(s) '")
     if not isinstance(front["orders"], list) or not front["orders"]:
         raise ValueError("orders must be a non-empty array")
     for order in front["orders"]:
@@ -118,13 +120,10 @@ def transform(parsed: dict) -> tuple[dict, str, list[str]]:
         body.extend(lines)
         body.append("")
     context = {
-        "notice_filed": front["notice_filed"],
+        "notice_dated": front["notice_dated"],
+        "hearing_date": front["hearing_date"],
         "time_estimate": front["time_estimate"],
         "opposed_order_numbers": ", ".join(oppose) if oppose else "Nil",
         "no_position_order_numbers": ", ".join(no_pos) if no_pos else "Nil",
     }
-    warnings = []
-    words = sum(len(x.split()) for x in sections["Part 4"] + sections["Part 5"])
-    if words > 4500:
-        warnings.append("Form 33 may exceed 10 pages; assemble-time estimate is warning only")
-    return context, "\n".join(body).rstrip() + "\n", warnings
+    return context, "\n".join(body).rstrip() + "\n", []

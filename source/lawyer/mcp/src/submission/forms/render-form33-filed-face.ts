@@ -20,6 +20,7 @@ import {
   fetchFilingPositions,
   fetchHearingDetails,
   fetchUnpositionedOrders,
+  hearingDateSentence,
   resolveRespondedToDocument,
 } from "./render-application-response.js";
 import {
@@ -43,8 +44,9 @@ function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 }
 
-/** Lenient emit placeholders. `[date]` and `[time estimate]` are the template's own blanks. */
-const NOTICE_DATE_PLACEHOLDER = "[date]";
+/** Lenient emit placeholders: the template's own blanks (templates/form-33.dotx). */
+const NOTICE_DATE_PLACEHOLDER = "[notice date]";
+const HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 const TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 const NO_FACTUAL_BASIS = "[factual basis: no facts recorded]";
 
@@ -147,7 +149,8 @@ function struckSubmissionIds(dbPath: string, submissionIds: number[]): Set<numbe
  *   together mean one of the two is wrong, so it refuses rather than choose.
  *
  * Given `warnings` (the lenient emit of the publish route, spec 2026-10-09), it refuses for none of the
- * missing data: a served notice with no date, an order with no position, no time estimate, a statement
+ * missing data: a served notice with no date, an order with no position, no time estimate, no position
+ * on the applicant's hearing date (or that position with no date recorded), a statement
  * of law with no citation and an empty Part 4 with no pure-law decision each print a placeholder (an
  * order with no position is left out) and push a warning instead. It still refuses with nothing to
  * respond to (no served notice resolved, no position taken) and on a facts-and-decision contradiction.
@@ -170,9 +173,9 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   }
   if (respondedTo.document_date === null) {
     if (warnings === undefined) {
-      throw new ValidationError(`Filing ${ctx.filing.id}: the served notice document (id ${respondedTo.id}) has no document_date -- cannot fill "notice_filed".`);
+      throw new ValidationError(`Filing ${ctx.filing.id}: the served notice document (id ${respondedTo.id}) has no document_date -- cannot fill "notice_dated".`);
     }
-    warnings.push({ kind: "missing_datum", field_or_id: "notice_filed", message: `Date the notice of application was filed: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
+    warnings.push({ kind: "missing_datum", field_or_id: "notice_dated", message: `Date of the notice of application: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
   }
   if (positions.length === 0) {
     throw new ValidationError(`Filing ${ctx.filing.id}: no positions taken on any order of the served notice -- nothing to assemble.`);
@@ -287,9 +290,25 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
     });
   }
 
+  const hearingDate = hearingDateSentence(hearing);
+  if (hearingDate === null) {
+    if (warnings === undefined) {
+      throw new ValidationError(
+        `Filing ${ctx.filing.id}: hearing_details.hearing_date_position is not set, or is 'agree' or 'propose_other' with no proposed_hearing -- cannot fill "hearing_date" (Rule 8-1(10)(b)(iv)).`
+      );
+    }
+    warnings.push({
+      kind: "missing_datum",
+      field_or_id: "hearing_date",
+      message: `Whether the application respondent agrees with the applicant's hearing date: not recorded. The form shows ${HEARING_DATE_PLACEHOLDER}.`,
+    });
+  }
+
   const front: string[] = [
     "---",
-    `notice_filed: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
+    `notice_dated: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
+    // "Nil." when the applicant proposed no date: the form then prints no hearing-date line.
+    `hearing_date: ${hearingDate === "" ? "Nil." : hearingDate ?? `The application respondent(s) ${HEARING_DATE_PLACEHOLDER}.`}`,
     `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
     `orders: ${JSON.stringify(orders)}`,
     ...(pureLawOn !== null ? ["pure_law_confirmed: true"] : []),

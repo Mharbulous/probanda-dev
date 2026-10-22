@@ -1,5 +1,6 @@
 ---
-notice_filed: 2026-08-01
+notice_dated: 2026-08-01
+hearing_date: The application respondent(s) agree to the applicant's hearing date of 2026-09-15.
 time_estimate: 1 hour 30 minutes
 orders: [{"order":1,"position":"consent","terms":"within 14 days"},{"order":2,"position":"oppose","terms":""},{"order":3,"position":"no-position","terms":""}]
 ---

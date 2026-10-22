@@ -146,6 +146,48 @@ test("Application Response states the time estimate once, in the template's sent
   }
 });
 
+// Rule 8-1(10)(b)(iv) as added by B.C. Reg. 105/2026: the response says whether the respondent
+// agrees with the applicant's proposed hearing date, if any (schema v79, hearing_date_position).
+test("Application Response states the respondent's position on the applicant's hearing date", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedApplicationResponse(f.dbPath);
+    const mockup = () =>
+      submissionFormsRender(f.dbPath, 1, {}, "mockup").documents.find((d) => d.document_type === "Application_response").markdown;
+    const set = (position, date) =>
+      submissionDataExecute(f.dbPath, `UPDATE hearing_details SET hearing_date_position = ${position}, proposed_hearing = ${date} WHERE filing_id = 1;`);
+
+    await set("'propose_other'", "'2026-09-22 or 2026-09-29'");
+    const proposed =
+      "The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): 2026-09-22 or 2026-09-29.";
+    assert.ok(mockup().includes(`\n${proposed}\n`));
+    const emitted = submissionFormsEmitForm33(f.dbPath, 1).markdown;
+    assert.ok(emitted.includes(`\nhearing_date: ${proposed}\n`));
+    assert.equal(runValidate33(writeTemp(f.dir, emitted)).status, 0);
+
+    // The applicant proposed no date: the form prints neither line.
+    await set("'none_proposed'", "NULL");
+    assert.doesNotMatch(mockup(), /hearing date/);
+    const nil = submissionFormsEmitForm33(f.dbPath, 1).markdown;
+    assert.match(nil, /^hearing_date: Nil\.$/m);
+    assert.equal(runValidate33(writeTemp(f.dir, nil)).status, 0);
+
+    // Not recorded, or 'agree' with no date: a 🧩 in the mockup, a refusal from the strict emit,
+    // and a placeholder with its warning from the lenient one.
+    for (const [position, date] of [["NULL", "NULL"], ["'agree'", "NULL"]]) {
+      await set(position, date);
+      assert.match(mockup(), /^The application respondent\(s\) 🧩$/m);
+      assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /hearing_date_position/);
+      const lenient = submissionFormsEmitForm33(f.dbPath, 1, undefined, {}, { lenient: true });
+      assert.match(lenient.markdown, /^hearing_date: The application respondent\(s\) \[agree, or propose other hearing date\(s\)\]\.$/m);
+      assert.ok(lenient.warnings.some((w) => w.field_or_id === "hearing_date"));
+    }
+  } finally {
+    f.cleanup();
+  }
+});
+
 function runValidate33(path) {
   let lastErr = "";
   for (const py of PY_CANDIDATES) {
@@ -192,7 +234,8 @@ test("emits a form-33.md that validate33 accepts, matching the reviewed data", a
     assert.equal(result.form_currency.form_key, "form-33");
     const md = result.markdown;
 
-    assert.match(md, /^notice_filed: 2026-08-01$/m);
+    assert.match(md, /^notice_dated: 2026-08-01$/m);
+    assert.match(md, /^hearing_date: The application respondent\(s\) agree to the applicant's hearing date of 2026-09-15\.$/m);
     assert.match(md, /^time_estimate: 1 hour 30 minutes$/m);
     const ordersLine = md.match(/^orders: (.+)$/m)[1];
     assert.deepEqual(JSON.parse(ordersLine), [

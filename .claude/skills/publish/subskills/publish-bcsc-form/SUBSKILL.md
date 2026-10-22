@@ -18,8 +18,8 @@ You are a **content-blind shuttle**. You do not draft substance, classify legal 
 |-----------|-------------|------------|
 | **Generate** | Fill blank form with proceedings/party info; write it at the top of the matter's draft folder, or into the package's Writing folder for Form 32 or 33 | Practitioner |
 | **Assemble** | Merge substance part files (`part-*.md`) into final `.docx` | `/polish-substance` or practitioner |
-| **Assemble Form 33 (`asm33`)** | Hard-validate `form-33.md`, transform Parts 1-6, fill final `.docx`; the caption comes from the emitter's publish sidecar, and a NOT FINAL cover page goes in front while any warning stands (contract, Publish sidecar) | `/draft`'s Form 33 filed-face emitter (see `references/assembly-input-contract.md`) |
-| **Assemble Form 32 (`asm32`)** | Hard-validate `form-32.md`, render Part 1 from frontmatter, transform Parts 2-4, fill final `.docx`; the caption comes from the emitter's publish sidecar, never a Generate run, and a NOT FINAL cover page goes in front while any warning stands (contract, Publish sidecar) | `/draft`'s Form 32 filed-face emitter (explicit `asm32` token only; a practitioner's ordinary "assemble Form 32" stays on Assemble) |
+| **Assemble Form 33 (`asm33`)** | Hard-validate `form-33.md`, transform Parts 1-6 and the Rule 8-1(10)(b)(iv) hearing-date line, fill final `.docx`, and advise (never block) when it runs over 10 pages; the caption comes from the emitter's publish sidecar, and a NOT FINAL cover page goes in front while any warning stands (contract, Publish sidecar) | `/draft`'s Form 33 filed-face emitter (see `references/assembly-input-contract.md`) |
+| **Assemble Form 32 (`asm32`)** | Hard-validate `form-32.md`, render Part 1 from frontmatter, transform Parts 2-4, fill final `.docx`, and advise (never block) when it runs over 10 pages; the caption comes from the emitter's publish sidecar, never a Generate run, and a NOT FINAL cover page goes in front while any warning stands (contract, Publish sidecar) | `/draft`'s Form 32 filed-face emitter (explicit `asm32` token only; a practitioner's ordinary "assemble Form 32" stays on Assemble) |
 | **Assemble affidavit (`asmaff`)** | Hard-validate `affidavit-<document_id>.md`, collect the caption and jurat as Generate does, fill Form 109 with the file's paragraphs, bold exhibit references, deponent and affidavit number; the ordinal is never asked | `/draft`, for a supporting affidavit of a Form 32 or 33 it holds: init `asmaff <document_id>` with the package's Writing folder (explicit token only; contract in `references/assembly-input-contract.md`) |
 | **Amend** | Amend a filed pleading per Rule 6-1 | Practitioner |
 | **New Template** | Convert LEAP-exported `.dotx` to canonical bracket-placeholder format | Practitioner |
@@ -209,7 +209,7 @@ while response.action != "done":
         break
 ```
 
-A step whose result the harness computes itself runs inside the same call, so an `asm32`, `asm33` or `asmaff` run can return `done` with no subagent at all. After an assemble fill, verify warns and never halts, because the file already exists. When `done` carries `verify_passed: false`, list each entry of `verify_warnings` to the practitioner, one line each, and never call the document final.
+A step whose result the harness computes itself runs inside the same call, so an `asm32`, `asm33` or `asmaff` run can return `done` with no subagent at all. After an assemble fill, verify warns and never halts, because the file already exists. When `done` carries `verify_passed: false`, list each entry of `verify_warnings` to the practitioner, one line each, and never call the document final. List each entry of `done`'s `advisories` too, one line each, such as a form over the 10-page limit; an advisory alone does not make the document not final.
 
 ## Generate Handoff
 
@@ -320,7 +320,7 @@ In Cowork, skip this check: the sandbox cannot see the draft folder. The harness
 | Affidavit of Personal Service (Form 15) | Rule 4-6(1) | `subskills/publish-bcsc-form/templates/015-afs.docx` | `fill_plain.py --form afs` | Generate only |
 | Affidavit of Ordinary Service (Form 16) | Rule 4-6(1) | `subskills/publish-bcsc-form/templates/016-aos.docx` | `fill_plain.py --form aos` | Generate only; substituted-service variant (Rule 4-4 + 22-3(1)) requires the entered order |
 | Affidavit (Form 109) | Rule 22-2 | `subskills/publish-bcsc-form/templates/affidavit.dotx` | `fill_plain.py --form affidavit` | A supporting affidavit of a Form 32 or 33 `/draft` holds: `asmaff` fills its text from `/draft`'s emitted file. An affidavit with no host filing `/draft` holds: Generate only, its substance hand-authored into document.xml using the template's LEAPBCParaNum styles (#1371's interim route) |
-| Application Response (Form 33) | Rule 8-1(6) | `subskills/publish-bcsc-form/templates/form-33.dotx` | `fill_plain.py --form form-33` | Generate + `asm33` Assemble |
+| Application Response (Form 33) | Rule 8-1(9)-(10) | `subskills/publish-bcsc-form/templates/form-33.dotx` | `fill_plain.py --form form-33` | Generate + `asm33` Assemble |
 
 Each form's version, and the amending regulations its template, emitter and type file conform to (`conformed_to:`), are recorded on its identity file in `/publish`'s knowledge tree, as `/publish`'s "Form identity" section describes. A form is conformed to an amendment only in a plugin release. A session that meets a `form_currency` warning says it, and the practitioner can ask for the release with `/lawyer:suggestion` naming the form and the amending regulation.
 

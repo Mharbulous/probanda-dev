@@ -35,7 +35,7 @@ FORM_PART_MARKERS: dict[str, dict[str, str]] = {
     },
     'form-33': {
         'part1': '[set out paragraph numbers and any proposed terms]',
-        'part4': '[Using numbered paragraphs, set out a brief summary of the material facts',
+        'part4': '[Using numbered paragraphs, set out a brief summary of the facts',
         'part5': '[Using paragraphs numbered sequentially from Part 4 above',
         'part6': '[Using numbered paragraphs, list the affidavits served with this application response',
     },

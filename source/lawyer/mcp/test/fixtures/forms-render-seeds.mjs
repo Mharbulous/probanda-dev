@@ -507,6 +507,12 @@ export const APPLICATION_RESPONSE_CASE_DATA = {
 
 export async function seedApplicationResponse(dbPath) {
   writePartiesOfRecord(dirname(dbPath), APPLICATION_RESPONSE_CASE_DATA);
+  // The hearing-date position arrived in schema v79; a test holding an older database seeds without it.
+  const schemaVersion = Number(submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows[0].value);
+  const hearingDetails =
+    schemaVersion >= 79
+      ? "INSERT INTO hearing_details (filing_id, time_estimate_minutes, proposed_hearing, hearing_date_position) VALUES (1, 90, '2026-09-15', 'agree');"
+      : "INSERT INTO hearing_details (filing_id, time_estimate_minutes) VALUES (1, 90);";
   await submissionDataExecute(
     dbPath,
     `
@@ -538,7 +544,7 @@ export async function seedApplicationResponse(dbPath) {
         (1, 2, 'opposed', NULL),
         (1, 3, 'no_position', NULL);
 
-    INSERT INTO hearing_details (filing_id, time_estimate_minutes) VALUES (1, 90);
+    ${hearingDetails}
 
     INSERT INTO facts (id, proceeding_id, postulate)
       VALUES

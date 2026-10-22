@@ -19,9 +19,14 @@ Lines beginning with `> ` are rendered as unnumbered excerpt paragraphs.
 Other supplied lines inherit the Form 33 paragraph formatting. Part 6 uses the
 template's affidavit-entry numbering.
 
-The template intentionally preserves its date variants, name, time-estimate,
-paragraph-list, affidavit-sequence, and proposed-terms placeholders for later
-completion.
+Before Part 1, the template carries the form's hearing-date line (Rule
+8-1(10)(b)(iv), B.C. Reg. 105/2026): the respondent agrees to the applicant's
+hearing date, or does not agree and proposes date(s). Only the chosen line
+prints, and neither prints when the applicant proposed no date.
+
+The template intentionally preserves its date variants, name, hearing-date,
+time-estimate, paragraph-list, affidavit-sequence, and proposed-terms
+placeholders for later completion.
 
 ## Strict assembly contract
 
@@ -35,3 +40,7 @@ returns the true `page_count` (the NOT FINAL cover page included when `cover`
 is true) and sibling `pdf_path`. Use Microsoft Word COM
 when available, otherwise LibreOffice `soffice`; if neither exists, fail and
 name the missing renderer. Never use a word-count estimate as the page count.
+
+An application response must not exceed 10 pages (Rule 8-1(10)). Over 10
+pages, the NOT FINAL cover page not counted, assembly returns an advisory in
+`done`'s `advisories` and still publishes.

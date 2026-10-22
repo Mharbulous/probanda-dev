@@ -63,13 +63,34 @@ function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
 
 export interface HearingDetailsRow {
   time_estimate_minutes: number | null;
+  proposed_hearing?: string | null;
+  hearing_date_position?: "agree" | "propose_other" | "none_proposed" | null;
 }
 
-/** Only time_estimate_minutes is read (#372: "the rest of that row is simply unused") --
+/** Form 33 reads time_estimate_minutes, and proposed_hearing with hearing_date_position (schema v79) --
  * hearing_date/hearing_time/associate_judge have no Form 33 surface. */
 export function fetchHearingDetails(dbPath: string, filingId: number): HearingDetailsRow | undefined {
-  const found = rows<HearingDetailsRow>(dbPath, "SELECT time_estimate_minutes FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows<HearingDetailsRow>(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
+}
+
+/**
+ * Form 33's hearing-date line (Rule 8-1(10)(b)(iv), B.C. Reg. 105/2026), in the form's own words.
+ * "" when the applicant proposed no date (the form prints neither line); null when the position, or
+ * the date it needs, is not recorded.
+ */
+export function hearingDateSentence(hearing: HearingDetailsRow | undefined): string | null {
+  const date = hearing?.proposed_hearing;
+  switch (hearing?.hearing_date_position) {
+    case "none_proposed":
+      return "";
+    case "agree":
+      return date ? `The application respondent(s) agree to the applicant's hearing date of ${date}.` : null;
+    case "propose_other":
+      return date ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date}.` : null;
+    default:
+      return null;
+  }
 }
 
 /** Duplicated from render-form33-filed-face.ts (private there), so the mockup's estimate sentence reads exactly as the filed face emits it. */
@@ -343,18 +364,25 @@ export function renderApplicationResponse(ctx: RenderContext): string {
   // (Goal card design §2.7), and keyed on that field so the Work Board keeps each its own item (#1219).
   const clientName = client?.name ?? gapMarker("gap");
   const applicantName = applicant?.name ?? gapMarker("gap");
-  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
+  // B.C. Reg. 105/2026: the notice is served unfiled, so the form names it by the date it bears.
+  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
   const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
   recordCriterionGlyphs(ctx.inventory, clientName, ["🧩"], { table: "form_fields", id: 0, item: "Name of application respondent" });
   recordCriterionGlyphs(ctx.inventory, applicantName, ["🧩"], { table: "form_fields", id: 1, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, filedOn, ["🧩"], { table: "form_fields", id: 2, item: "Date the notice of application was filed" });
+  recordCriterionGlyphs(ctx.inventory, datedOn, ["🧩"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
   recordCriterionGlyphs(ctx.inventory, estimate, ["🧩"], { table: "form_fields", id: 3, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, hearingDate, ["🧩"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
   lines.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
   lines.push(
     `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ` +
-      `${applicantName}, filed ${filedOn}.`
+      `${applicantName}, dated ${datedOn}.`
   );
   lines.push("");
+  if (hearingDate !== "") {
+    lines.push(hearingDate);
+    lines.push("");
+  }
   // Form 33's own estimate sentence, in the template's position (templates/form-33.dotx).
   lines.push(`The application respondent estimates that the application will take ${estimate}`);
   lines.push("");

@@ -5158,5 +5158,62 @@ class TestV78StepStatus(unittest.TestCase):
             self.assertIn(column, columns)
 
 
+class TestV79HearingDatePosition(unittest.TestCase):
+    """v79: Form 33 as substituted by B.C. Reg. 105/2026 states whether the respondent agrees with the
+    applicant's proposed hearing date (Rule 8-1(10)(b)(iv)). hearing_details gains
+    hearing_date_position, NULL on every existing row, and no revision moves."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO filings (id, proceeding_id, kind, title) VALUES (1, 1, 'application_response', 'Application Response');
+        INSERT INTO hearing_details (filing_id, time_estimate_minutes, proposed_hearing) VALUES (1, 90, 'March 3, 2027');
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    @staticmethod
+    def _revision(con):
+        return int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=78)[-1], (77, 78))
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(self.SEED)
+        con.commit()
+        self.revision = self._revision(con)
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 79})["applied"], [{"from": 78, "to": 79}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_an_existing_row_reads_null_and_no_revision_moves(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 79)
+        self.assertEqual(self._revision(con), self.revision, "the hop moves no revision")
+        self.assertEqual(
+            con.execute("SELECT time_estimate_minutes, proposed_hearing, hearing_date_position FROM hearing_details").fetchall(),
+            [(90, "March 3, 2027", None)],
+        )
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_the_check_holds_the_three_positions(self):
+        con = self._hop()
+        for position in ("agree", "propose_other", "none_proposed", None):
+            con.execute("UPDATE hearing_details SET hearing_date_position = ? WHERE filing_id = 1", (position,))
+        for bad in ("agreed", "disagree", ""):
+            with self.assertRaises(sqlite3.IntegrityError):
+                con.execute("UPDATE hearing_details SET hearing_date_position = ? WHERE filing_id = 1", (bad,))
+
+    def test_a_fresh_database_holds_the_column(self):
+        engine.run({"db_path": str(self.db_path)})
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        self.assertIn("hearing_date_position", [r[1] for r in con.execute("PRAGMA table_info(hearing_details)")])
+
+
 if __name__ == "__main__":
     unittest.main()

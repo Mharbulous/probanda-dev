@@ -115,8 +115,9 @@ order, nothing before the first heading:
 Transform: Part 1 renders from `orders` (verbatim text, numbered by `order`
 ascending); the hearing scalars fill the notice preamble, `registry` fills the
 style of proceeding, and `associate_judge` selects its jurisdiction sentence. Advisory (never
-rejecting) warnings flag a body likely exceeding the 10-page cap and a
-`time_estimate` over 2 hours.
+rejecting) warnings state what Rule 8-1(14.3), (14.5)(b) and (16) mean for the
+`time_estimate`: over 2 hours a registrar fixes the date, and at or under 2 hours
+written argument needs leave.
 
 An order with `against` prints its text with "(against <names>)" before any
 closing punctuation. The estimate prints as written ("30 minutes", "1 hour 30
@@ -136,7 +137,8 @@ Frontmatter — same mechanics:
 
 | Key | Required | Value |
 |---|---|---|
-| `notice_filed` | yes | verbatim string (the "THIS IS A RESPONSE TO … filed [date]" line) |
+| `notice_dated` | yes | verbatim string, the date the notice of application bears (the "THIS IS A RESPONSE TO … dated [date]" line; B.C. Reg. 105/2026 serves the notice unfiled) |
+| `hearing_date` | yes | the Rule 8-1(10)(b)(iv) line, whole, beginning "The application respondent(s) " ("agree to the applicant's hearing date of …." or "do not agree to the applicant's hearing date and propose the following date(s): …."), or `Nil.` when the applicant proposed no date |
 | `time_estimate` | yes | string, as for Form 32 |
 | `orders` | yes | JSON array of `{"order": <applicant's filed order number>, "position": "<consent\|oppose\|no-position>", "terms": "<string>"}`; non-empty; exactly those three keys per entry |
 | `pure_law_confirmed` | no | JSON `true`/`false` |
@@ -150,6 +152,16 @@ Part 6 is the dash list; empty Part 4 requires `pure_law_confirmed: true`).
 
 Transform: consent orders' terms render as "ORDER(S) CONSENTED TO"; opposed
 and no-position order numbers fill the template's number-list fields.
+`hearing_date` replaces the template's hearing-date paragraph, which `Nil.`
+removes.
+
+## Advisories (Forms 32 and 33)
+
+After the render, a form over 10 pages, the NOT FINAL cover page not counted
+(Rule 8-1(4) and (10)), adds an advisory. A Form 32 draft order is a separate
+document and is never in the count. The advisories, with the Form 32 time
+estimate ones above, are the `done` payload's `advisories` list. They never
+reject, never add the cover page, and are relayed to the practitioner.
 
 ## Publish sidecar (`form-32-publish.json` / `form-33-publish.json`)
 

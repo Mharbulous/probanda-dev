@@ -1,6 +1,9 @@
 """Form 33 substitution builder."""
 from __future__ import annotations
 
+# The template's Rule 8-1(10)(b)(iv) paragraph (B.C. Reg. 105/2026), whole.
+HEARING_DATE_TEMPLATE = "The application respondent(s) [agree, or propose other hearing date(s)]."
+
 
 def _format_party_list(caption: str) -> str:
     """Convert ALL-CAPS newline-separated party list to natural language.
@@ -79,7 +82,16 @@ def build_subs_form33(ctx: dict) -> dict[str, str]:
         f'the orders set out in paragraphs {no_position} of Part 1 of the notice of application.'
     )
 
+    # Rule 8-1(10)(b)(iv) line, whole as the emitter wrote it. "Nil." means the
+    # applicant proposed no date, so the line is removed (None). Absent on a
+    # Generate fill, which keeps the template's prompt.
+    hearing = {}
+    if 'hearing_date' in ctx:
+        hearing[HEARING_DATE_TEMPLATE] = (
+            None if ctx['hearing_date'] == 'Nil.' else ctx['hearing_date'])
+
     return {
+        **hearing,
         '[COURT FILE NUMBER]': ctx.get('court_file_number', ''),
         '[REGISTRY]': registry,
         '[2-INCH MARGIN]': '',
@@ -95,7 +107,7 @@ def build_subs_form33(ctx: dict) -> dict[str, str]:
         '[SERVICE CHECK]': '',
         '[CLIENT FILE NAME]': f'the {client_role.title()}' if client_role else '',
         '[PERSON ACTING FULL NAME]': ctx.get('lawyer_name', ''),
-        '[date]': ctx.get('notice_filed', ''),
+        '[notice date]': ctx.get('notice_dated', ''),
         '[time estimate]': ctx.get('time_estimate', ''),
         ('The application respondent(s) oppose(s) the granting of the orders set '
          'out in paragraphs [list paragraph numbers] of Part 1 of the notice of application.'):

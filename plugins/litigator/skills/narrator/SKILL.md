@@ -104,18 +104,18 @@ On approval, write to `{substance_folder}\part-2-factual-basis.md`.
 
 ### 8. Generate Part 4 mechanically
 
-After Part 2 is written, generate Part 4 (Material Relied On) by extracting and deduplicating citations from Part 2 and Part 3.
+After Part 2 is written, generate Part 4 (Material to be Relied On) by extracting and deduplicating the evidence cited in Part 2 and Part 3. Part 4 lists affidavits and other evidence, never authorities: a case or statute belongs in Part 3. (On a Form 33 application response the same list is Part 6.)
 
 **Process:**
-1. Scan `part-2-factual-basis.md` and `part-3-legal-basis.md` for all citations
-2. Extract each unique material reference (affidavits, exhibits, case authorities, statutes)
+1. Scan `part-2-factual-basis.md` and `part-3-legal-basis.md` for every citation of evidence
+2. Extract each unique affidavit or other piece of evidence (an exhibit cites the affidavit it is attached to; skip case authorities and statutes)
 3. Deduplicate -- same document cited in multiple places appears once
-4. Sort: affidavits first (alphabetical by deponent), then exhibits, then authorities
-5. Format as a plain list:
+4. Sort: affidavits first (alphabetical by deponent), then other evidence
+5. Format as a plain list, each affidavit in the form's own words, "Affidavit #<n> of <name>, made <date>":
 
 ```
-- Affidavit #1 of Jane Doe made April 20, 2026
-- Affidavit #1 of John Smith made April 22, 2026
+- Affidavit #1 of Jane Doe, made April 20, 2026
+- Affidavit #1 of John Smith, made April 22, 2026
 - Expert Report of Dr. Sarah Brown dated April 18, 2026
 ```
 
@@ -134,4 +134,4 @@ After writing both files: "Factual basis and material list saved. Start a new se
 - **Every paragraph needs a citation:** no uncited factual paragraphs
 - **No .docx:** never touch templates or Word files
 - **Plain text only:** no markdown syntax, no JSON in the file body
-- **Part 4 is mechanical:** extract and deduplicate citations, do not draft creatively
+- **Part 4 is mechanical:** extract and deduplicate the evidence cited, never authorities, and do not draft creatively
