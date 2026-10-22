@@ -120,7 +120,13 @@ other question runs the duties in their numbered order.
    `device_stage_files` call, the calls in parallel, confirm every file staged,
    and name the staged paths. Stage each manifest's PNGs the same way and name
    their staged paths in the manifest. Never stage or convert the `6. LAW` files
-   themselves.
+   themselves. When only some lines of one filed file are needed, such as one
+   provision to quote into the spawn prompt, call `law_folder_text` with `file`
+   and a `pattern` instead of extracting and staging the folder: the matching
+   lines come back inline with their line numbers and context, beside the file's
+   first lines and its manifest currency marker, and nothing is written or
+   staged. Pass that currency marker on with the lines. An HTML page is never
+   matched: the tool searches its `.md` or `.txt` sibling or refuses.
 3. **Tier 4, Westlaw — before the audit, never after it.** After tiers 1–3, for
    each issue no pinpointable text on disk answers, run Westlaw without asking unless the practitioner declined it this run:
    1. run the `westlaw-query-optimizer` subskill on the question;

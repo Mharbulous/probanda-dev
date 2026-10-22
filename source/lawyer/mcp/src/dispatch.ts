@@ -629,7 +629,12 @@ export async function callTool(
   }
 
   if (name === "research_filing__law_folder_text") {
-    return lawFolderText(args.matter_root as string, args.destination_dir as string);
+    return lawFolderText(args.matter_root as string, args.destination_dir as string, {
+      file: args.file ?? undefined,
+      pattern: args.pattern ?? undefined,
+      context: args.context ?? undefined,
+      max_matches: args.max_matches ?? undefined,
+    });
   }
 
   if (name === "research_filing__legislation_search") {

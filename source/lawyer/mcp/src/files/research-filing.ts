@@ -284,6 +284,163 @@ export interface LawTextRow {
   reason?: string;
 }
 
+export interface LawTextMatch {
+  file: string;
+  first: number;
+  last: number;
+  matched: number[];
+  text: string;
+}
+
+export interface LawTextSearched {
+  file: string;
+  status: "ok" | "unread";
+  reason?: string;
+  head?: string[];
+  manifest_marker?: string | null;
+}
+
+export interface LawTextOptions {
+  file?: unknown;
+  pattern?: unknown;
+  context?: unknown;
+  max_matches?: unknown;
+}
+
+const HTML_EXTENSIONS = new Set([".htm", ".html"]);
+// Extensions a filed HTML page's text sibling may carry: fileFetched writes a page as `.md`.
+const TEXT_SIBLING_EXTENSIONS = [".md", ".txt"];
+const DEFAULT_CONTEXT = 3;
+const DEFAULT_MAX_MATCHES = 50;
+const HEAD_LINES = 5;
+// extractText's results by real path, size and mtime, so a file unchanged since it was last read is
+// not extracted again. Held in this process only; nothing is written.
+const EXTRACT_CACHE = new Map<string, { key: string; read: Awaited<ReturnType<typeof extractText>> }>();
+const EXTRACT_CACHE_LIMIT = 64;
+
+async function cachedExtract(path: string): Promise<Awaited<ReturnType<typeof extractText>>> {
+  const stat = statSync(path);
+  const key = `${stat.size}:${stat.mtimeMs}`;
+  const hit = EXTRACT_CACHE.get(path);
+  if (hit !== undefined && hit.key === key) return hit.read;
+  const read = await extractText(path);
+  // A reader that failed to load may load next time, so that result is never kept.
+  if (read.status === "ok" || !read.reason.startsWith("extractor_unavailable")) {
+    EXTRACT_CACHE.delete(path);
+    EXTRACT_CACHE.set(path, { key, read });
+    if (EXTRACT_CACHE.size > EXTRACT_CACHE_LIMIT) EXTRACT_CACHE.delete(EXTRACT_CACHE.keys().next().value as string);
+  }
+  return read;
+}
+
+/**
+ * The one file in `files` that `wanted` names: an exact name (case aside) first, else the only name
+ * holding it as a substring. An HTML page is never matched directly: its text sibling (same stem,
+ * `.md` or `.txt`) stands in for it, and with no sibling the call is refused `html_page`.
+ */
+function pickLawFile(files: string[], wanted: string): string {
+  const lower = wanted.toLowerCase();
+  const exact = files.filter((name) => name.toLowerCase() === lower);
+  const named = exact.length > 0 ? exact : files.filter((name) => name.toLowerCase().includes(lower));
+  if (named.length === 0) {
+    throw new DataServerError(`no file in this folder matches ${JSON.stringify(wanted)}`, "not_found");
+  }
+  const picked = new Set<string>();
+  const htmlOnly: string[] = [];
+  for (const name of named) {
+    if (!HTML_EXTENSIONS.has(pathWin32.extname(name).toLowerCase())) {
+      picked.add(name);
+      continue;
+    }
+    const stem = name.slice(0, -pathWin32.extname(name).length).toLowerCase();
+    const sibling = files.find((other) =>
+      TEXT_SIBLING_EXTENSIONS.some((ext) => other.toLowerCase() === stem + ext)
+    );
+    if (sibling === undefined) htmlOnly.push(name);
+    else picked.add(sibling);
+  }
+  if (picked.size === 0) {
+    throw new DataServerError(
+      `an HTML page is never read, and ${htmlOnly.join(", ")} has no .md or .txt text sibling in this folder`,
+      "html_page"
+    );
+  }
+  if (picked.size > 1) {
+    throw new DataServerError(
+      `${JSON.stringify(wanted)} matches ${picked.size} files; name one: ${[...picked].sort().join(", ")}`,
+      "ambiguous_file"
+    );
+  }
+  return [...picked][0];
+}
+
+function nonNegativeInt(value: unknown, label: string, fallback: number, min: number): number {
+  if (value === undefined) return fallback;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < min) {
+    throw new DataServerError(`${label} must be an integer of at least ${min}: ${JSON.stringify(value)}`, "invalid_argument");
+  }
+  return value;
+}
+
+/** The currency marker of `file`'s latest line in the folder's manifest, or null when none names it. */
+function manifestMarker(law: string, file: string): string | null {
+  const path = pathWin32.join(law, MANIFEST);
+  if (!existsSync(path)) return null;
+  let marker: string | null = null;
+  for (const line of readFileSync(path, "utf-8").split("\n")) {
+    if (line.trim() === "") continue;
+    let record: unknown;
+    try {
+      record = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const r = record as { filename?: unknown; currency_marker?: unknown };
+    if (r.filename === file && typeof r.currency_marker === "string") marker = r.currency_marker;
+  }
+  return marker;
+}
+
+/** Lines of `text` matching `regex`, each with `context` lines either side; overlapping blocks merge. */
+function matchBlocks(file: string, text: string, regex: RegExp, context: number, budget: number): {
+  blocks: LawTextMatch[];
+  count: number;
+  truncated: boolean;
+} {
+  const lines = text.split(/\r?\n/);
+  const hits: number[] = [];
+  let truncated = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (!regex.test(lines[i])) continue;
+    if (hits.length === budget) {
+      truncated = true;
+      break;
+    }
+    hits.push(i);
+  }
+  // Spans as 0-based [first, last] line indexes; a span touching the one before it joins it.
+  const spans: Array<{ first: number; last: number; matched: number[] }> = [];
+  for (const i of hits) {
+    const first = Math.max(0, i - context);
+    const last = Math.min(lines.length - 1, i + context);
+    const prev = spans[spans.length - 1];
+    if (prev !== undefined && first <= prev.last + 1) {
+      prev.last = last;
+      prev.matched.push(i + 1);
+    } else {
+      spans.push({ first, last, matched: [i + 1] });
+    }
+  }
+  const blocks = spans.map((s) => ({
+    file,
+    first: s.first + 1,
+    last: s.last + 1,
+    matched: s.matched,
+    text: lines.slice(s.first, s.last + 1).join("\n"),
+  }));
+  return { blocks, count: hits.length, truncated };
+}
+
 /**
  * Write the text of every file in an existing `6. LAW` folder of `matterRoot` as `<file>.txt` under
  * the research agent's scratchpad, in `law-text\<the folder's path below 6. LAW>\`, replacing what an
@@ -291,16 +448,74 @@ export interface LawTextRow {
  * (./text-extract.ts), in the server with no host Python, one file at a time, so one broken file
  * cannot sink the rest. A file that yields no usable text is `unread` with extractText's reason and
  * gets no text file.
+ *
+ * `file` narrows the call to the one file it names (pickLawFile). `pattern` (a case-insensitive
+ * regex) returns the matching lines inline, with `context` lines either side, up to `max_matches`
+ * matched lines, and writes nothing: no scratch copy and no scratch folder. Without `file`, a pattern
+ * searches every file in the folder but its HTML pages.
  */
 export async function lawFolderText(
   matterRoot: string,
-  destinationDir: string
-): Promise<{ out_dir: string; files: LawTextRow[] }> {
+  destinationDir: string,
+  options: LawTextOptions = {}
+): Promise<
+  | { out_dir: string; files: LawTextRow[] }
+  | { pattern: string; searched: LawTextSearched[]; matches: LawTextMatch[]; match_count: number; truncated: boolean }
+> {
   const root = validateMatterRoot(matterRoot);
   const law = resolveLawDir(destinationDir);
   if (!law.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
     throw new DataServerError(`destination_dir is not in this matter: ${law}`, "not_in_matter");
   }
+  if (options.file !== undefined && (typeof options.file !== "string" || options.file.trim() === "")) {
+    throw new DataServerError("file must be a non-empty string", "invalid_argument");
+  }
+  if (options.pattern !== undefined && (typeof options.pattern !== "string" || options.pattern === "")) {
+    throw new DataServerError("pattern must be a non-empty string", "invalid_argument");
+  }
+  if (options.pattern === undefined && (options.context !== undefined || options.max_matches !== undefined)) {
+    throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
+  }
+  const listed = readdirSync(law)
+    .filter((name) => statSync(pathWin32.join(law, name)).isFile())
+    .sort();
+  const files = options.file === undefined ? listed : [pickLawFile(listed, options.file as string)];
+
+  if (options.pattern !== undefined) {
+    const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
+    const maxMatches = nonNegativeInt(options.max_matches, "max_matches", DEFAULT_MAX_MATCHES, 1);
+    let regex: RegExp;
+    try {
+      regex = new RegExp(options.pattern as string, "i");
+    } catch (err) {
+      throw new DataServerError(`pattern is not a valid regex: ${(err as Error).message}`, "invalid_argument");
+    }
+    const searched: LawTextSearched[] = [];
+    const matches: LawTextMatch[] = [];
+    let matchCount = 0;
+    let truncated = false;
+    for (const file of files) {
+      if (truncated) break;
+      if (HTML_EXTENSIONS.has(pathWin32.extname(file).toLowerCase())) {
+        searched.push({ file, status: "unread", reason: "html_page: an HTML page is never read; search its text sibling" });
+        continue;
+      }
+      if (file === MANIFEST) continue;
+      const read = await cachedExtract(pathWin32.join(law, file));
+      if (read.status === "unread") {
+        searched.push({ file, status: "unread", reason: read.reason });
+        continue;
+      }
+      const head = read.text.split(/\r?\n/).filter((l) => l.trim() !== "").slice(0, HEAD_LINES);
+      searched.push({ file, status: "ok", head, manifest_marker: manifestMarker(law, file) });
+      const found = matchBlocks(file, read.text, regex, context, maxMatches - matchCount);
+      matches.push(...found.blocks);
+      matchCount += found.count;
+      truncated = found.truncated;
+    }
+    return { pattern: options.pattern as string, searched, matches, match_count: matchCount, truncated };
+  }
+
   const segments = law.split(/[\\/]+/);
   const below = segments.slice(segments.findIndex((s) => s.toLowerCase() === LAW_SEGMENT) + 1);
   let outDir = researchScratchDir(root).dir;
@@ -312,12 +527,9 @@ export async function lawFolderText(
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
 
-  const files = readdirSync(law)
-    .filter((name) => statSync(pathWin32.join(law, name)).isFile())
-    .sort();
   const rows: LawTextRow[] = [];
   for (const file of files) {
-    const read = await extractText(pathWin32.join(law, file));
+    const read = await cachedExtract(pathWin32.join(law, file));
     if (read.status === "unread") {
       rows.push({ file, text_path: null, bytes: 0, status: "unread", reason: read.reason });
       continue;

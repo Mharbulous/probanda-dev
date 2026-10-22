@@ -128,3 +128,161 @@ test("law_folder_text refuses, writing nothing, outside the matter's 6. LAW tree
     other.cleanup();
   }
 });
+
+// The `file` and `pattern` inputs: one filed file searched inline, nothing written.
+
+/** A 6. LAW folder of synthetic rules files, with a manifest line naming one of them. */
+function rulesFixture() {
+  const f = fixture();
+  const rules = Array.from({ length: 30 }, (_, i) => `Rule ${i + 1} placeholder text.`);
+  rules[11] = "Rule 12 placeholder subrule (3) on fixture service.";
+  rules[13] = "Rule 14 placeholder text on fixture service.";
+  writeFileSync(join(f.law, "Fixture Rules.md"), ["Fixture Rules", "Current to 2026-09-30", ...rules].join("\n") + "\n");
+  writeFileSync(join(f.law, "Fixture Rules Schedule.txt"), "Schedule placeholder.\n");
+  writeFileSync(join(f.law, "Fixture Act.html"), "<html><body>Fixture Act page</body></html>");
+  writeFileSync(join(f.law, "Paged Act.html"), "<html><body>Paged Act page</body></html>");
+  writeFileSync(join(f.law, "Paged Act.md"), "Paged Act\nSection 1 placeholder fixture service.\n");
+  writeFileSync(
+    join(f.law, "case-download-manifest.json"),
+    JSON.stringify({ filename: "Fixture Rules.md", currency_marker: "current to September 30, 2026" }) + "\n"
+  );
+  return f;
+}
+
+const scratchOf = (matter) => join(matter, "0. DRAFT", "AI Scratchpad");
+
+test("law_folder_text with file and pattern returns matching lines with context inline and writes nothing", async () => {
+  const f = rulesFixture();
+  try {
+    const result = await lawFolderText(f.matter, f.law, { file: "Fixture Rules.md", pattern: "fixture service", context: 1 });
+    assert.equal(result.out_dir, undefined);
+    assert.deepEqual(result.searched, [
+      {
+        file: "Fixture Rules.md",
+        status: "ok",
+        head: ["Fixture Rules", "Current to 2026-09-30", "Rule 1 placeholder text.", "Rule 2 placeholder text.", "Rule 3 placeholder text."],
+        manifest_marker: "current to September 30, 2026",
+      },
+    ]);
+    // Rule 12 is line 14 and Rule 14 line 16: their one-line contexts touch, so they merge.
+    assert.deepEqual(result.matches, [
+      {
+        file: "Fixture Rules.md",
+        first: 13,
+        last: 17,
+        matched: [14, 16],
+        text: [
+          "Rule 11 placeholder text.",
+          "Rule 12 placeholder subrule (3) on fixture service.",
+          "Rule 13 placeholder text.",
+          "Rule 14 placeholder text on fixture service.",
+          "Rule 15 placeholder text.",
+        ].join("\n"),
+      },
+    ]);
+    assert.equal(result.match_count, 2);
+    assert.equal(result.truncated, false);
+    assert.equal(existsSync(scratchOf(f.matter)), false);
+
+    // Default context is 3; max_matches caps the matched lines and says so.
+    const capped = await lawFolderText(f.matter, f.law, { file: "Rules.md", pattern: "FIXTURE SERVICE", max_matches: 1 });
+    assert.deepEqual(capped.matches.map((m) => [m.first, m.last, m.matched]), [[11, 17, [14]]]);
+    assert.equal(capped.truncated, true);
+    assert.equal(existsSync(scratchOf(f.matter)), false);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text with a pattern that matches nothing returns no matches, still showing the file's head", async () => {
+  const f = rulesFixture();
+  try {
+    const result = await lawFolderText(f.matter, f.law, { file: "Fixture Rules.md", pattern: "no such words" });
+    assert.deepEqual(result.matches, []);
+    assert.equal(result.match_count, 0);
+    assert.equal(result.searched[0].head[1], "Current to 2026-09-30");
+    assert.equal(existsSync(scratchOf(f.matter)), false);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text refuses a file that matches no file, or several, listing the candidates", async () => {
+  const f = rulesFixture();
+  try {
+    assert.equal(await codeOf(() => lawFolderText(f.matter, f.law, { file: "absent.pdf", pattern: "x" })), "not_found");
+    let message;
+    try {
+      await lawFolderText(f.matter, f.law, { file: "fixture rules", pattern: "x" });
+    } catch (err) {
+      assert.equal(err.code, "ambiguous_file");
+      message = err.message;
+    }
+    assert.match(message, /Fixture Rules Schedule\.txt/);
+    assert.match(message, /Fixture Rules\.md/);
+    assert.equal(await codeOf(() => lawFolderText(f.matter, f.law, { context: 2 })), "invalid_argument");
+    assert.equal(await codeOf(() => lawFolderText(f.matter, f.law, { pattern: "(" })), "invalid_argument");
+    assert.equal(existsSync(scratchOf(f.matter)), false);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text never matches an HTML page: its text sibling stands in, or the call refuses", async () => {
+  const f = rulesFixture();
+  try {
+    assert.equal(await codeOf(() => lawFolderText(f.matter, f.law, { file: "Fixture Act.html", pattern: "page" })), "html_page");
+    const sibling = await lawFolderText(f.matter, f.law, { file: "Paged Act.html", pattern: "fixture service" });
+    assert.deepEqual(sibling.searched.map((s) => s.file), ["Paged Act.md"]);
+    assert.deepEqual(sibling.matches.map((m) => m.matched), [[2]]);
+
+    // Without `file`, a pattern searches the folder but reports each HTML page unread.
+    const folder = await lawFolderText(f.matter, f.law, { pattern: "fixture service" });
+    const rows = Object.fromEntries(folder.searched.map((s) => [s.file, s]));
+    assert.match(rows["Fixture Act.html"].reason, /^html_page/);
+    assert.equal(rows["case-download-manifest.json"], undefined);
+    assert.deepEqual([...new Set(folder.matches.map((m) => m.file))], ["Fixture Rules.md", "Paged Act.md"]);
+    assert.ok(folder.matches.every((m) => !m.file.endsWith(".html")));
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text with file alone writes that one file's text, and no options keeps the whole-folder output", async () => {
+  const f = fixture();
+  try {
+    const whole = await lawFolderText(f.matter, f.law);
+    const same = await lawFolderText(f.matter, f.law, {});
+    assert.deepEqual(same, whole);
+    assert.deepEqual(Object.keys(whole).sort(), ["files", "out_dir"]);
+
+    const one = await lawFolderText(f.matter, f.law, { file: "memo" });
+    assert.deepEqual(one.files.map((row) => row.file), ["memo.docx"]);
+    assert.match(readFileSync(one.files[0].text_path, "utf-8"), /Placeholder memo body/);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text reads a file again once its size or mtime changes", async () => {
+  const f = fixture();
+  try {
+    const first = await lawFolderText(f.matter, f.law, { file: "notes.txt", pattern: "notes" });
+    assert.equal(first.match_count, 1);
+    writeFileSync(join(f.law, "notes.txt"), "Placeholder replaced text, longer than before.\n");
+    const second = await lawFolderText(f.matter, f.law, { file: "notes.txt", pattern: "replaced" });
+    assert.equal(second.match_count, 1);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("law_folder_text's schema documents file, pattern, context and max_matches as optional", async () => {
+  const { buildToolDefinitions } = await import("../build/schema-gen.js");
+  const tool = buildToolDefinitions().find((definition) => definition.name === "research_filing__law_folder_text");
+  assert.deepEqual(tool.inputSchema.required, ["matter_root", "destination_dir"]);
+  for (const key of ["file", "pattern", "context", "max_matches"]) {
+    assert.ok(tool.inputSchema.properties[key].description, key);
+    assert.match(tool.description, new RegExp("`" + key + "`"));
+  }
+});
