@@ -48,6 +48,8 @@ Once per Job Board, at the point the calling skill sets, draw out what the pract
 7. Read it back as the reply's only code block, exactly as it will be saved, and ask exactly one question: "Does that capture your goal accurately and completely?" Then stop. Do not take up tensions, strategy or research in that turn. Only the practitioner's typed bare yes approves it, as with section 3a's revised paragraph. Any other reply records nothing: revise on a correction, then read back again.
 8. On each correction, revise and read back again, until approved. Only then is it recorded, in the approved words, and only then are tensions or strategy taken up, each as a separate question.
 
+**Goal framing.** A goal is one outcome sentence: an order obtained, a settlement reached, a claim defended. It is never a document or a step towards the outcome, such as drafting, filing or serving a Writing. Every goal the session proposes, infers or summarizes, in this section or elsewhere, is framed this way, one outcome per goal. The practitioner's own wording is never refused or reworded for this: when `drafting_data__set_board_goal`'s note carries a framing warning, relay it once and let the practitioner decide.
+
 The syntax:
 
 - One goal: `Goal: <statement>`
