@@ -1663,10 +1663,19 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       name: submissionDataPrefixed("merge_job_boards"),
       description:
         "Merge two Job Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
-        "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side " +
-        "and ask whether to merge them, saying that each Writing stays a separate filing with its own documents and " +
-        "numbering and that only the Job Board page, view pages and goals combine; call this only after their next " +
-        "turn is a bare yes, and pass confirmed: true. " +
+        "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, " +
+        "propose one combined goal as the reply's only fenced code block, and in the same turn ask whether to merge them " +
+        "with that goal, saying that each Writing stays a separate filing with its own documents and numbering and " +
+        "that only the Job Board page, view pages and goal combine; call this only after their next turn is a bare " +
+        "yes, or their own goal sentence, and pass confirmed: true. goal_statement is the merged board's one goal, " +
+        "the fenced block character for character or the practitioner's sentence; it is written as confirmed and " +
+        "passes the practitioner-words gate as drafting_data__set_board_goal's confirmed statement does. " +
+        "goal_description, only with it, is the line the closed Goal card shows. A goal naming drafting, or a " +
+        "description joining several goals, is still written, and the note ends with a framing warning to relay " +
+        "once. Without goal_statement the board's goal status is needs_consolidation, and the next /draft opening " +
+        "asks once for one combined goal. Either way every earlier statement of both boards is kept under the " +
+        "survivor's `merged` as history only, never drawn on the Goal card, board_summary or board_card once the " +
+        "board holds one goal. " +
         "boards names the two, each by exactly one of filing_id (a Writing's board or a Job Board with no Writing) and " +
         "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
         "a Writing's board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id. " +
@@ -1675,13 +1684,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "any of its Writings' ids, and board_card by the survivor's (an absorbed board's refuses board_merged). Criteria combine by id and read unmet while any Writing's is unmet; " +
         "each Writing's own gate still blocks only its own filing. One set of view pages spans all its Writings, named " +
         "by the survivor's id; the absorbed board's " +
-        "pages move to TRASH at the next page write. Its statement of goals is appended, with its own status, to the " +
-        "survivor's, and boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. " +
+        "pages move to TRASH at the next page write. Boards it had absorbed move to the survivor. No job, loose " +
+        "thread or Writing row is written. " +
         "Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per " +
         "absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: " +
-        "invalid_boards, invalid_board, not_confirmed, invalid_session_token, not_found, board_retired, " +
-        "proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed " +
-        "(each {filing_id, proceeding_id}), goals (the survivor's count of statements) and a note.",
+        "invalid_boards, invalid_board, not_confirmed, invalid_session_token, invalid_statement, invalid_description, " +
+        "not_found, board_retired, proceeding_has_writing, board_merged (name its survivor instead), same_board. " +
+        "Returns survivor, absorbed (each {filing_id, proceeding_id}), goal_status (confirmed or needs_consolidation) " +
+        "and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1694,6 +1704,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           },
           confirmed: { type: "boolean" },
           session_token: { type: "string" },
+          goal_statement: { type: "string" },
+          goal_description: { type: "string" },
         },
         required: ["db_path", "boards", "confirmed", "session_token"],
         additionalProperties: false,
@@ -2047,9 +2059,11 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "{description, statement, status, approved_at, session_token, updated_at}, approved_at set only for " +
         "confirmed. The write replaces the board's row and removes the rows of boards that no longer exist " +
         "(stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_job_boards) " +
-        "also holds each absorbed board's statement, with its own status, under `merged`: merged_index (1-based, as " +
-        "board_card lists them) writes that one, confirmed or inferred, and the board's own statement is kept; " +
-        "without it the board's own is written and the merged ones kept. A board merged into another is refused " +
+        "holds one goal, its own; each earlier statement of the boards merged into it is kept, with its own status, " +
+        "under `merged` as history only. A merged board left needs_consolidation (merged without a goal, or before " +
+        "2026-10-22) reads that status until this tool writes its own statement, which makes it hold one goal again. " +
+        "merged_index (1-based, as board_card's `### To combine <n>` lists them) writes that history entry instead, " +
+        "confirmed or inferred, and the board's own statement is kept. A board merged into another is refused " +
         "(board_merged): set the goal on its survivor. Refusals write nothing: invalid_board, " +
         "invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, " +
         "proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
@@ -2234,7 +2248,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "a short fixed-grammar summary: `# Job Board — Matter <matter no> <matter description> · Client <client " +
         "name> (<client no>) · Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or " +
         "`none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of " +
-        "goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined or none; the " +
+        "goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined, none or " +
+        "needs_consolidation, the last followed by `, <n> statements to combine` on a merged board that has no one goal yet; the " +
         "statement itself is board_card's goals lane), `Unmet completion criteria:` with one line per unmet or " +
         "pending criterion in board order, as board_card's criteria lane prints it without the items (`Unmet " +
         "completion criteria: none` when every criterion is met), and `Met " +
@@ -2359,8 +2374,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "own record and never steps of its plan, each when it has any, and on a completed job `  completed: " +
         "<completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded " +
         "by: … · reason: …`. Then each lane asked for: goals, the board's statement of goals " +
-        "(drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none>)`, its description on the next " +
-        "line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board; " +
+        "(drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none|needs_consolidation>)`, its " +
+        "description on the next line, then the statement verbatim, line breaks and indentation kept, when there is " +
+        "one, on every kind of board, and, only while needs_consolidation, each earlier statement of a merged board as " +
+        "`### To combine <n> (<status>)` and its text, to propose one combined goal from; " +
         "criteria, the `🎯 Completion criteria: <state>[ — <text>]` " +
         "line and each criterion in board order as `- <glyph> <id>: <text>[ (after …)][ (counts)][ — items]`, the " +
         "counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met " +
