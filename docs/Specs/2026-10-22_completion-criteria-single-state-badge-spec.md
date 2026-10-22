@@ -56,3 +56,20 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm where the badge and criterion texts are built for the page versus board_card, whether they share code, and ADR 0010's current amendment text. Record each as matches / differs.
+
+## 11. Verification against HEAD (fe82e54, 2026-10-22)
+
+| Claim | Result | At HEAD |
+|---|---|---|
+| The page's renderer is in `combined-board.ts` / `matter-pages.ts` | matches, with paths | `source/lawyer/mcp/src/submission/forms/combined-board.ts` (`combineSections`, `combinedCriteria`) builds the merged section; `source/lawyer/mcp/src/submission/matter-pages.ts` `buildMatterPages` passes it to the page; `source/lawyer/mcp/src/templates/job-board/job-board.js` `goalCard` draws the card. |
+| The badge reads `<Writing 1 title>: Drafting · <Writing 2 title>: Drafting` | matches | `combineSections` sets `meta.state_label` to each section's `<title>: <state>` joined by ` · `; `goalCard` draws it in the `lifecycle` span. |
+| Badge and criterion texts are shared between the page and board_card | matches | One `combineSections` serves both: `buildMatterPages` for the page, and `boardSectionOf` for board_summary and board_card. board_summary prints the same `meta.state_label` as its State line. A page-only change therefore needs a page-only variant of the combined section. |
+| Criterion texts end `(<Writing title>)`, the gate joins each Writing's wording named by its Writing, items are prefixed `<Writing title>: ` | matches | `combinedCriteria`: a criterion one of several Writings holds, and every deadline criterion, gets the suffix; differing texts join as `<title>: <text>` with `; `; every item of a combined criterion is tagged. |
+| The Completion Criteria card's head text names Writings | not in the spec, found | `goal.text` (the card string in the card's head) joins each Writing's as `<title>: <text>` with `; `. It sits inside the card, so §8 criterion 2 covers it. |
+| A single-Writing board shows a suffix to remove | differs | A board of one section passes through `combineSections` unchanged, with no suffix. Only a merged board carries suffixes and prefixes. |
+| An item specific to one Writing has a link (hover or target) to keep | differs | The page draws each item as plain text. Its only hover is a suppressed item's `🤫 replaces` title. There is no link to keep, and a hover naming the Writing would put its title into the card's HTML, against §8 criterion 2. |
+| The gate criterion's two wordings | matches | One id, texts "The pre-filing checks are passed or waived" (`PRE_FILING`) and "The pre-send checks are passed or waived" (`PRE_SEND`) in `render-work-board.ts`. |
+| ADR 0010's 2026-10-21 amendment text | matches | "Criteria combine by id. ... Where the Writings word it differently (a pre-filing and a pre-send gate), each Writing's wording is shown, named by its Writing. A criterion only one Writing holds names that Writing." A deadline criterion "keeps its own, named by its Writing." |
+| `shared/html-pages.md` describes the merged page | matches | Its pages paragraph says a merged page draws "one Completion Criteria card and one set of lanes, each job drawn once and naming its Writing", with no rule on Writing names in the card. |
+
+Answers to §9 (Brahm, 2026-10-22): the badge shows the least advanced lifecycle among the board's Writings; the neutral gate wording is "The pre-filing and pre-send checks are passed or waived".
