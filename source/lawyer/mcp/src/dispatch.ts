@@ -28,6 +28,7 @@ import { submissionDataCreateWriting, type CreateWritingArgs } from "./submissio
 import { submissionDataCreateJobBoard, type CreateJobBoardArgs } from "./submission/forms/create-job-board.js";
 import { submissionDataMergeJobBoards, type MergeJobBoardsArgs } from "./submission/forms/merge-job-boards.js";
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
+import { submissionDataRecordServed, type RecordServedArgs } from "./submission/forms/served-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
@@ -262,6 +263,10 @@ export async function callTool(
 
   if (name === "drafting_data__record_filed") {
     return submissionDataRecordFiled(args as unknown as RecordFiledArgs);
+  }
+
+  if (name === "drafting_data__record_served") {
+    return submissionDataRecordServed(args as unknown as RecordServedArgs);
   }
 
   if (name === "drafting_data__assign_job") {

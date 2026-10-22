@@ -9,11 +9,17 @@
 // the docket-clerk agent and is never stored (deadlines are on
 // /drafting-data's "not stored, deliberately" list).
 //
+// `served` (2026-10-21, amended Rule 8-1, B.C. Reg. 105/2026): a Notice of Application or
+// Application Response recorded by drafting_data__record_served, which sets filed_on to the service
+// date and sent_copy_id to the served copy. It takes the `filed` slot: the later registry filing is
+// a job step, not a state. One recorded the old way, by record_filed, has no sent_copy_id and reads
+// `filed`.
+//
 // Pure: no database, no clock. `today` is passed in (forms.ts derives it from
 // nowStamp(), the same local wall-clock every mockup is stamped with), so the
 // same inputs always give the same state.
 
-export type LifecycleState = "drafting" | "filed" | "sent" | "heard" | "decided" | "entered" | "appeal_expired" | "retired";
+export type LifecycleState = "drafting" | "served" | "filed" | "sent" | "heard" | "decided" | "entered" | "appeal_expired" | "retired";
 
 export interface Lifecycle {
   state: LifecycleState;
@@ -29,6 +35,7 @@ export interface Lifecycle {
 
 export const LIFECYCLE_LABELS: Record<LifecycleState, string> = {
   drafting: "Drafting",
+  served: "Served",
   filed: "Filed",
   sent: "Sent",
   heard: "Heard",
@@ -37,6 +44,9 @@ export const LIFECYCLE_LABELS: Record<LifecycleState, string> = {
   appeal_expired: "Appeal period expired",
   retired: "Retired",
 };
+
+/** The kinds amended Rule 8-1 serves before filing (8-1 (3), (9)). */
+export const SERVED_KINDS: ReadonlySet<string> = new Set(["notice_of_application", "application_response"]);
 
 /** Later states win: a retired filing reads as retired whatever else is set, and an expired appeal
  * period outranks both entry and the decision that started it running -- appeal time runs from the
@@ -49,7 +59,15 @@ export const LIFECYCLE_LABELS: Record<LifecycleState, string> = {
  * `retired_on` and `filed_on` alone: the hearing date, `decided_on`, `entered_on` and the appeal
  * deadline are ignored for it (the schema refuses the three dates on it, v32). */
 export function deriveLifecycle(
-  filing: { filed_on: string | null; decided_on: string | null; entered_on: string | null; retired_on: string | null; needs_forum_parts?: 0 | 1 },
+  filing: {
+    filed_on: string | null;
+    decided_on: string | null;
+    entered_on: string | null;
+    retired_on: string | null;
+    needs_forum_parts?: 0 | 1;
+    kind?: string;
+    sent_copy_id?: number | null;
+  },
   hearingDate: string | null,
   today: string,
   appealDeadline?: string | null
@@ -63,6 +81,9 @@ export function deriveLifecycle(
   if (filing.entered_on) return { state: "entered", since: filing.entered_on, readyToRetire: false, offerDelivered: false };
   if (filing.decided_on) return { state: "decided", since: filing.decided_on, readyToRetire: false, offerDelivered: false };
   if (hearingDate && hearingDate <= today) return { state: "heard", since: hearingDate, readyToRetire: false, offerDelivered: false };
-  if (filing.filed_on) return { state: "filed", since: filing.filed_on, readyToRetire: false, offerDelivered: false };
+  if (filing.filed_on) {
+    const served = filing.kind !== undefined && SERVED_KINDS.has(filing.kind) && filing.sent_copy_id != null;
+    return { state: served ? "served" : "filed", since: filing.filed_on, readyToRetire: false, offerDelivered: false };
+  }
   return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
 }

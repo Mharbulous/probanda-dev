@@ -94,3 +94,26 @@ test("needs_forum_parts 1, filed_on -- filed, no offer: a venue-kind letter is a
 test("sent carries its own label", () => {
   assert.equal(LIFECYCLE_LABELS.sent, "Sent");
 });
+
+// Amended Rule 8-1 (B.C. Reg. 105/2026): a Notice of Application or Application Response recorded
+// by record_served carries sent_copy_id and reads "served"; one filed the old way reads "filed".
+test("a served Notice of Application reads served, dated by the service", () => {
+  const result = deriveLifecycle(filing({ kind: "notice_of_application", filed_on: "2026-10-05", sent_copy_id: 7 }), null, "2026-10-21");
+  assert.deepEqual(result, { state: "served", since: "2026-10-05", readyToRetire: false, offerDelivered: false });
+  assert.equal(LIFECYCLE_LABELS.served, "Served");
+});
+
+test("the same Writing without sent_copy_id was filed the old way and reads filed", () => {
+  const result = deriveLifecycle(filing({ kind: "notice_of_application", filed_on: "2026-09-05", sent_copy_id: null }), null, TODAY);
+  assert.equal(result.state, "filed");
+});
+
+test("a served Writing whose hearing date has come reads heard", () => {
+  const result = deriveLifecycle(filing({ kind: "application_response", filed_on: "2026-10-05", sent_copy_id: 7 }), "2026-10-20", "2026-10-21");
+  assert.equal(result.state, "heard");
+});
+
+test("a letter with sent_copy_id is not a served kind and reads filed", () => {
+  const result = deriveLifecycle(filing({ kind: "letter", filed_on: "2026-10-05", sent_copy_id: 7 }), null, "2026-10-21");
+  assert.equal(result.state, "filed");
+});

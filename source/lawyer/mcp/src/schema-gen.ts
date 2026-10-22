@@ -1738,7 +1738,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "from parties and counsel and the address for service read from case data, then sets filed_on, which freezes the " +
         "exhibits and moves the revision. A Writing that already has party rows (a filed_on cleared in error) keeps them. " +
         "Clearing a filed_on set in error stays an ordinary update. Refusals write nothing: invalid_filed_on, not_found, " +
-        "writing_retired, already_filed, general_writing (record it as sent through drafting_data__record_sent), " +
+        "writing_retired, served_writing (a Notice of Application or Application Response recorded as served under " +
+        "amended Rule 8-1, whose registry filing is a job step), already_filed, general_writing (record it as sent " +
+        "through drafting_data__record_sent), " +
         "parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the " +
         "database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note.",
       inputSchema: {
@@ -1749,6 +1751,32 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           filed_on: { type: "string" },
         },
         required: ["db_path", "filing_id", "filed_on"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("record_served"),
+      description:
+        "Record a Notice of Application or Application Response as served on served_on (YYYY-MM-DD), under amended Rule " +
+        "8-1 (B.C. Reg. 105/2026), which serves it before it is filed. In one transaction it writes the party rows the " +
+        "Writing is served with (parties_snapshot), a documents row 'Served copy — <title>' dated served_on with " +
+        "served_copy_path when given, sent_copy_id pointing at it, and filed_on = served_on, which freezes the Writing as " +
+        "served and moves the revision. Its lifecycle then reads Served until Heard; the later registry filing is a step " +
+        "of the Set down for hearing or File the served response job, never a write here. Anyone may record it. Refusals " +
+        "write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, " +
+        "job_board_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), " +
+        "parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new " +
+        "revision and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          served_on: { type: "string" },
+          served_copy_path: { type: "string" },
+        },
+        required: ["db_path", "filing_id", "served_on"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },

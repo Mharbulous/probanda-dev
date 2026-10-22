@@ -394,6 +394,7 @@ test("every tool that acts on a Writing's document refuses the board", async (t)
   const calls = {
     drafting_data__record_sent: { sent_on: "2026-10-10", sent_copy_text: "Sent as drafted." },
     drafting_data__record_filed: { filed_on: "2026-10-10" },
+    drafting_data__record_served: { served_on: "2026-10-10" },
     drafting_data__resnapshot_writing: {},
     drafting_forms__pre_filing_check: { package_dir: f.draft },
     drafting_forms__emit_form32: {},

@@ -18,7 +18,7 @@ import type { CourtFileAffidavit } from "../court-file-affidavits.js";
 import { type BoardGoals, fetchBoardGoals } from "./board-goals.js";
 import type { PageDates } from "../matter-dates.js";
 import { storedLayout } from "./layout-snapshot.js";
-import { LIFECYCLE_LABELS, type LifecycleState } from "./lifecycle.js";
+import { LIFECYCLE_LABELS, SERVED_KINDS, type LifecycleState } from "./lifecycle.js";
 import { LEGISLATION_KINDS } from "./markers.js";
 import { currencyLabel, currencyWithheldClauses, type LayoutPart } from "./projections.js";
 import { NO_TO_RECIPIENT_TABLE, authorityUnconfirmed } from "./render-general.js";
@@ -1182,26 +1182,37 @@ const GATE_TITLE = "Pre-filing consistency gate";
 export const POSITION_CONFLICT_TITLE = "Decide a position our own correspondence contradicts";
 /** The job the Sent write's pre-send hold creates (jobs.md "Pre-send gate"). */
 export const PRE_SEND_TITLE = "Pre-send gate";
-/** Jobs identified by fixed title that the gate row's open-job reading leaves out (design §2.4): the
- * two gate jobs (jobs.md §14 and "Pre-send gate") and the stock jobs, which are not drafting work
- * (plan decision 3; jobs.md §3b). */
-const UNCOUNTED_TITLES: ReadonlySet<string> = new Set([
-  GATE_TITLE,
-  PRE_SEND_TITLE,
+/** The stock jobs' fixed titles (jobs-stock.md §3b, the one list), which are not drafting work. The
+ * service and set-down jobs follow amended Rule 8-1 (B.C. Reg. 105/2026); `File and serve` stays for
+ * a notice filed under the old rule. */
+export const STOCK_TITLES: ReadonlySet<string> = new Set([
   "Availability letter",
   "File and serve",
+  "Serve the application",
+  "Serve the response",
+  "Set down for hearing",
+  "Reply affidavits",
+  "File the served response",
   "Application book",
+  "Reset for hearing",
   "Draft the letter",
   "Draft the Writing",
   "Deliver",
 ]);
+/** Jobs identified by fixed title that the gate row's open-job reading leaves out (design §2.4): the
+ * two gate jobs (jobs.md §14 and "Pre-send gate") and the stock jobs (plan decision 3; jobs.md §3b). */
+const UNCOUNTED_TITLES: ReadonlySet<string> = new Set([GATE_TITLE, PRE_SEND_TITLE, ...STOCK_TITLES]);
+/** The title prefixes of service and filing work, which waits on the gate: hand-outlined work under
+ * one of these titles is stock work too (jobs-stock.md §3b). */
+const BEFORE_GATE_PREFIXES = ["File and serve", "Serve the application", "Serve the response"];
+const waitsOnGate = (title: string): boolean => BEFORE_GATE_PREFIXES.some((p) => title.startsWith(p));
 
 /** Every counted job this board shows still to do, rejected jobs left out (design §2.4). Loose threads
- * are not jobs. While any is open the gate row is unmet and names them. A hand-outlined `File and serve …`
- * job is stock work too, or it would hold the gate it waits on. */
+ * are not jobs. While any is open the gate row is unmet and names them. Hand-outlined filing or service
+ * work is stock work too, or it would hold the gate it waits on. */
 function openJobs(tickets: readonly WorkBoardTicket[]): WorkBoardTicket[] {
   return tickets.filter(
-    (t) => (t.status === "queued" || t.status === "wip") && t.rejected_at === null && !UNCOUNTED_TITLES.has(t.title) && !t.title.startsWith("File and serve")
+    (t) => (t.status === "queued" || t.status === "wip") && t.rejected_at === null && !UNCOUNTED_TITLES.has(t.title) && !waitsOnGate(t.title)
   );
 }
 
@@ -1312,19 +1323,23 @@ function readPreSendGate(
 /** Design §2.9's gate and drafting rows, or null where none applies. The drafting criteria are the
  * rows above the Gate. While a counted job is open none applies. With every other row met, an unmet
  * `hearing-date` gives its own string, and an unmet deadline says only the drafting conditions hold.
- * `send` gives the "to send" variant, for a Writing the Sent write holds. */
+ * `send` gives the "to send" variant, for a Writing the Sent write holds. `serve` gives the "to serve"
+ * variant, for a Writing amended Rule 8-1 serves before filing: its hearing date comes at set-down,
+ * after service, so an unmet `hearing-date` holds nothing and reads as an unmet deadline does. */
 function cardText(
   drafting: readonly GoalCriterion[],
   gate: GateReading,
   hearing: GoalCriterion | null,
   deadlines: readonly GoalCriterion[],
-  send: boolean
+  send: boolean,
+  serve: boolean
 ): string | null {
   if (gate.jobs > 0) return null;
   if (drafting.every((c) => c.state === "met")) {
     if (gate.criterion.state === "met") {
-      if (hearing?.state === "unmet") return "Only the hearing date remains to be recorded.";
-      return `Every ${deadlines.some((c) => c.state !== "met") ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : "file"}.`;
+      if (hearing?.state === "unmet" && !serve) return "Only the hearing date remains to be recorded.";
+      const partial = deadlines.some((c) => c.state !== "met") || hearing?.state === "unmet";
+      return `Every ${partial ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : serve ? "serve" : "file"}.`;
     }
     if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
     if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
@@ -1356,8 +1371,11 @@ function goalFor(
     return { goal: { sentence, state: "pending", text: `Retired on ${ctx.lifecycle.since}` + (reason ? ` — ${reason.replace(/_/g, " ")}` : "") }, criteria: [] };
   }
   const send = holdsBeforeSend(ctx.filing);
-  // The label follows the lifecycle, which a venue's letter keeps as Filed.
-  const filed = ctx.filing.filed_on === null ? null : `${ctx.filing.needs_forum_parts === 0 ? "Sent" : "Filed"} on ${ctx.filing.filed_on}`;
+  const serve = SERVED_KINDS.has(ctx.filing.kind);
+  // The label follows the lifecycle, which a venue's letter keeps as Filed. A served kind with a
+  // served copy was recorded by record_served; one without was filed under the old rule.
+  const verb = ctx.filing.needs_forum_parts === 0 ? "Sent" : serve && ctx.filing.sent_copy_id !== null ? "Served" : "Filed";
+  const filed = ctx.filing.filed_on === null ? null : `${verb} on ${ctx.filing.filed_on}`;
   const declared = declaredCriteria(ctx.filing);
   // No gate row here, so no currency reading either: this goal stays pending and never reads ready to send.
   if (declared.length === 0) return { goal: { sentence, state: "pending", text: filed ?? NO_CRITERIA_TEXT }, criteria: [] };
@@ -1370,7 +1388,7 @@ function goalFor(
   const hearing = (storedLayout(ctx.filing).layout.goal_criteria as string[]).includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
   const criteria = [...drafting, gate.criterion, ...(hearing === null ? [] : [hearing]), ...deadlines];
   const state: GoalState = forum === null ? "pending" : criteria.every((c) => c.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send) }, criteria };
+  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve) }, criteria };
 }
 
 /** The declared held criteria (HELD_CRITERIA) that `inventory` leaves unmet on this Writing,
@@ -1596,7 +1614,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
   const gated =
     gate === undefined || gate.state === "met"
       ? tickets
-      : tickets.map((t): WorkBoardTicket => (t.category === "ready" && t.title.startsWith("File and serve") ? { ...t, dispatch_skips: [...t.dispatch_skips, { reason: "before_gate" }] } : t));
+      : tickets.map((t): WorkBoardTicket => (t.category === "ready" && waitsOnGate(t.title) ? { ...t, dispatch_skips: [...t.dispatch_skips, { reason: "before_gate" }] } : t));
   const folders = declaredIngestInputs(ctx.filing);
   // This filing's own Ready jobs: a proceeding-wide job has no filing, so no declared inputs.
   const readyJobs = board.tickets.filter((t) => t.filing_id === ctx.filing.id && t.ticket.category === "ready").map((t) => t.ticket.id);

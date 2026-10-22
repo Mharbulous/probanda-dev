@@ -1,4 +1,4 @@
-// build-stamp: 4b5588d507c9
+// build-stamp: 88667d5aa709
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77773,7 +77773,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("record_filed"),
-      description: "Record a Writing that is not a general Writing as filed on filed_on (YYYY-MM-DD): the one door for its filing date. In one transaction it writes the party rows the Writing is filed with (parties_snapshot), names, roles and flags from parties and counsel and the address for service read from case data, then sets filed_on, which freezes the exhibits and moves the revision. A Writing that already has party rows (a filed_on cleared in error) keeps them. Clearing a filed_on set in error stays an ordinary update. Refusals write nothing: invalid_filed_on, not_found, writing_retired, already_filed, general_writing (record it as sent through drafting_data__record_sent), parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note.",
+      description: "Record a Writing that is not a general Writing as filed on filed_on (YYYY-MM-DD): the one door for its filing date. In one transaction it writes the party rows the Writing is filed with (parties_snapshot), names, roles and flags from parties and counsel and the address for service read from case data, then sets filed_on, which freezes the exhibits and moves the revision. A Writing that already has party rows (a filed_on cleared in error) keeps them. Clearing a filed_on set in error stays an ordinary update. Refusals write nothing: invalid_filed_on, not_found, writing_retired, served_writing (a Notice of Application or Application Response recorded as served under amended Rule 8-1, whose registry filing is a job step), already_filed, general_writing (record it as sent through drafting_data__record_sent), parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77782,6 +77782,22 @@ function submissionDataToolDefinitions() {
           filed_on: { type: "string" }
         },
         required: ["db_path", "filing_id", "filed_on"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: submissionDataPrefixed("record_served"),
+      description: "Record a Notice of Application or Application Response as served on served_on (YYYY-MM-DD), under amended Rule 8-1 (B.C. Reg. 105/2026), which serves it before it is filed. In one transaction it writes the party rows the Writing is served with (parties_snapshot), a documents row 'Served copy \u2014 <title>' dated served_on with served_copy_path when given, sent_copy_id pointing at it, and filed_on = served_on, which freezes the Writing as served and moves the revision. Its lifecycle then reads Served until Heard; the later registry filing is a step of the Set down for hearing or File the served response job, never a write here. Anyone may record it. Refusals write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, job_board_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new revision and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          served_on: { type: "string" },
+          served_copy_path: { type: "string" }
+        },
+        required: ["db_path", "filing_id", "served_on"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
@@ -85735,7 +85751,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "4b5588d507c9";
+var BUILD_STAMP = false ? null : "88667d5aa709";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -89792,8 +89808,8 @@ function checkFormat(ctx, name, id, lines2, state) {
     if (rules.length === 0) return line;
     const flag = formatFlag(rules);
     recordCriterionGlyphs(ctx.inventory, flag, ["\u{1F9E9}"], { table: "filing_prose", id, item: `${name} format: ${rules.join(", ")}` });
-    const refused3 = rules.filter((r3) => REFUSED_FORMAT_RULES.has(r3));
-    if (refused3.length > 0) state.prose_format.push({ slot: name, rules: refused3, line: line.trim() });
+    const refused4 = rules.filter((r3) => REFUSED_FORMAT_RULES.has(r3));
+    if (refused4.length > 0) state.prose_format.push({ slot: name, rules: refused4, line: line.trim() });
     return `${line}${flag}`;
   });
 }
@@ -90101,8 +90117,8 @@ async function resnapshotWriting(dbPath, filingId, opts = {}) {
   ).rows[0];
   if (!filing) throw new NotFoundError(`no filing ${filingId} in ${dbPath}`, "not_found");
   if (isJobOnlyBoard(filing)) throw new ValidationError(`filing ${filingId} is a Job Board with no Writing, so it has no stored layout to re-snapshot`, "job_board_only");
-  const refused3 = notDrafting(filingId, filing);
-  if (refused3) throw refused3;
+  const refused4 = notDrafting(filingId, filing);
+  if (refused4) throw refused4;
   let key;
   if (filing.forum !== null) {
     const segments = filing.forum.split("/");
@@ -90633,6 +90649,36 @@ async function submissionDataMergeJobBoards(args, env = process.env) {
   };
 }
 
+// src/submission/forms/lifecycle.ts
+var LIFECYCLE_LABELS = {
+  drafting: "Drafting",
+  served: "Served",
+  filed: "Filed",
+  sent: "Sent",
+  heard: "Heard",
+  decided: "Decided",
+  entered: "Entered",
+  appeal_expired: "Appeal period expired",
+  retired: "Retired"
+};
+var SERVED_KINDS = /* @__PURE__ */ new Set(["notice_of_application", "application_response"]);
+function deriveLifecycle(filing, hearingDate, today4, appealDeadline) {
+  if (filing.retired_on) return { state: "retired", since: filing.retired_on, readyToRetire: false, offerDelivered: false };
+  if (filing.needs_forum_parts === 0) {
+    if (filing.filed_on) return { state: "sent", since: filing.filed_on, readyToRetire: false, offerDelivered: true };
+    return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
+  }
+  if (appealDeadline && appealDeadline < today4) return { state: "appeal_expired", since: appealDeadline, readyToRetire: true, offerDelivered: false };
+  if (filing.entered_on) return { state: "entered", since: filing.entered_on, readyToRetire: false, offerDelivered: false };
+  if (filing.decided_on) return { state: "decided", since: filing.decided_on, readyToRetire: false, offerDelivered: false };
+  if (hearingDate && hearingDate <= today4) return { state: "heard", since: hearingDate, readyToRetire: false, offerDelivered: false };
+  if (filing.filed_on) {
+    const served = filing.kind !== void 0 && SERVED_KINDS.has(filing.kind) && filing.sent_copy_id != null;
+    return { state: served ? "served" : "filed", since: filing.filed_on, readyToRetire: false, offerDelivered: false };
+  }
+  return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
+}
+
 // src/submission/forms/parties-snapshot.ts
 import { dirname as dirname10 } from "node:path";
 var INSERT = "INSERT INTO parties_snapshot (filing_id, party_id, name, role, ordinal, is_client, is_applicant, to_be_served, address_for_service, address_for_service_filed, counsel_name, counsel_firm, counsel_phone, counsel_email, lower_court_role) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM parties_snapshot WHERE filing_id = ? AND party_id = ?)";
@@ -90773,31 +90819,6 @@ function mockupDirForRender(dbPath, filingId) {
     throw new DataServerError(`${own}'s render manifest names filing ${owner}, not filing ${filingId}; move that folder aside before rendering filing ${filingId}`);
   }
   return own;
-}
-
-// src/submission/forms/lifecycle.ts
-var LIFECYCLE_LABELS = {
-  drafting: "Drafting",
-  filed: "Filed",
-  sent: "Sent",
-  heard: "Heard",
-  decided: "Decided",
-  entered: "Entered",
-  appeal_expired: "Appeal period expired",
-  retired: "Retired"
-};
-function deriveLifecycle(filing, hearingDate, today4, appealDeadline) {
-  if (filing.retired_on) return { state: "retired", since: filing.retired_on, readyToRetire: false, offerDelivered: false };
-  if (filing.needs_forum_parts === 0) {
-    if (filing.filed_on) return { state: "sent", since: filing.filed_on, readyToRetire: false, offerDelivered: true };
-    return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
-  }
-  if (appealDeadline && appealDeadline < today4) return { state: "appeal_expired", since: appealDeadline, readyToRetire: true, offerDelivered: false };
-  if (filing.entered_on) return { state: "entered", since: filing.entered_on, readyToRetire: false, offerDelivered: false };
-  if (filing.decided_on) return { state: "decided", since: filing.decided_on, readyToRetire: false, offerDelivered: false };
-  if (hearingDate && hearingDate <= today4) return { state: "heard", since: hearingDate, readyToRetire: false, offerDelivered: false };
-  if (filing.filed_on) return { state: "filed", since: filing.filed_on, readyToRetire: false, offerDelivered: false };
-  return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
 }
 
 // src/submission/forms/render-general.ts
@@ -91495,19 +91516,26 @@ function inventoryCriterion(def, forum, shelved, current) {
 var GATE_TITLE = "Pre-filing consistency gate";
 var POSITION_CONFLICT_TITLE = "Decide a position our own correspondence contradicts";
 var PRE_SEND_TITLE = "Pre-send gate";
-var UNCOUNTED_TITLES = /* @__PURE__ */ new Set([
-  GATE_TITLE,
-  PRE_SEND_TITLE,
+var STOCK_TITLES = /* @__PURE__ */ new Set([
   "Availability letter",
   "File and serve",
+  "Serve the application",
+  "Serve the response",
+  "Set down for hearing",
+  "Reply affidavits",
+  "File the served response",
   "Application book",
+  "Reset for hearing",
   "Draft the letter",
   "Draft the Writing",
   "Deliver"
 ]);
+var UNCOUNTED_TITLES = /* @__PURE__ */ new Set([GATE_TITLE, PRE_SEND_TITLE, ...STOCK_TITLES]);
+var BEFORE_GATE_PREFIXES = ["File and serve", "Serve the application", "Serve the response"];
+var waitsOnGate = (title) => BEFORE_GATE_PREFIXES.some((p3) => title.startsWith(p3));
 function openJobs(tickets) {
   return tickets.filter(
-    (t3) => (t3.status === "queued" || t3.status === "wip") && t3.rejected_at === null && !UNCOUNTED_TITLES.has(t3.title) && !t3.title.startsWith("File and serve")
+    (t3) => (t3.status === "queued" || t3.status === "wip") && t3.rejected_at === null && !UNCOUNTED_TITLES.has(t3.title) && !waitsOnGate(t3.title)
   );
 }
 var WAIVER = " \u2014 WAIVED: ";
@@ -91561,12 +91589,13 @@ function readPreSendGate(ctx, tickets, filed, drafting, jobs2) {
     jobs: jobs2.length
   };
 }
-function cardText(drafting, gate, hearing, deadlines, send) {
+function cardText(drafting, gate, hearing, deadlines, send, serve2) {
   if (gate.jobs > 0) return null;
   if (drafting.every((c3) => c3.state === "met")) {
     if (gate.criterion.state === "met") {
-      if (hearing?.state === "unmet") return "Only the hearing date remains to be recorded.";
-      return `Every ${deadlines.some((c3) => c3.state !== "met") ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : "file"}.`;
+      if (hearing?.state === "unmet" && !serve2) return "Only the hearing date remains to be recorded.";
+      const partial2 = deadlines.some((c3) => c3.state !== "met") || hearing?.state === "unmet";
+      return `Every ${partial2 ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : serve2 ? "serve" : "file"}.`;
     }
     if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
     if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
@@ -91583,7 +91612,9 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
     return { goal: { sentence, state: "pending", text: `Retired on ${ctx.lifecycle.since}` + (reason ? ` \u2014 ${reason.replace(/_/g, " ")}` : "") }, criteria: [] };
   }
   const send = holdsBeforeSend(ctx.filing);
-  const filed = ctx.filing.filed_on === null ? null : `${ctx.filing.needs_forum_parts === 0 ? "Sent" : "Filed"} on ${ctx.filing.filed_on}`;
+  const serve2 = SERVED_KINDS.has(ctx.filing.kind);
+  const verb = ctx.filing.needs_forum_parts === 0 ? "Sent" : serve2 && ctx.filing.sent_copy_id !== null ? "Served" : "Filed";
+  const filed = ctx.filing.filed_on === null ? null : `${verb} on ${ctx.filing.filed_on}`;
   const declared = declaredCriteria(ctx.filing);
   if (declared.length === 0) return { goal: { sentence, state: "pending", text: filed ?? NO_CRITERIA_TEXT }, criteria: [] };
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
@@ -91593,7 +91624,7 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
   const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
   const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send) }, criteria };
+  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve2) }, criteria };
 }
 function unmetHeldCriteria(dbPath, filing, inventory) {
   const board = buildProceedingBoard(dbPath, filing.proceeding_id);
@@ -91742,7 +91773,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
   const gate = criteria.find((c3) => c3.id === "gate");
-  const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && t3.title.startsWith("File and serve") ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
+  const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && waitsOnGate(t3.title) ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
   const folders = declaredIngestInputs(ctx.filing);
   const readyJobs = board.tickets.filter((t3) => t3.filing_id === ctx.filing.id && t3.ticket.category === "ready").map((t3) => t3.ticket.id);
   return {
@@ -92102,6 +92133,12 @@ async function submissionDataRecordFiled(args, env = process.env) {
   if (filing === void 0) throw new NotFoundError(`${TOOL7}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused2(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused2(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing.filed_on && filing.sent_copy_id !== null && SERVED_KINDS.has(filing.kind)) {
+    throw refused2(
+      `filing ${filing.id} was recorded as served on ${filing.filed_on} under amended Rule 8-1 and stays frozen as served. Its registry filing is a step of the Set down for hearing or File the served response job, which saves the filed copy`,
+      "served_writing"
+    );
+  }
   if (filing.filed_on) throw refused2(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
   if (filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general") {
     throw refused2(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
@@ -92135,20 +92172,83 @@ async function submissionDataRecordFiled(args, env = process.env) {
   };
 }
 
+// src/submission/forms/served-write.ts
+import { existsSync as existsSync24 } from "node:fs";
+var TOOL8 = "drafting_data__record_served";
+function refused3(message, code) {
+  return new DataServerError(`${TOOL8}: ${message}`, code);
+}
+async function submissionDataRecordServed(args, env = process.env) {
+  if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL8}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
+  if (args.served_copy_path !== void 0 && !existsSync24(args.served_copy_path)) {
+    throw new ValidationError(`${TOOL8}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
+  }
+  const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
+  if (filing === void 0) throw new NotFoundError(`${TOOL8}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
+  if (isJobOnlyBoard(filing)) throw refused3(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as served`, "job_board_only");
+  if (filing.retired_on) throw refused3(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing.filed_on) throw refused3(`filing ${filing.id} was already recorded as served, filed or sent on ${filing.filed_on}`, "already_filed");
+  if (!SERVED_KINDS.has(filing.kind)) {
+    throw refused3(
+      `filing ${filing.id} is a ${filing.kind}; only a notice of application or an application response is served before filing. Record a filing through drafting_data__record_filed, or a general Writing through drafting_data__record_sent`,
+      "not_served_kind"
+    );
+  }
+  const revision = fetchRevision(args.db_path);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL8, env);
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    [
+      // The revision guard: nothing has moved since the party rows were read.
+      { sql: "UPDATE db_meta SET value = value WHERE key = 'revision' AND CAST(value AS INTEGER) = ?", params: [revision], expect_changes: 1 },
+      // Before the statement that sets filed_on, which the v42 guard refuses while the Writing has none.
+      ...snapshot,
+      {
+        sql: "INSERT INTO documents (proceeding_id, label, document_date, description, file_path) VALUES (?, ?, ?, ?, ?)",
+        params: [filing.proceeding_id, `Served copy \u2014 ${filing.title}`, args.served_on, "served copy, unfiled", args.served_copy_path ?? null],
+        expect_changes: 1
+      },
+      {
+        // The documents row inserted just above.
+        sql: "UPDATE filings SET sent_copy_id = last_insert_rowid(), filed_on = ? WHERE id = ? AND filed_on IS NULL AND retired_on IS NULL",
+        params: [args.served_on, filing.id],
+        expect_changes: 1
+      }
+    ],
+    env
+  );
+  if (!written.ok) {
+    if (written.failed === 0) {
+      throw refused3(`filing ${filing.id}'s database moved past revision ${revision} while it was being recorded; nothing was written. Record it as served again`, "revision_moved");
+    }
+    throw refused3(`filing ${filing.id} was served, filed or retired while it was being recorded; nothing was written`, "already_filed");
+  }
+  const [after] = submissionDataQuery(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]).rows;
+  return {
+    filing_id: filing.id,
+    served_on: args.served_on,
+    sent_copy_id: after.sent_copy_id,
+    parties_snapshot_rows: snapshot.length,
+    revision: fetchRevision(args.db_path),
+    note: `Filing ${filing.id} recorded as served on ${args.served_on}; it is frozen as served. ` + (snapshot.length > 0 ? `The ${snapshot.length} party row(s) it was served with were written from case data.` : "Its party rows stand as they were, or its proceeding has no party."),
+    ...written.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms/assign-job.ts
-var TOOL8 = "drafting_data__assign_job";
+var TOOL9 = "drafting_data__assign_job";
 var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL8}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL8}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.takeover === true && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL8}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL9}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   if (args.takeover !== true && args.expected_holder !== void 0) {
-    throw new ValidationError(`${TOOL8}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL9}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
   const takeover = args.takeover === true;
   const live = liveTicketClause(args.db_path);
@@ -92162,7 +92262,7 @@ async function submissionDataAssignJob(args, env = process.env) {
   const changes = written.ok ? written.results[0].changes : written.changes;
   const columns = `locked_by, locked_at, status, rejected_at${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read3] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL8}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
@@ -92208,13 +92308,13 @@ function createdAny(dbPath, sessionToken) {
 }
 
 // src/submission/forms/approve-plan.ts
-var TOOL9 = "drafting_data__approve_plan";
+var TOOL10 = "drafting_data__approve_plan";
 var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var PLAN_MARKER = "Create a plan for how to complete this job.";
 async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL9}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const [job] = submissionDataQuery(
@@ -92222,10 +92322,10 @@ async function submissionDataApprovePlan(args, env = process.env) {
     "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps, (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id AND text = ?) AS markers FROM tickets WHERE id = ?",
     [PLAN_MARKER, id]
   ).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL9}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL9}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job === void 0) throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL10}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
   if (job.steps === 1 && job.markers === 1) {
-    throw new DataServerError(`${TOOL9}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
+    throw new DataServerError(`${TOOL10}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
   }
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -92234,7 +92334,7 @@ async function submissionDataApprovePlan(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read3] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL9}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (changes === 1) {
@@ -92270,44 +92370,44 @@ async function submissionDataApprovePlan(args, env = process.env) {
 }
 
 // src/submission/forms/set-step.ts
-var TOOL10 = "drafting_data__set_step";
+var TOOL11 = "drafting_data__set_step";
 var STATUSES2 = ["open", "retry", "cancelled", "deferred", "waiting"];
 var DEFAULT_WAIT_MINUTES = 5;
 var WAIT_MINUTES_MAX = 1440;
 var WORDS_MAX = 500;
 async function submissionDataSetStep(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
-  if (!Number.isInteger(args.ordinal) || args.ordinal <= 0) throw new ValidationError(`${TOOL10}.ordinal must be a positive integer`, "invalid_ordinal");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ordinal) || args.ordinal <= 0) throw new ValidationError(`${TOOL11}.ordinal must be a positive integer`, "invalid_ordinal");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (typeof args.status !== "string" || !STATUSES2.includes(args.status)) {
-    throw new ValidationError(`${TOOL10}.status must be one of ${STATUSES2.join(", ")}; nothing was written`, "invalid_status");
+    throw new ValidationError(`${TOOL11}.status must be one of ${STATUSES2.join(", ")}; nothing was written`, "invalid_status");
   }
   const status2 = args.status;
   if (args.wait_minutes !== void 0 && (status2 !== "waiting" || !Number.isInteger(args.wait_minutes) || args.wait_minutes < 1 || args.wait_minutes > WAIT_MINUTES_MAX)) {
-    throw new ValidationError(`${TOOL10}.wait_minutes is a whole number of minutes from 1 to ${WAIT_MINUTES_MAX}, and only with status waiting; nothing was written`, "invalid_wait_minutes");
+    throw new ValidationError(`${TOOL11}.wait_minutes is a whole number of minutes from 1 to ${WAIT_MINUTES_MAX}, and only with status waiting; nothing was written`, "invalid_wait_minutes");
   }
   const owesWords = status2 === "cancelled" || status2 === "deferred";
   const words = typeof args.practitioner_words === "string" ? args.practitioner_words.trim() : "";
   if (owesWords && (words === "" || words.length > WORDS_MAX)) {
     throw new ValidationError(
-      `${TOOL10}: a step is set ${status2} only on the practitioner's own words, passed verbatim as practitioner_words (1 to ${WORDS_MAX} characters); nothing was written`,
+      `${TOOL11}: a step is set ${status2} only on the practitioner's own words, passed verbatim as practitioner_words (1 to ${WORDS_MAX} characters); nothing was written`,
       "practitioner_words_required"
     );
   }
   if (!owesWords && args.practitioner_words !== void 0) {
-    throw new ValidationError(`${TOOL10}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
+    throw new ValidationError(`${TOOL11}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
   }
   const id = args.ticket_id;
   const ordinal = args.ordinal;
   const token = args.session_token;
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
+    throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
   }
   if (!stepStatusHeld(args.db_path)) {
     throw new ValidationError(
-      `${TOOL10}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
+      `${TOOL11}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
       "schema_below_v78"
     );
   }
@@ -92360,7 +92460,7 @@ async function submissionDataSetStep(args, env = process.env) {
 
 // src/submission/forms.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync30, mkdirSync as mkdirSync14, readdirSync as readdirSync17, readFileSync as readFileSync24, realpathSync as realpathSync8, renameSync as renameSync7, unlinkSync as unlinkSync6, writeFileSync as writeFileSync9 } from "node:fs";
+import { existsSync as existsSync31, mkdirSync as mkdirSync14, readdirSync as readdirSync17, readFileSync as readFileSync24, realpathSync as realpathSync8, renameSync as renameSync7, unlinkSync as unlinkSync6, writeFileSync as writeFileSync9 } from "node:fs";
 import { basename as basename4, dirname as dirname16, extname as extname2, isAbsolute as isAbsolute6, join as join32, resolve as resolve6 } from "node:path";
 
 // src/submission/filing-order.ts
@@ -94916,13 +95016,13 @@ function composeFiller(venue, kind, seams = {}) {
 }
 
 // src/submission/matter-pages.ts
-import { existsSync as existsSync27, mkdirSync as mkdirSync12, readdirSync as readdirSync15, readFileSync as readFileSync23 } from "node:fs";
+import { existsSync as existsSync28, mkdirSync as mkdirSync12, readdirSync as readdirSync15, readFileSync as readFileSync23 } from "node:fs";
 import { dirname as dirname14, join as join30 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync as existsSync24,
+  existsSync as existsSync25,
   lstatSync,
   mkdirSync as mkdirSync10,
   readdirSync as readdirSync12,
@@ -94950,7 +95050,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   for (let dir = pathWin3212.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3212.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync24(pathWin3212.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync25(pathWin3212.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
@@ -95004,7 +95104,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   return result;
 }
 function isFile2(path) {
-  return existsSync24(path) && statSync12(path).isFile();
+  return existsSync25(path) && statSync12(path).isFile();
 }
 function present2(path) {
   try {
@@ -95020,7 +95120,7 @@ function stamp(d3) {
 }
 
 // src/submission/board-attachments.ts
-import { closeSync as closeSync7, existsSync as existsSync25, openSync as openSync7, readdirSync as readdirSync13, readSync, realpathSync as realpathSync5, statSync as statSync13 } from "node:fs";
+import { closeSync as closeSync7, existsSync as existsSync26, openSync as openSync7, readdirSync as readdirSync13, readSync, realpathSync as realpathSync5, statSync as statSync13 } from "node:fs";
 import { dirname as dirname12, isAbsolute as isAbsolute4, join as join27, relative as relative2, resolve as resolve4, sep } from "node:path";
 var REVIEW_LINE = /^Counsel['’]s review:\s*/;
 var FIRST_LINE_BYTES = 4096;
@@ -95067,7 +95167,7 @@ function attachedDrafts(draftDir, section2) {
       proceeding_wide: section2.meta.filing_id !== null && a3.filing_id === null
     };
     if (leavesDraftFolder(relative2(draftDir, abs))) return { ...entry, state: "outside", review: [] };
-    if (!existsSync25(abs)) return { ...entry, state: "missing", review: [] };
+    if (!existsSync26(abs)) return { ...entry, state: "missing", review: [] };
     try {
       const real = realpathSync5.native(abs);
       if (leavesDraftFolder(relative2(realpathSync5.native(draftDir), real)) || real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) {
@@ -97184,14 +97284,14 @@ var MATERIAL_FACTS = {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync26, linkSync as linkSync2, mkdirSync as mkdirSync11, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync27, linkSync as linkSync2, mkdirSync as mkdirSync11, readFileSync as readFileSync22, unlinkSync as unlinkSync5, writeFileSync as writeFileSync7 } from "node:fs";
 import { dirname as dirname13, join as join29 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
-  if (!existsSync26(path)) return DEFAULT_PAGE_API_PORT;
+  if (!existsSync27(path)) return DEFAULT_PAGE_API_PORT;
   const value = JSON.parse(readFileSync22(path, "utf-8"))?.page_api_port;
   if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
@@ -97204,7 +97304,7 @@ function pageApiSecretPath(env = process.env) {
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
-  if (!existsSync26(path)) {
+  if (!existsSync27(path)) {
     mkdirSync11(dirname13(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
     writeFileSync7(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
@@ -97991,7 +98091,7 @@ function guardTargets(names, views) {
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
     const file = join30(draftDir, name);
-    if (existsSync27(file) && !readFileSync23(file, "utf-8").includes(marker)) {
+    if (existsSync28(file) && !readFileSync23(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -99900,7 +100000,7 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync28, readdirSync as readdirSync16, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
+import { existsSync as existsSync29, readdirSync as readdirSync16, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
 import { basename as basename3, dirname as dirname15, isAbsolute as isAbsolute5, join as join31, resolve as resolve5 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
@@ -100175,7 +100275,7 @@ function resolvePackageDir(packageDir) {
   if (!isAbsolute5(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve5(packageDir);
   const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync28(dir) || !statSync14(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
+  if (!existsSync29(dir) || !statSync14(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
   const real = realpathSync6.native(dir);
   const parts = real.split(/[\\/]/);
   if (parts.some((p3) => /^(privileged|disclosed)$/i.test(p3))) throw refuse2("it lies inside a privileged or disclosed tree");
@@ -100249,7 +100349,7 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync29, mkdirSync as mkdirSync13, realpathSync as realpathSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync30, mkdirSync as mkdirSync13, realpathSync as realpathSync7, writeFileSync as writeFileSync8 } from "node:fs";
 import { win32 as pathWin3213 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
@@ -100269,11 +100369,11 @@ function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTA
   const dirs = folders.map((_3, i3) => pathWin3213.join(caseData, ...folders.slice(0, i3 + 1)));
   const path = pathWin3213.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
-    if (existsSync29(p3) && realpathSync7.native(p3).toLowerCase() !== p3.toLowerCase()) {
+    if (existsSync30(p3) && realpathSync7.native(p3).toLowerCase() !== p3.toLowerCase()) {
       throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync7.native(p3)})`);
     }
   }
-  for (const dir of dirs) if (!existsSync29(dir)) mkdirSync13(dir);
+  for (const dir of dirs) if (!existsSync30(dir)) mkdirSync13(dir);
   writeFileSync8(path, markdown, "utf-8");
   return path;
 }
@@ -100284,8 +100384,8 @@ function sanitizeForPath(name) {
 }
 function existingMockupPaths(baseDir) {
   const manifest = readManifest(baseDir);
-  const paths = (manifest?.files ?? []).map((f3) => join32(baseDir, f3.file_name)).filter((p3) => existsSync30(p3));
-  const board = [join32(baseDir, "Job Board.html"), join32(baseDir, "Work Board.html")].find((p3) => existsSync30(p3));
+  const paths = (manifest?.files ?? []).map((f3) => join32(baseDir, f3.file_name)).filter((p3) => existsSync31(p3));
+  const board = [join32(baseDir, "Job Board.html"), join32(baseDir, "Work Board.html")].find((p3) => existsSync31(p3));
   if (board) paths.push(board);
   return paths;
 }
@@ -100311,7 +100411,7 @@ function newSessionToken(unattended) {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
 }
 function readExistingRevision(filePath) {
-  if (!existsSync30(filePath)) return void 0;
+  if (!existsSync31(filePath)) return void 0;
   const text5 = readFileSync24(filePath, "utf-8");
   const match = text5.match(/^Revision:[ \t]*(\d+)/m) ?? text5.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text5.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
@@ -100326,7 +100426,7 @@ function archiveFile(filePath, formLabel, revision) {
   mkdirSync14(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
   let archivePath = join32(archiveDir, `${name}${extname2(filePath)}`);
-  for (let n3 = 2; existsSync30(archivePath); n3++) archivePath = join32(archiveDir, `${name} (${n3})${extname2(filePath)}`);
+  for (let n3 = 2; existsSync31(archivePath); n3++) archivePath = join32(archiveDir, `${name} (${n3})${extname2(filePath)}`);
   renameSync7(filePath, archivePath);
 }
 function archiveDroppedFiles(baseDir, previous, written) {
@@ -100353,7 +100453,7 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
     const file = join32(dir, name);
     try {
-      if (existsSync30(file)) unlinkSync6(file);
+      if (existsSync31(file)) unlinkSync6(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -100362,7 +100462,7 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeStaleWorkBoardMarkdown(baseDir) {
   const stale = join32(baseDir, STALE_WORKBOARD_MARKDOWN);
-  if (existsSync30(stale)) unlinkSync6(stale);
+  if (existsSync31(stale)) unlinkSync6(stale);
 }
 function ownStaleWorkBoardMarkdown(dir) {
   return readExistingRevision(join32(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
@@ -100569,7 +100669,7 @@ function resolvePresentationDir(presentationDir, filingTitle, styleOfCause) {
   if (!basename4(dir).endsWith(ending) && (oldEnding === null || !basename4(dir).endsWith(oldEnding))) {
     throw refuse2(`the folder name must end with "${ending}" (this filing's title)`);
   }
-  if (existsSync30(dir) && dirname16(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+  if (existsSync31(dir) && dirname16(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
@@ -100627,7 +100727,7 @@ function symbolNotes(notes) {
 function projectDocuments(dir, documents, wanted) {
   const targets = documents.map((doc) => join32(dir, doc.file_name));
   for (const target of targets) {
-    if (existsSync30(target) && readExistingRevision(target) === void 0) {
+    if (existsSync31(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(
         `drafting_forms__render.presentation_dir: refusing to overwrite ${target} -- it carries no render revision stamp, so this renderer did not write it`
       );
@@ -101319,7 +101419,7 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
 }
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync30(dbPath)) {
+  if (!existsSync31(dbPath)) {
     throw new ValidationError(`No submission database found at ${dbPath}. Run drafting_data__migrate first.`);
   }
   const draft = draftDir === void 0 ? void 0 : resolveDraftDir(draftDir);
@@ -101429,7 +101529,7 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL11 = "drafting_data__complete_job";
+var TOOL12 = "drafting_data__complete_job";
 var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
   try {
@@ -101485,9 +101585,9 @@ function openSteps(dbPath, id, token) {
   };
 }
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL12}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -101515,7 +101615,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL12}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read3.status === "completed" && read3.locked_by === null) {
@@ -101548,14 +101648,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL12 = "drafting_data__release_job";
+var TOOL13 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL12}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL13}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL13}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL12}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL13}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -101566,7 +101666,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read3] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL12}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL13}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read3.locked_by !== null && (holder === null ? read3.locked_by === args.session_token : read3.locked_by.endsWith(holder));
   let outcome;
@@ -101601,15 +101701,15 @@ async function submissionDataReleaseJob(args, env = process.env) {
 }
 
 // src/submission/forms/delete-job.ts
-var TOOL13 = "drafting_data__delete_job";
+var TOOL14 = "drafting_data__delete_job";
 var STAMP = "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND locked_by = ?))";
 async function submissionDataDeleteJob(args, env = process.env) {
   const ids = args.ticket_ids;
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => Number.isInteger(id) && id > 0) || new Set(ids).size !== ids.length) {
-    throw new ValidationError(`${TOOL13}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
+    throw new ValidationError(`${TOOL14}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
   }
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL13}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL14}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -101643,11 +101743,11 @@ async function submissionDataDeleteJob(args, env = process.env) {
 }
 
 // src/submission/open-session.ts
-import { existsSync as existsSync32, readdirSync as readdirSync18 } from "node:fs";
+import { existsSync as existsSync33, readdirSync as readdirSync18 } from "node:fs";
 import { basename as basename5, dirname as dirname17, join as join34 } from "node:path";
 
 // src/case/ingest-coverage.ts
-import { existsSync as existsSync31 } from "node:fs";
+import { existsSync as existsSync32 } from "node:fs";
 import { join as join33 } from "node:path";
 var DRIVER5 = String.raw`
 import json, sys
@@ -101668,7 +101768,7 @@ var FOLDER_GLOBS = ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*", "
 var CORRESPONDENCE_GLOBS = FOLDER_GLOBS.slice(0, 2);
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs = FOLDER_GLOBS, env = process.env) {
-  if (!existsSync31(join33(caseDataDir, "main.sqlite"))) {
+  if (!existsSync32(join33(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
@@ -101734,7 +101834,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
   const phases = (rendered) => {
     for (const t3 of rendered) timings.push({ phase: `open: ${t3.phase}`, ms: t3.ms });
   };
-  let refused3;
+  let refused4;
   try {
     if (target !== void 0) {
       const written = {};
@@ -101774,12 +101874,12 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
     }
   } catch (err) {
     if (!(err instanceof DataServerError)) throw err;
-    refused3 = { code: err.code, message: err.message };
+    refused4 = { code: err.code, message: err.message };
   }
   const pages = writeMatterPages(dbPath, draftDir, client, nowStamp(), fetchRevision(dbPath), todos, dates, timings);
   recordPagesState(dbPath, todos);
   return {
-    ...refused3 ? { open_refused: refused3 } : {},
+    ...refused4 ? { open_refused: refused4 } : {},
     matter_board_path: pages.matter_board_path,
     // The page of the filing or proceeding the refused opening tried to open; null with nothing to open.
     job_board_path: pagePathFor(pages, { filing_id: target ?? null, proceeding_id: proceedingId }) ?? null,
@@ -101852,7 +101952,7 @@ function practiceConfigBlocking(dbPath) {
 function backups(dbPath) {
   const dir = dirname17(dbPath);
   const prefix = `${basename5(dbPath)}.bak-`;
-  return new Set(existsSync32(dir) ? readdirSync18(dir).filter((name) => name.startsWith(prefix)) : []);
+  return new Set(existsSync33(dir) ? readdirSync18(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
   const started = performance.now();
@@ -101896,8 +101996,8 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
     if (to2 !== null && to2 !== from) migrated = { from, to: to2, backup: written.length > 0 ? join34(dirname17(dbPath), written[0]) : null };
   }
   for (const t3 of result.timings) timings.push({ phase: `bootstrap: ${t3.phase}`, ms: t3.ms });
-  const refused3 = result.migration_required || result.bundle_outdated || result.migration_withheld === true;
-  const opening = draftDir === void 0 || todos === void 0 || dates === void 0 || refused3 ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
+  const refused4 = result.migration_required || result.bundle_outdated || result.migration_withheld === true;
+  const opening = draftDir === void 0 || todos === void 0 || dates === void 0 || refused4 ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
   const coverage2 = await phase("ingest_coverage", () => openedIngestCoverage(opening.opened, dbPath, root));
@@ -101934,7 +102034,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync33, readdirSync as readdirSync19, readFileSync as readFileSync25, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
+import { existsSync as existsSync34, readdirSync as readdirSync19, readFileSync as readFileSync25, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
 import { win32 as pathWin3214 } from "node:path";
 var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -101970,7 +102070,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3214.join(shipped.root, ...rel);
-  if (!existsSync33(path)) {
+  if (!existsSync34(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -102035,7 +102135,7 @@ function assertSegment(value, label2) {
 }
 function confinedSessionsDir(caseData) {
   const dir = pathWin3214.join(caseData, "form-sessions");
-  if (existsSync33(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync34(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync9.native(dir)})`);
   }
   return dir;
@@ -102043,7 +102143,7 @@ function confinedSessionsDir(caseData) {
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
   const dir = pathWin3214.join(sessions, sessionId);
-  if (existsSync33(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync34(dir) && realpathSync9.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync9.native(dir)})`);
   }
   return dir;
@@ -102059,12 +102159,12 @@ function confineWritingFolder(root, writingFolder) {
 }
 function checkSession(root, caseData, sessions, sessionId) {
   const ctxPath = pathWin3214.join(confineSessionDir(sessions, sessionId), "ctx.json");
-  if (!existsSync33(ctxPath)) {
+  if (!existsSync34(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
   const ctx = JSON.parse(readFileSync25(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
-    if (typeof stored !== "string" || stored === "" || !existsSync33(stored)) return false;
+    if (typeof stored !== "string" || stored === "" || !existsSync34(stored)) return false;
     return realpathSync9.native(stored).toLowerCase() === expected.toLowerCase() && statSync15(stored).isDirectory();
   };
   if (!same2(ctx.matter_path, root) || !same2(ctx.case_data_folder, caseData)) {
@@ -102096,7 +102196,7 @@ function confineLocatePaths(caseData, resultJson) {
     if (typeof value !== "string" || !pathWin3214.isAbsolute(value)) {
       throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
-    const resolved = existsSync33(value) ? realpathSync9.native(value) : pathWin3214.resolve(value);
+    const resolved = existsSync34(value) ? realpathSync9.native(value) : pathWin3214.resolve(value);
     assertContained(caseData, resolved, label2, value);
   }
 }
@@ -102118,11 +102218,11 @@ function timeoutAdvice(command, sessionId) {
 }
 
 // src/submission/publish-tools.ts
-import { existsSync as existsSync35, readdirSync as readdirSync21 } from "node:fs";
+import { existsSync as existsSync36, readdirSync as readdirSync21 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/submission/publish-host.ts
-import { existsSync as existsSync34, readdirSync as readdirSync20 } from "node:fs";
+import { existsSync as existsSync35, readdirSync as readdirSync20 } from "node:fs";
 import { win32 as pathWin3215 } from "node:path";
 var DRIVER7 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -102188,7 +102288,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
     installRoot
   });
   const path = pathWin3215.join(shipped.root, ...rel);
-  if (!existsSync34(path)) {
+  if (!existsSync35(path)) {
     throw new DataServerError(
       `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -102231,8 +102331,8 @@ function publishGeneral(args, env = process.env, installRoot) {
   assertSegment(args.output_name, "output_name");
   const target = publishDraftTarget(args.matter_root, args.db_path, env);
   const filed = submissionFormsRender(args.db_path, args.filing_id, {}, "filed");
-  const refused3 = renderRefusal(filed);
-  if (refused3) return refused3;
+  const refused4 = renderRefusal(filed);
+  if (refused4) return refused4;
   const layout = filed.stored_layout?.layout;
   if (layout?.renderer === "bespoke") {
     return {
@@ -102273,7 +102373,7 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
   const target = publishTarget(args.matter_root, args.db_path, args.writing_folder, env);
   const dataFolders = ["vaniac-submissions", vaniacFilingFolder(args.writing_folder)];
   const pkg = writingSubfolder(target, "Package");
-  const previous = existsSync35(pkg) ? readdirSync21(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
+  const previous = existsSync36(pkg) ? readdirSync21(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
   if (previous.length > 0) {
     return {
       success: false,
@@ -102282,8 +102382,8 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
     };
   }
   const filed = submissionFormsRender(args.db_path, args.filing_id, {}, "filed");
-  const refused3 = renderRefusal(filed);
-  if (refused3) return refused3;
+  const refused4 = renderRefusal(filed);
+  if (refused4) return refused4;
   const sources = filed.documents.filter((doc) => SOURCES.has(doc.file_name) || WITNESS_SOURCE.test(doc.file_name));
   if (!sources.some((doc) => doc.file_name === "Written Arguments.md")) {
     return { success: false, error: "not_vaniac", detail: `Filing ${args.filing_id}'s filed render has no Written Arguments.md: it is not a VanIAC submissions package.` };
@@ -102334,11 +102434,11 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync37, readdirSync as readdirSync23 } from "node:fs";
+import { existsSync as existsSync38, readdirSync as readdirSync23 } from "node:fs";
 import { win32 as pathWin3220 } from "node:path";
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync3, existsSync as existsSync36, mkdirSync as mkdirSync15, mkdtempSync, readdirSync as readdirSync22, readFileSync as readFileSync26, realpathSync as realpathSync10, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync37, mkdirSync as mkdirSync15, mkdtempSync, readdirSync as readdirSync22, readFileSync as readFileSync26, realpathSync as realpathSync10, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync7, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3219 } from "node:path";
 
@@ -102560,7 +102660,7 @@ function findingParas(finding, pinpoint) {
   return [...found].sort((x3, y3) => x3 - y3);
 }
 function foreignEntries(folder) {
-  if (!existsSync36(folder)) return [];
+  if (!existsSync37(folder)) return [];
   return readdirSync22(folder, { withFileTypes: true }).filter((entry) => !(entry.isFile() && OWN_FILE.test(entry.name))).map((entry) => entry.name);
 }
 function confineMatterFile(root, given, label2) {
@@ -102585,12 +102685,12 @@ function confineMatterFile(root, given, label2) {
 function answerFile(root, named) {
   if (named === null) return null;
   const path = confineMatterFile(root, named, "the answer file the finding names");
-  return { named, path, exists: existsSync36(path) };
+  return { named, path, exists: existsSync37(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
   const path = pathWin3219.join(shipped.root, ...rel);
-  if (!existsSync36(path)) {
+  if (!existsSync37(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -102929,7 +103029,7 @@ function writeEmlPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3220.join(shipped.root, ...rel);
-  if (!existsSync37(path)) {
+  if (!existsSync38(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -105329,7 +105429,7 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID9 } from "node:crypto";
-import { existsSync as existsSync38, readFileSync as readFileSync29 } from "node:fs";
+import { existsSync as existsSync39, readFileSync as readFileSync29 } from "node:fs";
 import { dirname as dirname18, join as join35 } from "node:path";
 
 // src/preferences/redact.ts
@@ -105403,7 +105503,7 @@ function readJson2(file) {
 }
 function person(env) {
   const config2 = configPath(env);
-  const raw = existsSync38(config2) ? readJson2(config2).person : void 0;
+  const raw = existsSync39(config2) ? readJson2(config2).person : void 0;
   if (raw === void 0 || raw === null || raw === "") {
     throw new DataServerError(
       `person is not set: this machine's probanda.json names no firm roster key ("person"), so a preference has no owner. Set it with practice_data__upsert_firm_profile, then retry.`,
@@ -105420,7 +105520,7 @@ function preferencesFile(env) {
   return { file: join35(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
-  if (!existsSync38(file)) return [];
+  if (!existsSync39(file)) return [];
   const entries = readJson2(file).entries;
   if (!Array.isArray(entries)) throw new DataServerError(`${file} has no "entries" list`, "invalid_file");
   return entries;
@@ -105478,7 +105578,7 @@ function suggestionLogPath(env) {
   return join35(dirname18(configPath(env)), "suggestions.local.json");
 }
 function readLog(file) {
-  if (!existsSync38(file)) return { suggestions: [], held: [] };
+  if (!existsSync39(file)) return { suggestions: [], held: [] };
   const { suggestions, held = [] } = readJson2(file);
   if (!Array.isArray(suggestions)) throw new DataServerError(`${file} has no "suggestions" list`, "invalid_file");
   if (!Array.isArray(held)) throw new DataServerError(`${file} has a "held" entry that is not a list`, "invalid_file");
@@ -105549,7 +105649,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync39, mkdirSync as mkdirSync16, readFileSync as readFileSync30, statSync as statSync17, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync40, mkdirSync as mkdirSync16, readFileSync as readFileSync30, statSync as statSync17, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3223 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -105572,7 +105672,7 @@ function repoDocsWrite(relative3, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative3, "path");
   const resolved = resolveWithin(root, relative3, "path", false);
-  const exists = existsSync39(resolved);
+  const exists = existsSync40(resolved);
   if (exists && statSync17(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative3}`,
@@ -107144,7 +107244,7 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync41,
+  existsSync as existsSync42,
   mkdirSync as mkdirSync18,
   readdirSync as readdirSync26,
   readFileSync as readFileSync36,
@@ -107443,7 +107543,7 @@ function docxText(path) {
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync40, mkdtempSync as mkdtempSync2, readFileSync as readFileSync33, statSync as statSync18, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync41, mkdtempSync as mkdtempSync2, readFileSync as readFileSync33, statSync as statSync18, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
 import { extname as extname5, isAbsolute as isAbsolute7, join as join37 } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -113134,7 +113234,7 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute7(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync40(path) || !statSync18(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync41(path) || !statSync18(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname5(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync33(path);
   const pending3 = loadPdfium(wasm);
@@ -113549,14 +113649,14 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3225.join(downloadsDir(env), sourceFilename);
-  if (!existsSync41(source) || !statSync19(source).isFile()) {
+  if (!existsSync42(source) || !statSync19(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3225.join(dir, destName);
-  if (existsSync41(dest)) {
+  if (existsSync42(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync19(source).size;
@@ -113600,7 +113700,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3225.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync41(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
+  let law = existsSync42(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
   while (pathWin3225.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3225.dirname(law);
   const root = validateMatterRoot(pathWin3225.dirname(law));
   const draft = findDraftDir(root);
@@ -113818,7 +113918,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync41(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync42(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3225.dirname(destinationDir));
   if (PROTECTED_SEGMENTS3.has(pathWin3225.basename(destinationDir).toLowerCase())) {
@@ -114117,7 +114217,7 @@ function sectionBlocks(chunks) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL14 = "research_filing__save_answer";
+var TOOL15 = "research_filing__save_answer";
 var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
@@ -114126,20 +114226,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL14} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named < 3) throw new ValidationError(`${TOOL15} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL14}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL15}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL14}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL15}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL14}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL15}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL14}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL15}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -114611,6 +114711,9 @@ async function callTool(context, name, rawArgs) {
   if (name === "drafting_data__record_filed") {
     return submissionDataRecordFiled(args);
   }
+  if (name === "drafting_data__record_served") {
+    return submissionDataRecordServed(args);
+  }
   if (name === "drafting_data__assign_job") {
     return submissionDataAssignJob(args);
   }
@@ -115000,7 +115103,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync42 } from "node:fs";
+import { existsSync as existsSync43 } from "node:fs";
 import { createServer as createServer3 } from "node:http";
 import { isAbsolute as isAbsolute8 } from "node:path";
 
@@ -115119,7 +115222,7 @@ async function handle3(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute8(dbPath) || !existsSync42(dbPath)) {
+  if (!isAbsolute8(dbPath) || !existsSync43(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);

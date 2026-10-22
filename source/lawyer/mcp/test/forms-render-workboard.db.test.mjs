@@ -20,7 +20,7 @@ const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js"
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");
-const { buildWorkBoardData, INELIGIBLE_REASONS, RESERVE_INVENTORY_DOC } = await import("../build/submission/forms/render-work-board.js");
+const { buildWorkBoardData, INELIGIBLE_REASONS, RESERVE_INVENTORY_DOC, STOCK_TITLES } = await import("../build/submission/forms/render-work-board.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");
 const { GLYPH_SLUGS } = await import("../build/submission/forms/proposal-inventory.js");
 const { WORKBOARD_CSS, WORKBOARD_JS } = await import("../build/submission/forms/workboard-assets.js");
@@ -1322,6 +1322,15 @@ test("goal: a queued stock bundle job names no job on the gate row, and an ordin
            (2, 1, 1, 'File and serve', 'File the application and serve it.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-19T09:01'),
            (3, 1, NULL, 'Application book', 'Assemble the application record.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-19T09:02');`
     );
+    // Amended Rule 8-1's stock jobs, and hand-outlined service work under a Serve title.
+    const more = [...STOCK_TITLES].filter((t) => !["Availability letter", "File and serve", "Application book"].includes(t));
+    more.push("Serve the application on the new defendant", "Serve the response by email");
+    await submissionDataExecute(
+      f.dbPath,
+      more
+        .map((t, i) => `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created) VALUES (${20 + i}, 1, 1, '${t}', 'Stock work.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-19T09:02');`)
+        .join("\n")
+    );
     const GATE = { id: "gate", text: "The pre-filing checks are passed or waived", source: "sqlite" };
 
     assert.deepEqual(criterionOf(boardWithInventory(f.dbPath, []), "gate"), { ...GATE, state: "unmet", outstanding: 0, items: [] });
@@ -1362,7 +1371,7 @@ for (const c of [
     label: "closed at the current revision",
     steps: [passStep(412), waivedStep(412)],
     gate: ["met", 0, ["checks run on 2026-09-20", waivedStep(412)[0]]],
-    goal: ["met", "Every condition holds. Awaiting your approval to file."],
+    goal: ["met", "Every condition holds. Awaiting your approval to serve."],
   },
   {
     label: "closed at a lower revision",
@@ -1374,7 +1383,7 @@ for (const c of [
     label: "closed at the current revision with every step waived",
     steps: [waivedStep(412)],
     gate: ["met", 0, [waivedStep(412)[0]]],
-    goal: ["met", "Every condition holds. Awaiting your approval to file."],
+    goal: ["met", "Every condition holds. Awaiting your approval to serve."],
   },
   {
     label: "closed at a lower revision on a filing whose filed_on is set",
@@ -1468,13 +1477,13 @@ test("goal: linked deadlines follow hearing-date in their anchor's date order, a
       ]
     );
     assert.deepEqual(unmet.criteria.slice(0, NOA_CRITERIA.length).map((c) => c.id), NOA_CRITERIA, "the deadlines print after gate and hearing-date");
-    assert.deepEqual([unmet.goal.state, unmet.goal.text], ["unmet", "Every drafting condition holds. Awaiting your approval to file."]);
+    assert.deepEqual([unmet.goal.state, unmet.goal.text], ["unmet", "Every drafting condition holds. Awaiting your approval to serve."]);
     const summary = renderBoardSummary(unmet, ASHBOURNE, TODOS_NOT_READ);
     assert.ok(summary.includes("\n- ❌ deadline:application_record: Application record (after Application response — Corbin Vasey, Application brief)"), summary);
     assert.equal(JSON.stringify(unmet).includes("2031-"), false, "no deadline date reaches the section");
 
     const met = boardFor(dates("met", "met"));
-    assert.deepEqual([met.goal.state, met.goal.text], ["met", "Every condition holds. Awaiting your approval to file."]);
+    assert.deepEqual([met.goal.state, met.goal.text], ["met", "Every condition holds. Awaiting your approval to serve."]);
   } finally {
     f.cleanup();
   }
@@ -2727,7 +2736,7 @@ test("goal: an open job leaves the Notice of Application's gate line unmet, nami
   }
 });
 
-test("goal: with every other row met, an unrecorded hearing date leaves the goal unmet and its card says only the hearing date remains", async () => {
+test("goal: with every other row met, an unrecorded hearing date leaves the goal unmet, and an unserved notice of application is still ready to serve", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -2742,7 +2751,8 @@ test("goal: with every other row met, an unrecorded hearing date leaves the goal
 
     const data = boardWithInventory(f.dbPath, []);
     assert.deepEqual(statesOf(data), allMetBut({ "hearing-date": "unmet" }));
-    assert.deepEqual([data.goal.state, data.goal.text], ["unmet", "Only the hearing date remains to be recorded."]);
+    // Amended Rule 8-1: the hearing date comes at set-down, after service, so it holds nothing back.
+    assert.deepEqual([data.goal.state, data.goal.text], ["unmet", "Every drafting condition holds. Awaiting your approval to serve."]);
   } finally {
     f.cleanup();
   }
@@ -2985,4 +2995,55 @@ INSERT INTO filing_clauses (filing_id, clause_id, ordinal, wording_override) VAL
   assert.equal(criterionOf(renderGeneral(g, filing_id).board, "gate").state, "unmet", "the cited provision has no current result");
   await g.execute("INSERT INTO provision_currency (authority_id, provision, currency_status, checked_on, current_to) VALUES (80, 's 6', 'current', '2026-10-04', '2026-09-01');");
   assert.equal(criterionOf(renderGeneral(g, filing_id).board, "gate").state, "met");
+});
+
+// Amended Rule 8-1 (B.C. Reg. 105/2026): a notice recorded by record_served reads "Served on", and
+// one filed the old way, with no served copy, still reads "Filed on".
+test("goal: a served notice of application reads Served on its service date, and one filed under the old rule reads Filed", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `INSERT INTO documents (id, proceeding_id, label, document_date) VALUES (90, 1, 'Served copy — NOA', '2026-10-05');
+       ${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '2026-10-05', sent_copy_id = 90 WHERE id = 1;`
+    );
+    const served = boardWithInventory(f.dbPath, []);
+    assert.equal(served.goal.text, "Served on 2026-10-05");
+    await submissionDataExecute(f.dbPath, "UPDATE filings SET sent_copy_id = NULL WHERE id = 1;");
+    assert.equal(boardWithInventory(f.dbPath, []).goal.text, "Filed on 2026-10-05");
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("tickets: Ready Serve the application and Serve the response jobs are skipped before the pre-filing gate", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
+         VALUES (1, 1, 1, 'Serve the application', 'Serve it.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-24T09:00'),
+                (2, 1, 1, 'Serve the response', 'Serve it.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-24T09:01');
+       INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (1, 1, 'Serve'), (2, 1, 'Serve');`
+    );
+    const data = boardWithInventory(f.dbPath, []);
+    assert.equal(criterionOf(data, "gate").state, "unmet");
+    assert.deepEqual(ticketIn(data, 1).dispatch_skips, [{ reason: "before_gate" }]);
+    assert.deepEqual(ticketIn(data, 2).dispatch_skips, [{ reason: "before_gate" }]);
+  } finally {
+    f.cleanup();
+  }
+});
+
+// jobs-stock.md §3b is the one list of the stock jobs' fixed titles: the board's STOCK_TITLES is it.
+test("STOCK_TITLES is exactly the bold titles of jobs-stock.md §3b", () => {
+  const md = readFileSync(join(import.meta.dirname, "../../../../.claude/skills/drafting-data/references/jobs-stock.md"), "utf-8");
+  const section = md.slice(md.indexOf("## 3b."), md.indexOf("## 3c."));
+  const titles = [...section.matchAll(/^\*\*`([^`]+)`/gm)].map((m) => m[1]);
+  assert.deepEqual(new Set(titles), STOCK_TITLES);
+  assert.equal(titles.length, STOCK_TITLES.size);
 });

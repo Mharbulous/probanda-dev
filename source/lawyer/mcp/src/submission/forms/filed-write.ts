@@ -9,6 +9,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { storedLayout } from "./layout-snapshot.js";
+import { SERVED_KINDS } from "./lifecycle.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import { fetchRevision, isJobOnlyBoard, type FilingRow } from "./query.js";
 import { isCalendarDate } from "./sent-write.js";
@@ -43,6 +44,13 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
   if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
   if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing.filed_on && filing.sent_copy_id !== null && SERVED_KINDS.has(filing.kind)) {
+    throw refused(
+      `filing ${filing.id} was recorded as served on ${filing.filed_on} under amended Rule 8-1 and stays frozen as served. ` +
+        "Its registry filing is a step of the Set down for hearing or File the served response job, which saves the filed copy",
+      "served_writing"
+    );
+  }
   if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
   if (filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general") {
     throw refused(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
