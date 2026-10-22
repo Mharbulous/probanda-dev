@@ -51,3 +51,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD; mark any that differ, and append the table to this spec before changing code.
+
+## 11. Verification against HEAD (846073c, 2026-10-22)
+
+| Claim | At HEAD | Notes |
+|---|---|---|
+| Description example is `lawyer:draft` | Confirmed | `source/lawyer/mcp/src/schema-gen.ts` (preferences__read description). Hand-written source, no generator. preferences__write's description and the add-validation message in `source/lawyer/mcp/src/preferences/tools.ts` give the same example. |
+| /draft ships in `litigator` | Confirmed | `source/assignment.json` lists `draft` under `litigator`. |
+| Handler returns `{person, entries}` | Confirmed | `preferencesRead` in `source/lawyer/mcp/src/preferences/tools.ts` filters active entries by exact `skill` match. |
+| A non-matching key returns empty, not an error | Confirmed (root cause) | The filter yields `[]` with no error, so a wrong key and no saved preferences look the same. |
+| SessionStart sentence | Confirmed | `source/lawyer/hooks/inject-preferences.py`, `POINTER`, quoted verbatim in §2. It does not state the key form. |
+| Result shape frozen by a schema or outside consumer (§9) | Not frozen | No output schema. No skill, agent or hook in the repo reads the tool's result (the hook reads the preferences file directly). Consumers outside the repo were not checked. |
+| Example key choice | Changed | `litigator:draft` would make lawyer's server name a skill in a plugin `lawyer` does not require (CLAUDE.md layering rule). The example becomes `lawyer:show-me`, which `lawyer` ships. |
