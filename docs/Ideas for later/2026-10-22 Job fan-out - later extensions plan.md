@@ -97,7 +97,7 @@ Read security is the one risk that must not be got wrong; the rest are about spe
 
 | Risk | Arrives with | Why it matters | What we do about it |
 | --- | --- | --- | --- |
-| Read security | E1 | The listener answers pages with `Origin: null`, which also covers a sandboxed iframe on any website, so the token is the only guard. The token is embedded in the page HTML, which OneDrive copies to every synced device. Board state is privileged work product | Every new read route checks the per-proceeding token, exactly as Defer does. No unauthenticated board read, ever. The token is useless off this PC because the listener binds `127.0.0.1` only. Say plainly in the security note that anything on this PC that can read the HTML can read the board. Trim `/health`, which today reveals the process id and plugin version |
+| Read security | E1 | The listener answers pages with `Origin: null`, which also covers a sandboxed iframe on any website, so the token is the only guard. The token is embedded in the page HTML, which the folder's cloud sync copies to every synced device. Board state is privileged work product | Every new read route checks the per-proceeding token, exactly as Defer does. No unauthenticated board read, ever. The token is useless off this PC because the listener binds `127.0.0.1` only. Say plainly in the security note that anything on this PC that can read the HTML can read the board. Trim `/health`, which today reveals the process id and plugin version |
 | Data server pauses on every call | E1, E3 | Every database call runs synchronously on the data server's one thread, so the listener and all other tools wait while one runs | Poll every 3 to 5 s, not faster; `board__wait` waits on a timer; measure the stutter in E1 |
 | Torn reads | E1 | Writes copy the whole file back in place, so a reader can catch a half-written file | Retry the read; move to temp-and-rename writes |
 | Page approval trust | E2 | A click proves only that a page rendered on this machine; the practitioner-words gate reads chat turns and cannot see it | Structured choices only; record `answered_via: page` and `asked_at` |
@@ -122,7 +122,7 @@ These come from the Fable review of 2026-10-22, checked against the lawyer plugi
 
 1. **Torn reads.** The live database file is replaced in place by `shutil.copy2`, not temp-and-rename, so a read-only reader can see a half-written file (`litigation-mcp.js` ~83095-83200).
 2. **One thread.** Every database call blocks the data server's Node thread, so the listener stalls during each call.
-3. **Token on every device.** The page token is embedded in the page HTML, so it travels with OneDrive. `/health` is unauthenticated and reveals the process id and plugin version.
+3. **Token on every device.** The page token is embedded in the page HTML, so it travels with the folder's cloud sync. `/health` is unauthenticated and reveals the process id and plugin version.
 4. **Change counter.** Bumping `board_seq` from each tool would miss free `drafting_data__execute` scripts, which still stamp steps. Hence a trigger.
 5. **Page to listener.** POST from a `file://` page is proven by the Defer button. An open stream is unproven and would need the token in the URL.
 6. **Long calls over the bridge.** Claude Code moves MCP calls past 2 minutes to the background, with a 5-minute idle cut-off for connector-type servers. The remote-devices bridge's own ceiling is undocumented.
