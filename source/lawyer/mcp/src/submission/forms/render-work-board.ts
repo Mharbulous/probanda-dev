@@ -374,6 +374,11 @@ export interface GoalCriterion {
    * the marker a 🤫 item replaces, which the HTML board shows as its tooltip, or null for any other
    * item. Absent otherwise. */
   replaces?: (string | null)[];
+  /** An inventory criterion two of whose items print the same text only: one entry per item, by
+   * index, the row it was merged on (its Proposal key, or `<marker>:<table>:<id>`), so board_card can
+   * print such items once and still say where each sits. Null for an item no row locates. Absent
+   * otherwise. */
+  locators?: (string | null)[];
 }
 
 /** The Goal card's head (design §2.3, §2.9): `sentence` is the card's fixed head, `Completion
@@ -1154,15 +1159,16 @@ function inventoryCriterion(
     const key = e.generating ? proposalKey(e) : `${e.marker}:${e.table}:${e.id}`;
     if (!matches.has(key)) matches.set(key, e);
   }
-  const open: string[] = [];
-  const shelvedItems: string[] = [];
-  const suppressed: InventoryEntry[] = [];
+  const open: [string, string][] = [];
+  const shelvedItems: [string, string][] = [];
+  const suppressed: [string, InventoryEntry][] = [];
   for (const [key, e] of matches) {
-    if (e.generating && e.slug !== "note-up" && shelved.has(key)) shelvedItems.push(`${e.item} — shelved by you`);
-    else if (!e.generating && e.suppressed) suppressed.push(e);
-    else open.push(e.item);
+    if (e.generating && e.slug !== "note-up" && shelved.has(key)) shelvedItems.push([key, `${e.item} — shelved by you`]);
+    else if (!e.generating && e.suppressed) suppressed.push([key, e]);
+    else open.push([key, e.item]);
   }
-  const items = [...open, ...shelvedItems, ...suppressed.map((e) => `🤫 ${e.item} — suppressed by you`)];
+  const listed: [string, string][] = [...open, ...shelvedItems, ...suppressed.map(([key, e]): [string, string] => [key, `🤫 ${e.item} — suppressed by you`])];
+  const items = listed.map(([, item]) => item);
   return {
     id: def.id,
     text: def.text,
@@ -1171,8 +1177,9 @@ function inventoryCriterion(
     items,
     source: "inventory",
     ...(suppressed.length > 0
-      ? { replaces: [...new Array<null>(open.length + shelvedItems.length).fill(null), ...suppressed.map((e) => e.marker)] }
+      ? { replaces: [...new Array<null>(open.length + shelvedItems.length).fill(null), ...suppressed.map(([, e]) => e.marker)] }
       : {}),
+    ...(new Set(items).size < items.length ? { locators: listed.map(([key]) => key) } : {}),
   };
 }
 

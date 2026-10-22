@@ -78,6 +78,7 @@ function combinedCriteria(goaled: WorkBoardData[], deadlineIds: Map<string, stri
     }
     const texts = new Set(held.map((h) => h.c.text));
     const withReplaces = held.some((h) => h.c.replaces !== undefined);
+    const withLocators = held.some((h) => h.c.locators !== undefined);
     return {
       ...first.c,
       text: texts.size === 1 ? first.c.text : held.map((h) => tag(h.section, h.c.text)).join("; "),
@@ -85,6 +86,7 @@ function combinedCriteria(goaled: WorkBoardData[], deadlineIds: Map<string, stri
       outstanding: held.reduce((n, h) => n + h.c.outstanding, 0),
       items: held.flatMap((h) => h.c.items.map((item) => tag(h.section, item))),
       ...(withReplaces ? { replaces: held.flatMap((h) => h.c.replaces ?? h.c.items.map(() => null)) } : {}),
+      ...(withLocators ? { locators: held.flatMap((h) => h.c.locators ?? h.c.items.map(() => null)) } : {}),
     };
   });
 }

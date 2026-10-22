@@ -852,10 +852,29 @@ function countText(c: GoalCriterion): string {
   return ` (unmet ${c.outstanding}, met ${c.items.length - c.outstanding}, total ${c.items.length})`;
 }
 
+/** A criterion's items as the card prints them, in order. Items with the same text print once, where
+ * the first stands, as `<item> ×<n>`, then ` (at <locator>, ...)` naming the row of each when the
+ * criterion carries locators. The counts still count every item. */
+function itemsText(c: GoalCriterion): string {
+  const groups = new Map<string, (string | null)[]>();
+  c.items.forEach((item, i) => {
+    const locators = groups.get(item) ?? [];
+    locators.push(c.locators?.[i] ?? null);
+    groups.set(item, locators);
+  });
+  return [...groups]
+    .map(([item, locators]) => {
+      if (locators.length === 1) return item;
+      const known = locators.filter((l) => l !== null);
+      return `${item} ×${locators.length}${known.length === 0 ? "" : ` (at ${known.join(", ")})`}`;
+    })
+    .join("; ");
+}
+
 /** One criterion's line, with its ` — items` tail only on the card. A deadline criterion that
  * follows others in its anchor ends ` (after <their texts>)`, never a date. */
 export function criterionLine(c: GoalCriterion, criteria: readonly GoalCriterion[], withItems: boolean): string {
-  const items = !withItems || c.items.length === 0 ? "" : ` — ${c.items.join("; ")}`;
+  const items = !withItems || c.items.length === 0 ? "" : ` — ${itemsText(c)}`;
   const after = c.follows === undefined || c.follows.length === 0 ? "" : ` (after ${c.follows.map((id) => criteria.find((p) => p.id === id)?.text ?? id).join(", ")})`;
   return `- ${CRITERION_GLYPH[c.state]} ${c.id}: ${c.text}${after}${countText(c)}${items}`;
 }

@@ -2332,7 +2332,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "line and each criterion in board order as `- <glyph> <id>: <text>[ (after …)][ (counts)][ — items]`, the " +
         "counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met " +
         "counts the items the practitioner shelved or suppressed (🤫) and total the items still flagged, shelved or suppressed, since an item " +
-        "fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open; live, " +
+        "fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open, and the items " +
+        "separated by `; `, items with the same text printed once where the first stands as `<item> ×<n> (at <row>, …)`, " +
+        "each row being the Proposal key or `<glyph>:<table>:<id>` it was flagged on; live, " +
         "`## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, " +
         "each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, " +
         "`idle …` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the " +

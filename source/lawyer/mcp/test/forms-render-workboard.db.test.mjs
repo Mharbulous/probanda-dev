@@ -2687,7 +2687,15 @@ test("goal: board_card's criteria lane prints each criterion with its counts and
     assert.ok(criteria.some((c) => c.source === "inventory" && c.id !== "gate"), "the fixture has inventory criteria to count");
     assert.equal(criteria.some((c) => c.state === "pending"), false, "a rendered filing has an inventory, so nothing is pending");
     assert.ok(card[0].startsWith("🎯 Completion criteria: "), card[0]);
-    assert.deepEqual(card.slice(1), criteria.map((c) => line(c) + (c.items.length === 0 ? "" : ` — ${c.items.join("; ")}`)));
+    // Items with the same text print once, as `<item> ×<n> (at <locators>)`.
+    const itemsText = (c) =>
+      [...new Set(c.items)]
+        .map((item) => {
+          const at = c.items.flatMap((other, i) => (other === item ? [c.locators?.[i]] : []));
+          return at.length === 1 ? item : `${item} ×${at.length} (at ${at.join(", ")})`;
+        })
+        .join("; ");
+    assert.deepEqual(card.slice(1), criteria.map((c) => line(c) + (c.items.length === 0 ? "" : ` — ${itemsText(c)}`)));
 
     const unmet = criteria.filter((c) => c.state !== "met");
     assert.ok(unmet.length > 0, "the fixture has unmet criteria");
@@ -2697,6 +2705,65 @@ test("goal: board_card's criteria lane prints each criterion with its counts and
     const met = criteria.filter((c) => c.state === "met").map((c) => c.id);
     assert.equal(summary[from + 1 + unmet.length], `Met completion criteria: ${met.length === 0 ? "none" : met.join(", ")}`);
     assert.equal(summary.length, from + 2 + unmet.length, "nothing follows the met criteria");
+  } finally {
+    f.cleanup();
+  }
+});
+
+// The criteria lane prints items with the same text once, with a count and the row of each; the
+// counts still count every item, and the board data keeps every item for the page.
+const OPEN_ITEMS_LINE = "open-items: Nothing is left open on the form";
+function openItemsCardLine(dbPath) {
+  const card = submissionFormsBoardCard({ db_path: dbPath, filing_id: 1, lanes: ["criteria"] }, ASHBOURNE, GOAL_NOW).card;
+  const line = card.split("\n").find((l) => l.includes(OPEN_ITEMS_LINE));
+  assert.ok(line, card);
+  return line;
+}
+
+test("goal: two open items with the same text print once as ×2 with each row, the third in full after them, and the counts count all three", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    const same = "Example section format: a long paragraph that repeats";
+    const other = "Example section not written";
+    const data = boardWithInventory(f.dbPath, [
+      countedEntry("🧩", "filing_prose", 11, same),
+      countedEntry("🧩", "filing_prose", 12, same),
+      countedEntry("🧩", "filing_prose", 13, other),
+    ]);
+    assert.deepEqual(criterionOf(data, "open-items").items, [same, same, other], "the board data keeps every item");
+    assert.equal(
+      openItemsCardLine(f.dbPath),
+      `- ❌ ${OPEN_ITEMS_LINE} (unmet 3, met 0, total 3) — ${same} ×2 (at 🧩:filing_prose:11, 🧩:filing_prose:12); ${other}`
+    );
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("goal: open items with the same text on different documents print in full, in order", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    const first = "Example Affidavit #1, paragraph 2: linked fact";
+    const second = "Example Affidavit #2, paragraph 2: linked fact";
+    const data = boardWithInventory(f.dbPath, [countedEntry("🧩", "statement_paragraphs", 21, first), countedEntry("🧩", "statement_paragraphs", 22, second)]);
+    assert.equal(criterionOf(data, "open-items").locators, undefined, "no item repeats, so no locators");
+    assert.equal(openItemsCardLine(f.dbPath), `- ❌ ${OPEN_ITEMS_LINE} (unmet 2, met 0, total 2) — ${first}; ${second}`);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("goal: an open-items criterion with no items prints no items tail", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    boardWithInventory(f.dbPath, []);
+    assert.equal(openItemsCardLine(f.dbPath), `- ✅ ${OPEN_ITEMS_LINE} (unmet 0, met 0, total 0)`);
   } finally {
     f.cleanup();
   }
