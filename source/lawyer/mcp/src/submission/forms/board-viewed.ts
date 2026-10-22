@@ -130,7 +130,7 @@ export async function submissionDataRecordViewed(args: RecordViewedArgs, env: No
     let hits = targets.filter((t) => t.file.toLowerCase() === name);
     if (hits.length > 1) hits = hits.filter((t) => inFolderOf(t, path));
     if (hits.length !== 1 && targets.some((t) => t.file.toLowerCase() === name)) {
-      throw new ValidationError(`${TOOL}: several Writings have a document named ${name} and its folder names none of them; pass its mockup path. Nothing was written.`, "ambiguous_path");
+      throw new ValidationError(`${TOOL}: several Writings have a document named ${name} and its folder names none of them; pass the path in its Writing's mockup or presentation folder. Nothing was written.`, "ambiguous_path");
     }
     if (hits.length === 0) {
       throw new ValidationError(`${TOOL}: ${path} is no thumbnail on a Job Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");

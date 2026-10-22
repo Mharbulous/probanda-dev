@@ -144,7 +144,7 @@ test("without draft_dir the render returns the board alone and writes nothing", 
   assert.equal(result.rendered_at, PINNED);
   assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"], "no mockup");
   const board = boardOf(result);
-  assert.match(board.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Paper originals \(none\)\nState: Open$/);
+  assert.match(board.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Open$/);
   assert.equal(board.pages_written, false);
   assert.equal(board.path, undefined);
   assert.equal(board.ingest_inputs, undefined);

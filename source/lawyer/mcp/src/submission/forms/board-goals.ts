@@ -87,12 +87,30 @@ export function survivorGoalsKey(dbPath: string, board: BoardRef, index: BoardIn
   return boardGoalsKey({ filing_id: null, proceeding_id: survivor.proceeding_id });
 }
 
-/** The board's statement of goals, read from its survivor's row, its description defaulting to `fallback`. */
-export function fetchBoardGoals(dbPath: string, board: BoardRef, fallback: string): BoardGoals {
+/** The description a board with no statement of goals shows: never a step such as drafting. */
+export const NO_GOAL_DESCRIPTION = "Goal not set";
+
+/** The board's statement of goals, read from its survivor's row. With no statement stored (own or
+ * merged) its description is NO_GOAL_DESCRIPTION; with one but no stored description, `title`. */
+export function fetchBoardGoals(dbPath: string, board: BoardRef, title: string): BoardGoals {
   const stored = readStored(dbPath, survivorGoalsKey(dbPath, board));
-  if (stored === null) return { description: fallback, statement: null, status: null };
+  if (stored === null) return { description: NO_GOAL_DESCRIPTION, statement: null, status: null };
   const merged = (stored.merged ?? []).map((m) => ({ statement: m.statement, status: m.status }));
+  const fallback = stored.statement === null && merged.length === 0 ? NO_GOAL_DESCRIPTION : title;
   return { description: stored.description ?? fallback, statement: stored.statement, status: stored.status, ...(merged.length > 0 ? { merged } : {}) };
+}
+
+/** A soft warning, never a refusal: the goal names a drafting step, or its description joins more than one goal. */
+function framingWarning(statement: string | null, description: string | undefined): string | null {
+  const step = [statement, description].some((t) => t != null && /\bdraft/i.test(t));
+  // Writing titles joined as a merged board's page joins them ("; "), or with " + " or " & ".
+  const several = description !== undefined && /;|\s[+&]\s/.test(description);
+  if (!step && !several) return null;
+  return (
+    `${step ? "This goal names a drafting step" : "This description reads as more than one goal"}. A goal is one outcome ` +
+    "(an order obtained, a settlement reached, a claim defended), not a document or a step. It is recorded as written; " +
+    "tell the practitioner once and let them decide."
+  );
 }
 
 export interface SetBoardGoalArgs {
@@ -233,6 +251,7 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
       : status === "inferred"
         ? `The statement of goals on ${label} is recorded as inferred: the session's wording, not confirmed. Re-render to show it.`
         : `The practitioner's decline is recorded on ${label}: no statement is stored. Re-render to show it.`;
+  const framing = framingWarning(statement, args.description);
   return {
     key,
     ...(onFiling ? { filing_id: id } : { proceeding_id: id }),
@@ -243,7 +262,7 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
     updated_at: stored.updated_at,
     session_wording: status === "inferred",
     stale_keys_removed: stale,
-    note,
+    note: framing === null ? note : `${note} ${framing}`,
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }

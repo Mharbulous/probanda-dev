@@ -87,7 +87,7 @@ test("a proceeding's Job Board page carries its tickets and seeds, and no filing
     assert.equal(result.session_token, "tok-1");
     assert.equal(result.rendered_at, PINNED);
     assert.equal("documents" in result, false);
-    assert.match(result.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Proceeding 1 \(none\)\nState: Forum not yet chosen$/);
+    assert.match(result.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Forum not yet chosen$/);
     assert.equal(result.board_summary.includes("🎯"), false, "a pre-filing section has no completion criteria");
     assert.equal(result.board_summary.includes("## Proposed"), false, "and no Proposals");
     assert.equal(result.job_board_path, join(f.draft, "Job Board - proceeding 1.html"));
