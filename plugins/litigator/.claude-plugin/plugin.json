@@ -16,7 +16,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_job_boards)",
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_job_boards|merge_jobs)",
         "hooks": [
           {
             "type": "command",

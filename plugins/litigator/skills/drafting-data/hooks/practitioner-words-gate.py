@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Refuse a paragraph revision, a confirmed statement of goals or a Job Board merge the practitioner did not approve (#784).
+"""Refuse a paragraph revision, a confirmed statement of goals, or a merge of Job Boards or of jobs the practitioner did not approve (#784).
 
-Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal and
-drafting_data__merge_job_boards (a merge passes only when the last practitioner turn is a bare yes).
+Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
+drafting_data__merge_job_boards and drafting_data__merge_jobs (a merge passes only when the last
+practitioner turn is a bare yes).
 A job's title, intent and steps, and a marker suppression's note, are not read: their wording
 needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
 
@@ -73,6 +74,12 @@ is a bare yes (APPROVALS, the whole turn), as an on-the-fly revision is approved
 declined write passes unchecked: the tool records an inferred statement as the session's wording,
 never as confirmed, and a declined one carries no statement.
 
+A merge of two Job Boards with a goal_statement, the merged board's one goal written as confirmed
+(docs/ADRs/0010, 2026-10-22 goals amendment), passes when the practitioner's last turn holds that
+statement as an unbroken run: they typed their own goal in answer to the merge question. Otherwise
+the statement must pass the check a confirmed statement of goals passes, and the last turn must be
+a bare yes, so one bare yes to the shown statement confirms both the merge and the goal.
+
 Exit 0 allows the call; exit 2 refuses it and the session reads stderr. A refusal
 echoes the nearest turn, bounded: whole within 300 characters, else 300 characters
 centred on the longest run it shares with the value written. The gate
@@ -108,7 +115,9 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "new_text, and 'current' writes old_text unchanged.")
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Job Board's statement of goals
 MERGE_TOOL = "drafting_data__merge_job_boards"  # two Job Boards joined on the practitioner's yes
+MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
 GOAL_FIELD = "drafting_data__set_board_goal.statement"
+MERGE_GOAL_FIELD = "drafting_data__merge_job_boards.goal_statement"
 MOVE_ENTITY = "filing_facts"  # a fact move (paragraph-revision.md §6): the ordinals, no wording
 MOVE_FIELD = "paragraph_revisions.old_text/new_text"
 MOVE_CLOSING = ("A fact move records field 'ordinal', choice 'move' and origin 'practitioner', with old_text and new_text "
@@ -534,23 +543,31 @@ def board_goal(payload):
         turns, last_raw, last_fences, _ = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
+    failure = goal_failure(statement, GOAL_FIELD, turns, last_raw, last_fences)
+    if failure is None:
+        return 0
+    return refuse(failure + " Until then it is not confirmed: record it as inferred if the practitioner declined.")
+
+
+def goal_failure(statement, field, turns, last_raw, last_fences):
+    """None when a confirmed statement of goals is a run of one practitioner turn, or the one fenced
+    block shown before the last turn, approved by a bare yes; else the refusal's text."""
     if any(norm(statement) in norm(turn) for turn in turns):
-        return 0
+        return None
     if len(last_fences) == 1 and last_fences[0] == statement and approval(last_raw):
-        return 0
+        return None
     nearest_turn = f"\n  nearest turn: {echo(statement, nearest(statement, turns))}" if turns else ""
-    return refuse(f"a confirmed statement of goals is neither an unbroken run of one thing the practitioner "
-                  f"said in this session nor the one fenced code block in the session's reply before the "
-                  f"practitioner's last turn, approved by a bare yes.\n  field: {GOAL_FIELD}\n"
-                  f"  wrote: {statement}\n  shown: {len(last_fences)} fenced block(s){nearest_turn}\n"
-                  "Show the whole statement as the only fenced code block in one reply, exactly as it will be "
-                  "saved, and record it as confirmed only after the practitioner's next turn is a bare yes. "
-                  "Until then it is not confirmed: record it as inferred if the practitioner declined.")
+    return (f"a confirmed statement of goals is neither an unbroken run of one thing the practitioner "
+            f"said in this session nor the one fenced code block in the session's reply before the "
+            f"practitioner's last turn, approved by a bare yes.\n  field: {field}\n"
+            f"  wrote: {statement}\n  shown: {len(last_fences)} fenced block(s){nearest_turn}\n"
+            "Show the whole statement as the only fenced code block in one reply, exactly as it will be "
+            "saved, and record it as confirmed only after the practitioner's next turn is a bare yes.")
 
 
-def merge_boards(payload):
-    """A merge of two Job Boards (docs/ADRs/0010): the practitioner's last turn is a bare yes, given
-    after the session showed both boards' statements of goals and asked whether they cohere."""
+def bare_yes(payload, needs, how):
+    """A merge passes only when the practitioner's last turn is a bare yes. `needs` names what the
+    merge needs confirmed, `how` what the session shows before asking."""
     path = payload.get("transcript_path") or ""
     if not path:
         return refuse("the hook input names no transcript_path, so there is no record of the "
@@ -561,11 +578,37 @@ def merge_boards(payload):
         return refuse(f"cannot read the session transcript at {path}: {exc}")
     if approval(last_raw):
         return 0
-    return refuse("a merge of two Job Boards needs the practitioner's confirmation that their goals overlap "
-                  "or cohere, and their last turn is not a bare yes.\n"
+    return refuse(f"{needs}, and their last turn is not a bare yes.\n"
                   f"  last turn: {last_raw[:120] or '(none)'}\n"
-                  "Show both boards' statements of goals side by side, ask whether to merge them, and call "
-                  "the tool only after the practitioner's next turn is a bare yes.")
+                  f"{how}, and call the tool only after the practitioner's next turn is a bare yes.")
+
+
+def merge_boards(payload):
+    """A merge of two Job Boards (docs/ADRs/0010), after the session showed both boards' statements
+    of goals and asked whether they cohere. A goal_statement held by the last turn passes; any other
+    passes goal_failure and then needs the bare yes."""
+    statement = (payload.get("tool_input") or {}).get("goal_statement")
+    path = payload.get("transcript_path") or ""
+    if isinstance(statement, str) and statement.strip() and path:
+        try:
+            turns, last_raw, last_fences, _ = read_transcript(path)
+        except OSError as exc:
+            return refuse(f"cannot read the session transcript at {path}: {exc}")
+        if turns and norm(statement) in norm(turns[-1]):
+            return 0
+        failure = goal_failure(statement, MERGE_GOAL_FIELD, turns, last_raw, last_fences)
+        if failure is not None:
+            return refuse(failure + " Or merge with no goal_statement, which leaves the board needing one.")
+    return bare_yes(payload, "a merge of two Job Boards needs the practitioner's confirmation that their goals overlap "
+                    "or cohere", "Show both boards' statements of goals side by side, ask whether to merge them")
+
+
+def merge_jobs(payload):
+    """A merge of a duplicate job into another (jobs-closeout.md §9c), after the session named both
+    jobs and the combined steps and asked whether to merge them."""
+    args = payload.get("tool_input") or {}
+    return bare_yes(payload, f"a merge of Job {args.get('absorbed_id')} into Job {args.get('survivor_id')} needs the "
+                    "practitioner's confirmation", "Name both jobs and the combined steps, ask whether to merge them")
 
 
 def main():
@@ -574,6 +617,8 @@ def main():
         return board_goal(payload)
     if (payload.get("tool_name") or "").endswith(MERGE_TOOL):
         return merge_boards(payload)
+    if (payload.get("tool_name") or "").endswith(MERGE_JOBS_TOOL):
+        return merge_jobs(payload)
     script = (payload.get("tool_input") or {}).get("sql_script") or ""
     try:
         revisions, stmts = revision_writes(script)
