@@ -74,6 +74,7 @@ terms:
   - Matter role
   - Matter row key
   - Merge (Job Boards)
+  - Merge (jobs)
   - Mockup
   - Non-billable entry
   - Note up
@@ -437,6 +438,10 @@ _Avoid_: writing "matter ID" in any prose a practitioner reads, for any of the t
 **Merge (Job Boards)**:
 The practitioner's act that joins one Job Board into another after confirming that their goals overlap or cohere. The survivor takes every Writing, job and loose thread of both and keeps every goal of both. A board with a Writing survives over one without, otherwise the older one.
 _Avoid_: combine; consolidate.
+
+**Merge (jobs)**:
+The practitioner's act that folds a duplicate job into another job on the same Writing after `/draft` names them as likely the same work. The survivor keeps its own steps and their stamps and takes the other job's undone steps, scope and Proposal keys. The other job is superseded by the survivor, never deleted.
+_Avoid_: combine; consolidate; dedupe.
 
 **Mockup**:
 A Draft in markdown format — the word is reserved exclusively for markdown. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.

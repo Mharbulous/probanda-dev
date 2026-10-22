@@ -38,6 +38,7 @@ import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/form
 import { submissionDataSetBoardGoal, type SetBoardGoalArgs } from "./submission/forms/board-goals.js";
 import { submissionDataRecordViewed, type RecordViewedArgs } from "./submission/forms/board-viewed.js";
 import { submissionDataDeleteJob, type DeleteJobArgs } from "./submission/forms/delete-job.js";
+import { submissionDataMergeJobs, type MergeJobsArgs } from "./submission/forms/merge-jobs.js";
 import { submissionDataRecordSent, type RecordSentArgs } from "./submission/forms/sent-write.js";
 import { resnapshotWriting } from "./submission/writing-snapshot.js";
 import {
@@ -299,6 +300,10 @@ export async function callTool(
 
   if (name === "drafting_data__delete_job") {
     return submissionDataDeleteJob(args as unknown as DeleteJobArgs);
+  }
+
+  if (name === "drafting_data__merge_jobs") {
+    return submissionDataMergeJobs(args as unknown as MergeJobsArgs);
   }
 
   if (name === "drafting_data__complete_job") {

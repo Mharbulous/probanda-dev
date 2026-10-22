@@ -1569,7 +1569,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "a job's unchanged plan is approved through drafting_data__approve_plan, " +
         "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +
         "a job step's status is set through drafting_data__set_step, " +
-        "and a job is deleted through drafting_data__delete_job. " +
+        "a job is deleted through drafting_data__delete_job, " +
+        "and a duplicate job is merged into another through drafting_data__merge_jobs. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
         "nothing and nothing was written. " +
@@ -2000,6 +2001,38 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           session_token: { type: "string" },
         },
         required: ["db_path", "ticket_ids", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("merge_jobs"),
+      description:
+        "Merge a duplicate job into the job that survives, in one call, only after the practitioner's bare yes to the " +
+        "proposed merge (a hook refuses it otherwise): every statement under one guard in one transaction, then a " +
+        "confirm-read. The absorbed job's undone steps are appended after the survivor's, so the survivor's done steps " +
+        "keep their stamps; its scope rows and Proposal keys are copied to the survivor where the survivor lacks them; " +
+        "jobs waiting on it wait on the survivor; the survivor's plan approval is cleared when steps were added; and " +
+        "the absorbed job is superseded by the survivor (superseded_by), never deleted. The survivor is Ready or held " +
+        "by this session; the absorbed job is Ready. session_token is the one drafting_forms__open_session or " +
+        "drafting_forms__bootstrap returned; this tool mints none. Outcomes: merged, or a refusal that writes nothing " +
+        "and names refused_job: held_elsewhere (in progress in another session; never re-run), held_here (the absorbed " +
+        "job is this session's own: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
+        "(a different Writing, or a General Job with a Writing Job), different_proceeding, either_or (the absorbed job " +
+        "has an either/or partner), blocked (either job waits on a job outside the pair that is not completed), and " +
+        "no_match (a job changed between the read and the write). It moves no revision and renders nothing: re-render " +
+        "after it. Refusals write nothing: invalid_ticket_id, same_job, invalid_session_token, not_found. Returns " +
+        "{survivor_id, absorbed_id, outcome, refused_job?, steps_added, scope_added, keys_added, blocks_moved, " +
+        "absorbed_status, superseded_by, note}.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          survivor_id: { type: "number" },
+          absorbed_id: { type: "number" },
+          session_token: { type: "string" },
+        },
+        required: ["db_path", "survivor_id", "absorbed_id", "session_token"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },

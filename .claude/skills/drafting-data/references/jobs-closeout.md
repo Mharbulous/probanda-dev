@@ -1,4 +1,4 @@
-Read when: the practitioner retires a Writing, closes a job as superseded, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job, or moves jobs to another board; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
+Read when: the practitioner retires a Writing, closes a job as superseded, merges a duplicate job into another, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job, or moves jobs to another board; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 9a. Supersession on retirement
@@ -63,6 +63,22 @@ SELECT status, superseded_marker_gone_at, locked_by, rejected_at FROM tickets WH
 `status = 'superseded'` with `superseded_marker_gone_at` stamped means it landed. Anything else means the guard matched nothing, and the row says why: `wip` means another session holds it, `rejected_at` stamped means it is shelved, and `queued` with both NULL means it carries no conversion record. Report which it was and stop.
 
 **What stays.** The job's `ticket_proposals` rows are kept. They hide nothing now, because only a `queued` or `wip` unshelved job hides its Proposals, so if the marker fires again the Proposal returns to Proposed. There is **no restore path**: the returned Proposal is picked afresh. No revision bump, as for every write in this file except §9a's retirement script. Accepted cost: a job waiting on the closed one stays in Blocked until it is outlined afresh, even where the work was done elsewhere.
+
+## 9c. Merge two jobs (bookkeeping)
+
+Two jobs on one board can name the same work in different words. `/draft`'s duplicate check (`draft/references/job-session.md`, "The duplicate check") proposes a merge, and it runs only on the practitioner's bare yes, which the practitioner-words hook checks. It is never run on a session's own initiative and never in an unattended run. The merge is one call, `drafting_data__merge_jobs` `{db_path, survivor_id, absorbed_id, session_token}`. Never hand-write it through `execute`.
+
+**What it may merge.** The survivor is Ready (`queued`, no lock) or held by this session. The absorbed job is Ready. Both are unshelved and not deleted, in one proceeding and on one Writing, or both General Jobs. The absorbed job has no either/or partner, and neither job waits on a job outside the pair that is not completed. A completed job is never merged (`draft/references/job-session.md`, "A form is one job"). The tool reads both rows first and refuses anything else, writing nothing and naming the job that refused (`refused_job`).
+
+**What it writes,** every statement under one guard in one transaction, so either all of them land or none does:
+
+- The absorbed job's steps not yet done (no `done_at`, and not dropped or put off) are appended after the survivor's highest ordinal, in their own order. This is §5's partial replace `INSERT` with no `DELETE`: every survivor step keeps its row, its ordinal, its words and its `done_at`.
+- Its `ticket_scope` rows and `ticket_proposals` keys that the survivor lacks are copied to it.
+- Each job waiting on the absorbed job waits on the survivor instead, and the absorbed job's blocker rows are deleted, so nothing is left Blocked by a superseded job. A survivor that waited on the absorbed job is not made to wait on itself.
+- The survivor's `plan_approved_at` is cleared when steps were added, as §3a's "Adding a step" clears it. `drafting_data__approve_plan` stamps it again when the plan is announced.
+- The absorbed job becomes `superseded`, with `superseded_by` set to the survivor. The board prints "Superseded by" the survivor.
+
+**What stays.** The absorbed job keeps its own steps, scope, keys, saved answers and sources to get, as its record. It is superseded, not deleted, so it has no restore path. Outcomes: `merged`, `no_match` (a job changed between the read and the write, so re-render and read both cards again), and the refusals the tool's description lists. No revision bump. Re-render after it.
 
 ## 10a. Shelve and restore (bookkeeping)
 

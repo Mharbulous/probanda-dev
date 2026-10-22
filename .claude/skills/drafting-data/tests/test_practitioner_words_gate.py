@@ -560,6 +560,39 @@ class MergeJobBoardsGateTest(unittest.TestCase):
                 self.assertIn("their last turn is not a bare yes", result.stderr.decode("utf-8"))
 
 
+class MergeJobsGateTest(unittest.TestCase):
+    """jobs-closeout.md §9c: a merge of two jobs passes only on the practitioner's bare yes."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.transcript = Path(self.tmp.name) / "session.jsonl"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_merge(self, *lines):
+        self.transcript.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+        payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
+                   "tool_name": "mcp__plugin_lawyer_data__drafting_data__merge_jobs",
+                   "tool_input": {"db_path": "C:/matter/submission.sqlite", "survivor_id": 2, "absorbed_id": 5,
+                                  "session_token": "tok"},
+                   "transcript_path": str(self.transcript)}
+        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
+
+    def test_passes_after_a_bare_yes(self):
+        result = self.run_merge(reply_line("Job 5 may be the same work as Job 2. Merge Job 5 into Job 2?"), turn_line("yes"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_refuses_without_a_bare_yes(self):
+        for last in ("keep going with job 2", "no"):
+            with self.subTest(last=last):
+                result = self.run_merge(reply_line("Merge Job 5 into Job 2?"), turn_line(last))
+                self.assertEqual(result.returncode, 2)
+                stderr = result.stderr.decode("utf-8")
+                self.assertIn("a merge of Job 5 into Job 2", stderr)
+                self.assertIn("their last turn is not a bare yes", stderr)
+
+
 class PluginRegistrationTests(unittest.TestCase):
     def test_plugin_registers_the_gate_for_both_tool_name_forms(self):
         manifest = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))
@@ -570,7 +603,7 @@ class PluginRegistrationTests(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
-            for tool in ("execute", "set_board_goal", "merge_job_boards"):
+            for tool in ("execute", "set_board_goal", "merge_job_boards", "merge_jobs"):
                 self.assertTrue(matcher.fullmatch(prefix + "drafting_data__" + tool), prefix + tool)
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_data__query"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))
