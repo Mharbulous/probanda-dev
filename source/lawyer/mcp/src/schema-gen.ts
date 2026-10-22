@@ -1211,7 +1211,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "preferences__read",
       description:
-        "Read this person's saved preferences: standing instructions they asked Probanda to follow whenever a named skill runs. `person` is this machine's probanda.json `person`; when it is unset the call fails with `person_unset`, set it with practice_data__upsert_firm_profile. Returns {person, entries: [{id, skill, instruction, created_on, retired_on, plugin_version}]}, the active (unretired) entries only, all of them or those for one `skill` (\"<plugin>:<skill>\", e.g. \"lawyer:draft\"). Apply each entry's instruction when its skill runs.",
+        "Read this person's saved preferences: standing instructions they asked Probanda to follow whenever a named skill runs. `person` is this machine's probanda.json `person`; when it is unset the call fails with `person_unset`, set it with practice_data__upsert_firm_profile. Returns {person, entries: [{id, skill, instruction, created_on, retired_on, plugin_version}]}, the active (unretired) entries only, all of them or those for one `skill` (\"<plugin>:<skill>\": the plugin the skill ships in, then the skill name, e.g. \"lawyer:show-me\"). A filtered call also returns `skill`, the filter as given, and `excluded`, the number of active entries it left out: no entries with `excluded` above 0 means the key matched none of this person's preferences, so check it. Apply each entry's instruction when its skill runs.",
       inputSchema: {
         type: "object",
         properties: {
@@ -1224,7 +1224,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "preferences__write",
       description:
-        "Save or retire one of this person's preferences. `op: \"add\"` takes `skill` (\"<plugin>:<skill>\", e.g. \"lawyer:draft\") and `instruction`, the person's standing instruction to that skill in generic terms, and returns {status: \"saved\", id}. An instruction that names an email address, a path on this computer, a particular matter's folder, or runs over 2000 characters is refused with `identifying_detail` and a question about how to say it generically; nothing is saved. `op: \"retire\"` takes `id` and marks that entry retired, so it stops applying; the entry stays in the file. An unknown id is `not_found`. `person_unset` as for preferences__read.",
+        "Save or retire one of this person's preferences. `op: \"add\"` takes `skill` (\"<plugin>:<skill>\", e.g. \"lawyer:show-me\") and `instruction`, the person's standing instruction to that skill in generic terms, and returns {status: \"saved\", id}. An instruction that names an email address, a path on this computer, a particular matter's folder, or runs over 2000 characters is refused with `identifying_detail` and a question about how to say it generically; nothing is saved. `op: \"retire\"` takes `id` and marks that entry retired, so it stops applying; the entry stays in the file. An unknown id is `not_found`. `person_unset` as for preferences__read.",
       inputSchema: {
         type: "object",
         properties: {

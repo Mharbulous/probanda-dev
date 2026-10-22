@@ -57,6 +57,24 @@ test("add then read returns the active entries, all or for one skill", async (t)
   assert.equal(file.person, "bd");
 });
 
+test("a filtered read echoes the filter and counts the active entries it left out", async (t) => {
+  const f = fixture(t);
+  assert.deepEqual(preferencesRead({ skill: "lawyer:show-me" }, f.env), { person: "bd", entries: [], skill: "lawyer:show-me", excluded: 0 });
+  await preferencesWrite({ op: "add", skill: "lawyer:show-me", instruction: "Show the page, not a quote." }, f.env, f.seams);
+  await preferencesWrite({ op: "add", skill: "litigator:draft", instruction: "Use short paragraphs." }, f.env, f.seams);
+  const match = preferencesRead({ skill: "lawyer:show-me" }, f.env);
+  assert.equal(match.entries.length, 1);
+  assert.equal(match.skill, "lawyer:show-me");
+  assert.equal(match.excluded, 1);
+  const miss = preferencesRead({ skill: "lawyer:draft" }, f.env);
+  assert.deepEqual(miss.entries, []);
+  assert.equal(miss.skill, "lawyer:draft");
+  assert.equal(miss.excluded, 2);
+  const all = preferencesRead({}, f.env);
+  assert.equal(all.entries.length, 2);
+  assert.equal("excluded" in all, false);
+});
+
 test("retire stamps retired_on inside the file and read no longer returns it", async (t) => {
   const f = fixture(t);
   const { id } = await preferencesWrite({ op: "add", skill: "lawyer:draft", instruction: "Use short paragraphs." }, f.env, f.seams);

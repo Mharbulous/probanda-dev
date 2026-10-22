@@ -116,8 +116,11 @@ function readEntries(file: string): PreferenceEntry[] {
 export function preferencesRead(args: Args, env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
   const skill = args.skill === undefined ? undefined : text(args.skill, "skill");
   const { file, person: key } = preferencesFile(env);
-  const entries = readEntries(file).filter((entry) => entry.retired_on === null && (skill === undefined || entry.skill === skill));
-  return { person: key, entries };
+  const active = readEntries(file).filter((entry) => entry.retired_on === null);
+  if (skill === undefined) return { person: key, entries: active };
+  const entries = active.filter((entry) => entry.skill === skill);
+  // Echo the filter and count what it left out, so a wrong key is told apart from no preferences.
+  return { person: key, entries, skill, excluded: active.length - entries.length };
 }
 
 export async function preferencesWrite(
@@ -128,7 +131,7 @@ export async function preferencesWrite(
   const { file, person: key } = preferencesFile(env);
   if (args.op === "add") {
     const skill = text(args.skill, "skill");
-    if (!SKILL.test(skill)) throw new ValidationError(`skill must name a plugin and a skill as "<plugin>:<skill>", e.g. "lawyer:draft"`);
+    if (!SKILL.test(skill)) throw new ValidationError(`skill must name a plugin and a skill as "<plugin>:<skill>", e.g. "lawyer:show-me"`);
     const instruction = text(args.instruction, "instruction");
     const hits = findRedactionHits(instruction);
     if (hits.length) {
