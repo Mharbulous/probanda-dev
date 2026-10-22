@@ -539,12 +539,12 @@ class MergeJobBoardsGateTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_merge(self, *lines):
+    def run_merge(self, *lines, **extra):
         self.transcript.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
         payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
                    "tool_name": "mcp__plugin_lawyer_data__drafting_data__merge_job_boards",
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "boards": [{"filing_id": 1}, {"filing_id": 3}],
-                                  "confirmed": True, "session_token": "tok"},
+                                  "confirmed": True, "session_token": "tok", **extra},
                    "transcript_path": str(self.transcript)}
         return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
 
@@ -558,6 +558,32 @@ class MergeJobBoardsGateTest(unittest.TestCase):
                 result = self.run_merge(reply_line("Goal 12: ... Goal 15: ... Merge them?"), turn_line(last))
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("their last turn is not a bare yes", result.stderr.decode("utf-8"))
+
+    GOAL = "Obtain an order for a verified list of documents."
+
+    def test_a_goal_shown_as_the_one_fenced_block_passes_on_a_bare_yes(self):
+        result = self.run_merge(reply_line(f"Goal 12: ... Goal 15: ...\n```\n{self.GOAL}\n```\nMerge them with that goal?"),
+                                turn_line("yes"), goal_statement=self.GOAL)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_the_practitioners_own_goal_typed_as_the_answer_passes(self):
+        result = self.run_merge(reply_line("```\nSomething else.\n```\nMerge them with that goal?"),
+                                turn_line(f"Merge, but the goal is: {self.GOAL}"), goal_statement=self.GOAL)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a_goal_neither_shown_nor_said_is_refused_even_on_a_bare_yes(self):
+        result = self.run_merge(reply_line("```\nSomething else.\n```\nMerge them with that goal?"),
+                                turn_line("yes"), goal_statement=self.GOAL)
+        self.assertEqual(result.returncode, 2)
+        stderr = result.stderr.decode("utf-8")
+        self.assertIn(GOAL_REFUSAL, stderr)
+        self.assertIn("drafting_data__merge_job_boards.goal_statement", stderr)
+
+    def test_a_goal_said_earlier_still_needs_the_bare_yes_to_merge(self):
+        result = self.run_merge(turn_line(f"the goal is {self.GOAL}"), reply_line("Merge them with that goal?"),
+                                turn_line("maybe later"), goal_statement=self.GOAL)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("their last turn is not a bare yes", result.stderr.decode("utf-8"))
 
 
 class MergeJobsGateTest(unittest.TestCase):
