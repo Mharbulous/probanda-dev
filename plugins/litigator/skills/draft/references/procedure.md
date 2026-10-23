@@ -132,7 +132,7 @@ This section's rules are in `references/substance-and-revise.md`. Read it when a
 **3. Mockups.** Nothing to write. The server already wrote each mockup host-side. Never write, edit, or re-create one.
 
 <!-- atom id=draft.render.present ops=render,present_file -->
-**4. Present.** Before presenting any file as a card other than the pages (a mockup, an enclosure, a report, a drafted email), read `references/present-files.md`, Present, which holds the one-call rule, enclosure reading, remote-device staging, refresh, the skip rule and the failure line. At the opening no mockup is presented (section 7); a mockup is first presented by a later render that writes it. The pages are never staged or presented by this step: section 7 presents them, and when a `render` or `drafting_data__complete_job` result reports `pages_written` true and `board_changed` true the page at that result's `job_board_path` is presented again as a card (section 7).
+**4. Present.** Before presenting any file as a card other than the pages (a mockup, an enclosure, a report, a drafted email), read `references/present-files.md`, Present, which holds the one-call rule, enclosure reading, remote-device staging, refresh, the skip rule and the failure line. A letter, email or memo mockup is presented only after `references/source-trace.md`'s review of its text (SKILL.md ban 20). At the opening no mockup is presented (section 7); a mockup is first presented by a later render that writes it. The pages are never staged or presented by this step: section 7 presents them, and when a `render` or `drafting_data__complete_job` result reports `pages_written` true and `board_changed` true the page at that result's `job_board_path` is presented again as a card (section 7).
 
 <!-- atom id=draft.render.layout ops=present_file -->
 **5. Layout confirmation.** When a presented mockup carries an `[unverified: …]` or `[source changed: …]` tag, or the practitioner accepts or asks to re-snapshot a layout item, read `references/present-files.md`, Layout confirmation.
@@ -185,6 +185,8 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 | A letter's `Deliver` job is open at the opening, the Sent write refuses with `sent_copy_mismatch`, or whether a letter went out or arrived is in question | `references/delivery-check.md` |
 <!-- atom id=draft.ref.reply ops=reply_route -->
 | The practitioner asks to reply to a message from the tribunal, a registry or another party's counsel, and not for a letter (section 1) | `references/reply.md` |
+<!-- atom id=draft.ref.source-trace ops=letter,reply_route,present_file -->
+| A letter, email or memo mockup is about to be presented, or any email is about to be written (SKILL.md ban 20) | `references/source-trace.md` |
 <!-- atom id=draft.ref.unstructured ops=unstructured -->
 | The Writing's kind is `unstructured` or `unstructured-<recipient>`, the venue and kind lookup creates an Unstructured Writing (section 1), the Sent write succeeds on one, or the assigned job is `Keep the layout of <title> for next time` (a job written before 2026-10-22 has the old title `Make <title> a Structured Writing`) | `references/unstructured.md` |
 <!-- atom id=draft.ref.court-oral ops=court_oral -->

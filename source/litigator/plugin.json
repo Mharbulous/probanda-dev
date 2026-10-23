@@ -42,6 +42,35 @@
             "statusMessage": "HTML pages gate"
           }
         ]
+      },
+      {
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_forms__draft_harness|mcp__(.+__)?plugin_lawyer_contacts-calendars-email__mail__save_draft|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/correspondence-review-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Correspondence review gate"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/correspondence-note.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Correspondence note"
+          }
+        ]
       }
     ],
     "PostToolUse": [

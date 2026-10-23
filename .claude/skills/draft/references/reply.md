@@ -69,8 +69,9 @@ Run it on the latest saved version when the practitioner asks for a final check 
 ## 6. Export
 
 **The email.** When the practitioner asks to email the reply, or says it is final, write it as one unsent `.eml` by `shared/email.md`, the one route for any outgoing email: `drafting_forms__draft_harness` step `write_email`, loaded by ToolSearch with the host prefix variants.
-1. **Pass** `matter_root`; `to`, the message's sender as `read_message` returned it, which the practitioner confirms in one line, never a guessed address; `subject`, `Re: ` and the message's subject; `body`, the latest saved version's text with no closing and no name, because the signature supplies them; `output_name`, the reply's stem; no attachments.
-2. **Present the `.eml`** by `shared/email.md`'s Present rule: it opens in the mail program addressed, signed and From the firm address, ready to send. Each refusal is quoted in one line, as that file says.
+1. **Review its facts first.** Run `references/source-trace.md` on the exact `body` below, `kind` reply, the message being answered among the `sources`, and resolve every finding. A reply is correspondence like any letter: it can be used as evidence of what it states.
+2. **Pass** `matter_root`; `to`, the message's sender as `read_message` returned it, which the practitioner confirms in one line, never a guessed address; `subject`, `Re: ` and the message's subject; `body`, the latest saved version's text with no closing and no name, because the signature supplies them; `output_name`, the reply's stem; no attachments.
+3. **Present the `.eml`** by `shared/email.md`'s Present rule: it opens in the mail program addressed, signed and From the firm address, ready to send. Each refusal is quoted in one line, as that file says.
 
 **The Word copy.** When the practitioner asks for one:
 1. **Run `reply_draft` step `export_docx`** on the latest saved `.md`.

@@ -1,7 +1,7 @@
 ---
 name: draft
 description: >
-  Draft and revise any legal writing as a mockup: a letter, a memo, or a filing such as VanIAC submissions, BCSC applications and requisitions, BCCA stay books and factums. Use when the practitioner asks to draft, revise or keep working on a filing, letter, email, memo or release. What the law is -> /legal-research.
+  Draft and revise any legal writing as a mockup: a letter, a memo, or a filing such as VanIAC submissions, BCSC applications and requisitions, BCCA stay books and factums. Use when the practitioner asks to draft, revise or keep working on a filing, letter, email, memo or release, or to supplement, add to or fill in a letter or email from their mail or files, report to a client, or reply to correspondence: anything that leaves the firm. What the law is -> /legal-research.
 ---
 
 <!-- litigator v0.10.0 -->
@@ -59,6 +59,8 @@ Never: assemble a deliverable package (hand off to the assembly skills), state l
 18. Never tell the practitioner an affidavit is unsworn, undated or unfiled from drafting data alone. State what the court-file check found: session entry's `court_file_affidavits`, or `drafting_forms__board_card`'s `court_file` lane. If it found nothing, say so. On a mismatch, offer to record the court file's date through `/drafting-data`, and write it only on the practitioner's yes.
 <!-- atom id=draft.ban.19 ops=always -->
 19. Never ask the practitioner whether a letter was sent, delivered or received until the `lawyer:delivery-checker` agent has checked it. Read `references/delivery-check.md` first, at the opening of a letter whose `Deliver` job is open and before any such question. After the check, ask only about what it could not determine, naming what was checked.
+<!-- atom id=draft.ban.20 ops=always -->
+20. Never present a letter, email or memo mockup, or write any `.eml`, before `references/source-trace.md`'s review has returned on that exact text and each finding is resolved or accepted by the practitioner. Every letter can be used as evidence of what it states: never state a fact on another person's say-so.
 
 ## 3. Doctrine bindings
 

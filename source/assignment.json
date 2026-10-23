@@ -127,9 +127,12 @@
         "marshal-facts",
         "rules-improviser",
         "rules-reorienter",
+        "source-tracer",
         "suggestion-evaluator"
       ],
       "hooks": {
+        "correspondence-note": "source/litigator/hooks/correspondence-note.py",
+        "correspondence-review-gate": "source/litigator/hooks/correspondence-review-gate.py",
         "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",
         "job-board-card-gate": ".claude/skills/drafting-data/hooks/job-board-card-gate.py",
         "practitioner-words-gate": ".claude/skills/drafting-data/hooks/practitioner-words-gate.py"
