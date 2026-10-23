@@ -144,7 +144,7 @@ Every learned file follows this contract.
 - A Claude Code session whose working folder is the Probanda development repo, on the maintainer's explicit instruction, writes the **shipped tree**. The helper writes nothing, because `knowledge__write` refuses the repo-run marker: it returns each candidate's intended path and full text. The session writes them to its scratchpad and moves them into the skills tree after the practitioner's review, in the same step as the commit. The helper never commits. The reason is review before packaging.
 - Any other session with a live matter writes only the **overlay**.
 - A session with neither refuses.
-- **Promotion** of an overlay file into the shipped tree is an ordinary commit. A promoted file ships learned and unconfirmed, unless the practitioner checks every item at promotion review and explicitly chooses vetted, which records `reviewed_by` and drops `learned_by`.
+- **Promotion** of an overlay file into the shipped tree is an ordinary commit. A promoted file ships learned and unconfirmed, unless the practitioner checks every item at promotion review and explicitly chooses vetted, which records `reviewed_by` and drops `learned_by`. Vetting does not confirm any item for another firm: each firm's notice stops only on its own sidecar (section 11).
 - A file carrying a correction is not promoted until the correction is reconciled.
 - The promoting firm's overlay original is not retired at promotion.
 - A promotion reaches install users only at the next plugin release.
@@ -183,10 +183,16 @@ Every learned file follows this contract.
 
 ## 11. The learned-file notice
 
-The calling skill shows this notice in its first message after `/localize` returns `created`, and then once per session on each load of a learned file. It is filled from header fields only:
+The calling skill shows this notice in its first message after `/localize` returns `created`, and then once per session on each load of a learned or vetted file. It is filled from header fields only:
 
 ```text
 Note: the {venue} requirements for {document kind} used here were learned by an agent on {accessed} from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup.
 ```
 
-The notice stops when every item of the file reads confirmed or corrected in the firm's sidecar, or when the file is vetted. Promotion alone does not stop it, because a promoted file ships unconfirmed.
+For a vetted file it reads:
+
+```text
+Note: the {venue} requirements for {document kind} used here were reviewed by {reviewed_by} on {reviewed_on}, but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.
+```
+
+At each firm the notice stops only when every item of the file reads confirmed or corrected in that firm's own sidecar. Neither promotion nor vetting stops it: a promoted file ships unconfirmed, and a vetted file's items read `vetted` until the firm confirms or corrects them.

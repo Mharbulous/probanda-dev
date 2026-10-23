@@ -143,6 +143,7 @@ const Q3_HEADER = [
 test("the mockup header carries the Q3 fields in order, naming the Writing's type, title and date", async (t) => {
   const g = await generalWritingFixture(t, { front: VETTED_FRONT });
   const id = await letter(g);
+  confirm(g, ["R-title", "R-body"]);
   const header = (md) => md.slice("---\n".length, md.indexOf("\n---\n")).split("\n");
   const client = { ...CLIENT, matterDescription: "Client v Other, wrongful dismissal" };
 
@@ -274,9 +275,48 @@ test("a vetted file whose passage changed tags source changed on the mockup, and
   assertFiledFaceClean(filed.documents[0].markdown, "General_writing");
 });
 
+// #121: vetting does not stop the notice. A vetted file's notice names its reviewer, and stops only
+// once this firm's sidecar reads confirmed or corrected for every cited item.
+const VETTED_NOTICE =
+  "\nLayout confirmation:\n  - Note: the No venue requirements for Letter to opposing counsel used here were reviewed by Pat Example on 2026-09-22, " +
+  "but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.\n";
+
+test("a vetted file with no firm confirmation shows the reviewer's notice, untagged and never refused", async (t) => {
+  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const id = await letter(g);
+  const md = docOf(render(g, id), "General_writing").markdown;
+  assert.ok(headerOf(md).includes(VETTED_NOTICE), md);
+  assert.doesNotMatch(md, /learned by an agent|\[unverified|\[source changed/);
+  assert.doesNotMatch(md, /need not|no need|not necessary|unnecessary/i, "the notice never excuses the firm's own review");
+  assert.equal(render(g, id, "filed").confirmation_gate_failed, undefined);
+});
+
+test("a vetted file with only some items confirmed by the firm still shows the notice", async (t) => {
+  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const id = await letter(g);
+  confirm(g, ["R-title"]);
+  assert.ok(headerOf(docOf(render(g, id), "General_writing").markdown).includes(VETTED_NOTICE));
+});
+
+test("a vetted file whose every cited item the firm confirmed or corrected shows no notice", async (t) => {
+  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const id = await letter(g);
+  g.f.local(`${LETTER_FILE}.confirmations.local.json`, {
+    file: LETTER_FILE,
+    items: [
+      { rule_ref: "R-title", status: "corrected", by: "pe", on: "2026-09-25", value: "Letter to opposing counsel", confirmed_against: { passage_hash: passageHash(PASSAGES["R-title"]), currency: "September 1, 2020" } },
+      { rule_ref: "R-body", status: "confirmed", by: "pe", on: "2026-09-25", confirmed_against: { passage_hash: passageHash(PASSAGES["R-body"]), currency: "September 1, 2020" } },
+    ],
+  });
+  const md = docOf(render(g, id), "General_writing").markdown;
+  assert.doesNotMatch(md, /Layout confirmation/);
+  assert.deepEqual(optionalFieldsOf(md), []);
+});
+
 test("a blind copy prints in the header's Blind copies on the mockup and nowhere on the filed face; a cc prints on both", async (t) => {
   const g = await generalWritingFixture(t, { front: VETTED_FRONT });
   const id = await letter(g);
+  confirm(g, ["R-title", "R-body"]);
   await g.recipient(id, 3, "cc");
   await g.recipient(id, 2, "bcc");
 
@@ -326,6 +366,7 @@ test("a drafting letter's party-linked recipient whose party is not of its proce
 test("a page_limit prints the header's Page budget on the mockup only", async (t) => {
   const g = await generalWritingFixture(t, { front: VETTED_FRONT, block: { ...LETTER_BLOCK, page_limit: 2 } });
   const id = await letter(g);
+  confirm(g, ["R-title", "R-body"]);
   const md = docOf(render(g, id), "General_writing").markdown;
   assert.ok(headerOf(md).includes("\nPage budget:\n  - Limit: 2 pages; estimate: 1 pages\n"), md);
   assert.deepEqual(optionalFieldsOf(md), ["Page budget:"]);

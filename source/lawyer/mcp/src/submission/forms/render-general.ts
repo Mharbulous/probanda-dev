@@ -150,13 +150,23 @@ function wordCount(lines: string[]): number {
   return lines.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w) => w !== "").length;
 }
 
-/** The learned-file notice (shared/knowledge-tree.md section 11), filled from header fields only. */
-function notice(venue: string, kind: string, accessed: string | null): string {
+/** The learned-file notice (shared/knowledge-tree.md section 11), filled from header fields only. A
+ * vetted file's names its reviewer, and still asks this firm to confirm. */
+function notice(venue: string, kind: string, learned: boolean, header: Record<string, string | null>): string {
+  if (!learned) {
+    return (
+      `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by ?? "a practitioner"} on ${header.reviewed_on ?? "an unrecorded date"}, ` +
+      "but this firm has not yet confirmed or corrected every item; confirm each item before relying on it."
+    );
+  }
   return (
-    `Note: the ${venue} requirements for ${kind} used here were learned by an agent on ${accessed ?? "an unrecorded date"} ` +
+    `Note: the ${venue} requirements for ${kind} used here were learned by an agent on ${header.accessed ?? "an unrecorded date"} ` +
     "from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup."
   );
 }
+
+/** Whether this firm's sidecar leaves the item open: the notice stops only once every cited item reads confirmed or corrected. */
+const firmOpen = (s: CitedState): boolean => s.item?.status !== "confirmed" && s.item?.status !== "corrected";
 
 /** A venue's stock `unstructured` type file, or a `_NoVenue` recipient's `unstructured-<recipient>`
  * (plan 2026-10-07, "Stock types"). Its title names the
@@ -234,9 +244,12 @@ export function renderGeneral(
       : [withTag(`Limit: ${pageLimit} pages; estimate: ${Math.ceil(wordCount([title, ...body]) / 300)} pages`, tagAt("type", "page_limit"))];
 
   const unplaced = cited.filter((s) => !placed.has(s) && tagOf(s) !== "");
-  const unverifiedFiles = [...new Set(cited.filter((s) => tagOf(s).startsWith("[unverified")).map((s) => s.file))];
+  const openFiles = [...new Set(cited.filter(firmOpen).map((s) => s.file))];
   const confirmation = [
-    ...unverifiedFiles.map((file) => notice(venueLabel === "" ? "No venue" : venueLabel, title, cited.find((s) => s.file === file)!.header.accessed ?? null)),
+    ...openFiles.map((file) => {
+      const state = cited.find((s) => s.file === file)!;
+      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state.learned, state.header);
+    }),
     ...unplaced.map((s) => `${s.block === "venue" ? "venue " : ""}${s.field} ${tagOf(s)}`),
   ];
 

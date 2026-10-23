@@ -998,7 +998,7 @@ def fill(args):
 
     cited = [item for item in read["items"] if isinstance(item, dict) and item.get("rule_ref") in refs]
     # A vetted file (learned: false) never blocks the deliverable: an item of it can read
-    # unconfirmed only because its source moved (a correction on a missing source), which warns.
+    # unconfirmed only because its source moved (a confirmation or correction on a missing source), which warns.
     vetted = read["learned"] is False
     unconfirmed = [] if vetted else [item for item in cited if item.get("status") == "unconfirmed"]
     changed = [item for item in cited if item.get("freshness") == "missing"

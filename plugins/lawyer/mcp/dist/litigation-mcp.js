@@ -1,4 +1,4 @@
-// build-stamp: 3e83adc1db0b
+// build-stamp: ebf6c7bd43bf
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77462,7 +77462,7 @@ function fileToolDefinitions() {
     },
     {
       name: "knowledge__read",
-      description: "Read one file of a skill's knowledge tree, merged from two layers: the shipped tree (`<skill>/references/` in the installed plugin's bundled skill source, else a checkout) and the firm's overlay (`<case_data_root>\\_practice\\knowledge\\`). `path` is relative, starting with a skill that owns a tree (draft, publish, assemble, legal-research, docket-clerk), e.g. `draft/CAN/BC/BCSC/venue.md`, or an overlay reserved entry (_superseded, _fetched, _inbox, _hosts.json). Per file the shipped copy wins; when the overlay holds a copy too, `shadowed_local` {path, identical} reports it, compared after line-ending normalization. An index file (`venues.json` at a jurisdiction, `kinds.json` in a Documents folder, or their `.local.json` overlay names) returns the merged `view` instead of text: rows merged by `code` or `file`, the shipped name and fields winning, aliases unioned, `layer` on every row and alias, `conflicts` on the view, and the reserved `_NoVenue` row (`reserved: true`, skipped by every forum picker); a local `name` a shipped row shadows is also reported at the top level as `shadowed_local` [{key, shipped, local}]. A document returns `content`, `learned` (header `learned_by: agent`), `header`, and each item's effective status from the firm's confirmation sidecar: `items` [{rule_ref, status (vetted, confirmed, corrected or unconfirmed), freshness (verified, not verified or missing, from this session's sources__check result on the file, if one ran), passage_hash, currency, record, pdf_page?}], `stale_confirmation` (a confirmation whose passage changed; the item reads unconfirmed), `orphaned_confirmations` (rows whose rule_ref is gone), `currency_moved` (the row stands), `corrections` (in force, with `passage_changed`), and `shadowed_sources` [{path, identical}] for each source record its `sources:` list names that the overlay also holds (the shipped copy was read). A /draft type file or venue.md also returns its validated `layout` block, and a /publish format.md its validated `format` block with `defaulted` properties, each with the firm's corrections substituted. Relay `shadowed_local`, `shadowed_sources`, `conflicts` and `corrections` to the practitioner once per session. Fails hard, naming file, field and rule, on a malformed block, index or sidecar, a path breaking the folder grammar, or a missing case_data_root. Every result reports `shipped_from`, `plugin_version` and `build_stamp`. Never touches the network. The overlay's case data root comes from the per-user probanda.json; when that file is absent it comes from the `matter_root` matter pointer's `0. CASE DATA` folder, so pass the `matter_root` that `drafting_forms__open_session` returned.",
+      description: "Read one file of a skill's knowledge tree, merged from two layers: the shipped tree (`<skill>/references/` in the installed plugin's bundled skill source, else a checkout) and the firm's overlay (`<case_data_root>\\_practice\\knowledge\\`). `path` is relative, starting with a skill that owns a tree (draft, publish, assemble, legal-research, docket-clerk), e.g. `draft/CAN/BC/BCSC/venue.md`, or an overlay reserved entry (_superseded, _fetched, _inbox, _hosts.json). Per file the shipped copy wins; when the overlay holds a copy too, `shadowed_local` {path, identical} reports it, compared after line-ending normalization. An index file (`venues.json` at a jurisdiction, `kinds.json` in a Documents folder, or their `.local.json` overlay names) returns the merged `view` instead of text: rows merged by `code` or `file`, the shipped name and fields winning, aliases unioned, `layer` on every row and alias, `conflicts` on the view, and the reserved `_NoVenue` row (`reserved: true`, skipped by every forum picker); a local `name` a shipped row shadows is also reported at the top level as `shadowed_local` [{key, shipped, local}]. A document returns `content`, `learned` (header `learned_by: agent`), `header`, and each item's effective status from the firm's confirmation sidecar: `items` [{rule_ref, status (vetted, confirmed, corrected or unconfirmed; vetted is an item of a vetted file this firm has not confirmed or corrected), freshness (verified, not verified or missing, from this session's sources__check result on the file, if one ran), passage_hash, currency, record, pdf_page?}], `stale_confirmation` (a confirmation whose passage changed; the item reads unconfirmed), `orphaned_confirmations` (rows whose rule_ref is gone), `currency_moved` (the row stands), `corrections` (in force, with `passage_changed`), and `shadowed_sources` [{path, identical}] for each source record its `sources:` list names that the overlay also holds (the shipped copy was read). A /draft type file or venue.md also returns its validated `layout` block, and a /publish format.md its validated `format` block with `defaulted` properties, each with the firm's corrections substituted. Relay `shadowed_local`, `shadowed_sources`, `conflicts` and `corrections` to the practitioner once per session. Fails hard, naming file, field and rule, on a malformed block, index or sidecar, a path breaking the folder grammar, or a missing case_data_root. Every result reports `shipped_from`, `plugin_version` and `build_stamp`. Never touches the network. The overlay's case data root comes from the per-user probanda.json; when that file is absent it comes from the `matter_root` matter pointer's `0. CASE DATA` folder, so pass the `matter_root` that `drafting_forms__open_session` returned.",
       inputSchema: {
         type: "object",
         properties: {
@@ -85952,7 +85952,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "3e83adc1db0b";
+var BUILD_STAMP = false ? null : "ebf6c7bd43bf";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -86498,7 +86498,7 @@ function effectiveStatus(input) {
       out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
     } else if (row2?.status === "confirmed") {
       if (row2.confirmed_against.passage_hash === hash) {
-        status2 = input.learned ? "confirmed" : "vetted";
+        status2 = "confirmed";
       } else {
         out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
       }
@@ -89112,7 +89112,6 @@ function renderWitnessStatements(ctx) {
     lines2.push(
       frontmatterFor("Witness_statement", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription)
     );
-    lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} witness_statement ${s3.id} -->`);
     lines2.push("");
     lines2.push(
       styleOfProceedingCaption(captionParties2, {
@@ -89367,7 +89366,6 @@ function renderEvidenceIndex(ctx) {
   const tenderStatus = fetchDocumentTenderStatus(ctx.dbPath, docs.map((d3) => d3.document_id), ctx.rendered.slice(0, 10), ctx.inventory);
   const lines2 = [];
   lines2.push(frontmatterFor("Evidence_index", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push("| Ex. | Date | Description | Tendered by |");
   lines2.push("| --- | --- | --- | --- |");
@@ -91181,9 +91179,13 @@ function authorityCitedLine(ctx, row2) {
 function wordCount(lines2) {
   return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => w3 !== "").length;
 }
-function notice(venue, kind, accessed) {
-  return `Note: the ${venue} requirements for ${kind} used here were learned by an agent on ${accessed ?? "an unrecorded date"} from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup.`;
+function notice(venue, kind, learned, header) {
+  if (!learned) {
+    return `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by ?? "a practitioner"} on ${header.reviewed_on ?? "an unrecorded date"}, but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.`;
+  }
+  return `Note: the ${venue} requirements for ${kind} used here were learned by an agent on ${header.accessed ?? "an unrecorded date"} from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup.`;
 }
+var firmOpen = (s3) => s3.item?.status !== "confirmed" && s3.item?.status !== "corrected";
 var STOCK_UNSTRUCTURED = /\/Documents\/unstructured(-[a-z-]+)?\.md$/;
 function renderGeneral(ctx, stored, cited2) {
   const { layout } = stored;
@@ -91198,7 +91200,7 @@ function renderGeneral(ctx, stored, cited2) {
   };
   const state = { paragraph: 0, prose: fetchProse(ctx.dbPath, ctx.filing.id), signer: layout.signer === "party" ? "party" : "lawyer", letterhead: layout.letterhead === true, unwritten: [], part: 0, currency_withheld: [], prose_format: [] };
   const date3 = state.prose.get("date")?.text.trim().replace(/\s+/g, " ") ?? "";
-  const lines2 = [`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`];
+  const lines2 = [];
   if (!STOCK_UNSTRUCTURED.test(stored.type_file ?? "")) lines2.push("", withTag(`# ${title}`, tagAt("type", "title")));
   const body = [];
   let numbered = 0;
@@ -91229,9 +91231,12 @@ function renderGeneral(ctx, stored, cited2) {
   const pageLimit = scalarValue(layout.page_limit);
   const pageBudget = pageLimit === void 0 ? [] : [withTag(`Limit: ${pageLimit} pages; estimate: ${Math.ceil(wordCount([title, ...body]) / 300)} pages`, tagAt("type", "page_limit"))];
   const unplaced = cited2.filter((s3) => !placed.has(s3) && tagOf(s3) !== "");
-  const unverifiedFiles = [...new Set(cited2.filter((s3) => tagOf(s3).startsWith("[unverified")).map((s3) => s3.file))];
+  const openFiles = [...new Set(cited2.filter(firmOpen).map((s3) => s3.file))];
   const confirmation = [
-    ...unverifiedFiles.map((file) => notice(venueLabel === "" ? "No venue" : venueLabel, title, cited2.find((s3) => s3.file === file).header.accessed ?? null)),
+    ...openFiles.map((file) => {
+      const state2 = cited2.find((s3) => s3.file === file);
+      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state2.learned, state2.header);
+    }),
     ...unplaced.map((s3) => `${s3.block === "venue" ? "venue " : ""}${s3.field} ${tagOf(s3)}`)
   ];
   const blind = recipients.filter((r3) => r3.role === "bcc").map((r3) => recipientEntry(r3, "bcc"));
@@ -93204,7 +93209,6 @@ function renderApplicationResponse(ctx) {
   const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
   const lines2 = [];
   lines2.push(frontmatterFor2(ctx.proceeding, ctx));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -93702,7 +93706,6 @@ function renderBccaStayResponse(ctx) {
   });
   const lines2 = [];
   lines2.push(frontmatterFor3(ctx.proceeding, ctx));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     bccaCoverPage(captionParties2, {
@@ -94081,7 +94084,6 @@ function renderBccaFactum(ctx) {
   const title = factumRecordLabel(signer.roleLabel);
   const lines2 = [];
   lines2.push(frontmatterFor4(ctx.proceeding, ctx));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     bccaCoverPage(captionParties2, {
@@ -94403,7 +94405,6 @@ function renderAffidavit(ctx, a3) {
   const deponent = a3.deponent_name ?? "________________";
   const lines2 = [];
   lines2.push(frontmatterFor5(ctx));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} affidavit ${a3.id} -->`);
   lines2.push("");
   lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
   lines2.push("");
@@ -94566,7 +94567,6 @@ function renderRequisitionDefaultJudgment(ctx) {
   checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
   const lines2 = [];
   lines2.push(frontmatterFor6(ctx, "Requisition"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -94595,7 +94595,6 @@ function renderForm8DefaultJudgment(ctx) {
   });
   const lines2 = [];
   lines2.push(frontmatterFor6(ctx, "Default_judgment"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -94650,7 +94649,6 @@ function renderRequisitionConsent(ctx) {
   ];
   const lines2 = [];
   lines2.push(frontmatterFor6(ctx, "Requisition"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -94679,7 +94677,6 @@ function renderConsentOrder(ctx) {
   });
   const lines2 = [];
   lines2.push(frontmatterFor6(ctx, "Consent_order"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -94797,7 +94794,6 @@ function renderWrittenArguments(ctx, documentKey) {
   }
   const lines2 = [];
   lines2.push(frontmatterFor7(ctx, "Written_arguments"));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -95170,7 +95166,6 @@ function renderNoticeOfApplication(ctx) {
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const lines2 = [];
   lines2.push(frontmatterFor8(ctx.proceeding, ctx));
-  lines2.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {

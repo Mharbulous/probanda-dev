@@ -250,6 +250,17 @@ test("a vetted file never reads unconfirmed; a correction on it still applies", 
   assert.deepEqual(result.layout.title, { value: "Letter to the registrar", rule_ref: "R-title" });
 });
 
+test("a firm's matching confirmation of a vetted file's item reads confirmed, so the firm's own review is visible", (t) => {
+  const f = knowledgeFixture(t);
+  f.shipped(FILE, knowledgeFile(FRONT.replace("learned_by: agent\n", ""), BLOCK));
+  f.shipped("draft/CAN/BC/BCSC/Sources/rules.md", RECORD);
+  f.local(SIDECAR, { file: FILE, items: [row("R-title")] });
+  const result = knowledgeRead(FILE, f.seams);
+  assert.equal(result.learned, false);
+  assert.equal(statusOf(result, "R-title").status, "confirmed");
+  assert.equal(statusOf(result, "R-addr").status, "vetted", "an item this firm has not confirmed");
+});
+
 test("a missing passage makes a corrected item read unconfirmed for the session; the correction stays recorded", async (t) => {
   // BCHRT, so no other test's memo entry is in play.
   const { f, file, read } = fixture(t, [row("R-missing", { status: "corrected", value: "Charlie is on the notice board." })], "BCHRT");

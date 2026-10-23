@@ -123,6 +123,7 @@ export interface CheckedRecord {
   items?: Array<{ rule_ref: string; present: boolean | null }>;
 }
 
+/** `vetted`: an item of a vetted file that this firm has not confirmed or corrected. A firm's own row reads as it does on a learned file. */
 export type Status = "vetted" | "confirmed" | "corrected" | "unconfirmed";
 /** `verified`: the session's source check found the passage. `missing`: it did not. Otherwise not verified. */
 export type Freshness = "verified" | "not verified" | "missing";
@@ -197,7 +198,7 @@ export function effectiveStatus(input: StatusInput): EffectiveStatus {
       out.corrections.push({ rule_ref: row.rule_ref, value: row.value, by: row.by, on: row.on, passage_changed: row.confirmed_against.passage_hash !== hash });
     } else if (row?.status === "confirmed") {
       if (row.confirmed_against.passage_hash === hash) {
-        status = input.learned ? "confirmed" : "vetted";
+        status = "confirmed";
       } else {
         out.stale_confirmation.push({ rule_ref: row.rule_ref, by: row.by, on: row.on, confirmed_against: row.confirmed_against, passage_hash: hash });
       }

@@ -9,7 +9,7 @@ Naming rules:
 - One concept, one symbol — languages differ only by syntax (snake_case SQL/Python, camelCase TypeScript, spaced prose).
 - A child keeps its symbol wherever a reflection of the square preserves its meaning; distinct only where meaning changes.
 - Backend matches lawyer language first; wording improvements never break the match. work-markers.md edits are gated: practitioner + Fable.
-- Id-trace HTML comments (`<!-- label N -->`) follow one rule everywhere they're stamped (#379): a bare label + number is positional, matching the printed ordinal the reader sees on that line, with the label in the form's own vocabulary (`order`, `submission`, `fact` ...); an `_id`-suffixed label + number is a database row id with no printed ordinal to match, and the label names the schema table (`order_sought_id`, `fact_id`, `law_assertion_id` ...). The top-of-document `<!-- filing F proceeding P -->` provenance comment is exempt -- always database ids, no positional counterpart.
+- Id-trace HTML comments (`<!-- label N -->`) follow one rule everywhere they're stamped (#379): a bare label + number is positional, matching the printed ordinal the reader sees on that line, with the label in the form's own vocabulary (`order`, `submission`, `fact` ...); an `_id`-suffixed label + number is a database row id with no printed ordinal to match, and the label names the schema table (`order_sought_id`, `fact_id`, `law_assertion_id` ...).
 
 ## The square
 

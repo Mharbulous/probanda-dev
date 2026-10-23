@@ -58,8 +58,11 @@ reviewed_on:
 sources:
   - ../Sources/conduct.md`;
 
-/** The same file vetted: no learned_by, so it is never tagged unverified and never refused. */
+/** The same file vetted: no learned_by, so it is never tagged unverified and never refused. Its
+ * notice still shows until this firm confirms or corrects every cited item (#121). */
 export const VETTED_FRONT = `accessed: 2026-09-20
+reviewed_by: Pat Example
+reviewed_on: 2026-09-22
 sources:
   - ../Sources/conduct.md`;
 
