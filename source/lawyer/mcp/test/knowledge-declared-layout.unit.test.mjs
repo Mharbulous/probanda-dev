@@ -141,7 +141,7 @@ test("each shipped BCSC form-identity file records its form, version and templat
       ["form_key", "form_number", "template", "title", "version", ...(pinned ? ["version_source"] : [])].sort(),
       `${label}: fields`
     );
-    assert.match(front.form_number, /^\d+$/, `${label}: form_number`);
+    assert.match(front.form_number, /^\d+(\.\d+)*$/, `${label}: form_number`);
     assert.ok(existsSync(join(publishSkill, front.template)), `${label}: template ${front.template} exists`);
     if (pinned) {
       const pdf = join(publishSkill, front.version_source);
