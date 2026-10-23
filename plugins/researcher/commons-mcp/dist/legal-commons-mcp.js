@@ -15515,6 +15515,10 @@ async function unprotectLocalSecret(data) {
 }
 async function runDpapi(action, data) {
   const script = action === "Protect" ? protectScript : unprotectScript;
+  const out = await runPowerShell(`Windows DPAPI ${action}`, script, data.toString("base64"));
+  return Buffer.from(out, "base64");
+}
+async function runPowerShell(label, script, stdin = "") {
   const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true
@@ -15527,12 +15531,12 @@ async function runDpapi(action, data) {
     child.on("error", reject);
     child.on("exit", (code) => {
       if (code === 0) resolve2();
-      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
+      else reject(new Error(`${label} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
-  child.stdin.end(data.toString("base64"));
+  child.stdin.end(stdin);
   await done;
-  return Buffer.from(Buffer.concat(stdout).toString("utf8").trim(), "base64");
+  return Buffer.concat(stdout).toString("utf8").trim();
 }
 var scriptPreamble = `
 $ErrorActionPreference = 'Stop'
@@ -16537,12 +16541,122 @@ function isPlainObject4(value) {
 import { join as join4 } from "node:path";
 
 // ../../mcp-shared/commons-key.js
+import { readdir, unlink } from "node:fs/promises";
+import { homedir as homedir2 } from "node:os";
 import { join as join3 } from "node:path";
+
+// ../../mcp-shared/credential-manager.js
+var TARGET = /^[A-Za-z0-9/_.-]{1,256}$/;
+var ERROR_NOT_FOUND = 1168;
+function checkTarget(target) {
+  if (!TARGET.test(target)) throw new Error(`credential target "${target}" is not a plain name`);
+  return target;
+}
+function requireWindows() {
+  if (process.platform !== "win32") {
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
+  }
+}
+async function readCredential(target) {
+  requireWindows();
+  const out = await runPowerShell("Credential Manager read", readScript(checkTarget(target)));
+  if (out === "absent") return null;
+  if (!out.startsWith("found:")) throw new Error(`Credential Manager read returned nothing usable`);
+  return Buffer.from(out.slice("found:".length), "base64").toString("utf16le");
+}
+async function writeCredential(target, secret) {
+  requireWindows();
+  if (typeof secret !== "string" || !secret) throw new Error("a credential needs a secret");
+  await runPowerShell("Credential Manager write", writeScript(checkTarget(target)), Buffer.from(secret, "utf16le").toString("base64"));
+}
+async function deleteCredential(target) {
+  requireWindows();
+  await runPowerShell("Credential Manager delete", deleteScript(checkTarget(target)));
+}
+var preamble = `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class ProbandaCred {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public struct CREDENTIAL {
+    public uint Flags; public uint Type; public string TargetName; public string Comment;
+    public System.Runtime.InteropServices.ComTypes.FILETIME LastWritten;
+    public uint CredentialBlobSize; public IntPtr CredentialBlob; public uint Persist;
+    public uint AttributeCount; public IntPtr Attributes; public string TargetAlias; public string UserName;
+  }
+  [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  public static extern bool CredReadW(string target, uint type, uint flags, out IntPtr credential);
+  [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  public static extern bool CredWriteW(ref CREDENTIAL credential, uint flags);
+  [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  public static extern bool CredDeleteW(string target, uint type, uint flags);
+  [DllImport("advapi32.dll")]
+  public static extern void CredFree(IntPtr credential);
+}
+"@
+$CRED_TYPE_GENERIC = 1
+$CRED_PERSIST_LOCAL_MACHINE = 2
+function Win32Error($what) {
+  $code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+  throw "$what failed with Win32 error $code"
+}`;
+var readScript = (target) => `${preamble}
+$handle = [IntPtr]::Zero
+if (-not [ProbandaCred]::CredReadW('${target}', $CRED_TYPE_GENERIC, 0, [ref]$handle)) {
+  $code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+  if ($code -eq ${ERROR_NOT_FOUND}) { [Console]::Out.Write('absent'); exit 0 }
+  throw "CredReadW failed with Win32 error $code"
+}
+try {
+  $cred = [System.Runtime.InteropServices.Marshal]::PtrToStructure($handle, [type][ProbandaCred+CREDENTIAL])
+  $bytes = New-Object byte[] $cred.CredentialBlobSize
+  if ($cred.CredentialBlobSize -gt 0) { [System.Runtime.InteropServices.Marshal]::Copy($cred.CredentialBlob, $bytes, 0, $cred.CredentialBlobSize) }
+  [Console]::Out.Write('found:' + [Convert]::ToBase64String($bytes))
+} finally {
+  [ProbandaCred]::CredFree($handle)
+}
+`;
+var writeScript = (target) => `${preamble}
+$bytes = [Convert]::FromBase64String([Console]::In.ReadToEnd().Trim())
+$blob = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($bytes.Length)
+try {
+  [System.Runtime.InteropServices.Marshal]::Copy($bytes, 0, $blob, $bytes.Length)
+  $cred = New-Object ProbandaCred+CREDENTIAL
+  $cred.Type = $CRED_TYPE_GENERIC
+  $cred.TargetName = '${target}'
+  $cred.Comment = 'Saved by the Probanda plugins. Remove it here to forget the key on this computer.'
+  $cred.CredentialBlobSize = $bytes.Length
+  $cred.CredentialBlob = $blob
+  $cred.Persist = $CRED_PERSIST_LOCAL_MACHINE
+  $cred.UserName = 'Probanda'
+  if (-not [ProbandaCred]::CredWriteW([ref]$cred, 0)) { Win32Error 'CredWriteW' }
+} finally {
+  [System.Runtime.InteropServices.Marshal]::FreeHGlobal($blob)
+}
+`;
+var deleteScript = (target) => `${preamble}
+if (-not [ProbandaCred]::CredDeleteW('${target}', $CRED_TYPE_GENERIC, 0)) {
+  $code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+  if ($code -ne ${ERROR_NOT_FOUND}) { throw "CredDeleteW failed with Win32 error $code" }
+}
+`;
+
+// ../../mcp-shared/commons-key.js
 var BAKED_SUPABASE_URL = "https://nbzkuhgiqscjkypedqff.supabase.co";
+var CLOUD_KEY_TARGET = "Probanda/cloud-key";
+var credentialManagerStore = {
+  read: () => readCredential(CLOUD_KEY_TARGET),
+  write: (secret) => writeCredential(CLOUD_KEY_TARGET, secret),
+  delete: () => deleteCredential(CLOUD_KEY_TARGET)
+};
+var activeStore = credentialManagerStore;
+var cached2 = /* @__PURE__ */ new WeakMap();
 function credentialPath(env = process.env) {
   return join3(defaultStateDir(env), "credential.json.dpapi");
 }
-async function loadCommonsKey(env = process.env) {
+async function loadCommonsKey(env = process.env, store = activeStore) {
   const key = {
     supabaseUrl: env.SUPABASE_URL || BAKED_SUPABASE_URL,
     // Deliberately NOT falling back to the public anon key: it has no grants on
@@ -16551,19 +16665,68 @@ async function loadCommonsKey(env = process.env) {
     staticKey: env.LEGAL_COMMONS_SUPABASE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || ""
   };
   if (key.staticKey) return key;
+  if (cached2.has(store)) return { ...key, staticKey: cached2.get(store) };
   try {
-    const persisted = await readProtectedJson(credentialPath(env), null);
-    if (persisted?.staticKey) key.staticKey = persisted.staticKey;
+    const stored = await store.read() || await migrateLegacyFile(env, store);
+    if (stored) {
+      cached2.set(store, stored);
+      key.staticKey = stored;
+    }
   } catch (error2) {
     const detail = error2 instanceof Error ? error2.message : String(error2);
     key.credentialError = detail.split("\n")[0].trim();
     process.stderr.write(
-      `legal-commons: stored credential at ${credentialPath(env)} could not be read \u2014 ${detail}
+      `legal-commons: the stored credential (${CLOUD_KEY_TARGET}) could not be read: ${detail}
 Starting unconfigured; call cloud_key__configure_credential to replace it.
 `
     );
   }
   return key;
+}
+async function legacyFiles(env) {
+  const packages = join3(env.LOCALAPPDATA || join3(homedir2(), "AppData", "Local"), "Packages");
+  let names = [];
+  try {
+    names = await readdir(packages);
+  } catch {
+  }
+  return [
+    credentialPath(env),
+    ...names.map((name) => join3(packages, name, "LocalCache", "Local", "Coclerk", "legal-commons", "credential.json.dpapi"))
+  ];
+}
+async function migrateLegacyFile(env, store) {
+  let found = "";
+  let firstError;
+  const readable = [];
+  for (const path of await legacyFiles(env)) {
+    try {
+      const persisted = await readProtectedJson(path, null);
+      if (persisted === null) continue;
+      readable.push(path);
+      if (!found && persisted?.staticKey) found = persisted.staticKey;
+    } catch (error2) {
+      firstError ??= error2;
+    }
+  }
+  if (!found) {
+    if (firstError) throw firstError;
+    return "";
+  }
+  await store.write(found);
+  await removeLegacyFiles(readable, (error2) => {
+    throw new Error(`the key was moved into Credential Manager, but its old file could not be deleted: ${error2.message}`);
+  });
+  return found;
+}
+async function removeLegacyFiles(paths, onError) {
+  for (const path of paths) {
+    try {
+      await unlink(path);
+    } catch (error2) {
+      if (error2?.code !== "ENOENT") onError(error2);
+    }
+  }
 }
 
 // src/troubleshoot/config.ts
@@ -17062,7 +17225,7 @@ function textResult(result) {
 
 // src/legal-commons/client.ts
 var LegalCommonsClient = class {
-  // `reload` reads the credential file again. Only the pool's client has one:
+  // `reload` reads the credential store again. Only the pool's client has one:
   // the lawyer plugin's cloud_key__configure_credential saves the key from
   // another process, so a pool client that started with none must look again.
   constructor(config2, reload) {
@@ -17072,7 +17235,7 @@ var LegalCommonsClient = class {
   config;
   reload;
   // Picks up a key saved since this process started. Called before every pool
-  // and Suggestion Box tool; costs a file read only while no key is held.
+  // and Suggestion Box tool; costs a store read only while no key is held.
   async reloadKeyIfUnset() {
     if (this.config.staticKey || !this.reload) return;
     const { staticKey, credentialError } = await this.reload();
