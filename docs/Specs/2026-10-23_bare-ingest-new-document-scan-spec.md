@@ -58,3 +58,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm `ingest/SKILL.md` step 2's wording, extract-facts §1's folder prompt, and whether any earlier commit defined a bare-run scan; mark what differs and append the table to this spec before changing code.
+
+### Verification against HEAD (2026-10-23, at b437f3e5)
+
+| Claim | Repo source | Result |
+|---|---|---|
+| Skill paths | `.claude/skills/ingest/SKILL.md`, `.claude/skills/matter-data/SKILL.md`, `.claude/skills/matter-data/operations/extract-facts.md` | Same files; the installed copy differs only in its path prefix |
+| `ingest/SKILL.md` step 2 wording | line 39 | Matches the quote word for word |
+| No step covers an invocation with no path | Procedure steps 1-8 | Confirmed. Step 8 (contact check) ends every run |
+| extract-facts heading and §1 folder prompt | lines 1, 7-18 | Match. §1 also lets a calling skill name the folder and skip the prompt |
+| §1 candidates `RAW`, `3. CORRESPONDENCE`, `5. COURT FILE`, `7. DISCOVERY`, `6. LAW`, custom path | lines 11-16 | Match, in that order |
+| One folder per run, extraction in the same run | §4-§5 | Confirmed |
+| Classification semantics (hash before path, three stores, superseded marker) | extract-facts §3 `classify` | Confirmed; also returns `re-extract` and `corrupt` |
+| Version pairing is read-only | supersede-draft §1 `candidates` | The function and its probe are read-only. §2 onwards and §6c ask questions or write, so a report-only run stops at §1 |
+| Routing row for a report-only scan in `matter-data/SKILL.md` | lines 43, 69 | Absent. Rows exist for the folder scan (`extract-facts.md`) and for batch status (`ingest-status.md`) |
+| Proceeding-linkage check (§9 Q2) | extract-facts §6 | Its query is read-only, but its hand-off to `proceedings-profile.md` §6 writes |
+| Earlier commit defining a bare-run scan (§9 Q1) | `git log` of this repo since c96efcf9; CoClerk history of `ingest/SKILL.md`, `case-data` and `housekeeping` | None found. The nearest is CoClerk 61b97272 (2026-08-15), whose message names "a no-argument bulk invocation" and routes it to the folder-scan row, which prompts for one folder and extracts. Housekeeping's ingest-first run (CoClerk 7d4a6f22) ingests rather than reports. No text exists to restore, so the bare run is written new |
