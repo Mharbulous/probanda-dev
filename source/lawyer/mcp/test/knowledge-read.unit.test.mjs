@@ -36,7 +36,7 @@ function readError(f, path) {
   return errorOf(() => knowledgeRead(path, f.seams));
 }
 
-test("a vetted shipped type file reads with its validated layout and full provenance", (t) => {
+test("a shipped type file with no learned_by reads with its validated layout and full provenance", (t) => {
   const f = knowledgeFixture(t);
   f.shipped("draft/CAN/BC/BCSC/Documents/notice-of-application.md", knowledgeFile("kind: notice_of_application", TYPE_BLOCK));
   const result = knowledgeRead("draft\\CAN\\BC\\BCSC\\Documents\\notice-of-application.md", f.seams);

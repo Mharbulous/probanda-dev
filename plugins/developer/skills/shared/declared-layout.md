@@ -117,7 +117,7 @@ A layout item that rests on a published rule, a practitioner's instruction or an
 
 - A part carries it as its `rule_ref` member.
 - A cited scalar is written as `{ "value": <scalar>, "rule_ref": "<ref>" }` in place of the bare scalar. Only `title`, `page_limit` and `exhibit_numbering` in a type file, and the fields of a `venue.md` block, may be cited.
-- An uncited item carries no `rule_ref`. In a vetted file every item may be uncited.
+- An uncited item carries no `rule_ref`. A file may leave every item uncited.
 
 ## 8. The `venue.md` block
 

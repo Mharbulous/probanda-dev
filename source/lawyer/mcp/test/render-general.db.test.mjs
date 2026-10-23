@@ -434,6 +434,7 @@ test("the Writing's folder is named by its title with no folder_code, though the
 test("a slot, addressee and sender with no text, and no signer chosen, print whole mockup lines, and the filed render refuses naming each unwritten part", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT, person: null });
   const { filing_id: id } = await g.createLetter();
+  confirm(g, ["R-title", "R-body"]);
 
   const md = docOf(render(g, id), "General_writing").markdown;
   for (const what of ["addressee not written", "body not written", "sender not written", "signer not chosen"]) {
@@ -1119,6 +1120,7 @@ test("with no client party the counsel line is a gap on the mockup and absent fr
 test("a prose placeholder in brackets is flagged, counted and refuses the filed render; [sic] and the signing line are not flagged; a blank underline files", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const { filing_id: id } = await g.createLetter();
+  confirm(g, ["R-title", "R-body"]);
   g.setPerson("st"); // the signer is not this machine's person, so the signing line prints
   await g.prose(id, "addressee", ADDRESSEE);
   await g.prose(id, "body", "The judge said it was [sic] late.\n\nDated [insert date].");

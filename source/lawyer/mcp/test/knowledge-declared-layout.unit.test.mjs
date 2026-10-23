@@ -118,7 +118,7 @@ test("every shipped /publish format.md block validates, reads, and cites only pr
     const content = readFileSync(join(v.path, "format.md"), "utf-8");
     validateFormatBlock(extractJsonBlock(content, label, false, "invalid_format"), label);
     const result = readShipped(t, label);
-    assert.equal(result.learned, false, `${label} ships vetted`);
+    assert.equal(result.learned, false, `${label} carries no learned_by`);
     for (const item of readFrontMatter(content, label)?.items ?? []) {
       assert.equal(item.source, "practitioner", `${label}: ${item.rule_ref} is practitioner-sourced`);
       assert.ok(existsSync(join(publishSkill, item.ref)), `${label}: ${item.rule_ref} points at ${item.ref}, which exists`);

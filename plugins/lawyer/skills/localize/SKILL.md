@@ -20,7 +20,7 @@ description: Internal writer of every skill's knowledge tree. Learns a venue's o
 | 4. Spawning the helper | Spawning the helper |
 | 5. Returns | The helper returns a status |
 | 6. Operations | Running create, confirm, correct, refresh or retire |
-| 7. Notice | After a created return, or on loading a learned or vetted file |
+| 7. Notice | After a created return, or on loading a learned file |
 | 8. Live issue | Checking the live-matter rule for an overlay or repo run |
 
 # localize
@@ -94,13 +94,13 @@ Each is a tool sequence the playbook spells out.
 
 ## 7. Notice
 
-The calling skill shows this notice in its first message after a `created` return, then once per session on each load of a learned or vetted file. It fills it from header fields only:
+The calling skill shows this notice in its first message after a `created` return, then once per session on each load of a learned file. It fills it from header fields only:
 
 ```text
 Note: the {venue} requirements for {document kind} used here were learned by an agent on {accessed} from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup.
 ```
 
-A vetted file's notice names its reviewer instead (`shared/knowledge-tree.md` section 11). At each firm the notice stops only when every item reads confirmed or corrected in that firm's own sidecar. Neither promotion nor vetting stops it.
+A file whose header names `reviewed_by` gets a notice naming its reviewer instead (`shared/knowledge-tree.md` section 11). A maintainer's review is provenance only: each cited item is still tagged and still blocks the filed render until this firm confirms or corrects it. At each firm the notice stops only when every item reads confirmed or corrected in that firm's own sidecar. Neither promotion nor a review stops it.
 
 ## 8. Live issue
 
