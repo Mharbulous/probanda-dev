@@ -1,4 +1,4 @@
-Read when: the practitioner starts a read-only turn outside the job's scope, or outside any job (`references/dispatch.md` section 14).
+Read when: the practitioner starts a read-only turn outside the job's scope, or outside any job (`/work`'s `references/dispatch.md` section 14).
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 14: Tangents

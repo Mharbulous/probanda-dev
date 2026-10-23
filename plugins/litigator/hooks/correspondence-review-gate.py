@@ -9,7 +9,8 @@ holds the delivery end of that rule:
 
 - draft_harness step write_email passes only when the session itself (not a
   subagent) has spawned source-tracer with a prompt holding the call's body,
-  whitespace aside, and that agent has returned. Other steps pass.
+  whitespace aside, and that agent has returned. An empty or whitespace-only body
+  states nothing and passes. Other steps pass.
 - mail__save_draft passes only for an .eml a write_email call in this session wrote.
 - Write, Edit or MultiEdit of an .eml is refused: shared/email.md's route is the only
   author of one.
@@ -107,12 +108,14 @@ def main():
     is_write = name.endswith("drafting_forms__draft_harness")
     if is_write and tool_input.get("step") != "write_email":
         return 0
+    body = norm(str(tool_input.get("body") or ""))
+    if is_write and not body:
+        return 0  # an empty body states nothing to trace
     transcript = payload.get("transcript_path") or ""
     if not transcript:
         return deny(EMAIL_MESSAGE if is_write else SAVE_MESSAGE)
     reviewed, written = read_transcript(transcript)
     if is_write:
-        body = norm(str(tool_input.get("body") or ""))
         return 0 if any(body in norm(prompt) for prompt in reviewed) else deny(EMAIL_MESSAGE)
     target = path_key(str(tool_input.get("eml_path") or ""))
     return 0 if target and any(target in path_key(text) for text in written) else deny(SAVE_MESSAGE)

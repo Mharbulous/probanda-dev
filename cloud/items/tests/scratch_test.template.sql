@@ -1707,12 +1707,14 @@ returns jsonb language sql as $f$
       'hashes', jsonb_strip_nulls(jsonb_build_object('name', pg_temp.h(p_name)))))));
 $f$;
 
-create function pg_temp.mrole(p_tenant uuid, p_matter uuid, p_contact uuid, p_role text, p_proc text default null)
+create function pg_temp.mrole(p_tenant uuid, p_matter uuid, p_contact uuid, p_role text, p_proc text default null,
+                               p_party text default null, p_from text default null)
 returns jsonb language sql as $f$
   select pg_temp.w(p_tenant, 'upsert_matter_role', jsonb_build_array(pg_temp.op('upsert', gen_random_uuid(), 'matter_role',
     jsonb_build_object('tags', jsonb_build_object('role', p_role),
       'links', jsonb_build_object('matter', p_matter, 'contact', p_contact),
-      'hashes', jsonb_build_object('case_proceeding_id', pg_temp.h(p_proc))))));
+      'hashes', jsonb_build_object('case_proceeding_id', pg_temp.h(p_proc))
+        || jsonb_strip_nulls(jsonb_build_object('case_party_id', pg_temp.h(p_party), 'from', pg_temp.h(p_from)))))));
 $f$;
 
 create function pg_temp.affil(p_tenant uuid, p_person uuid, p_org uuid, p_from text default null)
@@ -1834,6 +1836,36 @@ begin
     and pg_temp.as_id(a2) = pg_temp.as_id(a1) and pg_temp.as_id(a3) <> pg_temp.as_id(a1)
     and pg_temp.live(v_t, 'affiliation') = 2,
     format('%s / %s / %s / %s / %s / %s / %s', r1, r2, r3, r4, a1, a2, a3));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_p uuid;
+  r0 jsonb;
+  r1 jsonb;
+  r2 jsonb;
+  r3 jsonb;
+  r4 jsonb;
+  r5 jsonb;
+begin
+  v_m := pg_temp.matter(v_t, 'L205');
+  v_p := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'Shared Counsel'));
+  r0 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1');
+  r1 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1');
+  r2 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1', 'party-1', '2024-01-10');
+  r3 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1', 'party-2', '2024-01-10');
+  r4 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1', 'party-1', '2025-06-02');
+  r5 := pg_temp.mrole(v_t, v_m, v_p, 'opposing_counsel', 'proc-1', 'party-1', '2024-01-10');
+  perform pg_temp.t_check('R12 a counsel role is one item per party and per from date, and a role with neither still matches its twin',
+    pg_temp.saved(r0) and pg_temp.as_id(r1) = pg_temp.as_id(r0)
+    and pg_temp.saved(r2) and pg_temp.as_id(r2) <> pg_temp.as_id(r0)
+    and pg_temp.saved(r3) and pg_temp.as_id(r3) <> pg_temp.as_id(r2)
+    and pg_temp.saved(r4) and pg_temp.as_id(r4) <> pg_temp.as_id(r2)
+    and pg_temp.as_id(r5) = pg_temp.as_id(r2)
+    and pg_temp.live(v_t, 'matter_role') = 4,
+    format('%s / %s / %s / %s / %s / %s', r0, r1, r2, r3, r4, r5));
 end $t$;
 
 do $t$

@@ -5,18 +5,20 @@
 // write_email runs draft/scripts/write_eml.py, which writes an unsent Outlook draft (.eml, X-Unsent: 1)
 // and sends nothing. The server decides where it goes: the top of the matter's one 0. DRAFT folder,
 // or one named folder under it, which the script creates when absent once every check has passed
-// (0. DRAFT never is). From is this machine's
+// (0. DRAFT never is). An email that belongs to no matter omits matter_root and goes under
+// <case_data_root>\_practice\drafts, created when absent. From is this machine's
 // person in the firm roster, whose signature template under the firm folder, when present, is used
 // before Outlook's (skills/shared/email.md). An attachment may be any host file, as an enclosure may under ADR 0027
 // (Brahm, #1453). No database is opened, and no file content is returned.
 
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, realpathSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError, NotFoundError, ValidationError } from "../errors.js";
 import { validateMatterRoot } from "../files/matter-root.js";
 import { resolveWithin } from "../files/scope.js";
 import { runPythonDriver } from "../python-spawn.js";
+import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { pythonTimeoutMs } from "../python-timeout.js";
 import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { emailSignaturePath, readFirmProfile } from "../tools/practice/firm-profile.js";
@@ -34,22 +36,23 @@ export const DRAFT_STEPS = ["write_email", "scrutiny_review"] as const;
 
 export interface DraftHarnessArgs extends Omit<ScrutinyReviewArgs, "step" | "matter_root"> {
   step: string;
-  matter_root: string;
+  /** write_email: omitted for an email that belongs to no matter. */
+  matter_root?: string;
   /** write_email: the draft's bare file name stem, composed under the firm's naming convention. */
   output_name?: string;
-  /** write_email: one folder name under the 0. DRAFT folder; omitted, the draft goes at its top. */
+  /** write_email: one folder name under the 0. DRAFT folder (or the firm drafts folder); omitted, the draft goes at its top. */
   folder?: string;
   to?: string[];
   cc?: string[];
   subject?: string;
   body?: string;
-  /** write_email: any host files, absolute or relative to the matter folder. */
+  /** write_email: any host files, absolute or relative to the matter folder; absolute with no matter. */
   attachments?: string[];
 }
 
 /** Runs one /draft step for a matter and returns its script's JSON line unchanged. */
 export function draftHarness(args: DraftHarnessArgs, env: NodeJS.ProcessEnv = process.env, installRoot?: string): unknown {
-  if (args.step === "scrutiny_review") return scrutinyReview(args, env, installRoot);
+  if (args.step === "scrutiny_review") return scrutinyReview(args as ScrutinyReviewArgs, env, installRoot);
   if (args.step !== "write_email") {
     throw new ValidationError(`drafting_forms__draft_harness.step must be one of: ${DRAFT_STEPS.join(", ")} (got ${JSON.stringify(args.step)})`);
   }
@@ -66,10 +69,24 @@ function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?
   assertSegment(outputName, "output_name");
   if (args.folder !== undefined) assertSegment(args.folder, "folder");
 
-  const root = validateMatterRoot(args.matter_root);
-  const outDir = args.folder === undefined ? oneDraftFolder(root, draftFolders(root)) : oneDraftFolder(root, confineWritingFolder(root, args.folder));
+  let root: string;
+  let outDir: string;
+  if (args.matter_root === undefined) {
+    const relative = attachments.filter((path) => !pathWin32.isAbsolute(path));
+    if (relative.length) {
+      throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative.join(", ")}`);
+    }
+    root = realpathSync.native(resolveCaseDataRoot(env));
+    const drafts = pathWin32.join("_practice", "drafts");
+    outDir = resolveWithin(root, args.folder === undefined ? drafts : pathWin32.join(drafts, args.folder), "the firm drafts folder", false);
+  } else {
+    root = validateMatterRoot(args.matter_root);
+    outDir = args.folder === undefined ? oneDraftFolder(root, draftFolders(root)) : oneDraftFolder(root, confineWritingFolder(root, args.folder));
+  }
   const from = sender(env);
   if ("error" in from) return from;
+  // The firm drafts folder is Probanda's own, so it is made here; write_eml.py makes a folder under it.
+  if (args.matter_root === undefined) mkdirSync(pathWin32.join(root, "_practice", "drafts"), { recursive: true });
 
   return runPythonDriver({
     label: "draft write_email (write_eml.py)",

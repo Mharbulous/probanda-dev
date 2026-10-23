@@ -80,7 +80,7 @@ Read the stage off `drafting_forms__board_card`, with `lanes: ["live"]` for the 
 
 ## 5. The outlining interview
 
-Run `/draft`'s outlining branch (`.claude/skills/draft/references/job-session.md` Branch B) at bundle level: the application as a whole, what is sought and against whom, what evidence is in hand, what must be in place before it is heard, and each captured idea. Its rules hold here unchanged: one question at a time, answers recorded in the practitioner's words, nothing proposed, a Proposal picked handled as Branch B says, legal views recorded as the practitioner's propositions, and the closing read-back as the only confirmation. Where Branch B's text and the one-session-one-role rule differ, take the stricter rule.
+Run `/draft`'s outlining branch (`.claude/skills/work/references/job-session.md` Branch B) at bundle level: the application as a whole, what is sought and against whom, what evidence is in hand, what must be in place before it is heard, and each captured idea. Its rules hold here unchanged: one question at a time, answers recorded in the practitioner's words, nothing proposed, a Proposal picked handled as Branch B says, legal views recorded as the practitioner's propositions, and the closing read-back as the only confirmation. Where Branch B's text and the one-session-one-role rule differ, take the stricter rule.
 
 - **Past events** are read from the matter's `ProceduralHistory.md` and are content. Run its currency check as Branch B does (`.claude/skills/shared/procedural-history.md`), and never ask the practitioner to recount what happened.
 - **What waits on what** is the session's call, recorded as waits-on links, as in Branch B. A link to a job is written only once that job exists.

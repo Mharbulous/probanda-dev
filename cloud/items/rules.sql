@@ -209,7 +209,8 @@ insert into rules.natural_key (kind, purpose, rank, parts, states) values
                                         'hash:proceeding_label?', 'hash:scenario_label?'],
                                   array['active']),
   ('affiliation',   'upsert',    1, array['link:person', 'link:organization', 'hash:from?'], null),
-  ('matter_role',   'upsert',    1, array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?'], null);
+  ('matter_role',   'upsert',    1, array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?',
+                                        'hash:case_party_id?', 'hash:from?'], null);
 
 delete from rules.status_policy;
 insert into rules.status_policy (status_label, required_signals, blocking_signals, auto_advance, description) values

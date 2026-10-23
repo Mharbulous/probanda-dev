@@ -78,6 +78,11 @@ class GateTests(unittest.TestCase):
         self.assertEqual(decision, "deny")
         self.assertIn("checked against", reason)
 
+    def test_an_empty_body_needs_no_review(self):
+        for body in ("", "  \n\t "):
+            with self.subTest(body=body):
+                self.assertEqual(self.write_email([], body=body)[0], "allow")
+
     def test_refuses_when_the_reviewer_read_other_text(self):
         self.assertEqual(self.write_email(review(BODY.replace("3 March", "4 March")))[0], "deny")
 

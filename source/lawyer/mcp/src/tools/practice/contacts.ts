@@ -93,6 +93,7 @@ export async function upsert_matter_role(store: PracticeStore, args: Record<stri
     data: {
       from: args.from, to: args.to, note: args.note, case_party_id: args.case_party_id,
       case_proceeding_id: creating ? args.case_proceeding_id ?? null : args.case_proceeding_id,
+      from_source_id: args.from_source_id, to_source_id: args.to_source_id, unfiled: args.unfiled,
     },
   }]);
   return rowOf(items, ops[0].as);
@@ -122,11 +123,14 @@ export async function contact_lookup(
   store: PracticeStore,
   args: Record<string, unknown>
 ): Promise<{ contacts: Row[]; near: Row[] }> {
-  if (!args.id && !args.query) throw new ValidationError("contact_lookup requires id or query");
+  const byMatter = Boolean(args.matt_num || args.matter_id);
+  if (!args.id && !args.query && !byMatter) throw new ValidationError("contact_lookup requires id, query or a matter ref");
   const items = store.items();
   const contacts = rowsOf(items, "contact");
   const affiliations = rowsOf(items, "affiliation");
-  const roles = rowsOf(items, "matter_role");
+  // With a matter ref, only that matter's roles, and only the contacts holding one.
+  const matterId = byMatter ? requireMatter(items, args).id : null;
+  const roles = rowsOf(items, "matter_role").filter((row) => matterId === null || row.matter_id === matterId);
   const matters = new Map(rowsOf(items, "matter").map((row) => [String(row.id), row]));
   const limit = typeof args.limit === "number" && args.limit > 0 ? Math.floor(args.limit) : 25;
 
@@ -135,11 +139,12 @@ export async function contact_lookup(
   const queryDigits = query.replace(/\D/g, "");
   const found = (args.id
     ? contacts.filter((contact) => contact.id === String(args.id))
-    : contacts.filter((contact) =>
+    : contacts.filter((contact) => !query ||
       [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)]
         .some((value) => typeof value === "string" && value.toLowerCase().includes(query)) ||
       (queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits))))
-  ).slice(0, limit);
+  ).filter((contact) => matterId === null || roles.some((row) => row.contact_id === contact.id)).slice(0, limit);
+  if (!args.id && !query) return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
 
   // What a near contact may share with what was found, or with the query itself.
   const names = new Set(found.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName)));
@@ -164,15 +169,17 @@ export async function contact_lookup(
     if (reasons.length) near.push({ id: contact.id, name: contact.name, entity: contact.entity, reasons });
   }
 
+  return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near };
+}
+
+/** A found contact with its affiliations and its matter roles (with matt_num). */
+function withTies(contact: Row, affiliations: Row[], roles: Row[], matters: Map<string, Row>): Row {
   return {
-    contacts: found.map((contact) => ({
-      ...contact,
-      affiliations: affiliations.filter((row) => row.person_id === contact.id || row.organization_id === contact.id),
-      roles: roles
-        .filter((row) => row.contact_id === contact.id)
-        .map((row) => ({ ...row, matt_num: matters.get(String(row.matter_id))?.matt_num ?? null })),
-    })),
-    near,
+    ...contact,
+    affiliations: affiliations.filter((row) => row.person_id === contact.id || row.organization_id === contact.id),
+    roles: roles
+      .filter((row) => row.contact_id === contact.id)
+      .map((row) => ({ ...row, matt_num: matters.get(String(row.matter_id))?.matt_num ?? null })),
   };
 }
 
@@ -354,13 +361,13 @@ export async function merge_contact(
   let combined = 0;
   const linked = (kind: string, roles: string[]) =>
     [...items].filter(([, item]) => item.kind === kind && roles.some((role) => item.links[role] === spareId));
-  const shift = (kind: string, keyLinks: string[], keyData: string, fields: string[]) => {
+  const shift = (kind: string, keyLinks: string[], keyData: string[], fields: string[]) => {
     for (const [spareItemId, item] of linked(kind, keyLinks)) {
       const role = keyLinks.find((name) => item.links[name] === spareId) as string;
       const twin = [...items].find(([, other]) =>
         other.kind === kind && other.links[role] === keepId && same(other.tags, item.tags) &&
         keyLinks.every((name) => name === role || other.links[name] === item.links[name]) &&
-        same(other.data[keyData], item.data[keyData]));
+        keyData.every((name) => same(other.data[name], item.data[name])));
       if (!twin) {
         ops.push({ op: "update", id: spareItemId, kind, links: { [role]: keepId } });
         moved++;
@@ -372,8 +379,9 @@ export async function merge_contact(
       combined++;
     }
   };
-  shift("matter_role", ["contact", "matter"], "case_proceeding_id", ["from", "to", "note", "case_party_id"]);
-  shift("affiliation", ["person", "organization"], "from", ["to", "title"]);
+  shift("matter_role", ["contact", "matter"], ["case_proceeding_id", "case_party_id", "from"],
+    ["to", "note", "from_source_id", "to_source_id", "unfiled"]);
+  shift("affiliation", ["person", "organization"], ["from"], ["to", "title"]);
 
   if (conflicts.length) return { merged: false, conflicts };
   ops.push({ op: "delete", id: spareId, kind: "contact" });

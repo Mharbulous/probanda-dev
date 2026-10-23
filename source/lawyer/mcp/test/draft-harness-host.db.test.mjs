@@ -42,7 +42,16 @@ function fixture(t, { person = "pe", entry = ENTRY } = {}) {
   const env = { ...process.env, COCLERK_CONFIG_PATH: config };
   const canon = realpathSync.native(root);
   const args = { step: "write_email", matter_root: canon, output_name: NAME, to: ["Bert Other <bert@example.org>"], subject: "Invoice 7413", body: BODY };
-  return { root: canon, draft: join(canon, "0. DRAFT"), outside: realpathSync.native(outside), env, args, run: (extra = {}) => draftHarness({ ...args, ...extra }, env) };
+  return {
+    root: canon,
+    draft: join(canon, "0. DRAFT"),
+    practice: join(realpathSync.native(caseDataRoot), "_practice"),
+    outside: realpathSync.native(outside),
+    env,
+    args,
+    run: (extra = {}) => draftHarness({ ...args, ...extra }, env),
+    runNoMatter: (extra = {}) => draftHarness({ ...args, matter_root: undefined, ...extra }, env),
+  };
 }
 
 /** The draft's headers, body and attachment names, as Python's email parser reads them. */
@@ -67,7 +76,7 @@ test("draft_harness: registered after publish_general, taking a step and that st
     "step", "matter_root", "output_name", "folder", "to", "cc", "subject", "body", "attachments",
     "db_path", "statement_id", "context_paras", "source_path", "proposed",
   ]);
-  assert.deepEqual(tools[at].inputSchema.required, ["step", "matter_root"]);
+  assert.deepEqual(tools[at].inputSchema.required, ["step"]);
   const f = fixture(t);
   await assert.rejects(callTool({}, TOOL, { ...f.args, filing_id: 1 }), /unknown field "filing_id"/);
 });
@@ -173,4 +182,51 @@ test("write_email: a taken name gets \" v2\", reports versioned_from, and leaves
   assert.ok(readFileSync(first.path).equals(bytes));
   assert.deepEqual(readdirSync(f.draft).sort(), [`${NAME} v2.eml`, `${NAME}.eml`]);
   assert.equal(existsSync(join(f.draft, `${NAME} v3.eml`)), false);
+});
+
+test("write_email: with no matter_root, writes under <case_data_root>\\_practice\\drafts, created when absent, From the roster", (t) => {
+  const f = fixture(t);
+  const drafts = join(f.practice, "drafts");
+  assert.equal(existsSync(drafts), false);
+  const result = f.runNoMatter();
+  assert.equal(result.success, true, JSON.stringify(result));
+  assert.equal(result.path, join(drafts, `${NAME}.eml`));
+  const eml = parsed(result.path);
+  assert.equal(eml["X-Unsent"], "1");
+  assert.equal(eml.From, "Pat Example <pat@example.com>");
+  assert.ok(eml.body.startsWith(BODY), eml.body);
+  const attached = f.runNoMatter({ attachments: [join(f.root, "3. CORRESPONDENCE", "invoice.pdf")] });
+  assert.equal(attached.path, join(drafts, `${NAME} v2.eml`), JSON.stringify(attached));
+  assert.deepEqual(attached.attachments, [{ name: "invoice.pdf", size: 8 }]);
+  assert.deepEqual(readdirSync(f.draft), [], "the matter's 0. DRAFT is not touched");
+});
+
+test("write_email: with no matter_root, folder is one name under the firm drafts folder; a path or a link elsewhere is refused", (t) => {
+  const f = fixture(t);
+  const result = f.runNoMatter({ folder: "Bert letters" });
+  assert.equal(result.success, true, JSON.stringify(result));
+  assert.equal(result.path, join(f.practice, "drafts", "Bert letters", `${NAME}.eml`));
+  for (const folder of ["..", "a\\b", "C:x"]) {
+    assert.equal(codeOf(() => f.runNoMatter({ folder })), "path_out_of_scope", folder);
+  }
+  symlinkSync(f.outside, join(f.practice, "drafts", "Linked"), "junction");
+  assert.equal(codeOf(() => f.runNoMatter({ folder: "Linked" })), "path_out_of_scope");
+  rmSync(join(f.practice, "drafts"), { recursive: true });
+  symlinkSync(f.outside, join(f.practice, "drafts"), "junction");
+  assert.equal(codeOf(() => f.runNoMatter()), "path_out_of_scope");
+  assert.deepEqual(readdirSync(f.outside), []);
+});
+
+test("write_email: with no matter_root, a relative attachment or no sender is refused, writing nothing", (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.runNoMatter({ attachments: ["3. CORRESPONDENCE\\invoice.pdf"] }), /must be absolute paths when no matter_root/);
+  const noPerson = fixture(t, { person: null });
+  const result = noPerson.runNoMatter();
+  assert.deepEqual([result.success, result.error], [false, "from_unresolved"], JSON.stringify(result));
+  for (const each of [f, noPerson]) assert.equal(existsSync(join(each.practice, "drafts")), false);
+});
+
+test("scrutiny_review: still refuses with no matter_root", (t) => {
+  const f = fixture(t);
+  assert.equal(codeOf(() => draftHarness({ step: "scrutiny_review", db_path: join(f.root, "x.db"), statement_id: 1 }, f.env)), "invalid_root");
 });

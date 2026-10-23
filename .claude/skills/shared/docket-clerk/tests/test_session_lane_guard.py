@@ -63,7 +63,7 @@ class SessionLaneGuardTest(unittest.TestCase):
         self.assertEqual(self.tool(self.AUDIT, session=fresh).returncode, 0)
 
     def test_each_drafting_skill_enters_the_drafting_lane(self):
-        for name in ("draft", "publish", "litigator:polish-substance", "litigator:assemble", "prepare"):
+        for name in ("draft", "publish", "litigator:polish-substance", "litigator:assemble", "prepare", "work", "litigator:work"):
             session = str(uuid.uuid4())
             self.assertEqual(self.skill(name, session=session).returncode, 0, name)
             self.assertEqual(self.tool(self.AUDIT, session=session).returncode, 2, name)

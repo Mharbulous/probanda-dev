@@ -46,7 +46,7 @@ test("a contact, an affiliation and a matter role are written, and an update cha
 
   const role = await contacts.upsert_matter_role(store, { matt_num: "L101", contact_id: jane.contact_id, role: "opposing_counsel", case_party_id: 2 });
   assert.deepEqual([role.matter_id, role.contact_id, role.role, role.case_party_id], [matter_id, jane.contact_id, "opposing_counsel", 2]);
-  const twice = await contacts.upsert_matter_role(store, { matt_num: "L101", contact_id: jane.contact_id, role: "opposing_counsel" });
+  const twice = await contacts.upsert_matter_role(store, { matt_num: "L101", contact_id: jane.contact_id, role: "opposing_counsel", case_party_id: 2 });
   assert.equal(twice.id, role.id, "proposing the same role twice is one role");
   const other = await contacts.upsert_matter_role(store, { matt_num: "L101", contact_id: jane.contact_id, role: "opposing_counsel", case_proceeding_id: 7 });
   assert.notEqual(other.id, role.id, "the same role in a proceeding of its own is a second role");
@@ -123,7 +123,71 @@ test("contact_lookup finds by name, email or phone and lists likely duplicates a
   assert.deepEqual(byPhone.contacts.map((row) => row.id).sort(), [acme.contact_id, sharer.contact_id].sort());
   const byId = await contacts.contact_lookup(store, { id: acme2.contact_id });
   assert.deepEqual(byId.near.map((row) => row.id), [acme.contact_id]);
-  await assert.rejects(contacts.contact_lookup(store, {}), /requires id or query/);
+  await assert.rejects(contacts.contact_lookup(store, {}), /requires id, query or a matter ref/);
+});
+
+// A party's counsel history: one role per appearance, closed by id, read back by matter.
+const counsel = (store, contact_id, extra) => contacts.upsert_matter_role(store,
+  { matt_num: "L113", contact_id, role: "opposing_counsel", case_party_id: 3, case_proceeding_id: 1, ...extra });
+
+test("two successive changes of counsel keep all three lawyers, each with its dates and source", async (t) => {
+  const { store } = await setup(t, "counsel-history");
+  await matter(store, "L113");
+  const [first, second, third] = [await person(store, "First Lawyer"), await person(store, "Second Lawyer"), await person(store, "Third Lawyer")];
+  const a = await counsel(store, first.contact_id, { from: "2023-02-01", from_source_id: 10 });
+  const b = await counsel(store, second.contact_id, { from: "2024-05-06", from_source_id: 21 });
+  await contacts.upsert_matter_role(store, { id: a.id, to: "2024-05-06", to_source_id: 21 });
+  await counsel(store, third.contact_id, { from: "2025-01-15", from_source_id: 34 });
+  await contacts.upsert_matter_role(store, { id: b.id, to: "2025-01-15", to_source_id: 34 });
+
+  const { contacts: found, near } = await contacts.contact_lookup(store, { matt_num: "L113" });
+  assert.deepEqual(near, []);
+  const history = found.flatMap((contact) => contact.roles.map((role) =>
+    [contact.name, role.from, role.from_source_id, role.to ?? null, role.to_source_id ?? null])).sort();
+  assert.deepEqual(history, [
+    ["First Lawyer", "2023-02-01", 10, "2024-05-06", 21],
+    ["Second Lawyer", "2024-05-06", 21, "2025-01-15", 34],
+    ["Third Lawyer", "2025-01-15", 34, null, null],
+  ]);
+});
+
+test("an unfiled notice opens an appearance that its filed copy updates, with no second appearance", async (t) => {
+  const { store } = await setup(t, "counsel-unfiled");
+  await matter(store, "L113");
+  const lawyer = await person(store, "New Lawyer");
+  const opened = await counsel(store, lawyer.contact_id, { from: "2025-03-03", from_source_id: 40, unfiled: true });
+  assert.equal(opened.unfiled, true);
+  const filed = await contacts.upsert_matter_role(store, { id: opened.id, from: "2025-03-10", from_source_id: 41, unfiled: false });
+  assert.equal(filed.id, opened.id);
+  assert.deepEqual(store.rows("matter_role").map((row) => [row.from, row.from_source_id, row.unfiled]), [["2025-03-10", 41, false]]);
+});
+
+test("one lawyer for two parties, or back on record after leaving, has a role for each, and an old role still matches", async (t) => {
+  const { store } = await setup(t, "counsel-key");
+  await matter(store, "L113");
+  const lawyer = await person(store, "Shared Lawyer");
+  const legacy = await contacts.upsert_matter_role(store, { matt_num: "L113", contact_id: lawyer.contact_id, role: "opposing_counsel", case_proceeding_id: 1 });
+  const legacyAgain = await contacts.upsert_matter_role(store, { matt_num: "L113", contact_id: lawyer.contact_id, role: "opposing_counsel", case_proceeding_id: 1 });
+  assert.equal(legacyAgain.id, legacy.id, "a role with no party or from still matches its twin");
+  const forThree = await counsel(store, lawyer.contact_id, { from: "2023-02-01" });
+  const forFour = await counsel(store, lawyer.contact_id, { case_party_id: 4, from: "2023-02-01" });
+  await contacts.upsert_matter_role(store, { id: forThree.id, to: "2023-09-01" });
+  const back = await counsel(store, lawyer.contact_id, { from: "2024-04-04" });
+  assert.equal(new Set([legacy.id, forThree.id, forFour.id, back.id]).size, 4);
+  assert.equal(store.rows("matter_role").length, 4);
+});
+
+test("merge_contact carries a combined counsel role's source fields", async (t) => {
+  const { store } = await setup(t, "counsel-merge");
+  await matter(store, "L113");
+  const keep = await person(store, "Kim Counsel");
+  const spare = await person(store, "K. Counsel");
+  const kept = await counsel(store, keep.contact_id, { from: "2023-02-01" });
+  await counsel(store, spare.contact_id, { from: "2023-02-01", from_source_id: 12, to: "2024-01-02", to_source_id: 19 });
+  const result = await contacts.merge_contact(store, { keep_id: keep.contact_id, spare_id: spare.contact_id });
+  assert.deepEqual(result, { merged: true, contact_id: keep.contact_id, moved: 0, combined: 1 });
+  const [role] = store.rows("matter_role");
+  assert.deepEqual([role.id, role.from_source_id, role.to, role.to_source_id], [kept.id, 12, "2024-01-02", 19]);
 });
 
 test("check 2 lists each matter-data party no matter role points to, by the matter-data folder named for the matter", async (t) => {
@@ -188,8 +252,8 @@ test("merge_contact combines lists, keeps the spare's name, moves and combines i
   const keep = await person(store, "John Smith", { emails: ["john@a.example"], note: "Prefers email" });
   const spare = await person(store, "J. Smith", { emails: ["john@a.example", "js@b.example"], phones: ["604-555-0100"] });
   const firm = await contacts.upsert_contact(store, { entity: "organization", name: "Smith Law" });
-  await contacts.upsert_matter_role(store, { matt_num: "L109", contact_id: keep.contact_id, role: "opposing_counsel" });
-  const twin = await contacts.upsert_matter_role(store, { matt_num: "L109", contact_id: spare.contact_id, role: "opposing_counsel", case_party_id: 4 });
+  await contacts.upsert_matter_role(store, { matt_num: "L109", contact_id: keep.contact_id, role: "opposing_counsel", case_party_id: 4 });
+  const twin = await contacts.upsert_matter_role(store, { matt_num: "L109", contact_id: spare.contact_id, role: "opposing_counsel", case_party_id: 4, to: "2025-02-03" });
   const other = await contacts.upsert_matter_role(store, { matt_num: "L110", contact_id: spare.contact_id, role: "expert" });
   const tie = await contacts.upsert_affiliation(store, { person_id: spare.contact_id, organization_id: firm.contact_id, title: "Associate" });
 
@@ -203,7 +267,7 @@ test("merge_contact combines lists, keeps the spare's name, moves and combines i
     ["John Smith", ["john@a.example", "js@b.example"], ["604-555-0100"], ["J. Smith"], "Prefers email"]);
   const roles = store.rows("matter_role");
   assert.ok(roles.every((row) => row.contact_id === keep.contact_id));
-  assert.deepEqual(roles.filter((row) => row.role === "opposing_counsel").map((row) => row.case_party_id), [4], "the twin's case_party_id fills keep's role");
+  assert.deepEqual(roles.filter((row) => row.role === "opposing_counsel").map((row) => row.to), ["2025-02-03"], "the twin's to fills keep's role");
   assert.ok(roles.some((row) => row.id === other.id));
   const [moved] = store.rows("affiliation").filter((row) => row.id === tie.id);
   assert.equal(moved.person_id, keep.contact_id);
@@ -215,15 +279,15 @@ test("merge_contact writes nothing when the two contacts or their combined roles
   await matter(store, "L111");
   const keep = await person(store, "Ann Lee", { note: "Met at CLE" });
   const spare = await person(store, "Ann Lee", { note: "Referred by Bob" });
-  await contacts.upsert_matter_role(store, { matt_num: "L111", contact_id: keep.contact_id, role: "client", from: "2024-01-01" });
-  const spareRole = await contacts.upsert_matter_role(store, { matt_num: "L111", contact_id: spare.contact_id, role: "client", from: "2024-03-01" });
+  await contacts.upsert_matter_role(store, { matt_num: "L111", contact_id: keep.contact_id, role: "client", from: "2024-01-01", to: "2024-06-01" });
+  const spareRole = await contacts.upsert_matter_role(store, { matt_num: "L111", contact_id: spare.contact_id, role: "client", from: "2024-01-01", to: "2024-09-01" });
   const org = await contacts.upsert_contact(store, { entity: "organization", name: "Ann Lee Ltd." });
   const before = cloud.writes().length;
 
   const result = await contacts.merge_contact(store, { keep_id: keep.contact_id, spare_id: spare.contact_id });
   assert.equal(result.merged, false);
   assert.deepEqual(result.conflicts.map((c) => [c.field, c.keep, c.spare]).sort(),
-    [["from", "2024-01-01", "2024-03-01"], ["note", "Met at CLE", "Referred by Bob"]]);
+    [["note", "Met at CLE", "Referred by Bob"], ["to", "2024-06-01", "2024-09-01"]]);
   assert.equal(cloud.writes().length, before, "nothing left the machine");
   assert.ok(store.items().has(spare.contact_id) && store.items().has(spareRole.id));
 

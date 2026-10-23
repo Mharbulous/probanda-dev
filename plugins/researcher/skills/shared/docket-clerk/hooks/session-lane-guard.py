@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 LANES = {
-    "drafting": {"draft", "publish", "polish-substance", "assemble", "prepare"},
+    "drafting": {"draft", "publish", "polish-substance", "assemble", "prepare", "work"},
 }
 SLASH_RE = re.compile(r"^\s*/([\w.:-]+)")
 COMMAND_RE = re.compile(r"<command-name>/?([\w.:-]+)</command-name>")

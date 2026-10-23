@@ -121,7 +121,8 @@
         "prepare",
         "publish",
         "rule-migrate",
-        "solver"
+        "solver",
+        "work"
       ],
       "agents": [
         "marshal-facts",

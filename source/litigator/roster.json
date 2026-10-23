@@ -40,5 +40,6 @@
     "subskills/publish-general/scripts"
   ],
   "rule-migrate": [],
-  "solver": []
+  "solver": [],
+  "work": []
 }

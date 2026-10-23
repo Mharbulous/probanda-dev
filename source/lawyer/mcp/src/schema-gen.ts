@@ -582,7 +582,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("upsert_matter_role"),
-      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id, case_party_id, from), so proposing the same role twice returns the one already recorded, while one lawyer acting for two parties, or coming back on record after leaving, gets a role for each. An ended role keeps its row with to set; nothing is deleted when a matter closes. For counsel of record, from and to are the on-record and off-record dates, from_source_id and to_source_id the matter-data source_id of the instrument that dated each, and unfiled true while from is the signed date of a notice not yet filed; change an existing role's dates by id, never by a second upsert. Returns the role row.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         ...matterRef,
@@ -593,14 +593,18 @@ export function practiceToolDefinitions(): ToolDefinition[] {
         { name: "note", type: "str" },
         { name: "case_party_id", type: "num" },
         { name: "case_proceeding_id", type: "num" },
+        { name: "from_source_id", type: "num" },
+        { name: "to_source_id", type: "num" },
+        { name: "unfiled", type: "bool" },
       ]),
     },
     {
       name: practicePrefixed("contact_lookup"),
-      description: "Find contacts, locally and offline, by id or by query (a case-insensitive substring of a name, another name, an email or a phone). Returns {contacts, near}: each contact with its affiliations and its matter roles (with matt_num), and near, the other contacts that may be the same person or organization (the same name once case, punctuation and a corporate suffix such as Ltd., Inc. or LLP are ignored, or a shared email or phone), each with its reason. limit caps contacts (default 25). Whether a near contact is the same one is the practitioner's decision.",
+      description: "Find contacts, locally and offline, by id or by query (a case-insensitive substring of a name, another name, an email or a phone), or by a matter ref (matt_num or matter_id) alone. Returns {contacts, near}: each contact with its affiliations and its matter roles (with matt_num), and near, the other contacts that may be the same person or organization (the same name once case, punctuation and a corporate suffix such as Ltd., Inc. or LLP are ignored, or a shared email or phone), each with its reason. With a matter ref, only the contacts holding a role on that matter are returned, each with that matter's roles only, so a party's counsel history is its roles' from and to; near is empty when no id or query is given. limit caps contacts (default 25). Whether a near contact is the same one is the practitioner's decision.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         { name: "query", type: "str" },
+        ...matterRef,
         { name: "limit", type: "num" },
       ]),
     },
@@ -615,7 +619,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("merge_contact"),
-      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role and case_proceeding_id) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, or a combined role's or affiliation's from, to, title, note or case_party_id), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
+      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role, case_proceeding_id, case_party_id and from) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, a combined role's to, note, from_source_id, to_source_id or unfiled, or a combined affiliation's to or title), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
       inputSchema: objectSchema([
         { name: "keep_id", type: "str" },
         { name: "spare_id", type: "str" },
@@ -2919,7 +2923,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "/draft or not (skills/shared/email.md): never a mail send tool. It (output_name, to, subject, body; optional folder, " +
         "cc, attachments) writes an unsent Outlook draft, <output_name>.eml with X-Unsent: 1, which Outlook opens as a new " +
         "message ready to send; nothing is sent. It goes at the top of the matter's one 0. DRAFT folder (never created), or " +
-        "in folder, one folder name under it, created when absent. output_name is a bare file name stem, no extension, that " +
+        "in folder, one folder name under it, created when absent. For an email that belongs to no matter, omit matter_root: " +
+        "the draft goes under <case_data_root>\\_practice\\drafts (or folder under it), created when absent, and every " +
+        "attachment must be absolute. output_name is a bare file name stem, no extension, that " +
         "the caller composed under the firm's naming convention; a taken name gets the next \" vN\", reported as " +
         "versioned_from, and nothing is ever overwritten. to (at least one) and cc are address strings, \"Name <a@b>\" or " +
         "\"a@b\"; body is plain text; attachments are any host files, absolute or relative to the matter folder. From is " +
@@ -2986,7 +2992,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
             additionalProperties: false,
           },
         },
-        required: ["step", "matter_root"],
+        required: ["step"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },

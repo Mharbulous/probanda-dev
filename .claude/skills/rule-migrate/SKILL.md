@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # /rule-migrate
 
-Purpose: a `/draft` working rule has just come up in real work, and the practitioner wants it moved from the pilot's tagged atoms onto the rules map, where each node of practitioner positions carries its own rules. This skill produces one fenced code block that can be copied straight into Claude Code, where the move is made. Then go back to the interrupted work. It never moves, edits or deletes anything itself.
+Purpose: a `/draft` working rule has just come up in real work, and the practitioner wants it moved from the pilot's tagged atoms onto the rules map, where each node of practitioner positions carries its own rules. This skill produces one fenced code block that can be copied straight into Claude Code, where the move is made. Then go back to the interrupted work. It never moves, edits or deletes anything itself. A `/work` working rule is a pilot atom in `work/` and stays there: the map's `replaces` names `/draft`'s atoms, in `draft/`, only.
 
 The map is the node files under `draft/rules/nodes/`. Each holds one node, its move edges and its rules. A rule on a node is in force on every path through that node. A rule may override one rule on an ancestor node, with a written reason. While a rule exists both as a node rule and as a pilot atom, the node rule names the atom in `replaces` and the pilot stops serving the atom. A rule's lifecycle is: markdown only, then migrated (node rule plus pilot atom), then verified (served from its node in a later session), then retired (pilot atom deleted).
 

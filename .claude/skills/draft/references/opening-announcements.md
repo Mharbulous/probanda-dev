@@ -1,4 +1,4 @@
-Read when: the card's completion criteria (`board_card(lanes: ["criteria"])`) show every criterion above counsel-review met, or every gate step closed (SKILL.md section 14, "Opening announcements").
+Read when: the card's completion criteria (`board_card(lanes: ["criteria"])`) show every criterion above counsel-review met, or every gate step closed (`/work`'s section 14, "Opening announcements").
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 14: The three Opening announcements

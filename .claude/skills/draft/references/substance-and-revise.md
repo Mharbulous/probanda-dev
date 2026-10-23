@@ -27,7 +27,7 @@ Offer a closed template set as a plain-language menu of all choices, never as on
 
 Where the type file has a Deployment section, follow it.
 
-**Legacy loose-thread marker:** see `references/legacy.md`.
+**Legacy loose-thread marker:** see `/work`'s `references/legacy.md`.
 
 ## Section 12: Revise
 
@@ -37,7 +37,7 @@ The practitioner speaks in the numbers printed on the mockup they are looking at
 
 Once the overstatement review has run on the Writing, a revision that adds or changes an assertion reruns the overstatement review on that assertion with the re-render, one decision form per new flagged finding, each left undecided written to the Job Board, never a report or a card (`references/overstatement.md`).
 
-A revision that falsifies a fact a letter's title names offers a new title in one line. Once confirmed, retitle through `/drafting-data`, then run section 11's rename and the nightly-list retitle update (`references/nightly-launch.md`, Opt-in, withdrawal and retitle), and render again.
+A revision that falsifies a fact a letter's title names offers a new title in one line. Once confirmed, retitle through `/drafting-data`, then run section 11's rename and the nightly-list retitle update (`/work`'s `references/nightly-launch.md`, Opt-in, withdrawal and retitle), and render again.
 
 A revision's Word or PDF copy is presented as current, with its superseded copies offered to TRASH (`shared/workspace-output-rule.md`).
 

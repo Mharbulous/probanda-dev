@@ -6,7 +6,7 @@ Shared rule for what a job's plan must hold. It is not a skill: it has no `SKILL
 
 Every plan states:
 
-1. **Each step as a concrete action on a named object.** A step never restates the job's title or intent: that is the restating check (`draft/references/job-session.md`, "A step that only restates the request"), which stays and runs first.
+1. **Each step as a concrete action on a named object.** A step never restates the job's title or intent: that is the restating check (`work/references/job-session.md`, "A step that only restates the request"), which stays and runs first.
 2. **The deliverable and where it lands:** the document, record or answer the job produces, and the folder, Writing or record it is saved to.
 3. **Each approval point:** every point where the practitioner must approve before the work continues, named at the step it follows.
 4. **The completion test:** what must be true for the job to be complete.
@@ -30,6 +30,6 @@ At pickup, take-over, restore and a re-taken release, and before each announceme
 
 An upgrade needs no adoption and no pasting (`shared/paralegal-posture.md` section 3): the session writes the upgraded steps and names them in the announcement, as the pickup review names what it changed.
 
-The upgrade skips a job whose steps are fixed or kept as written: a fixed-text job (the list `draft/references/job-session.md`'s pickup review skips), an intake note-up or grouped intake job, and a job whose steps were split along its item's own numbered or lettered parts (`draft/references/job-session.md`, `draft.note-up`).
+The upgrade skips a job whose steps are fixed or kept as written: a fixed-text job (the list `work/references/job-session.md`'s pickup review skips), an intake note-up or grouped intake job, and a job whose steps were split along its item's own numbered or lettered parts (`draft/references/job-session.md`, `draft.note-up`).
 
 **Unattended.** An unattended run never pauses and never upgrades. Where it meets a plan that falls short, it writes nothing, reports which of sections 1 and 2 the plan lacks, and stops, as the restating check does.

@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 # The reply route
 
-A reply to a message is a plain markdown file at the top of the matter's `0. DRAFT` folder (ADR 0040). It is not a Writing. It has no job and no mockup, so the route takes no intake and no session entry's opening (SKILL.md section 6). It opens the drafting database only to attach the file to one Job Board (section 3, ADR 0042). A formal letter is not this route: one on letterhead, one with enclosures, or one the practitioner calls a letter goes by `references/letters.md`. Asked for one mid-route, leave the route and go there.
+A reply to a message is a plain markdown file at the top of the matter's `0. DRAFT` folder (ADR 0040). It is not a Writing. It has no job and no mockup, so the route takes no intake and no session entry's opening (`/work`'s section 6). It opens the drafting database only to attach the file to one Job Board (section 3, ADR 0042). A formal letter is not this route: one on letterhead, one with enclosures, or one the practitioner calls a letter goes by `references/letters.md`. Asked for one mid-route, leave the route and go there.
 
 Two doctrines hold throughout:
 
@@ -12,7 +12,7 @@ Two doctrines hold throughout:
 
 ## 1. Tools and the matter folder
 
-Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_forms__draft_harness`, `drafting_forms__open_session`, `drafting_forms__render`, `drafting_data__query`, `drafting_data__execute` and the file-card tool in one ToolSearch, with the host prefix variants as SKILL.md section 6 loads them. The matter folder comes by section 6's **Matter folder** rule, and is never searched for. Pass that absolute path as `matter_root` on every call.
+Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_forms__draft_harness`, `drafting_forms__open_session`, `drafting_forms__render`, `drafting_data__query`, `drafting_data__execute` and the file-card tool in one ToolSearch, with the host prefix variants as `/work`'s section 6 loads them. The matter folder comes by section 6's **Matter folder** rule, and is never searched for. Pass that absolute path as `matter_root` on every call.
 
 ## 2. Find the message
 

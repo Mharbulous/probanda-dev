@@ -7,7 +7,7 @@ Every letter can be used as evidence of what it states. The review checks each f
 ## 1. When
 
 - Before each presentation of a letter, email or memo mockup whose text changed since its last review.
-- Before each `write_email` call. The covering email of a letter is reviewed on its own body. A letter it encloses was reviewed at its mockup.
+- Before each `write_email` call. The covering email of a letter is reviewed on its own body. A letter it encloses was reviewed at its mockup. An empty body states nothing and needs no review.
 - On the reply route, before the `.eml` of `references/reply.md` §6.
 
 ## 2. Spawn the reviewer

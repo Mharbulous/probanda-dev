@@ -1,7 +1,7 @@
 Read when: the assigned job is `Prepare the review pages`, or its title starts with `Counsel's review of `.
 Assumes SKILL.md and `references/job-session.md` are loaded. Rules are not restated here.
 
-Both jobs are `/drafting-data`'s fixed-text jobs (`/drafting-data` §3c), created at the Opening once the pre-review passes leave nothing open (SKILL.md section 14). Every read and write below goes through the gatekeeper. Its storage rules for approvals and discussion points are `.claude/skills/drafting-data/references/review.md`.
+Both jobs are `/drafting-data`'s fixed-text jobs (`/drafting-data` §3c), created at the Opening once the pre-review passes leave nothing open (`/work`'s section 14). Every read and write below goes through the gatekeeper. Its storage rules for approvals and discussion points are `.claude/skills/drafting-data/references/review.md`.
 
 A **unit** is one 🧐 line on a forum mockup (the mockup of a document that is sent, a letter's or memo's included), the line of one statement, proposition, postulate, submission, order sought, clause or prose slot. A prose slot is one slot of a Writing's own text, reviewed whole, and has no source (`"source": null`). One line can carry the 🧐 of several objects: a Notice of Application fact line merges a postulate with each of its statements of fact, and an order sought's line merges the order with the Writing's own wording of it, where the Writing has one (`review.md` "Snapshot fields"). The unit's approval is therefore an approval of every object whose 🧐 is on that line, and the line's 🧐 clears only when each of them has one.
 
@@ -16,7 +16,7 @@ An ordinary AI job with one step, dispatched like any other. It never writes the
 
 ## The review session
 
-The review job is a one-step job whose step is the practitioner's. Assigning it follows `job-session.md` Branch A, and then this section runs in place of dispatch. The session executes the review and only records: approvals, discussion points, and the wording changes the practitioner dictates. Work needing AI becomes a job only in a later outlining session.
+The review job is a one-step job whose step is the practitioner's. Assigning it follows `/work`'s `job-session.md` Branch A, and then this section runs in place of dispatch. The session executes the review and only records: approvals, discussion points, and the wording changes the practitioner dictates. Work needing AI becomes a job only in a later outlining session.
 
 **Mode.** Four modes: scope is **full review** or **review changed**, and comments are **at the end** or **per paragraph**. Read the stored `review` block from `probanda.json` through `/practice-data`. If it is absent, ask once, one form per choice, and write the answers back there. The practitioner may switch mode at any point. Keep to the new mode until told otherwise, and write nothing back for a switch.
 

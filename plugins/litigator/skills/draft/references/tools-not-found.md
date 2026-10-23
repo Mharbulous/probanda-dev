@@ -1,4 +1,4 @@
-Read when: the opening ToolSearch and its one retry did not return drafting_forms__open_session, and the session has stopped (SKILL.md section 6, "Tools not found").
+Read when: the opening ToolSearch and its one retry did not return drafting_forms__open_session, and the session has stopped (`/work`'s section 6, "Tools not found").
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 6: Tools not found, the two cases

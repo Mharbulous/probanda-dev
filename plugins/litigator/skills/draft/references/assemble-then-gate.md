@@ -1,4 +1,4 @@
-Read when: the drafting conditions hold, the Writing is declared ready, an Opening announcement names section 13 (SKILL.md section 14: the pre-review passes, the declaration), or the practitioner asks for a court-ready Word document or PDF while a drafting criterion is unmet (the practitioner's override, below), or asks to waive or suppress a requirement nobody may waive (suppression, below).
+Read when: the drafting conditions hold, the Writing is declared ready, an Opening announcement names section 13 (`/work`'s section 14: the pre-review passes, the declaration), or the practitioner asks for a court-ready Word document or PDF while a drafting criterion is unmet (the practitioner's override, below), or asks to waive or suppress a requirement nobody may waive (suppression, below).
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 13: Assemble, then gate

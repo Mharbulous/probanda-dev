@@ -95,7 +95,7 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
 
 One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. It is also the write that adds a step for each tier a held research job's return names as not run (`shared/legal-research.md`, "On a held job, an open tier is not an answer"): its `INSERT` with no `DELETE`, so every step already on the job keeps its row and its stamp. Then run the confirm-read below and read it as below.
 
-**The pickup rewrite.** `/draft`'s pickup review (`draft/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
+**The pickup rewrite.** `/draft`'s pickup review (`work/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
 
 ```sql
 DELETE FROM ticket_steps WHERE ticket_id = 2
@@ -117,7 +117,7 @@ UPDATE tickets SET title = 'Reply to the letter of 3 May'
 
 Every statement carries the same guard, so either all of them write or none does. Each title and step is cut from the job card's own words as a `drafting_forms__*` result printed them this session; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced. Confirm-read the title and the steps in order: anything but the written text assigns nothing and re-renders.
 
-**The held-job title cleanup.** `/draft`'s title spelling cleanup (`draft/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. The pickup rewrite's guard matches no row there, so the write is a title-only `UPDATE` under this section's guard, through `drafting_data__execute`, and nothing else in the script:
+**The held-job title cleanup.** `/draft`'s title spelling cleanup (`work/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. The pickup rewrite's guard matches no row there, so the write is a title-only `UPDATE` under this section's guard, through `drafting_data__execute`, and nothing else in the script:
 
 ```sql
 UPDATE tickets SET title = 'Reply to the letter of 3 May'
@@ -126,7 +126,7 @@ UPDATE tickets SET title = 'Reply to the letter of 3 May'
 
 It touches no step and no stamp. The title is the card's title with only a misspelled word corrected. Then run the confirm-read below and read it as below.
 
-If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/draft`'s `job-session.md`, "A form is one job") is appended by the partial replace's `INSERT` with no `DELETE`, so done steps keep their stamps, and is written with the stamp only once the practitioner re-approves the read-back list.
+If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/work`'s `job-session.md`, "A form is one job") is appended by the partial replace's `INSERT` with no `DELETE`, so done steps keep their stamps, and is written with the stamp only once the practitioner re-approves the read-back list.
 
 **The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
 
@@ -264,7 +264,7 @@ UPDATE seeds SET discarded_at = NULL WHERE id = 7 AND discarded_at IS NOT NULL;
 SELECT id, discarded_at FROM seeds WHERE id = 7;
 ```
 
-**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. Written only after the Suggestion Box's post has returned an issue number (`draft/references/suggestion-box.md`), never before and never without one. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
+**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. Written only after the Suggestion Box's post has returned an issue number (`work/references/suggestion-box.md`), never before and never without one. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
 
 ```sql
 UPDATE seeds SET suggested_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = 7 AND suggested_at IS NULL AND discarded_at IS NULL;
