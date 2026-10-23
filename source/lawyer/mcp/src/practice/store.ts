@@ -10,14 +10,15 @@
 //   5. refused: the pending entry is removed and the question, its items described, is the error.
 //
 // A cloud that does not answer at step 3 leaves nothing anywhere. A failure after the cloud
-// saved leaves the pending entry, which the next practice tool call replays with its write_id.
+// saved, or a connection reset at step 3 that leaves unknown whether it saved, leaves the
+// pending entry, which the next practice tool call replays with its write_id.
 // Reads never call the cloud.
 
 import { randomBytes, randomUUID } from "node:crypto";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import type { KvWrite } from "../kv/backend.js";
-import { CloudUnreachableError, callItems } from "./cloud.js";
+import { CloudResetError, CloudUnreachableError, callItems } from "./cloud.js";
 import { SqlitePracticeKv, type PracticeKv } from "./backend.js";
 import { describe, rowsOf, type Item, type Row } from "./items.js";
 import { buildOp, guardRaw, type CloudOp, type OpSpec } from "./ops.js";
@@ -58,6 +59,8 @@ export interface ReplayedWrite {
   write_id: string;
   tool: string;
   saved: boolean;
+  /** A refused replay's question, its items described. */
+  question?: string;
 }
 
 interface SyncItem {
@@ -162,6 +165,7 @@ export class PracticeStore {
       reply = await callItems(this.env, "write", pending.write);
       if (reply.saved !== true && reply.saved !== false) throw new CloudUnreachableError("a reply with no saved field");
     } catch (err) {
+      if (err instanceof CloudResetError) throw this.outcomeUnknown(writeId, err.detail);
       // Nothing reached the cloud, or nothing it said can be taken as a save.
       this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
       throw err;
@@ -181,8 +185,10 @@ export class PracticeStore {
     for (const [writeId, pending] of queue) {
       const reply = await callItems(this.env, "write", pending.write);
       if (reply.saved === false) {
+        // A write reset before the cloud saved it reaches the cloud first here, and may be refused.
+        const question = this.fillQuestion(String(reply.question ?? ""), this.snapshot().items, pending.local);
         this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
-        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: false });
+        replayed.push({ write_id: writeId, tool: pending.write.tool, saved: false, question });
       } else if (reply.saved === true) {
         await this.applySaved(writeId, pending, reply, this.snapshot());
         replayed.push({ write_id: writeId, tool: pending.write.tool, saved: true });
@@ -257,6 +263,15 @@ export class PracticeStore {
     return new DataServerError(
       `Probanda's Cloud saved this write, but it could not be applied to practice.db (${detail}). ` +
         `It is kept as pending write ${writeId} and is applied by the next practice tool call.`,
+      "write_pending"
+    );
+  }
+
+  private outcomeUnknown(writeId: string, detail: string): DataServerError {
+    return new DataServerError(
+      `Probanda's Cloud may have saved this write: the connection was reset before its answer arrived (${detail}). ` +
+        `It is kept as pending write ${writeId}, and the next practice tool call sends it again with the same write_id: ` +
+        "the cloud saves it once, or answers with a question. Do not repeat this call.",
       "write_pending"
     );
   }

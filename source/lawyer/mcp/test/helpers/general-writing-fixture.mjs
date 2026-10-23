@@ -58,9 +58,11 @@ reviewed_on:
 sources:
   - ../Sources/conduct.md`;
 
-/** The same file vetted: no learned_by, so it is never tagged unverified and never refused. Its
- * notice still shows until this firm confirms or corrects every cited item (#121). */
-export const VETTED_FRONT = `accessed: 2026-09-20
+/** The same file after a maintainer's review: still learned, its header naming the reviewer. Its
+ * items are tagged and refused until this firm confirms or corrects each (#163). */
+export const REVIEWED_FRONT = `learned_by: agent
+accessed: 2026-09-20
+matter: L0000
 reviewed_by: Pat Example
 reviewed_on: 2026-09-22
 sources:
@@ -94,7 +96,7 @@ const PARTY_LETTER_BLOCK = {
   parts: [part("addressee"), part("slot:body"), part("signature-block")],
 };
 
-/** A vetted internal memo using every DB-backed projection, each heading numbering, and a
+/** An internal memo citing nothing, using every DB-backed projection, each heading numbering, and a
  * `restart` part followed by a `continue` one. */
 export const MEMO_BLOCK = {
   renderer: "general",

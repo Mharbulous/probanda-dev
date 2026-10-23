@@ -1,12 +1,13 @@
 // The practice write sequence against a fake Probanda's Cloud
 // (docs/Plans/2026-10-14_practice-db-conversion.md, step 5): the ops sent, that no clear data
 // value and no hash_key leaves the machine, that a refusal or an unreachable cloud writes
-// nothing locally, that a write saved but not applied is replayed, and that reads never call
-// the cloud.
+// nothing locally, that a write saved but not applied, or reset on the way, is replayed, and
+// that reads never call the cloud.
 
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -143,22 +144,79 @@ test("a refused write writes nothing locally and returns the question with its i
   assert.deepEqual(entries(kv, "pending"), [], "the pending entry is removed");
 });
 
-for (const [mode, detail] of [["down", /fetch failed/], ["html", /not JSON/], ["nosaved", /no saved field/]]) {
-  test(`a cloud that ${mode === "down" ? "cannot be reached" : mode === "html" ? "answers with HTML" : "answers without saved"} writes nothing and says so`, async (t) => {
+for (const [mode, detail] of [["refused", /ECONNREFUSED/], ["html", /not JSON/], ["http500", /^HTTP 500$/], ["nosaved", /no saved field/]]) {
+  test(`a cloud that ${{ refused: "refuses the connection", html: "answers with HTML", http500: "answers HTTP 500", nosaved: "answers without saved" }[mode]} writes nothing, says so and is not retried`, async (t) => {
     const { cloud, kv, store } = await setup(t);
     await seedMatter(store);
     const before = JSON.stringify(entries(kv, "item"));
-    cloud.mode = mode;
-    await assert.rejects(writes.upsert_task(store, { matt_num: "L100", task_type: "admin", description: "File the report" }), (err) => {
+    const sent = cloud.writes().length;
+    let target = store;
+    if (mode === "refused") {
+      const closed = createServer();
+      await new Promise((resolve) => closed.listen(0, "127.0.0.1", resolve));
+      const { port } = closed.address();
+      await new Promise((resolve) => closed.close(resolve));
+      target = new PracticeStore({ ...cloud.env, SUPABASE_URL: `http://127.0.0.1:${port}` }, kv);
+    } else {
+      cloud.mode = mode;
+    }
+    await assert.rejects(writes.upsert_task(target, { matt_num: "L100", task_type: "admin", description: "File the report" }), (err) => {
       assert.match(err.message, UNREACHABLE);
       assert.match(err.message.match(UNREACHABLE)[1], detail);
       assert.equal(err.code, "cloud_unreachable");
       return true;
     });
+    assert.equal(cloud.writes().length, sent + (mode === "refused" ? 0 : 1), "sent once at most, never retried");
     assert.equal(JSON.stringify(entries(kv, "item")), before);
     assert.deepEqual(entries(kv, "pending"), [], "nothing reached the cloud, so nothing is kept");
   });
 }
+
+const tasks = (kv) => [...items(kv).values()].filter((item) => item.kind === "task");
+const cloudTasks = (cloud, kv) => [...cloud.ledger(meta(kv, "tenant")).items.values()].filter((item) => item.kind === "task" && !item.deleted);
+
+for (const [mode, saved] of [["down", "before the cloud saved it"], ["lost-reply", "after the cloud saved it"], ["cut-reply", "part-way through the cloud's reply"]]) {
+  test(`a connection reset ${saved} keeps the write pending, and the next practice tool call applies it once (#162)`, async (t) => {
+    const { cloud, kv, store } = await setup(t);
+    await seedMatter(store);
+    cloud.mode = mode;
+    await assert.rejects(writes.upsert_task(store, { matt_num: "L100", task_type: "client", description: "Settle the opening submissions" }), (err) => {
+      assert.equal(err.code, "write_pending");
+      assert.match(err.message, /^Probanda's Cloud may have saved this write: the connection was reset before its answer arrived \(.*(ECONNRESET|UND_ERR_SOCKET|terminated).*\)\. It is kept as pending write [0-9a-f-]+, and the next practice tool call sends it again with the same write_id: the cloud saves it once, or answers with a question\. Do not repeat this call\.$/);
+      return true;
+    });
+    const [[writeId]] = entries(kv, "pending");
+    assert.deepEqual(tasks(kv), [], "nothing applied yet");
+
+    cloud.mode = "ok";
+    const result = await callPracticeTool(store, "practice_data__open_tasks", {});
+    assert.deepEqual(result.replayed_writes, [{ write_id: writeId, tool: "upsert_task", saved: true }]);
+    assert.equal(result.rows.length, 1);
+    assert.equal(result.rows[0].description, "Settle the opening submissions");
+    assert.equal(tasks(kv).length, 1, "applied once in practice.db");
+    assert.equal(cloudTasks(cloud, kv).length, 1, "saved once in the cloud");
+    assert.equal(store.pendingCount(), 0);
+  });
+}
+
+test("a reset write the cloud refuses on replay returns its question in replayed_writes, with the item described (#162)", async (t) => {
+  const { cloud, kv, store } = await setup(t);
+  await seedMatter(store);
+  cloud.mode = "down";
+  await assert.rejects(writes.upsert_task(store, { matt_num: "L100", task_type: "client", description: "Settle it" }), { code: "write_pending" });
+  const [[writeId]] = entries(kv, "pending");
+
+  cloud.mode = "ok";
+  cloud.refuse = (write) => (write.tool === "upsert_task" ? `Is {{item:${write.ops[0].id}}} still wanted?` : undefined);
+  const result = await callPracticeTool(store, "practice_data__open_tasks", {});
+  assert.equal(result.replayed_writes.length, 1);
+  const [replay] = result.replayed_writes;
+  assert.deepEqual({ ...replay, question: undefined }, { write_id: writeId, tool: "upsert_task", saved: false, question: undefined });
+  assert.match(replay.question, /^Is .+ still wanted\?$/);
+  assert.doesNotMatch(replay.question, /\{\{item:/);
+  assert.deepEqual(result.rows, []);
+  assert.equal(store.pendingCount(), 0);
+});
 
 test("a wrong key gets the unreachable message with its status", async (t) => {
   const { cloud, kv } = await setup(t);
@@ -308,4 +366,22 @@ test("a write after the event loop was blocked past the fake's old 5 s keep-aliv
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 6000);
   await writes.upsert_task(store, { matt_num: ".L100", task_type: "client", description: "Settle it" });
   assert.equal(cloud.writes().length, 2);
+});
+
+test("a write after the cloud closed its idle socket during a long block is never reported as unsaved, and is applied once (#162)", async (t) => {
+  // Node's 5 s default keep-alive and a 6 s block reproduce the reset of #154 against the store.
+  const cloud = await startFakeCloud(t, { keepAliveTimeout: 5000 });
+  const kv = memoryKv();
+  const store = new PracticeStore({ ...cloud.env }, kv);
+  await seedMatter(store);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 6000);
+  try {
+    await writes.upsert_task(store, { matt_num: ".L100", task_type: "client", description: "Settle it" });
+  } catch (err) {
+    assert.equal(err.code, "write_pending", "a reset keeps the write: never cloud_unreachable");
+    assert.equal(store.pendingCount(), 1);
+    await callPracticeTool(store, "practice_data__open_tasks", {});
+  }
+  assert.equal(tasks(kv).length, 1);
+  assert.equal(store.pendingCount(), 0);
 });

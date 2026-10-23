@@ -91,16 +91,16 @@ def filed(title, face, letterhead=False):
             "timings": {}}
 
 
-def format_read(fmt=FORMAT, learned=True, **items):
-    """knowledge__read's response for the format file: every cited item confirmed (or vetted),
+def format_read(fmt=FORMAT, header=None, status="confirmed", **items):
+    """knowledge__read's response for the format file: every cited item reading `status`,
     except as `items` overrides it by rule_ref."""
     rows = []
     for entry in fmt.values():
-        row = {"rule_ref": entry["rule_ref"], "status": "confirmed" if learned else "vetted",
+        row = {"rule_ref": entry["rule_ref"], "status": status,
                "freshness": "not verified", "passage_hash": "0" * 64, "currency": None, "record": PATH}
         row.update(items.get(entry["rule_ref"].replace("-", "_"), {}))
         rows.append(row)
-    return {"path": PATH, "layer": "local", "learned": learned, "header": {}, "items": rows,
+    return {"path": PATH, "layer": "local", "learned": True, "header": header or {}, "items": rows,
             "stale_confirmation": [], "orphaned_confirmations": [], "currency_moved": [],
             "corrections": [], "sources_check": "none", "format": fmt, "corrections_substituted": []}
 
@@ -202,23 +202,50 @@ class TestConfirmedItem(Base):
         self.assertEqual(result["defaulted"],
                          ["typeface", "font_size", "line_spacing", "footer", "filing_stamp_reservation"])
 
-    def test_a_vetted_file_whose_source_moved_is_warned_of_but_not_refused(self):
-        proc, result = self.fill(format_read(learned=False, F_margins={"freshness": "missing"}))
-        self.assertEqual(proc.returncode, 0, result)
-        self.assertTrue(self.deliverable.exists())
-        review = parts_of(self.review)["word/document.xml"]
-        self.assertEqual(text(paragraphs(review)[0]), "Source changed: F-margins")
-
-    def test_a_vetted_file_item_reading_unconfirmed_never_blocks_the_deliverable(self):
-        # A corrected row on a missing source reads unconfirmed for the session.
-        proc, result = self.fill(format_read(learned=False,
-                                             F_margins={"status": "unconfirmed", "freshness": "missing"}))
+    def test_a_corrected_item_with_the_rest_confirmed_writes_the_deliverable(self):
+        proc, result = self.fill(format_read(F_margins={"status": "corrected"}))
         self.assertEqual(proc.returncode, 0, result)
         self.assertEqual(result["deliverable"], str(self.deliverable))
-        self.assertEqual(result["review_copy"], str(self.review))
+        self.assertNotIn("review_copy", result)
+
+
+REVIEWED = {"reviewed_by": "Pat Example", "reviewed_on": "2026-09-22"}
+
+
+class TestReviewedFile(Base):
+    """#163: a maintainer's review is provenance only. Every item blocks until this firm confirms it."""
+
+    def test_a_reviewed_file_with_no_firm_rows_refuses_the_deliverable_naming_every_item(self):
+        proc, result = self.fill(format_read(header=REVIEWED, status="unconfirmed"))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(result["error"], "deliverable_refused")
+        refs = [entry["rule_ref"] for entry in FORMAT.values()]
+        self.assertEqual([item["rule_ref"] for item in result["unconfirmed"]], refs)
+        self.assertFalse(self.deliverable.exists())
+        self.assertTrue(self.review.exists())
+
+    def test_a_partly_confirmed_reviewed_file_blocks_only_the_unconfirmed_item(self):
+        proc, result = self.fill(format_read(header=REVIEWED, F_margins={"status": "unconfirmed"}))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual([item["rule_ref"] for item in result["unconfirmed"]], ["F-margins"])
         review = parts_of(self.review)["word/document.xml"]
-        self.assertEqual(text(paragraphs(review)[0]), "Source changed: F-margins")
-        self.assertNotIn(b"Format unverified", parts_of(self.review)["word/document.xml"])
+        self.assertEqual(text(paragraphs(review)[0]), "Format unverified: F-margins")
+
+    def test_a_reviewed_file_all_confirmed_or_corrected_writes_the_deliverable(self):
+        proc, result = self.fill(format_read(header=REVIEWED, F_margins={"status": "corrected"}))
+        self.assertEqual(proc.returncode, 0, result)
+        self.assertEqual(result["deliverable"], str(self.deliverable))
+
+    def test_a_stale_confirmation_reads_unconfirmed_and_still_blocks(self):
+        # knowledge__read reports a confirmation whose passage hash no longer matches as
+        # stale_confirmation, and the item reads unconfirmed.
+        read = format_read(header=REVIEWED, F_margins={"status": "unconfirmed"})
+        read["stale_confirmation"] = [{"rule_ref": "F-margins", "by": "pe", "on": "2026-09-25",
+                                       "confirmed_against": {"passage_hash": "1" * 64, "currency": None},
+                                       "passage_hash": "0" * 64}]
+        proc, result = self.fill(read)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual([item["rule_ref"] for item in result["unconfirmed"]], ["F-margins"])
 
 
 class TestVersioning(Base):
@@ -243,12 +270,11 @@ class TestVersioning(Base):
 
     def test_the_review_copy_series_is_versioned_on_its_own(self):
         self.review.write_bytes(b"an earlier review copy")
-        proc, result = self.fill(format_read(learned=False, F_margins={"freshness": "missing"}))
-        self.assertEqual(proc.returncode, 0, result)
+        proc, result = self.fill(format_read(F_margins={"status": "unconfirmed"}))
+        self.assertNotEqual(proc.returncode, 0)
         self.assertEqual(result["review_copy"], str(self.version(2, " (format unverified)")))
         self.assertEqual(result["review_copy_versioned_from"], str(self.review))
-        self.assertEqual(result["deliverable"], str(self.deliverable))
-        self.assertNotIn("versioned_from", result)
+        self.assertFalse(self.deliverable.exists())
         self.assertEqual(self.review.read_bytes(), b"an earlier review copy")
 
     def test_the_next_version_is_one_past_the_highest(self):
@@ -261,7 +287,10 @@ class TestVersioning(Base):
         self.assertFalse(self.deliverable.exists())
 
     def test_no_temporary_file_remains(self):
-        proc, result = self.fill(format_read(learned=False, F_margins={"freshness": "missing"}))
+        proc, result = self.fill(format_read(F_margins={"status": "unconfirmed"}))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual([p.name for p in self.out.iterdir()], [self.review.name])
+        proc, result = self.fill(format_read())
         self.assertEqual(proc.returncode, 0, result)
         self.assertEqual(sorted(p.name for p in self.out.iterdir()),
                          sorted([self.deliverable.name, self.review.name]))

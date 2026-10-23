@@ -236,29 +236,22 @@ test("the session's memoized sources__check result makes a missing passage read 
   assert.equal(statusOf(after, "R-addr").status, "unconfirmed");
 });
 
-test("a vetted file never reads unconfirmed; a correction on it still applies", (t) => {
+// #163: no vetted kind. A shipped file a maintainer reviewed (reviewed_by in its header) reads
+// unconfirmed item by item until this firm's own sidecar confirms or corrects it.
+test("a reviewed shipped file's items read unconfirmed until this firm confirms or corrects each", (t) => {
   const f = knowledgeFixture(t);
-  const front = FRONT.replace("learned_by: agent\n", "");
-  f.shipped(FILE, knowledgeFile(front, BLOCK));
+  f.shipped(FILE, knowledgeFile(FRONT.replace("reviewed_by:
+reviewed_on:", "reviewed_by: Pat Example
+reviewed_on: 2026-09-22"), BLOCK));
   f.shipped("draft/CAN/BC/BCSC/Sources/rules.md", RECORD);
-  f.local(SIDECAR, { file: FILE, items: [row("R-title", { status: "corrected", value: "Letter to the registrar" })] });
+  f.local(SIDECAR, { file: FILE, items: [row("R-title", { status: "corrected", value: "Letter to the registrar" }), row("R-echo")] });
   const result = knowledgeRead(FILE, f.seams);
-  assert.equal(result.learned, false);
   assert.equal(result.layer, "shipped");
-  assert.equal(statusOf(result, "R-addr").status, "vetted");
+  assert.equal(result.header.reviewed_by, "Pat Example");
   assert.equal(statusOf(result, "R-title").status, "corrected");
+  assert.equal(statusOf(result, "R-echo").status, "confirmed");
+  assert.equal(statusOf(result, "R-addr").status, "unconfirmed", "an item this firm has not confirmed");
   assert.deepEqual(result.layout.title, { value: "Letter to the registrar", rule_ref: "R-title" });
-});
-
-test("a firm's matching confirmation of a vetted file's item reads confirmed, so the firm's own review is visible", (t) => {
-  const f = knowledgeFixture(t);
-  f.shipped(FILE, knowledgeFile(FRONT.replace("learned_by: agent\n", ""), BLOCK));
-  f.shipped("draft/CAN/BC/BCSC/Sources/rules.md", RECORD);
-  f.local(SIDECAR, { file: FILE, items: [row("R-title")] });
-  const result = knowledgeRead(FILE, f.seams);
-  assert.equal(result.learned, false);
-  assert.equal(statusOf(result, "R-title").status, "confirmed");
-  assert.equal(statusOf(result, "R-addr").status, "vetted", "an item this firm has not confirmed");
 });
 
 test("a missing passage makes a corrected item read unconfirmed for the session; the correction stays recorded", async (t) => {

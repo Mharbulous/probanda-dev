@@ -135,9 +135,9 @@ not a stylistic preference.
    and supply its page manifest as `PAGE_MANIFEST`: `{page, images}` for each scanned page and
    `{pages: "a-b", pdf}` for each run of born-digital pages, with no PDF path for a wholly
    scanned one (`/matter-data`'s design decision #71). Name each PNG individually rather than the
-   render directory. Where host files arrive only over a bridge (Project Cowork) stage a
-   byte-exact copy into the session first (`device_stage_files`), each PNG included, and
-   dispatch that path. If the tool refuses, dispatch nothing: report the claim as
+   render directory. In a bridged session (`/matter-data`'s verify-law operation §2 defines it)
+   stage a byte-exact copy into the session first (`device_stage_files`), each PNG included, and
+   dispatch that path. If the tool refuses or is not listed, dispatch nothing: report the claim as
    source-unresolvable under step 4, with the refusal's reason.
 
    **A verifier that is unavailable — never substitute another agent — that fails, or that returns

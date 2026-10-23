@@ -1228,8 +1228,7 @@ export function submissionFormsRender(
     }
 
     // Spec §6 piece 5: a general Writing's filed face waits on the confirmation of every item its
-    // stored layout cites from a learned file. A vetted file is never refused. A passage that moved
-    // since the snapshot is reported either way.
+    // stored layout cites, at this firm. A passage that moved since the snapshot is reported either way.
     const gate = confirmationGate(cited);
     const changed = gate.changed_since_snapshot.length > 0 ? { changed_since_snapshot: gate.changed_since_snapshot } : {};
     if (gate.unconfirmed.length > 0) {

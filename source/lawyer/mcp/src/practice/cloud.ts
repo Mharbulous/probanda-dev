@@ -1,7 +1,8 @@
 // The client of Probanda's Cloud's three items functions
 // (cloud/items/README.md). It posts with the commons credential in the
 // `apikey` header, through Node's fetch. A reply that is not what the function
-// promises counts as no answer, never as a save
+// promises counts as no answer, never as a save. A connection reset after the request went
+// out, or part-way through the reply, is neither: the cloud may have saved
 // (docs/Plans/2026-10-14_practice-db-conversion.md, "When the cloud cannot be reached").
 
 import { loadCloudKey } from "../cloud-key.js";
@@ -27,6 +28,21 @@ export class CloudUnreachableError extends DataServerError {
   }
 }
 
+/** The connection was reset before the answer arrived: the cloud may have received the request, and saved it. */
+export class CloudResetError extends DataServerError {
+  constructor(readonly detail: string) {
+    super(`Probanda's Cloud may have received this request: the connection was reset before its answer arrived (${detail}).`, "cloud_reset");
+  }
+}
+
+// The fetch failures that can come after the request went out.
+const RESET_CODES = new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
+
+function failure(err: unknown): { detail: string; code?: string } {
+  const cause = (err as { cause?: { code?: string; message?: string } }).cause;
+  return { detail: [(err as Error).message, cause?.code ?? cause?.message].filter(Boolean).join(": "), code: cause?.code };
+}
+
 /** No credential is configured: nothing can be sent. */
 export class CloudNotConfiguredError extends DataServerError {
   constructor(reason: string) {
@@ -41,7 +57,7 @@ export async function cloudCredential(env: NodeJS.ProcessEnv): Promise<{ supabas
   return key;
 }
 
-/** Posts one request and returns its JSON object, or throws CloudUnreachableError. */
+/** Posts one request and returns its JSON object, or throws CloudUnreachableError or CloudResetError. */
 export async function callItems(
   env: NodeJS.ProcessEnv,
   fn: ItemsFunction,
@@ -56,13 +72,20 @@ export async function callItems(
       body: JSON.stringify(body),
     });
   } catch (err) {
-    const cause = (err as { cause?: { code?: string; message?: string } }).cause;
-    throw new CloudUnreachableError([(err as Error).message, cause?.code ?? cause?.message].filter(Boolean).join(": "));
+    const { detail, code } = failure(err);
+    throw RESET_CODES.has(code ?? "") ? new CloudResetError(detail) : new CloudUnreachableError(detail);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
+  let text: string;
+  try {
+    text = await res.text();
+  } catch (err) {
+    // The cloud answered 200, so it got the request; its reply was cut off.
+    throw new CloudResetError(failure(err).detail);
+  }
   let json: unknown;
   try {
-    json = JSON.parse(await res.text());
+    json = JSON.parse(text);
   } catch {
     throw new CloudUnreachableError("a reply that is not JSON");
   }

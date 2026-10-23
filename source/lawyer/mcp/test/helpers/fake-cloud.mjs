@@ -40,9 +40,13 @@ function ledger() {
 /**
  * Starts the fake. Options on the returned object, settable at any time:
  *   refuse(write) -> question | undefined   refuse a write with this question
- *   mode: "ok" | "down" | "html" | "nosaved" | "sync-down"
+ *   mode: "ok" | "down" | "html" | "http500" | "nosaved" | "sync-down" | "lost-reply" | "cut-reply"
+ * "down" resets the connection once the request has arrived, saving nothing. "lost-reply" saves
+ * a write and then resets the connection, and "cut-reply" saves it and resets the connection
+ * part-way through the 200 reply's body.
+ * keepAliveTimeout: the server's idle-socket timeout in ms, 0 (never) unless a test sets it.
  */
-export async function startFakeCloud(t) {
+export async function startFakeCloud(t, { keepAliveTimeout = 0 } = {}) {
   const tenants = new Map();
   const cloud = {
     requests: [],
@@ -239,9 +243,21 @@ export async function startFakeCloud(t) {
         res.writeHead(200, { "Content-Type": "text/html" });
         return res.end("<html>paused</html>");
       }
+      if (cloud.mode === "http500") {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "internal error" }));
+      }
       let reply;
-      if (req.url.endsWith("/functions/v1/items-write")) reply = cloud.mode === "nosaved" ? { ok: true } : apply(body);
-      else if (req.url.endsWith("/functions/v1/items-sync")) {
+      if (req.url.endsWith("/functions/v1/items-write")) {
+        reply = cloud.mode === "nosaved" ? { ok: true } : apply(body);
+        if (cloud.mode === "lost-reply") return res.destroy();
+        if (cloud.mode === "cut-reply") {
+          const text = JSON.stringify(reply);
+          res.writeHead(200, { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(text) });
+          res.write(text.slice(0, 5));
+          return setTimeout(() => res.destroy(), 20);
+        }
+      } else if (req.url.endsWith("/functions/v1/items-sync")) {
         if (cloud.mode === "sync-down") return res.destroy();
         reply = sync(body);
       } else {
@@ -254,7 +270,8 @@ export async function startFakeCloud(t) {
   });
   // Idle sockets stay open until close(): a store's synchronous Python can block the loop past
   // Node's 5 s default, and the overdue timer would then reset the next write's socket (#154).
-  server.keepAliveTimeout = 0;
+  // A test of that reset passes its own keepAliveTimeout.
+  server.keepAliveTimeout = keepAliveTimeout;
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address();
   cloud.env = { SUPABASE_URL: `http://127.0.0.1:${port}`, LEGAL_COMMONS_SUPABASE_KEY: FAKE_KEY, SUPABASE_SERVICE_ROLE_KEY: "" };

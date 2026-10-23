@@ -146,8 +146,6 @@ export interface CitedState {
   block: BlockKind;
   /** The knowledge path of the file that records it. */
   file: string;
-  /** The file is learned now; a vetted file is never tagged unverified and never refused. */
-  learned: boolean;
   /** The file's header fields, for the learned-file notice. */
   header: Record<string, string | null>;
   /** The passage hash the snapshot recorded. */
@@ -177,7 +175,6 @@ export function citedStates(stored: StoredLayout, filing: FilingRow, seams: Know
         field,
         block,
         file,
-        learned: result.learned === true,
         header: result.header as Record<string, string | null>,
         snapshot_hash: stored.passage_hashes[rule_ref],
         item: (result.items as ItemStatus[]).find((item) => item.rule_ref === rule_ref),

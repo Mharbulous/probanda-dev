@@ -25,7 +25,7 @@ import {
   PASSAGES,
   SOURCE_FILE,
   sourceRecord,
-  VETTED_FRONT,
+  REVIEWED_FRONT,
 } from "./helpers/general-writing-fixture.mjs";
 import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
@@ -141,7 +141,7 @@ const Q3_HEADER = [
 ];
 
 test("the mockup header carries the Q3 fields in order, naming the Writing's type, title and date", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   confirm(g, ["R-title", "R-body"]);
   const header = (md) => md.slice("---\n".length, md.indexOf("\n---\n")).split("\n");
@@ -258,7 +258,7 @@ test("a passage changed after confirmation reads unverified again and the filed 
 });
 
 test("a vetted file whose passage changed tags source changed on the mockup, and its filed render succeeds reporting the change", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   g.f.local(SOURCE_FILE, sourceRecord({ ...PASSAGES, "R-body": CHANGED_BODY }));
 
@@ -282,7 +282,7 @@ const VETTED_NOTICE =
   "but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.\n";
 
 test("a vetted file with no firm confirmation shows the reviewer's notice, untagged and never refused", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   const md = docOf(render(g, id), "General_writing").markdown;
   assert.ok(headerOf(md).includes(VETTED_NOTICE), md);
@@ -292,14 +292,14 @@ test("a vetted file with no firm confirmation shows the reviewer's notice, untag
 });
 
 test("a vetted file with only some items confirmed by the firm still shows the notice", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   confirm(g, ["R-title"]);
   assert.ok(headerOf(docOf(render(g, id), "General_writing").markdown).includes(VETTED_NOTICE));
 });
 
 test("a vetted file whose every cited item the firm confirmed or corrected shows no notice", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   g.f.local(`${LETTER_FILE}.confirmations.local.json`, {
     file: LETTER_FILE,
@@ -314,7 +314,7 @@ test("a vetted file whose every cited item the firm confirmed or corrected shows
 });
 
 test("a blind copy prints in the header's Blind copies on the mockup and nowhere on the filed face; a cc prints on both", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   confirm(g, ["R-title", "R-body"]);
   await g.recipient(id, 3, "cc");
@@ -331,7 +331,7 @@ test("a blind copy prints in the header's Blind copies on the mockup and nowhere
 });
 
 test("a party-linked recipient prints its party's counsel, email and address for service from case data, and keeps its own capacity", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   await g.recipient(id, 3, "cc");
   updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
@@ -350,7 +350,7 @@ test("a party-linked recipient prints its party's counsel, email and address for
 });
 
 test("a drafting letter's party-linked recipient whose party is not of its proceeding is a hard error naming the recipient", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   await g.execute("UPDATE recipients SET party_id = 3 WHERE id = 1;");
   assert.throws(
@@ -364,7 +364,7 @@ test("a drafting letter's party-linked recipient whose party is not of its proce
 });
 
 test("a page_limit prints the header's Page budget on the mockup only", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT, block: { ...LETTER_BLOCK, page_limit: 2 } });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT, block: { ...LETTER_BLOCK, page_limit: 2 } });
   const id = await letter(g);
   confirm(g, ["R-title", "R-body"]);
   const md = docOf(render(g, id), "General_writing").markdown;
@@ -393,7 +393,7 @@ test("the Writing's folder is named by its title with no folder_code, though the
 });
 
 test("a slot, addressee and sender with no text, and no signer chosen, print whole mockup lines, and the filed render refuses naming each unwritten part", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT, person: null });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT, person: null });
   const { filing_id: id } = await g.createLetter();
 
   const md = docOf(render(g, id), "General_writing").markdown;
@@ -1048,7 +1048,7 @@ async function submission(g) {
 }
 
 test("a lawyer-signed type without letterhead prints no closing and ends with the counsel line, plural when parties share the client's role", async (t) => {
-  const g = await generalWritingFixture(t, { person: "st", front: VETTED_FRONT, block: SUBMISSION_BLOCK });
+  const g = await generalWritingFixture(t, { person: "st", front: REVIEWED_FRONT, block: SUBMISSION_BLOCK });
   const id = await submission(g);
 
   const md = docOf(render(g, id), "General_writing").markdown;
@@ -1060,7 +1060,7 @@ test("a lawyer-signed type without letterhead prints no closing and ends with th
 });
 
 test("with no client party the counsel line is a gap on the mockup and absent from the filed face", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT, block: SUBMISSION_BLOCK });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT, block: SUBMISSION_BLOCK });
   const id = await submission(g);
   await g.execute("UPDATE parties SET is_client = 0 WHERE proceeding_id = 1;");
 
@@ -1078,7 +1078,7 @@ test("with no client party the counsel line is a gap on the mockup and absent fr
 // Plan 2026-10-07 step 5: a prose line holding what is not printed wording is flagged on the mockup
 // and counted by open-items; a refused rule refuses the filed render, and a blank underline files.
 test("a prose placeholder in brackets is flagged, counted and refuses the filed render; [sic] and the signing line are not flagged; a blank underline files", async (t) => {
-  const g = await generalWritingFixture(t, { front: VETTED_FRONT });
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const { filing_id: id } = await g.createLetter();
   g.setPerson("st"); // the signer is not this machine's person, so the signing line prints
   await g.prose(id, "addressee", ADDRESSEE);

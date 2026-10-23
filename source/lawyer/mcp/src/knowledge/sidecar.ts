@@ -123,8 +123,8 @@ export interface CheckedRecord {
   items?: Array<{ rule_ref: string; present: boolean | null }>;
 }
 
-/** `vetted`: an item of a vetted file that this firm has not confirmed or corrected. A firm's own row reads as it does on a learned file. */
-export type Status = "vetted" | "confirmed" | "corrected" | "unconfirmed";
+/** Every file is learned: an item reads unconfirmed until this firm's own sidecar confirms or corrects it. */
+export type Status = "confirmed" | "corrected" | "unconfirmed";
 /** `verified`: the session's source check found the passage. `missing`: it did not. Otherwise not verified. */
 export type Freshness = "verified" | "not verified" | "missing";
 
@@ -158,7 +158,6 @@ export interface EffectiveStatus {
 export interface StatusInput {
   items: StatusItem[];
   rows: SidecarRow[];
-  learned: boolean;
   /** /publish format files: a practitioner-sourced property needs no row (shared/declared-format.md section 4). */
   practitionerConfirms: boolean;
   /** The session's memoized sources__check result for this file, if any. */
@@ -189,7 +188,7 @@ export function effectiveStatus(input: StatusInput): EffectiveStatus {
     const hash = passageHash(item.passage);
     const freshness = freshnessOf(item, input.checked);
     const row = byRef.get(item.rule_ref);
-    let status: Status = input.learned ? "unconfirmed" : "vetted";
+    let status: Status = "unconfirmed";
     let practitioner = false;
 
     if (row?.status === "corrected") {
@@ -202,7 +201,7 @@ export function effectiveStatus(input: StatusInput): EffectiveStatus {
       } else {
         out.stale_confirmation.push({ rule_ref: row.rule_ref, by: row.by, on: row.on, confirmed_against: row.confirmed_against, passage_hash: hash });
       }
-    } else if (input.practitionerConfirms && item.source === "practitioner" && input.learned) {
+    } else if (input.practitionerConfirms && item.source === "practitioner") {
       status = "confirmed";
       practitioner = true;
     }

@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync, rmSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -70,9 +71,14 @@ test("an unreachable cloud leaves practice.db's items as they were", async (t) =
   await callTool(context, "practice_data__upsert_client_matter", { client_num: "C-1", name: "Acme Co", matt_num: "L100" });
   const items = () => runPython("import json, sqlite3, sys; print(json.dumps(sqlite3.connect(sys.argv[1]).execute(\"SELECT namespace, key, value FROM kv_store WHERE namespace <> 'meta' ORDER BY namespace, key\").fetchall()))", dbPath);
   const before = items();
-  cloud.mode = "down";
+  // A closed port refuses the connection, so nothing reaches the cloud. A reset ("down") would keep the write pending.
+  const closed = createServer();
+  await new Promise((resolve) => closed.listen(0, "127.0.0.1", resolve));
+  const { port } = closed.address();
+  await new Promise((resolve) => closed.close(resolve));
+  const offline = await createDispatchContext({ ...process.env, ...cloud.env, SUPABASE_URL: `http://127.0.0.1:${port}`, COCLERK_DB_PATH: dbPath });
   await assert.rejects(
-    callTool(context, "practice_data__upsert_task", { matt_num: "L100", task_type: "admin", description: "File it" }),
+    callTool(offline, "practice_data__upsert_task", { matt_num: "L100", task_type: "admin", description: "File it" }),
     /^DataServerError: Probanda's Cloud did not answer|Probanda's Cloud did not answer \(.+\)\. Nothing was saved, in the cloud or in practice\.db\./
   );
   assert.equal(items(), before);

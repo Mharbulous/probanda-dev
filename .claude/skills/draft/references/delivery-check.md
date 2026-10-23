@@ -20,11 +20,11 @@ An ingested letter is checked by `/matter-data` at its ingest, not here. An unat
 
 ## 3. Dispatch
 
-Spawn `lawyer:delivery-checker` once for the letter, each time a trigger fires, with:
+In a bridged session (`/matter-data`'s verify-law operation §2 defines it), spawn nothing: the checker cannot see the matter folder there, so report in one line that the letter's delivery was not checked, and why. Otherwise spawn `lawyer:delivery-checker` once for the letter, each time a trigger fires, with:
 
    - `matter_root`, `letter_path`, `file_name`, and `file_size`, the file's size in bytes;
    - `environment_notes`: the practitioner's environment notes, as this session was given them (`/practice-data`, "Practice quirks");
-   - `page_manifests`, when the letter is a PDF: call `pdf_pages__images` for it first and pass its page manifest as `{path, pages}`, with `path` the letter's path relative to `matter_root`. The manifest is `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages. A scanned page is read only from its images (`/matter-data`'s design decision #71). In a bridged session each PNG is staged like any other rendering (`/matter-data`'s ingest-extract Universal rules). If the tool refuses, dispatch nothing: report that the letter's delivery was not checked, with the refusal's reason;
+   - `page_manifests`, when the letter is a PDF: call `pdf_pages__images` for it first and pass its page manifest as `{path, pages}`, with `path` the letter's path relative to `matter_root`. The manifest is `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages. A scanned page is read only from its images (`/matter-data`'s design decision #71). If the tool refuses, dispatch nothing: report that the letter's delivery was not checked, with the refusal's reason;
    - `draft`, when the letter is a Writing on this board: `writing_id`, `mockup_path` (the letter's copy from the latest render), `addressee`, `subject` and `date` as the mockup prints them, and `last_changed`, the latest stamp the letter's job cards show (`board_card(jobs: [N])`), left out when they show none.
 
 ## 4. Acting on the result

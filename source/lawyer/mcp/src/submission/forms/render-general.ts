@@ -5,9 +5,9 @@
 // The filed face is the kind-agnostic toFiledFace transform, which drops the whole header.
 //
 // The confirmation gate's mockup half (spec §6 piece 5): each item the stored layout cites is
-// tagged on the line it renders, `[unverified: <rule_ref>]` while a learned file's item is
-// unconfirmed, `[source changed: <rule_ref>]` when a vetted file's passage moved since the
-// snapshot or the session's source check found it missing. Both tags are rendered for the human
+// tagged on the line it renders, `[unverified: <rule_ref>]` while this firm has not confirmed or
+// corrected it against its current passage, `[source changed: <rule_ref>]` when a confirmed or
+// corrected item's passage moved since the snapshot or the session's source check found it missing. Both tags are rendered for the human
 // and withheld from the forum. A cited item that renders on no line of its own is listed in the
 // header's "Layout confirmation" field with its tag. The filed half is forms.ts's, from confirmationGate below.
 
@@ -23,12 +23,11 @@ import { generalDocumentName } from "./writing-label.js";
 
 /** The item's mockup tag, or "" when it needs none. */
 export function tagOf(state: CitedState): string {
-  if (state.learned) {
-    if (state.item !== undefined && state.item.status !== "unconfirmed") return "";
+  if (state.item === undefined || state.item.status === "unconfirmed") {
     const pdf = state.item?.pdf_page ? `, transcribed from PDF p. ${state.item.pdf_page}` : "";
     return `[unverified: ${state.rule_ref}${pdf}]`;
   }
-  const moved = state.item === undefined || state.item.passage_hash !== state.snapshot_hash || state.item.freshness === "missing";
+  const moved = state.item.passage_hash !== state.snapshot_hash || state.item.freshness === "missing";
   return moved ? `[source changed: ${state.rule_ref}]` : "";
 }
 
@@ -40,13 +39,12 @@ export interface ChangedSinceSnapshot {
 }
 
 /**
- * The filed render's gate: every cited item of a learned file that reads unconfirmed, and every
- * cited item of any status whose passage differs from the snapshot's. A vetted file's items never
- * appear in `unconfirmed`.
+ * The filed render's gate: every cited item that reads unconfirmed at this firm, and every
+ * cited item of any status whose passage differs from the snapshot's.
  */
 export function confirmationGate(states: CitedState[]): { unconfirmed: string[]; changed_since_snapshot: ChangedSinceSnapshot[] } {
   return {
-    unconfirmed: states.filter((s) => s.learned && (s.item === undefined || s.item.status === "unconfirmed")).map((s) => s.rule_ref),
+    unconfirmed: states.filter((s) => (s.item === undefined || s.item.status === "unconfirmed")).map((s) => s.rule_ref),
     changed_since_snapshot: states
       .filter((s) => (s.item?.passage_hash ?? null) !== s.snapshot_hash)
       .map((s) => ({ rule_ref: s.rule_ref, snapshot_hash: s.snapshot_hash, current_hash: s.item?.passage_hash ?? null })),
@@ -151,11 +149,11 @@ function wordCount(lines: string[]): number {
 }
 
 /** The learned-file notice (shared/knowledge-tree.md section 11), filled from header fields only. A
- * vetted file's names its reviewer, and still asks this firm to confirm. */
-function notice(venue: string, kind: string, learned: boolean, header: Record<string, string | null>): string {
-  if (!learned) {
+ * reviewed file's (one whose header names `reviewed_by`) names its reviewer, and still asks this firm to confirm. */
+function notice(venue: string, kind: string, header: Record<string, string | null>): string {
+  if (header.reviewed_by) {
     return (
-      `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by ?? "a practitioner"} on ${header.reviewed_on ?? "an unrecorded date"}, ` +
+      `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by} on ${header.reviewed_on ?? "an unrecorded date"}, ` +
       "but this firm has not yet confirmed or corrected every item; confirm each item before relying on it."
     );
   }
@@ -248,7 +246,7 @@ export function renderGeneral(
   const confirmation = [
     ...openFiles.map((file) => {
       const state = cited.find((s) => s.file === file)!;
-      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state.learned, state.header);
+      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state.header);
     }),
     ...unplaced.map((s) => `${s.block === "venue" ? "venue " : ""}${s.field} ${tagOf(s)}`),
   ];

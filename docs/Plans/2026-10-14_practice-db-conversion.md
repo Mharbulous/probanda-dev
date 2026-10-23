@@ -138,11 +138,12 @@ Before anything is sent, a local guard refuses any raw string that is not a voca
 5. On `saved: false`, it removes the `pending` entry and returns the question as the tool's error. Nothing is written locally.
 6. It returns the same shape as today, built from the local items.
 
-If step 4 fails after the cloud saved, the `pending` entry stays. Every practice tool call first replays any `pending` write with its original `write_id`. The cloud returns the stored result, the tool applies it, and the result says it did so. `config_status` reports the number of pending writes.
+If step 4 fails after the cloud saved, or the connection is reset at step 3 (below), the `pending` entry stays. Every practice tool call first replays any `pending` write with its original `write_id`. The cloud returns the stored result, or saves or refuses a write it never received, the tool applies it, and the result says it did so, with a refusal's question. `config_status` reports the number of pending writes.
 
 ### When the cloud cannot be reached
 
 - **Unreachable, paused or misconfigured.** A write fails at step 3 with: "Probanda's Cloud did not answer (`<status or network error>`). Nothing was saved, in the cloud or in practice.db. If this persists, check whether the Supabase project is paused." The `pending` entry is removed because nothing reached the cloud. There is no queue and no retry loop, so a failure is never hidden.
+- **Connection reset (#162).** A write whose connection is reset after the request went out (`ECONNRESET` or `UND_ERR_SOCKET`), or part-way through a 200 reply, may have been saved. It fails with: "Probanda's Cloud may have saved this write: the connection was reset before its answer arrived (`<error>`). It is kept as pending write `<id>`, and the next practice tool call sends it again with the same write_id: the cloud saves it once, or answers with a question. Do not repeat this call." The `pending` entry stays, and the next practice tool call settles it by the replay above. Nothing retries the request in the meantime. A timeout after the request went out and an HTTP 5xx still count as unreachable, although the cloud may have saved.
 - **No credential.** A write fails with the not-configured message, naming the commons `configure_credential` tool.
 - **Reads** never call the cloud and keep working.
 - A non-JSON reply or one without `saved` counts as unreachable, never as saved.

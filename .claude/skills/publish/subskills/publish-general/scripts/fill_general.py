@@ -48,7 +48,7 @@ The CLI (publish-general):
            `stored_layout`, the Writing's stored layout as storedLayout() returns it, whose
            `layout` block gives `renderer` (general) and `letterhead`.
 --format   knowledge__read's response for the venue's format.md, saved as it came: `path`,
-           `learned` (false for a vetted file), `format` (the block's properties, the firm's
+           `format` (the block's properties, the firm's
            corrections substituted) and `items` (each with its effective `status` and
            `freshness`, and `pdf_page` when it was transcribed from a PDF).
 --out-dir  the matter's draft folder, an existing folder the .docx files are written to at
@@ -103,10 +103,10 @@ and `first_page` (true or false: whether page one shows its number). A
 The confirmation loop (shared/declared-format.md; #970): while any item the block cites
 reads `unconfirmed`, which includes a stale confirmation, only the review copy
 `<stem> (format unverified).docx` is written, and the deliverable is refused: the script
-exits non-zero naming each such rule_ref. A vetted file (`learned: false`) never blocks the
-deliverable, whatever its items read: a cited item whose source the session's check found
-missing is warned of in a review copy written beside the deliverable. The warning is the body's first paragraph, `Format unverified:
-<rule_ref>[, transcribed from PDF p. <n>]` or `Source changed: <rule_ref>`, joined by "; ".
+exits non-zero naming each such rule_ref. Every file is learned: an item reads `unconfirmed`
+until this firm's sidecar confirms or corrects it against its current passage, and a
+maintainer's review (`reviewed_by` in the header) lifts nothing. The warning is the body's
+first paragraph, `Format unverified: <rule_ref>[, transcribed from PDF p. <n>]`, joined by "; ".
 It is never in a header or footer part, and no document property carries it.
 
 The signature block keeps with the paragraph before it. On the letterhead, build_body()
@@ -985,10 +985,9 @@ def fill(args):
         raise FillError("bad_input", "a letterhead: true Writing takes --letter and --profile and "
                         "no --tokens; any other Writing takes neither --letter nor --profile")
 
-    if (not isinstance(read, dict) or "format" not in read or not isinstance(read.get("items"), list)
-            or not isinstance(read.get("learned"), bool)):
+    if not isinstance(read, dict) or "format" not in read or not isinstance(read.get("items"), list):
         raise FillError("bad_input", "--format %s is not a knowledge__read response for a format "
-                        "file (it needs `format`, `items` and `learned`)" % args.format)
+                        "file (it needs `format` and `items`)" % args.format)
     file = read.get("path") or args.format
     fmt = read["format"]
     refs = validate_format(fmt, file)
@@ -997,16 +996,10 @@ def fill(args):
         report["overridden_by_letterhead"] = [prop for prop in FORMAT_PROPERTIES if prop in fmt]
 
     cited = [item for item in read["items"] if isinstance(item, dict) and item.get("rule_ref") in refs]
-    # A vetted file (learned: false) never blocks the deliverable: an item of it can read
-    # unconfirmed only because its source moved (a confirmation or correction on a missing source), which warns.
-    vetted = read["learned"] is False
-    unconfirmed = [] if vetted else [item for item in cited if item.get("status") == "unconfirmed"]
-    changed = [item for item in cited if item.get("freshness") == "missing"
-               and (vetted or item.get("status") == "vetted")]
-    warnings = (["Format unverified: " + item["rule_ref"]
-                 + (", transcribed from PDF p. %s" % item["pdf_page"] if item.get("pdf_page") else "")
-                 for item in unconfirmed]
-                + ["Source changed: " + item["rule_ref"] for item in changed])
+    unconfirmed = [item for item in cited if item.get("status") == "unconfirmed"]
+    warnings = ["Format unverified: " + item["rule_ref"]
+                + (", transcribed from PDF p. %s" % item["pdf_page"] if item.get("pdf_page") else "")
+                for item in unconfirmed]
 
     blocks = filed_blocks(faces[0].get("markdown") or "", faces[0].get("file_name") or GENERAL_WRITING)
     if letterhead:

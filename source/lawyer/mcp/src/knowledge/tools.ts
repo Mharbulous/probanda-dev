@@ -296,7 +296,6 @@ export function knowledgeRead(path: unknown, seams: KnowledgeSeams = {}): Knowle
   const status = effectiveStatus({
     items,
     rows: sidecarRows(kp, seams, label),
-    learned,
     practitionerConfirms: blockKindOf(kp)?.kind === "format",
     checked: memoizedKnowledgeCheck(kp.path)?.sources,
   });
