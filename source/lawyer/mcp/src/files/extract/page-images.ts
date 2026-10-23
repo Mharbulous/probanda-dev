@@ -7,8 +7,8 @@
 // is inlined by esbuild and scripts/bundle.mjs copies pdfium.wasm, with THIRD-PARTY-NOTICES.txt, next
 // to the bundle, so nothing is installed at run time and no host renderer is needed. The PNG encoder
 // is the few lines below, on node:zlib, so the same page gives the same bytes with the same server
-// build. Imported only by the data server's dispatch and text tools, which keeps the renderer out of
-// the contacts, files and timecamp bundles.
+// build. Imported only by the data server's dispatch, text and page-compare tools, which keeps the
+// renderer out of the contacts, files and timecamp bundles.
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -25,7 +25,7 @@ import { DataServerError, ValidationError } from "../../errors.js";
 // that each keep within both limits.
 const MAX_PIXELS = 3_000_000;
 const MAX_SIDE = 2000;
-const DPI = 150;
+export const DPI = 150;
 const TILE_DPI = 200;
 // The two `tiles` halves overlap by this share of the page height, so a stamp at mid-height is whole
 // in at least one of them.
@@ -39,13 +39,13 @@ const MAX_TEXT_COVER = 0.05;
 // FPDF_PAGEOBJ_* and FPDF_TEXTRENDERMODE_INVISIBLE / _CLIP (fpdf_edit.h), FPDF_ERR_PASSWORD
 // (fpdfview.h), FPDFBitmap_BGR (3 bytes a pixel, blue first).
 const OBJ_TEXT = 1;
-const OBJ_IMAGE = 3;
-const OBJ_FORM = 5;
+export const OBJ_IMAGE = 3;
+export const OBJ_FORM = 5;
 const INVISIBLE_TEXT_MODES = new Set([3, 7]);
 const ERR_PASSWORD = 4;
 const BITMAP_BGR = 2;
 
-const DEFAULT_WASM = new URL("./pdfium.wasm", import.meta.url);
+export const DEFAULT_WASM = new URL("./pdfium.wasm", import.meta.url);
 
 export type PageKind = "scanned" | "born_digital";
 
@@ -99,7 +99,7 @@ function malloc(lib: WrappedPdfiumModule, bytes: number): number {
  * page's open, use and close stays within one turn of the event loop; the document stays open across turns, which
  * PDFium allows. A trap (WebAssembly.RuntimeError) drops the cached instance, so the next call loads a
  * fresh one. */
-async function withPdf<T>(
+export async function withPdf<T>(
   path: string,
   wasm: URL,
   work: (lib: WrappedPdfiumModule, doc: number, data: Buffer) => Promise<T>
@@ -141,7 +141,7 @@ async function withPdf<T>(
 }
 
 /** Loads page `n` (from 1), runs `use` on it and closes it, all in this turn of the event loop. */
-function withPage<T>(lib: WrappedPdfiumModule, doc: number, n: number, use: (page: number) => T): T {
+export function withPage<T>(lib: WrappedPdfiumModule, doc: number, n: number, use: (page: number) => T): T {
   const page = lib.FPDF_LoadPage(doc, n - 1);
   if (!page) throw new DataServerError(`PDFium cannot load page ${n} of this PDF`, "bad_pages");
   try {
@@ -151,7 +151,7 @@ function withPage<T>(lib: WrappedPdfiumModule, doc: number, n: number, use: (pag
   }
 }
 
-const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
+export const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
 
 /** The kind of every page of the PDF at `path`, renders nothing. */
 export async function classifyPdfPages(path: string, wasm: URL = DEFAULT_WASM): Promise<PageKind[]> {
@@ -211,11 +211,11 @@ export async function pdfPageImages(
   });
 }
 
-function pageName(n: number): string {
+export function pageName(n: number): string {
   return `page-${String(n).padStart(4, "0")}`;
 }
 
-function pageRange(pages: string | undefined, pageCount: number): [number, number] {
+export function pageRange(pages: string | undefined, pageCount: number): [number, number] {
   if (pages === undefined) return [1, pageCount];
   const m = /^\s*(\d+)\s*(?:[-–]\s*(\d+))?\s*$/.exec(pages);
   if (!m) throw new DataServerError(`pages must read "X" or "X-Y": ${pages}`, "bad_pages");
@@ -229,7 +229,7 @@ function pageRange(pages: string | undefined, pageCount: number): [number, numbe
 
 /** The page's pixel size at `dpi`, with the dpi lowered so the width is at most MAX_SIDE, and each
  * side at least 1 px. */
-function pageSize(lib: WrappedPdfiumModule, page: number, n: number, dpi: number): { width: number; height: number } {
+export function pageSize(lib: WrappedPdfiumModule, page: number, n: number, dpi: number): { width: number; height: number } {
   const wPt = lib.FPDF_GetPageWidthF(page);
   const hPt = lib.FPDF_GetPageHeightF(page);
   if (!(wPt <= MAX_PAGE_POINTS && hPt <= MAX_PAGE_POINTS)) {
@@ -245,7 +245,7 @@ function pageSize(lib: WrappedPdfiumModule, page: number, n: number, dpi: number
 /** [top row, row count] of each tile of rows [top, top + rows): as few equal tiles as keep each at
  * most MAX_SIDE tall and MAX_PIXELS in all. `width` is at most MAX_SIDE, so a tile holds at least
  * 1,500 rows. */
-function tileRows(width: number, top: number, rows: number): Array<[number, number]> {
+export function tileRows(width: number, top: number, rows: number): Array<[number, number]> {
   const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
   const each = Math.ceil(rows / Math.ceil(rows / maxRows));
   const tiles: Array<[number, number]> = [];
@@ -347,34 +347,59 @@ function coverage(rects: Rect[], [left, bottom, right, top]: Rect): number {
 /** Rows [top, top + rows) of page `n` drawn at width x height pixels, as an RGB PNG on white, with no
  * annotations. */
 function renderPng(lib: WrappedPdfiumModule, page: number, n: number, width: number, height: number, top: number, rows: number): Buffer {
+  return encodePng(renderRgb(lib, page, n, width, height, top, rows), width, rows);
+}
+
+/** Rows [top, top + rows) of page `n` drawn at width x height pixels on white, as RGB bytes row by
+ * row. `flags` go to FPDF_RenderPageBitmap (0: no annotations); with a form-fill handle `form`, the
+ * page's form fields are drawn over it with the same flags. */
+export function renderRgb(
+  lib: WrappedPdfiumModule,
+  page: number,
+  n: number,
+  width: number,
+  height: number,
+  top: number,
+  rows: number,
+  flags = 0,
+  form = 0
+): Buffer {
   const bitmap = lib.FPDFBitmap_CreateEx(width, rows, BITMAP_BGR, 0, 0);
   if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows} bitmap for page ${n}`, "page_too_large");
   try {
     lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows, 0xffffffff);
-    lib.FPDF_RenderPageBitmap(bitmap, page, 0, -top, width, height, 0, 0);
+    lib.FPDF_RenderPageBitmap(bitmap, page, 0, -top, width, height, 0, flags);
+    if (form) lib.FPDF_FFLDraw(form, bitmap, page, 0, -top, width, height, 0, flags);
     const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
     const stride = lib.FPDFBitmap_GetStride(bitmap);
     const heap = heapU8(lib);
-    const line = width * 3 + 1;
-    const raw = Buffer.alloc(line * rows); // each row: filter byte 0, then R G B per pixel
+    const rgb = Buffer.alloc(width * 3 * rows);
     for (let y = 0; y < rows; y++) {
       const src = buffer + y * stride;
-      const dst = y * line + 1;
+      const dst = y * width * 3;
       for (let x = 0; x < width; x++) {
-        raw[dst + 3 * x] = heap[src + 3 * x + 2];
-        raw[dst + 3 * x + 1] = heap[src + 3 * x + 1];
-        raw[dst + 3 * x + 2] = heap[src + 3 * x];
+        rgb[dst + 3 * x] = heap[src + 3 * x + 2];
+        rgb[dst + 3 * x + 1] = heap[src + 3 * x + 1];
+        rgb[dst + 3 * x + 2] = heap[src + 3 * x];
       }
     }
-    const header = Buffer.alloc(13);
-    header.writeUInt32BE(width, 0);
-    header.writeUInt32BE(rows, 4);
-    header[8] = 8; // bit depth
-    header[9] = 2; // colour type RGB
-    return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+    return rgb;
   } finally {
     lib.FPDFBitmap_Destroy(bitmap);
   }
+}
+
+/** `rgb` (width x rows, from renderRgb) as a PNG. */
+export function encodePng(rgb: Buffer, width: number, rows: number): Buffer {
+  const line = width * 3 + 1;
+  const raw = Buffer.alloc(line * rows); // each row: filter byte 0, then R G B per pixel
+  for (let y = 0; y < rows; y++) rgb.copy(raw, y * line + 1, y * width * 3, (y + 1) * width * 3);
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(rows, 4);
+  header[8] = 8; // bit depth
+  header[9] = 2; // colour type RGB
+  return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
 }
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

@@ -9,6 +9,7 @@
         "bill-client",
         "calendar-reminders",
         "call-contact",
+        "compare-documents",
         "matter-data",
         "dyu",
         "executive-assistant",
@@ -35,6 +36,7 @@
         "wip-tracker"
       ],
       "agents": [
+        "compare-pages",
         "delivery-checker",
         "docket-clerk",
         "extract-affidavit",

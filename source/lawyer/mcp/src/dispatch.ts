@@ -99,6 +99,7 @@ import {
 import { researchPreflight } from "./research/preflight.js";
 import { legislationSearch } from "./files/legislation-search.js";
 import { pdfPageImages } from "./files/extract/page-images.js";
+import { pdfPagesCompare } from "./files/extract/page-compare.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
 import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matter-root.js";
 import { callKeyRequestTool, isKeyRequestToolName } from "./key-request/tools.js";
@@ -665,6 +666,10 @@ export async function callTool(
       pages: args.pages as string | undefined,
       tiles: args.tiles as boolean | undefined,
     });
+  }
+
+  if (name === "pdf_pages__compare") {
+    return pdfPagesCompare({ a: args.a as string, b: args.b as string, pages: args.pages as string | undefined });
   }
 
   if (isKeyRequestToolName(name)) {

@@ -1,0 +1,32 @@
+---
+name: compare-documents
+description: "Compare two PDF copies of one document and say what changed: a court e-filing system's flattened copy against the original ('verify flattened documents'), a converted or re-saved PDF against its source, or a returned signed copy against the version sent. Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original'. Redlining two drafts of a Word document -> not this skill."
+---
+
+<!-- lawyer v0.8.2 -->
+> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
+> **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
+
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
+# Compare documents
+
+Answers one question: did anything change between an original (A) and a copy (B)? An automatic page-by-page check clears the pages that match exactly, and a reviewer looks only at the pages that differ to the eye.
+
+Both files are read-only: never change, move or rename either, and write nothing into a matter folder. The page images go to a temporary folder.
+
+1. **Get the two files.** Take the absolute path of the original and of the copy. Both must be PDFs. For any other format, say plainly that this compares PDFs only and stop. Never convert a file yourself.
+2. **Check.** Call `pdf_pages__compare` with `a` (the original) and `b` (the copy). If it refuses, say so in plain words with its reason, such as "the copy is password-protected", and stop.
+3. **No pages to review.** When `review_groups` is empty, answer from the result alone (step 6) and dispatch nothing.
+4. **Bridged session.** When lawyer's data tools are listed as `mcp__remote-devices__plugin_lawyer_data__*`, the reviewer cannot see host files. Stage each PNG of the pages to review first, by the bridged-session rule of `../matter-data/operations/verify-law.md` §2, and use the staged paths. Where staging is impossible, dispatch nothing and report those pages as not reviewed, with the reason in one line.
+5. **Review.** Dispatch one `lawyer:compare-pages` agent per review group. Its brief is one line per page: the page number, its `reasons`, `changed_share` if present, and the A and B image paths, in order. Nothing else goes in the brief.
+   - **Warm the prompt cache.** With two or more groups, dispatch the first group's agent alone, in the foreground, and wait for it to return. Then dispatch every other group in one message, as parallel calls. The prompt cache lasts 5 minutes, so send that message within 5 minutes of the first dispatch. The later agents then read the start-up prompt the first one cached instead of each writing it again. With one group, dispatch it at once.
+   - An agent that fails or returns another format leaves its pages not reviewed: say so. Never give its pages to a broader agent.
+6. **Answer** in one short reply, in the practitioner's words:
+   - each page that visibly changed, and what changed ("page 74 now displays upside down; its content is the same");
+   - pages the reviewer found no visible difference on, with what differs underneath ("pages 3 and 9 look the same; the difference found there is too small to see");
+   - pages flagged for `text` or `images` alone: they look the same, but the copy's searchable text (`text`) or its stored images (`images`) differ ("the copy's searchable text differs on page 5; the page looks the same");
+   - a page count difference, and the pages only one copy has;
+   - how many pages matched exactly ("the other 73 pages are identical"), and any pages not reviewed.
+
+   Where the context asks for a decision, say which choice the result supports. For a court system's flattened copy: a visible change supports submitting the original, and no visible change supports accepting the flattened copy. Show each visibly changed page from both copies as file cards (`shared/present-files.md`), the original's first. Never name a tool, an agent, a hash, a reason code, the number of agents or how the check works.

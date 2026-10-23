@@ -1,0 +1,28 @@
+---
+name: compare-documents
+description: "Compare two PDF copies of one document and say what changed: a court e-filing system's flattened copy against the original ('verify flattened documents'), a converted or re-saved PDF against its source, or a returned signed copy against the version sent. Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original'. Redlining two drafts of a Word document -> not this skill."
+---
+
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
+# Compare documents
+
+Answers one question: did anything change between an original (A) and a copy (B)? An automatic page-by-page check clears the pages that match exactly, and a reviewer looks only at the pages that differ to the eye.
+
+Both files are read-only: never change, move or rename either, and write nothing into a matter folder. The page images go to a temporary folder.
+
+1. **Get the two files.** Take the absolute path of the original and of the copy. Both must be PDFs. For any other format, say plainly that this compares PDFs only and stop. Never convert a file yourself.
+2. **Check.** Call `pdf_pages__compare` with `a` (the original) and `b` (the copy). If it refuses, say so in plain words with its reason, such as "the copy is password-protected", and stop.
+3. **No pages to review.** When `review_groups` is empty, answer from the result alone (step 6) and dispatch nothing.
+4. **Bridged session.** When lawyer's data tools are listed as `mcp__remote-devices__plugin_lawyer_data__*`, the reviewer cannot see host files. Stage each PNG of the pages to review first, by the bridged-session rule of `../matter-data/operations/verify-law.md` §2, and use the staged paths. Where staging is impossible, dispatch nothing and report those pages as not reviewed, with the reason in one line.
+5. **Review.** Dispatch one `lawyer:compare-pages` agent per review group. Its brief is one line per page: the page number, its `reasons`, `changed_share` if present, and the A and B image paths, in order. Nothing else goes in the brief.
+   - **Warm the prompt cache.** With two or more groups, dispatch the first group's agent alone, in the foreground, and wait for it to return. Then dispatch every other group in one message, as parallel calls. The prompt cache lasts 5 minutes, so send that message within 5 minutes of the first dispatch. The later agents then read the start-up prompt the first one cached instead of each writing it again. With one group, dispatch it at once.
+   - An agent that fails or returns another format leaves its pages not reviewed: say so. Never give its pages to a broader agent.
+6. **Answer** in one short reply, in the practitioner's words:
+   - each page that visibly changed, and what changed ("page 74 now displays upside down; its content is the same");
+   - pages the reviewer found no visible difference on, with what differs underneath ("pages 3 and 9 look the same; the difference found there is too small to see");
+   - pages flagged for `text` or `images` alone: they look the same, but the copy's searchable text (`text`) or its stored images (`images`) differ ("the copy's searchable text differs on page 5; the page looks the same");
+   - a page count difference, and the pages only one copy has;
+   - how many pages matched exactly ("the other 73 pages are identical"), and any pages not reviewed.
+
+   Where the context asks for a decision, say which choice the result supports. For a court system's flattened copy: a visible change supports submitting the original, and no visible change supports accepting the flattened copy. Show each visibly changed page from both copies as file cards (`shared/present-files.md`), the original's first. Never name a tool, an agent, a hash, a reason code, the number of agents or how the check works.

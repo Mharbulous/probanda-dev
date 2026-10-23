@@ -45,17 +45,24 @@ export const drawText = (mode, x, y, size = 12) => `BT ${mode} Tr /F1 ${size} Tf
 export const textBlock = () =>
   Array.from({ length: 40 }, (_, i) => `BT /F1 12 Tf 72 ${740 - 17 * i} Td (Placeholder text layer, visible on the page) Tj ET`).join(" ");
 
-/** A PDF of `pages` ([{content, mediaBox = [0, 0, 612, 792], cropBox?, rotate?}]), every page and form
+/** A PDF of `pages` ([{content, mediaBox = [0, 0, 612, 792], cropBox?, rotate?, annots?}]), every page and form
  * sharing the image /Im1, the font /F1 and the form XObjects in `forms` ({name: {bbox, matrix?,
- * content}}). `encrypted` adds a Standard security handler whose user password is not empty. */
+ * content}}). Each of a page's `annots` ({rect: [l, b, r, t], ap, widget?}) is a /Square annotation,
+ * or with `widget` a text form field, whose normal appearance draws the content `ap` over its rect.
+ * `encrypted` adds a Standard security handler whose user password is not empty. */
 export function imagePdfBytes({ pages, forms = {}, encrypted = false }) {
   const names = Object.keys(forms);
-  // Object numbers: 1 catalog, 2 pages, 3 font, 4 image, the forms from 5, then page/content pairs.
+  // Object numbers: 1 catalog, 2 pages, 3 font, 4 image, the forms from 5, then page/content pairs,
+  // then each annotation and its appearance stream.
   const first = 5 + names.length;
   const xobjects = ["/Im1 4 0 R", ...names.map((n, i) => `/${n} ${5 + i} 0 R`)].join(" ");
   const resources = `<< /Font << /F1 3 0 R >> /XObject << ${xobjects} >> >>`;
+  let nextAnnot = first + 2 * pages.length;
+  const annotNumbers = pages.map(({ annots = [] }) => annots.map(() => ((nextAnnot += 2), nextAnnot - 2)));
+  const widgets = pages.flatMap(({ annots = [] }, i) => annots.flatMap((a, j) => (a.widget ? [annotNumbers[i][j]] : [])));
+  const acroForm = widgets.length ? ` /AcroForm << /Fields [${widgets.map((n) => `${n} 0 R`).join(" ")}] >>` : "";
   const objs = [
-    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>", "latin1"),
+    Buffer.from(`<< /Type /Catalog /Pages 2 0 R${acroForm} >>`, "latin1"),
     Buffer.from(`<< /Type /Pages /Kids [${pages.map((_, i) => `${first + 2 * i} 0 R`).join(" ")}] /Count ${pages.length} >>`, "latin1"),
     Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "latin1"),
     stream("/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceRGB /BitsPerComponent 8", IMAGE_PIXELS),
@@ -68,8 +75,18 @@ export function imagePdfBytes({ pages, forms = {}, encrypted = false }) {
   pages.forEach(({ content, mediaBox = [0, 0, 612, 792], cropBox, rotate }, i) => {
     const crop = cropBox ? ` /CropBox [${cropBox.join(" ")}]` : "";
     const rot = rotate ? ` /Rotate ${rotate}` : "";
-    objs.push(Buffer.from(`<< /Type /Page /Parent 2 0 R /MediaBox [${mediaBox.join(" ")}]${crop}${rot} /Contents ${first + 1 + 2 * i} 0 R /Resources ${resources} >>`, "latin1"));
+    const annots = annotNumbers[i].length ? ` /Annots [${annotNumbers[i].map((n) => `${n} 0 R`).join(" ")}]` : "";
+    objs.push(Buffer.from(`<< /Type /Page /Parent 2 0 R /MediaBox [${mediaBox.join(" ")}]${crop}${rot}${annots} /Contents ${first + 1 + 2 * i} 0 R /Resources ${resources} >>`, "latin1"));
     objs.push(stream("", Buffer.from(content, "latin1")));
+  });
+  pages.forEach(({ annots = [] }, i) => {
+    annots.forEach(({ rect, ap, widget }, j) => {
+      const n = annotNumbers[i][j];
+      const kind = widget ? `/Subtype /Widget /FT /Tx /T (field${n}) /V (Placeholder)` : "/Subtype /Square";
+      objs.push(Buffer.from(`<< /Type /Annot ${kind} /F 4 /P ${first + 2 * i} 0 R /Rect [${rect.join(" ")}] /AP << /N ${n + 1} 0 R >> >>`, "latin1"));
+      const [l, b, r, t] = rect;
+      objs.push(stream(`/Type /XObject /Subtype /Form /BBox [0 0 ${r - l} ${t - b}] /Resources ${resources}`, Buffer.from(ap, "latin1")));
+    });
   });
   let trailer = "";
   if (encrypted) {
