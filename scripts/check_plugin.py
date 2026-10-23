@@ -30,6 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_file_ops  # noqa: E402
+import check_internals  # noqa: E402
 import check_layering  # noqa: E402
 import plugin_layout  # noqa: E402
 
@@ -1393,6 +1394,13 @@ def check_file_ops_rule(repo):
     return True, f"{len(found)} (file, operation) pairs"
 
 
+def check_internals_rule(repo):
+    """check_internals.py's verdict: no Probanda internal term in a hook refusal, a page template or a
+    file name the data server builds (shared/internals-confidentiality.md)."""
+    hits = check_internals.violations(Path(repo))
+    return (False, "; ".join(hits)) if hits else (True, "no internal term in user-visible text")
+
+
 CHECKS = (
     ("roster-sanity: every shipped skill maps to a source SKILL.md", check_roster_sanity),
     ("reserved-name: no shipped skill name contains the reserved word 'claude'", check_reserved_name),
@@ -1439,6 +1447,8 @@ REPO_CHECKS = (
      "(scripts/check_layering.py)", check_layering_rule),
     ("file-ops: every file-changing operation outside file-manager has a ruling (scripts/check_file_ops.py)",
      check_file_ops_rule),
+    ("internals: no hook refusal, page template or built file name holds a Probanda internal term "
+     "(scripts/check_internals.py)", check_internals_rule),
 )
 
 
