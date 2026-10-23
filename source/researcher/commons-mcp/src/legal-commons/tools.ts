@@ -1,6 +1,6 @@
 import { ValidationError } from "../errors.js";
 import type { LegalCommonsClient } from "./client.js";
-import { findRulePeriods, pushRulePeriods, recordRulePeriodVerification, retireRulePeriod } from "./rule-periods.js";
+import { findRulePeriods, pushRulePeriods, retireRulePeriod } from "./rule-periods.js";
 
 // Runtime logic for the layer-3 gatekeeper namespace. Five reads + one write,
 // all matter-free (spec §6/§7). Tool definitions live in schema-gen.ts alongside
@@ -59,8 +59,6 @@ export function callLegalCommonsTool(
       return pushRulePeriods(client, args);
     case "legal_commons__rule_period_find":
       return findRulePeriods(client, args);
-    case "legal_commons__rule_period_record_verification":
-      return recordRulePeriodVerification(client, args);
     case "legal_commons__rule_period_retire":
       return retireRulePeriod(client, args);
     case "legal_commons__configure_status":

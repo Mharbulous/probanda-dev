@@ -44,7 +44,7 @@
         ]
       },
       {
-        "matcher": "mcp__(.+__)?plugin_researcher_commons__legal_commons__(push|amend_authority|amend_authority_edge|amend_criterion_text|amend_principle_text|link_authority|unlink_authority|merge_authority|record_treatment|rule_period_push|rule_period_record_verification|rule_period_retire)",
+        "matcher": "mcp__(.+__)?plugin_researcher_commons__legal_commons__(push|amend_authority|amend_authority_edge|amend_criterion_text|amend_principle_text|link_authority|unlink_authority|merge_authority|record_treatment|rule_period_push|rule_period_retire)",
         "hooks": [
           {
             "type": "command",

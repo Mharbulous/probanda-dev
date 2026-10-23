@@ -284,8 +284,8 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
       name: legalCommonsPrefixed("rule_period_find"),
       description:
         "Find pooled court-rule records for one enactment (by its citation, e.g. \"B.C. Reg. 168/2009\"), optionally narrowed by amending regulation, rule_ref or deadline_type. " +
-        "Each row carries its status (proposed, corroborated, disputed or retired), its record, its verifications, and `mine` when this install contributed it. " +
-        "Rows from different contributors for one key are all returned; the pool never picks one.",
+        "Returns one current row per rule period (jurisdiction, enactment, rule_ref, deadline_type, effective_from): the latest live row, else the latest retired one. " +
+        "Each row carries its pool id, contributed_at, record and, when retired, retired_at, retire_reason and shipped_version.",
       inputSchema: objectSchema([
         { name: "jurisdiction", type: "str" },
         { name: "enactment", type: "str" },
@@ -294,17 +294,6 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
         { name: "deadline_type", type: "str" },
       ], ["jurisdiction", "enactment"]),
       annotations: { readOnlyHint: true },
-    },
-    {
-      name: legalCommonsPrefixed("rule_period_record_verification"),
-      description:
-        "Record this install's live re-check of one pooled court-rule record against its primary source: whether its verbatim quote was found, and when the source was fetched. " +
-        "A matched check from an install other than the contributor's makes the row corroborated. A later check by the same install replaces its earlier one.",
-      inputSchema: objectSchema([
-        { name: "id", type: "str" },
-        { name: "quote_matched", type: "bool" },
-        { name: "source_fetched_at", type: "str" },
-      ], ["id", "quote_matched", "source_fetched_at"]),
     },
     {
       name: legalCommonsPrefixed("rule_period_retire"),

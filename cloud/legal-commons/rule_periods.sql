@@ -117,8 +117,12 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- rule_periods_find — rows for one enactment, optionally narrowed, each with its
--- derived status and its verifications. Retired rows are returned too, marked.
+-- rule_periods_find — one current row per key for one enactment, optionally
+-- narrowed (lawyer-only-access plan §7 rule 15, #119). The current row is the
+-- latest live row, else the latest retired row, which `retired_at` marks. It is
+-- chosen over every row of the key before the amending_reg filter, so that
+-- filter never brings back a row a later one replaced. No status, verification
+-- or contributor is returned (§7 rule 7).
 -- -----------------------------------------------------------------------------
 create or replace function legal_commons.rule_periods_find(
   p_jurisdiction text,
@@ -132,78 +136,24 @@ language sql
 stable
 as $$
   select coalesce(jsonb_agg(jsonb_build_object(
-    'rule_period_id', r.rule_period_id,
-    'status', case
-      when r.retired_at is not null then 'retired'
-      when exists (
-        select 1 from legal_commons.rule_period o
-        where o.retired_at is null
-          and o.rule_period_id <> r.rule_period_id
-          and o.jurisdiction = r.jurisdiction
-          and o.enactment_citation = r.enactment_citation
-          and o.rule_ref = r.rule_ref
-          and o.deadline_type = r.deadline_type
-          and o.effective_from is not distinct from r.effective_from
-          and o.content_hash <> r.content_hash
-      ) then 'disputed'
-      when exists (
-        select 1 from legal_commons.rule_period_verification v
-        where v.rule_period_id = r.rule_period_id and v.quote_matched and v.verifier <> r.contributor
-      ) then 'corroborated'
-      else 'proposed'
-    end,
-    'contributor', r.contributor,
-    'contributed_at', r.contributed_at,
-    'record', r.record,
-    'verifications', coalesce((
-      select jsonb_agg(jsonb_build_object(
-        'verifier', v.verifier,
-        'verified_at', v.verified_at,
-        'source_fetched_at', v.source_fetched_at,
-        'quote_matched', v.quote_matched
-      ) order by v.verified_at)
-      from legal_commons.rule_period_verification v where v.rule_period_id = r.rule_period_id
-    ), '[]'::jsonb),
-    'retired_at', r.retired_at,
-    'retire_reason', r.retire_reason,
-    'shipped_version', r.shipped_version
-  ) order by r.rule_ref, r.deadline_type, r.effective_from, r.contributed_at), '[]'::jsonb)
-  from legal_commons.rule_period r
-  where r.jurisdiction = p_jurisdiction
-    and r.enactment_citation = p_enactment_citation
-    and (p_amending_reg is null or r.amending_reg = p_amending_reg)
-    and (p_rule_ref is null or r.rule_ref = p_rule_ref)
-    and (p_deadline_type is null or r.deadline_type = p_deadline_type);
-$$;
-
--- -----------------------------------------------------------------------------
--- rule_periods_record_verification — a verifier's live re-check of one row
--- against its primary source. Upserts: the verifier's latest check stands.
--- -----------------------------------------------------------------------------
-create or replace function legal_commons.rule_periods_record_verification(
-  p_id uuid,
-  p_verifier text,
-  p_quote_matched boolean,
-  p_source_fetched_at text
-)
-returns jsonb
-language plpgsql
-as $$
-begin
-  perform 1 from legal_commons.rule_period r where r.rule_period_id = p_id;
-  if not found then
-    raise exception 'no pooled rule period %', p_id;
-  end if;
-
-  insert into legal_commons.rule_period_verification (rule_period_id, verifier, source_fetched_at, quote_matched)
-  values (p_id, p_verifier, p_source_fetched_at, p_quote_matched)
-  on conflict (rule_period_id, verifier) do update set
-    verified_at = now(),
-    source_fetched_at = excluded.source_fetched_at,
-    quote_matched = excluded.quote_matched;
-
-  return jsonb_build_object('rule_period_id', p_id, 'recorded', true, 'quote_matched', p_quote_matched);
-end;
+    'rule_period_id', c.rule_period_id,
+    'contributed_at', c.contributed_at,
+    'record', c.record,
+    'retired_at', c.retired_at,
+    'retire_reason', c.retire_reason,
+    'shipped_version', c.shipped_version
+  ) order by c.rule_ref, c.deadline_type, c.effective_from), '[]'::jsonb)
+  from (
+    select distinct on (r.rule_ref, r.deadline_type, r.effective_from) r.*
+    from legal_commons.rule_period r
+    where r.jurisdiction = p_jurisdiction
+      and r.enactment_citation = p_enactment_citation
+      and (p_rule_ref is null or r.rule_ref = p_rule_ref)
+      and (p_deadline_type is null or r.deadline_type = p_deadline_type)
+    order by r.rule_ref, r.deadline_type, r.effective_from,
+             r.retired_at is not null, r.contributed_at desc, r.rule_period_id
+  ) c
+  where p_amending_reg is null or c.amending_reg = p_amending_reg;
 $$;
 
 -- -----------------------------------------------------------------------------

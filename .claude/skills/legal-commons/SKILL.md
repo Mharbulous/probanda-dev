@@ -58,7 +58,6 @@ prompt. A WARN pause inside a push is a content confirmation, a separate thing.
 | Correct a pooled authority's own title, url, or authority_type | `legal_commons__amend_authority` |
 | Share locally verified court-rule overlay records | `legal_commons__rule_period_push` |
 | Find pooled court-rule records for an enactment, optionally by amending regulation, rule_ref or deadline type | `legal_commons__rule_period_find` |
-| Record this install's live re-check of a pooled court-rule record against its source | `legal_commons__rule_period_record_verification` |
 | Retire a pooled court-rule record | `legal_commons__rule_period_retire` |
 
 ## Reads
@@ -180,21 +179,22 @@ existing authority row, so nothing else can.
 The pool also holds **court-rule records**: one row per deadline-rule period a
 practitioner verified locally against the rule's primary source (the
 firm rule overlay that `lawyer:docket-clerk` keeps). They are a separate kind of row from
-principles, with their own four tools. Probanda ships no procedure that pushes, pulls,
-ratifies or retires them; this section states the rules every caller keeps.
+principles, with their own three tools. Probanda ships no procedure that pushes, pulls
+or retires them; this section states the rules every caller keeps.
 
 - **Push carries only verified records in the overlay shape.** The runtime refuses
   a record with a field outside that shape, a missing required field, a local
   status other than `verified`, or a client matter code anywhere in its text. It
   strips the local bookkeeping fields. A refusal names the field, never the text.
-- **Several contributors may hold different rows for one rule period.** The pool
-  never picks a winner. Each row reports a status derived on read: `proposed`,
-  `corroborated` (a matching re-check by an install other than the contributor's),
-  `disputed` (another live row for the same period says something different), or
-  `retired`. Show disputed rows side by side.
-- **A pooled record never drives a calculation.** A pulled record lands locally as
-  unverified and becomes usable only after a live re-check against its primary
-  source and the practitioner's approval.
+- **One current row per rule period, latest wins.** A rule period is one
+  jurisdiction, enactment, rule_ref, deadline type and start date. `rule_period_find`
+  returns its latest live row, or its latest retired row when none is live. A row
+  is retired when `retired_at` is set. No row carries a status, a re-check count or
+  who contributed it.
+- **A pooled record never drives a calculation until the lawyer's own live
+  re-check.** A pulled record lands locally as unverified and becomes usable only
+  after a live re-check against its primary source and the practitioner's
+  approval.
 - **Identity is an opaque per-install id**, minted by the runtime. No tool takes
   it as an argument, and it names no one. The contributing install may retire its
   own row; any install may retire a row by naming the plugin version that now

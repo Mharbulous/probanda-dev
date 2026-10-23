@@ -26,8 +26,7 @@ BRIDGED = "mcp__remote-devices__" + SERVER
 WRITE = {
     "push", "amend_authority", "amend_authority_edge", "amend_criterion_text",
     "amend_principle_text", "link_authority", "unlink_authority", "merge_authority",
-    "record_treatment", "rule_period_push",
-    "rule_period_record_verification", "rule_period_retire",
+    "record_treatment", "rule_period_push", "rule_period_retire",
 }
 READ = {
     "browse", "search", "find_candidates", "lookup_by_citation", "resolve_by_id", "treatment_chain",

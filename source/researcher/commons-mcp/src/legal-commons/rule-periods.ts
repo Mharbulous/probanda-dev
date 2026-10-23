@@ -109,7 +109,7 @@ function canonical(value: unknown): string {
 
 // The hash covers what the rule does, not how a contributor described or
 // sourced it, so two contributors with the same rule hold one row and a
-// different offset, base or quote makes the key disputed.
+// different offset, base or quote makes a new row for the key.
 function contentHash(record: Record<string, unknown>): string {
   const enactment = record.enactment as Record<string, unknown>;
   const operative = {
@@ -176,6 +176,10 @@ export async function pushRulePeriods(client: LegalCommonsClient, args: Record<s
   return { contributor, results };
 }
 
+// One current row per key: the cloud picks the latest live row, else the latest
+// retired one, which `retired_at` marks.
+const FIND_REPLY_FIELDS = ["rule_period_id", "contributed_at", "record", "retired_at", "retire_reason", "shipped_version"];
+
 export async function findRulePeriods(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
   const rows = (await client.rpc("rule_periods_find", {
     p_jurisdiction: String(args.jurisdiction),
@@ -184,21 +188,11 @@ export async function findRulePeriods(client: LegalCommonsClient, args: Record<s
     p_rule_ref: args.rule_ref ?? null,
     p_deadline_type: args.deadline_type ?? null,
   })) as Array<Record<string, unknown>> | null;
-  const me = await contributorId();
-  // `mine` tells the caller which rows it pushed, and so may retire.
-  return (rows ?? []).map((row) => ({ ...row, mine: row.contributor === me }));
-}
-
-export async function recordRulePeriodVerification(
-  client: LegalCommonsClient,
-  args: Record<string, unknown>
-): Promise<unknown> {
-  return client.rpc("rule_periods_record_verification", {
-    p_id: String(args.id),
-    p_verifier: await contributorId(),
-    p_quote_matched: args.quote_matched,
-    p_source_fetched_at: String(args.source_fetched_at),
-  });
+  // Named fields only, so no status, verification or attribution reaches a
+  // reader, whatever the pool returns (lawyer-only-access plan §7 rules 7 and 15).
+  return (rows ?? []).map((row) =>
+    Object.fromEntries(FIND_REPLY_FIELDS.map((field) => [field, row[field] ?? null]))
+  );
 }
 
 export async function retireRulePeriod(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {

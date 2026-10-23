@@ -119,10 +119,10 @@ test("only a locally verified record with its required fields and a dated period
   assert.equal(pool.calls.length, 0);
 });
 
-// The pool marks a key disputed when two live rows for it have different
-// hashes, so the hash must separate a different rule and join the same rule
-// described or sourced differently.
-test("the content hash keys disputes on what the rule does, not on how it was described", async () => {
+// The pool holds a new row for a key only when the hash differs, so the hash
+// must separate a different rule and join the same rule described or sourced
+// differently.
+test("the content hash keys rows on what the rule does, not on how it was described", async () => {
   const pool = fakePool();
   await push(pool, [
     record(),
@@ -136,12 +136,19 @@ test("the content hash keys disputes on what the rule does, not on how it was de
   assert.notEqual(hashes[3], hashes[0], "a different offset is a different rule");
 });
 
-test("find passes its filters and marks the rows this install contributed", async () => {
+// No reader sees a corroboration status, a verification or attribution
+// (lawyer-only-access plan §7 rules 7 and 15, #119). The fake rows carry the
+// fields the pool returned before #119, so the reply must name its fields.
+test("find passes its filters and replies with no status, verification or attribution", async () => {
   const me = JSON.parse(readFileSync(contributorPath(), "utf8")).id;
   const pool = fakePool({
     rule_periods_find: [
-      { rule_period_id: "a", contributor: me, status: "disputed" },
-      { rule_period_id: "b", contributor: "someone-else", status: "disputed" },
+      {
+        rule_period_id: "a", status: "corroborated", contributor: me, contributed_at: "2026-10-05T00:00:00Z",
+        record: { rule_ref: "Rule 8-1(14.5)(a)" }, retired_at: null, retire_reason: null, shipped_version: null,
+        verifications: [{ verifier: "someone-else", verified_at: "t", source_fetched_at: "2026-10-05", quote_matched: true }],
+      },
+      { rule_period_id: "b", status: "disputed", contributor: "someone-else", verifier: "x", mine: false },
     ],
   });
   const rows = await index.callTool(context(pool), "legal_commons__rule_period_find", {
@@ -156,28 +163,29 @@ test("find passes its filters and marks the rows this install contributed", asyn
     p_rule_ref: null,
     p_deadline_type: null,
   });
-  assert.deepEqual(rows.map((r) => [r.rule_period_id, r.mine]), [["a", true], ["b", false]]);
+  for (const row of rows) {
+    assert.deepEqual(Object.keys(row).sort(), [
+      "contributed_at", "record", "retire_reason", "retired_at", "rule_period_id", "shipped_version",
+    ]);
+  }
+  assert.deepEqual(rows[0].record, { rule_ref: "Rule 8-1(14.5)(a)" });
+  const text = JSON.stringify(rows);
+  for (const banned of ["corroborated", "disputed", "status", "verifications", "verifier", "contributor", "mine"]) {
+    assert.ok(!text.includes(banned), `the reply holds no "${banned}"`);
+  }
 });
 
-test("verification and retirement are recorded under this install's id, never a caller-supplied one", async () => {
+test("retirement is recorded under this install's id, never a caller-supplied one", async () => {
   const me = JSON.parse(readFileSync(contributorPath(), "utf8")).id;
   const pool = fakePool();
-  await index.callTool(context(pool), "legal_commons__rule_period_record_verification", {
-    id: "00000000-0000-4000-8000-0000000000bb",
-    quote_matched: true,
-    source_fetched_at: "2026-10-05",
-  });
   await index.callTool(context(pool), "legal_commons__rule_period_retire", {
     id: "00000000-0000-4000-8000-0000000000bb",
     reason: "shipped in the plugin",
     shipped_version: "1.29.0",
   });
-  assert.equal(pool.calls[0].fn, "rule_periods_record_verification");
-  assert.equal(pool.calls[0].body.p_verifier, me);
-  assert.equal(pool.calls[0].body.p_quote_matched, true);
-  assert.equal(pool.calls[1].fn, "rule_periods_retire");
-  assert.equal(pool.calls[1].body.p_caller, me);
-  assert.equal(pool.calls[1].body.p_shipped_version, "1.29.0");
+  assert.equal(pool.calls[0].fn, "rule_periods_retire");
+  assert.equal(pool.calls[0].body.p_caller, me);
+  assert.equal(pool.calls[0].body.p_shipped_version, "1.29.0");
   await assert.rejects(
     () => index.callTool(context(pool), "legal_commons__rule_period_retire", { id: "x", reason: "r", contributor: "spoof" }),
     /unknown field "contributor"/

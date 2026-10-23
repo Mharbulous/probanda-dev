@@ -282,7 +282,6 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
     "legal_commons__resolve_by_id",
     "legal_commons__rule_period_find",
     "legal_commons__rule_period_push",
-    "legal_commons__rule_period_record_verification",
     "legal_commons__rule_period_retire",
     "legal_commons__search",
     "legal_commons__treatment_chain",
