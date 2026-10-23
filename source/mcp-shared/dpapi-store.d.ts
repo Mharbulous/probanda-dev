@@ -10,3 +10,5 @@ export declare function writeProtectedJson(path: string, value: unknown, protect
 export declare function protectLocalSecret(data: Buffer): Promise<Buffer>;
 
 export declare function unprotectLocalSecret(data: Buffer): Promise<Buffer>;
+
+export declare function runPowerShell(label: string, script: string, stdin?: string): Promise<string>;

@@ -11,7 +11,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { fakeCloudKeyStore } from "./helpers/fake-cloud-key-store.mjs";
 import { memoryKv, seedItems, startFakeCloud } from "./helpers/fake-cloud.mjs";
+
+// The no-credential test reads Credential Manager; a fake keeps it off the practitioner's real entry.
+const { setCloudKeyStore } = await import("../../../mcp-shared/commons-key.js");
+setCloudKeyStore(fakeCloudKeyStore());
 
 const { PracticeStore } = await import("../build/practice/store.js");
 const { callPracticeTool } = await import("../build/tools/practice/index.js");

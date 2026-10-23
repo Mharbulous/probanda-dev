@@ -67,6 +67,15 @@ export async function unprotectLocalSecret(data) {
 
 async function runDpapi(action, data) {
   const script = action === "Protect" ? protectScript : unprotectScript;
+  const out = await runPowerShell(`Windows DPAPI ${action}`, script, data.toString("base64"));
+  return Buffer.from(out, "base64");
+}
+
+// One Windows PowerShell run: the script on the command line, `stdin` (if any)
+// on its standard input, its trimmed standard output returned. Shared with the
+// Credential Manager store (credential-manager.js). A non-zero exit rejects
+// with `${label} failed: <stderr>`.
+export async function runPowerShell(label, script, stdin = "") {
   const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
@@ -81,13 +90,13 @@ async function runDpapi(action, data) {
     child.on("error", reject);
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
+      else reject(new Error(`${label} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
 
-  child.stdin.end(data.toString("base64"));
+  child.stdin.end(stdin);
   await done;
-  return Buffer.from(Buffer.concat(stdout).toString("utf8").trim(), "base64");
+  return Buffer.concat(stdout).toString("utf8").trim();
 }
 
 // Windows PowerShell 5.1 does not load System.Security by default, so

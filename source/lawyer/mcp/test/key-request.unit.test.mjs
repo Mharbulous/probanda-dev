@@ -4,12 +4,14 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
-// The request's reference and the key are saved under LOCALAPPDATA, so each run uses its own.
+import { fakeCloudKeyStore } from "./helpers/fake-cloud-key-store.mjs";
+
+// The request's reference is saved under LOCALAPPDATA, so each run uses its own; the key goes to a
+// fake Credential Manager, never the practitioner's.
 const STATE = await mkdtemp(join(tmpdir(), "probanda-key-request-"));
 process.env.LOCALAPPDATA = STATE;
 delete process.env.LEGAL_COMMONS_SUPABASE_KEY;
@@ -22,7 +24,9 @@ after(() => rm(STATE, { recursive: true, force: true }));
 const { callTool } = await import("../build/dispatch.js");
 const { buildToolDefinitions, buildFileManagerToolDefinitions } = await import("../build/schema-gen.js");
 const { loadCloudKey } = await import("../build/cloud-key.js");
-const { credentialPath } = await import("../../../mcp-shared/commons-key.js");
+const { setCloudKeyStore } = await import("../../../mcp-shared/commons-key.js");
+const keyStore = fakeCloudKeyStore();
+setCloudKeyStore(keyStore);
 
 const KEY_TOOLS = ["cloud_key__configure_credential", "key_request__status", "key_request__submit"];
 const CALL = {
@@ -183,7 +187,7 @@ async function pasteOnKeyPage(secret) {
 
 test("configure_credential refuses a key as a tool argument", async () => {
   await assert.rejects(() => call("cloud_key__configure_credential", { static_key: "sb_secret_X" }), /unknown field/);
-  assert.equal(existsSync(credentialPath()), false);
+  assert.equal(keyStore.secret, null);
 });
 
 test("configure_credential's page rejects the publishable key without probing or saving it", async (t) => {
@@ -191,7 +195,7 @@ test("configure_credential's page rejects the publishable key without probing or
   const html = await pasteOnKeyPage("sb_publishable_ABCDEFGHIJKLMNOP");
   assert.match(html, /Not saved: that is the project&#39;s publishable key/);
   assert.equal(calls.length, 0, "must fail before spending a network round trip");
-  assert.equal(existsSync(credentialPath()), false);
+  assert.equal(keyStore.secret, null);
 });
 
 test("configure_credential's page saves nothing when Probanda's Cloud refuses the key", async (t) => {
@@ -200,12 +204,11 @@ test("configure_credential's page saves nothing when Probanda's Cloud refuses th
   assert.match(html, /Not saved: that key did not work against Probanda&#39;s Cloud \(401\)/);
   assert.ok(!html.includes("sb_secret_WRONGKEY"), "the page does not echo the key");
   assert.equal(calls.length, 1);
-  assert.equal(existsSync(credentialPath()), false);
+  assert.equal(keyStore.secret, null);
 });
 
-// Last: it leaves a key stored, which the refusals above must not see. Saving goes through DPAPI,
-// so it runs on Windows only, as the suite does.
-test("configure_credential's page checks the key, then saves it where every server reads it", { skip: process.platform !== "win32" }, async (t) => {
+// Last: it leaves a key stored, which the refusals above must not see.
+test("configure_credential's page checks the key, then saves it where every server reads it", async (t) => {
   const calls = fakeCloud(t, () => [200, []]);
   const html = await pasteOnKeyPage("  sb_secret_GOODKEY_0123456789\n");
   assert.match(html, /Connected to Probanda's Cloud/);
@@ -214,6 +217,8 @@ test("configure_credential's page checks the key, then saves it where every serv
   assert.equal(calls[0].url, `${PROJECT}/functions/v1/items-sync`);
   assert.deepEqual(calls[0].body, {});
   assert.equal(calls[0].headers.apikey, "sb_secret_GOODKEY_0123456789");
+  assert.equal(keyStore.secret, "sb_secret_GOODKEY_0123456789");
+  assert.equal(keyStore.writes, 1);
   assert.deepEqual(await loadCloudKey(), { configured: true, supabaseUrl: PROJECT, staticKey: "sb_secret_GOODKEY_0123456789" });
   await assert.rejects(() => call("key_request__submit"), /already holds Probanda's key/);
 });

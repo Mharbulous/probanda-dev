@@ -4,6 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { fakeCloudKeyStore } from "./helpers/fake-cloud-key-store.mjs";
+
+// cloud_credential comes from Credential Manager; a fake keeps this file off the practitioner's real entry.
+const { setCloudKeyStore } = await import("../../../mcp-shared/commons-key.js");
+setCloudKeyStore(fakeCloudKeyStore());
 const { config_set_root, config_status, DOCUMENTED_KEYS } = await import("../build/tools/practice/config.js");
 const { resolveCaseDataRoot } = await import("../build/practice/backend.js");
 
@@ -113,7 +118,7 @@ test("config_status reports a configured root and whether it holds practice.db",
   assert.equal(ok.root_exists, true);
   assert.equal(ok.practice_db_exists, true);
   assert.deepEqual(ok.keys_missing, []);
-  assert.equal(ok.cloud_credential, "missing", "no commons credential in this machine's scratch LOCALAPPDATA");
+  assert.equal(ok.cloud_credential, "missing", "nothing in the fake Credential Manager");
   assert.equal(ok.pending_writes, 0, "an empty practice.db holds no pending write, and is not opened");
   assert.equal(readFileSync(join(f.root, "_practice", "practice.db"), "utf-8"), "");
   const keyed = await config_status({}, { ...f.env, LEGAL_COMMONS_SUPABASE_KEY: "sb_secret_X" });

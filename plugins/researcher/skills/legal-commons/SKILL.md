@@ -4,6 +4,8 @@ user-invocable: false
 description: Sole gatekeeper for the layer-3 shared legal-commons pool — matter-free legal principles, authorities, criteria, and treatments in Supabase, reached only through the legal_commons__* MCP tools.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # legal-commons — Router
 
 Sole gatekeeper for **layer 3**: the shared, matter-free pool of generalized
@@ -216,7 +218,7 @@ embedding/model API key (retrieval runs entirely in Postgres).
 The credential is supplied once per machine through the lawyer plugin's
 `cloud_key__configure_credential`, which returns a link to a page on this computer. The
 practitioner pastes the key on that page, never in chat; the page validates it and stores it
-encrypted on the host, where it survives restarts. It cannot arrive as an environment variable in Cowork: Cowork
+in Windows Credential Manager (practice-data, "Probanda's key"). It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
 (see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
 still wins where one is genuinely set, which is the Claude Code CLI / developer path.

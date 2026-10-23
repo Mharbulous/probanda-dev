@@ -1,11 +1,13 @@
 // The data server reads Probanda's Cloud credential the way the commons server does
-// (source/mcp-shared/commons-key.js): the env override first, then the DPAPI file, with the baked URL.
+// (source/mcp-shared/commons-key.js): the env override first, then Credential Manager (a fake here), with the baked URL.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+
+import { fakeCloudKeyStore } from "./helpers/fake-cloud-key-store.mjs";
 
 const { loadCloudKey } = await import("../build/cloud-key.js");
 
@@ -35,10 +37,20 @@ test("SUPABASE_URL overrides the baked URL", async (t) => {
   assert.equal((await loadCloudKey(env)).supabaseUrl, "https://example.supabase.co");
 });
 
-test("no env key and no credential file: not configured, naming the tool that sets it", async (t) => {
-  const result = await loadCloudKey({ LOCALAPPDATA: emptyStateDir(t) });
+test("no env key and nothing in the store: not configured, naming the tool that sets it", async (t) => {
+  const result = await loadCloudKey({ LOCALAPPDATA: emptyStateDir(t) }, fakeCloudKeyStore());
   assert.equal(result.configured, false);
   assert.equal(result.supabaseUrl, BAKED_URL);
   assert.equal("staticKey" in result, false);
   assert.match(result.reason, /no credential is configured; set it with cloud_key__configure_credential, or ask Probanda for a key with key_request__submit/);
+});
+
+test("a key in the store is configured; an unreadable store names the cause", async (t) => {
+  const env = { LOCALAPPDATA: emptyStateDir(t) };
+  assert.deepEqual(await loadCloudKey(env, fakeCloudKeyStore("sb_secret_STORED")), { configured: true, supabaseUrl: BAKED_URL, staticKey: "sb_secret_STORED" });
+  const broken = fakeCloudKeyStore();
+  broken.failRead = "Credential Manager read failed: CredReadW failed with Win32 error 5";
+  const result = await loadCloudKey(env, broken);
+  assert.equal(result.configured, false);
+  assert.match(result.reason, /^the stored credential could not be read \(Credential Manager read failed: CredReadW failed with Win32 error 5\); set it with cloud_key__configure_credential/);
 });

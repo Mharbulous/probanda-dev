@@ -15,7 +15,7 @@ export interface SelectOptions {
 }
 
 export class LegalCommonsClient {
-  // `reload` reads the credential file again. Only the pool's client has one:
+  // `reload` reads the credential store again. Only the pool's client has one:
   // the lawyer plugin's cloud_key__configure_credential saves the key from
   // another process, so a pool client that started with none must look again.
   constructor(
@@ -24,7 +24,7 @@ export class LegalCommonsClient {
   ) {}
 
   // Picks up a key saved since this process started. Called before every pool
-  // and Suggestion Box tool; costs a file read only while no key is held.
+  // and Suggestion Box tool; costs a store read only while no key is held.
   async reloadKeyIfUnset(): Promise<void> {
     if (this.config.staticKey || !this.reload) return;
     const { staticKey, credentialError } = await this.reload();

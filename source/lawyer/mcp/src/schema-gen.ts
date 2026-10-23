@@ -1642,7 +1642,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one " +
         "with none keeps its own Job Board, which already holds jobs with no Writing, and the call is refused with " +
         "no_writing. The board has a Job Board page (`Job Board <id>.html`) and jobs, and never a mockup, " +
-        "a presentation copy, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
+        "a Writing folder, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
         "job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no " +
         "filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write " +
         "nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so " +
@@ -2125,8 +2125,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "viewed first and a view page's tile stops being dashed. Call it right after presenting a view page or a " +
         "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Job " +
         "Board or Litigation Strategy page. Each path is matched by its file name to a thumbnail: a board's view " +
-        "page (view_page_paths), or a live Writing's document by its mockup or presentation copy, by its folder too " +
-        "when several Writings' documents share the name. Each moves to the front of its board's order, so the last " +
+        "page (view_page_paths), or a live Writing's document by its mockup, by its folder too " +
+        "when several thumbnails share the name. Each moves to the front of its board's order, so the last " +
         "path ends up first. One db_meta row per board, key `board_viewed:filing:<id>` or " +
         "`board_viewed:proceeding:<id>` by the board's survivor, value a JSON array of item keys, most recent first, " +
         "with no time. It moves no revision, touches no job, and does not rewrite the page: the order shows the " +
@@ -2211,11 +2211,10 @@ function formsPrefixed(name: string): string {
 // Deterministic mockup rendering surface (build ticket #297, issue 291 §6).
 // SQL and rendering logic live in data/forms/* -- this backend never embeds
 // a query, a table name, or a column name either (same boundary as
-// drafting_data__*, just for the render surface). render/bootstrap write
-// markdown files beside the matter's submission database
-// (<dirname(db_path)>/mockups/, issue #324), and render alone may also write
-// presentation copies into a confined 0. DRAFT subfolder (issue #466, ADR
-// 0012); emit_form32 (issue #392) returns markdown for the caller to write,
+// drafting_data__*, just for the render surface). render writes each
+// Writing's markdown mockups into its own folder in the matter's 0. DRAFT
+// (spec 2026-10-22), and render and bootstrap move an older build's case-data
+// mockups tree there once; emit_form32 (issue #392) returns markdown for the caller to write,
 // and writes it itself only given case_data_folder (#1267, ADR 0025).
 // bcsc_form_harness runs publish-bcsc-form's harness host-side (ADR 0025), and publish_general,
 // publish_bcca_factum and publish_vaniac_package run their subskills' fills host-side (ADR 0026),
@@ -2247,9 +2246,14 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
     {
       name: formsPrefixed("render"),
       description:
-        "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes mockups beside the " +
-        "database under <dirname(db_path)>/mockups/Filing <id>/ (issue 324, issue 1317), archiving the previous copy on a " +
-        "revision change, and returns each document's markdown inline alongside its path (issue 337) -- a session " +
+        "Render one filing's document(s) to markdown. render_mode 'mockup' (default) writes each mockup into the " +
+        "Writing's own folder in the matter's 0. DRAFT folder, the one beside the 0. CASE DATA folder holding db_path: " +
+        "one folder per Writing named after the document (its title), each mockup named after its document (a Writing " +
+        "on a stock type is named by its title), the only copy. A folder recorded for the Writing is kept on a retitle; " +
+        "a name another Writing holds gets ` (2)` after it. A matter with no 0. DRAFT folder there is refused " +
+        "(draft_dir_missing). It archives the previous copy into the folder's archive on a revision change, never " +
+        "overwrites a file it did not write (no render revision stamp), and returns each document's markdown inline " +
+        "alongside its path (issue 337) -- a session " +
         "never reads the mockup file itself, so this is the only way to read its work markers. With draft_dir " +
         "or presentation_dir, markdown returns only for the documents named in documents; every other document " +
         "carries markdown_chars, its length, in its place, so to read a document's work markers name its " +
@@ -2298,55 +2302,54 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-" +
         "retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup " +
         "mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery " +
-        "remedy. Optional presentation_dir (issue 466, ADR 0012, mockup " +
-        "mode only) is the absolute host path of this filing's presentation folder: directly under the matter's " +
-        "0. DRAFT folder, its name ending in the filing's title (the final component of a returned mockup path) -- " +
-        "anything else is refused, naming the expected ending. The server then writes every document's " +
-        "presentation copy there itself (never overwriting a file it did not write); the Job Board has none. Each " +
-        "advocacy document then comes back with presentation_path and markdown_chars but no markdown, and documents " +
-        "changes meaning: it names which documents ALSO return markdown (the board: board_summary) inline, rather " +
-        "than narrowing the list. Under presentation_dir the server also rewrites the matter's pages at the top " +
-        "of the 0. DRAFT folder above it: Litigation Strategy.html (issue 585), with the matter's open to-dos read from " +
+        "remedy. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT " +
+        "folder as open_session returned it, refused unless it is the one beside db_path's case data. With it each " +
+        "advocacy document comes back with path and markdown_chars but no markdown, and documents changes meaning: it " +
+        "names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. " +
+        "Under draft_dir the server also rewrites the matter's pages in that folder: Litigation Strategy.html (issue 585) " +
+        "at its top, with the matter's open to-dos read from " +
         "practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 " +
         "amendments), a merged board's page drawing every board merged into it as one board (drafting_data__merge_job_boards): " +
-        "`Job Board <id>.html` per live Writing and " +
-        "`Job Board - proceeding <id>.html` per pre-filing proceeding, named by id so a retitle never moves a page; " +
+        "`Job Board.html` in the Writing's own folder for a board of a Writing, and at the folder's top " +
+        "`Job Board - proceeding <id>.html` per pre-filing proceeding and `Job Board <id>.html` per Job Board with no Writing; " +
         "a job with no filing_id is on every Writing's " +
-        "page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside them, " +
-        "`<page name> - Job Board <id>.html` per live Writing, and the response carries view_page_paths " +
+        "page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside its board's " +
+        "page, `<page name>.html` in a Writing's folder, and the response carries view_page_paths " +
         "[{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its " +
         "name; a retired filing has no page and its entry no path. Each page is written atomically " +
         "(temp file, then rename) and only over a file carrying its page's marker: one without it is refused before " +
-        "any page or presentation copy is written. A page write moves the old page files this server wrote (a " +
+        "any page is written. A page write moves the old page files this server wrote (a " +
         "retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, " +
         "per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash " +
         "[{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when " +
         "this filing's section matches, apart from its Rendered minute, the one the last such render recorded in " +
-        "matter-pages-state.json beside the mockups, true otherwise. Revision cannot tell this, since writing a job " +
+        "matter-pages-state.json in the draft folder's Drafting records folder, true otherwise. Revision cannot tell this, since writing a job " +
         "or a shelving moves no revision. When a section was recorded, the entry also carries board_moves: each job " +
         "added (from null), removed (to null) or moved to another board column since it, as {id, title, from, to}; " +
         "empty when no job moved. " +
-        "Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT folder " +
-        "as open_session returned it: the server then finds this filing's presentation folder itself, <code> <filing " +
-        "title> (SUB, NOA, AR, REQ or FACTUM by filing kind) with or without a leading YYYY-MM-DD, and renders exactly " +
-        "as under that presentation_dir. No such folder: the undated one, created. One undated: that one. One dated " +
-        "(code presentation_dir_dated) or two or more (code presentation_dir_ambiguous): refused before anything is " +
-        "written, naming each candidate and, for a dated one, whether it is renameable -- it holds at least one " +
-        "file and only files this renderer writes. The server never renames; the caller renames or chooses, then " +
-        "passes presentation_dir. " +
+        "With no folder recorded for the Writing, the server finds it by its title, with or without a leading " +
+        "YYYY-MM-DD; an older build's `<code> <title>` folder is renamed to the title when it holds only files this " +
+        "renderer wrote, else kept, and the response carries writing_folder_rename {from, to} for the practitioner to " +
+        "rename it through file-manager. Two or more candidates are refused (code presentation_dir_ambiguous) before " +
+        "anything is written, naming each. Optional presentation_dir (issue 466, ADR 0012, mockup mode only) then names " +
+        "the Writing's folder: directly under that 0. DRAFT folder, named for the filing's title with or without a " +
+        "leading YYYY-MM-DD -- anything else is refused; it otherwise acts as draft_dir does. A render or bootstrap that " +
+        "finds an older build's mockups folder beside the database first moves it into 0. DRAFT, each Writing's mockups " +
+        "and archive into its folder and the manifests into the Drafting records folder, and reports each folder moved " +
+        "as mockups_moved [{from, to}]. " +
         "A successful mockup render also carries background_job, the background render job's status (see " +
         "drafting_forms__bootstrap). " +
         "Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in " +
         "pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no " +
         "filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. " +
-        "Nothing is written beside the database; given draft_dir the matter's pages are rewritten, the proceeding's " +
+        "No mockup is written; given draft_dir the matter's pages are rewritten, the proceeding's " +
         "section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths " +
         "(every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. " +
         "It takes only client fields, " +
         "session_token and draft_dir, and refuses a proceeding that has a filing. " +
         "A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: " +
         "job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with " +
-        "no mockup or presentation copy written; draft_dir rewrites the matter's pages, its own " +
+        "no mockup written; draft_dir rewrites the matter's pages, its own " +
         "`Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
         "refused with job_board_only. " +
         "Every response also carries timings: per-phase durations in ms, for profiling only.",
@@ -2473,7 +2476,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "its content and write its mockups. filings comes back in the order to present them in; present that order " +
         "as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they " +
         "are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with " +
-        "no paths. A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with " +
+        "no paths. Before listing it moves an older build's mockups folder beside the database into the matter's " +
+        "0. DRAFT, as drafting_forms__render describes (mockups_moved). A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with " +
         "job_board_only true, no paths and no render_state: it is not a Writing, has a Job Board page and no view " +
         "page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind " +
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
@@ -2506,18 +2510,18 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per " +
         "proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no " +
         "Writing, a merged board's page drawing every board merged into it as one board (ADR 0033, 2026-10-05 amendments; " +
-        "drafting_data__merge_job_boards): `Job Board " +
-        "<id>.html` and `Job Board - proceeding <id>.html`, named by id so a retitle never moves a page; a job with " +
-        "no filing_id is on every Writing's " +
+        "drafting_data__merge_job_boards): `Job Board.html` in the Writing's own folder for a board of a Writing, " +
+        "and at the folder's top `Job Board - proceeding <id>.html` and `Job Board <id>.html` (a Job Board with no " +
+        "Writing); a job with no filing_id is on every Writing's " +
         "page in its proceeding. job_board_paths lists them, [{filing_id, proceeding_id, path}] in page order, " +
         "filing_id null on a proceeding's page; bootstrap returns no job_board_path. Beside them it writes each view " +
-        "page (ADR 0033, 2026-10-07 amendment), `<page name> - Job Board <id>.html` per live Writing, and returns " +
+        "page (ADR 0033, 2026-10-07 amendment), `<page name>.html` beside its board's page, and returns " +
         "view_page_paths [{name, filing_id, path}], null without draft_dir. A session never reads a page " +
         "(shared/html-pages.md): the board's content comes from a render naming Work_board. On success " +
         "pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet " +
         "chosen -- render one with drafting_forms__render's proceeding_id. " +
-        "Without draft_dir nothing is written and matter_board_path and job_board_paths are null. A draft_dir " +
-        "that is not an existing 0. DRAFT folder, or lies in a privileged or disclosed tree, is refused, and so is " +
+        "Without draft_dir no page is written and matter_board_path and job_board_paths are null. A draft_dir " +
+        "that is not the 0. DRAFT folder beside db_path's case data, or lies in a privileged or disclosed tree, is refused, and so is " +
         "an existing Litigation Strategy.html or Job Board page that does not carry its page's marker, before any page is " +
         "written. Each page is written atomically (temp file, then rename); a page write moves the old page files " +
         "this server wrote (a retired filing's page, a proceeding's once it has a filing, the old " +
@@ -2568,7 +2572,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
         "it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when " +
         "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
-        "with draft_dir would (presentation copies and the matter's pages written once), returning that board as opened " +
+        "with draft_dir would (mockups and the matter's pages written once), returning that board as opened " +
         "(board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, " +
         "filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board " +
         "page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap " +
@@ -3021,7 +3025,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       description:
         "publish-vaniac-package's Cowork route (issue #1268, ADR 0026): renders a VanIAC exchange package's .docx files on " +
         "the host, since a Cowork sandbox cannot reach the matter or matter-data folders. A Code-tab session runs " +
-        "fill_vaniac.py in its own shell instead. writing_folder is the filing's mockup folder, SUB <filing folder> with or " +
+        "fill_vaniac.py in its own shell instead. writing_folder is the filing's own folder, named after it, with or " +
         "without a leading YYYY-MM-DD, under the matter's one 0. DRAFT folder. Before writing anything the server refuses " +
         "(output_exists) while its Package folder holds Index.docx or any Written Argument of the * or Witness Statement of * " +
         "file, PDFs included. It then renders the filed face, writes Written Arguments.md, Evidence Index.md and each " +
@@ -3772,7 +3776,9 @@ export function cloudKeyToolDefinitions(): ToolDefinition[] {
         "The key is typed on that page, never in chat and never as a tool argument. " +
         "Send the link, and when the practitioner says it is done, call practice_data__config_status, whose cloud_credential then reads present. " +
         "A practitioner who has no key asks Probanda for one with key_request__submit. " +
-        "The page checks the key against Probanda's Cloud before saving it; it is saved on this computer, encrypted at rest, and never logged or echoed back. " +
+        "The page checks the key against Probanda's Cloud before saving it in Windows Credential Manager, as the generic credential Probanda/cloud-key: " +
+        "the same store inside and outside the Claude app, kept through a reinstall, and never logged or echoed back. " +
+        "To forget the key on this computer, the practitioner removes that entry under Control Panel, Credential Manager, Windows Credentials. " +
         "That check confirms only that the key works, not who it was issued to or whether they were verified.",
       inputSchema: objectSchema([], []),
       annotations: { destructiveHint: true },

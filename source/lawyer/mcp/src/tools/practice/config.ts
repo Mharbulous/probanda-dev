@@ -96,7 +96,7 @@ export interface ConfigStatus {
   /** The profile scan stopped at SCAN_LIMIT folders, so a root may exist that it did not reach. */
   scan_truncated?: boolean;
   redirected_copies: string[];
-  /** Whether Probanda's Cloud credential, which every practice write needs, is configured. */
+  /** Whether Probanda's Cloud credential, which every practice write needs, is in Credential Manager (or the env override). Never the key. */
   cloud_credential: "present" | "missing";
   /** Writes the cloud saved that practice.db has not applied yet; null when practice.db cannot be read. */
   pending_writes: number | null;

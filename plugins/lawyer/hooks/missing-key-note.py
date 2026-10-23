@@ -6,11 +6,13 @@ repeated after a compaction or on resume. Posting a suggestion needs Probanda's 
 so a complaint raised in a key-less session would otherwise be lost
 (docs/Specs/2026-10-20_missing-probanda-key-at-session-start-spec.md).
 
-The key is the file source/mcp-shared/commons-key.js reads: credential.json.dpapi in
-%LOCALAPPDATA%\\Coclerk\\legal-commons (else %APPDATA%, else the home folder), unless
-LEGAL_COMMONS_SUPABASE_KEY or SUPABASE_SERVICE_ROLE_KEY is set. Only whether the
-file exists is checked: the hook never opens it and never reads a key's value.
-Outside Windows (Cowork's VM) the file is out of reach, so the hook tells the
+The key is the Windows Credential Manager entry source/mcp-shared/commons-key.js
+reads, the generic credential Probanda/cloud-key, unless LEGAL_COMMONS_SUPABASE_KEY
+or SUPABASE_SERVICE_ROLE_KEY is set. Only whether the entry exists is checked: the
+hook frees the handle at once and never decodes, keeps or prints a key's value.
+A key an earlier version saved as a file is moved into the entry by the first
+server read, so before that read the hook may still say the key is missing.
+Outside Windows (Cowork's VM) the store is out of reach, so the hook tells the
 session to ask practice_data__config_status instead.
 
 With the key present, the hook names any suggestions held unposted in
@@ -46,14 +48,25 @@ HELD = (
 )
 
 
+CLOUD_KEY_TARGET = "Probanda/cloud-key"
+CRED_TYPE_GENERIC = 1
+ERROR_NOT_FOUND = 1168
+
+
 def key_present() -> bool | None:
-    """True or False when the key's file is in reach, None when it is not."""
+    """True or False when Credential Manager is in reach, None when it is not."""
     if os.environ.get("LEGAL_COMMONS_SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
         return True
     if sys.platform != "win32":
         return None
-    root = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA") or str(Path.home())
-    return (Path(root) / "Coclerk" / "legal-commons" / "credential.json.dpapi").is_file()
+    import ctypes
+
+    advapi32 = ctypes.windll.advapi32
+    handle = ctypes.c_void_p()
+    if advapi32.CredReadW(CLOUD_KEY_TARGET, CRED_TYPE_GENERIC, 0, ctypes.byref(handle)):
+        advapi32.CredFree(handle)
+        return True
+    return False if ctypes.GetLastError() == ERROR_NOT_FOUND else None
 
 
 def config_path() -> Path:

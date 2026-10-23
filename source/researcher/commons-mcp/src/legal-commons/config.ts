@@ -17,8 +17,8 @@ export { credentialPath };
 // anthropics/claude-code #39125, duplicate #45613) — an env-only credential is
 // therefore unreachable from Cowork's GUI. The static key is instead accepted
 // once on the page the lawyer plugin's cloud_key__configure_credential serves,
-// and persisted to a host-backed, DPAPI-encrypted file this process reads at
-// start and again while it holds no key — see dpapi-store.ts. `env` remains
+// and kept in Windows Credential Manager, which this process reads at start and
+// again while it holds no key (mcp-shared/commons-key.js). `env` remains
 // the first-checked source so an explicit env var (Claude Code CLI, developer
 // testing) still overrides the persisted file.
 //

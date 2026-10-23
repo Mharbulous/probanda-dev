@@ -4,12 +4,12 @@ import { ValidationError } from "../errors.js";
 import { serveKeyPage } from "./page.js";
 
 // cloud_key__configure_credential: sets Probanda's one Cloud key on this
-// computer, the file every server reads through source/mcp-shared/commons-key.js
-// (practice writes here, the Suggestion Box and the legal commons in the
-// researcher plugin). Cowork never injects a plugin's userConfig secret into its
-// MCP server's environment, so the key is pasted on a local page (page.ts) and
-// never passes through the chat. This server reads the file on every call, so a
-// saved key takes effect at once. The commons server re-reads it while it holds none.
+// computer, the Windows Credential Manager entry every server reads through
+// source/mcp-shared/commons-key.js (practice writes here, the Suggestion Box and
+// the legal commons in the researcher plugin). Cowork never injects a plugin's
+// userConfig secret into its MCP server's environment, so the key is pasted on a
+// local page (page.ts) and never passes through the chat. A saved key takes effect
+// at once in this process; the commons server looks again while it holds none.
 
 export async function configureCloudKey(env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
   const url = await serveKeyPage((typed) => saveKey(typed, env));
