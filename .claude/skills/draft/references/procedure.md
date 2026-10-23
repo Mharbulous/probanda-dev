@@ -186,7 +186,7 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.reply ops=reply_route -->
 | The practitioner asks to reply to a message from the tribunal, a registry or another party's counsel, and not for a letter (section 1) | `references/reply.md` |
 <!-- atom id=draft.ref.unstructured ops=unstructured -->
-| The Writing's kind is `unstructured` or `unstructured-<recipient>`, the venue and kind lookup creates an Unstructured Writing (section 1), the Sent write succeeds on one, or the assigned job is `Make <title> a Structured Writing` | `references/unstructured.md` |
+| The Writing's kind is `unstructured` or `unstructured-<recipient>`, the venue and kind lookup creates an Unstructured Writing (section 1), the Sent write succeeds on one, or the assigned job is `Keep the layout of <title> for next time` (a job written before 2026-10-22 has the old title `Make <title> a Structured Writing`) | `references/unstructured.md` |
 <!-- atom id=draft.ref.court-oral ops=court_oral -->
 | None: kept for in-court oral advocacy and never routed | `references/court-oral.md` |
 <!-- atom id=draft.ref.counsel-review ops=counsel_review -->

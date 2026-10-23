@@ -331,14 +331,14 @@ test("the Sent write records a written Unstructured Writing from a pasted copy, 
   const blocks = [...text.slice(from, end === -1 ? undefined : end).matchAll(/```sql\n([\s\S]*?)\n```/g)].map((m) => m[1]);
   assert.equal(blocks.length, 2, "§3h's call 1 and call 3");
   await g.execute(blocks[0].replace("VALUES (1, 9,", `VALUES (2, ${id},`).replaceAll("Notice of discontinuance", TITLE));
-  const jobTitle = `Make ${TITLE} a Structured Writing`;
+  const jobTitle = `Keep the layout of ${TITLE} for next time`;
   const [job] = g.query("SELECT id, filing_id, intent, status, kind, billing_anchor FROM tickets WHERE filing_id = ? AND title = ?", [id, jobTitle]);
   assert.deepEqual(
     { ...job, id: undefined },
     {
       id: undefined,
       filing_id: id,
-      intent: `Turn this Writing into a type file so the next ${TITLE} is a Structured Writing. Unbilled: firm infrastructure.`,
+      intent: `Record this document's layout so the next ${TITLE} is drafted from it. Unbilled: firm infrastructure.`,
       status: "queued",
       kind: "work",
       billing_anchor: "<matter>|unbilled firm infrastructure",

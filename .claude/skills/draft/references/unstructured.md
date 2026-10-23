@@ -1,4 +1,4 @@
-Read when: the Writing is an Unstructured Writing (its kind is `unstructured`, or `unstructured-<recipient>` under `_NoVenue`), the venue and kind lookup creates one (`references/venue-and-kind-lookup.md`, step 5), the Sent write succeeds on one, or the assigned job's title starts with `Make ` and ends with ` a Structured Writing`.
+Read when: the Writing is an Unstructured Writing (its kind is `unstructured`, or `unstructured-<recipient>` under `_NoVenue`), the venue and kind lookup creates one (`references/venue-and-kind-lookup.md`, step 5), the Sent write succeeds on one, or the assigned job's title starts with `Keep the layout of ` and ends with ` for next time` (on a job written before 2026-10-22, starts with `Make ` and ends with ` a Structured Writing`).
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 # Unstructured Writings
@@ -35,7 +35,7 @@ The Writing is recorded as sent or filed through `/drafting-data`'s Sent write, 
 
 ## 5. The conversion offer and job
 
-**The offer.** When the Sent write succeeds on this Writing, offer in the same turn, as one question, to put the job `Make <title> a Structured Writing` on its Job Board, `<title>` being the Writing's title. Say what it does in plain words: it records this document's layout, so the next one of its kind is drafted from that layout, and it is unbilled firm work. Name no type file, stock type or folder code (`shared/internals-confidentiality.md`). On a yes, write the job by `/drafting-data`'s fixed text for it, on this Writing. On a no, write nothing.
+**The offer.** When the Sent write succeeds on this Writing, offer in the same turn, as one question, to put the job `Keep the layout of <title> for next time` on its Job Board, `<title>` being the Writing's title. Say what it does in plain words: it records this document's layout, so the next one of its kind is drafted from that layout, and it is unbilled firm work. Name no type file, stock type or folder code (`shared/internals-confidentiality.md`). On a yes, write the job by `/drafting-data`'s fixed text for it, on this Writing. On a no, write nothing.
 
 No retirement is offered with it or after it: recording a Writing as sent never leads to a retirement offer (ADR 0042), so the Writing stays on its board until the practitioner asks to retire it (`references/retire-filing.md`).
 
