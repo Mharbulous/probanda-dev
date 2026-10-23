@@ -4,7 +4,7 @@ user-invocable: false
 description: Resolve a folder's filing profile — a litigation matter (renames files in place) or the firm's accounting root (routes loose files to sibling destination folders) — which of its subfolders or destinations are in scope, and how that profile's review record is looked up and recorded. Domain-aware companion to /file-naming — knows folder layouts, not naming grammar. Used internally by /housekeeping and /route-accounting.
 ---
 
-<!-- file-manager v0.7.20 -->
+<!-- file-manager v0.8.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -42,7 +42,7 @@ just a profile.
 
 | Profile | Kind | Detection | profile.md |
 |---|---|---|---|
-| `litigation-matter` | `rename-in-place` | root has the firm's standard numbered-subfolder layout (`0. DRAFT`, `2. SOLICITOR CLIENT`, ... per the user's CLAUDE.md) | `profiles/litigation-matter/profile.md` |
+| `litigation-matter` | `rename-in-place` | root holds the matter pointer, or a subfolder the practitioner's folder map names (`practice_data__folder_map`) | `profiles/litigation-matter/profile.md` |
 | `accounting` | `route-to-destination` | root is, or directly contains, `ACCOUNTING\` with all four of `General Account Bookkeeping\`, `Trust Account Bookkeeping\`, `LOGICA LAW BILLING\`, `Family\` | `profiles/accounting/profile.md` |
 
 (Future profiles land here as their own `profiles/<name>/profile.md` — see
@@ -65,8 +65,9 @@ Given a root folder path and a resolved profile name, read that profile's
 `profile.md` and return everything it documents about scope. What that means
 depends on the profile's **Kind**:
 
-- For a `rename-in-place` profile: the in-scope subfolders (each with its
-  own type/label and the notes chunk it should be reviewed with), the
+- For a `rename-in-place` profile: the in-scope subfolders, resolved from
+  the practitioner's folder map (each with its own type/label and the notes
+  chunk it should be reviewed with), or the no-map stop the profile states, the
   always-skip list, disambiguation tips, the verbatim-path rule, and the
   argument rule.
 - For a `route-to-destination` profile: the in-scope location (e.g. files
@@ -77,7 +78,8 @@ depends on the profile's **Kind**:
 
 Either way, also return the extension whitelist. This is a pure delegation
 to the named profile's document — this skill holds no folder-layout or
-routing knowledge of its own outside `profiles/`.
+routing knowledge of its own outside `profiles/`, and a matter's layout is the
+practitioner's folder map, never a built-in one.
 
 ## Intent: record-backend
 

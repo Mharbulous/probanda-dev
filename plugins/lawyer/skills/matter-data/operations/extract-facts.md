@@ -2,18 +2,13 @@
 
 Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
-This operation scans a folder for PDFs not yet in the database and extracts them in bulk. It is the "scan for new documents" entry point — distinct from `ingest.md`, which handles one document the agent already has in hand. Read [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md) for the extraction semantics (hash-before-extraction, honest status then flip, no fuzzy-merge, per-run report contract) — this file does not restate them.
+This operation scans a folder for PDFs not yet in the database and extracts them in bulk. It is the "scan for new documents" entry point — distinct from `ingest.md`, which handles one document the agent already has in hand. Read [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md) for the extraction semantics (hash-before-extraction, honest status then flip, no fuzzy-merge, per-run report contract) — this file does not restate them. §8 is a report-only mode of the same walk and classification, for a bare `/ingest`: it skips §1 and §3b-§7.
 
 ## 1. Folder selection (every run — no persisted config)
 
-Prompt the user to choose a folder to scan, **every run**. Do not read or write a config file for this choice. A calling skill that names the folder in its instruction has made the choice — use that folder and skip the prompt; nothing is persisted either way. Offer the standard candidates plus a custom option:
+First read the practitioner's folder map: `practice_data__folder_map` with no arguments. It says where this practitioner keeps each document type (`../../shared/document-types.md`). With `status` `no_map`, tell the practitioner in plain words that Probanda does not yet know where they keep each kind of document, offer to set that up (`/probanda-setup`), and stop: nothing is scanned. Never assume a layout. The map file and how it works are never named to the practitioner.
 
-- `RAW`
-- `3. CORRESPONDENCE`
-- `5. COURT FILE`
-- `7. DISCOVERY`
-- `6. LAW`
-- custom path, typed by the user
+Prompt the user to choose a folder to scan, **every run**. Do not read or write a config file for this choice. A calling skill that names the folder in its instruction has made the choice — use that folder and skip the prompt; nothing is persisted either way. Offer, as candidates, each folder of the matter that matches a folder glob the map gives a type that is not `never_ingest`, labelled with that type's name, plus a custom path typed by the user.
 
 Resolve the chosen folder relative to the matter root.
 
@@ -53,7 +48,9 @@ def sha256_of_file(path):
 
 ## 3. Classification against the source and law stores
 
-For every candidate source, compute its path (relative to the matter root, matching how `sources.file_path` is stored) and its SHA-256 hash (raw bytes, per the extraction protocol). Compare both against the two stores the single-document gate probes ([`ingest.md`](ingest.md) Step 3) and the law store [`ingest-status.md`](ingest-status.md) rule 3 reads: after the corruption check below, `privileged.privileged_sources` and `law.authorities` first, then `main.sources`.
+First resolve every candidate's document types in one `practice_data__folder_map` call, `paths` set to the candidates' stored-form paths (conventions §2.4). Keep each answer for §4. A candidate the answer marks `never_ingest` (every type its folder holds is never ingested, such as drafts or raw intake) is dropped here, before any hash, and only counted in the report (§7).
+
+For every remaining candidate source, compute its path (relative to the matter root, matching how `sources.file_path` is stored) and its SHA-256 hash (raw bytes, per the extraction protocol). Compare both against the two stores the single-document gate probes ([`ingest.md`](ingest.md) Step 3) and the law store [`ingest-status.md`](ingest-status.md) rule 3 reads: after the corruption check below, `privileged.privileged_sources` and `law.authorities` first, then `main.sources`.
 
 Paths are compared in conventions §2.4's stored form against the matter root, ignoring case, so a legacy row holding an absolute host path or forward slashes, or a differently-cased path, still names the scanned file. Stored rows are never rewritten here (`relocate-source.md` does that on a move).
 
@@ -151,11 +148,11 @@ Every scan, whatever it found, also runs [`supersede-draft.md`](supersede-draft.
 
 For each `.docx`/`.eml`/`.msg` on the extraction list, and each `.doc` that is RTF (Path D's "RTF pre-processing" says when), run the renderer first per [`ingest-extract.md`](ingest-extract.md)'s Document pre-processing section (one rendering per file, reused for the routing read, the gate and the dispatch in this run) — do not restate that logic here. A `.doc` that is not RTF is not read: report it as non-ingestable (§7).
 
-A file on the extraction list whose stored path (§3) begins with `2. SOLICITOR CLIENT` (case-insensitive) takes [`ingest-extract.md`](ingest-extract.md) Path B inline by that file's solicitor-client folder rule, with no question and no routing read, and is removed from everything below: the routing read, segmentation, the affidavit gate and the `extract-facts` dispatch.
+A file on the extraction list whose §3 folder-map answer is `privileged` takes [`ingest-extract.md`](ingest-extract.md) Path B inline by that file's solicitor-client folder rule, with no question and no routing read, and is removed from everything below: the routing read, segmentation, the affidavit gate and the `extract-facts` dispatch.
 
-Then give every remaining file on the extraction list a routing read of page 1 (for a rendered file, the head of its rendering, and for a PDF, page 1 through `pdf_pages__images` by [`ingest-extract.md`](ingest-extract.md)'s Universal rules, a scanned page read only from its PNG). The routing read comes first for every file, `6. LAW` included. An internal document (a client email, a lawyer's note, an internal memo) takes [`ingest-extract.md`](ingest-extract.md) Path B inline, with that path's three-answer privilege question to the practitioner, and is removed from everything below: it never reaches the `extract-facts` subagent.
+Then give every remaining file on the extraction list a routing read of page 1 (for a rendered file, the head of its rendering, and for a PDF, page 1 through `pdf_pages__images` by [`ingest-extract.md`](ingest-extract.md)'s Universal rules, a scanned page read only from its PNG). The routing read comes first for every file, a file whose answer is `authority` included. An internal document (a client email, a lawyer's note, an internal memo) takes [`ingest-extract.md`](ingest-extract.md) Path B inline, with that path's three-answer privilege question to the practitioner, and is removed from everything below: it never reaches the `extract-facts` subagent.
 
-A legal authority (a decision, statute, regulation or treatise) takes [`ingest-extract.md`](ingest-extract.md) Path D inline and is likewise removed from everything below, since the `extract-facts` subagent is given party names (the extraction protocol's contamination control). Path D's own rules apply unchanged. Under `6. LAW` its bulk classification cascade chooses the extractor, and the cascade's tier 4 asks the practitioner inline as Path B does. Elsewhere the routing read's call of the authority's kind chooses it. When the citation tier reuses an authority, Path D's second-copy rule records the file by reference, so the next scan reads it as held (§3). Count it as reused by citation in the report (§7). An RTF `.doc` is read only as an authority, so one the routing read does not take to Path D, the matter's own decisions below included, is reported as non-ingestable (§7). **The matter's own decisions are not authorities here:** reasons for judgment or an order whose style of cause or file number matches a proceeding or party of this matter is a court document and keeps its ordinary path, because Path D would put client data in `law.sqlite` and skip the proceeding linkage and order-effects passes.
+A legal authority (a decision, statute, regulation or treatise) takes [`ingest-extract.md`](ingest-extract.md) Path D inline and is likewise removed from everything below, since the `extract-facts` subagent is given party names (the extraction protocol's contamination control). Path D's own rules apply unchanged. For a file whose §3 answer is `authority`, its bulk classification cascade chooses the extractor, and the cascade's tier 4 asks the practitioner inline as Path B does. Elsewhere the routing read's call of the authority's kind chooses it. When the citation tier reuses an authority, Path D's second-copy rule records the file by reference, so the next scan reads it as held (§3). Count it as reused by citation in the report (§7). An RTF `.doc` is read only as an authority, so one the routing read does not take to Path D, the matter's own decisions below included, is reported as non-ingestable (§7). **The matter's own decisions are not authorities here:** reasons for judgment or an order whose style of cause or file number matches a proceeding or party of this matter is a court document and keeps its ordinary path, because Path D would put client data in `law.sqlite` and skip the proceeding linkage and order-effects passes.
 
 Before the affidavit gate, run the compound-book segmentation from [`ingest-extract.md`](ingest-extract.md) against every `.pdf` on the extraction list. A file that engages Path E or the bundled-book-of-authorities cascade takes that path instead and is removed from the per-file dispatch below. Do not restate that logic here.
 
@@ -181,20 +178,25 @@ SELECT s.source_id, s.title, s.file_path, s.category
 FROM main.sources s
 WHERE s.proceeding_id IS NULL
   AND s.parent_source_id IS NULL
-  AND (s.file_path LIKE '5.%'
-       OR (s.category = 'court' AND s.file_path LIKE :scan_prefix || '%'))
+  AND s.file_path IS NOT NULL
   AND (s.notes IS NULL OR s.notes NOT LIKE '%PROCEEDING-CHECK:%');
 ```
 
-`:scan_prefix` is the scanned folder's matter-root-relative path (§1). The first arm is whole-matter self-healing — it fires even when today's scan is of a different folder, catching a proceeding gap left by any past session. The second arm covers a `category = 'court'` source that was touched or skipped *in this scan* but sits outside a `5.` folder (a filed order living in `3. CORRESPONDENCE`, say), which the first arm alone would never reach and which won't be caught again once ingested.
+Then resolve the returned rows' `file_path`s in one `practice_data__folder_map` call (`paths`), and keep a row when either arm holds:
 
-Any rows returned → hand off to [`proceedings-profile.md`](proceedings-profile.md) §6: group the `5.*` rows by first path segment (one call per group), and hand the out-of-folder `category = 'court'` rows over individually. Fold whatever §6 returns — evidence-only skips, out-of-folder filing-question findings, proceedings created or matched, sources back-filled — into the summary report below as additional report lines.
+1. its answer's `types` include `court_filings`, whatever its category; or
+2. its `category` is `court` and its stored path lies under the scanned folder (§1), compared in stored form ignoring case.
+
+The first arm is whole-matter self-healing — it fires even when today's scan is of a different folder, catching a proceeding gap left by any past session. It keys on the court filings type alone: documents exchanged in the proceeding never reach it. The second arm covers a `category = 'court'` source that was touched or skipped *in this scan* but sits outside a court-filings folder (a filed order kept with correspondence, say), which the first arm alone would never reach and which won't be caught again once ingested.
+
+Any rows kept → hand off to [`proceedings-profile.md`](proceedings-profile.md) §6: group the first arm's rows by first path segment (one call per group), and hand the second arm's out-of-folder `category = 'court'` rows over individually. Fold whatever §6 returns — evidence-only skips, out-of-folder filing-question findings, proceedings created or matched, sources back-filled — into the summary report below as additional report lines.
 
 ## 7. Summary report
 
 After the batch completes, report:
 
 - dispositions: counts of new / duplicate / unchanged / changed / re-extract / partial / superseded / corrupt sources found, broken down by extension (`.pdf`/`.docx`/`.eml`/`.msg`/`.doc`);
+- files left out because the practitioner's folder map marks their folder as never ingested (§3), counted by type name;
 - supersessions (§3b): counts proposed, applied and rejected, with each pair's kept and superseded source, or for a rejected pair why ([`supersede-draft.md`](supersede-draft.md) §7); and each superseded row offered its move (§6c), with whether it moved or the tool's refusal word for word;
 - authorities (§4): counts registered, reused by citation, and reported for merge;
 - partial sources, each by name with its `/ingest` route (§3);
@@ -206,3 +208,19 @@ After the batch completes, report:
 - verified-0 backlog delta: how much the AI-verifier backlog (`verified = 0` rows) grew as a result of this run.
 
 Writes go through `matter_data__execute` (§2.3), which regenerates `evidence.sql` automatically on success — no separate dump call. Report every INSERT/UPDATE performed during the run.
+
+## 8. Report-only mode (bare `/ingest`)
+
+Reached when `/ingest` names no document or folder. It lists every file in the matter that is not yet held, by folder, and **writes nothing and asks nothing**: every database read goes through `matter_data__query`, nothing is moved, and no question is put. The practitioner names what to ingest afterwards, and that request takes the ordinary paths.
+
+1. **Scope.** Read the practitioner's folder map (`practice_data__folder_map`). With `status` `no_map`, say in plain words that Probanda does not yet know where the practitioner keeps each kind of document, offer to set that up (`/probanda-setup`), and stop: nothing is scanned and no layout is assumed. Otherwise the scope is the whole matter root, its loose files included, less every file the map marks `never_ingest` (step 2). Privileged and authority folders are scanned: privilege and authority handling happen at ingestion.
+2. **Walk.** §2's `find_candidate_sources` over the matter root, in the bridged shell or through a host tool, never with `matter_root` as a sandbox path (conventions §2.2). Resolve every file found in one `practice_data__folder_map` call (`paths`, stored form), and drop each file the answer marks `never_ingest`, before any hash.
+3. **Classify.** §3's `classify` for every file. Its semantics are §3's alone.
+4. **Versions.** [`supersede-draft.md`](supersede-draft.md) §1's `candidates` over the `new` files and the registered top-level court rows, with an empty `scan_folder` (the whole matter). Read the pairs only: that operation's §2 onwards, and §6c, are not run. §6's proceeding-linkage check is not run either.
+5. **Report**, naming folders and files, never stores, tables or tools:
+   - one table, a row per folder: counts of new, changed, re-extract, duplicate, superseded, partial and corrupt files;
+   - the new, changed and re-extract files by name, under their folder. A `new` file that `candidates` pairs with another file, and a changed file whose held row is a court document, is marked: ingesting it will be proposed as a supersession;
+   - partial files with their `/ingest` route, and corrupt files with the source ids holding their hash (§3);
+   - non-ingestable extensions found, with counts (§2's `skipped_extensions`);
+   - the folders left out under step 2 as never ingested, each with its type's name;
+   - the folders holding files the map gives no type, so the practitioner can add them to it.

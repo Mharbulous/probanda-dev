@@ -146,9 +146,9 @@ Subagents speak plain descriptors; the main agent maps each to a stored value (t
 | `authority_role` | relationship, passed through as given: a principle-link value of [`../../shared/treatment-vocabulary.md`](../../shared/treatment-vocabulary.md), which defines each one. A value the local store cannot hold yet is held back and reported, never remapped (that file, "Local matter-data store") |
 | burden descriptors | burden of proof, plain phrase passed through verbatim as free text (e.g. `balance of probabilities`, `on the party asserting duress`) — never snake_cased into the retired 3-value enum |
 
-### Bulk classification cascade — `6. LAW\` scans
+### Bulk classification cascade — authority folders
 
-When scanning a `6. LAW\` folder, classify each file by the first tier that resolves; fall through only when a tier cannot decide:
+When scanning a folder the practitioner's folder map gives legal authorities (a file whose folder-map answer is `authority`), classify each file by the first tier that resolves; fall through only when a tier cannot decide:
 
 1. **Subfolder name.** `Cases` → case law; `Statutes` → statute; `Regulations` → regulation; `Treatises` → treatise.
 2. **Filename citation pattern.** `[YYYY] BCxx NNN` → case law; `SBC/RSBC YYYY c N` → statute; `BC Reg N/YYYY` → regulation.

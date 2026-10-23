@@ -2,12 +2,12 @@
 
 Read `../shared/conventions.md` first.
 
-Reached only from `initialize.md`, when the matter root exists but has no
-`4. LAWYER BRIEF\` directly beneath it. This operation owns a new matter's folder
+Reached only from `initialize.md`, when the matter root exists but has no folder
+the practitioner's folder map names directly beneath it. This operation owns a new matter's folder
 skeleton (#481): initialize's root proof is the step that needs the skeleton, so the
 skeleton's source is recorded beside it rather than in a separate skill.
 
-1. **Confirm the root.** A missing `4. LAWYER BRIEF\` also means a wrong folder. Show
+1. **Confirm the root.** No mapped folder may also mean a wrong folder. Show
    the practitioner the `matter_root` path and copy nothing until they confirm it is
    the new matter's own folder.
 2. **Resolve the template.** It is `<parent of matter_root>\ADMIN\0. TEMPLATE\L### Litigation\`.

@@ -1,9 +1,9 @@
 ---
 name: probanda-setup
-description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and maps the practitioner's matter folders to the layout the skills assume. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
+description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and records where the practitioner keeps each kind of document (their folder map). Also use it, on a device already set up, when another skill reports that Probanda does not yet know where the practitioner keeps each kind of document: it then runs only that step. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
-<!-- lawyer v0.8.3 -->
+<!-- lawyer v0.9.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -17,14 +17,14 @@ A missing `probanda.json` means Probanda has not been set up on this device. It 
 - Every root, folder and setting is written only after the practitioner approves it under `/show-me`. Ask one question at a time.
 - Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
-- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, and `_practice\firm\firm.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
+- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, `_practice\firm\firm.json`, and this person's folder map. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
 - Setup never writes `practice_quirks` or a credential. `practice_quirks` follows practice-data's Practice quirks rules.
 
 ## Step 1 — Confirm this is a new device
 
 Call `practice_data__config_status`.
 - If `error` is set because `COCLERK_CONFIG_PATH` names a missing file, stop and report it. That file is the authority, and setup never creates the live file in its place.
-- If `exists` is `true`, the device is already set up. A broken file goes to practice-data's Conventions repair, not here.
+- If `exists` is `true`, the device is already set up. When this run was started to record the folder map, go to Step 6 and then hand back. Otherwise a broken file goes to practice-data's Conventions repair, not here.
 - Otherwise continue. Keep its `candidates`, its `cloud_credential` and its `redirected_copies` for later steps. A `redirected_copies` entry means an earlier install wrote its settings where the runtime does not read them. Tell the practitioner, and do not copy it.
 
 ## Step 2 — Find the matter-data root
@@ -56,9 +56,9 @@ Cover both points conversationally:
 
 Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by practice-data's Accounting System Resolution, each when first needed. Setup asks neither.
 
-## Step 6 — Map the folder layout
+## Step 6 — Record the folder map
 
-Follow `references/folder-layout.md`. It compares one of the practitioner's matter folders with the layout the skills assume and advises on any gap. It writes nothing.
+Follow `references/folder-layout.md`. It proposes, from one of the practitioner's matter folders, where they keep each kind of document, and records it only on their yes.
 
 ## Step 7 — Verify and hand back
 

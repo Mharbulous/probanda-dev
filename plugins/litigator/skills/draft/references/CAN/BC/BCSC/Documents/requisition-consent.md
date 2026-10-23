@@ -6,7 +6,7 @@
   "exhibit_numbering": "writing",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "companions": ["written-arguments"],
-  "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"]
+  "ingest_inputs": ["court_filings", "documents_exchanged"]
 }
 ```
 

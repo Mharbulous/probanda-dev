@@ -22,7 +22,7 @@ The deterministic steps are the fenced functions below. [`../references/scripts/
 |---|---|
 | `matter_root`, `matter_folder` | as [`ingest-status.md`](ingest-status.md) takes them |
 | `mode` | `attended` (the practitioner is present: [`ingest.md`](ingest.md), [`extract-facts.md`](extract-facts.md)) or `unattended` ([`ingest-unattended.md`](ingest-unattended.md)) |
-| `newcomers` | files with no row yet, each `{path, hash}`, `path` in stored form (conventions §2.4) |
+| `newcomers` | files with no row yet, each `{path, hash, court}`, `path` in stored form (conventions §2.4), `court` true when `practice_data__folder_map`'s answer for the path includes `court_filings` |
 | `scan_folder` | the folder the caller is working in, in stored form: the scanned folder, or for one file its first path segment |
 | `pair` | instead of the above, a pair the caller already holds: the two `source_id`s a `SUPERSEDE-PENDING:` marker names |
 
@@ -56,7 +56,7 @@ ORDER BY source_id;
 
 Read each PDF's page count with `references/scripts/extract_outline.py <path>` (its output carries `pages`), for every newcomer and every registered row under `scan_folder`. A script error leaves that file's count unknown. Then run `candidates`. Two files are a pair when all of these hold:
 
-- **Same proceeding.** Two registered rows: equal, non-null `proceeding_id`. A newcomer and a registered row, or two newcomers: the same `5. COURT…` folder (first path segment).
+- **Same proceeding.** Two registered rows: equal, non-null `proceeding_id`. A newcomer and a registered row, or two newcomers: the same court-filings folder (first path segment). A newcomer is in a court-filings folder when the practitioner's folder map says so (its `court`).
 - **Similar title**, compared on each file's title stem: the file name, lower-cased, with dates and the whole words DRAFT, SIGNED, UNSIGNED, EXECUTED, FILED, AFFIRMED and UNFILED stripped, and every run of other characters collapsed to one space. A word is stripped only whole, so `unsigned` never leaves `un`. The two stems need not be equal, because two copies of one document are often named by hand, with a filler word, an abbreviation or a typo in one of them. `same_title` compares them in three steps:
   - Each stem is split into words. A document code in the list below is replaced by its meaning, and the filler words `of`, `re`, `the`, `and`, `to` and `for` are dropped. The list is a short copy of the court document codes in `file-naming/references/code-registry.md`, which stays their source; it sits here because `candidates` runs from this fenced code alone.
   - The numbers in the two names must be the same. `AFF#1` and `AFF#2` are never a pair, and neither are a numbered name and one with no number.
@@ -70,7 +70,6 @@ import re
 
 _STEM_DATE = re.compile(r'\d{4}[-._ ]?\d{2}[-._ ]?\d{2}')
 _STEM_TOKEN = re.compile(r'\b(?:draft|signed|unsigned|executed|filed|affirmed|unfiled)\b')
-_COURT_FOLDER = re.compile(r'^5\. COURT', re.I)
 
 
 def title_stem(path):
@@ -161,8 +160,7 @@ def candidates(newcomers, registered, pages, scan_folder, matter_root):
         if not scope or path.lower().startswith(scope + '\\'):
             rows.append(dict(r, path=path))
     pairs = []
-    court = [p for p in (stored_form(n['path'], matter_root) for n in newcomers)
-             if _COURT_FOLDER.match(segment(p))]
+    court = [stored_form(n['path'], matter_root) for n in newcomers if n.get('court')]
     for path in court:
         for r in rows:
             if (segment(r['path']) == segment(path)

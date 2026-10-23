@@ -22,8 +22,11 @@ proven before it is written.
   from the granted/confirmed matter folder — never from the working directory (ordinarily
   the repo) and never by guessing.
 
-Prove the root before writing: natively read/list it and require `4. LAWYER BRIEF\`
-directly beneath. If it is absent, run `matter-skeleton.md` first. Steps 4–5's
+Prove the root before writing: natively read/list it and require, directly beneath, a
+folder that matches a glob in the practitioner's folder map (`practice_data__folder_map`).
+If none does, run `matter-skeleton.md` first. With no folder map, stop: say that Probanda
+does not yet know where the practitioner keeps each kind of document, and offer setup
+(`/probanda-setup`). Steps 4–5's
 `matter_data__*` calls against the new pointer are the proof it actually works.
 
 ---
@@ -64,8 +67,9 @@ path only, proven before writing.
 1. Read the existing pointer (native Read): `probanda.json` when it exists, else
    `coclerk.json` (a sub-v5 pointer predates the rename, so it is normally `coclerk.json`).
 2. Derive `matter_root` = the absolute host path of the folder containing that
-   pointer (this session's own path to that folder). Sanity-check that
-   `4. LAWYER BRIEF\` exists directly under it — if it doesn't, halt and report
+   pointer (this session's own path to that folder). Sanity-check that a
+   folder matching a glob in the practitioner's folder map exists directly under it (with
+   no folder map, say so and offer setup) — if it doesn't, halt and report
    rather than guessing a wrong root (a wrong `matter_root` would misdirect the
    `evidence.sql` rebuild boundary onto another matter's data).
 3. Re-derive `case_data_dir` from the live `matter_root` and the existing

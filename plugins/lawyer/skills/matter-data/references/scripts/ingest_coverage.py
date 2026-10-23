@@ -22,7 +22,10 @@ Three statuses:
 Reads temp copies of all three databases (never a native file), takes no
 lock, and writes nothing. Standard library only.
 
-    python ingest_coverage.py <case_data_dir> <matter_root>
+    python ingest_coverage.py <case_data_dir> <matter_root> <folder_glob> [<folder_glob> ...]
+
+The folder globs come from the practitioner's folder map. The CLI counts none of
+them as correspondence.
 """
 
 import json
@@ -40,10 +43,6 @@ _SKILL = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 _OPERATION = os.path.join(_SKILL, 'operations', 'ingest-coverage.md')
 _STATUS = os.path.join(_SKILL, 'operations', 'ingest-status.md')
 _CONVENTIONS = os.path.join(_SKILL, 'shared', 'conventions.md')
-
-# The CLI's scope: the drafting runtime's session-entry check.
-FOLDER_GLOBS = ['2. SOLICITOR CLIENT*', '3. CORRESPONDENCE*', '5. COURT*', '7. DISCOVERY*']
-CORRESPONDENCE_GLOBS = FOLDER_GLOBS[:2]
 
 _DATABASES = ('main', 'law', 'privileged')
 
@@ -131,9 +130,10 @@ def run(request):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("usage: ingest_coverage.py <case_data_dir> <matter_root>", file=sys.stderr)
+    if len(sys.argv) < 4:
+        print("usage: ingest_coverage.py <case_data_dir> <matter_root> <folder_glob> [<folder_glob> ...]",
+              file=sys.stderr)
         sys.exit(1)
     print(json.dumps(run({"case_data_dir": sys.argv[1], "matter_root": sys.argv[2],
-                          "folder_globs": FOLDER_GLOBS,
-                          "correspondence_globs": CORRESPONDENCE_GLOBS}), indent=2))
+                          "folder_globs": sys.argv[3:],
+                          "correspondence_globs": []}), indent=2))
