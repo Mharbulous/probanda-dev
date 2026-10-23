@@ -2,8 +2,7 @@
 // from its stored layout, part by part, with the recipients after the last part, a party-linked one
 // printing its party's counsel from case data; the filed face is toFiledFace's. The confirmation
 // gate tags each unconfirmed cited item on the mockup and refuses the filed render until a roster
-// lawyer confirms it; a vetted file is tagged only when its source
-// moved, and is never refused. The fixture letter lives in a firm overlay (helpers/general-writing-fixture.mjs).
+// lawyer confirms it, whoever reviewed the file (#163). The fixture letter lives in a firm overlay (helpers/general-writing-fixture.mjs).
 
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
@@ -257,10 +256,17 @@ test("a passage changed after confirmation reads unverified again and the filed 
   ]);
 });
 
-test("a vetted file whose passage changed tags source changed on the mockup, and its filed render succeeds reporting the change", async (t) => {
+test("a confirmed item whose passage moved since the snapshot tags source changed on the mockup, and its filed render succeeds reporting the change", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   g.f.local(SOURCE_FILE, sourceRecord({ ...PASSAGES, "R-body": CHANGED_BODY }));
+  g.f.local(`${LETTER_FILE}.confirmations.local.json`, {
+    file: LETTER_FILE,
+    items: [
+      { rule_ref: "R-title", status: "confirmed", by: "pe", on: "2026-09-25", confirmed_against: { passage_hash: passageHash(PASSAGES["R-title"]), currency: "September 1, 2020" } },
+      { rule_ref: "R-body", status: "confirmed", by: "pe", on: "2026-09-25", confirmed_against: { passage_hash: passageHash(CHANGED_BODY), currency: "September 1, 2020" } },
+    ],
+  });
 
   const md = docOf(render(g, id), "General_writing").markdown;
   assert.match(md, /^## Re \[source changed: R-body\]$/m);
@@ -275,30 +281,60 @@ test("a vetted file whose passage changed tags source changed on the mockup, and
   assertFiledFaceClean(filed.documents[0].markdown, "General_writing");
 });
 
-// #121: vetting does not stop the notice. A vetted file's notice names its reviewer, and stops only
-// once this firm's sidecar reads confirmed or corrected for every cited item.
-const VETTED_NOTICE =
+// #163: a maintainer's review is provenance only. A reviewed file's notice names its reviewer, and
+// each cited item is tagged and refused until this firm's sidecar confirms or corrects it.
+const REVIEWED_NOTICE =
   "\nLayout confirmation:\n  - Note: the No venue requirements for Letter to opposing counsel used here were reviewed by Pat Example on 2026-09-22, " +
   "but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.\n";
 
-test("a vetted file with no firm confirmation shows the reviewer's notice, untagged and never refused", async (t) => {
+test("a reviewed file with no firm rows shows the reviewer's notice, tags each cited item, and the filed render refuses naming each", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   const md = docOf(render(g, id), "General_writing").markdown;
-  assert.ok(headerOf(md).includes(VETTED_NOTICE), md);
-  assert.doesNotMatch(md, /learned by an agent|\[unverified|\[source changed/);
+  assert.ok(headerOf(md).includes(REVIEWED_NOTICE), md);
+  assert.doesNotMatch(md, /learned by an agent/);
+  assert.match(md, /^# Letter to opposing counsel \[unverified: R-title\]$/m);
+  assert.match(md, /^## Re \[unverified: R-body\]$/m);
   assert.doesNotMatch(md, /need not|no need|not necessary|unnecessary/i, "the notice never excuses the firm's own review");
-  assert.equal(render(g, id, "filed").confirmation_gate_failed, undefined);
+
+  const filed = render(g, id, "filed");
+  assert.equal(filed.confirmation_gate_failed, true);
+  assert.deepEqual(filed.unconfirmed, ["R-title", "R-body"]);
+  assert.deepEqual(filed.documents, []);
+  assert.match(filed.note, /R-title, R-body/);
 });
 
-test("a vetted file with only some items confirmed by the firm still shows the notice", async (t) => {
+test("a reviewed file with only some items confirmed tags and refuses only the unconfirmed one", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   confirm(g, ["R-title"]);
-  assert.ok(headerOf(docOf(render(g, id), "General_writing").markdown).includes(VETTED_NOTICE));
+  const md = docOf(render(g, id), "General_writing").markdown;
+  assert.ok(headerOf(md).includes(REVIEWED_NOTICE));
+  assert.match(md, /^# Letter to opposing counsel$/m);
+  assert.match(md, /^## Re \[unverified: R-body\]$/m);
+
+  const filed = render(g, id, "filed");
+  assert.equal(filed.confirmation_gate_failed, true);
+  assert.deepEqual(filed.unconfirmed, ["R-body"]);
 });
 
-test("a vetted file whose every cited item the firm confirmed or corrected shows no notice", async (t) => {
+test("a reviewed file's confirmation against a stale passage hash lifts neither the tag nor the refusal", async (t) => {
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
+  const id = await letter(g);
+  g.f.local(`${LETTER_FILE}.confirmations.local.json`, {
+    file: LETTER_FILE,
+    items: [
+      { rule_ref: "R-title", status: "confirmed", by: "pe", on: "2026-09-25", confirmed_against: { passage_hash: passageHash(PASSAGES["R-title"]), currency: "September 1, 2020" } },
+      { rule_ref: "R-body", status: "confirmed", by: "pe", on: "2026-09-25", confirmed_against: { passage_hash: passageHash("an older passage"), currency: "September 1, 2020" } },
+    ],
+  });
+  assert.match(docOf(render(g, id), "General_writing").markdown, /^## Re \[unverified: R-body\]$/m);
+  const filed = render(g, id, "filed");
+  assert.equal(filed.confirmation_gate_failed, true);
+  assert.deepEqual(filed.unconfirmed, ["R-body"]);
+});
+
+test("a reviewed file whose every cited item the firm confirmed or corrected shows no notice and renders filed", async (t) => {
   const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
   const id = await letter(g);
   g.f.local(`${LETTER_FILE}.confirmations.local.json`, {
@@ -309,8 +345,11 @@ test("a vetted file whose every cited item the firm confirmed or corrected shows
     ],
   });
   const md = docOf(render(g, id), "General_writing").markdown;
-  assert.doesNotMatch(md, /Layout confirmation/);
+  assert.doesNotMatch(md, /Layout confirmation|\[unverified/);
   assert.deepEqual(optionalFieldsOf(md), []);
+  const filed = render(g, id, "filed");
+  assert.equal(filed.confirmation_gate_failed, undefined);
+  assert.deepEqual(filed.documents.map((d) => d.document_type), ["General_writing"]);
 });
 
 test("a blind copy prints in the header's Blind copies on the mockup and nowhere on the filed face; a cc prints on both", async (t) => {

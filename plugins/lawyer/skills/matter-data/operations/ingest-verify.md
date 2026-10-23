@@ -129,7 +129,7 @@ same-context verification is not verification
   `VERIFICATION_MODE = targeted_reverification` plus the exact pending target ids
   for a backlog/second pass.
 
-**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it cannot list a directory, and in a bridged session it cannot see host files at all. Supply the explicit path of every file it must read, and for a PDF its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (design decision #71), each PNG named individually rather than the render directory. Where host files arrive only over a bridge (Project Cowork), stage a byte-exact copy into the session first (`device_stage_files`) and dispatch that path; [`verify-law.md`](verify-law.md) §2 states this rule in full.
+**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it cannot list a directory, and in a bridged session it cannot see host files at all. Supply the explicit path of every file it must read, and for a PDF its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (design decision #71), each PNG named individually rather than the render directory. In a bridged session, stage a byte-exact copy into the session first (`device_stage_files`) and dispatch that path; [`verify-law.md`](verify-law.md) §2 defines a bridged session and states this rule in full.
 
 **A verifier that is unavailable — never substitute another agent — that fails, or that returns malformed JSON leaves this source's rows, stamp and marker untouched** and does not halt the run: continue to the next source and report the failure. A failed pass is never recorded as a verification.
 

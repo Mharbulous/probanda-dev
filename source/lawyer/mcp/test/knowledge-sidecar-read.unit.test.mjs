@@ -240,9 +240,7 @@ test("the session's memoized sources__check result makes a missing passage read 
 // unconfirmed item by item until this firm's own sidecar confirms or corrects it.
 test("a reviewed shipped file's items read unconfirmed until this firm confirms or corrects each", (t) => {
   const f = knowledgeFixture(t);
-  f.shipped(FILE, knowledgeFile(FRONT.replace("reviewed_by:
-reviewed_on:", "reviewed_by: Pat Example
-reviewed_on: 2026-09-22"), BLOCK));
+  f.shipped(FILE, knowledgeFile(FRONT.replace("reviewed_by:\nreviewed_on:", "reviewed_by: Pat Example\nreviewed_on: 2026-09-22"), BLOCK));
   f.shipped("draft/CAN/BC/BCSC/Sources/rules.md", RECORD);
   f.local(SIDECAR, { file: FILE, items: [row("R-title", { status: "corrected", value: "Letter to the registrar" }), row("R-echo")] });
   const result = knowledgeRead(FILE, f.seams);

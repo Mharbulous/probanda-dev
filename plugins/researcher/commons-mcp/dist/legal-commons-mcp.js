@@ -15899,7 +15899,7 @@ var EDGE_TREATMENT_VALUES = [
   "abrogated"
 ];
 function refuseNoteUpDate(label, authority) {
-  if ("last_verified_at" in authority) {
+  if (typeof authority === "object" && authority !== null && "last_verified_at" in authority) {
     throw new ValidationError(`${label} received unknown field "last_verified_at"`);
   }
 }
