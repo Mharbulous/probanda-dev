@@ -103,6 +103,7 @@ Fixed-text jobs, offered per Writing kind and per stage:
 - **Written through `/drafting-data` §3b**, which fixes their scope to the lead Writing and how each is written.
 - **A contempt application** takes `Serve the application` with §3b's contempt step, which adds personal service on the alleged contemnor.
 - **The availability letter** is drafted by a `/draft` session that takes the job from the board. Sending it is the practitioner's step. `/prepare` never proposes hearing dates.
+- **The filing steps** of `Set down for hearing`, `File the served response`, `Reply affidavits` and `Reset for hearing` are e-filed with `/e-file` in the session working the job.
 
 ## 7. Persistence rule
 
