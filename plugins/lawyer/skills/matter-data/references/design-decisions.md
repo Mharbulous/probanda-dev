@@ -1254,6 +1254,16 @@ Before any read of a PDF's content, the session calls the lawyer data server's `
 
 **What it supersedes.** #63's native read of scanned pages, and #70's "Scanned affidavit pages are read natively" paragraph with its cost rationale. The rest of #70 stands: Opus at high effort, chunks of no more than 20 pages, and a fresh extractor per document and per exhibit.
 
+## 72. Counsel history is one dated practice-data counsel role per appearance (2026-10-23)
+
+#41 kept one `replaced_representative` and one `service_address_filed_date` per party and left chains of changes to the court file. A proceeding often sees several changes of lawyer, so a second change overwrote the stored predecessor, and nobody could answer from case data who acted for a party on a given date. The practitioner chose to keep every appearance.
+
+**Where it lives.** Case data may gain no DDL (it is a legacy store under the Exception in COMMANDMENTS.md), so the history is not a table here. Each appearance is a practice-data `matter_role` (#69) tagged `opposing_counsel` or `co_counsel`, carrying `case_party_id`, `case_proceeding_id`, `from` (on record), `to` (off record), `from_source_id` and `to_source_id` (the case-data source that dated each end) and `unfiled` (true while `from` is an unfiled notice's signed date). The cloud's upsert key for a matter role gained `case_party_id` and `from`, so one lawyer for two parties, or a lawyer back on record after leaving, gets a role for each. `contact-lookup` by matter reads a matter's roles.
+
+**What stays.** `parties.lawyer_*`, `address`, `service_address_filed_date` and `replaced_representative`, and the per-proceeding overrides (#55), remain the current view, written as before, so every reader's output is unchanged and no migration was needed. `operations/order-effects.md` Step 3 proposes the roles beside the party fields: it closes the outgoing role and opens the incoming one from the same instrument, backfills a legacy party's roles when it is next touched, dates an unfiled notice by its signed date and moves it to the filing date by `id` when the filed copy arrives, and lets the first filing that gave an address for service open an appearance. Each approved role row is a Step 4 row with an `ORDER-EFFECT:` audit row (#36). No deadline is derived from these dates.
+
+This supersedes #41's "chains of successive changes reconstruct from the court file" only. #41's two fields and its rejection of a history table inside case data stand.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

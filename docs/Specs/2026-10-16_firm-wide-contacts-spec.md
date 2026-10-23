@@ -58,7 +58,7 @@ All three kinds are in store `practice` with `has_state` false, so they have no 
 - `rules.link_role`: (`matter_role`, `matter`, `matter`, required, synced) and (`matter_role`, `contact`, `contact`, required, synced).
 - `rules.tag`: (`matter_role`, `role`, `vocab`, required). `rules.vocabulary` for `role`: `client`, `prospective_client`, `opposing_party`, `opposing_counsel`, `co_counsel`, `expert`, `adjuster`, `referral_source`.
 - Data: `from?`, `to?`, `note?`, `case_party_id?`, `case_proceeding_id?`.
-- Natural key: `upsert`, rank 1, `array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?']`. Proposing the same role twice is idempotent, and one contact can hold the same role in two proceedings of a matter.
+- Natural key: `upsert`, rank 1, `array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?', 'hash:case_party_id?', 'hash:from?']` (amended 2026-10-23 for counsel history, case-data design decision #72). Proposing the same role twice is idempotent, and one contact can hold the same role in two proceedings of a matter, for two parties, or for a second period with a new `from`.
 - An ended role keeps its item with `to` set. Nothing is deleted when a matter closes.
 
 No existing kind changes. `matter` gains no required link or tag, and `client` keeps all its data, `name` included, as the account label. `rules.seed` is unchanged.
