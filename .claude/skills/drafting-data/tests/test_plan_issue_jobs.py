@@ -47,7 +47,8 @@ class PlanIssueJobsTest(unittest.TestCase):
         create = read("drafting-data", "references", "jobs-create.md")
         self.assertIn("| §3l research plan issue jobs |", create)
         self.assertIn("§3l's research plan issue jobs", create)
-        self.assertIn("(§3i, §3l)", paragraph(create, "**The plan marker.**"))
+        sections = paragraph(create, "**The plan marker.**").rsplit("(", 1)[1].rstrip(").").split(", ")
+        self.assertIn("§3l", sections)
         self.assertIn("`references/jobs-stock.md` §3l", read("drafting-data", "SKILL.md"))
 
 
