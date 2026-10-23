@@ -8,7 +8,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,9 +28,14 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { submissionFormsEmitForm32, submissionFormsRender } = await import("../build/submission/forms.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");
 
+/** A matter folder in a scratch dir: the database in its own `0. CASE DATA`, beside the `0. DRAFT` its
+ * Writings' mockups are written in (spec 2026-10-22). */
 function seededDbFixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-form32-emitter-"));
-  const dbPath = join(dir, "submission.sqlite");
+  const matter = join(dir, "Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
   return { dir, dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 

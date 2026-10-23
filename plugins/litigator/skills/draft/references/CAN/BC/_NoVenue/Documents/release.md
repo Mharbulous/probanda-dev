@@ -2,7 +2,6 @@
 {
   "renderer": "general",
   "needs_forum_parts": false,
-  "folder_code": "REL",
   "title": "Release",
   "exhibit_numbering": "writing",
   "letterhead": false,

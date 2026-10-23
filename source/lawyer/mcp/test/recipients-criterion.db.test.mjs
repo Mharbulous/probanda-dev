@@ -42,7 +42,7 @@ const boardOf = (result) => result.board;
 const criterionOf = (board, id) => board.criteria.find((c) => c.id === id);
 const letterOf = (result) => docOf(result, "General_writing").markdown;
 const gapEntries = (result) =>
-  JSON.parse(readFileSync(join(dirname(docOf(result, "General_writing").path), "render-manifest.json"), "utf-8"))
+  JSON.parse(readFileSync(join(dirname(dirname(docOf(result, "General_writing").path)), "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8"))
     .inventory.filter((e) => e.marker === "🧩")
     .map((e) => [e.generating, e.table, e.id, e.item, e.doc]);
 

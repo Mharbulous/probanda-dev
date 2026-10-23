@@ -1,8 +1,8 @@
 // The filler registry (spec §6 piece 7, plan Phase 5): fillers are keyed by venue key plus stored
 // kind. Every registered key has a shipped type file declaring `bespoke`, and every shipped
 // `bespoke` type file has a registered key. A `bespoke` type with no filler fails at compose,
-// naming the venue, the kind and the missing filler; a `_NoVenue` type never has one. The
-// presentation folder code is the type file's declared `folder_code`.
+// naming the venue, the kind and the missing filler; a `_NoVenue` type never has one. No type
+// declares a folder code: each Writing's folder is named after the document (spec 2026-10-22).
 
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -53,17 +53,8 @@ test("every shipped bespoke type file has a registered key", () => {
   }
 });
 
-test("the presentation folder code is each type file's folder_code, as PRESENTATION_CODE held it", () => {
-  const codes = Object.fromEntries(REGISTERED_FILLERS.map((key) => [key.kind, resolveTypeFile(key.venue, key.kind).block.folder_code]));
-  assert.deepEqual(codes, {
-    submissions_package: "SUB",
-    notice_of_application: "NOA",
-    requisition_default_judgment: "REQ",
-    requisition_consent: "REQ",
-    application_response: "AR",
-    bcca_stay_response: "AR",
-    bcca_factum: "FACTUM",
-  });
+test("no registered type declares a folder code: each Writing's folder is named after the document", () => {
+  for (const key of REGISTERED_FILLERS) assert.equal(Object.hasOwn(resolveTypeFile(key.venue, key.kind).block, "folder_code"), false, key.kind);
 });
 
 test("each registered type declares the companions the render path's retired kind list implied", () => {

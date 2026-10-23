@@ -46,7 +46,8 @@ function matterBoard(path) {
 async function fixture(t, { board = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-job-board-only-"));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
-  const dbPath = join(dir, "submission.sqlite");
+  mkdirSync(join(dir, "L8470 Matter", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L8470 Matter", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(
     dbPath,
@@ -170,18 +171,17 @@ test("with draft_dir the render writes the board's page among the matter's pages
   assert.equal(board.board_summary.includes("🎯"), false, "no completion criteria");
 
   const entries = readdirSync(f.draft, { withFileTypes: true });
-  assert.deepEqual(entries.filter((e) => e.isDirectory()).map((e) => e.name), [], "no presentation folder");
+  assert.deepEqual(entries.filter((e) => e.isDirectory()).map((e) => e.name), ["Consent Order Requisition", "Drafting records"], "the Writing's folder and the records folder, and no folder for the board");
   const names = entries.map((e) => e.name);
   assert.deepEqual(names.filter((name) => name.includes(`Job Board ${f.boardId}`)), [`Job Board ${f.boardId}.html`], "its page, and no view page beside it");
   assert.ok(names.includes("Litigation Strategy.html"));
-  assert.ok(names.includes("Job Board 1.html"), "the Writing's page is written too");
-  assert.ok(names.includes("Arguments - Job Board 1.html"), "the Writing keeps its view pages");
+  assert.ok(existsSync(join(f.draft, "Consent Order Requisition", "Job Board.html")), "the Writing's page is written too");
+  assert.ok(existsSync(join(f.draft, "Consent Order Requisition", "Arguments.html")), "the Writing keeps its view pages");
   assert.deepEqual([...new Set(result.view_page_paths.map((p) => p.filing_id))], [1], "view pages are the Writing's alone");
   for (const name of readdirSync(dirname(f.dbPath))) {
-    assert.doesNotMatch(name, /brief|manifest/i, `nothing of a mockup beside the database: ${name}`);
+    assert.doesNotMatch(name, /brief|manifest|mockups/i, `nothing of a mockup beside the database: ${name}`);
   }
-  const mockups = join(dirname(f.dbPath), "mockups");
-  assert.deepEqual(existsSync(mockups) ? readdirSync(mockups) : [], ["matter-pages-state.json"], "only the pages' own state file, no mockup folder");
+  assert.deepEqual(readdirSync(join(f.draft, "Drafting records")), ["matter-pages-state.json"], "only the pages' own state file, no manifest");
 
   const data = readBoardData(page);
   assert.deepEqual(data.sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[f.boardId, 1]], "its own section alone");
@@ -201,10 +201,10 @@ test("with draft_dir the render writes the board's page among the matter's pages
   assert.deepEqual(section.lapsed_keys, []);
 });
 
-test("the render refuses a filed face and a presentation folder", async (t) => {
+test("the render refuses a filed face and a Writing folder", async (t) => {
   const f = await fixture(t);
   assert.throws(() => render(f.dbPath, f.boardId, { mode: "filed" }), code("job_board_only", /no filed face/));
-  assert.throws(() => render(f.dbPath, f.boardId, { presentationDir: join(f.draft, "Paper originals") }), code("job_board_only", /no presentation folder/));
+  assert.throws(() => render(f.dbPath, f.boardId, { presentationDir: join(f.draft, "Paper originals") }), code("job_board_only", /no Writing folder/));
   await assert.rejects(callTool({}, "drafting_forms__render", { db_path: f.dbPath, filing_id: f.boardId, render_mode: "filed" }), code("job_board_only"));
   assert.deepEqual(readdirSync(f.draft), []);
 });
@@ -285,14 +285,14 @@ test("bootstrap lists the board with no paths and no render_state, and the Litig
   assert.deepEqual(
     result.job_board_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]).sort(),
     [
-      [1, 1, join(f.draft, "Job Board 1.html")],
+      [1, 1, join(f.draft, "Consent Order Requisition", "Job Board.html")],
       [f.boardId, 1, join(f.draft, `Job Board ${f.boardId}.html`)],
       [null, 2, join(f.draft, "Job Board - proceeding 2.html")],
     ].sort(),
     "the board has a page of its own"
   );
-  assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "matter-pages-state.json")), true);
-  assert.deepEqual(readdirSync(join(dirname(f.dbPath), "mockups")), ["matter-pages-state.json"], "bootstrap looks up no mockup folder for it");
+  assert.equal(existsSync(join(f.draft, "Drafting records", "matter-pages-state.json")), true);
+  assert.deepEqual(readdirSync(join(f.draft, "Drafting records")), ["matter-pages-state.json"], "bootstrap looks up no manifest for it");
 
   const page = readFileSync(result.matter_board_path, "utf-8");
   assert.ok(page.includes('section("job-boards", "Job Boards"'), "the page draws a Job Boards section");
@@ -427,7 +427,7 @@ test("completing a proceeding-wide job rewrites a Writing's page, and completing
   const wide = await complete(2);
   assert.equal(wide.outcome, "completed");
   assert.equal(wide.pages_refused, undefined);
-  assert.equal(wide.job_board_path, join(f.draft, "Job Board 3.html"), "never the board, which shows no job without a filing_id");
+  assert.equal(wide.job_board_path, join(f.draft, "Second Requisition", "Job Board.html"), "never the board, which shows no job without a filing_id");
 
   const own = await complete(4);
   assert.equal(own.outcome, "completed");

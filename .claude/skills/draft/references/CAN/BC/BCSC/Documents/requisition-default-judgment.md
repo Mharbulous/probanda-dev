@@ -2,7 +2,6 @@
 {
   "renderer": "bespoke",
   "needs_forum_parts": true,
-  "folder_code": "REQ",
   "title": "Requisition for default judgment",
   "exhibit_numbering": "writing",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],

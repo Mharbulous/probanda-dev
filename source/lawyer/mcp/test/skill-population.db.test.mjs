@@ -94,9 +94,14 @@ const MARCHETTI_CASE_DATA = {
   ],
 };
 
+/** A matter folder in a scratch dir: the database in its own `0. CASE DATA`, beside the `0. DRAFT` its
+ * Writings' mockups are written in (spec 2026-10-22). */
 function seededDbFixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-skill-population-"));
-  const dbPath = join(dir, "submission.sqlite");
+  const matter = join(dir, "Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
   return { dir, dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
@@ -114,7 +119,6 @@ function findFile(dir, fileName) {
 // amendment the board is the filing's own Job Board page, written only by a render given a draft folder.
 function boardPage(f, client) {
   const draft = join(f.dir, "Matter", "0. DRAFT");
-  mkdirSync(draft, { recursive: true });
   const rendered = submissionFormsRender(f.dbPath, 1, client, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
   return readFileSync(rendered.documents.find((d) => d.document_type === "Work_board").path, "utf-8");
 }

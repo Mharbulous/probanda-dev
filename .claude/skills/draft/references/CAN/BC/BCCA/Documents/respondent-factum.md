@@ -2,7 +2,6 @@
 {
   "renderer": "bespoke",
   "needs_forum_parts": true,
-  "folder_code": "FACTUM",
   "title": "Respondent's factum",
   "exhibit_numbering": "writing",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],

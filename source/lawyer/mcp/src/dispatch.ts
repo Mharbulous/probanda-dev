@@ -350,7 +350,7 @@ export async function callTool(
 
   if (name === "drafting_forms__render") {
     if (args.filing_id === undefined) throw new ValidationError("drafting_forms__render needs filing_id, or proceeding_id for a proceeding with no filing");
-    // Only a render that writes presentation copies rewrites the Litigation Strategy, so only it reads the registry.
+    // Only a render under draft_dir or presentation_dir rewrites the Litigation Strategy, so only it reads the registry.
     const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined || args.presentation_dir !== undefined);
     const result = submissionFormsRender(
       args.db_path as string,
@@ -707,7 +707,7 @@ async function pageContext(
   // board_card agree with the page.
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  // The page sits in <matter>/0. DRAFT, and a presentation folder is always that folder's child.
+  // The page sits in <matter>/0. DRAFT, and a Writing's folder is always that folder's child.
   const draftDir = (args.draft_dir as string | undefined) ?? dirname(args.presentation_dir as string);
   const resolved = (await lookUpMatter(dirname(draftDir), context.practiceDb, client)).client;
   // A folder the lookup could not match still reads its own token, as #883 did.

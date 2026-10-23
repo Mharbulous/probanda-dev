@@ -90,7 +90,7 @@ guides to be loaded.
 # code you cannot pin down, ask the practitioner; never fall back to the title. The
 # finished .docx is saved as {stem}.docx at the top of the matter's draft folder.
 # {writing folder}: a package's own folder under the draft folder, one path segment.
-# The caller passes it: /draft, the folder its mockup presentation copy was rendered
+# The caller passes it: /draft, the folder its mockups were rendered
 # into; for an affidavit sworn for a package, that package's folder. For a Form 32 or
 # 33 with no Writing, name a `{CODE} {description}` folder by /file-naming's grammar.
 # Working files go under {matter-data folder}; a package's finished .docx goes under

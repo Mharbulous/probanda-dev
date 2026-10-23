@@ -18,11 +18,12 @@ Provenance: spec `Engineering/1. Design/2026-09-24_draft-generalization-and-loca
 |---|---|---|
 | `renderer` | `bespoke` or `general` | `bespoke` renders through a filler registered for the venue key plus the stored kind. A `bespoke` type with no registered filler fails at compose, naming the venue, the kind and the missing filler. A `_NoVenue` type never has a filler. `general` renders through the general renderer. |
 | `needs_forum_parts` | `true` or `false` | Whether the Writing prints parts only a forum supplies (a caption, a file number). A type declaring `true` that resolves under `_NoVenue` fails validation. |
-| `folder_code` | string | The code of the Writing's output folder. A missing `folder_code` fails hard. |
 | `title` | string | The Writing's title. `/publish` names the output from it. |
 | `exhibit_numbering` | `proceeding` or `writing` | Whether exhibits number across the whole proceeding or restart for this Writing. |
 
-`renderer`, `needs_forum_parts` and `folder_code` never carry a `rule_ref` (section 7). They cannot be confirmed or corrected.
+`renderer` and `needs_forum_parts` never carry a `rule_ref` (section 7). They cannot be confirmed or corrected.
+
+No type declares a folder code: each Writing's folder is named after the document (`shared/workspace-output-rule.md`). A type file an older build wrote may still carry `folder_code`. It is accepted, never cited, and read only to find a Writing folder an older build named with it.
 
 ## 3. Parts (`general` types only)
 
@@ -149,7 +150,6 @@ A fictitious `general` type, for shape only. It is not a shipped file.
 {
   "renderer": "general",
   "needs_forum_parts": false,
-  "folder_code": "XMPL",
   "title": { "value": "Example letter", "rule_ref": "example-title" },
   "exhibit_numbering": "writing",
   "letterhead": true,

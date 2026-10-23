@@ -2,7 +2,6 @@
 {
   "renderer": "general",
   "needs_forum_parts": false,
-  "folder_code": "MEM",
   "title": "Internal memo",
   "exhibit_numbering": "writing",
   "goal_criteria": ["primary-authority", "excerpts", "noting-up", "open-items", "counsel-review"],

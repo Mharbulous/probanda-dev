@@ -10,7 +10,7 @@
 // (freshSubmissionDb + submissionDataExecute), not the full VanIAC fixture.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -130,7 +130,10 @@ UPDATE db_meta SET value = '1' WHERE key = 'revision';
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-doctrinal-slot-"));
-  return { dbPath: join(dir, "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  return { dbPath: join(matter, "0. CASE DATA", "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 test("📖 and 🔬 split the doctrinal slot by whether a non-killed statement exists", async () => {
@@ -330,7 +333,7 @@ test("v46: a failed statement reopens 📖, tags its finding, and reaches no fil
     // is counsel's decision on the finding, so that 📖 is recorded as a non-generating proposition
     // instance, which the Goal card still counts. A proposition with no statement at all still
     // proposes doctrinal-basis as before.
-    const manifest = JSON.parse(readFileSync(join(dirname(writtenArgumentDoc.path), "render-manifest.json"), "utf-8"));
+    const manifest = JSON.parse(readFileSync(join(dirname(dirname(writtenArgumentDoc.path)), "Drafting records", "render-manifest-1.json"), "utf-8"));
     const keys = new Set(manifest.inventory.filter((e) => e.generating !== false).map(proposalKey));
     const proposed = new Set(boardDataOf(f.dbPath, 1, client).proposals.map((p) => p.key));
     for (const id of [9, 10, 12]) assert.equal(keys.has(`scrutinize:statements_of_law:${id}`), false, `expected no 🔬 Proposal for failed statement ${id}`);

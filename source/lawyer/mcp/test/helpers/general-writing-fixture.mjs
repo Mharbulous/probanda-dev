@@ -213,17 +213,24 @@ export async function generalWritingFixture(t, { person = "pe", front = LEARNED_
   f.local(MEMO_FILE, knowledgeFile(null, MEMO_BLOCK));
   f.local(SOURCE_FILE, sourceRecord());
 
-  const dbPath = join(f.scratch, "submission.sqlite");
+  // A matter laid out as ADR 0013 lays one out: the database in its own 0. CASE DATA, beside the
+  // 0. DRAFT that holds each Writing's own folder (spec 2026-10-22).
+  const caseData = join(f.scratch, "L0000 Matter", "0. CASE DATA");
+  const draft = join(f.scratch, "L0000 Matter", "0. DRAFT");
+  mkdirSync(caseData, { recursive: true });
+  mkdirSync(draft, { recursive: true });
+  const dbPath = join(caseData, "submission.sqlite");
   if (version === undefined) await freshSubmissionDb(dbPath);
   else submissionDbAt(dbPath, version);
   await submissionDataExecute(dbPath, SEED);
-  writePartiesOfRecord(f.scratch, GENERAL_WRITING_CASE_DATA);
+  writePartiesOfRecord(caseData, GENERAL_WRITING_CASE_DATA);
   const seams = { env: { ...process.env, APPDATA: appData } };
   const query = (sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
   const confirm = (filingId) => submissionDataWrite(dbPath, "UPDATE filings SET authority_confirmed_on = '2026-09-27' WHERE id = ?", [filingId]);
   return {
     f,
     dbPath,
+    draft,
     seams,
     firmJson: join(firmDir, "firm.json"),
     setPerson,

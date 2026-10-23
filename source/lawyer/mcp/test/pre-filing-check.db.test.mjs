@@ -59,12 +59,13 @@ with zipfile.ZipFile(path, "w") as z:
   assert.equal(res.status, 0, res.stderr);
 }
 
-/** A matter-shaped temp tree: <root>/0. DRAFT/SUB Test/Package plus a submission.sqlite beside it. */
+/** A matter-shaped temp tree: <root>/0. DRAFT/Test filing/Package plus <root>/0. CASE DATA/submission.sqlite beside it. */
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "coclerk-prefiling-"));
-  const pkg = join(root, "0. DRAFT", "SUB Test filing", "Package");
+  const pkg = join(root, "0. DRAFT", "Test filing", "Package");
   mkdirSync(pkg, { recursive: true });
-  const dbPath = join(root, "submission.sqlite");
+  mkdirSync(join(root, "0. CASE DATA"));
+  const dbPath = join(root, "0. CASE DATA", "submission.sqlite");
   return { root, pkg, dbPath, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 

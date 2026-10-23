@@ -8,7 +8,7 @@
 // Seed pattern follows scrutiny-settled.db.test.mjs. All names are synthetic.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -78,7 +78,10 @@ const QUOTING = " (quoting Lord Example in An Earlier Case)";
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-authority-fit-"));
-  return { dbPath: join(dir, "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  return { dbPath: join(matter, "0. CASE DATA", "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 async function seeded(f) {

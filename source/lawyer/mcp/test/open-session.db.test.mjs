@@ -42,7 +42,8 @@ function oneVersionBehind(dbPath, version = "m.TARGET_SCHEMA_VERSION - 1") {
   if (res.status !== 0) throw new Error(`fixture migrate failed: ${res.stderr}`);
 }
 
-/** <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/0. CASE DATA/L9999 Test Matter/submission.sqlite */
+/** <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/L9999 Test Matter/0. CASE DATA/submission.sqlite, beside the
+ * matter's 0. DRAFT when a test makes one (spec 2026-10-22 §9). */
 function matterFixture(t, { folder = "L9999 Test Matter", pointer } = {}) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-open-session-"));
   t.after(async () => {
@@ -50,13 +51,15 @@ function matterFixture(t, { folder = "L9999 Test Matter", pointer } = {}) {
     rmSync(base, { recursive: true, force: true });
   });
   const matterRoot = join(base, folder);
-  const caseDataDir = join(base, "0. CASE DATA", folder);
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(matterRoot, { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
+  // The firm's own 0. CASE DATA root beside the matter, which a session finds without the per-user file.
+  mkdirSync(join(base, "0. CASE DATA"));
   const pointerText =
     typeof pointer === "string"
       ? pointer
-      : JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: caseDataDir, evidence_sql_path: "4. LAWYER BRIEF\\CoWork\\evidence.sql", ...pointer }, null, 2);
+      : JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: "0. CASE DATA", evidence_sql_path: "4. LAWYER BRIEF\\CoWork\\evidence.sql", ...pointer }, null, 2);
   writeFileSync(join(matterRoot, "coclerk.json"), pointerText, "utf-8");
   return { base, matterRoot, caseDataDir, dbPath: join(caseDataDir, "submission.sqlite"), pointerBytes: () => readFileSync(join(matterRoot, "coclerk.json")) };
 }
@@ -70,8 +73,9 @@ async function seedOneFiling(dbPath) {
   );
 }
 
-/** seedOneFiling's filing's Job Board page (ADR 0033, 2026-10-05 amendment). */
-const OPENING_PAGE = "Job Board 1.html";
+/** seedOneFiling's filing's Job Board page, in its Writing's own folder (spec 2026-10-22 §9). */
+const OPENING_FOLDER = "Opening Submissions Package";
+const OPENING_PAGE = join(OPENING_FOLDER, "Job Board.html");
 
 async function practiceContext(t, { withMatter = true, dbPath } = {}) {
   const practicePath = dbPath ?? join(tmpdir(), `coclerk-open-session-practice-${randomUUID()}.db`);
@@ -117,7 +121,7 @@ test("resolves db_path from coclerk.json, folds in the matter lookup, and bootst
 test("a relocated matter's relative pointer gives db_path under the matter's own 0. CASE DATA (ADR 0013)", async (t) => {
   const m = matterFixture(t, { pointer: { case_data_dir: "0. CASE DATA", evidence_sql_path: "0. CASE DATA\\evidence.sql" } });
   const dbPath = join(m.matterRoot, "0. CASE DATA", "submission.sqlite");
-  mkdirSync(join(m.matterRoot, "0. CASE DATA"));
+  mkdirSync(join(m.matterRoot, "0. CASE DATA"), { recursive: true });
   await seedOneFiling(dbPath);
   noPerUserConfig(t);
   const context = await practiceContext(t);
@@ -547,7 +551,7 @@ test("filing_id naming a retired filing opens its board as retired, with no mock
   assert.ok(!result.opened.board_summary.includes("## "), result.opened.board_summary);
   assert.match(result.opened.board_summary, /^State: Retired 2026-09-30/m);
   assert.equal(result.opened.rendered_at, undefined);
-  assert.deepEqual(readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name), [], "no presentation folder");
+  assert.deepEqual(readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name), ["Drafting records"], "no Writing folder, only the records folder");
 });
 
 test("filing_id naming no filing is reported as open_refused, and the matter's pages are still written", async (t) => {
@@ -572,12 +576,14 @@ test("a refused opening of a live filing returns that filing's page", async (t) 
   await seedOneFiling(m.dbPath);
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
-  mkdirSync(join(draftDir, "2026-09-10 SUB Opening Submissions Package")); // one dated presentation folder refuses the render
+  // Two folders that could each be the Writing's, none recorded, refuse the render.
+  mkdirSync(join(draftDir, OPENING_FOLDER));
+  mkdirSync(join(draftDir, `2026-09-10 ${OPENING_FOLDER}`));
   const context = await practiceContext(t);
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
-  assert.equal(result.open_refused.code, "presentation_dir_dated");
+  assert.equal(result.open_refused.code, "presentation_dir_ambiguous");
   assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
   assert.ok(existsSync(result.job_board_path));
 });
@@ -617,7 +623,7 @@ test("a Job Board with no Writing leads the list and is not opened by default", 
   assert.equal([job.current, ...job.queued, ...job.done].includes(boardId), false, "the background job never queues the board");
 });
 
-test("filing_id naming a Job Board with no Writing opens its board, with no presentation folder", async (t) => {
+test("filing_id naming a Job Board with no Writing opens its board, with no folder of its own", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const draftDir = join(m.matterRoot, "0. DRAFT");
@@ -636,7 +642,7 @@ test("filing_id naming a Job Board with no Writing opens its board, with no pres
   assert.equal(named.ingest_coverage.status, "not_applicable");
   assert.equal(named.form_currency, undefined);
   const folders = () => readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
-  assert.deepEqual(folders(), [], "no presentation folder for the board");
+  assert.deepEqual(folders(), ["Drafting records", OPENING_FOLDER], "no folder for the board: only the Writing's and the records folder");
 
   // The render a session then calls for it, through the dispatch.
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: boardId, draft_dir: named.draft_dir, session_token: named.session_token });
@@ -644,7 +650,7 @@ test("filing_id naming a Job Board with no Writing opens its board, with no pres
   assert.deepEqual(rendered.documents.map((d) => d.document_type), ["Work_board"]);
   assert.equal(rendered.documents[0].path.toLowerCase(), boardPage.toLowerCase());
   assert.equal(rendered.documents[0].board_changed, false);
-  assert.deepEqual(folders(), []);
+  assert.deepEqual(folders(), ["Drafting records", OPENING_FOLDER]);
 });
 
 test("a live Job Board with no Writing beside a retired Writing: nothing is opened by default", async (t) => {
@@ -873,8 +879,8 @@ test("a render without matter_no keeps the Litigation Strategy's to-dos", async 
   assert.equal(bootstrapped.matter_board_url, undefined);
   assert.deepEqual(boardData(opened.matter_board_path).todos.map((todo) => todo.description), ["Settle the submissions"]);
 
-  // The presentation folder the draft_dir render created: its parent is the 0. DRAFT folder.
-  const [presentation] = readdirSync(opened.draft_dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  // The Writing's folder the draft_dir render wrote into: its parent is the 0. DRAFT folder.
+  const presentation = OPENING_FOLDER;
   const presented = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, presentation_dir: join(opened.draft_dir, presentation), session_token: opened.session_token });
   assert.equal(presented.job_board_url, undefined);
   assert.equal(presented.matter_board_url, undefined);
@@ -898,7 +904,7 @@ test("a render or bootstrap without matter_no writes the Litigation Strategy hea
   await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token });
   assert.deepEqual(header(), { matter: "L9999", client: "Lookup Client Ltd." }, "render with filing_id and draft_dir");
 
-  const [presentation] = readdirSync(opened.draft_dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  const presentation = OPENING_FOLDER;
   rmSync(opened.matter_board_path);
   await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, presentation_dir: join(opened.draft_dir, presentation), session_token: opened.session_token });
   assert.deepEqual(header(), { matter: "L9999", client: "Lookup Client Ltd." }, "render with filing_id and presentation_dir");

@@ -25,7 +25,6 @@ const VENUE_BLOCK = {
 const TYPE_BLOCK = {
   renderer: "bespoke",
   needs_forum_parts: true,
-  folder_code: "NOA",
   title: "Notice of Application",
   exhibit_numbering: "writing",
   goal_criteria: ["orders-sought", "counsel-review"],
@@ -120,7 +119,8 @@ test("the layout validator fails hard on every broken rule, naming file, field a
   const part = { heading: null, heading_numbering: "none", paragraph_numbering: "none", source: "slot:body" };
   for (const [block, field, rule] of [
     [{ ...TYPE_BLOCK, typeface: "Arial" }, "typeface", /typography is not in the layout contract/],
-    [{ ...TYPE_BLOCK, folder_code: undefined }, "folder_code", /is required; a missing required field has no default/],
+    [{ ...TYPE_BLOCK, title: undefined }, "title", /is required; a missing required field has no default/],
+    [{ ...TYPE_BLOCK, folder_code: "" }, "folder_code", /must be a non-empty string/],
     [{ ...TYPE_BLOCK, renderer: "fancy" }, "renderer", /must be one of bespoke, general/],
     [{ ...TYPE_BLOCK, renderer: { value: "general", rule_ref: "R1" } }, "renderer", /never carries a rule_ref/],
     [{ ...TYPE_BLOCK, parts: [part] }, "parts", /a bespoke type declares no parts/],

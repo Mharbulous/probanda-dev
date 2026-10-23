@@ -23,7 +23,10 @@ const ALL_MARKER_GLYPHS = ["🧩", "🏷️", "🕵️", "⬜", "🏛️", "📖
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-bcca-"));
-  return { dbPath: join(dir, "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  return { dbPath: join(matter, "0. CASE DATA", "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 test("BCCA stay response renders clean from checklist-only population (issue #436, checklist §10)", async () => {
@@ -313,9 +316,8 @@ test("render withholds the response book's hearing date and time from the respon
     await freshSubmissionDb(f.dbPath);
     writePartiesOfRecord(dirname(f.dbPath), STAY_RESPONSE_CASE_DATA);
     await submissionDataExecute(f.dbPath, SEED);
-    const draft = join(dirname(f.dbPath), "L4801 Matter", "0. DRAFT");
-    mkdirSync(draft, { recursive: true });
-    const leaf = join(draft, "AR Stay Application Response");
+    const draft = join(dirname(dirname(f.dbPath)), "0. DRAFT");
+    const leaf = join(draft, "Stay Application Response");
 
     const result = submissionFormsRender(f.dbPath, 1, {}, "mockup", ["Response_book"], undefined, leaf);
     const book = result.documents.find((d) => d.document_type === "Response_book");
@@ -326,7 +328,7 @@ test("render withholds the response book's hearing date and time from the respon
     assert.ok(!book.markdown.includes("10:00 am"), "nor the hearing time");
     const file = readFileSync(book.path, "utf-8");
     assert.ok(file.includes("returnable 2026-09-04 at 10:00 am."), "the canonical mockup keeps both");
-    assert.equal(readFileSync(book.presentation_path, "utf-8"), file, "the presentation copy keeps both");
+    assert.equal(dirname(book.path), leaf, "the mockup is the file in the Writing's folder");
     assert.equal(book.markdown_chars, file.length, "measured before withholding");
   } finally {
     f.cleanup();

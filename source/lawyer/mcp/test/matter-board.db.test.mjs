@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test, { after } from "node:test";
@@ -33,16 +33,18 @@ const PINNED = "2026-09-15 10:00";
 const LARCHMONT = { clientName: "Larchmont", clientNo: "1", matterNo: "L8470" };
 const DATA_PREFIX = "window.MATTER_BOARD = ";
 const PAGE = "Litigation Strategy.html";
-/** Each live filing's Job Board page (ADR 0033, 2026-10-05 amendment); filing 3 is retired and has none. */
+/** Each live filing's Job Board page, in its Writing's own folder (spec 2026-10-22 §9); filing 3 is retired and has none. */
 const JOB_BOARD = {
-  1: "Job Board 1.html",
-  2: "Job Board 2.html",
-  4: "Job Board 4.html",
+  1: join("First Consent Order Requisition", "Job Board.html"),
+  2: join("Second Consent Order Requisition", "Job Board.html"),
+  4: join("Adjournment Consent Order Requisition", "Job Board.html"),
 };
 
 async function fixture({ seed = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-todo-list-"));
-  const dbPath = join(dir, "submission.sqlite");
+  // The database in the matter's own 0. CASE DATA, beside its 0. DRAFT (spec 2026-10-22 §9).
+  mkdirSync(join(dir, "L8470 Matter", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L8470 Matter", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   if (seed) await seedMatter(dbPath);
   const draft = join(dir, "L8470 Matter", "0. DRAFT");
@@ -332,7 +334,7 @@ test("writing the Litigation Strategy moves a Matter Board.html this renderer wr
   const f = await fixture();
   try {
     const matterRoot = dirname(f.draft);
-    writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: f.dir, evidence_sql_path: "x.sql" }), "utf-8");
+    writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: "0. CASE DATA", evidence_sql_path: "x.sql" }), "utf-8");
     const old = join(f.draft, "Matter Board.html");
     const ours = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n<title>Matter Board</title>\n</html>\n';
 
@@ -349,7 +351,7 @@ test("writing the Litigation Strategy moves a Matter Board.html this renderer wr
     assert.deepEqual(boot.moved_to_trash.map((x) => x.from.toLowerCase()), [old.toLowerCase()]);
 
     writeFileSync(old, ours, "utf-8");
-    const rendered = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, join(f.draft, "REQ First Consent Order Requisition"), PINNED);
+    const rendered = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, join(f.draft, "First Consent Order Requisition"), PINNED);
     assert.equal(existsSync(old), false, "so does a render that rewrites the page");
     assert.deepEqual(rendered.moved_to_trash.map((x) => x.from.toLowerCase()), [old.toLowerCase()]);
 
@@ -398,10 +400,11 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
   const f = await fixture();
   try {
     const page = join(f.draft, PAGE);
-    const jobBoard = join(f.draft, JOB_BOARD[1]);
+    const leaf = join(f.draft, "2026-09-15 First Consent Order Requisition");
+    // A Writing's page is in its own folder, here the dated one the render is given.
+    const jobBoard = join(leaf, "Job Board.html");
     const otherBoard = join(f.draft, JOB_BOARD[4]);
     const lineOf = (id) => readBoard(page).data.filings.find((x) => x.filing_id === id);
-    const leaf = join(f.draft, "2026-09-15 REQ First Consent Order Requisition");
     const rows = [todo("t1", "Settle the first requisition", "2026-09-01", "filing:1")];
 
     const full = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, leaf, PINNED, undefined, undefined, { rows });
@@ -421,11 +424,12 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
 
     rmSync(page);
     rmSync(jobBoard);
-    const retired = submissionFormsRender(f.dbPath, 3, LARCHMONT, "mockup", undefined, undefined, join(f.draft, "2026-09-10 REQ Withdrawn Consent Order Requisition"), PINNED);
+    const retiredLeaf = join(f.draft, "2026-09-10 Withdrawn Consent Order Requisition");
+    const retired = submissionFormsRender(f.dbPath, 3, LARCHMONT, "mockup", undefined, undefined, retiredLeaf, PINNED);
     assert.equal(retired.filing_retired, true);
     assert.ok(existsSync(page), "the retired filing's render rewrites the Litigation Strategy too");
     assert.ok(existsSync(jobBoard), "and the live filings' Job Board pages");
-    assert.equal(existsSync(join(f.draft, "Job Board 3.html")), false, "the retired filing has none");
+    assert.equal(existsSync(join(retiredLeaf, "Job Board.html")), false, "the retired filing has none");
 
     rmSync(page);
     rmSync(otherBoard);
@@ -434,9 +438,9 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     assert.equal(fromDraft.documents.find((d) => d.document_type === "Work_board").path, otherBoard);
 
     rmSync(page);
-    for (const name of Object.values(JOB_BOARD)) rmSync(join(f.draft, name));
+    for (const path of [jobBoard, join(f.draft, JOB_BOARD[2]), otherBoard]) rmSync(path);
     submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, undefined, PINNED);
-    assert.equal(existsSync(page), false, "a render without presentation_dir writes nothing in the draft folder");
+    assert.equal(existsSync(page), false, "a render without presentation_dir or draft_dir writes no page");
     assert.equal(existsSync(jobBoard), false);
   } finally {
     f.cleanup();
@@ -520,10 +524,13 @@ test("a page whose to-dos could not be read says why, and the session still open
   const f = await fixture();
   const p = await practice(t);
   try {
-    // #883: with no matter_no, the matter folder's own number is read, so this one carries none.
+    // #883: with no matter_no, the matter folder's own number is read, so this one carries none. The
+    // draft folder must be the database's own, so the matter's case data is copied into it.
     const unnumberedDraft = join(f.dir, "Unnumbered Matter", "0. DRAFT");
     mkdirSync(unnumberedDraft, { recursive: true });
-    const unnumbered = await callTool(p.context, "drafting_forms__bootstrap", { db_path: f.dbPath, draft_dir: unnumberedDraft });
+    cpSync(dirname(f.dbPath), join(f.dir, "Unnumbered Matter", "0. CASE DATA"), { recursive: true });
+    const unnumberedDb = join(f.dir, "Unnumbered Matter", "0. CASE DATA", "submission.sqlite");
+    const unnumbered = await callTool(p.context, "drafting_forms__bootstrap", { db_path: unnumberedDb, draft_dir: unnumberedDraft });
     let { data } = readBoard(unnumbered.matter_board_path);
     assert.deepEqual(data.todos, []);
     assert.match(data.todos_note, /No matter number/);

@@ -26,7 +26,7 @@ import { runPythonDriver } from "../../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../../repo-root.js";
 import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-profile.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
-import { mockupDir, readManifest } from "../render-manifest.js";
+import { readManifest } from "../render-manifest.js";
 import { storedLayout, type StoredLayout } from "./layout-snapshot.js";
 import type { LayoutPart } from "./projections.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
@@ -104,7 +104,7 @@ function signerSnapshot(dbPath: string, filing: FilingRow, profile: FirmProfile)
  * render records one. The Sent write never renders: an inventory older than the revision, or none,
  * is refused. */
 function latestInventory(dbPath: string, filing: FilingRow, revision: number): MarkerInventory {
-  const manifest = readManifest(mockupDir(dbPath, filing.id));
+  const manifest = readManifest(dbPath, filing.id);
   if (manifest === null || manifest.stamp.filing_id !== filing.id) {
     throw refused(`render first: no render of filing ${filing.id} has recorded an inventory; render its mockup, then record it as sent again`, "render_first");
   }

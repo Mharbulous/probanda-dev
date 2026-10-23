@@ -47,8 +47,13 @@ function mtimesOf(baseDir, names) {
   return names.map((name) => statSync(join(baseDir, name)).mtimeMs);
 }
 
+/** Filing 1's render manifest, in `0. DRAFT\Drafting records\` beside its Writing folder `baseDir` (spec 2026-10-22 §9). */
+function manifestFileOf(baseDir) {
+  return join(dirname(baseDir), "Drafting records", "render-manifest-1.json");
+}
+
 function manifestOf(baseDir) {
-  return JSON.parse(readFileSync(join(baseDir, "render-manifest.json"), "utf-8"));
+  return JSON.parse(readFileSync(manifestFileOf(baseDir), "utf-8"));
 }
 
 async function vaniacFixture() {
@@ -177,11 +182,13 @@ test("memoisation: a mockup edited on disk is rewritten, without archiving", asy
     const first = renderAt(f.dbPath, PINNED);
     const baseDir = dirname(advocacyOf(first)[0].path);
     const name = advocacyOf(first)[0].file_name;
-    writeFileSync(join(baseDir, name), "tampered\n", "utf-8");
+    // Still stamped, so still this renderer's own file: an unstamped one is refused, never overwritten.
+    const tampered = `${readFileSync(join(baseDir, name), "utf-8")}tampered\n`;
+    writeFileSync(join(baseDir, name), tampered, "utf-8");
 
     renderAt(f.dbPath, PINNED);
 
-    assert.notEqual(readFileSync(join(baseDir, name), "utf-8"), "tampered\n", "a sha256 mismatch must rewrite the file");
+    assert.notEqual(readFileSync(join(baseDir, name), "utf-8"), tampered, "a sha256 mismatch must rewrite the file");
     assert.ok(!existsSync(join(baseDir, "archive")), "the revision has not moved, so nothing is archived");
   } finally {
     f.cleanup();
@@ -219,29 +226,23 @@ test("memoisation: bootstrap reports render_state from the manifest and file exi
   }
 });
 
-// A presentation copy is disposable (ADR 0012) and can be deleted at any moment, so its
-// absence must never force a re-render of the canonical mockups. A stamp hit re-projects
-// every copy from the canonical text it just verified, which is what makes a missing copy
-// a copy rather than a render (#581 §1).
-test("memoisation: a deleted presentation copy is re-copied on a stamp hit, with no canonical write", async () => {
+// Since spec 2026-10-22 the mockup in the Writing's folder is the only copy. A deleted one is a missing
+// listed file, so the next render under presentation_dir misses and writes it again.
+test("memoisation: a mockup deleted from the Writing's folder is written again on the next render", async () => {
   const f = await vaniacFixture();
   try {
     const { leaf } = draftFolder(f);
     const first = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf, PINNED);
-    const baseDir = dirname(advocacyOf(first)[0].path);
-    const names = advocacyOf(first).map((d) => d.file_name);
-    const before = mtimesOf(baseDir, names);
+    const deleted = advocacyOf(first)[0].path;
+    assert.equal(dirname(deleted), leaf, "the mockup is written into the folder presentation_dir names");
+    const text = readFileSync(deleted, "utf-8");
+    rmSync(deleted);
 
-    const copy = advocacyOf(first)[0].presentation_path;
-    assert.ok(copy && existsSync(copy), "expected a presentation copy from the first render");
-    rmSync(copy);
+    const second = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf, PINNED);
 
-    const second = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf, LATER_MINUTE);
-
-    assert.ok(existsSync(copy), "the missing copy must be written again");
-    assert.deepEqual(mtimesOf(baseDir, names), before, "re-copying must not rewrite a canonical mockup");
-    assert.equal(second.rendered_at, PINNED, "the canonical files keep the minute they were rendered with");
-    assert.equal(readFileSync(copy, "utf-8"), readFileSync(join(baseDir, names[0]), "utf-8"), "the copy must match its canonical mockup");
+    assert.equal(advocacyOf(second)[0].path, deleted);
+    assert.ok(existsSync(deleted), "the missing mockup must be written again");
+    assert.equal(readFileSync(deleted, "utf-8"), text, "at the same inputs and clock it is the same text");
   } finally {
     f.cleanup();
   }
@@ -326,7 +327,7 @@ for (const [label, broken] of [
       const manifest = manifestOf(baseDir);
       if (broken === undefined) delete manifest.inventory;
       else manifest.inventory = broken;
-      writeFileSync(join(baseDir, "render-manifest.json"), JSON.stringify(manifest), "utf-8");
+      writeFileSync(manifestFileOf(baseDir), JSON.stringify(manifest), "utf-8");
 
       const second = renderAt(f.dbPath, PINNED);
 

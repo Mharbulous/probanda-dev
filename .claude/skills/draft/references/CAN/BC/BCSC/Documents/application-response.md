@@ -2,7 +2,6 @@
 {
   "renderer": "bespoke",
   "needs_forum_parts": true,
-  "folder_code": "AR",
   "title": "Application Response",
   "exhibit_numbering": "writing",
   "goal_criteria": ["orders-positioned", "primary-authority", "excerpts", "noting-up", "evidence", "open-items", "opposing-points", "counsel-review"],

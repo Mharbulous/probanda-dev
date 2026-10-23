@@ -2,7 +2,6 @@
 {
   "renderer": "general",
   "needs_forum_parts": true,
-  "folder_code": "LTR",
   "title": "Letter to the tribunal",
   "exhibit_numbering": "writing",
   "letterhead": true,

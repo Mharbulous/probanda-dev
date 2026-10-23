@@ -58,7 +58,7 @@ export interface OpenSessionResult extends BootstrapResult {
   /** The matter folder as proven host-side (realpath). */
   matter_root: string;
   /** #689: the matter's one 0. DRAFT folder, absent when there is none. Passed to every later
-   * drafting_forms__render so the server resolves the presentation folder itself. */
+   * drafting_forms__render, under which the server rewrites the matter's pages. */
   draft_dir?: string;
   /** Present only when this call migrated the database before bootstrapping. `backup` is the
    * #353 copy-aside the migrate wrote beside the database, or null if none appeared. */

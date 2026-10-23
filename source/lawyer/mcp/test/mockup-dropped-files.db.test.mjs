@@ -25,7 +25,8 @@ const EXLOCK = 0x10000000; // libuv UV_FS_O_EXLOCK: an open that shares nothing,
 const render = (dbPath, id, mode = "mockup") => submissionFormsRender(dbPath, id, CLIENT, mode, undefined, undefined, undefined, NOW);
 const folderOf = (result) => dirname(result.documents[0].path);
 const topLevelMd = (dir) => readdirSync(dir).filter((name) => name.endsWith(".md")).sort();
-const revisionOf = (dir) => JSON.parse(readFileSync(join(dir, "render-manifest.json"), "utf-8")).stamp.revision;
+/** The stamped revision in filing `id`'s render manifest, in `0. DRAFT\Drafting records\` beside its Writing folder `dir`. */
+const revisionOf = (dir, id) => JSON.parse(readFileSync(join(dirname(dir), "Drafting records", `render-manifest-${id}.json`), "utf-8")).stamp.revision;
 const archived = (dir) => (existsSync(join(dir, "archive")) ? readdirSync(join(dir, "archive")) : []);
 
 const UNCITED_LETTER = { ...LETTER_BLOCK, title: "Letter to opposing counsel", parts: LETTER_BLOCK.parts.map(({ rule_ref, ...rest }) => rest) };
@@ -50,16 +51,16 @@ async function retitledLetter(t) {
 
 test("a re-snapshot after the type title changed archives the old-title file, and leaves an unlisted file and archive/ where they are", async (t) => {
   const { g, id, dir } = await retitledLetter(t);
-  const previous = revisionOf(dir);
+  const previous = revisionOf(dir, id);
   writeFileSync(join(dir, "My notes.md"), "practitioner's own notes", "utf-8");
   mkdirSync(join(dir, "archive"), { recursive: true });
   writeFileSync(join(dir, "archive", "Older copy.md"), "an earlier archive", "utf-8");
 
   render(g.dbPath, id);
   assert.deepEqual(topLevelMd(dir), ["Letter re costs.md", "My notes.md"]);
-  const moved = archived(dir).filter((name) => name.startsWith("General_writing @rev"));
-  assert.equal(moved.length, 1);
-  assert.match(moved[0], new RegExp(`^General_writing @rev${previous} .+\\.md$`));
+  const moved = archived(dir).filter((name) => name.startsWith("Letter re costs @rev"));
+  assert.equal(moved.length, 1, "archived under the name the render now gives its document");
+  assert.match(moved[0], new RegExp(`^Letter re costs @rev${previous} .+\\.md$`));
   assert.ok(archived(dir).includes("Older copy.md"));
 });
 
@@ -71,7 +72,7 @@ test("a listed file already gone is skipped", async (t) => {
 
   render(g.dbPath, id);
   assert.deepEqual(topLevelMd(dir), ["Letter re costs.md"]);
-  assert.deepEqual(archived(dir).filter((name) => name.startsWith("General_writing @rev")), []);
+  assert.deepEqual(archived(dir).filter((name) => name.startsWith("Letter re costs @rev")), []);
 });
 
 // UV_FS_O_EXLOCK denies sharing only on Windows, so elsewhere the rename would succeed and prove nothing.
@@ -86,7 +87,7 @@ test("a dropped file the sync client holds does not fail the render, and stays w
   }
   assert.ok(existsSync(join(dir, "Letter re costs.md")));
   assert.ok(existsSync(old));
-  assert.deepEqual(archived(dir).filter((name) => name.startsWith("General_writing @rev")), []);
+  assert.deepEqual(archived(dir).filter((name) => name.startsWith("Letter re costs @rev")), []);
 });
 
 test("a memoisation hit moves nothing", async (t) => {
@@ -112,5 +113,7 @@ test("removing a witness from a VanIAC filing archives that witness's statement 
   render(f.dbPath, 1);
   assert.equal(topLevelMd(dir).includes("Witness Statement - J. Renwick.md"), false);
   // The dropped statement and the three stale ones share a type, a revision and a minute.
-  assert.equal(archived(dir).filter((name) => name.startsWith("Witness_statement @rev")).length, 4);
+  const statementsArchived = archived(dir).filter((name) => name.startsWith("Witness Statement - "));
+  assert.equal(statementsArchived.length, 4);
+  assert.ok(statementsArchived.some((name) => name.startsWith("Witness Statement - J. Renwick @rev")), "each archived under its own file's name");
 });

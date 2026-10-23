@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import { assertMatchesGolden, seededDbFixture, seedApplicationResponse, seedBcscDefaultJudgment } from "./fixtures/forms-render-seeds.mjs";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
@@ -372,8 +372,9 @@ test("given case_data_folder, the tool writes bcsc-form-substance\\affidavit-<id
   const f = seededDbFixture();
   try {
     await seedCleanAffidavits(f.dbPath);
-    const result = await callTool({}, "drafting_forms__emit_affidavit", { db_path: f.dbPath, filing_id: 1, document_id: 20, case_data_folder: f.dir });
-    const expected = join(realpathSync.native(f.dir), "bcsc-form-substance", "affidavit-20.md");
+    const caseData = dirname(f.dbPath);
+    const result = await callTool({}, "drafting_forms__emit_affidavit", { db_path: f.dbPath, filing_id: 1, document_id: 20, case_data_folder: caseData });
+    const expected = join(realpathSync.native(caseData), "bcsc-form-substance", "affidavit-20.md");
     assert.equal(result.written_path, expected);
     assert.equal(readFileSync(expected, "utf-8"), result.markdown);
 

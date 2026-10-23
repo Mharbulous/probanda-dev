@@ -13,7 +13,7 @@ import test from "node:test";
 import { runInNewContext } from "node:vm";
 
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
-const { sectionOf } = await import("./fixtures/forms-render-seeds.mjs");
+const { readBoardData } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { fetchLatestActivity, fetchProceeding, liveSeedClause, seedClosedColumns } = await import("../build/submission/forms/query.js");
@@ -51,7 +51,9 @@ function tempDir(t) {
 /** A current database holding THREADS, with 2, 3 and 5 closed. */
 async function current(t) {
   const dir = tempDir(t);
-  const dbPath = join(dir, "submission.sqlite");
+  const caseData = join(dir, "L8470 Larchmont", "0. CASE DATA");
+  mkdirSync(caseData, { recursive: true });
+  const dbPath = join(caseData, "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(dbPath, THREADS + CLOSE);
   return { dir, dbPath };
@@ -272,13 +274,16 @@ test("a filing's board carries them and points at the Loose Threads page, even w
   const draft = join(dir, "L8470 Larchmont", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   const result = submissionFormsRender(dbPath, 1, CLIENT, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-  const section = sectionOf(draft, 1);
+  const board = result.documents.find((d) => d.document_type === "Work_board");
+  assert.equal(board.path, join(draft, "Notice of Application", "Job Board.html"));
+  const page = readBoardData(board.path);
+  assert.equal(page.sections.length, 1);
+  const section = page.sections[0];
   assert.deepEqual(section.seeds, []);
   assert.deepEqual(section.discardedSeeds.map((s) => [s.id, s.discarded_at !== null]), [[1, true], [2, true], [3, false]]);
   assert.equal(Object.keys(section.discardedSeeds[0]).join(), "id,idea,discarded_at,suggested_at", "no filing id on the page");
 
   // A filing's threads are on its Loose Threads page: the board counts the open ones and points there.
-  const board = result.documents.find((d) => d.document_type === "Work_board");
   const drawn = threadsSection(drawBoard(readFileSync(board.path, "utf-8")));
   assert.equal(drawn.count, "0", "the count is the open threads'");
   assert.deepEqual(drawn.lines.map((l) => l[2]), ["To see them, ask a session to show the Loose Threads page."], "the pointer, and no thread drawn");

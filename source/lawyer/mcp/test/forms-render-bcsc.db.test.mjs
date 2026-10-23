@@ -389,8 +389,7 @@ test("Notice of Application PART 3 references a linked fact already in PART 2 by
     assert.doesNotMatch(underD, /<!-- fact_id|Fact four/, "expected no fact text printed under D");
 
     // 🧾 is still derived and recorded once, on B.
-    const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
-    const inventory = JSON.parse(readFileSync(join(dirname(advocacy.path), "render-manifest.json"), "utf-8")).inventory;
+    const inventory = JSON.parse(readFileSync(join(f.draft, "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8")).inventory;
     assert.deepEqual(
       inventory.filter((e) => e.marker === "🧾" && e.doc === "Notice_of_application").map((e) => `${e.table}:${e.id}`),
       ["submissions:2"]
@@ -452,8 +451,7 @@ test("Notice of Application PART 3 marks a contention with no linked proposition
     assert.match(lineOf(part3, 3), /^\d+\. Submission C needs no stated law\. \(no stated law needed, per counsel 2026-10-06\)/);
     assert.doesNotMatch(lineOf(part3, 3), /📚/);
 
-    const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
-    const inventory = JSON.parse(readFileSync(join(dirname(advocacy.path), "render-manifest.json"), "utf-8")).inventory;
+    const inventory = JSON.parse(readFileSync(join(f.draft, "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8")).inventory;
     assert.deepEqual(
       inventory.filter((e) => e.marker === "📚" && e.doc === "Notice_of_application").map((e) => `${e.slug}:${e.table}:${e.id}`),
       ["proposition:submissions:1", "proposition:submissions:2"]
@@ -514,8 +512,7 @@ test("an attached fact missing from PART 2 prints NOT PLACED on the mockup, and 
     const belowContention = part3.split("<!-- submission_id 1 -->")[1].split("\n").slice(1).join("\n");
     assert.doesNotMatch(belowContention, /<!-- fact_id|Fact one|Fact two/, "expected no fact text printed in PART 3");
     // Fact 1's 📌 is recorded once, by its PART 2 line, and the unplaced fact records nothing.
-    const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
-    const inventory = JSON.parse(readFileSync(join(dirname(advocacy.path), "render-manifest.json"), "utf-8")).inventory;
+    const inventory = JSON.parse(readFileSync(join(f.draft, "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8")).inventory;
     const noaEntries = inventory.filter((e) => e.doc === "Notice_of_application" && e.table === "facts");
     assert.deepEqual(noaEntries.filter((e) => e.marker === "📌").map((e) => e.id), [1]);
     assert.deepEqual(noaEntries.filter((e) => e.id === 2), []);
@@ -912,7 +909,7 @@ test("renders the consent-order requisition and consent order", async () => {
 });
 
 // ADR 0013 (deadline isolation): a mockup render withholds a Notice of Application's proposed hearing
-// from the markdown it returns; the canonical file and the presentation copy keep it. B.C. Reg. 105/2026's
+// from the markdown it returns; the mockup file keeps it. B.C. Reg. 105/2026's
 // Form 32 fixes no hearing date, so the fixed hearing date and time print nowhere on the notice.
 const WITHHELD = "[withheld from drafting context]";
 const PROPOSED = "The applicant proposes that the matter will be heard on";
@@ -929,13 +926,13 @@ async function seedNoticeOfApplication(dbPath, hearingSql) {
 
 const NOA_WITH_HEARING = `INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge, proposed_hearing) VALUES (1, '2026-09-01', '9:45 am', 45, 1, '2026-09-14 to 2026-09-18');`;
 
-test("render withholds a Notice of Application's proposed hearing from the response, never from the file or the copy", async () => {
+test("render withholds a Notice of Application's proposed hearing from the response, never from the file", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath, NOA_WITH_HEARING);
     const { draft } = draftFolder(f);
-    const leaf = join(draft, "NOA Notice of Application");
+    const leaf = join(draft, "Notice of Application");
 
     const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", ["Notice_of_application"], undefined, leaf);
 
@@ -945,8 +942,8 @@ test("render withholds a Notice of Application's proposed hearing from the respo
     assert.ok(!noa.markdown.includes("2026-09-01"), "nor the fixed hearing date");
     assert.ok(!noa.markdown.includes("9:45 am"), "nor the fixed hearing time");
     const file = readFileSync(noa.path, "utf-8");
-    assert.ok(file.includes(`${PROPOSED} 2026-09-14 to 2026-09-18.`), "the canonical mockup keeps the proposal");
-    assert.equal(readFileSync(noa.presentation_path, "utf-8"), file, "the presentation copy keeps the proposal");
+    assert.equal(noa.path, join(leaf, "Notice of Application.md"));
+    assert.ok(file.includes(`${PROPOSED} 2026-09-14 to 2026-09-18.`), "the mockup in the Writing's folder keeps the proposal");
     assert.equal(noa.markdown_chars, file.length, "measured before withholding");
   } finally {
     f.cleanup();

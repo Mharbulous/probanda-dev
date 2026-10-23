@@ -1,6 +1,6 @@
 """Cut each reviewed unit's cited source pages out of their PDFs for counsel's review.
 
-Usage: python extract_review_pages.py <manifest.json> <presentation folder>
+Usage: python extract_review_pages.py <manifest.json> <Writing folder>
 
 The manifest is a JSON list, one entry per unit in document order:
   {"unit": "Paragraph 12", "source": "<absolute PDF path or null>",
@@ -12,7 +12,7 @@ missing from the source. The index carries it, and it is the status of a unit wi
 page and no excerpt.
 
 Writes `review-NNN.pdf` per unit with a source and `review-pages.json` (the index) into
-`<presentation folder>/Review pages/`, and prints the index. These are disposable
+`<Writing folder>/Review pages/`, and prints the index. These are disposable
 projections: the script never touches the drafting database.
 """
 import json

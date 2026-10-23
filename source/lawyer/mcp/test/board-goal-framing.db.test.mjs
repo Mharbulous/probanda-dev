@@ -18,7 +18,7 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
 const { callTool } = await import("../build/dispatch.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
-const { sectionOf, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
+const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
 const NOW = "2026-10-22 09:00";
 const TOKEN = "tok-goal-framing";
@@ -33,7 +33,7 @@ async function fixture(t) {
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L9999 Test Matter");
-  const caseDataDir = join(base, "0. CASE DATA", "L9999 Test Matter");
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
   writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: caseDataDir, evidence_sql_path: "x.sql" }), "utf-8");
@@ -57,7 +57,7 @@ function goalViews(m) {
   const summary = board.board_summary;
   const { card } = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW);
   return {
-    page: sectionOf(m.draft, 1).goals.description,
+    page: readBoardData(join(m.draft, "Opening Submissions Package", "Job Board.html")).sections[0].goals.description,
     summary: summary.split("\n").find((l) => l.startsWith("Goal: ")),
     card: card.split("\n").slice(card.split("\n").findIndex((l) => l.startsWith("## Goal")), card.split("\n").findIndex((l) => l.startsWith("## Goal")) + 2),
   };

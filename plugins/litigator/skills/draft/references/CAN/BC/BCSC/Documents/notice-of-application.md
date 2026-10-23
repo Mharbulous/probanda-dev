@@ -2,7 +2,6 @@
 {
   "renderer": "bespoke",
   "needs_forum_parts": true,
-  "folder_code": "NOA",
   "title": "Notice of Application",
   "exhibit_numbering": "writing",
   "goal_criteria": ["primary-authority", "excerpts", "noting-up", "evidence", "counsel-review", "open-items", "orders-sought", "hearing-date"],

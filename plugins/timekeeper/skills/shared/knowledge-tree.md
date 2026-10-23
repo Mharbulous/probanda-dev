@@ -27,7 +27,7 @@ Each skill has its own tree. There is no shared tree.
 
 - Overlay roots sit under `<case_data_root>\_practice\knowledge\`.
 - The shipped layer of a skill is the root the runtime's shipped-root resolver serves for it: the installed plugin's `skill-source/` mirror when the skill is in it, otherwise the checkout.
-- `/publish`'s tree holds no layout contract, `folder_code`, output-folder code or file name, period, fee, binding or filing practice, per-form caption rule, or template binary. A per-venue `.dotx` template exists only beside a bespoke filler.
+- `/publish`'s tree holds no layout contract, output-folder code or file name, period, fee, binding or filing practice, per-form caption rule, or template binary. A per-venue `.dotx` template exists only beside a bespoke filler.
 - `/assemble`'s script contracts stay beside their subskill, outside the tree.
 - `/legal-research`'s tree records where law is published and is never a statement of law. A paid subscription is recorded in the overlay only.
 - `/localize` writes no `/assemble` file until that tree has a reader, and no `/legal-research` file. `legislation-fetcher` writes that tree's publisher maps.

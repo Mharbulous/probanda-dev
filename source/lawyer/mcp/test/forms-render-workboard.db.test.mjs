@@ -9,7 +9,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
-import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedApplicationResponse, assertMatchesGolden, goldenPath, seedTickets, seedProposalCases, boardDataOf, sectionOf, jobBoardPages, DATA_LINE_PREFIX, boardDataLines, readBoardData, ASHBOURNE, draftFolder } from "./fixtures/forms-render-seeds.mjs";
+import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedApplicationResponse, assertMatchesGolden, goldenPath, seedTickets, seedProposalCases, boardDataOf, DATA_LINE_PREFIX, boardDataLines, readBoardData, ASHBOURNE, draftFolder } from "./fixtures/forms-render-seeds.mjs";
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
 const { freshSubmissionDb, partiesSnapshotSql } = await import("./helpers/template-db.mjs");
@@ -82,6 +82,13 @@ test("bootstrap mints sess-<hex>, and sess-unattended-<hex> when asked for an un
   }
 });
 
+/** The one section of a Writing's own Job Board page, `<Writing folder>Job Board.html` (spec 2026-10-22). */
+function writingSection(folder) {
+  const page = readBoardData(join(folder, "Job Board.html"));
+  assert.equal(page.sections.length, 1, `the Job Board page in ${folder} holds one section`);
+  return page.sections[0];
+}
+
 function boardCode(html) {
   return html.split("\n").filter((line) => !line.startsWith(DATA_LINE_PREFIX)).join("\n");
 }
@@ -124,13 +131,13 @@ test("renders the Job Board's data", async () => {
     await seedTickets(f.dbPath);
     await seedProposalCases(f.dbPath);
 
-    const { draft } = draftFolder(f);
+    const { draft, leaf } = draftFolder(f);
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, "2026-09-20 10:00", undefined, draft);
     const board = result.documents.find((d) => d.document_type === "Work_board");
     const data = boardDataOf(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "2026-09-20 10:00");
     assert.equal(board.markdown, undefined, "the board returns no markup");
-    assert.equal(board.path, join(draft, "Job Board 1.html"));
-    assert.deepEqual(sectionOf(draft, 1), data, "the filing's page carries exactly the board data");
+    assert.equal(board.path, join(leaf, "Job Board.html"));
+    assert.deepEqual(writingSection(leaf), data, "the filing's page carries exactly the board data");
 
     // Ordered priority DESC, then id, within each category.
     assert.deepEqual(idsIn(data, "ready"), [2, 7, 8], "ticket 2 (blocker completed), the proceeding-scoped ticket, the charting ticket");
@@ -322,17 +329,17 @@ test("the Job Board's code is identical across matters once the data line is rem
     await freshSubmissionDb(b.dbPath);
     await seedBcscDefaultJudgment(b.dbPath);
 
-    const draftA = draftFolder(a).draft;
+    const { draft: draftA, leaf: leafA } = draftFolder(a);
     const draftB = draftFolder(b).draft;
     submissionFormsRender(a.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftA);
-    submissionFormsRender(b.dbPath, 1, { clientName: "Halloway", clientNo: "9002", matterNo: "L9002" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftB);
-    const pageA = join(draftA, "Job Board 1.html");
-    const pageB = join(draftB, jobBoardPages(draftB).find((name) => readBoardData(join(draftB, name)).sections[0].meta.filing_id === 1));
-    const dataA = sectionOf(draftA, 1);
+    const resultB = submissionFormsRender(b.dbPath, 1, { clientName: "Halloway", clientNo: "9002", matterNo: "L9002" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftB);
+    const pageA = join(leafA, "Job Board.html");
+    const pageB = resultB.documents.find((d) => d.document_type === "Work_board").path;
+    const dataA = writingSection(leafA);
     const codeA = boardCode(readFileSync(pageA, "utf-8"));
     assert.equal(codeA, boardCode(readFileSync(pageB, "utf-8")), "expected identical code across two matters");
 
-    const needles = ["Ashbourne", "Northridge", "L4801", "2417", "Halloway", "Vasey", "L9002", "S-901433", dataA.meta.filing, sectionOf(draftB, 1).meta.filing];
+    const needles = ["Ashbourne", "Northridge", "L4801", "2417", "Halloway", "Vasey", "L9002", "S-901433", dataA.meta.filing, writingSection(dirname(pageB)).meta.filing];
     for (const ticket of dataA.tickets) needles.push(ticket.title);
     for (const proposal of dataA.proposals) {
       needles.push(proposal.item, proposal.title);
@@ -418,7 +425,7 @@ test("render writes the board as one self-contained file, with no sibling suppor
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
 
     const board = result.documents.find((d) => d.document_type === "Work_board");
-    assert.equal(board.file_name, "Job Board 1.html");
+    assert.equal(board.file_name, "Job Board.html");
     assert.ok(!existsSync(join(dirname(board.path), "workboard-data.js")), "expected no data script beside the board");
     for (const doc of result.documents) assert.equal("assets" in doc, false, `the board has no support files to return (${doc.document_type})`);
 
@@ -438,8 +445,7 @@ test("render writes the board as one self-contained file, with no sibling suppor
     assert.ok(html.includes(`<style>\n${WORKBOARD_CSS}</style>`), "expected the stylesheet inline");
     assert.ok(html.includes(`<script>\n${WORKBOARD_JS}</script>`), "expected the behaviour script inline");
 
-    const mockupsRoot = join(dirname(f.dbPath), "mockups");
-    for (const name of ["workboard.css", "workboard.js"]) assert.ok(!existsSync(join(mockupsRoot, name)), `expected no ${name} in the mockups folder`);
+    for (const name of ["workboard.css", "workboard.js"]) assert.ok(!existsSync(join(draft, name)), `expected no ${name} in the draft folder`);
   } finally {
     f.cleanup();
   }
@@ -534,13 +540,13 @@ test("ticket text containing a closing script tag cannot break out of the board'
     const title = "Reply </script><script>window.PWNED = 1</script> <!-- on attornment";
     await submissionDataExecute(f.dbPath, `UPDATE tickets SET title = '${title}' WHERE id = 2;`);
 
-    const { draft } = draftFolder(f);
+    const { draft, leaf } = draftFolder(f);
     submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-    const html = readFileSync(join(draft, "Job Board 1.html"), "utf-8");
+    const html = readFileSync(join(leaf, "Job Board.html"), "utf-8");
 
     const [dataLine] = boardDataLines(html);
     assert.ok(!dataLine.includes("<"), "expected every < on the data line escaped");
-    assert.equal(ticketIn(sectionOf(draft, 1), 2).title, title, "the title survives the escape intact");
+    assert.equal(ticketIn(writingSection(leaf), 2).title, title, "the title survives the escape intact");
     assert.equal(boardCode(html), boardCode(renderWorkBoardHtml({ meta: {}, sections: [] })), "the code around the data line is unchanged");
   } finally {
     f.cleanup();
@@ -606,7 +612,7 @@ test("render discards a stamped Markdown Work Board from the presentation folder
 
     submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
     assert.equal(existsSync(stale), false, "expected the superseded Markdown board discarded from the presentation folder");
-    assert.equal(existsSync(join(dirname(leaf), "Job Board 1.html")), true, "the filing's Job Board page is written above it");
+    assert.equal(existsSync(join(leaf, "Job Board.html")), true, "the filing's Job Board page is written beside it, in its Writing folder");
 
     const own = "the practitioner's own notes\n";
     writeFileSync(stale, own, "utf-8");
@@ -618,8 +624,8 @@ test("render discards a stamped Markdown Work Board from the presentation folder
 });
 
 // Decision 3 (2026-09-15): renders delete the files the split board left behind -- fixed names only,
-// never inside archive/. Since #1365 no board is written in the presentation folder at all.
-test("render deletes leftover board support files and data scripts, leaving archive/ untouched, and writes no board in the presentation folder", async () => {
+// never inside archive/. Since spec 2026-10-22 the Writing's folder holds its own Job Board page and no other board.
+test("render deletes leftover board support files and data scripts, leaving archive/ untouched, and writes only the Writing's own page in its folder", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -628,14 +634,11 @@ test("render deletes leftover board support files and data scripts, leaving arch
 
     const first = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
     const baseDir = dirname(first.documents[0].path);
-    const mockupsRoot = dirname(baseDir);
     const archivedPair = join(baseDir, "archive", "Work_board @rev0 2026-09-14-10-00");
     mkdirSync(archivedPair, { recursive: true });
     const keep = [join(archivedPair, "Work Board.html"), join(archivedPair, "workboard-data.js"), join(baseDir, "archive", "workboard.css")];
     for (const file of keep) writeFileSync(file, "archived\n", "utf-8");
     const stale = [
-      join(mockupsRoot, "workboard.css"),
-      join(mockupsRoot, "workboard.js"),
       join(draft, "workboard.css"),
       join(draft, "workboard.js"),
       join(leaf, "workboard-data.js"),
@@ -647,7 +650,8 @@ test("render deletes leftover board support files and data scripts, leaving arch
     for (const file of stale) assert.ok(!existsSync(file), `expected ${file} deleted`);
     for (const file of keep) assert.equal(readFileSync(file, "utf-8"), "archived\n", `expected ${file} untouched`);
     assert.deepEqual(readdirSync(join(baseDir, "archive")).sort(), ["Work_board @rev0 2026-09-14-10-00", "workboard.css"], "nothing archived at an unchanged revision");
-    assert.equal(readdirSync(leaf).some((name) => name.endsWith(".html")), false, "the presentation folder holds no board");
+    assert.ok(readdirSync(leaf).includes("Job Board.html"), "the Writing's folder holds its own Job Board page");
+    assert.equal(readdirSync(leaf).some((name) => /^Work Board/.test(name)), false, "and no other board");
   } finally {
     f.cleanup();
   }
@@ -676,11 +680,16 @@ test("ticket writes do not move the mockup revision or archive the mockup", asyn
 // prepare-implementation-plan.md): the collector names each entry's document, records the glyphs a
 // criterion counts although they never generate, and derives the unrated-authority Proposal.
 
-/** The inventory the render saved beside its advocacy documents, as proposal-inventory.db.test.mjs
+/** Filing `filingId`'s render manifest, in its matter's `0. DRAFT\Drafting records\` (spec 2026-10-22 §9). */
+function manifestFileOf(dbPath, filingId) {
+  return join(dirname(dirname(dbPath)), "0. DRAFT", "Drafting records", `render-manifest-${filingId}.json`);
+}
+
+/** The inventory the render saved in the filing's render manifest, as proposal-inventory.db.test.mjs
  * reads it. */
 function inventoryOf(result) {
   const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
-  return JSON.parse(readFileSync(join(dirname(advocacy.path), "render-manifest.json"), "utf-8")).inventory;
+  return JSON.parse(readFileSync(join(dirname(dirname(advocacy.path)), "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8")).inventory;
 }
 
 /** seedBcscDefaultJudgment's proceeding as a Notice of Application with no hearing_details row, so
@@ -1040,7 +1049,8 @@ function allMetBut(overrides) {
  * case reaches a glyph no renderer prints yet (🧐), or a card whose every inventory criterion is met. */
 function boardWithInventory(dbPath, inventory) {
   const render = () => submissionFormsRender(dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, GOAL_NOW);
-  const manifestFile = join(dirname(render().documents[0].path), "render-manifest.json");
+  render();
+  const manifestFile = manifestFileOf(dbPath, 1);
   writeFileSync(manifestFile, JSON.stringify({ ...JSON.parse(readFileSync(manifestFile, "utf-8")), inventory }), "utf-8");
   render();
   return boardDataOf(dbPath, 1, ASHBOURNE, GOAL_NOW);
@@ -2963,7 +2973,8 @@ test("goal: a no-forum Writing with an unmet Excerpts shows its gate row reading
        VALUES (1, ${filing_id}, 'Deliver', 'Send this letter to its recipients and record it as sent.', 'work', 0, 'L0000|late objection', '2026-09-25T09:00');`
   );
   const withInventory = (inventory) => {
-    const manifest = join(dirname(renderGeneral(g, filing_id).documents[0].path), "render-manifest.json");
+    renderGeneral(g, filing_id);
+    const manifest = manifestFileOf(g.dbPath, filing_id);
     writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory }), "utf-8");
     return renderGeneral(g, filing_id).board;
   };
@@ -3018,7 +3029,8 @@ test("goal: a venue's letter reads the Pre-send gate, never the pre-filing gate,
        VALUES (2, ${filing_id}, 'Deliver', 'Send this letter to its recipients and record it as sent.', 'work', 0, 'L0000|late objection', '2026-09-25T09:00');`
   );
   const unquoted = { generating: false, marker: "👃", instance: "law", table: "statements_of_law", id: 1, item: "Example v. Authority, 2020 BCSC 1", doc: "General_writing" };
-  const manifest = join(dirname(renderGeneral(g, filing_id).documents[0].path), "render-manifest.json");
+  renderGeneral(g, filing_id);
+  const manifest = manifestFileOf(g.dbPath, filing_id);
   writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory: [unquoted] }), "utf-8");
 
   const before = renderGeneral(g, filing_id).board;

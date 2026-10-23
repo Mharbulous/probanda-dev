@@ -62,7 +62,7 @@ test("every shipped venue.md block and type file block validates", () => {
 });
 
 test("ingest_inputs outside the folder vocabulary, or empty, fails invalid_layout naming the file and field", () => {
-  const base = { renderer: "bespoke", needs_forum_parts: true, folder_code: "NOA", title: "Notice of Application", exhibit_numbering: "writing" };
+  const base = { renderer: "bespoke", needs_forum_parts: true, title: "Notice of Application", exhibit_numbering: "writing" };
   for (const [ingest_inputs, field] of [[["6. LAW*"], "ingest_inputs[0]"], [[], "ingest_inputs"]]) {
     assert.throws(
       () => validateTypeBlock({ ...base, ingest_inputs }, "x.md", { noVenue: false }),

@@ -24,7 +24,7 @@ const NEVER_DELIVERED = new Set(["Work_board"]);
 function renderGaps(dbPath) {
   const result = submissionFormsRender(dbPath, 1, ASHBOURNE);
   const venue = result.documents.filter((d) => !NEVER_DELIVERED.has(d.document_type));
-  const manifest = JSON.parse(readFileSync(join(dirname(venue[0].path), "render-manifest.json"), "utf-8"));
+  const manifest = JSON.parse(readFileSync(join(dirname(dirname(venue[0].path)), "Drafting records", "render-manifest-1.json"), "utf-8"));
   const entries = manifest.inventory.filter((e) => e.marker === "🧩");
   const printing = new Set(venue.filter((d) => readFileSync(d.path, "utf-8").includes("🧩")).map((d) => d.document_type));
   return { entries, printing };

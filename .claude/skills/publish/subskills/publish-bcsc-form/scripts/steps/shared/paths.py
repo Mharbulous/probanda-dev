@@ -63,9 +63,10 @@ def _draft_folder(matter_path: str | Path) -> Path:
 def writing_output_dir(matter_path: str | Path, writing_folder: str) -> Path:
     """Return the Writing's own folder under the draft folder, creating it if needed.
 
-    writing_folder is one path segment, e.g. "NOA Stay application", supplied by
-    the caller: the folder the Writing's mockup presentation copy was rendered
-    into, or a {CODE} {description} name for a document with no Writing.
+    writing_folder is one path segment, e.g. "Stay application", supplied by
+    the caller: the folder the Writing's mockups were rendered into, named
+    after the Writing, or a {CODE} {description} name for a document with no
+    Writing.
     """
     name = writing_folder or ""
     # ":" is refused with the separators because a Windows drive prefix

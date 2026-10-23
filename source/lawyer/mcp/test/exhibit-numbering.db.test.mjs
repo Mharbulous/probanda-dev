@@ -5,7 +5,7 @@
 // relative to the Written Arguments, and never lists in Part 4.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -63,7 +63,10 @@ async function seedNoticeOfApplicationWithWitnessStatementFirst(dbPath) {
 
 test("a witness statement ahead of an exhibit shifts no Ex. N on the Notice of Application and stays out of Part 4", async () => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-exhibit-numbering-"));
-  const dbPath = join(dir, "submission.sqlite");
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
   try {
     await freshSubmissionDb(dbPath);
     await seedNoticeOfApplicationWithWitnessStatementFirst(dbPath);

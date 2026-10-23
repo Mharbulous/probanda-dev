@@ -64,8 +64,8 @@ class RelocateTests(unittest.TestCase):
         con.commit()
         con.close()
         (self.old / "evidence.sql").write_text("-- Case Data evidence dump -- schema v9.0\n", encoding="utf-8")
-        (self.old / "mockups").mkdir()
-        (self.old / "mockups" / "draft.md").write_text("# Draft\n", encoding="utf-8")
+        (self.old / "housekeeping").mkdir()
+        (self.old / "housekeeping" / "run.md").write_text("# Run\n", encoding="utf-8")
         (self.old / "form-sessions").mkdir()
 
         pointer = json.dumps({
@@ -93,7 +93,7 @@ class RelocateTests(unittest.TestCase):
         self.assertEqual(Path(result["old_folder"]), self.old)
         paths = {Path(f["path"]) for f in result["files"]}
         self.assertIn(Path("privileged.sqlite"), paths)
-        self.assertIn(Path("mockups") / "draft.md", paths)
+        self.assertIn(Path("housekeeping") / "run.md", paths)
         self.assertEqual(self.pointer_bytes(), before)
         self.assertFalse(self.target.exists())
 

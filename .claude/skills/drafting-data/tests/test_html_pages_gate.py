@@ -16,17 +16,20 @@ STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOA
                    "Provable Facts - Job Board - proceeding 3.html",
                    # The pages Provable Facts split into (docs/ADRs/0011).
                    "Procedural History - Job Board 1.html", "Material Facts - Job Board 2.html",
-                   "Material Facts - Job Board - proceeding 3.html"]
+                   "Material Facts - Job Board - proceeding 3.html",
+                   # A Writing's own folder's pages (spec 2026-10-22).
+                   "Job Board.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Job Board 1 preview 1.html",
                  "Job Board - proceeding 2 preview 3.html", "Provable Facts - Job Board 1 preview 1.html",
                  "Raw Research - Job Board 4 preview 2.html", "Arguments - Job Board 1 preview 10.html",
                  "Loose Threads - Job Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
-                 "Procedural History - Job Board 1 preview 1.html", "Material Facts - Job Board 1 preview 2.html"]
+                 "Procedural History - Job Board 1 preview 1.html", "Material Facts - Job Board 1 preview 2.html",
+                 "Job Board preview 1.html", "Raw Research preview 2.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
-UNSTAGEABLE_NAMES = ["Job Board.html", "Job Board - SUB Opening.html", "Job Board 1-1.html",
+UNSTAGEABLE_NAMES = ["Job Board - SUB Opening.html", "Job Board 1-1.html",
                      "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html",
-                     "Work Board preview.html", "Job Board preview 1.html", "Job Board 1 preview 1 (2).html",
+                     "Work Board preview.html", "Job Board 1 preview 1 (2).html",
                      "Matter Board preview 1.html", "To Do List preview 1.html", "Job Board - filing 1 preview 1.html"]
 
 PAGE_PATHS = [
@@ -51,10 +54,15 @@ PAGE_PATHS = [
 ] + [DRAFT + "\\" + name for name in PREVIEW_NAMES] + [
     r"<data>\previews\Provable Facts - Job Board 1 preview 1.html",
     DRAFT + r"\Provable Facts - filing 1 preview 1.html",
+    DRAFT + r"\Notice of Hearing of Application\Job Board.html",
+    DRAFT + r"\Notice of Hearing of Application\Material Facts.html",
+    DRAFT + r"\Notice of Hearing of Application\Arguments preview 1.html",
 ]
 OTHER_PATHS = [
     DRAFT + r"\approval.html",
     DRAFT + r"\index.html",
+    DRAFT + r"\Notice of Hearing of Application\counter-arguments.html",
+    DRAFT + r"\Notice of Hearing of Application\Notice of Hearing of Application.md",
     DRAFT + r"\SUB <filing title>\Evidence Index.md",
     DRAFT + r"\SUB <filing title>\Work Board.md",
     DRAFT + r"\Job Board notes.txt",

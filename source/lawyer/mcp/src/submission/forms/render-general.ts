@@ -19,6 +19,7 @@ import { lawItem, recordLawStatementGlyphs } from "./proposal-inventory.js";
 import { fetchFilingLaw, fetchFilingRecipients, fetchProse, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
 import { reviewMarkerFor, type RenderContext } from "./render-vaniac-submissions.js";
+import { generalDocumentName } from "./writing-label.js";
 
 /** The item's mockup tag, or "" when it needs none. */
 export function tagOf(state: CitedState): string {
@@ -248,7 +249,7 @@ export function renderGeneral(
     matterDescription: ctx.matterDescription,
     venue: venueLabel,
     proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType: title,
+    documentType: generalDocumentName(title, ctx.filing.title),
     documentName: ctx.filing.title,
     documentDate: date === "" ? BLANK_UNDERLINE : date,
     revision: ctx.revision,

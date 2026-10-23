@@ -43,7 +43,7 @@ function dataLine(html, name) {
   return JSON.parse(line.slice(`window.${name} = `.length, -1));
 }
 
-// <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/0. CASE DATA/L9999 Test Matter/submission.sqlite, as matter-pages.db.test.mjs.
+// <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/L9999 Test Matter/0. CASE DATA/submission.sqlite, beside its 0. DRAFT, as matter-pages.db.test.mjs.
 function matterFixture(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-pages-preview-"));
   t.after(async () => {
@@ -51,10 +51,10 @@ function matterFixture(t) {
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L9999 Test Matter");
-  const caseDataDir = join(base, "0. CASE DATA", "L9999 Test Matter");
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
-  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: caseDataDir, evidence_sql_path: "x.sql" }), "utf-8");
+  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: "0. CASE DATA", evidence_sql_path: "x.sql" }), "utf-8");
   return { matterRoot, draft: join(matterRoot, "0. DRAFT"), dbPath: join(caseDataDir, "submission.sqlite") };
 }
 
@@ -87,16 +87,19 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   const threads = await preview({ page: "Loose Threads", filing_id: 1, overrides: cssOverride("Loose Threads") });
   const again = await preview({ page: "Job Board", filing_id: 1 });
   assert.deepEqual(Object.keys(strategy), ["path"], "the path only, never the HTML");
+  // The Writing's pages are in its own folder (spec 2026-10-22 §9), so its previews are written there.
+  const writing = join(m.draft, "Opening Submissions Package");
   assert.deepEqual(
     [strategy, jobBoard, threads, again].map((r) => [dirname(r.path).toLowerCase(), basename(r.path)]),
     [
       [m.draft.toLowerCase(), "Litigation Strategy preview 1.html"],
-      [m.draft.toLowerCase(), "Job Board 1 preview 1.html"],
-      [m.draft.toLowerCase(), "Loose Threads - Job Board 1 preview 1.html"],
-      [m.draft.toLowerCase(), "Job Board 1 preview 2.html"],
+      [writing.toLowerCase(), "Job Board preview 1.html"],
+      [writing.toLowerCase(), "Loose Threads preview 1.html"],
+      [writing.toLowerCase(), "Job Board preview 2.html"],
     ]
   );
-  assert.deepEqual(readdirSync(m.draft).sort(), [strategy, jobBoard, threads, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
+  assert.deepEqual(readdirSync(m.draft).sort(), [basename(strategy.path), basename(writing)].sort(), "no page and no other file was written");
+  assert.deepEqual(readdirSync(writing).sort(), [jobBoard, threads, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
 
   const html = (r) => readFileSync(r.path, "utf-8");
   assert.equal(dataLine(html(strategy), "MATTER_BOARD").meta.matter, "L9999", "the matter's own data, looked up as session entry looks it up");
@@ -110,7 +113,7 @@ test("a real-data preview of a matter page is the page as the write builds it, o
 
   // The page write's sweep moves old page files to TRASH; a preview is not one.
   await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  for (const r of [strategy, jobBoard, threads, again]) assert.ok(readdirSync(m.draft).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
+  for (const r of [strategy, jobBoard, threads, again]) assert.ok(readdirSync(dirname(r.path)).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
 
   await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for filing 9/);
 });

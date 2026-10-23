@@ -8,7 +8,6 @@ sources:
 {
   "renderer": "bespoke",
   "needs_forum_parts": true,
-  "folder_code": "SUB",
   "title": "Submissions package",
   "exhibit_numbering": "proceeding",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],

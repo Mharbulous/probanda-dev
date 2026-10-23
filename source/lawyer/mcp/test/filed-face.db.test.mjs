@@ -6,7 +6,7 @@
 // the transform wired against real rendered documents.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -257,7 +257,10 @@ test("never treats the missing-citation placeholder as a marker glyph -- the fil
 // bundle_outdated refusal shape in forms.ts.
 test("filed-mode render refuses when a deployed statement of law has no authorities.citation", async () => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-filed-face-citation-gate-"));
-  const dbPath = join(dir, "submission.sqlite");
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
   try {
     await freshSubmissionDb(dbPath);
     writePartiesOfRecord(dirname(dbPath), CLAIMANT_CASE_DATA);

@@ -84,16 +84,16 @@ test("a _NoVenue recipient's stock kind creates a Writing whose header names the
     const { filing_id } = await g.create({ proceeding_id: 1, tree: NO_VENUE_BC, kind: `unstructured-${recipient}`, recipient, title: UNDERTAKING });
     const [row] = g.query("SELECT kind, needs_forum_parts, layout_snapshot FROM filings WHERE id = ?", [filing_id]);
     const { layout } = JSON.parse(row.layout_snapshot);
-    assert.deepEqual([row.kind, row.needs_forum_parts, layout.folder_code, layout.title], [`unstructured-${recipient}`, 0, "UNS", "Unstructured"]);
+    assert.deepEqual([row.kind, row.needs_forum_parts, layout.folder_code, layout.title], [`unstructured-${recipient}`, 0, undefined, "Unstructured"]);
     assert.deepEqual(layout.parts.map((p) => p.source), ["slot:date", "addressee", "slot:body", "signature-block"]);
 
     const md = docOf(render(g, filing_id)).markdown;
-    for (const field of ["Document Type: Unstructured", `Document Name: ${UNDERTAKING}`]) assert.ok(headerOf(md).includes(field), `${field}\n${md}`);
+    for (const field of [`Document Type: ${UNDERTAKING}`, `Document Name: ${UNDERTAKING}`]) assert.ok(headerOf(md).includes(field), `${field}\n${md}`);
     assert.doesNotMatch(md, /^# /m, recipient);
   }
 });
 
-test("each venue's stock type is created on a proceeding in that venue, with folder code UNS and needs_forum_parts 1", async (t) => {
+test("each venue's stock type is created on a proceeding in that venue, with no folder code and needs_forum_parts 1", async (t) => {
   const g = await generalWritingFixture(t);
   const ids = [await unstructured(g)];
   const bcca = await g.create({ proceeding_id: 3, tree: { ...BCSC_TREE, venue: "BCCA" }, kind: "unstructured", title: "notice of abandonment" });
@@ -102,7 +102,7 @@ test("each venue's stock type is created on a proceeding in that venue, with fol
     const [row] = g.query("SELECT needs_forum_parts, layout_snapshot FROM filings WHERE id = ?", [id]);
     const { layout } = JSON.parse(row.layout_snapshot);
     assert.equal(row.needs_forum_parts, 1);
-    assert.deepEqual([layout.folder_code, layout.title], ["UNS", "Unstructured"]);
+    assert.deepEqual([layout.folder_code, layout.title], [undefined, "Unstructured"]);
     assert.deepEqual(layout.parts.map((p) => p.source), ["caption", "form-source", "slot:body", "signature-block"]);
   }
 });
@@ -113,7 +113,7 @@ test("the mockup names the type and the title in its header, prints the caption 
 
   const md = docOf(render(g, id)).markdown;
   const header = headerOf(md);
-  for (const field of ["Document Type: Unstructured", `Document Name: ${TITLE}`, "Document Date: ________", "Venue: BC Supreme Court"]) {
+  for (const field of [`Document Type: ${TITLE}`, `Document Name: ${TITLE}`, "Document Date: ________", "Venue: BC Supreme Court"]) {
     assert.ok(header.includes(field), `${field}\n${md}`);
   }
   assert.doesNotMatch(md, /^# /m, "no title heading: the type's title names the type, not the document");
@@ -218,7 +218,7 @@ test("publish_general writes the Word document through the BCSC generic template
   const id = await unstructured(g);
   await g.prose(id, "body", BODY);
   await linkForm(g, id);
-  const m = matterOver(t, realpathSync.native(g.f.scratch));
+  const m = matterOver(t, realpathSync.native(dirname(g.dbPath)));
   const name = "2026-10-08 NOD re discontinuance";
 
   const result = publishGeneral({ matter_root: m.root, db_path: g.dbPath, filing_id: id, output_name: name, format_path: "publish/CAN/BC/BCSC/format.md" });

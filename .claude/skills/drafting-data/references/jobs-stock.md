@@ -178,9 +178,9 @@ Two fixed-text jobs a Writing gains once every completion criterion printed abov
 
 **`Prepare the review pages`.** An AI job.
 
-- Intent: `Extract the source pages each paragraph of this Writing relies on into the presentation folder, ready for counsel's review.`
-- Step 1: `Extract the source pages into the presentation folder`
-- No scope rows: the pages are disposable projections in the presentation folder, and the job writes nothing to this database.
+- Intent: `Extract the source pages each paragraph of this Writing relies on into the Writing's folder, ready for counsel's review.`
+- Step 1: `Extract the source pages into the Writing's folder`
+- No scope rows: the pages are disposable projections in the Writing's folder, and the job writes nothing to this database.
 
 **`Counsel's review of <filings.title>`.** The title is `Counsel's review of ` followed by the Writing's own `filings.title`, copied character for character; a reader matches the job by that prefix. A retitle, one `execute` script while the Writing is drafting, sets `filings.title` and this job's suffix while it is queued or wip. The practitioner is its mover: its one step is the practitioner's, listed for them and never dispatched.
 
@@ -197,7 +197,7 @@ Creating this pair, like §14's gate job, is a fixed-text create and not outlini
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 7, 'Prepare the review pages', 'Extract the source pages each paragraph of this Writing relies on into the presentation folder, ready for counsel''s review.', 'work', 10, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 7, 'Prepare the review pages', 'Extract the source pages each paragraph of this Writing relies on into the Writing''s folder, ready for counsel''s review.', 'work', 10, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
   VALUES (1, 7, 'Counsel''s review of Notice of Application', 'Counsel reviews every paragraph of this Writing, in document order, against its source pages.', 'work', 10, 'L8212|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 DELETE FROM tickets WHERE filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
@@ -222,7 +222,7 @@ No row means the guard fired: take the live review job's number from `drafting_f
 **Call 3 writes the children**, on the recovered literal ids (here `9` and `10`):
 
 ```sql
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (9, 1, 'Extract the source pages into the presentation folder');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (9, 1, 'Extract the source pages into the Writing''s folder');
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (10, 1, 'Review every paragraph and resolve every discussion point');
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'statements_of_law', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'statements_of_fact', NULL);

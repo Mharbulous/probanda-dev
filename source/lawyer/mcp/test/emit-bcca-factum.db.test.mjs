@@ -4,7 +4,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +27,10 @@ const { FACTUM_CASE_DATA, FACTUM_SEED } = await import("./fixtures/bcca-factum-s
 
 async function seeded(extraSql = "") {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-emit-factum-"));
-  const dbPath = join(dir, "submission.sqlite");
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   writePartiesOfRecord(dirname(dbPath), FACTUM_CASE_DATA);
   await submissionDataExecute(dbPath, FACTUM_SEED + extraSql);

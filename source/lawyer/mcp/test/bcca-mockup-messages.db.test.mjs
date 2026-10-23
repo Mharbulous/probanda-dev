@@ -12,7 +12,7 @@
 // response's `NONE 🕵️` (Part 1, no documents) is not a message line: it strips to the true word NONE.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -27,7 +27,10 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-bcca-mockup-messages-"));
-  return { dbPath: join(dir, "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  return { dbPath: join(matter, "0. CASE DATA", "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 async function renderBoth(seed, documentType, caseData) {

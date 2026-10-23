@@ -254,7 +254,7 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
     assert.equal(result.documents.length, 6);
 
     // No disk write at all in filed mode -- not even the mockups root.
-    assert.equal(existsSync(join(dirname(f.dbPath), "mockups")), false, "expected render_mode 'filed' to write nothing to disk");
+    assert.deepEqual(readdirSync(f.draft), [], "expected render_mode 'filed' to write nothing to disk");
 
     assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Job Board genuinely absent from filed-mode output, not merely stripped");
 
@@ -316,7 +316,7 @@ test("a fabricated venue key fails hard on the caption, the Written Arguments an
     assert.throws(() => renderWrittenArguments(ctx, "form"), neverVaniac("venue_unknown", /Proceeding 1 has forum "CAN\/BC\/Nowhere", which has no Written Arguments settings/));
     assert.throws(() => renderWitnessStatements(ctx), neverVaniac("venue_missing", /Filing 1: forum "CAN\/BC\/Nowhere" has no venue\.md/));
     assert.throws(() => submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }), neverVaniac("type_file_missing", /CAN\/BC\/Nowhere/));
-    assert.equal(existsSync(join(dirname(f.dbPath), "mockups")), false, "a refused render writes nothing");
+    assert.deepEqual(readdirSync(f.draft), [], "a refused render writes nothing");
   } finally {
     f.cleanup();
   }
@@ -446,7 +446,7 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
     const render = (mode) => submissionFormsRender(f.dbPath, 1, { clientName: "Law", clientNo: "9999", matterNo: "L9999" }, mode);
     const contentionLine = (result, type) => result.documents.find((d) => d.document_type === type).markdown.split("\n").find((l) => l.includes("<!-- submission_id 1 -->"));
     const factualBasisEntries = (result) => {
-      const manifest = join(dirname(result.documents.find((d) => d.document_type === "Written_arguments").path), "render-manifest.json");
+      const manifest = join(f.draft, "Drafting records", "render-manifest-1.json");
       return JSON.parse(readFileSync(manifest, "utf-8")).inventory.filter((e) => e.marker === "🧾" && e.table === "submissions" && e.id === 1);
     };
 
@@ -550,7 +550,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     const contentionLine = (result, type, id) =>
       result.documents.find((d) => d.document_type === type).markdown.split("\n").find((l) => l.includes(`<!-- submission_id ${id} -->`));
     const propositionEntries = (result) => {
-      const manifest = join(dirname(result.documents.find((d) => d.document_type === "Written_arguments").path), "render-manifest.json");
+      const manifest = join(f.draft, "Drafting records", "render-manifest-1.json");
       return JSON.parse(readFileSync(manifest, "utf-8")).inventory
         .filter((e) => e.marker === "📚" && e.doc === "Written_arguments")
         .map((e) => `${e.slug}:${e.table}:${e.id}`);
@@ -717,7 +717,7 @@ test("bootstrap lists a seeded matter's filings and reports the schema version, 
     // this matter yet, so there is nothing on disk to list and render_state says exactly that.
     assert.deepEqual(result.filings[0].paths, [], "bootstrap must report only what is on disk");
     assert.equal(result.filings[0].render_state, "never");
-    assert.equal(existsSync(join(dirname(f.dbPath), "mockups")), false, "bootstrap must not write a mockup at all");
+    assert.deepEqual(readdirSync(f.draft), [], "bootstrap must not write a mockup at all");
 
     // Once the filing is rendered, bootstrap reports its files -- still without rendering them.
     const rendered = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
@@ -895,7 +895,7 @@ test("render archives the previous mockup only when db_meta.revision has moved",
     assert.ok(existsSync(archiveDir), "expected an archive directory after the revision moved");
     const archived = readdirSync(archiveDir);
     assert.ok(
-      archived.some((name) => name.startsWith("Written_arguments @rev1 ")),
+      archived.some((name) => name.startsWith("Written Arguments @rev1 ")),
       `expected an archived rev1 copy, found: ${archived.join(", ")}`
     );
   } finally {

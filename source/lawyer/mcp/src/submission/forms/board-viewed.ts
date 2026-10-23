@@ -10,12 +10,13 @@
 // A retitle that renames a document's file drops its key, so its tile reverts to never viewed. On a
 // merged board (docs/ADRs/0010) the survivor's row applies; the absorbed board's row is ignored.
 
-import { dirname, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 
 import { DataServerError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { mockupDir, readManifest } from "../render-manifest.js";
+import { draftDirOf, manifestDir, readManifest } from "../render-manifest.js";
 import { VIEW_PAGES, viewPageFile } from "../view-pages.js";
+import { writingFolders } from "../writing-folder.js";
 import { BoardIndex, boardKey, type BoardRef } from "./board-members.js";
 import { isJobOnlyBoard, type FilingRow } from "./query.js";
 
@@ -63,25 +64,18 @@ export function orderStrip<T extends { key: string }>(items: T[], viewed: string
   ];
 }
 
-/** One thumbnail on a board's strip: its board (a survivor), item key, file name and, for a Writing's
- * document, the mockup folder it is written to and its Writing's title. */
+/** One thumbnail on a board's strip: its board (a survivor), item key, file name and the folder the
+ * file is written to: a Writing's own folder, or the draft folder's top for a board with no Writing. */
 interface StripTarget {
   board: BoardRef;
   key: string;
   file: string;
-  dir?: string;
-  title?: string;
+  dir: string;
 }
 
-/** Whether `path` sits in the target's mockup folder, or in its Writing's presentation folder:
- * `<code> <title>`, perhaps dated, or `<code> <title> - <style of cause>` under an older title, the
- * title made safe for a path as forms.ts sanitizeForPath makes it. */
+/** Whether `path` sits in the target's folder. */
 function inFolderOf(t: StripTarget, path: string): boolean {
-  if (t.dir === undefined || t.title === undefined) return false;
-  if (resolve(t.dir).toLowerCase() === resolve(dirname(path)).toLowerCase()) return true;
-  const folder = (dirname(path).split(/[\\/]/).pop() as string).toLowerCase();
-  const title = t.title.replace(/[\\/:*?"<>|]/g, "_").trim().toLowerCase();
-  return folder.endsWith(` ${title}`) || folder.includes(` ${title} - `);
+  return resolve(t.dir).toLowerCase() === resolve(dirname(path)).toLowerCase();
 }
 
 /** Every thumbnail on every board's strip, as the pages draw them: each live Writing's documents from
@@ -97,10 +91,20 @@ function stripTargets(dbPath: string): StripTarget[] {
   for (const f of filings.filter((x) => !x.retired_on && !isJobOnlyBoard(x))) {
     const board = index.survivorOf({ filing_id: f.id, proceeding_id: f.proceeding_id });
     boards.set(boardKey(board), board);
-    const dir = mockupDir(dbPath, f.id);
-    for (const doc of readManifest(dir)?.files ?? []) targets.push({ board, key: docItemKey(f.id, doc.file_name), file: doc.file_name, dir, title: f.title });
+    const manifest = readManifest(dbPath, f.id);
+    if (manifest === null) continue;
+    const dir = manifestDir(dbPath, manifest);
+    for (const doc of manifest.files) targets.push({ board, key: docItemKey(f.id, doc.file_name), file: doc.file_name, dir });
   }
-  for (const board of boards.values()) for (const page of VIEW_PAGES) targets.push({ board, key: viewItemKey(page.name), file: viewPageFile(page, board) });
+  const draft = draftDirOf(dbPath);
+  const folders = writingFolders(dbPath, draft);
+  for (const board of boards.values()) {
+    const folder = board.filing_id === null ? undefined : folders.get(board.filing_id)?.name;
+    for (const page of VIEW_PAGES) {
+      const file = join(draft, viewPageFile(page, board, folder));
+      targets.push({ board, key: viewItemKey(page.name), file: basename(file), dir: dirname(file) });
+    }
+  }
   return targets;
 }
 
@@ -130,7 +134,7 @@ export async function submissionDataRecordViewed(args: RecordViewedArgs, env: No
     let hits = targets.filter((t) => t.file.toLowerCase() === name);
     if (hits.length > 1) hits = hits.filter((t) => inFolderOf(t, path));
     if (hits.length !== 1 && targets.some((t) => t.file.toLowerCase() === name)) {
-      throw new ValidationError(`${TOOL}: several Writings have a document named ${name} and its folder names none of them; pass the path in its Writing's mockup or presentation folder. Nothing was written.`, "ambiguous_path");
+      throw new ValidationError(`${TOOL}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
     }
     if (hits.length === 0) {
       throw new ValidationError(`${TOOL}: ${path} is no thumbnail on a Job Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");

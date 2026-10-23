@@ -25,6 +25,16 @@ const DOCUMENT_CODES: Record<string, { code: string; name: string }> = {
   Evidence_index: { code: "INDEX", name: "Evidence Index" },
 };
 
+/** The stored layout title every stock type carries (`unstructured.md`, `unstructured-<recipient>.md`):
+ * such a Writing's document name is its own title (spec 2026-10-22). */
+const STOCK_TITLE = "Unstructured";
+
+/** A general Writing's document name, for its file name, its strip label and its header's Document
+ * Type: its own title on a stock type, else its type's title. */
+export function generalDocumentName(layoutTitle: string, writingTitle: string): string {
+  return layoutTitle === STOCK_TITLE ? writingTitle : layoutTitle;
+}
+
 const ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];
 
 /** The document type's code and name, or the file name without its extension for both. */

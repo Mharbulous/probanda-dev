@@ -2,7 +2,6 @@
 {
   "renderer": "general",
   "needs_forum_parts": true,
-  "folder_code": "UNS",
   "title": "Unstructured",
   "exhibit_numbering": "writing",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],

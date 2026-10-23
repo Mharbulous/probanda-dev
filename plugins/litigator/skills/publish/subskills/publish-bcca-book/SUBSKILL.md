@@ -120,9 +120,8 @@ at binding.
 
 6. **Resolve the output folder.** The documents land in the filing's
    Writing folder under the draft folder -- the folder `/draft` renders the
-   filing's mockup presentation copy into, and whose name it passes (glob
-   `0. DRAFT*`, the filing's own code -- `AR` for a stay response, `FACTUM`
-   for a factum). `/draft` section 11 ("The presentation folder") holds the
+   filing's mockups into, named after the filing, and whose name it passes
+   (glob `0. DRAFT*`). `/draft` section 11 ("The Writing's folder") holds the
    mechanics; do not re-derive them independently here. Point `<output-dir>`
    at that same folder, never at the top of the draft folder.
 

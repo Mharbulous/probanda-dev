@@ -16,7 +16,7 @@ const { CARD_LANES, TODOS_NOT_READ, renderBoardSummary, submissionFormsBoardCard
 const { submissionDataAssignJob } = await import("../build/submission/forms/assign-job.js");
 const { submissionDataCompleteJob } = await import("../build/submission/forms/complete-job.js");
 const { submissionDataDeleteJob } = await import("../build/submission/forms/delete-job.js");
-const { mockupDir, writeManifest } = await import("../build/submission/render-manifest.js");
+const { writeManifest } = await import("../build/submission/render-manifest.js");
 const { boardDataOf } = await import("./fixtures/forms-render-seeds.mjs");
 
 const CLIENT = { clientName: "Ashgrove Holdings", clientNo: "7001", matterNo: "L7001" };
@@ -80,7 +80,10 @@ const proposalOf = (data) => data.proposals.find((p) => p.key === KEY);
 async function matter(t) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-deleted-job-"));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
-  const dbPath = join(dir, "submission.sqlite");
+  // The database in the matter's own 0. CASE DATA, beside its 0. DRAFT, which holds the render manifest.
+  mkdirSync(join(dir, "L7001 Ashgrove", "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(dir, "L7001 Ashgrove", "0. DRAFT"));
+  const dbPath = join(dir, "L7001 Ashgrove", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(
     dbPath,
@@ -103,10 +106,9 @@ async function matter(t) {
   );
   const stored = { layout: shippedBlock("Documents/notice-of-application.md"), venue: shippedBlock("venue.md"), passage_hashes: {} };
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
-  const mockups = mockupDir(dbPath, 1);
-  mkdirSync(mockups, { recursive: true });
-  writeManifest(mockups, {
+  writeManifest(dbPath, 1, {
     stamp: { filing_id: 1 },
+    folder: "Notice of Application",
     rendered_at: NOW,
     files: [],
     // A note-up Proposal derives once its statement has cleared the authority's other markers.

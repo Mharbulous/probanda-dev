@@ -25,7 +25,7 @@ const { callTool, createDispatchContext } = await import("../build/index.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const writes = await import("../build/tools/practice/writes.js");
 
-// The open_session fixture: <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/0. CASE DATA/L9999 Test Matter/submission.sqlite.
+// The open_session fixture: <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/L9999 Test Matter/0. CASE DATA/submission.sqlite, beside its 0. DRAFT.
 function matterFixture(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-complete-job-"));
   t.after(async () => {
@@ -33,10 +33,10 @@ function matterFixture(t) {
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L9999 Test Matter");
-  const caseDataDir = join(base, "0. CASE DATA", "L9999 Test Matter");
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
-  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: caseDataDir, evidence_sql_path: "x.sql" }), "utf-8");
+  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: "0. CASE DATA", evidence_sql_path: "x.sql" }), "utf-8");
   return { matterRoot, caseDataDir, draft: join(matterRoot, "0. DRAFT"), dbPath: join(caseDataDir, "submission.sqlite") };
 }
 
@@ -58,8 +58,8 @@ async function practiceContext(t) {
 }
 
 const TICKET = "INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created";
-/** Filing 1's Job Board page (ADR 0033, 2026-10-05 amendment). */
-const OPENING_PAGE = "Job Board 1.html";
+/** Filing 1's Job Board page, in its Writing's own folder (spec 2026-10-22 §9). */
+const OPENING_PAGE = join("Opening Submissions Package", "Job Board.html");
 const row = (dbPath, id) => submissionDataQuery(dbPath, "SELECT status, superseded_by, locked_by, completed_at FROM tickets WHERE id = ?", [id]).rows[0];
 
 /** A matter with one filing and job 1 queued, opened and assigned to the session's token. */
@@ -258,7 +258,8 @@ async function twoStateJob(t, version, extra = "") {
     await awaitBackgroundJobs();
     rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
-  const dbPath = join(dir, "submission.sqlite");
+  mkdirSync(join(dir, "0. CASE DATA"));
+  const dbPath = join(dir, "0. CASE DATA", "submission.sqlite");
   const draft = join(dir, "0. DRAFT");
   mkdirSync(draft);
   submissionDbAt(dbPath, version);

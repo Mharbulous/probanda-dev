@@ -72,6 +72,9 @@ const PART_KEYS = ["heading", "heading_numbering", "paragraph_numbering", "sourc
 /** Typography belongs to /publish's physical-format file (shared/declared-format.md), never to layout. */
 const TYPOGRAPHY = ["typeface", "font", "font_size", "line_spacing", "margins", "paper", "page_numbering", "header", "footer", "filing_stamp_reservation"];
 
+/** `folder_code` is optional and no shipped type declares it (spec 2026-10-22: every Writing's folder is
+ * named after the document). A type file an older build learned may still carry it, and a stored
+ * layout's copy is read only to find a Writing folder an older build named with it (writing-folder.ts). */
 const TYPE_FIELDS = [
   "renderer", "needs_forum_parts", "folder_code", "title", "exhibit_numbering",
   "parts", "goal_criteria", "companions", "page_limit", "letterhead", "signer", "ingest_inputs",
@@ -165,7 +168,7 @@ export function validateTypeBlock(raw: unknown, file: string, context: TypeConte
     if (TYPOGRAPHY.includes(key)) fail(file, key, "typography is not in the layout contract; it belongs to /publish's physical-format file");
     if (!TYPE_FIELDS.includes(key)) fail(file, key, `is not a layout field (allowed: ${TYPE_FIELDS.join(", ")})`);
   }
-  for (const key of ["renderer", "needs_forum_parts", "folder_code", "title", "exhibit_numbering"]) {
+  for (const key of ["renderer", "needs_forum_parts", "title", "exhibit_numbering"]) {
     if (!Object.hasOwn(block, key)) fail(file, key, "is required; a missing required field has no default");
   }
 
@@ -174,7 +177,7 @@ export function validateTypeBlock(raw: unknown, file: string, context: TypeConte
   const needsForum = scalar(block, "needs_forum_parts", file, false);
   if (typeof needsForum !== "boolean") fail(file, "needs_forum_parts", "must be true or false");
   if (needsForum && context.noVenue) fail(file, "needs_forum_parts", "a type declaring true cannot resolve under _NoVenue");
-  requireString(scalar(block, "folder_code", file, false), file, "folder_code");
+  if (Object.hasOwn(block, "folder_code")) requireString(scalar(block, "folder_code", file, false), file, "folder_code");
   requireString(scalar(block, "title", file, true), file, "title");
   requireEnum(scalar(block, "exhibit_numbering", file, true), ["proceeding", "writing"], file, "exhibit_numbering");
 

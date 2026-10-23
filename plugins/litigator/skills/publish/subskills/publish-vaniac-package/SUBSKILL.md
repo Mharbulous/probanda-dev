@@ -85,14 +85,13 @@ each file card names a host path it returns.
    If the practitioner's request names a filing of any other kind, say so and
    stop.
 
-3. **Resolve the mockup folder.** It is the presentation folder `/draft`
-   section 9 resolves ("Resolving the presentation folder"): the draft folder,
-   the `SUB` code and the filing folder. Read that section for the mechanics;
-   do not re-derive them here. It holds no date prefix.
+3. **Resolve the Writing's folder.** It is the folder `/draft` renders the
+   filing's mockups into, named after the filing (`/draft` section 11, "The
+   Writing's folder"). Do not re-derive it here.
 
    The data folder is `<matter-data folder>\vaniac-submissions\<filing folder>\`,
-   the mockup folder's name without any leading `YYYY-MM-DD ` and without
-   the `SUB` code. The matter-data folder
+   the Writing folder's name without any leading `YYYY-MM-DD ` (and without
+   the `SUB ` an older build's folder still carries). The matter-data folder
    is the one `probanda.json`'s `case_data_dir` names; in Cowork, make no
    access request: the host tool derives it. If the
    matter-data folder does not exist, stop: the matter is not initialized

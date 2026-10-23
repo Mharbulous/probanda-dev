@@ -3,9 +3,10 @@
 //
 // A render is a pure function of the stamp's inputs, so a filing whose stamp has
 // not moved since its last render never needs rendering again -- comparing stamps
-// replaces the work. The manifest lives beside the mockups it describes, one per
-// filing, and never inside a document body: the filed face is untouched by
-// memoisation.
+// replaces the work. The manifest is one file per filing in the matter's records folder
+// (`0. DRAFT\Drafting records\`, spec 2026-10-22 §9), never inside a document body: the
+// filed face is untouched by memoisation. It names the Writing's own folder in `0. DRAFT`,
+// where the mockups it lists are.
 //
 // The Job Board is deliberately absent from `files` (#581 §2). It is rebuilt from
 // SQLite on every render and bootstrap, it carries session lock tokens, and its
@@ -23,14 +24,24 @@
 // because it is never read.
 
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
-import { DataServerError } from "../errors.js";
+import { DataServerError, ValidationError } from "../errors.js";
+import { findDraftDir } from "../files/matter-root.js";
 import { isInventoryEntry, type InventoryEntry } from "./forms/proposal-inventory.js";
 import type { WritingLabel } from "./forms/writing-label.js";
 
-export const RENDER_MANIFEST_FILE = "render-manifest.json";
+/** The one folder in the matter's `0. DRAFT` that holds the drafting bookkeeping: each filing's render
+ * manifest and the pages' state file (spec 2026-10-22 §9). */
+export const RECORDS_FOLDER = "Drafting records";
+
+/** A matter's own case-data folder (ADR 0013), whose sibling 0. DRAFT holds its mockups. */
+const CASE_DATA_FOLDER = "0. CASE DATA";
+
+/** The manifest an older build wrote inside each `<case data>\mockups\Filing <id>\` folder; read only
+ * by the move into `0. DRAFT` (writing-folder.ts). */
+export const LEGACY_MANIFEST_FILE = "render-manifest.json";
 
 /**
  * Every input an advocacy document's bytes depend on (#581 §1).
@@ -72,6 +83,9 @@ export interface ManifestFile {
 
 export interface RenderManifest {
   stamp: RenderStamp;
+  /** The Writing's own folder, one name directly under the matter's `0. DRAFT`, which holds the files
+   * listed here. Named after the document when first rendered and kept on a retitle (writing-folder.ts). */
+  folder: string;
   /** The `Rendered:` minute the listed files carry. A stamp hit writes nothing, so each
    * mockup keeps its original minute and this is what `rendered_at` reports (#581 §3). */
   rendered_at: string;
@@ -93,14 +107,28 @@ export function sha256(text: string): string {
   return createHash("sha256").update(text, "utf-8").digest("hex");
 }
 
-export function manifestPath(baseDir: string): string {
-  return join(baseDir, RENDER_MANIFEST_FILE);
+/** A filing's manifest file in the matter's records folder. */
+export function manifestPath(dbPath: string, filingId: number): string {
+  return join(recordsDir(dbPath), `render-manifest-${filingId}.json`);
 }
 
-/** Missing, unreadable or malformed all read as "no manifest": the next render rewrites it.
- * A corrupt sidecar costs one render, never a wrong answer. */
-export function readManifest(baseDir: string): RenderManifest | null {
-  const file = manifestPath(baseDir);
+/** recordsDir, or undefined when the matter has no 0. DRAFT folder, so no Writing of it has a mockup or
+ * a manifest. Only a reader uses it; a writer calls recordsDir and is refused. */
+export function recordsDirIfAny(dbPath: string): string | undefined {
+  try {
+    return recordsDir(dbPath);
+  } catch (err) {
+    if (err instanceof DataServerError && err.code === "draft_dir_missing") return undefined;
+    throw err;
+  }
+}
+
+/** Whether `name` is one folder name, as a manifest's `folder` must be. */
+function isFolderName(name: unknown): name is string {
+  return typeof name === "string" && name.trim() !== "" && name !== "." && name !== ".." && !/[\\/]/.test(name);
+}
+
+function parseManifest(file: string): RenderManifest | null {
   if (!existsSync(file)) return null;
   try {
     const parsed = JSON.parse(readFileSync(file, "utf-8")) as RenderManifest;
@@ -120,8 +148,29 @@ export function readManifest(baseDir: string): RenderManifest | null {
   }
 }
 
-export function writeManifest(baseDir: string, manifest: RenderManifest): void {
-  writeFileSync(manifestPath(baseDir), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+/** Missing, unreadable or malformed all read as "no manifest": the next render rewrites it.
+ * A corrupt sidecar costs one render, never a wrong answer. So does one naming no folder, or
+ * another filing. A matter with no 0. DRAFT folder has no manifest: nothing of it was rendered. */
+export function readManifest(dbPath: string, filingId: number): RenderManifest | null {
+  const records = recordsDirIfAny(dbPath);
+  if (records === undefined) return null;
+  const parsed = parseManifest(join(records, `render-manifest-${filingId}.json`));
+  return parsed !== null && isFolderName(parsed.folder) && parsed.stamp.filing_id === filingId ? parsed : null;
+}
+
+/** An older build's manifest inside a case-data mockup folder, which names no folder. */
+export function readLegacyManifest(dir: string): Omit<RenderManifest, "folder"> | null {
+  return parseManifest(join(dir, LEGACY_MANIFEST_FILE));
+}
+
+export function writeManifest(dbPath: string, filingId: number, manifest: RenderManifest): void {
+  mkdirSync(recordsDir(dbPath), { recursive: true });
+  writeFileSync(manifestPath(dbPath, filingId), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+}
+
+/** The folder a manifest's files are in. */
+export function manifestDir(dbPath: string, manifest: RenderManifest): string {
+  return join(draftDirOf(dbPath), manifest.folder);
 }
 
 export function stampsEqual(a: RenderStamp, b: RenderStamp): boolean {
@@ -140,19 +189,22 @@ export function stampsEqual(a: RenderStamp, b: RenderStamp): boolean {
 
 /**
  * What bootstrap reports per filing, from the manifest, the party drift digest and file
- * existence only -- it opens no mockup file (#581 §5). The mockups tree is OneDrive-synced,
+ * existence only -- it opens no mockup file (#581 §5). The draft folder is cloud-synced,
  * where reading a placeholder costs a download on the critical path; existence is
  * answerable from the directory entry alone.
  */
-export function renderState(baseDir: string, stamp: RenderStamp, partiesDrift: string): RenderState {
-  const manifest = readManifest(baseDir);
+export function renderState(dbPath: string, filingId: number, stamp: RenderStamp, partiesDrift: string): RenderState {
+  const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp) || manifest.parties_drift !== partiesDrift) return "stale";
-  return manifest.files.every((f) => existsSync(join(baseDir, f.file_name))) ? "fresh" : "stale";
+  const dir = manifestDir(dbPath, manifest);
+  return manifest.files.every((f) => existsSync(join(dir, f.file_name))) ? "fresh" : "stale";
 }
 
 export interface FreshRender {
   manifest: RenderManifest;
+  /** The Writing's folder the files were read from. */
+  dir: string;
   /** file_name -> the bytes just verified, so a hit never reads the same file twice. */
   contents: Map<string, string>;
 }
@@ -167,12 +219,13 @@ export interface FreshRender {
  * archiving, because db_meta.revision has not moved and archiveIfStale only archives
  * when it has.
  */
-export function freshManifest(baseDir: string, stamp: RenderStamp, partiesDrift: string): FreshRender | null {
-  const manifest = readManifest(baseDir);
+export function freshManifest(dbPath: string, filingId: number, stamp: RenderStamp, partiesDrift: string): FreshRender | null {
+  const manifest = readManifest(dbPath, filingId);
   if (manifest === null || !stampsEqual(manifest.stamp, stamp) || manifest.parties_drift !== partiesDrift) return null;
+  const dir = manifestDir(dbPath, manifest);
   const contents = new Map<string, string>();
   for (const f of manifest.files) {
-    const file = join(baseDir, f.file_name);
+    const file = join(dir, f.file_name);
     if (!existsSync(file)) return null;
     let text: string;
     try {
@@ -183,77 +236,57 @@ export function freshManifest(baseDir: string, stamp: RenderStamp, partiesDrift:
     if (sha256(text) !== f.sha256) return null;
     contents.set(f.file_name, text);
   }
-  return { manifest, contents };
+  return { manifest, dir, contents };
 }
 
-/** The folder beside the database that holds every filing's canonical mockup folder. */
-export function mockupsRoot(dbPath: string): string {
-  return join(dirname(dbPath), "mockups");
-}
-
-function filingFolderName(filingId: number): string {
-  return `Filing ${filingId}`;
-}
-
-/**
- * The title-keyed folders an earlier build wrote (#1317), by the filing id their manifest names.
- * Where two claim one filing (rendered under one title, retitled, rendered again), the later
- * render's wins: the higher revision, then the later `rendered_at`, then the first in directory
- * order. A folder with no readable manifest, or that is already the id folder of the filing its
- * manifest names, is not a candidate.
- */
-export function legacyMockupDirs(dbPath: string): Map<number, string> {
-  const root = mockupsRoot(dbPath);
-  const found = new Map<number, { dir: string; stamp: RenderStamp; renderedAt: string }>();
-  if (!existsSync(root)) return new Map();
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const dir = join(root, entry.name);
-    const manifest = readManifest(dir);
-    if (manifest === null || entry.name === filingFolderName(manifest.stamp.filing_id)) continue;
-    const held = found.get(manifest.stamp.filing_id);
-    const later =
-      held === undefined ||
-      manifest.stamp.revision > held.stamp.revision ||
-      (manifest.stamp.revision === held.stamp.revision && manifest.rendered_at > held.renderedAt);
-    if (later) found.set(manifest.stamp.filing_id, { dir, stamp: manifest.stamp, renderedAt: manifest.rendered_at });
+/** #585 (#583 §4, ADR 0012's confinement extended): bootstrap's draft_dir (and render's, #689) must be the matter's
+ * `0. DRAFT*` folder itself, existing, and outside any privileged or disclosed tree. Checked on the
+ * real path, so a junction named `0. DRAFT` that leads elsewhere is refused. */
+export function resolveDraftDir(draftDir: string, param = "drafting_forms__bootstrap.draft_dir"): string {
+  const refuse = (why: string) => new ValidationError(`${param} ${draftDir}: ${why}`);
+  if (!isAbsolute(draftDir)) throw refuse("must be an absolute path");
+  const dir = resolve(draftDir);
+  let real: string;
+  try {
+    real = realpathSync.native(dir);
+  } catch {
+    throw refuse("does not exist");
   }
-  return new Map([...found].map(([id, { dir }]) => [id, dir]));
+  if (!/^0\. DRAFT/i.test(basename(real))) throw refuse("must be the matter's 0. DRAFT folder");
+  if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
+  return dir;
 }
 
 /**
- * The one lookup of a filing's canonical mockup folder (#1317), read-only: `mockups/Filing <id>`
- * when it exists, else the legacy title-keyed folder whose manifest names this filing, else
- * `mockups/Filing <id>`, which the filing's first render creates. Keyed by id, so a retitle never
- * moves the folder and no filing inherits another's by sharing a title. `legacy` is called only
- * when the id folder is missing, so bootstrap can scan once for every filing it lists.
+ * The matter's `0. DRAFT` folder for a drafting database (spec 2026-10-22 §9): the one `0. DRAFT*`
+ * folder of the matter folder whose `0. CASE DATA` holds the database (ADR 0013), confined as
+ * resolveDraftDir confines it. Every Writing's mockups, its Job Board page and the records folder
+ * are in it, so a database with none is refused, never given a folder elsewhere.
  */
-export function mockupDir(dbPath: string, filingId: number, legacy: () => Map<number, string> = () => legacyMockupDirs(dbPath)): string {
-  const own = join(mockupsRoot(dbPath), filingFolderName(filingId));
-  return existsSync(own) ? own : (legacy().get(filingId) ?? own);
-}
-
-/**
- * mockupDir for a mockup render, the folder's only writer. A legacy folder is renamed to
- * `Filing <id>` first, once. A failed rename (the sync client holding the folder) fails the render
- * rather than writing into the legacy folder, which would split the filing across two folders. A
- * `Filing <id>` folder whose manifest names another filing (an older database backup restored, so
- * the id was issued again) is refused, never written or archived into.
- */
-export function mockupDirForRender(dbPath: string, filingId: number): string {
-  const own = join(mockupsRoot(dbPath), filingFolderName(filingId));
-  const dir = mockupDir(dbPath, filingId);
-  if (dir !== own) {
+export function draftDirOf(dbPath: string): string {
+  const caseData = dirname(resolve(dbPath));
+  const matter = dirname(caseData);
+  let found: string | undefined;
+  if (basename(caseData).toLowerCase() === CASE_DATA_FOLDER.toLowerCase()) {
     try {
-      renameSync(dir, own);
+      found = findDraftDir(matter);
     } catch (err) {
-      const code = (err as NodeJS.ErrnoException).code ?? String(err);
-      throw new DataServerError(`could not rename filing ${filingId}'s mockup folder ${dir} to ${own} (${code}); render again once the sync client releases it`);
+      if (err instanceof DataServerError) throw err;
+      found = undefined;
     }
   }
-  const owner = readManifest(own)?.stamp.filing_id;
-  if (owner !== undefined && owner !== filingId) {
-    throw new DataServerError(`${own}'s render manifest names filing ${owner}, not filing ${filingId}; move that folder aside before rendering filing ${filingId}`);
+  if (found === undefined) {
+    throw new DataServerError(
+      `no 0. DRAFT folder beside ${caseData}. A Writing's mockups are written in its matter's 0. DRAFT folder, found ` +
+        "beside the matter's own 0. CASE DATA folder that holds the database. Create the matter's 0. DRAFT folder; a matter " +
+        "whose case data is still under the firm's 0. CASE DATA folder is moved into the matter folder first with /matter-data relocate.",
+      "draft_dir_missing"
+    );
   }
-  return own;
+  return resolveDraftDir(found, `the 0. DRAFT folder of ${matter}`);
+}
+
+/** The matter's records folder, which holds every render manifest and the pages' state file. */
+export function recordsDir(dbPath: string): string {
+  return join(draftDirOf(dbPath), RECORDS_FOLDER);
 }

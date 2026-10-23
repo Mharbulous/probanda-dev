@@ -15,7 +15,7 @@
 // The housekeeping approval page's template is served here too; its preview is housekeeping__preview
 // in file-manager's files server (src/housekeeping/preview.ts).
 
-import { basename, dirname } from "node:path";
+import { basename, dirname, relative } from "node:path";
 
 import type { TemplateSet } from "../compose-template.js";
 import { ValidationError } from "../errors.js";
@@ -153,13 +153,13 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       : page === "Job Board"
         ? built.paths.job_board_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
         : built.paths.view_page_paths.find((v) => v.name === page && v.filing_id === ids.filing_id)?.path;
-  const fileName = target === undefined ? undefined : basename(target);
-  const html = built.pages.find((p) => p.name === fileName)?.html;
-  if (fileName === undefined || html === undefined) {
+  const pageFile = target === undefined ? undefined : relative(draftDir, target);
+  const html = built.pages.find((p) => p.name === pageFile)?.html;
+  if (target === undefined || html === undefined) {
     const which = ids.filing_id !== undefined ? `filing ${ids.filing_id}` : `proceeding ${ids.proceeding_id}`;
     throw new ValidationError(`this matter has no ${page} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(draftDir, stem(fileName), html, false) };
+  return { path: writePreview(dirname(target), stem(basename(target)), html, false) };
 }
 
 /** The Loose Threads page with its buttons cut off from the listener: port 0, no token (#138). */

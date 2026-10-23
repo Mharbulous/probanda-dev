@@ -21,7 +21,8 @@ const CLIENT = { clientName: "Larchmont", clientNo: "1", matterNo: "L8470" };
 // one filing. Proceeding 3: forum chosen, no filing yet.
 async function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-pre-filing-"));
-  const dbPath = join(dir, "submission.sqlite");
+  mkdirSync(join(dir, "L8470 Matter", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L8470 Matter", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(
     dbPath,
@@ -95,7 +96,7 @@ test("a proceeding's Job Board page carries its tickets and seeds, and no filing
     assert.deepEqual(
       result.job_board_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]),
       [
-        [1, 2, join(f.draft, "Job Board 1.html")],
+        [1, 2, join(f.draft, "Consent Order Requisition", "Job Board.html")],
         [null, 1, join(f.draft, "Job Board - proceeding 1.html")],
         [null, 3, join(f.draft, "Job Board - proceeding 3.html")],
       ],
@@ -103,8 +104,13 @@ test("a proceeding's Job Board page carries its tickets and seeds, and no filing
     );
     assert.deepEqual(
       readdirSync(f.draft),
-      ["Arguments - Job Board 1.html", "Job Board - proceeding 1.html", "Job Board - proceeding 3.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html"],
-      "no Pre-filing proceeding folder, only the matter's pages"
+      ["Consent Order Requisition", "Drafting records", "Job Board - proceeding 1.html", "Job Board - proceeding 3.html", "Litigation Strategy.html"],
+      "no Pre-filing proceeding folder, only the matter's pages, the filing's Writing folder and the records folder"
+    );
+    assert.deepEqual(
+      readdirSync(join(f.draft, "Consent Order Requisition")),
+      ["Arguments.html", "Job Board.html", "Loose Threads.html", "Material Facts.html", "Procedural History.html", "Raw Research.html"],
+      "the filing's pages are in its Writing's folder"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");
 

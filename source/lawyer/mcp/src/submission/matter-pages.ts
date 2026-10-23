@@ -1,13 +1,15 @@
-// The matter's pages (#1365, ADR 0033's 2026-10-05 amendment), at the top of its 0. DRAFT folder:
-// one Litigation Strategy.html, and one Job Board page per board: a board's own section, or, on a
-// merged board (docs/ADRs/0010), every section merged into it pooled into one board (combined-board.ts). Each page is named by its database id, which a retitle never changes: a live Writing's is
-// `Job Board <id>.html`, a pre-filing proceeding's `Job Board - proceeding <id>.html`. Every
+// The matter's pages (#1365, ADR 0033's 2026-10-05 amendment) in its 0. DRAFT folder: one Litigation
+// Strategy.html at the top, and one Job Board page per board: a board's own section, or, on a
+// merged board (docs/ADRs/0010), every section merged into it pooled into one board (combined-board.ts).
+// A board whose survivor is a Writing has its page in that Writing's own folder as `Job Board.html`
+// (spec 2026-10-22 §9; writing-folder.ts), its view pages beside it. A pre-filing proceeding's page,
+// and a Job Board with no Writing's, is at the top, named by its id: `Job Board - proceeding <id>.html`,
+// `Job Board <id>.html`. Every
 // page is a human interface generated from the databases, and no session reads one: a session reads a
 // section through a render's board_summary.
 //
 // The pages follow the Litigation Strategy's order of live filings, then the pre-filing proceedings. A retired
-// filing has no page (D1), and nothing is written beside the database or in a presentation folder on
-// the board's account. A proceeding-scoped job is on every filing's page in its proceeding.
+// filing has no page (D1), and nothing is written beside the database on the board's account. A proceeding-scoped job is on every filing's page in its proceeding.
 //
 // Every page write is a rename-replace through writeStatusFile, so no reader sees half a page and no
 // in-place write is left for a sync client to fork into a numbered copy. A target that does not
@@ -17,7 +19,7 @@
 // Litigation Strategy page's name before 2026-10-08), the `... - filing <id>.html` names used
 // before 2026-10-09 -- are moved into the matter's TRASH (D3), never deleted.
 //
-// board_changed and board_moves compare against matter-pages-state.json beside the mockups, never
+// board_changed and board_moves compare against matter-pages-state.json in the records folder, never
 // against a page: the last section a foreground render reported for each filing or proceeding, kept
 // also per session so a session compares against its own last report, and the last to-dos read. The
 // background job cannot read practice data, so it is handed the to-dos from that file and the matter's dates from the closure it was started with. The dates are never
@@ -30,7 +32,7 @@
 // beside them, under the same marker guard, atomic write and TRASH sweep.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 import { buildStampStatus } from "../build-stamp.js";
 import type { ComposedTemplate } from "../compose-template.js";
@@ -87,9 +89,10 @@ import { renderWorkBoardHtml } from "./forms/workboard-shell.js";
 import { stepGlyphText, stepView } from "./forms/step-state.js";
 import { deadlineCriteria, type MatterDates, type PageDates, pageDates } from "./matter-dates.js";
 import type { MatterTodos } from "./matter-todos.js";
-import { mockupDir, mockupsRoot, readManifest, type RenderManifest, sha256 } from "./render-manifest.js";
+import { readManifest, recordsDir, type RenderManifest, sha256 } from "./render-manifest.js";
 import { writeStatusFile } from "./render-job.js";
 import { isViewPageFile, renderViewPageHtml, VIEW_PAGE_MARKER, VIEW_PAGES, viewPageFile, type ViewPage, type ViewPagePath } from "./view-pages.js";
+import { writingFolders, type WritingFolder } from "./writing-folder.js";
 
 /** On every Job Board page's root element: the overwrite guard recognises this server's own page by it. */
 const JOB_BOARD_MARKER = "data-workboard-shell";
@@ -117,10 +120,10 @@ export interface JobBoardPage {
 }
 
 export interface PagesWritten {
-  /** Every Job Board page this write put at the draft folder's top, in page order. */
+  /** Every Job Board page this write put in the draft folder, in page order. */
   job_board_paths: JobBoardPage[];
   matter_board_path: string;
-  /** Every view page this write put at the draft folder's top (ADR 0033, 2026-10-07 amendment): each
+  /** Every view page this write put in the draft folder (ADR 0033, 2026-10-07 amendment): each
    * live filing's, in page order, in registry order within a filing. */
   view_page_paths: ViewPagePath[];
   /** Old page files this generator wrote, moved into the matter's TRASH by this write (D3). */
@@ -144,7 +147,7 @@ export function filingBoardData(
   now: string,
   revision: number,
   dates: MatterDates = DATES_NOT_READ,
-  manifest: RenderManifest | null = isJobOnlyBoard(filing) ? null : readManifest(mockupDir(dbPath, filing.id))
+  manifest: RenderManifest | null = isJobOnlyBoard(filing) ? null : readManifest(dbPath, filing.id)
 ): WorkBoardData {
   const ctx = buildContext(dbPath, proceeding, filing, [], revision, client, undefined, now);
   return buildWorkBoardData({ ...ctx, inventory: manifest?.inventory ?? null }, deadlineCriteria(dates, filing.id));
@@ -176,21 +179,38 @@ interface PageGroup {
   members: Member[];
 }
 
-/** A board's page name by its survivor's id. */
-function boardFile(board: BoardRef): string {
+/** A Writing's Job Board page, in the Writing's own folder (spec 2026-10-22 §9). */
+export const WRITING_JOB_BOARD_FILE = "Job Board.html";
+
+/** The draft folder's subfolder a board's pages go in: its survivor Writing's own folder, or none for
+ * a board whose survivor is a pre-filing proceeding or a Job Board with no Writing. */
+function boardFolder(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>): string | undefined {
+  return board.filing_id === null ? undefined : folders.get(board.filing_id)?.name;
+}
+
+/** A board's page, relative to the draft folder: `Job Board.html` in its survivor Writing's folder,
+ * else at the top, named by its survivor's id. */
+function boardFile(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>): string {
+  const folder = boardFolder(board, folders);
+  if (folder !== undefined) return join(folder, WRITING_JOB_BOARD_FILE);
   return board.filing_id === null ? `Job Board - proceeding ${board.proceeding_id}.html` : `Job Board ${board.filing_id}.html`;
 }
 
 /** The live filings, then the pre-filing proceedings, grouped by the board each is drawn on: one
  * page per survivor, in the order its first section comes, the survivor's own section first. A
  * survivor that is retired keeps its page while any section on it is live. */
-function pageGroups(index: BoardIndex, live: { proceeding: ProceedingRow; filing: FilingRow }[], preFiling: ProceedingRow[]): PageGroup[] {
+function pageGroups(
+  index: BoardIndex,
+  live: { proceeding: ProceedingRow; filing: FilingRow }[],
+  preFiling: ProceedingRow[],
+  folders: ReadonlyMap<number, WritingFolder>
+): PageGroup[] {
   const groups = new Map<string, PageGroup>();
   for (const m of [...live.map((l): Member => l), ...preFiling.map((p): Member => ({ proceeding: p, filing: null }))]) {
     const ref = { filing_id: m.filing?.id ?? null, proceeding_id: m.proceeding.id };
     const board = index.survivorOf(ref);
     const key = boardKey(board);
-    const group = groups.get(key) ?? { board, file: boardFile(board), members: [] };
+    const group = groups.get(key) ?? { board, file: boardFile(board, folders), members: [] };
     if (sameBoard(ref, board)) group.members.unshift(m);
     else group.members.push(m);
     groups.set(key, group);
@@ -223,7 +243,7 @@ export function boardSectionOf(dbPath: string, own: WorkBoardData, client: Clien
   const index = new BoardIndex(dbPath);
   if (!index.absorbed(ref) && index.membersOf(index.survivorOf(ref)).length === 0) return own;
   const { live, preFiling } = liveMembers(dbPath);
-  const group = pageGroups(index, live, preFiling).find((g) => g.members.some((m) => sameBoard(memberRef(m), ref)));
+  const group = pageGroups(index, live, preFiling, new Map()).find((g) => g.members.some((m) => sameBoard(memberRef(m), ref)));
   if (group === undefined || group.members.length < 2) return own;
   const sections = group.members.map((m) => {
     if (sameBoard(memberRef(m), ref)) return own;
@@ -266,21 +286,22 @@ interface ViewTarget {
 }
 
 /** Every registered view page for each board holding a Writing, in page order (ADR 0033, 2026-10-07
- * amendment; ADR 0010): one set per board, named by its survivor's id. */
-function viewTargets(groups: PageGroup[]): ViewTarget[] {
+ * amendment; ADR 0010): one set per board, beside its Job Board page. */
+function viewTargets(groups: PageGroup[], folders: ReadonlyMap<number, WritingFolder>): ViewTarget[] {
   return groups
     .map((group) => ({ group, writings: writingsOf(group) }))
     .filter(({ writings }) => writings.length > 0)
-    .flatMap(({ group, writings }) => VIEW_PAGES.map((page) => ({ page, group, writings, file: viewPageFile(page, group.board) })));
+    .flatMap(({ group, writings }) => VIEW_PAGES.map((page) => ({ page, group, writings, file: viewPageFile(page, group.board, boardFolder(group.board, folders)) })));
 }
 
 /** Refuses a page target that exists without its page's marker, every page's name read from the
- * database alone: what a render checks before it writes its presentation copies, ahead of the page
+ * database alone: what a render checks before it lists its documents, ahead of the page
  * write itself. */
 export function refuseForeignMatterPages(draftDir: string, dbPath: string): void {
   const { live, preFiling } = liveMembers(dbPath);
-  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling);
-  refuseForeignPages(draftDir, guardTargets(groups.map((g) => g.file), viewTargets(groups)));
+  const folders = writingFolders(dbPath, draftDir);
+  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling, folders);
+  refuseForeignPages(draftDir, guardTargets(groups.map((g) => g.file), viewTargets(groups, folders)));
 }
 
 /** The page written for the section with this filing id, or with this proceeding id when the filing
@@ -290,7 +311,7 @@ export function pagePathFor(pages: PagesWritten, section: { filing_id: number | 
   return pages.job_board_paths.find((p) => (filing_id !== null ? p.filing_id === filing_id : p.filing_id === null && p.proceeding_id === proceeding_id))?.path;
 }
 
-/** A page file at the draft folder's top, with the marker the overwrite guard checks it by and the page's name. */
+/** A page file, relative to the draft folder, with the marker the overwrite guard checks it by and the page's name. */
 interface GuardTarget {
   name: string;
   marker: string;
@@ -317,6 +338,7 @@ function refuseForeignPages(draftDir: string, targets: GuardTarget[]): void {
 }
 
 function writePage(file: string, html: string): void {
+  mkdirSync(dirname(file), { recursive: true });
   const code = writeStatusFile(file, html);
   if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
 }
@@ -343,23 +365,23 @@ function generatorWrote(file: string): boolean {
 /**
  * D3: moves every old page file this generator wrote in `draftDir` and its immediate subfolders
  * (never deeper, never an archive folder) into the matter's TRASH, through file_ops__trash's own
- * mover: an older page name, and a registered view page no live filing has now. The current targets
- * at the folder's top, `names` and the Litigation Strategy, stay. A file without a
+ * mover: an older page name, and a registered view page no live filing has now. The current targets,
+ * `names` (relative to `draftDir`) and the Litigation Strategy, stay. A file without a
  * marker is the practitioner's and is left. A file that cannot be moved -- locked, gone, or outside a
  * matter with a probanda.json -- is reported.
  */
 function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "moved_to_trash" | "trash_skipped"> {
   const moved: { from: string; to: string }[] = [];
   const skipped: { path: string; error: string }[] = [];
-  const targets = [...names, MATTER_BOARD_FILE].map((name) => name.toLowerCase());
+  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join(name).toLowerCase()));
   const subfolders = readdirSync(draftDir, { withFileTypes: true })
     .filter((e) => e.isDirectory() && e.name.toLowerCase() !== "archive")
     .map((e) => join(draftDir, e.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (!entry.isFile() || PREVIEW_FILE.test(entry.name) || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
-      if (dir === draftDir && targets.includes(entry.name.toLowerCase())) continue;
       const file = join(dir, entry.name);
+      if (targets.has(relative(draftDir, file).toLowerCase())) continue;
       try {
         if (!generatorWrote(file)) continue;
         const result = fileOpsTrash(file) as TrashResult;
@@ -373,7 +395,7 @@ function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWritten, "m
   return { ...(moved.length > 0 ? { moved_to_trash: moved } : {}), ...(skipped.length > 0 ? { trash_skipped: skipped } : {}) };
 }
 
-/** One built page: its file name at the draft folder's top, its HTML, and the marker and page name
+/** One built page: its file relative to the draft folder, its HTML, and the marker and page name
  * the overwrite guard checks an existing file by. */
 export interface MatterPage {
   name: string;
@@ -383,7 +405,7 @@ export interface MatterPage {
 }
 
 export interface MatterPagesBuilt {
-  /** The pages a write puts at the draft folder's top, in write order: the Litigation Strategy, the
+  /** The pages a write puts in the draft folder, in write order: the Litigation Strategy, the
    * Job Board pages, then the view pages. */
   pages: MatterPage[];
   /** Every current Job Board and view page's file name, built by this call or not: what the sweep keeps. */
@@ -397,7 +419,7 @@ export interface MatterPagesBuilt {
  * pre-filing proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live
  * filing's view pages (2026-10-07 amendment), from database state. Writes nothing: writeMatterPages
  * guards, sweeps and writes, and a preview renders the same pages without them.
- * `draftDir` is already confined (resolveDraftDir, or the parent of a confined presentation folder).
+ * `draftDir` is already confined (resolveDraftDir, or the parent of a confined Writing folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
  * `reuse.only` names the one filing whose Job Board page and view pages are built, with the
@@ -424,9 +446,10 @@ export function buildMatterPages(
   const preFiling = fetchPreFilingProceedings(dbPath);
   const live = ranked.filter((r) => !r.filing.retired_on);
   const index = new BoardIndex(dbPath);
-  const groups = pageGroups(index, live, preFiling);
+  const folders = writingFolders(dbPath, draftDir);
+  const groups = pageGroups(index, live, preFiling, folders);
   const targets = pageTargets(groups);
-  const views = viewTargets(groups);
+  const views = viewTargets(groups, folders);
   const meta = {
     revision,
     matter: client.matterNo ?? "",
@@ -450,7 +473,7 @@ export function buildMatterPages(
       };
     }
     // A Job Board with no Writing has no mockup folder, so none is looked up for it.
-    const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(mockupDir(dbPath, m.filing.id));
+    const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(dbPath, m.filing.id);
     const filingId = m.filing.id;
     return {
       section: own?.meta.filing_id === m.filing.id ? own : filingBoardData(dbPath, m.filing, m.proceeding, client, now, revision, dates, manifest),
@@ -557,7 +580,7 @@ interface PagesState {
 const MAX_SESSIONS = 20;
 
 function statePath(dbPath: string): string {
-  return join(mockupsRoot(dbPath), PAGES_STATE_FILE);
+  return join(recordsDir(dbPath), PAGES_STATE_FILE);
 }
 
 function isTodos(value: unknown): value is MatterTodos {
@@ -665,7 +688,7 @@ export function recordPagesState(
     sections: state.sections,
     ...(state.sessions ? { sessions: state.sessions } : {}),
   };
-  mkdirSync(mockupsRoot(dbPath), { recursive: true });
+  mkdirSync(recordsDir(dbPath), { recursive: true });
   const code = writeStatusFile(statePath(dbPath), JSON.stringify(next, null, 2) + "\n");
   if (code !== null) throw new DataServerError(`could not write ${statePath(dbPath)}: ${code}`);
   return change;

@@ -2,7 +2,6 @@
 {
   "renderer": "general",
   "needs_forum_parts": false,
-  "folder_code": "LTR",
   "title": "Letter to opposing counsel",
   "exhibit_numbering": "writing",
   "letterhead": true,

@@ -5,7 +5,7 @@ date: 2026-10-21
 
 # A matter's case data lives in its own `0. CASE DATA` folder inside the matter folder
 
-Each matter's case data (`main.sqlite`, `law.sqlite`, `privileged.sqlite`, `submission.sqlite`, `evidence.sql`, `mockups\`, `housekeeping\`, `form-sessions\` and the other workflow folders) lived in a firm-level `<library>\0. CASE DATA\<matter_id> <short_name>\`, beside the matter folders. From now on it lives in `<matter folder>\0. CASE DATA\`, flat, with no per-matter subfolder. The pointer (`probanda.json`, and `coclerk.json` with the same content) stores it as the relative value `0. CASE DATA`, and `evidence_sql_path` as `0. CASE DATA\evidence.sql`.
+Each matter's case data (`main.sqlite`, `law.sqlite`, `privileged.sqlite`, `submission.sqlite`, `evidence.sql`, `mockups\` (until the 2026-10-22 amendment below), `housekeeping\`, `form-sessions\` and the other workflow folders) lived in a firm-level `<library>\0. CASE DATA\<matter_id> <short_name>\`, beside the matter folders. From now on it lives in `<matter folder>\0. CASE DATA\`, flat, with no per-matter subfolder. The pointer (`probanda.json`, and `coclerk.json` with the same content) stores it as the relative value `0. CASE DATA`, and `evidence_sql_path` as `0. CASE DATA\evidence.sql`.
 
 The firm-level `<library>\0. CASE DATA\` stays as `case_data_root`. It holds the practice stores only: `_practice\practice.db`, the knowledge overlay, timecamping and preferences.
 
@@ -27,7 +27,7 @@ The firm-level location was chosen to keep the binaries clear of the Cowork FUSE
 
 ## What stays
 
-- **The FUSE workaround code is retained** until the bug is confirmed gone for every session shape: inline mockup markdown in `drafting_forms__render`'s response, temp-copy staging, `fuse_safe_io.py` and the Write-tool rules. Only the location and its stated reason change.
+- **The FUSE workaround code is retained** until the bug is confirmed gone for every session shape: inline mockup markdown in `drafting_forms__render`'s response, temp-copy staging, `fuse_safe_io.py` and the Write-tool rules. Only the location and its stated reason change. The mockups were the exception, moved out of case data on 2026-10-22 (amendment below).
 - **Coclerk ADR 0004's privilege model is unchanged.** `privileged.sqlite` is copied as an ordinary file and keeps its access paths.
 - **Exclusions already in source cover the folder inside a matter**, and this decision relies on them: housekeeping and file-sorting skip `0`-numbered folders (`file-sorting/profiles/litigation-matter/profile.md`, `housekeeping/SKILL.md`); `zones.ts` refuses `^[01]\.` destinations; ingest walks an allow-list (`case/ingest-coverage.ts`); `file_ops/move.ts` and `trash.ts` protect `0. case data`; `correspondence/message.ts` and `scrutiny-review.ts` exclude it.
 
@@ -44,3 +44,12 @@ This supersedes the location reasoning of Coclerk ADRs 0008 and 0012. The Cocler
 - A relocated matter's `submission.sqlite` path changes, so its drafting lock key and any outstanding migrate plan token change with it. The relocate result says to re-run `drafting_forms__open_session` and re-plan any migration.
 - The old folder stays under the firm root until the practitioner deletes it. Every resolver prefers the matter's own folder once it holds `main.sqlite`.
 - Out of scope: the sync client's "cloud sync provider failed to validate" error and the SQLite disk input-output error (both folders are in the same library), version bumps and bundles, the practice-level stores, and deleting old folders.
+
+## Amendment, 2026-10-22: mockups move to the draft folder
+
+Decided by Brahm in `docs/Specs/2026-10-22_writing-file-names-hide-internal-codes-spec.md` §9. Keeping the mockups in case data, as `mockups\Filing <id>\` with a presentation copy in `0. DRAFT\<CODE> <title>\`, was a workaround for the Cowork FUSE mount-staleness bug (#324), which no longer applies: sessions read mockups only through the render's response, as this ADR's reasons already say for the other files.
+
+- Each Writing's mockups are written into its own folder in the matter's `0. DRAFT`, named after the document, e.g. `0. DRAFT\Notice of Hearing of Application\Notice of Hearing of Application.md`. That one file replaces both the case-data mockup and the presentation copy. Revisions go to an `archive` folder there, and the Writing's Job Board page and view pages sit beside the mockup. The Litigation Strategy stays at the top of `0. DRAFT`.
+- The render manifests and the pages' state file go in one folder, `0. DRAFT\Drafting records\`. No folder or file name carries a type's code, a stock type's name or a filing id.
+- The draft folder is the one beside the matter's own `0. CASE DATA` that holds `submission.sqlite`, so a matter not yet relocated is relocated before it renders.
+- An older build's `mockups\` tree is moved into `0. DRAFT` on the next render or bootstrap and removed, so case data keeps only the databases and the other workflow folders.

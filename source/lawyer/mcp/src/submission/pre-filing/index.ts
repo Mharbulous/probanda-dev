@@ -31,7 +31,7 @@ export interface PreFilingChecksResult {
 
 /** Same confinement idea as render's presentation_dir (ADR 0012), loosened by one level: the
  * folder must lie somewhere beneath the matter's `0. DRAFT*` folder (a VanIAC package sits one
- * level below the presentation folder), never inside a privileged/disclosed tree, and a junction
+ * level below the Writing's own folder), never inside a privileged/disclosed tree, and a junction
  * must not resolve outside it. */
 export function resolvePackageDir(packageDir: string): string {
   if (!isAbsolute(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);

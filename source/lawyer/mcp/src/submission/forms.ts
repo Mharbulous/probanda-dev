@@ -1,23 +1,19 @@
 // drafting_forms__render / drafting_forms__bootstrap (build ticket
 // #297, design doc 291 §5-§6). Orchestrates the per-document renderers in
-// data/forms/*, writes markdown mockups beside the matter's submission
-// database, and archives the previous copy only when db_meta.revision has
-// moved (design doc 291 §5's "always render, never detect" rule -- no
-// revision-CAS input parameter here, per issue #302's "no stale-mockup
-// guard" decision).
+// data/forms/*, writes markdown mockups into the Writing's own folder in the
+// matter's 0. DRAFT folder, and archives the previous copy only when
+// db_meta.revision has moved (design doc 291 §5's "always render, never detect"
+// rule -- no revision-CAS input parameter here, per issue #302's "no
+// stale-mockup guard" decision).
 //
-// Output location (#324, keyed by filing id since #1317): <dirname(db_path)>/
-// mockups/Filing <id>/, archive copies in an archive/ folder beside them -- i.e. inside the
-// matter's matter-data folder (for a new or relocated matter, the matter's own
-// 0. CASE DATA; docs/ADRs/0013-per-matter-case-data-inside-the-matter-folder.md),
-// not the draft folders. They are written and reached host-side through these
-// tools, and a session never reads them itself, which is why render returns
-// the markdown inline. Deterministic from db_path alone, so the canonical
-// location takes no output-root parameter.
-// This canonical copy is unaffected by ADR 0008 (docs/adr/0008-mockup-
-// presentation-copy-relocated-to-draft-folder.md), which only relocates the
-// disposable presentation copy into the mount -- and by ADR 0012 (#466), under
-// which render's optional presentation_dir writes that copy itself.
+// Output location (spec 2026-10-22 §9): <matter>\0. DRAFT\<document name>\, one
+// folder per Writing named after the document (writing-folder.ts), archive copies
+// in an archive\ folder inside it. That one file is the mockup: no second copy is
+// kept beside the database, which holds only the databases. The 0. DRAFT folder is
+// the one beside the matter's own 0. CASE DATA folder holding db_path (ADR 0013),
+// so the location takes no output-root parameter. The render manifests and the
+// pages' state file are in 0. DRAFT\Drafting records\. Render still returns the
+// markdown inline, so a session reads a mockup through this tool, never from disk.
 //
 // Client Name / Client no / Matter no in the frontmatter (issue #299's
 // ratified YAML) have no backing column anywhere in the submission schema
@@ -52,7 +48,7 @@
 // /drafting-data's jobs.md tells the model to do with it.
 
 import { randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync, renameSync, unlinkSync } from "node:fs";
 import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path";
 
 import { buildStampStatus, type BuildStampStatus } from "../build-stamp.js";
@@ -60,19 +56,29 @@ import { submissionDataQuery } from "./backend.js";
 import { currentSchemaVersion } from "./migrate.js";
 import { bundleNextStep, renderableSchemaVersion, type SchemaSourceStatus, schemaSourceStatus } from "./schema-ceiling.js";
 import {
+  draftDirOf,
   freshManifest,
-  legacyMockupDirs,
-  mockupDir,
-  mockupDirForRender,
-  mockupsRoot,
+  manifestDir,
   readManifest,
   renderState,
+  resolveDraftDir,
   sha256,
   writeManifest,
   type RenderManifest,
   type RenderState,
   type RenderStamp,
 } from "./render-manifest.js";
+import {
+  GENERAL_DOCUMENT_TYPE,
+  generalDocumentName,
+  moveCaseDataMockups,
+  readExistingRevision,
+  sanitizeForPath,
+  writingFolderForRender,
+  type MockupMove,
+} from "./writing-folder.js";
+
+export { readExistingRevision, resolveDraftDir };
 import { orderByRecency, orderFilings, type Orderable } from "./filing-order.js";
 import { backgroundJobStatus, startRenderJob, writeStatusFile, type BackgroundJob } from "./render-job.js";
 import {
@@ -92,7 +98,7 @@ import {
   type ProceedingRow,
 } from "./forms/query.js";
 import { CITATION_MISSING, fetchReviewState, renderWitnessStatements, type RenderContext } from "./forms/render-vaniac-submissions.js";
-import { composeFiller, resolveTypeFile } from "./forms/filler-registry.js";
+import { composeFiller } from "./forms/filler-registry.js";
 import { citedStates, scalarValue, storedLayout, type CitedState, type StoredLayout } from "./forms/layout-snapshot.js";
 import { confirmationGate, renderGeneral, type ChangedSinceSnapshot } from "./forms/render-general.js";
 import { currencyLabel, type CurrencyWithheld, type ProseFormatHit } from "./forms/projections.js";
@@ -163,24 +169,17 @@ interface DocumentOutput {
   prose_format?: ProseFormatHit[];
 }
 
-function sanitizeForPath(name: string): string {
-  return name.replace(/[\\/:*?"<>|]/g, "_").trim();
-}
-
 /**
  * What is actually on disk for one filing, now that bootstrap renders nothing (#584): the
- * advocacy mockups its manifest lists and that still exist, plus a Job Board an older render left
- * beside them (#1365 D1: left in place and listed). A filing never rendered reports none, and its
- * `render_state` says `never`. Existence only -- no mockup is opened, so a OneDrive placeholder
- * costs nothing here.
+ * advocacy mockups its manifest lists and that still exist. A filing never rendered reports none,
+ * and its `render_state` says `never`. Existence only -- no mockup is opened, so a cloud-sync
+ * placeholder costs nothing here.
  */
-function existingMockupPaths(baseDir: string): string[] {
-  const manifest = readManifest(baseDir);
-  const paths = (manifest?.files ?? []).map((f) => join(baseDir, f.file_name)).filter((p) => existsSync(p));
-  // A filing rendered before the Job Board rename (#869) still has its board under the old name.
-  const board = [join(baseDir, "Job Board.html"), join(baseDir, "Work Board.html")].find((p) => existsSync(p));
-  if (board) paths.push(board);
-  return paths;
+function existingMockupPaths(dbPath: string, filingId: number): string[] {
+  const manifest = readManifest(dbPath, filingId);
+  if (manifest === null) return [];
+  const dir = manifestDir(dbPath, manifest);
+  return manifest.files.map((f) => join(dir, f.file_name)).filter((p) => existsSync(p));
 }
 
 /** Per-phase durations in ms, on every render and bootstrap response and logged by dispatch
@@ -232,23 +231,12 @@ function newSessionToken(unattended: boolean): string {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes(9).toString("hex")}`;
 }
 
-export function readExistingRevision(filePath: string): number | undefined {
-  if (!existsSync(filePath)) return undefined;
-  const text = readFileSync(filePath, "utf-8");
-  // [ \t]*, not \s* -- "Revision:\s" bundles to the literal substring "n:\s",
-  // which the bundle-contract test's host-path scanner (HOST_PATH =
-  // /[A-Za-z]:\\|.../) reads as a baked Windows drive path. Not a real path;
-  // just avoid a backslash escape directly after "n:" in the source regex.
-  // The Job Board carries no YAML frontmatter. Its revision is the first key of its data line, a
-  // line of its own inside the page since 2026-09-15 (hence the m flag) and the whole of the sibling
-  // workboard-data.js the day before; a board written before the 2026-09-14 local-only design
-  // carried it in its header meta line instead, which still identifies an older board as this renderer's own.
-  const match =
-    text.match(/^Revision:[ \t]*(\d+)/m) ?? text.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text.match(/data-k="Rev">(\d+)</);
-  return match ? Number(match[1]) : undefined;
+/** A file name without its extension: the name an archived copy of the file is labelled with. */
+function fileStem(fileName: string): string {
+  return fileName.slice(0, fileName.length - extname(fileName).length);
 }
 
-/** Archives the previous copy of `filePath` under `archive/<form> @rev<N> <timestamp><ext>` only when its stamped revision differs from `currentRevision`. */
+/** Archives the previous copy of `filePath` under `archive/<document name> @rev<N> <timestamp><ext>` only when its stamped revision differs from `currentRevision`. */
 function archiveIfStale(filePath: string, formLabel: string, currentRevision: number): void {
   const existingRevision = readExistingRevision(filePath);
   if (existingRevision === undefined || existingRevision === currentRevision) return;
@@ -267,18 +255,22 @@ function archiveFile(filePath: string, formLabel: string, revision: number): voi
 }
 
 /** Archives each file the previous render's manifest listed that this render no longer writes
- * (#1339): a re-snapshot after the type's title changed, a witness removed, a companion dropped.
- * Named as archiveIfStale names a copy, with the revision that manifest stamped. Only listed files
- * move, never one outside `baseDir`. A file already gone, or locked or refused by the sync client,
- * is left in place rather than failing the render, as removeRetiredBoardFiles leaves one. The new
- * manifest does not list a file left that way, so no later render retries it: listing it would
- * make a memoisation hit serve it as one of the filing's documents. */
-function archiveDroppedFiles(baseDir: string, previous: RenderManifest | null, written: ReadonlySet<string>): void {
+ * (#1339): a re-snapshot after the type's title changed, a retitled stock-type Writing, a witness
+ * removed, a companion dropped. Named as archiveIfStale names a copy, with the revision that manifest
+ * stamped, under the name this render gives a document of the same type, so a renamed document's
+ * archive reads as one. Only listed files move, from the folder the manifest names, never one outside
+ * it. A file already gone, or locked or refused by the sync client, is left in place rather than
+ * failing the render, as removeRetiredBoardFiles leaves one. The new manifest does not list a file
+ * left that way, so no later render retries it: listing it would make a memoisation hit serve it as
+ * one of the filing's documents. */
+function archiveDroppedFiles(dbPath: string, previous: RenderManifest | null, written: readonly DocumentOutput[]): void {
   if (!previous) return;
+  const dir = manifestDir(dbPath, previous);
   for (const file of previous.files) {
-    if (written.has(file.file_name) || basename(file.file_name) !== file.file_name) continue;
+    if (written.some((doc) => doc.fileName === file.file_name) || basename(file.file_name) !== file.file_name) continue;
+    const renamed = written.find((doc) => doc.documentType === file.document_type);
     try {
-      archiveFile(join(baseDir, file.file_name), file.document_type, previous.stamp.revision);
+      archiveFile(join(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes((err as NodeJS.ErrnoException).code ?? "")) throw err;
     }
@@ -288,7 +280,7 @@ function archiveDroppedFiles(baseDir: string, previous: RenderManifest | null, w
 function writeDocument(baseDir: string, output: DocumentOutput, revision: number): string {
   mkdirSync(baseDir, { recursive: true });
   const filePath = join(baseDir, output.fileName);
-  archiveIfStale(filePath, output.documentType, revision);
+  archiveIfStale(filePath, fileStem(output.fileName), revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
   return filePath;
@@ -316,20 +308,26 @@ function removeRetiredBoardFiles(dir: string, names: readonly string[] = RETIRED
 
 const STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 
-/** The HTML board replaces the Markdown one outright (2026-09-03 design doc §3). A matter
- * rendered by an older bundle still has the stale `Work Board.md` beside it, which no render
- * overwrites and no archive rule catches -- a renderer-owned output superseded by a rename,
- * discarded rather than relocated (ADR 0008). */
-function removeStaleWorkBoardMarkdown(baseDir: string): void {
-  const stale = join(baseDir, STALE_WORKBOARD_MARKDOWN);
-  if (existsSync(stale)) unlinkSync(stale);
+/** The board files an older render left in the Writing's folder `dir` and at the draft folder's top:
+ * the retired support files, and in `dir` a `Work Board.md` carrying a render revision stamp, as every
+ * Markdown board did (2026-09-03 design doc §3, #966). The folder is the practitioner's too, so an
+ * unstamped `Work Board.md` there is theirs and is never deleted. */
+function removeOldBoardFiles(dir: string): void {
+  const stale = readExistingRevision(join(dir, STALE_WORKBOARD_MARKDOWN)) !== undefined ? [STALE_WORKBOARD_MARKDOWN] : [];
+  removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
+  removeRetiredBoardFiles(dirname(dir));
 }
 
-/** `[STALE_WORKBOARD_MARKDOWN]` when the presentation folder `dir` holds one carrying a render revision
- * stamp, as every Markdown board did, else none (#966). Unlike the store beside the database, that
- * folder is the practitioner's, so an unstamped `Work Board.md` there is theirs and is never deleted. */
-function ownStaleWorkBoardMarkdown(dir: string): string[] {
-  return readExistingRevision(join(dir, STALE_WORKBOARD_MARKDOWN)) !== undefined ? [STALE_WORKBOARD_MARKDOWN] : [];
+/** Refuses, before any is written, a mockup target in the Writing's folder that exists and carries no
+ * render revision stamp: this renderer did not write it, so it is the practitioner's (AGENTS.md: never
+ * overwrite a file this skill did not write). */
+function refuseForeignTargets(dir: string, fileNames: readonly string[]): void {
+  for (const name of fileNames) {
+    const target = join(dir, name);
+    if (existsSync(target) && readExistingRevision(target) === undefined) {
+      throw new ValidationError(`drafting_forms__render: refusing to overwrite ${target} -- it carries no render revision stamp, so this renderer did not write it`);
+    }
+  }
 }
 
 /** A Writing's party rows and their drift. A sent Writing prints the party rows it printed when sent
@@ -502,8 +500,8 @@ function hasLiveTags(general: StoredLayout | null): boolean {
 
 /** The render state of a filing's mockups on disk, against partiesDigest's value for it. A Writing with
  * live tags is never `fresh`: the render never serves it from the manifest, so neither does the freshness check. */
-function renderStateFor(baseDir: string, stamp: RenderStamp, filing: FilingRow, digest: string): RenderState {
-  const state = renderState(baseDir, stamp, digest);
+function renderStateFor(dbPath: string, stamp: RenderStamp, filing: FilingRow, digest: string): RenderState {
+  const state = renderState(dbPath, filing.id, stamp, digest);
   return state === "fresh" && hasLiveTags(generalLayoutFor(filing)) ? "stale" : state;
 }
 
@@ -517,14 +515,16 @@ function venueDocumentsForFiling(
   cited: CitedState[]
 ): { docs: DocumentOutput[]; companions: readonly unknown[] } {
   if (general !== null) {
-    const fileName = `${sanitizeForPath(String(scalarValue(general.layout.title)))}.md`;
+    // The document's own name (spec 2026-10-22): the Writing's title on a stock type, else its type's title.
+    const name = generalDocumentName(String(scalarValue(general.layout.title)), ctx.filing.title);
+    const fileName = `${sanitizeForPath(name)}.md`;
     let unwritten: string[] = [];
     let currencyWithheld: CurrencyWithheld[] = [];
     let proseFormat: ProseFormatHit[] = [];
     const doc = renderDocument(
       ctx,
       timings,
-      "General_writing",
+      GENERAL_DOCUMENT_TYPE,
       fileName,
       () => {
         const rendered = renderGeneral(ctx, general, cited);
@@ -533,7 +533,7 @@ function venueDocumentsForFiling(
         proseFormat = rendered.prose_format;
         return rendered.markdown;
       },
-      { short: String(scalarValue(general.layout.folder_code)), long: String(scalarValue(general.layout.title)) }
+      { short: name, long: name }
     );
     return {
       docs: [{ ...doc, unwritten, currency_withheld: currencyWithheld, prose_format: proseFormat }],
@@ -587,12 +587,13 @@ function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, general: 
 export interface RenderedDocument {
   document_type: string;
   /** Absent in 'filed' mode -- filed-face rendering writes nothing to disk (build #359); the caller decides where the returned markdown lands.
+   * In mockup mode: the mockup in the Writing's own folder in 0. DRAFT, the only copy.
    * On the Job Board: this filing's Job Board page, present only when this render wrote the pages
    * and the filing is live (a retired filing has no page). */
   path?: string;
   /** The renderer's own file name (e.g. "Written Argument.md") -- present in every mode, since 'filed' mode has no path for a caller to derive it from. */
   file_name: string;
-  /** Absent under presentation_dir unless this document was named in `documents` (#466). Never on the Job Board. */
+  /** Absent under draft_dir or presentation_dir unless this document was named in `documents` (#466). Never on the Job Board. */
   markdown?: string;
   /** Mockup mode, beside `markdown`, only when a row of the mockup's legend has a note written for
    * the model (forms/legend.ts): one string per note. Never written to any file. */
@@ -600,9 +601,7 @@ export interface RenderedDocument {
   /** The Job Board only (#1365): this filing's section's short summary as fixed-grammar text.
    * Present only when the board was named in `documents`, and on a retired filing's refusal. */
   board_summary?: string;
-  /** Present only under presentation_dir, on each copy written there (#466). Never on the Job Board. */
-  presentation_path?: string;
-  /** Present only under presentation_dir, on every document but the Job Board: the document's length, so a
+  /** Present only under draft_dir or presentation_dir, on every document but the Job Board: the document's length, so a
    * caller can tell before asking for it inline whether it alone would overflow the host's tool-result cap (#466). */
   markdown_chars?: number;
   /** The Job Board only, when this render wrote the pages: false when the section this filing last
@@ -644,10 +643,17 @@ export interface RenderResult {
    * whose work is over. */
   filing_retired?: boolean;
   /** True only on a Job Board with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
-   * board and nothing else, so no mockup, manifest or presentation copy is written.
+   * board and nothing else, so no mockup or manifest is written.
    * `documents` carries the Job Board alone, with its board_summary. A closed one also carries
    * filing_retired and a note. */
   job_board_only?: true;
+  /** Each folder of an older build's `<case data>\mockups\` tree this call moved into 0. DRAFT
+   * (writing-folder.ts moveCaseDataMockups), once per matter. */
+  mockups_moved?: MockupMove[];
+  /** Present when the Writing's folder still has the name an older build gave it, with its type's code,
+   * because it holds a file this renderer did not write: the folder and the name it should have. Only
+   * file-manager renames it, on the practitioner's yes. */
+  writing_folder_rename?: { from: string; to: string };
   /** Present only when this render wrote the matter's pages: every view page written (ADR 0033,
    * 2026-10-07 amendment), [{name, filing_id, path}]. */
   view_page_paths?: PagesWritten["view_page_paths"];
@@ -778,11 +784,12 @@ function selectDocuments<T extends { document_type: string }>(documents: T[], wa
   return documents.filter((doc) => wanted.includes(doc.document_type));
 }
 
-/** #466 / ADR 0012: the caller-named presentation folder must sit directly under the matter's
- * `0. DRAFT*` folder and end with this filing's own sanitized title, so the one matter-tree write
- * this server makes cannot land anywhere else. `realpathSync.native` resolves a junction to its
- * true target (which then fails containment) and reads OneDrive placeholders as ordinary files. */
-function resolvePresentationDir(presentationDir: string, filingTitle: string, styleOfCause: string | null): string {
+/** #466 / ADR 0012: a caller-named Writing folder must sit directly under the matter's `0. DRAFT`
+ * folder (the one beside the database's own case data) and be named for this filing's own sanitized
+ * title, with or without a leading date, so the one matter-tree write this server makes cannot land
+ * anywhere else. `realpathSync.native` resolves a junction to its true target (which then fails
+ * containment) and reads cloud-sync placeholders as ordinary files. */
+function resolvePresentationDir(dbPath: string, presentationDir: string, filingTitle: string, styleOfCause: string | null): string {
   if (!isAbsolute(presentationDir)) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
   }
@@ -796,11 +803,12 @@ function resolvePresentationDir(presentationDir: string, filingTitle: string, st
   }
   if (!/^0\. DRAFT/i.test(basename(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
   if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
-  const ending = ` ${sanitizeForPath(filingTitle)}`;
-  // A folder made while the title still ended in the style of proceeding keeps that name (oldTitle).
-  const oldEnding = styleOfCause ? ` ${sanitizeForPath(oldTitle(filingTitle, styleOfCause))}` : null;
-  if (!basename(dir).endsWith(ending) && (oldEnding === null || !basename(dir).endsWith(oldEnding))) {
-    throw refuse(`the folder name must end with "${ending}" (this filing's title)`);
+  if (parent.toLowerCase() !== realpathSync.native(draftDirOf(dbPath)).toLowerCase()) throw refuse("its parent must be the 0. DRAFT folder of this database's matter");
+  // A folder made while the title still ended in the style of proceeding keeps that name.
+  const titles = [filingTitle, ...(styleOfCause ? [`${filingTitle} - ${styleOfCause}`] : [])].map((t) => sanitizeForPath(t).toLowerCase());
+  const name = basename(dir).replace(/^\d{4}-\d{2}-\d{2} /, "").toLowerCase();
+  if (!titles.includes(name)) {
+    throw refuse(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
   }
   if (existsSync(dir) && dirname(realpathSync.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse("it resolves outside its 0. DRAFT folder");
@@ -808,87 +816,14 @@ function resolvePresentationDir(presentationDir: string, filingTitle: string, st
   return dir;
 }
 
-/** #585 (#583 §4, ADR 0012's confinement extended): bootstrap's draft_dir (and render's, #689) must be the matter's
- * `0. DRAFT*` folder itself, existing, and outside any privileged or disclosed tree. Checked on the
- * real path, so a junction named `0. DRAFT` that leads elsewhere is refused. */
-export function resolveDraftDir(draftDir: string, param = "drafting_forms__bootstrap.draft_dir"): string {
-  const refuse = (why: string) => new ValidationError(`${param} ${draftDir}: ${why}`);
-  if (!isAbsolute(draftDir)) throw refuse("must be an absolute path");
-  const dir = resolve(draftDir);
-  let real: string;
-  try {
-    real = realpathSync.native(dir);
-  } catch {
-    throw refuse("does not exist");
+/** #585 / #689: a caller's draft_dir, confined, and the one the database's matter has: the pages are
+ * written there and nowhere else. */
+function draftDirOfCaller(dbPath: string, draftDir: string, param = "drafting_forms__render.draft_dir"): string {
+  const draft = resolveDraftDir(draftDir, param);
+  if (realpathSync.native(draft).toLowerCase() !== realpathSync.native(draftDirOf(dbPath)).toLowerCase()) {
+    throw new ValidationError(`${param} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
   }
-  if (!/^0\. DRAFT/i.test(basename(real))) throw refuse("must be the matter's 0. DRAFT folder");
-  if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
-  return dir;
-}
-
-/** #689: the presentation folder's name, `<code> <filing folder>`. The code is the `folder_code` the
- * filing's type file declares (shared/declared-layout.md), read from its stored layout; a row with
- * no stored layout (a seeded test row) reads it from /draft's shipped tree, which needs the forum. */
-function presentationFolder(proceeding: ProceedingRow, filing: FilingRow, title = filing.title): string {
-  const stored = layoutFor(filing);
-  const code = stored !== null ? stored.layout.folder_code : resolveTypeFile(requireForum(proceeding, true).forum, filing.kind).block.folder_code;
-  return `${code} ${sanitizeForPath(title)}`;
-}
-
-/** A Writing's title as it read while titles still ended in the style of proceeding. A presentation
- * folder made under that title keeps its name: the render uses it as it is and renames nothing. */
-function oldTitle(title: string, styleOfCause: string): string {
-  return `${title} - ${styleOfCause}`;
-}
-
-/** A dated presentation folder may be renamed to the undated form only if it holds at least one
- * file and only files this renderer writes: a revision-stamped copy, a retired board support file,
- * or a board file by either name an older render left there (#1365: no render writes a board there
- * any more). A fact for the caller, who does the renaming (#689). */
-function renameable(dir: string): boolean {
-  const entries = readdirSync(dir, { withFileTypes: true });
-  const isBoard = (name: string) => name === "Job Board.html" || name === "Work Board.html";
-  return (
-    entries.length > 0 &&
-    entries.every(
-      (e) =>
-        e.isFile() &&
-        (isBoard(e.name) || RETIRED_BOARD_FILES.includes(e.name) || readExistingRevision(join(dir, e.name)) !== undefined)
-    )
-  );
-}
-
-/** #689: resolves this filing's presentation folder inside the matter's draft folder, so a
- * session never lists the folder and pattern-matches names itself. Siblings match
- * `<code> <filing folder>`, with or without a leading `YYYY-MM-DD `. None: the undated folder,
- * which the render creates. One undated: that one. One dated, or two or more: refused before any
- * write, naming each candidate and whether a dated one is renameable -- the caller renames or
- * asks, then passes presentation_dir. */
-function presentationDirFromDraft(draftDir: string, proceeding: ProceedingRow, filing: FilingRow): string {
-  const draft = resolveDraftDir(draftDir, "drafting_forms__render.draft_dir");
-  const undated = presentationFolder(proceeding, filing);
-  // Case-insensitive, as NTFS is. An undated match resolves to the canonical spelling, which
-  // opens the same folder and passes resolvePresentationDir's title-ending check.
-  // A folder under the old name (oldTitle) matches too, and is returned under the name it has.
-  const old = proceeding.style_of_cause ? presentationFolder(proceeding, filing, oldTitle(filing.title, proceeding.style_of_cause)) : null;
-  const isOld = (name: string) => old !== null && name.toLowerCase() === old.toLowerCase();
-  const isUndated = (name: string) => name.toLowerCase() === undated.toLowerCase() || isOld(name);
-  const matches = readdirSync(draft, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && (isUndated(e.name) || (/^\d{4}-\d{2}-\d{2} /.test(e.name) && isUndated(e.name.slice(11)))))
-    .map((e) => e.name)
-    .sort();
-  if (matches.length === 1 && isOld(matches[0])) return join(draft, matches[0]);
-  if (matches.length === 0 || (matches.length === 1 && isUndated(matches[0]))) return join(draft, undated);
-  const candidates = matches.map((name) => {
-    const path = join(draft, name);
-    return isUndated(name) ? `"${path}" (undated)` : `"${path}" (dated, renameable: ${renameable(path) ? "yes" : "no"})`;
-  });
-  throw new ValidationError(
-    `drafting_forms__render.draft_dir: ${matches.length === 1 ? "one dated" : `${matches.length}`} presentation folder` +
-      `${matches.length === 1 ? "" : "s"} for "${undated}": ${candidates.join(", ")}. Nothing was written. ` +
-      `Rename or choose one, then pass it as presentation_dir.`,
-    matches.length === 1 ? "presentation_dir_dated" : "presentation_dir_ambiguous"
-  );
+  return draft;
 }
 
 type Projectable = Pick<RenderedDocument, "document_type" | "path" | "file_name" | "symbol_notes"> & { markdown: string };
@@ -898,39 +833,20 @@ function symbolNotes(notes: string[]): Pick<RenderedDocument, "symbol_notes"> {
   return notes.length > 0 ? { symbol_notes: notes } : {};
 }
 
-/** #466: writes each advocacy document's disposable presentation copy into `dir` -- a plain
- * overwrite, never archived (ADR 0008). Every target is checked before any is written, and one this
- * renderer did not write -- no render revision stamp -- is refused (AGENTS.md: never overwrite a file
- * this skill did not write). The board's retired support files in `dir` and one level up, and a
- * stamped Markdown board in `dir`, are deleted. Here `wanted` selects which documents also carry
- * their markdown inline; every document is listed. The caller has already refused an unknown name. */
-function projectDocuments(dir: string, documents: Projectable[], wanted: string[] | undefined): RenderedDocument[] {
-  const targets = documents.map((doc) => join(dir, doc.file_name));
-  for (const target of targets) {
-    if (existsSync(target) && readExistingRevision(target) === undefined) {
-      throw new ValidationError(
-        `drafting_forms__render.presentation_dir: refusing to overwrite ${target} -- it carries no render revision stamp, so this renderer did not write it`
-      );
-    }
-  }
-  mkdirSync(dir, { recursive: true });
-  for (const doc of documents) writeFileSync(join(dir, doc.file_name), doc.markdown, "utf-8");
-  removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...ownStaleWorkBoardMarkdown(dir)]);
-  removeRetiredBoardFiles(dirname(dir));
-
+/** #466: under draft_dir or presentation_dir, every document is listed with its length, and only those
+ * `wanted` names carry their markdown inline. The caller has already refused an unknown name. */
+function listDocuments(documents: Projectable[], wanted: string[] | undefined): RenderedDocument[] {
   return documents.map((doc) => ({
     document_type: doc.document_type,
     ...(doc.path ? { path: doc.path } : {}),
     file_name: doc.file_name,
-    presentation_path: join(dir, doc.file_name),
     markdown_chars: doc.markdown.length,
     ...(wanted?.includes(doc.document_type) ? { markdown: doc.markdown, ...symbolNotes(doc.symbol_notes ?? []) } : {}),
   }));
 }
 
 /** ADR 0013 (deadline isolation): a mockup render withholds the hearing date and time (on a Notice of
- * Application, the proposed hearing) from the markdown it returns, so neither enters a drafting session's context. The canonical mockup and its presentation
- * copy keep the real values, which makes these two sentences the one exception to "returned markdown is
+ * Application, the proposed hearing) from the markdown it returns, so neither enters a drafting session's context. The mockup file keeps the real values, which makes these two sentences the one exception to "returned markdown is
  * byte-identical to the file". Anchored on the renderer-owned template sentences
  * (render-notice-of-application.ts, render-bcca-stay-response.ts), never on the date's value, which would
  * also blank a fact dated the same day. Each value is replaced on its own, and a blank or gap marker stays
@@ -954,21 +870,19 @@ function withholdHearing<T extends { markdown?: string }>(doc: T): T {
  * filing -> mockup(s) + conditional archive copy, stamped (design doc 291 §6).
  * No expected-revision parameter -- render always renders (issue #302).
  *
- * Returns each document's `markdown` alongside its path (issue #337). The
- * mockups are written outside every Cowork sandbox FUSE mount (issue #324), so
- * a session has no way to open the file it was just handed the path to; this
- * response is the only channel that crosses that boundary, since the server
- * runs host-side. Without it ADR 0005's "orient from the mockup, not from a
- * query battery" rule had no working path at all. The markdown here is for the
- * session to read work markers from -- it is not for pasting into chat, which
- * still gets the file, not its contents.
+ * Returns each document's `markdown` alongside its path (issue #337), so a
+ * session reads a mockup through this tool and never opens the file. ADR 0005's
+ * "orient from the mockup, not from a query battery" rule rests on it. The
+ * markdown here is for the session to read work markers from -- it is not for
+ * pasting into chat, which still gets the file, not its contents.
  *
- * `renderMode: 'filed'` (build #359, design #358) writes nothing to disk at
- * all -- no mockup file, no archive copy -- and returns each document's
- * markdown put through toFiledFace() (forms/filed-face.ts): the mockup minus
- * everything human-side. The caller decides
- * where a filed-face document lands (the matter's `0. DRAFT` tree); this
- * tool only ever writes beside the database, and only in 'mockup' mode.
+ * Mockup mode writes each document into the Writing's own folder in the matter's
+ * 0. DRAFT (writing-folder.ts), the only copy, after moving an older build's
+ * case-data mockups tree there once. `renderMode: 'filed'` (build #359, design
+ * #358) writes nothing to disk at all -- no mockup file, no archive copy -- and
+ * returns each document's markdown put through toFiledFace() (forms/filed-face.ts):
+ * the mockup minus everything human-side. The caller decides where a filed-face
+ * document lands.
  */
 export function submissionFormsRender(
   dbPath: string,
@@ -986,10 +900,11 @@ export function submissionFormsRender(
    * unchanged on a successful mockup render and used for nothing else -- this server never
    * compares it. Omitted means the response carries no session_token at all. */
   sessionToken?: string,
-  /** #689: the matter's 0. DRAFT folder, from which the server resolves presentation_dir itself.
-   * Never with presentation_dir. */
+  /** #689: the matter's 0. DRAFT folder, which must be the one beside the database's own case data.
+   * Given, the matter's pages are rewritten and markdown comes back only for named documents. Never
+   * with presentation_dir. */
   draftDir?: string,
-  /** The matter's open to-dos, for the Litigation Strategy a render with presentation copies rewrites. */
+  /** The matter's open to-dos, for the Litigation Strategy a render under draft_dir rewrites. */
   todos: MatterTodos = TODOS_NOT_READ,
   /** The matter's dates, for the Job Board pages alone, and this filing's linked deadlines as its
    * section's dateless Goal criteria (ADR 0013, 2026-10-04 amendments). */
@@ -1032,20 +947,22 @@ export function submissionFormsRender(
   const loadStart = performance.now();
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  // A Job Board with no Writing has no document, so no filed face and no presentation folder: only
+  // A Job Board with no Writing has no document, so no filed face and no Writing folder: only
   // its board renders, and under draft_dir the matter's pages go into that folder itself.
   const jobOnly = isJobOnlyBoard(filing);
   if (jobOnly && (renderMode !== "mockup" || presentationDir !== undefined)) {
     throw new ValidationError(
-      `drafting_forms__render: filing ${filingId} is a Job Board with no Writing, so it has no ${renderMode !== "mockup" ? "filed face" : "presentation folder"}; ` +
+      `drafting_forms__render: filing ${filingId} is a Job Board with no Writing, so it has no ${renderMode !== "mockup" ? "filed face" : "Writing folder"}; ` +
         "render it in mockup mode, with draft_dir to rewrite the matter's pages",
       "job_board_only"
     );
   }
-  const requestedDir = draftDir === undefined || jobOnly ? presentationDir : presentationDirFromDraft(draftDir, proceeding, filing);
-  const projectionDir = requestedDir === undefined ? undefined : resolvePresentationDir(requestedDir, filing.title, proceeding.style_of_cause);
-  const pagesDir =
-    jobOnly && draftDir !== undefined ? resolveDraftDir(draftDir, "drafting_forms__render.draft_dir") : projectionDir === undefined ? undefined : dirname(projectionDir);
+  // Both checked before anything is written. presentation_dir names the Writing's folder itself.
+  const chosenDir = presentationDir === undefined ? undefined : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding.style_of_cause);
+  const pagesDir = draftDir !== undefined ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== undefined ? dirname(chosenDir) : undefined;
+  // An older build's case-data mockups move into 0. DRAFT before any manifest is read (spec 2026-10-22 §9).
+  const moved = renderMode === "mockup" ? timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath)) : [];
+  const movedReport = moved.length > 0 ? { mockups_moved: moved } : {};
   const revision = fetchRevision(dbPath);
   // Read before buildContext reads the review state, so an approval landing between the two
   // makes the next render miss rather than hit a manifest stamped with the newer mark.
@@ -1063,7 +980,7 @@ export function submissionFormsRender(
   const ctx = buildContext(dbPath, proceeding, filing, parties, revision, client, appealDeadline, now);
   timings.push({ phase: "load_filing", ms: loadMs + elapsedMs(contextStart) });
 
-  // #1365: under a presentation folder the matter's pages are rewritten from database state, with
+  // #1365: under draft_dir or presentation_dir the matter's pages are rewritten from database state, with
   // the section this render built for its filing, and that section is recorded so board_changed
   // compares against what this filing last reported, never against a page.
   const writePages = (section: WorkBoardData) => {
@@ -1096,9 +1013,8 @@ export function submissionFormsRender(
   const deadlines = deadlineCriteria(dates, filingId);
 
   // A Job Board with no Writing, open or closed: the board alone. documentsForFiling, the manifest
-  // and finishMockup are never reached, so nothing is written beside the database or in a
-  // presentation folder for it. Under draft_dir the matter's pages are rewritten, a closed board with
-  // no page, as a retired filing has none.
+  // and finishMockup are never reached, so no mockup or manifest is written for it. Under draft_dir
+  // the matter's pages are rewritten, a closed board with no page, as a retired filing has none.
   if (jobOnly) {
     const section = timed(timings, "board_section", () => buildWorkBoardData(ctx));
     selectDocuments([{ document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
@@ -1110,6 +1026,7 @@ export function submissionFormsRender(
       documents: [boardDocument(section, written, true)],
       ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
       ...trashReport(written),
+      ...movedReport,
       ...(filing.retired_on
         ? {
             filing_retired: true,
@@ -1124,18 +1041,16 @@ export function submissionFormsRender(
     };
   }
 
-  // Retired filing (schema v17): mockup mode renders no mockup and writes nothing beside the
-  // database. Re-rendering a retired filing's other mockups would archive the copies of work that
+  // Retired filing (schema v17): mockup mode renders no mockup. Re-rendering a retired filing's other mockups would archive the copies of work that
   // is over, on a revision bump nobody asked for -- but the board is the one thing the retire
   // flow needs back, to confirm the state actually read Retired (its own State row derives from
   // `filing.retired_on`, already reflected in `ctx.lifecycle` above): `documents` carries its
   // board_summary. Filed mode is untouched: a filed face of a filing already delivered to the
-  // forum is still a legitimate read. Under presentation_dir the matter's pages are rewritten, the
-  // retired filing with no Job Board page (#1365 D1; its old one is moved to TRASH), and no
-  // presentation copy is written.
+  // forum is still a legitimate read. Under draft_dir the matter's pages are rewritten, the
+  // retired filing with no Job Board page (#1365 D1; its old one is moved to TRASH).
   if (retiredMockup) {
     const section = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
-    if (projectionDir) selectDocuments([{ document_type: "Work_board" }], documentTypes);
+    if (pagesDir) selectDocuments([{ document_type: "Work_board" }], documentTypes);
     const written = writePages(section);
     return {
       filing_id: filingId,
@@ -1143,10 +1058,11 @@ export function submissionFormsRender(
       documents: [boardDocument(section, written, true)],
       ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
       ...trashReport(written),
+      ...movedReport,
       note:
         `Filing ${filingId} was retired on ${filing.retired_on}` +
         (filing.retirement_reason ? ` (${filing.retirement_reason})` : "") +
-        `. Nothing was rendered and ${projectionDir ? "no mockup was" : "nothing was"} written -- a retired filing's mockups stay as they ` +
+        `. Nothing was rendered and no mockup was written -- a retired filing's mockups stay as they ` +
         "were at retirement. Recover the filing (clear filings.retired_on and retirement_reason) " +
         "before rendering it again.",
       timings: withTotal(timings, started),
@@ -1171,9 +1087,10 @@ export function submissionFormsRender(
   // written: their paths, and their text when it is asked for, come off disk. The Job
   // Board's section is rebuilt either way -- it sits outside the stamp (#581 §2),
   // since its data reads the ticket tables, whose writes are exempt from the revision bump.
-  // Keyed by filing id, so a retitle never moves it (#1317). Only a mockup render writes it, so only
-  // a mockup render moves a legacy title-keyed folder there.
-  const baseDir = renderMode === "mockup" ? mockupDirForRender(dbPath, filingId) : mockupDir(dbPath, filingId);
+  // The Writing's own folder (writing-folder.ts): the one its manifest records, so a retitle never
+  // moves it, or presentation_dir. Only a mockup render writes into it, so only it is resolved here.
+  const folder = renderMode !== "mockup" ? undefined : chosenDir !== undefined ? { dir: chosenDir } : writingFolderForRender(dbPath, filingId, filing.title);
+  const baseDir = folder?.dir as string;
   // A general Writing whose stored layout cites an item tags its mockup from that item's live
   // confirmation status, which a firm's sidecar write changes without moving any stamp input, so
   // such a Writing is never served from the manifest. Its manifest is still written, so its
@@ -1184,12 +1101,14 @@ export function submissionFormsRender(
     renderMode === "mockup"
       ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals)
       : null;
-  const hit = stamp === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(baseDir, stamp, driftDigest));
+  const fresh = stamp === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp, driftDigest));
+  // A hit serves only the folder this render writes into: presentation_dir may name another.
+  const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
 
-  /** The mockup render's response, after the hit or the miss: under a presentation folder its copies
-   * and the matter's pages are written, each target checked before any is; inline, every document's
-   * markdown. Either way the board's summary only when the board is named in `documents`. The Job
-   * Board is the last document either way. */
+  /** The mockup render's response, after the hit or the miss: under draft_dir or presentation_dir the
+   * matter's pages are written, each target checked before any is, and markdown comes back only for
+   * named documents; otherwise every document's markdown. Either way the board's summary only when
+   * the board is named in `documents`. The Job Board is the last document either way. */
   const finishMockup = (documents: Projectable[], section: WorkBoardData, renderedAt: string): RenderResult => {
     const due = noteUpDue(section.proposals);
     const tail = {
@@ -1198,11 +1117,13 @@ export function submissionFormsRender(
       rendered_at: renderedAt,
       ...(currency ? { form_currency: currency } : {}),
       ...(due.length > 0 ? { note_up_due: due } : {}),
+      ...movedReport,
+      ...(folder?.rename ? { writing_folder_rename: folder.rename } : {}),
     };
-    if (projectionDir) {
+    if (pagesDir) {
       selectDocuments([...documents, { document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
-      refuseForeignMatterPages(dirname(projectionDir), dbPath);
-      const projected = timed(timings, "write presentation copies", () => projectDocuments(projectionDir, documents, documentTypes));
+      refuseForeignMatterPages(pagesDir, dbPath);
+      const projected = listDocuments(documents, documentTypes);
       const written = writePages(section);
       const board = boardDocument(section, written, documentTypes?.includes("Work_board") ?? false);
       const views = written ? { view_page_paths: written.pages.view_page_paths } : {};
@@ -1213,10 +1134,7 @@ export function submissionFormsRender(
   };
 
   if (hit) {
-    timed(timings, "remove retired board files", () => {
-      removeRetiredBoardFiles(mockupsRoot(dbPath));
-      removeStaleWorkBoardMarkdown(baseDir);
-    });
+    timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
     // The board's section alone. Its ticket state reads only SQLite (tickets, blocks, conflicts, steps,
     // scope, ticket_proposals, proposal_rejections), and its Proposals come from the inventory
     // the render that filled this manifest saved, plus that same SQLite state -- on a miss they
@@ -1230,7 +1148,7 @@ export function submissionFormsRender(
       const markdown = hit.contents.get(f.file_name) as string;
       return {
         document_type: f.document_type,
-        path: join(baseDir, f.file_name),
+        path: join(hit.dir, f.file_name),
         file_name: f.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f.document_type)),
@@ -1411,11 +1329,9 @@ export function submissionFormsRender(
   );
   if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
 
-  timed(timings, "remove retired board files", () => {
-    removeRetiredBoardFiles(mockupsRoot(dbPath));
-    removeStaleWorkBoardMarkdown(baseDir);
-  });
-  timed(timings, "archive dropped files", () => archiveDroppedFiles(baseDir, readManifest(baseDir), new Set(built.map((doc) => doc.fileName))));
+  refuseForeignTargets(baseDir, built.map((doc) => doc.fileName));
+  timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
+  timed(timings, "archive dropped files", () => archiveDroppedFiles(dbPath, readManifest(dbPath, filingId), built));
   // Each mockup's last section is the legend of the symbols printed on it, scanned after the drift
   // lines above; the filed render returned before this. Its model notes go back in the response alone.
   const finished = built.map((doc) => ({ ...doc, ...withLegend(doc.markdown, doc.documentType) }));
@@ -1430,8 +1346,9 @@ export function submissionFormsRender(
   // no file of the filing's: it is rebuilt on every call (#581 §2).
   if (stamp) {
     timed(timings, "manifest_write", () =>
-      writeManifest(baseDir, {
+      writeManifest(dbPath, filingId, {
         stamp,
+        folder: basename(baseDir),
         rendered_at: ctx.rendered,
         files: finished.map((doc) => ({ document_type: doc.documentType, file_name: doc.fileName, sha256: sha256(doc.markdown), label: doc.label })),
         inventory: ctx.inventory,
@@ -1490,7 +1407,7 @@ export function submissionFormsRenderProceedingBoard(
 ): ProceedingBoardResult {
   const timings: PhaseTimings = [];
   const started = performance.now();
-  const draft = draftDir === undefined ? undefined : resolveDraftDir(draftDir, "drafting_forms__render.draft_dir");
+  const draft = draftDir === undefined ? undefined : draftDirOfCaller(dbPath, draftDir);
   const proceeding = fetchProceeding(dbPath, proceedingId);
   if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
@@ -1974,7 +1891,7 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     /** Whether this filing's mockups would need rendering (#582): `fresh` when the manifest's
      * stamp and parties digest (#1308) match what a render now would use and every file it lists
      * is present, `never` when there is no manifest, `stale` otherwise. Read from the manifest,
-     * directory entries and the parties' values -- no mockup file is opened, since the tree is OneDrive-synced and reading
+     * directory entries and the parties' values -- no mockup file is opened, since the draft folder is cloud-synced and reading
      * a placeholder would cost a download here (#581 §5). Absent on a retired filing, whose
      * mockups stand as they were at retirement. */
     render_state?: RenderState;
@@ -2001,6 +1918,8 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
   moved_to_trash?: PagesWritten["moved_to_trash"];
   /** Old page files that page write could not move, and why. */
   trash_skipped?: PagesWritten["trash_skipped"];
+  /** Each folder of an older build's `<case data>\mockups\` tree this call moved into 0. DRAFT, once per matter. */
+  mockups_moved?: MockupMove[];
   /** Present only on success (ADR 0009, #609) -- a freshly minted opaque identity for THIS
    * session, unique per bootstrap call. A ticket-driven session uses it as tickets.locked_by and
    * passes it back to every later drafting_forms__render, which echoes it. Deliberately not
@@ -2101,9 +2020,6 @@ export function rankFilings(
         })
     );
   });
-  // The legacy title-keyed folder scan (#1317), once for the whole listing and only when a filing has no id folder.
-  let legacy: Map<number, string> | undefined;
-  const legacyOnce = () => (legacy ??= legacyMockupDirs(dbPath));
   const ranked: Ranked[] = timed(timings, "filing_entries", () =>
     listed.map(({ proceeding, filing }) => {
       // A Job Board with no Writing has no mockup, so no folder is looked up and it answers no
@@ -2130,7 +2046,6 @@ export function rankFilings(
           },
         };
       }
-      const baseDir = mockupDir(dbPath, filing.id, legacyOnce);
       const hearingDate = fetchHearingDate(dbPath, filing.id);
       // No appeal deadline on this path (#583 §3), so the lifecycle never reaches appeal_expired.
       const lifecycle = deriveLifecycle(filing, hearingDate, now.slice(0, 10));
@@ -2157,7 +2072,7 @@ export function rankFilings(
         };
       }
       const state = renderStateFor(
-        baseDir,
+        dbPath,
         stampFor(filing.id, proceeding, client, now, stamp.revision, stamp.schemaVersion, stamp.buildStamp, approvals),
         filing,
         digests.get(filing.id) as string
@@ -2174,7 +2089,7 @@ export function rankFilings(
         entry: {
           filing_id: filing.id,
           title: filing.title,
-          paths: existingMockupPaths(baseDir),
+          paths: existingMockupPaths(dbPath, filing.id),
           lifecycle: lifecycle.state,
           render_state: state,
         },
@@ -2248,7 +2163,7 @@ export function submissionFormsBootstrap(
   if (!existsSync(dbPath)) {
     throw new ValidationError(`No submission database found at ${dbPath}. Run drafting_data__migrate first.`);
   }
-  const draft = draftDir === undefined ? undefined : resolveDraftDir(draftDir);
+  const draft = draftDir === undefined ? undefined : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
   const timings: PhaseTimings = [];
   const started = performance.now();
   const schemaVersion = timed(timings, "schema_check", () => readSchemaVersion(dbPath));
@@ -2327,6 +2242,8 @@ export function submissionFormsBootstrap(
   // `render_state` tells the caller which filings would need a render; step 6's own `render`
   // on the filing the practitioner chose does it, for that one filing only.
   const revision = timed(timings, "revision", () => fetchRevision(dbPath));
+  // An older build's case-data mockups move into 0. DRAFT before any manifest is read (spec 2026-10-22 §9).
+  const moved = timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath));
   const ranked = rankFilings(dbPath, client, now, { revision, schemaVersion, buildStamp: build.build_stamp }, timings);
   const filings = orderByRecency(ranked).map((r) => r.entry);
 
@@ -2355,6 +2272,7 @@ export function submissionFormsBootstrap(
     view_page_paths: pages?.view_page_paths ?? null,
     ...(pages?.moved_to_trash ? { moved_to_trash: pages.moved_to_trash } : {}),
     ...(pages?.trash_skipped ? { trash_skipped: pages.trash_skipped } : {}),
+    ...(moved.length > 0 ? { mockups_moved: moved } : {}),
     session_token: token,
     bootstrapped_at: nowStamp(),
     legacy_workboard_artifact_url: timed(timings, "legacy_url_read", () => readDbMetaValue(dbPath, "workboard_artifact_url")),
@@ -2367,7 +2285,7 @@ function renderStateOf(dbPath: string, filingId: number, client: ClientContext):
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const stamp = stampFor(filing.id, proceeding, client, nowStamp(), fetchRevision(dbPath), readSchemaVersion(dbPath), buildStampStatus().build_stamp, fetchApprovalsMark(dbPath));
-  return renderStateFor(mockupDir(dbPath, filing.id), stamp, filing, partiesDigest(partiesFor(dbPath, proceeding, filing)));
+  return renderStateFor(dbPath, stamp, filing, partiesDigest(partiesFor(dbPath, proceeding, filing)));
 }
 
 /**

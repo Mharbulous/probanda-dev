@@ -6,7 +6,7 @@
 // moved, and is never refused. The fixture letter lives in a firm overlay (helpers/general-writing-fixture.mjs).
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
@@ -294,7 +294,7 @@ test("a party-linked recipient prints its party's counsel, email and address for
   const g = await generalWritingFixture(t, { front: VETTED_FRONT });
   const id = await letter(g);
   await g.recipient(id, 3, "cc");
-  updateCaseData(g.f.scratch, "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
   await g.execute("UPDATE recipients SET name = 'Stale Name', email = 'stale@copy.test', address = '9 Stale St' WHERE id = 3;");
   // Schema v43 holds no name, email or address on a party-linked row.
   await assert.rejects(g.execute("UPDATE recipients SET name = 'Stale Name' WHERE id = 1;"), /CHECK constraint failed/);
@@ -305,7 +305,7 @@ test("a party-linked recipient prints its party's counsel, email and address for
   assert.doesNotMatch(md, /^To: .*(Stale|stale|cara@counsel)/m);
 
   // Withdrawn counsel: the recipient prints the party's own name, with no counsel email.
-  updateCaseData(g.f.scratch, "UPDATE parties SET lawyer_name = NULL, lawyer_email = NULL WHERE party_id = 2;");
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = NULL, lawyer_email = NULL WHERE party_id = 2;");
   assert.ok(docOf(render(g, id), "General_writing").markdown.includes("To: Bert Other — counsel for Bert Other (2 Y St)"));
 });
 
@@ -332,20 +332,21 @@ test("a page_limit prints the header's Page budget on the mockup only", async (t
   assert.doesNotMatch(render(g, id, "filed").documents[0].markdown, /Page budget|Limit:/);
 });
 
-test("the presentation folder takes the stored folder_code, and bootstrap lists the Writing on its forum-less proceeding", async (t) => {
+test("the Writing's folder is named by its title with no folder_code, though the stored layout carries one, and bootstrap lists the Writing on its forum-less proceeding", async (t) => {
   const g = await generalWritingFixture(t);
   const id = await letter(g);
-  const draft = join(g.f.scratch, "Matter", "0. DRAFT");
-  mkdirSync(draft, { recursive: true });
+  const draft = g.draft;
 
   const rendered = render(g, id, "mockup", draft);
   const general = docOf(rendered, "General_writing");
-  assert.equal(general.presentation_path, join(draft, "LTR Letter to Cara", "Letter to opposing counsel.md"));
+  // LETTER_BLOCK declares folder_code "LTR": the folder ignores it.
+  assert.equal(general.path, join(draft, "Letter to Cara", "Letter to opposing counsel.md"));
+  assert.equal(existsSync(join(draft, "LTR Letter to Cara")), false);
 
   const boot = submissionFormsBootstrap(g.dbPath, CLIENT, NOW, draft);
   assert.ok(boot.filings.some((f) => f.filing_id === id));
   const page = boot.job_board_paths.find((p) => p.filing_id === id);
-  assert.equal(page.path, join(draft, `Job Board ${id}.html`), "the Writing's page is named by its filing id");
+  assert.equal(page.path, join(draft, "Letter to Cara", "Job Board.html"), "the Writing's page is in its own folder, with no filing id");
   assert.ok(existsSync(page.path));
   assert.deepEqual(boot.pre_filing_proceedings.map((p) => p.proceeding_id), [2, 3]);
 });
@@ -374,7 +375,7 @@ test("each 🧩 gap line is recorded on its layout part, stamped General_writing
   const { filing_id: id } = await g.createLetter();
 
   const result = render(g, id);
-  const manifest = JSON.parse(readFileSync(join(dirname(docOf(result, "General_writing").path), "render-manifest.json"), "utf-8"));
+  const manifest = JSON.parse(readFileSync(join(g.draft, "Drafting records", `render-manifest-${id}.json`), "utf-8"));
   assert.deepEqual(
     manifest.inventory.filter((e) => e.marker === "🧩").map((e) => [e.generating, e.table, e.id, e.item, e.doc]),
     [
@@ -678,7 +679,7 @@ test("a lead-backed clause's 🔬 is recorded on its statement of law, and terms
   await seedClauses(g, id);
 
   const result = render(g, id);
-  const manifest = JSON.parse(readFileSync(join(dirname(docOf(result, "General_writing").path), "render-manifest.json"), "utf-8"));
+  const manifest = JSON.parse(readFileSync(join(g.draft, "Drafting records", `render-manifest-${id}.json`), "utf-8"));
   const scrutinize = manifest.inventory.filter((e) => e.marker === "🔬");
   assert.deepEqual(
     scrutinize.map((e) => [e.table, e.id, e.item]),

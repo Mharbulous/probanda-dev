@@ -37,7 +37,7 @@ import proceduralHistoryHtml from "../../templates/view-pages/procedural-history
 import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import { submissionDataQuery } from "../backend.js";
-import { mockupDir, readManifest } from "../render-manifest.js";
+import { readManifest } from "../render-manifest.js";
 import type { ViewPage, ViewPageContext } from "../view-pages.js";
 import type { InventoryEntry } from "./proposal-inventory.js";
 import { fetchParties } from "./query.js";
@@ -202,7 +202,7 @@ export function proceduralHistoryData(ctx: ViewPageContext): FactsPageData {
 
 function factsFor(ctx: Omit<ViewPageContext, "writings">): { evidence: FactsPageData["evidence"]; facts: (PageFact & { id: number })[] } {
   const { dbPath, filing, proceeding, now, revision } = ctx;
-  const manifest = readManifest(mockupDir(dbPath, filing.id));
+  const manifest = readManifest(dbPath, filing.id);
   // The inventory's silence on a link counts only when its render saw the link as it stands now.
   const inventory = manifest !== null && manifest.stamp.revision === revision ? manifest.inventory : null;
   const facts = factsInFilingOrder(dbPath, filing.id);

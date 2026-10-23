@@ -24,17 +24,15 @@ function localDate(days) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** Renders filing 1 on a freshly seeded database and returns the manifest the render wrote
- * beside the first advocacy document, as forms-render-memo-order.db.test.mjs reads it. */
+/** Renders filing 1 on a freshly seeded database and returns the inventory of the manifest the render
+ * wrote in the matter's `0. DRAFT/Drafting records`, as forms-render-memo-order.db.test.mjs reads it. */
 async function inventoryOf(seed) {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
     await seed(f.dbPath);
-    const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
-    const advocacy = result.documents.filter((d) => d.document_type !== "Work_board");
-    const baseDir = dirname(advocacy[0].path);
-    const manifest = JSON.parse(readFileSync(join(baseDir, "render-manifest.json"), "utf-8"));
+    submissionFormsRender(f.dbPath, 1, ASHBOURNE);
+    const manifest = JSON.parse(readFileSync(join(f.draft, "Drafting records", "render-manifest-1.json"), "utf-8"));
     return manifest.inventory;
   } finally {
     f.cleanup();
@@ -106,7 +104,7 @@ test("a rung fused to 🏅 still records primary-authority; a 🚧 line records 
     // 🚧 is an event (table 1b), so it does not hold back 🧐 (#912).
     assert.ok(lineOf(22).endsWith(`sources 🚧🧐 <!-- law_assertion_id 22 -->`), lineOf(22));
 
-    const manifest = JSON.parse(readFileSync(join(dirname(advocacy[0].path), "render-manifest.json"), "utf-8"));
+    const manifest = JSON.parse(readFileSync(join(dirname(dirname(advocacy[0].path)), "Drafting records", "render-manifest-1.json"), "utf-8"));
     const rungs = (id) => [
       ...new Set(manifest.inventory.filter((e) => e.generating !== false && e.table === "law_assertions" && e.id === id).map((e) => `${proposalKey(e)} ${e.marker}`)),
     ];

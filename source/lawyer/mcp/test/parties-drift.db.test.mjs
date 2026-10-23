@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import test, { after } from "node:test";
 
 // open_session starts the background render job (#589): keep its locks out of %LOCALAPPDATA%.
@@ -51,7 +51,7 @@ INSERT INTO proceeding_parties (proceeding_id, party_id, role) VALUES (1, 1, 'pl
 // A filed Notice of Withdrawal: the defendant's lawyer is gone and it is served at its own address.
 const NOWOL_CASE_SEED = CASE_SEED.replace("'Y. Counsel'", "NULL") + "UPDATE parties SET address = '9 Home Rd' WHERE party_id = 2;";
 
-/** <tmp>/L8470 Larchmont/coclerk.json -> <tmp>/0. CASE DATA/L8470 Larchmont/{submission,main}.sqlite */
+/** <tmp>/L8470 Larchmont/coclerk.json -> <tmp>/L8470 Larchmont/0. CASE DATA/{submission,main}.sqlite, beside its 0. DRAFT */
 async function matterFixture(t, { caseSeed = CASE_SEED, link = true, version } = {}) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-parties-drift-"));
   t.after(async () => {
@@ -59,8 +59,8 @@ async function matterFixture(t, { caseSeed = CASE_SEED, link = true, version } =
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L8470 Larchmont");
-  const caseDataDir = join(base, "0. CASE DATA", "L8470 Larchmont");
-  mkdirSync(matterRoot, { recursive: true });
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
+  mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
   writeFileSync(
     join(matterRoot, "coclerk.json"),
@@ -273,7 +273,8 @@ test("a sent filing stays fresh in bootstrap when case data changes after it was
 test("a manifest without parties_drift reads stale in bootstrap, as it misses in render", async (t) => {
   const m = await matterFixture(t);
   renderAt(m.dbPath);
-  const manifestFile = join(dirname(submissionFormsBootstrap(m.dbPath, CLIENT, PINNED).filings[0].paths[0]), "render-manifest.json");
+  const { filing_id } = submissionFormsBootstrap(m.dbPath, CLIENT, PINNED).filings[0];
+  const manifestFile = join(m.matterRoot, "0. DRAFT", "Drafting records", `render-manifest-${filing_id}.json`);
   const { parties_drift, ...older } = JSON.parse(readFileSync(manifestFile, "utf-8"));
   assert.equal(typeof parties_drift, "string");
   writeFileSync(manifestFile, JSON.stringify(older), "utf-8");

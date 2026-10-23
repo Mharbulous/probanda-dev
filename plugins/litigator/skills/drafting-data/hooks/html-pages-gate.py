@@ -3,9 +3,12 @@
 
 Hook event: PreToolUse. The plugin's Job Board, Litigation Strategy and view pages (and
 the older page names a render may still find) are human interfaces generated
-from the plugin's databases (`shared/html-pages.md`). A view page is named
-`<page name> - Job Board <id>.html`, or `<page name> - Job Board - proceeding <id>.html` on a
-merged pre-filing board (docs/ADRs/0010) (ADR 0033, 2026-10-07 amendment; before
+from the plugin's databases (`shared/html-pages.md`). A Writing's Job Board page is
+`Job Board.html` in the Writing's own folder, and its view pages `<page name>.html`
+beside it (spec 2026-10-22). A board with no Writing has its view pages at the draft
+folder's top as `<page name> - Job Board <id>.html`, or `<page name> - Job Board -
+proceeding <id>.html` on a merged pre-filing board (docs/ADRs/0010) (ADR 0033,
+2026-10-07 amendment; every view page's name until 2026-10-22, and before
 2026-10-09 `<page name> - filing <id>.html`, still recognised until the next
 page write trashes it), and only a page name listed in VIEW_NAMES counts, so
 each new view page adds its name there. An agent never views, reads,
@@ -24,8 +27,8 @@ So this gate refuses:
   device_request_folder_access, its path only, never its reason), except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
   `To Do List.html`), `Work Board.html` (the practice-wide page beside
-  practice.db), `Job Board <id>.html`,
-  `Job Board - proceeding <id>.html` or a listed view page's
+  practice.db), `Job Board.html`, `Job Board <id>.html`,
+  `Job Board - proceeding <id>.html` or a listed view page's `<page name>.html` or
   `<page name> - Job Board <id>.html`, case aside, or the same pages under their
   names before 2026-10-09 (`Job Board - filing <id>.html`,
   `<page name> - filing <id>.html`) (a remote-device-only host stages
@@ -37,7 +40,9 @@ So this gate refuses:
 
 Glob is never refused, and no other HTML file is. Exempt when COCLERK_HTML_DEV=1
 is in the environment: developing or debugging the generator in Claude Code
-(this repo's .claude/settings.json sets it).
+(this repo's .claude/settings.json sets it). The refusal names neither it nor any
+tool or skill file: a refusal is quoted to the practitioner verbatim
+(shared/internals-confidentiality.md).
 
 Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails OPEN on its own error, loudly on stderr, because its matcher
@@ -57,12 +62,13 @@ STEM = r"(?:job board|litigation strategy|to do list|work board|matter board|wor
 # before 2026-10-08, and "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011),
 # each kept so an old copy not yet moved to TRASH is still refused.
 VIEW_NAMES = ("procedural history", "material facts", "raw research", "arguments", "loose threads", "loose ideas", "provable facts")
-# A view page: a listed name, then " - job board <id>.html", or " - filing <id>.html", its name
-# before 2026-10-09, kept so an old copy not yet moved to TRASH is still recognised. A preview of a
-# page (#139) is the page's stem, then " preview <n>.html"; a board stem already matches STEM, so
-# only a view page's preview needs its own pattern here.
+# A view page: a listed name, then ".html" in a Writing's own folder, or " - job board <id>.html",
+# or " - filing <id>.html", its name before 2026-10-09, kept so an old copy not yet moved to TRASH is
+# still recognised. A preview of a page (#139) is the page's stem, then " preview <n>.html"; a board
+# stem already matches STEM, so only a view page's preview needs its own pattern here. The bare name
+# is not matched inside a longer word.
 VIEW_NAME = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r")"
-VIEW = VIEW_NAME + r" - (?:job board(?: - proceeding)?|filing) \d+(?: preview \d+)?\.html"
+VIEW = r"(?<![\w-])" + VIEW_NAME + r"(?: - (?:job board(?: - proceeding)?|filing) \d+)?(?: preview \d+)?\.html"
 PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
@@ -77,7 +83,9 @@ SAMPLE_PAGES = ("Job Board.html", "Job Board 1.html", "Job Board - filing 1.html
                 "Material Facts - Job Board 1 preview 1.html", "Provable Facts - Job Board 1 preview 1.html",
                 "Raw Research - Job Board 1 preview 1.html", "Arguments - Job Board 1 preview 1.html",
                 "Loose Threads - Job Board 1 preview 1.html", "Provable Facts - Job Board - proceeding 3.html",
-                "Procedural History - Job Board - proceeding 3.html", "Material Facts - Job Board - proceeding 3.html")
+                "Procedural History - Job Board - proceeding 3.html", "Material Facts - Job Board - proceeding 3.html",
+                "Procedural History.html", "Material Facts.html", "Raw Research.html", "Arguments.html", "Loose Threads.html",
+                "Job Board preview 1.html", "Arguments preview 1.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",
               "NotebookRead": "notebook_path", "NotebookEdit": "notebook_path"}
@@ -87,12 +95,12 @@ STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # A folder grant reads no page, so only its path is judged: a reason naming a page passes.
 FOLDER_TOOL = re.compile(r"mcp__(.+__)?device_request_folder_access")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
-# practice-wide Work Board beside practice.db, the
+# practice-wide Work Board beside practice.db, a Writing's Job Board page, the
 # id-named Job Board pages (and a Writing's before 2026-10-09, "job board - filing <id>"), the
 # listed view pages, and a preview of each current page (#139).
-STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|"
-                       + VIEW_NAME + r" - (?:job board(?: - proceeding)?|filing) \d+\.html|"
-                       r"(?:litigation strategy|work board|job board \d+|job board - proceeding \d+|" + VIEW_NAME + r" - job board(?: - proceeding)? \d+) preview \d+\.html")
+STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|job board\.html|job board \d+\.html|job board - (?:filing|proceeding) \d+\.html|"
+                       + VIEW_NAME + r"(?: - (?:job board(?: - proceeding)?|filing) \d+)?\.html|"
+                       r"(?:litigation strategy|work board|job board|job board \d+|job board - proceeding \d+|" + VIEW_NAME + r"(?: - job board(?: - proceeding)? \d+)?) preview \d+\.html")
 
 
 def basename(path):
@@ -162,17 +170,15 @@ def first_hit(texts):
 
 def message(name, shell):
     text = (
-        f'Refused (HTML pages principle, shared/html-pages.md): "{name}" is a Probanda plugin page, '
-        "a human interface generated from the plugin's databases. An agent never views, reads, greps, "
-        "parses, scripts over, authors or requests a screenshot; however, an agent may present "
-        "the html to a human user for them to view, staging it first where presenting needs that, and an agent may view screenshots provided by a "
-        "human user on the user's own initiative. Use the data instead: "
-        "drafting_forms__render naming Work_board returns board_summary; "
-        "drafting_forms__board_card returns what a card holds when opened; "
-        "drafting_forms__open_session returns the page paths and the filing list; /drafting-data's "
-        "query tools and the markdown mockups hold everything else. A change the practitioner wants "
-        "to a page goes to /lawyer:suggestion: never look for or edit the generator. Developing the generator in Claude "
-        "Code: set COCLERK_HTML_DEV=1 (this repo's .claude/settings.json sets it)."
+        f'Refused: "{name}" is a Probanda page, made for a person to view. An agent never views, '
+        "reads, greps, parses, scripts over, authors or requests a screenshot of it; however, an agent "
+        "may present the html to a human user for them to view, staging it first where presenting needs "
+        "that, and an agent may view screenshots provided by a human user on the user's own initiative. "
+        "Use the data instead, as the shared HTML-pages rule says: the board's summary from a render that "
+        "names the Job Board, what a card holds from the board-card tool, and the page paths and the list "
+        "of Writings from session entry. The drafting records and the markdown mockups hold everything "
+        "else. A change the practitioner wants to a page goes to /lawyer:suggestion: never look for or "
+        "edit what makes the page."
     )
     if shell:
         text += " Matched in the command text; a page reached another way is still off limits."

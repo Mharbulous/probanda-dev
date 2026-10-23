@@ -16,9 +16,10 @@ const TABLE_GLYPHS = new Set(SYMBOLS.map((s) => s.glyph));
 /** Every documentType the renderer names, read off its source where a document is rendered or stamped. */
 function rendererDocumentTypes() {
   const dir = new URL("../src/submission/", import.meta.url);
-  const files = [new URL("forms.ts", dir), ...readdirSync(new URL("forms/", dir)).filter((f) => f.endsWith(".ts")).map((f) => new URL(`forms/${f}`, dir))];
+  // writing-folder.ts holds GENERAL_DOCUMENT_TYPE, the general renderer's document type.
+  const files = [new URL("forms.ts", dir), new URL("writing-folder.ts", dir), ...readdirSync(new URL("forms/", dir)).filter((f) => f.endsWith(".ts")).map((f) => new URL(`forms/${f}`, dir))];
   const types = new Set();
-  const site = /(?:\.document\(|documentType: |frontmatterFor\((?:ctx, )?|renderDocument\(\s*ctx,\s*timings,\s*|document_type: )"([A-Z][A-Za-z_]*)"/g;
+  const site = /(?:\.document\(|documentType: |frontmatterFor\((?:ctx, )?|renderDocument\(\s*ctx,\s*timings,\s*|document_type: |_DOCUMENT_TYPE = )"([A-Z][A-Za-z_]*)"/g;
   for (const file of files) for (const m of readFileSync(file, "utf-8").matchAll(site)) types.add(m[1]);
   return types;
 }

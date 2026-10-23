@@ -39,13 +39,13 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
 
 ## Steps
 
-1. **Resolve the mockup folder.** It is the presentation folder `/draft`
-   section 9 resolves ("Resolving the presentation folder"). Read that
-   section for the mechanics; do not re-derive them here.
+1. **Resolve the Writing's folder.** It is the folder `/draft` renders the
+   filing's mockups into, named after the filing (`/draft` section 11, "The
+   Writing's folder"). Do not re-derive it here.
 
    The data folder is `<matter-data folder>\vaniac-submissions\<filing folder>\`,
-   the mockup folder's name without any leading `YYYY-MM-DD ` and without
-   the `SUB` code, the matter-data folder being the one `probanda.json`'s
+   the Writing folder's name without any leading `YYYY-MM-DD ` (and without
+   the `SUB ` an older build's folder still carries), the matter-data folder being the one `probanda.json`'s
    `case_data_dir` names (in Cowork, request access to that folder itself,
    never a parent or the firm root). It must hold `Package index.json`. If
    it doesn't but `Package\` already holds the rendered documents, the

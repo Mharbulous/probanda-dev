@@ -11,7 +11,7 @@
 // submissionDataExecute + submissionFormsRender).
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -96,7 +96,10 @@ const SETTLED_EXCERPT = "A passage counsel confirmed over the finding.";
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-scrutiny-settled-"));
-  return { dbPath: join(dir, "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  return { dbPath: join(matter, "0. CASE DATA", "submission.sqlite"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 async function seeded(f) {
@@ -122,11 +125,12 @@ function traced(md, trace) {
 /** Every generating key the render recorded, and every key the board proposes. */
 function keysOf(result) {
   const wa = doc(result, "Written_arguments");
-  const manifest = JSON.parse(readFileSync(join(dirname(wa.path), "render-manifest.json"), "utf-8"));
+  const draft = dirname(dirname(wa.path));
+  const manifest = JSON.parse(readFileSync(join(draft, "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8"));
   return {
     manifest,
     recorded: new Set(manifest.inventory.filter((e) => e.generating !== false).map(proposalKey)),
-    proposed: new Set(boardDataOf(join(dirname(dirname(dirname(wa.path))), "submission.sqlite"), result.filing_id, CLIENT).proposals.map((p) => p.key)),
+    proposed: new Set(boardDataOf(join(dirname(draft), "0. CASE DATA", "submission.sqlite"), result.filing_id, CLIENT).proposals.map((p) => p.key)),
   };
 }
 

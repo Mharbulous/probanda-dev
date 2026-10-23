@@ -97,10 +97,10 @@ test("the named document's response carries symbol_notes, on a fresh render and 
 
     const written = filesUnder(f.dir);
     const names = written.map((p) => p.slice(dirname(p).length + 1));
-    for (const expected of ["Written Arguments.md", "render-manifest.json"]) {
+    for (const expected of ["Written Arguments.md", "render-manifest-1.json"]) {
       assert.ok(names.filter((n) => n === expected).length >= 1, `expected ${expected} among the written files`);
     }
-    assert.equal(names.filter((n) => n === "Written Arguments.md").length, 2, "the canonical mockup and its presentation copy");
+    assert.equal(names.filter((n) => n === "Written Arguments.md").length, 1, "the mockup in the Writing's folder is the only copy");
     for (const path of written) {
       const text = readFileSync(path, "utf-8");
       for (const note of NOTES) assert.ok(!text.includes(note), `${path} holds a note written for the model`);

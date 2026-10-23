@@ -1,5 +1,5 @@
 // The matter's pages (#1365, ADR 0033's 2026-10-05 amendment): one Litigation Strategy.html and one Job Board
-// page per live filing and per pre-filing proceeding at the top of the matter's 0. DRAFT folder,
+// page per live filing (in its Writing's own folder) and per pre-filing proceeding in the matter's 0. DRAFT folder,
 // rewritten by rename-replace and only over a file carrying their marker;
 // the state sidecar board_changed and board_moves compare against, never a page; the old page files
 // moved into the matter's TRASH; and the lean render response with its short board_summary, and
@@ -20,7 +20,7 @@ import { runInNewContext } from "node:vm";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-matter-pages-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
-const { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedTickets, seedProposalCases, assertMatchesGolden, readBoardData, sectionOf, jobBoardPages, boardDataOf, ASHBOURNE, draftFolder } =
+const { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedTickets, seedProposalCases, assertMatchesGolden, readBoardData, boardDataOf, ASHBOURNE, draftFolder } =
   await import("./fixtures/forms-render-seeds.mjs");
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
@@ -37,13 +37,32 @@ const writes = await import("../build/tools/practice/writes.js");
 
 const FIRST = "2026-10-02 09:00";
 const SECOND = "2026-10-02 09:05";
-const OPENING_PAGE = "Job Board 1.html";
-const REPLY_PAGE = "Job Board 2.html";
+// A Writing's Job Board page is in its own folder (spec 2026-10-22 §9); a pre-filing proceeding's stays at the top.
+const OPENING_PAGE = join("Opening Submissions Package", "Job Board.html");
+const REPLY_PAGE = join("Reply Submissions Package", "Job Board.html");
 const PAGES = [OPENING_PAGE, "Litigation Strategy.html"];
 
 /** A mockup render of one filing with draft_dir, at a pinned minute. */
 function renderInto(f, filingId, draft, now, documents) {
   return submissionFormsRender(f.dbPath, filingId, ASHBOURNE, "mockup", documents, undefined, undefined, now, "tok", draft);
+}
+
+/** Every Job Board page in the draft folder, at its top or in a Writing's folder, relative to it, sorted. */
+function jobBoardPages(draft) {
+  return namesUnder(draft)
+    .map(String)
+    .filter((name) => /^Job Board( .*)?\.html$/.test(name.split(/[\\/]/).pop()))
+    .sort();
+}
+
+/** The section of the Job Board page whose one section is filing `filingId`'s. */
+function sectionOf(draft, filingId) {
+  const page = jobBoardPages(draft)
+    .map((name) => readBoardData(join(draft, name)))
+    .find((data) => data.sections[0]?.meta.filing_id === filingId);
+  assert.ok(page, `expected a Job Board page for filing ${filingId} in ${draft}`);
+  assert.equal(page.sections.length, 1, `filing ${filingId}'s Job Board page holds one section`);
+  return page.sections[0];
 }
 
 /** Every file name under `dir`, at any depth. */
@@ -62,7 +81,7 @@ test("two renders of one matter leave one Job Board page per live filing and one
     renderInto(f, 1, draft, FIRST);
     renderInto(f, 2, draft, SECOND);
 
-    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", "Arguments - Job Board 2.html", OPENING_PAGE, REPLY_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Loose Threads - Job Board 2.html", "Material Facts - Job Board 1.html", "Material Facts - Job Board 2.html", "Procedural History - Job Board 1.html", "Procedural History - Job Board 2.html", "Raw Research - Job Board 1.html", "Raw Research - Job Board 2.html", "SUB Opening Submissions Package", "SUB Reply Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Opening Submissions Package", "Reply Submissions Package"]);
     for (const [name, filingId] of [[OPENING_PAGE, 1], [REPLY_PAGE, 2]]) {
       const page = readBoardData(join(draft, name));
       assert.equal(page.meta.rendered, SECOND, `the later render's ${name}`);
@@ -70,10 +89,11 @@ test("two renders of one matter leave one Job Board page per live filing and one
     }
     assert.match(readFileSync(join(draft, "Litigation Strategy.html"), "utf-8"), new RegExp(`"rendered":"${SECOND}"`));
     assert.deepEqual(namesUnder(draft).filter((name) => /\.tmp$|-\d+\.html$/.test(name)), [], "no temp file and no numbered copy");
-    for (const leaf of ["SUB Opening Submissions Package", "SUB Reply Submissions Package"]) {
-      assert.equal(readdirSync(join(draft, leaf)).some((name) => name.endsWith(".html")), false, `no board in the presentation folder ${leaf}`);
+    for (const leaf of ["Opening Submissions Package", "Reply Submissions Package"]) {
+      const pages = readdirSync(join(draft, leaf)).filter((name) => name.endsWith(".html")).sort();
+      assert.deepEqual(pages, ["Job Board.html", ...VIEW_PAGES.map((p) => `${p.name}.html`)].sort(), `the board and its view pages in the Writing's folder ${leaf}`);
     }
-    assert.equal(readdirSync(join(dirname(f.dbPath), "mockups", "Filing 1")).some((name) => name.endsWith(".html")), false, "no board beside the database");
+    assert.equal(readdirSync(dirname(f.dbPath)).some((name) => /mockups|\.html$/.test(name)), false, "no board beside the database");
   } finally {
     f.cleanup();
   }
@@ -106,7 +126,7 @@ test("two live filings in one proceeding get a Job Board page each, each with on
     assert.equal(sectionOf(draft, 2).meta.filing_id, 2);
     const board = result.documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.path, join(draft, OPENING_PAGE), "the render returns its own filing's page");
-    assert.equal(board.file_name, OPENING_PAGE);
+    assert.equal(board.file_name, "Job Board.html");
   } finally {
     f.cleanup();
   }
@@ -134,7 +154,7 @@ test("a matter with one live filing has that filing's Job Board page, the Litiga
 
     renderInto(f, 1, draft, FIRST);
 
-    assert.deepEqual(readdirSync(draft), ["Arguments - Job Board 1.html", OPENING_PAGE, "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Opening Submissions Package"]);
     const { meta: pageMeta, ...page } = sectionOf(draft, 1);
     const { meta: builtMeta, ...built } = boardDataOf(f.dbPath, 1, ASHBOURNE, SECOND);
     assert.deepEqual(page, built);
@@ -172,7 +192,10 @@ test("a retired filing's Job Board page goes to TRASH", async (t) => {
   await submissionDataExecute(m.dbPath, "UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 2;");
   const retired = render(SECOND);
   assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
-  assert.deepEqual(retired.moved_to_trash.map((x) => x.from.toLowerCase()), [join(m.draft, "Arguments - Job Board 2.html").toLowerCase(), join(m.draft, REPLY_PAGE).toLowerCase(), join(m.draft, "Loose Threads - Job Board 2.html").toLowerCase(), join(m.draft, "Material Facts - Job Board 2.html").toLowerCase(), join(m.draft, "Procedural History - Job Board 2.html").toLowerCase(), join(m.draft, "Raw Research - Job Board 2.html").toLowerCase()]);
+  assert.deepEqual(
+    retired.moved_to_trash.map((x) => x.from.toLowerCase()),
+    ["Arguments", "Job Board", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+  );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
 
@@ -186,6 +209,7 @@ test("a file without the page marker at another filing's or proceeding's page na
     await submissionDataExecute(m.dbPath, seed);
     const own = "<p>the practitioner's own page</p>\n";
     const page = join(m.draft, other);
+    mkdirSync(dirname(page), { recursive: true });
     writeFileSync(page, own, "utf-8");
 
     assert.throws(
@@ -195,7 +219,9 @@ test("a file without the page marker at another filing's or proceeding's page na
     );
 
     assert.equal(readFileSync(page, "utf-8"), own, `${other}: the practitioner's file is untouched`);
-    assert.deepEqual(readdirSync(m.draft), [other], `${other}: no page, no Litigation Strategy, no presentation copy, no temp file`);
+    // Filing 1's mockups are written before the page write refuses, as every refusal leaves them.
+    const html = namesUnder(m.draft).map(String).filter((name) => /\.html$|\.tmp$/.test(name));
+    assert.deepEqual(html, [other], `${other}: no page, no Litigation Strategy, no view page, no temp file`);
   }
 });
 
@@ -208,7 +234,7 @@ test("a pre-filing proceeding has a Job Board page of its own until it gains a f
   const board = submissionFormsRenderProceedingBoard(m.dbPath, 1, ASHBOURNE, FIRST, "tok", m.draft);
   assert.equal(board.job_board_path, join(m.draft, proceedingPage));
   assert.deepEqual(board.job_board_paths, [{ filing_id: null, proceeding_id: 1, path: join(m.draft, proceedingPage) }]);
-  assert.deepEqual(readdirSync(m.draft), [proceedingPage, "Litigation Strategy.html"]);
+  assert.deepEqual(readdirSync(m.draft), ["Drafting records", proceedingPage, "Litigation Strategy.html"]);
   assert.deepEqual(readBoardData(join(m.draft, proceedingPage)).sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[null, 1]]);
 
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');");
@@ -225,6 +251,7 @@ test("a Job Board page without the page's marker refuses the render before any p
     const { draft } = draftFolder(f);
     const own = "<p>the practitioner's own page</p>\n";
     const page = join(draft, OPENING_PAGE);
+    mkdirSync(dirname(page), { recursive: true });
     writeFileSync(page, own, "utf-8");
 
     assert.throws(
@@ -233,14 +260,14 @@ test("a Job Board page without the page's marker refuses the render before any p
     );
 
     assert.equal(readFileSync(page, "utf-8"), own, "the practitioner's file is untouched");
-    assert.deepEqual(readdirSync(draft), [OPENING_PAGE], "no Litigation Strategy, no presentation copy, no temp file");
-    assert.ok(readdirSync(join(dirname(f.dbPath), "mockups", "Filing 1")).includes("render-manifest.json"), "the canonical mockups are written, as every refusal leaves them");
+    assert.deepEqual(namesUnder(draft).map(String).filter((name) => /\.html$|\.tmp$/.test(name)), [OPENING_PAGE], "no Litigation Strategy, no view page, no temp file");
+    assert.ok(existsSync(join(draft, "Drafting records", "render-manifest-1.json")), "the mockups are written, as every refusal leaves them");
   } finally {
     f.cleanup();
   }
 });
 
-// The open_session fixture: <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/0. CASE DATA/L9999 Test Matter/submission.sqlite.
+// The open_session fixture: <tmp>/L9999 Test Matter/coclerk.json -> <tmp>/L9999 Test Matter/0. CASE DATA/submission.sqlite, beside its 0. DRAFT.
 function matterFixture(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-matter-pages-"));
   t.after(async () => {
@@ -248,10 +275,10 @@ function matterFixture(t) {
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L9999 Test Matter");
-  const caseDataDir = join(base, "0. CASE DATA", "L9999 Test Matter");
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
-  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: caseDataDir, evidence_sql_path: "x.sql" }), "utf-8");
+  writeFileSync(join(matterRoot, "coclerk.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: "0. CASE DATA", evidence_sql_path: "x.sql" }), "utf-8");
   return { matterRoot, caseDataDir, draft: join(matterRoot, "0. DRAFT"), dbPath: join(caseDataDir, "submission.sqlite") };
 }
 
@@ -294,7 +321,7 @@ test("session entry and render report board_changed against the state sidecar, w
   const firstBoard = boardOf(await render(first));
   assert.equal(firstBoard.board_changed, false, "the opening recorded the section");
   assert.deepEqual(firstBoard.board_moves, []);
-  const state = JSON.parse(readFileSync(join(dirname(m.dbPath), "mockups", "matter-pages-state.json"), "utf-8"));
+  const state = JSON.parse(readFileSync(join(m.draft, "Drafting records", "matter-pages-state.json"), "utf-8"));
   assert.deepEqual(Object.keys(state.sections), ["filing:1"]);
   assert.ok(Array.isArray(state.todos.rows), "the to-dos open_session read are recorded");
 
@@ -372,7 +399,7 @@ test("a release another session renders between two of this session's renders st
   assert.equal(yAgain.board_changed, true);
   assert.deepEqual(yAgain.board_moves, [{ id: 1, title: "Settle the opening", from: "wip", to: "ready" }]);
 
-  const state = JSON.parse(readFileSync(join(dirname(m.dbPath), "mockups", "matter-pages-state.json"), "utf-8"));
+  const state = JSON.parse(readFileSync(join(m.draft, "Drafting records", "matter-pages-state.json"), "utf-8"));
   assert.deepEqual(Object.keys(state.sections), ["filing:1"]);
   assert.deepEqual(Object.keys(state.sessions).sort(), [x.session_token, y.session_token].sort());
 });
@@ -493,7 +520,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
       review_flag,
     });
   }
-  const jobBoard = join(m.draft, "Job Board 1.html");
+  const jobBoard = join(m.draft, "Notice of Application", "Job Board.html");
   const onPage = (when) => {
     const page = readFileSync(jobBoard, "utf-8");
     for (const date of DATES) assert.ok(page.includes(date), `${when}: ${date} is on the Job Board`);
@@ -540,7 +567,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   assert.equal(alias.card, card.card, "goal is the criteria lane's former name");
 
   absent(readFileSync(join(m.draft, "Litigation Strategy.html"), "utf-8"), "the Litigation Strategy");
-  absent(readFileSync(join(dirname(m.dbPath), "mockups", "matter-pages-state.json"), "utf-8"), "matter-pages-state.json");
+  absent(readFileSync(join(m.draft, "Drafting records", "matter-pages-state.json"), "utf-8"), "matter-pages-state.json");
 
   const { header, main } = drawPage(jobBoard);
   const rowOf = (className) => header.children.find((n) => n.className === className);
@@ -623,11 +650,12 @@ test("a filing's Job Board page draws its Writings in the render's order between
   const { draft } = draftFolder(f);
   renderInto(f, 1, draft, FIRST);
 
-  const { mockupDir, readManifest } = await import("../build/submission/render-manifest.js");
+  const { readManifest } = await import("../build/submission/render-manifest.js");
   const stem = (name) => name.replace(/\.[^.]+$/, "");
-  const expected = readManifest(mockupDir(f.dbPath, 1)).files.map((file) => file.label ?? { short: stem(file.file_name), long: stem(file.file_name) });
+  const expected = readManifest(f.dbPath, 1).files.map((file) => file.label ?? { short: stem(file.file_name), long: stem(file.file_name) });
   assert.ok(expected.length > 0, "the render's manifest lists its Writings");
-  const { main } = drawPage(join(draft, OPENING_PAGE));
+  const noticePage = join(draft, "Notice of Application", "Job Board.html");
+  const { main } = drawPage(noticePage);
   const nodes = main.all();
   const strip = nodes.find((n) => n.tag === "ol" && n.className === "writings");
   assert.ok(strip, "the page draws the Writings strip");
@@ -648,7 +676,7 @@ test("a filing's Job Board page draws its Writings in the render's order between
   assert.ok(goal >= 0 && goal < nodes.indexOf(strip) && nodes.indexOf(strip) < ready, "the strip sits after the Goal card and before Ready");
 
   const file = join(draft, "no-writings.html");
-  writeFileSync(file, renderWorkBoardHtml({ ...readBoardData(join(draft, OPENING_PAGE)), strip: undefined }), "utf-8");
+  writeFileSync(file, renderWorkBoardHtml({ ...readBoardData(noticePage), strip: undefined }), "utf-8");
   assert.equal(drawPage(file).main.all().some((n) => n.className === "writings"), false, "no strip key draws no strip");
 });
 
@@ -659,7 +687,7 @@ test("a malformed state sidecar reads as no section recorded", async () => {
     await seedVaniacProceeding(f.dbPath);
     const { draft } = draftFolder(f);
     renderInto(f, 1, draft, FIRST);
-    writeFileSync(join(dirname(f.dbPath), "mockups", "matter-pages-state.json"), "{ not json", "utf-8");
+    writeFileSync(join(draft, "Drafting records", "matter-pages-state.json"), "{ not json", "utf-8");
 
     const board = renderInto(f, 1, draft, SECOND, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.board_changed, true);
@@ -1049,7 +1077,7 @@ test("board_card is listed read-only, and a call through the dispatcher writes n
     assert.deepEqual(tool.annotations, { readOnlyHint: true, openWorldHint: false });
 
     const snapshot = () =>
-      [draft, join(dirname(f.dbPath), "mockups")].flatMap((dir) =>
+      [draft].flatMap((dir) =>
         namesUnder(dir).map((name) => {
           const file = join(dir, name);
           const stat = statSync(file);
@@ -1061,7 +1089,7 @@ test("board_card is listed read-only, and a call through the dispatcher writes n
     const result = await callTool(context, "drafting_forms__board_card", { db_path: f.dbPath, filing_id: 1, jobs: [4], lanes: ["completed"], key: "x" });
 
     assert.ok(result.card.startsWith("- Job #4 Rebuild the evidence index · In Progress 1/2\n"), result.card);
-    assert.deepEqual(snapshot(), before, "no file under the draft folder or the mockups, matter-pages-state.json included, changed");
+    assert.deepEqual(snapshot(), before, "no file under the draft folder, the mockups and matter-pages-state.json included, changed");
     assert.equal(result.revision, revision);
     assert.equal(fetchRevision(f.dbPath), revision, "the revision did not move");
   } finally {

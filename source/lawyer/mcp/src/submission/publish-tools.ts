@@ -95,11 +95,12 @@ const SOURCES = new Set(["Written Arguments.md", "Evidence Index.md"]);
 /** publish-vaniac-package step 6: what the binder takes by name, PDFs included. */
 const PREVIOUS_SET = /^(Index\.docx$|Written Argument of the |Witness Statement of )/i;
 
-/** publish-vaniac-package step 3: the mockup folder's name without any leading date and the SUB code. */
+/** publish-vaniac-package step 3: the Writing's folder's name without any leading date, and without the
+ * `SUB ` code an older build's folder still carries until it is renamed (writing-folder.ts). */
 function vaniacFilingFolder(writingFolder: string): string {
-  const match = /^(?:\d{4}-\d{2}-\d{2} )?SUB (.+)$/.exec(writingFolder);
+  const match = /^(?:\d{4}-\d{2}-\d{2} )?(?:SUB )?(.+)$/.exec(writingFolder);
   if (!match) {
-    throw new ValidationError(`writing_folder must be the filing's mockup folder, "SUB <filing folder>" with or without a leading YYYY-MM-DD: ${writingFolder}`);
+    throw new ValidationError(`writing_folder must be the filing's own folder, named after it, with or without a leading YYYY-MM-DD: ${writingFolder}`);
   }
   assertSegment(match[1], "writing_folder's filing folder");
   return match[1];

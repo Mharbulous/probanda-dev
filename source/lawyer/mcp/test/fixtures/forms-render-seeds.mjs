@@ -21,10 +21,15 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = HERE;
 const REGENERATE = process.env.COCLERK_REGENERATE_GOLDEN === "1";
 
+/** A matter folder in a scratch dir, laid out as ADR 0013 lays one out: the database in the matter's own
+ * `0. CASE DATA`, beside its `0. DRAFT`, which holds every Writing's own folder (spec 2026-10-22). */
 export function seededDbFixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-forms-"));
-  const dbPath = join(dir, "submission.sqlite");
-  return { dir, dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  const matter = join(dir, "L4801 Matter");
+  mkdirSync(join(matter, "0. CASE DATA"), { recursive: true });
+  mkdirSync(join(matter, "0. DRAFT"));
+  const dbPath = join(matter, "0. CASE DATA", "submission.sqlite");
+  return { dir, dbPath, draft: join(matter, "0. DRAFT"), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 // Each seed below links its parties (case_party_id) and writes the case data beside the database,
@@ -868,10 +873,11 @@ export function readBoardData(file) {
 // tool-result cap. `documents` then names which documents also come back inline.
 export const ASHBOURNE = { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" };
 
+/** The matter's 0. DRAFT folder and the VanIAC seed's Writing's own folder in it. */
 export function draftFolder(f) {
   const draft = join(f.dir, "L4801 Matter", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
-  return { draft, leaf: join(draft, "SUB Opening Submissions Package") };
+  return { draft, leaf: join(draft, "Opening Submissions Package") };
 }
 
 // The "Rendered:" frontmatter line and any bench-line date carry the real

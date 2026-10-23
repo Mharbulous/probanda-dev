@@ -64,15 +64,21 @@ async function drafted(t, { fixture = { front: null, block: VETTED_LETTER }, bod
   return { g, id };
 }
 
-/** Every file in a letter's mockup folder, by name, as base64 bytes: none when the folder does not exist. */
+/** A Writing's render manifest, in the matter's `0. DRAFT\Drafting records\`. */
+const manifestPath = (g, id) => join(g.draft, "Drafting records", `render-manifest-${id}.json`);
+
+/** A letter's render manifest and every file in its Writing folder, by name, as base64 bytes: none when it has no manifest. */
 function mockupFiles(g, id) {
-  const dir = join(dirname(g.dbPath), "mockups", `Filing ${id}`);
-  return existsSync(dir) ? Object.fromEntries(readdirSync(dir).map((name) => [name, readFileSync(join(dir, name)).toString("base64")])) : {};
+  const manifest = manifestPath(g, id);
+  if (!existsSync(manifest)) return {};
+  const dir = join(g.draft, JSON.parse(readFileSync(manifest, "utf-8")).folder);
+  const files = readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile());
+  return Object.fromEntries([["render-manifest.json", manifest], ...files.map((e) => [e.name, join(dir, e.name)])].map(([name, path]) => [name, readFileSync(path).toString("base64")]));
 }
 
 /** Replaces the inventory the latest render's manifest recorded, as a render printing those markers would. */
 function setInventory(g, id, inventory) {
-  const manifest = join(dirname(g.dbPath), "mockups", `Filing ${id}`, "render-manifest.json");
+  const manifest = manifestPath(g, id);
   writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory }), "utf-8");
 }
 
@@ -135,7 +141,8 @@ test("an inventory older than the revision is refused as render first, and the S
   const { filing_id: unrendered } = await g.createLetter({ title: "Never rendered" });
   await g.prose(unrendered, "body", BODY);
   await assert.rejects(send(g, unrendered), code("render_first", /no render of filing/));
-  assert.deepEqual(mockupFiles(g, unrendered), {}, "no mockup and no render manifest were written");
+  assert.deepEqual(mockupFiles(g, unrendered), {}, "no render manifest was written");
+  assert.equal(existsSync(join(g.draft, "Never rendered")), false, "no mockup was written");
 });
 
 test("a Writing whose stored layout cites a learned item records a render inventory, so the hold reads it and the Sent write succeeds", async (t) => {
@@ -259,7 +266,7 @@ test("a party row another recorder wrote between the read and the write is refus
 
 test("the Sent write records the party rows from case data, and a later matter-data change leaves them as sent", async (t) => {
   const { g, id } = await drafted(t);
-  updateCaseData(g.f.scratch, "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Y. Counsel', lawyer_email = 'y@counsel.test', address = '2 Y St' WHERE party_id = 2;");
   await g.prose(id, "sender", "Fixture Law LLP");
   const toLine = "To: Y. Counsel — counsel for Bert Other (y@counsel.test | 2 Y St)";
   assert.ok(letterOf(render(g, id)).includes(toLine), "the drafting letter prints case data's counsel");
@@ -269,7 +276,7 @@ test("the Sent write records the party rows from case data, and a later matter-d
     [2, "Bert Other", "Respondent", "Y. Counsel", "y@counsel.test", "2 Y St"],
   ];
   assert.deepEqual(printed(g, id), sent);
-  updateCaseData(g.f.scratch, "UPDATE parties SET lawyer_name = 'Z. Counsel', lawyer_email = NULL WHERE party_id = 2;");
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Z. Counsel', lawyer_email = NULL WHERE party_id = 2;");
   assert.ok(letterOf(render(g, id)).includes(toLine), "the sent letter prints the counsel it was sent with");
   assert.ok(letterOf(render(g, id, "filed")).includes(toLine));
   assert.deepEqual(printed(g, id), sent);
@@ -586,7 +593,7 @@ async function draftedMemo(t) {
        VALUES (1, ${id}, 'Deliver', 'Circulate this memo or put it on file, and record it as sent.', 'work', 0, 'L0000|limitation analysis', '2026-09-25T09:00');`
   );
   render(g, id);
-  const manifest = join(dirname(g.dbPath), "mockups", `Filing ${id}`, "render-manifest.json");
+  const manifest = manifestPath(g, id);
   const setMemoInventory = (inventory) =>
     writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory }), "utf-8");
   return { g, id, setMemoInventory };
@@ -641,7 +648,7 @@ INSERT INTO filing_clauses (filing_id, clause_id, ordinal, wording_override) VAL
 `);
   if (body !== null) await g.prose(id, "body", body);
   render(g, id);
-  const manifest = join(dirname(g.dbPath), "mockups", `Filing ${id}`, "render-manifest.json");
+  const manifest = manifestPath(g, id);
   writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory: [] }), "utf-8");
   return { g, id };
 }

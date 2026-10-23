@@ -65,7 +65,7 @@ const CLIENT = { clientName: "Held Client Ltd.", clientNo: "C-9999", matterNo: "
 
 const schemaVersion = (dbPath) => Number(submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows[0].value);
 
-/** <tmp>/L9999 Held Matter/coclerk.json -> <tmp>/0. CASE DATA/L9999 Held Matter/{submission,main}.sqlite, held at v42. */
+/** <tmp>/L9999 Held Matter/coclerk.json -> <tmp>/L9999 Held Matter/0. CASE DATA/{submission,main}.sqlite, held at v42. */
 async function heldMatter(t) {
   const base = mkdtempSync(join(tmpdir(), "coclerk-held-v42-"));
   t.after(async () => {
@@ -73,7 +73,7 @@ async function heldMatter(t) {
     rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   });
   const matterRoot = join(base, "L9999 Held Matter");
-  const caseDataDir = join(base, "0. CASE DATA", "L9999 Held Matter");
+  const caseDataDir = join(matterRoot, "0. CASE DATA");
   mkdirSync(join(matterRoot, "0. DRAFT"), { recursive: true });
   mkdirSync(caseDataDir, { recursive: true });
   writeFileSync(
