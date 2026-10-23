@@ -15712,6 +15712,7 @@ async function pushRulePeriods(client, args) {
   const results = await client.rpc("rule_periods_push", { p_records: prepared, p_contributor: contributor });
   return { contributor, results };
 }
+var FIND_REPLY_FIELDS = ["rule_period_id", "contributed_at", "record", "retired_at", "retire_reason", "shipped_version"];
 async function findRulePeriods(client, args) {
   const rows = await client.rpc("rule_periods_find", {
     p_jurisdiction: String(args.jurisdiction),
@@ -15720,16 +15721,9 @@ async function findRulePeriods(client, args) {
     p_rule_ref: args.rule_ref ?? null,
     p_deadline_type: args.deadline_type ?? null
   });
-  const me = await contributorId();
-  return (rows ?? []).map((row) => ({ ...row, mine: row.contributor === me }));
-}
-async function recordRulePeriodVerification(client, args) {
-  return client.rpc("rule_periods_record_verification", {
-    p_id: String(args.id),
-    p_verifier: await contributorId(),
-    p_quote_matched: args.quote_matched,
-    p_source_fetched_at: String(args.source_fetched_at)
-  });
+  return (rows ?? []).map(
+    (row) => Object.fromEntries(FIND_REPLY_FIELDS.map((field) => [field, row[field] ?? null]))
+  );
 }
 async function retireRulePeriod(client, args) {
   return client.rpc("rule_periods_retire", {
@@ -15780,8 +15774,6 @@ function callLegalCommonsTool(client, name, args) {
       return pushRulePeriods(client, args);
     case "legal_commons__rule_period_find":
       return findRulePeriods(client, args);
-    case "legal_commons__rule_period_record_verification":
-      return recordRulePeriodVerification(client, args);
     case "legal_commons__rule_period_retire":
       return retireRulePeriod(client, args);
     case "legal_commons__configure_status":
@@ -16290,7 +16282,7 @@ function legalCommonsToolDefinitions() {
     },
     {
       name: legalCommonsPrefixed("rule_period_find"),
-      description: 'Find pooled court-rule records for one enactment (by its citation, e.g. "B.C. Reg. 168/2009"), optionally narrowed by amending regulation, rule_ref or deadline_type. Each row carries its status (proposed, corroborated, disputed or retired), its record, its verifications, and `mine` when this install contributed it. Rows from different contributors for one key are all returned; the pool never picks one.',
+      description: 'Find pooled court-rule records for one enactment (by its citation, e.g. "B.C. Reg. 168/2009"), optionally narrowed by amending regulation, rule_ref or deadline_type. Returns one current row per rule period (jurisdiction, enactment, rule_ref, deadline_type, effective_from): the latest live row, else the latest retired one. Each row carries its pool id, contributed_at, record and, when retired, retired_at, retire_reason and shipped_version.',
       inputSchema: objectSchema([
         { name: "jurisdiction", type: "str" },
         { name: "enactment", type: "str" },
@@ -16299,15 +16291,6 @@ function legalCommonsToolDefinitions() {
         { name: "deadline_type", type: "str" }
       ], ["jurisdiction", "enactment"]),
       annotations: { readOnlyHint: true }
-    },
-    {
-      name: legalCommonsPrefixed("rule_period_record_verification"),
-      description: "Record this install's live re-check of one pooled court-rule record against its primary source: whether its verbatim quote was found, and when the source was fetched. A matched check from an install other than the contributor's makes the row corroborated. A later check by the same install replaces its earlier one.",
-      inputSchema: objectSchema([
-        { name: "id", type: "str" },
-        { name: "quote_matched", type: "bool" },
-        { name: "source_fetched_at", type: "str" }
-      ], ["id", "quote_matched", "source_fetched_at"])
     },
     {
       name: legalCommonsPrefixed("rule_period_retire"),
