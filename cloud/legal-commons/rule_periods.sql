@@ -31,7 +31,9 @@
 -- exception. So those three functions exist, are in PostgREST's schema cache,
 -- and service_role can execute them and select from `rule_period`.
 -- `rule_periods_record_verification` and its `rule_period_verification` table
--- are no longer in this file: migrations/0003 drops them (#119).
+-- are no longer in this file: migrations/0003 drops them (#119). It was applied
+-- through the SQL editor on 2026-10-23; afterwards `rule_periods_find` answered
+-- [] for a synthetic enactment and for CA-BC / B.C. Reg. 168/2009.
 -- NOT CHECKED: `rule_periods_push`; the insert/update grants on both tables
 -- (each probe raises before its write); the two indexes; RLS. Live `prosrc`
 -- was not diffed against this file, unlike functions.sql's 2026-09-13 block.
