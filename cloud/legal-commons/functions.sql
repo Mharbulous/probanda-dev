@@ -36,14 +36,18 @@
 -- =============================================================================
 
 -- =============================================================================
--- NOTE-UP DATE RETIRED (2026-10-23, #118) — NOT YET DEPLOYED
+-- NOTE-UP DATE RETIRED (2026-10-23, #118) — DEPLOYED 2026-10-23
 -- =============================================================================
 -- `push_principle` and `record_treatment` below no longer write
 -- `authority.last_verified_at`, and the column is dropped. The pool keeps no
--- note-up date (lawyer-only-access plan §7 rules 3 and 8). Deploy with
+-- note-up date (lawyer-only-access plan §7 rules 3 and 8). Brahm applied
 -- migrations/0002_retire_note_up_date.sql, which carries both functions as
--- written here. Until it runs, the deployed pool still has the column and the
--- 2026-09-13 bodies recorded above.
+-- written here, through the SQL editor on 2026-10-23. Its pre-checks passed (the
+-- live bodies matched the 2026-09-13 md5s above, and no other function used the
+-- column), and afterwards `authority` had no `last_verified_at` column. The drop
+-- and both replacements ran in one transaction, so the live `prosrc` md5s are
+-- abdbe94d1e0b754068c90e1ff2cb0dfd (`push_principle`) and
+-- e15c870936666d190fbd3bed3bc3aee4 (`record_treatment`), computed from this file.
 -- =============================================================================
 
 -- =============================================================================

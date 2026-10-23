@@ -92,8 +92,8 @@ create table if not exists legal_commons.principle_redirects (
 -- -----------------------------------------------------------------------------
 -- authority — a public legal source (case/statute/rule) by public citation.
 -- NO file_path / file_hash (matter pointers; severed). url is the public link.
--- No note-up date (#118). The deployed pool keeps `last_verified_at` until
--- migrations/0002_retire_note_up_date.sql runs.
+-- No note-up date: migrations/0002_retire_note_up_date.sql dropped
+-- `last_verified_at` from the deployed pool on 2026-10-23 (#118).
 -- -----------------------------------------------------------------------------
 create table if not exists legal_commons.authority (
   authority_id      uuid primary key default gen_random_uuid(),
