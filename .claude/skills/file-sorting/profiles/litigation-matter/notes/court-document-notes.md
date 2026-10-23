@@ -11,8 +11,8 @@ discovery folder). Look up definitions in `code-registry.md`.
 
 ## Judgment calls
 
-- **Date rules:** use the **signed** date for an unfiled document; the
-  **court-stamp** date for a filed one.
+- **Date rules:** as `/file-naming`'s general conventions ("Date") set
+  them. A filed document takes the **court-stamp** date.
 - **Status markers:** add trailing `FILED` / `UNFILED` / `signed` where it
   distinguishes versions of the same document.
 - **`EFS` attribution:** name an `EFS` for the deponent of the document it

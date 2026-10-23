@@ -29,8 +29,12 @@ documents).
 
 ## Date
 
-- The date of a document is the date it was **created or last modified**.
-- The date of an **unfiled** court document is the date it was **signed**.
+- The date of a document is the date it was **created**, unless it was
+  **signed** on a different day. Then it is the date of the **most recent
+  signature**. Each stage of execution (draft, final unsigned, signed by some,
+  fully signed) is a distinct document, so each takes its own date. Example: a
+  notice created on 2026-10-20 and signed on 2026-10-22 is
+  `2026-10-20 … UNFILED` unsigned and `2026-10-22 … signed` once signed.
 - The date of a **filed** court document is the date of the **court stamp**.
 - Use zeroes where part of the date is unknown:
   - `0000-03-01` = March 1, year unknown
@@ -148,8 +152,8 @@ Later copies take ` v2`, ` v3`…, never `(v2)`. A non-court PDF for signature e
 ## FILED / UNFILED / signed
 
 For court documents, a trailing marker records status — filed with the court,
-unfiled, or signed-but-unfiled. Combine with the date rule above (signed date
-for unfiled, court-stamp date for filed).
+unfiled, or signed-but-unfiled. Combine with the date rule above (court-stamp
+date for filed, otherwise the creation or most recent signature date).
 
 ---
 
