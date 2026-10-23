@@ -46,3 +46,15 @@ None.
 
 ## 10. Verify before building
 Confirm where the general renderer builds the To lines and how a party-linked row resolves counsel from case data.
+
+## 11. Verification against the repo
+
+Paths are repo paths: the installed `litigator/skills/<x>` is `.claude/skills/<x>`, and the data server's source is `source/lawyer/mcp/src`.
+
+| Claim | Finding (file:line) | Result |
+|---|---|---|
+| The general renderer builds the To lines | `source/lawyer/mcp/src/submission/forms/render-general.ts:221-229` reads the recipients and prints one `To:`/`cc:` line per row through `recipientEntry` (:106) and `recipientLine` (:98); bcc lines at :254 go only to the header's "Blind copies". No other renderer prints recipient lines. | confirmed |
+| A party-linked row resolves counsel from case data | `source/lawyer/mcp/src/submission/forms/query.ts:321-359` (`fetchFilingRecipients`): a row with `party_id` takes name = the party's `counsel_name`, else the party's own name, email = `counsel_email`, address = `address_for_service` (:349). The party rows come from `forms.ts:340-341`: `draftingParties` (`submission/parties-drift.ts:74`, read live through `case/parties-of-record.ts`, which maps matter-data `lawyer_name`/`lawyer_email` to `counsel_name`/`counsel_email` in `.claude/skills/matter-data/references/scripts/parties_of_record.py:45,47`) while drafting, `fetchSentParties` (`query.ts:266`, `parties_snapshot`) once sent. | confirmed |
+| A sent draft renders from its snapshot | `query.ts:323-326`: a Writing with `filed_on` reads `recipients_snapshot` instead of `recipients`, and its party rows from `parties_snapshot`. So a dedupe applied after `fetchFilingRecipients` covers both. | confirmed |
+| Rule text: "one `To:` line per `'to'` row" in filing-checklists.md §13 "Service list" | `.claude/skills/drafting-data/references/filing-checklists.md:454` (§13, "Service list" at :450). No `/draft` rules-map node covers recipients (`.claude/skills/draft/rules/nodes/` has no match), so the rule is changed here. | confirmed |
+| Spec B "calls this code" | write_email (`source/lawyer/mcp/src/submission/draft-harness.ts`, `.claude/skills/draft/scripts/write_eml.py`) takes typed address strings today and resolves no recipients, so the renderer is the only place recipients resolve to addresses now. The dedupe is exported for Spec B to call. | confirmed |
