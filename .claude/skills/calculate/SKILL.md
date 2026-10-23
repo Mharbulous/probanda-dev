@@ -24,6 +24,10 @@ this front door's own folder, not to the subskill's folder.
 
 ## Routing
 
+0. A deadline, limitation date or hearing date is never a figure here. Spawn
+   `lawyer:docket-clerk` for it (`shared/deadline-isolation.md`, "Calling docket-clerk"), and
+   follow the session note on a Probanda agent missing from your Agent tool's list. Never work
+   the date out yourself.
 1. If the first word of the request is a subskill's folder name, that is the subskill.
    Pass the remaining words to it unchanged.
 2. Otherwise read only each subskill's frontmatter and description, and choose exactly
