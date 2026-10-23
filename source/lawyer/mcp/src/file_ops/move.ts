@@ -170,7 +170,7 @@ export function fileOpsMove(
 }
 
 /** `path` relative to `root`, or a refusal when it is not inside it. "" is the root itself. */
-function relativeInside(root: string, path: string, label: string): string {
+export function relativeInside(root: string, path: string, label: string): string {
   const rel = pathWin32.relative(root, path);
   if (rel.startsWith("..") || pathWin32.isAbsolute(rel)) {
     throw new DataServerError(`${label} is not under the matter root ${root}: ${path}`, "path_out_of_scope");

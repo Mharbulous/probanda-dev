@@ -344,6 +344,7 @@ test("the nine tools are registered on the file-manager server only and dispatch
   }
   assert.ok(names.includes("file_ops__move"));
   assert.ok(names.includes("file_ops__trash"));
+  assert.ok(names.includes("file_ops__move_from_downloads"));
   // The practice plugin's data server neither lists nor runs them.
   const dataNames = buildToolDefinitions().map((d) => d.name);
   assert.deepEqual(dataNames.filter((n) => n.startsWith("housekeeping__") || n.startsWith("file_ops__")), []);

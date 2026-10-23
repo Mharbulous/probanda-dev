@@ -28,22 +28,22 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
 import { checkCoverageLine } from "./coverage-line.js";
+import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
 import { extractText } from "./text-extract.js";
+import { nextVersionName } from "./version-name.js";
 
 const LAW_SEGMENT = "6. law";
 // Belt-and-braces: a `6. LAW` folder never sits under a firewall zone, so the segment rule above
 // already excludes these. Keep this check anyway -- do not delete the segment rule believing
 // this one covers it; it does not (it says nothing about where the folder is).
 const PROTECTED_SEGMENTS = new Set(["privileged", "disclosed"]);
-const IN_PROGRESS_EXTENSIONS = new Set([".crdownload", ".tmp", ".partial"]);
 const MANIFEST = "case-download-manifest.json";
 // The research agent's scratchpad, under the matter's 0. DRAFT folder (practitioner's decision, 2026-10-05).
 const SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
@@ -59,15 +59,6 @@ export interface DownloadEntry {
   mtime: string;
   bytes: number;
   in_progress: boolean;
-}
-
-export function downloadsDir(env: NodeJS.ProcessEnv = process.env): string {
-  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin32.join(homedir(), "Downloads");
-  const dir = canonicalRoot(probe, `Downloads folder not found at ${probe}`, "downloads_missing");
-  if (!statSync(dir).isDirectory()) {
-    throw new DataServerError(`Downloads path is not a folder: ${probe}`, "downloads_missing");
-  }
-  return dir;
 }
 
 export function listDownloads(
@@ -703,17 +694,6 @@ function writeNewVersion(dir: string, filename: string, body: Buffer): { path: s
     `no free version of ${filename} in ${dir} after ${MAX_SAVE_ATTEMPTS} attempts`,
     "dest_exists"
   );
-}
-
-function nextVersionName(dir: string, stem: string, ext: string): string {
-  const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version = new RegExp(`^${escape(stem)}(?: v(\\d+))?${escape(ext)}$`, "i");
-  let highest = 0;
-  for (const name of readdirSync(dir)) {
-    const match = version.exec(name);
-    if (match) highest = Math.max(highest, match[1] === undefined ? 1 : Number(match[1]));
-  }
-  return highest === 0 ? `${stem}${ext}` : `${stem} v${highest + 1}${ext}`;
 }
 
 function resolveOrCreateLawDir(destinationDir: string): { dir: string; created: boolean } {

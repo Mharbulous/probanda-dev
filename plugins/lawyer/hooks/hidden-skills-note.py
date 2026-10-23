@@ -7,8 +7,10 @@ session's skill list, so a session that checks only that list wrongly tells the
 practitioner a skill they name does not exist. It also tells the session to
 check for a Probanda agent before calling it absent, and never to stand in for
 one. The note also carries the core
-sentence of shared/internals-confidentiality.md, because this is the one hook
-that speaks in every session, whether or not a skill loads. Never blocks: always exits 0.
+sentence of shared/internals-confidentiality.md, and the rule that a request to
+move a file is never met with a copy (GLOSSARY.md, Move (file)), because this is
+the one hook that speaks in every session, whether or not a skill loads. Never
+blocks: always exits 0.
 """
 import json
 import sys
@@ -37,7 +39,11 @@ NOTE = (
     "in any Probanda plugin; read it before your first reply that could name one). Never show one in "
     "anything the practitioner sees, and never explain how Probanda works inside. Say it in the "
     "practitioner's own words instead. Show an internal only when the practitioner cannot act without "
-    "it, and then in the fewest, plainest words. This hides mechanism, never an outcome or an error."
+    "it, and then in the fewest, plainest words. This hides mechanism, never an outcome or an error.\n"
+    "When the practitioner asks to move a file, the file must leave where it was: move it with the "
+    "file-manager plugin's file_ops__* tools (file_ops__move_from_downloads for a file in Downloads). "
+    "Never meet a request to move a file with a copy. If no tool here can move it, say that Probanda "
+    "cannot move it and offer a copy, calling it a copy. Never say that a file you copied was moved."
 )
 
 if __name__ == "__main__":

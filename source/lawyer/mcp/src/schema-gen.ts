@@ -3133,7 +3133,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
 }
 
 // The file-manager plugin's tools: the soft delete into a matter's TRASH folder
-// (ADR 0014) and the confined move /housekeeping files approved rows with.
+// (ADR 0014), the confined move /housekeeping files approved rows with, and the
+// move of a download into a matter folder.
 // Served only by the `files` server (src/file-manager-index.ts), never by the
 // lawyer plugin's `data` server, so disabling file-manager removes them.
 export function fileOpsToolDefinitions(): ToolDefinition[] {
@@ -3168,6 +3169,22 @@ export function fileOpsToolDefinitions(): ToolDefinition[] {
           superseded: { type: "boolean" },
         },
         required: ["matter_root", "source", "destination"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "file_ops__move_from_downloads",
+      description:
+        "Move one file from the practitioner's Downloads folder into a client matter folder, such as a court registry's receipt, submission sheet or filed document. A move, not a copy: one rename on the same drive, so the file leaves Downloads and no duplicate is left. Use it whenever the practitioner asks to move a download into a matter; never copy the file and call that a move. `source_filename` is the bare file name in Downloads (the server finds the folder itself). `matter_root` and `destination` are absolute host paths; `destination` is the full new file path, in an existing folder inside the matter outside folders 0 and 1, TRASH and any privileged/disclosed tree. No folder is created. Never overwrites: a taken name gets the next ` v2`, ` v3` before the extension, even under a race (the name is claimed by an exclusive create first). Refuses with an error `code`, touching nothing: `invalid_filename`, `downloads_missing`, `not_found` (no such download, or the destination folder does not exist), `not_a_file`, `in_progress`, `invalid_path`, `path_out_of_scope`, `protected`, `cross_device` (Downloads and the matter are on different drives), `dest_exists` (no free version name); `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, versioned}; `moved_to` is the path as it now reads on disk, and `versioned` is true when a ` vN` name was used, so tell the practitioner the name it got. Every move is logged to `<matter-data folder>\\file-manager\\move-log.jsonl`; `log_error` is present when that line could not be written.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          source_filename: { type: "string" },
+          destination: { type: "string" },
+        },
+        required: ["matter_root", "source_filename", "destination"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },

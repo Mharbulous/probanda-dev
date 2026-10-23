@@ -24,6 +24,7 @@ terms:
   - Consolidation part
   - Contact
   - Contention
+  - Copy (file)
   - Copy (within a bundle)
   - Counsel of record
   - Court Rule
@@ -31,6 +32,7 @@ terms:
   - Current package
   - Dead key
   - Defence
+  - Delete (file)
   - Dismissed
   - Doctrine
   - Document
@@ -76,6 +78,7 @@ terms:
   - Merge (Job Boards)
   - Merge (jobs)
   - Mockup
+  - Move (file)
   - Non-billable entry
   - Note up
   - Obiter dictum
@@ -242,6 +245,10 @@ _Avoid_: party (a role in a proceeding, recorded in matter-data); participant (a
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
 _Avoid_: theory, thesis; proposition (law alone); point (an opposing point is theirs).
 
+**Copy (file)**:
+A new file holding the same bytes as an existing one, while the original stays where it was. Probanda tells the practitioner it made a copy, in that word. It never calls a copy a move, and it never meets a request to move a file with a copy.
+_Avoid_: move, file, put (each reads as if the original left); duplicate (reserved for the cross-file hash match at the ingest gate).
+
 **Copy (within a bundle)**:
 A later segment of a bundle whose text matches an earlier segment: the scanned paper cover letter behind the digital one, the printed enclosures behind the originals. Noted on the original's row, never extracted twice, never given a row of its own.
 _Avoid_: duplicate (reserved for the cross-file hash match at the ingest gate).
@@ -267,6 +274,10 @@ _Avoid_: stale job (the job may hold other live keys); moved item (a reworded it
 
 **Defence**:
 A matter the responding party raises that defeats liability or relief, often with the burden on that party. The pool has no type for it, and how a defence is stored follows the prose. Stated as a carve-out from a proposition ("unless", "except"), it is an **Exception** to that proposition, which may point at another proposition that sets out the defence's own conditions. Stated as a rule of its own ("relief does not follow where"), it is a **Proposition** whose consequence has negative polarity.
+
+**Delete (file)**:
+Removing a file from the disk. No Probanda tool deletes a file. Trashing one is a **Move (file)** into the matter's `TRASH` folder, from which it can be restored.
+_Avoid_: delete for trashing; move for deleting.
 
 **Dismissed**:
 The **terminal** disposition on a theorized fact's provenance: our own investigation concluded the fact is **likely untrue**. Recorded on the provenance row, never by deletion — the record of what was considered and rejected is the point. An argument may not rest on a dismissed fact. "Dismissed" is a fact-investigation disposition, **not** a party position and **not** a posture, and it is knowable only for **our own** side — there is no way to know what an opposing party has privately dismissed. (Distinct from a *proceeding* status or an *issue* status — see **Fact Posture**.)
@@ -446,6 +457,10 @@ _Avoid_: combine; consolidate; dedupe.
 **Mockup**:
 A Draft in markdown format — the word is reserved exclusively for markdown. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.
 _Avoid_: report; readiness report; document.
+
+**Move (file)**:
+Taking one existing file out of the folder it is in and putting it in another, so that afterwards exactly one file exists, in the new place. Probanda moves a file only with the operating system's own move on one drive (a rename), never by copying and then deleting, and never over an existing file. Only the file-manager plugin moves a file Probanda did not create.
+_Avoid_: move for a **Copy (file)**; move for a **Delete (file)**.
 
 **Non-billable entry**:
 A time entry recorded against a matter with `billable` false: kept on the file, excluded from WIP and accounts receivable, never billed. The consolidation push records one per retirement run, tagged `retire:<filing_id>:<retired_on>`. Matter-less administrative time is not the same thing and is still never committed.

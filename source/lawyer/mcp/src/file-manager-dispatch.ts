@@ -9,6 +9,7 @@ import { buildFileManagerToolDefinitions, type ToolDefinition } from "./schema-g
 import { validateToolInput } from "./validate.js";
 import { fileOpsTrash } from "./file_ops/trash.js";
 import { fileOpsMove } from "./file_ops/move.js";
+import { fileOpsMoveFromDownloads } from "./file_ops/move-from-downloads.js";
 import { orderCandidates } from "./housekeeping/order.js";
 import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js";
 import { preflight } from "./housekeeping/preflight.js";
@@ -65,6 +66,10 @@ export async function callFileManagerTool(name: string, rawArgs: unknown): Promi
       (args.draft_unchanged as boolean | undefined) ?? false,
       (args.superseded as boolean | undefined) ?? false
     );
+  }
+
+  if (name === "file_ops__move_from_downloads") {
+    return fileOpsMoveFromDownloads(args.matter_root as string, args.source_filename as string, args.destination as string);
   }
 
   if (name === "housekeeping__preflight") {
