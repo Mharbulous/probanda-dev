@@ -31,6 +31,7 @@ import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
 const { resnapshotWriting } = await import("../build/submission/writing-snapshot.js");
 const { reviewSnapshotSql } = await import("../build/submission/forms/markers.js");
+const { mergeSharedRecipients } = await import("../build/submission/forms/query.js");
 
 const FIXTURE_JURISDICTION = { country: NO_VENUE_TREE.country, jurisdiction: NO_VENUE_TREE.jurisdiction };
 
@@ -386,6 +387,63 @@ test("a party-linked recipient prints its party's counsel, email and address for
   // Withdrawn counsel: the recipient prints the party's own name, with no counsel email.
   updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = NULL, lawyer_email = NULL WHERE party_id = 2;");
   assert.ok(docOf(render(g, id), "General_writing").markdown.includes("To: Bert Other — counsel for Bert Other (2 Y St)"));
+});
+
+test("two party-linked recipients with the same counsel print one To line with their capacities joined, and the stored rows stay one per party", async (t) => {
+  const g = await generalWritingFixture(t, { front: REVIEWED_FRONT });
+  const id = await letter(g);
+  updateCaseData(dirname(g.dbPath), "INSERT INTO parties (party_id, name, lawyer_name, lawyer_email) VALUES (5, 'Cy Third', 'Cara Counsel', 'Cara@Counsel.test');");
+  await g.execute(
+    "INSERT INTO parties (id, proceeding_id, name, role, ordinal, is_client, case_party_id) VALUES (5, 1, 'Cy Third', 'Respondent', 3, 0, 5); " +
+      "INSERT INTO recipients (id, proceeding_id, name, capacity, email, address, party_id, ordinal) VALUES (4, 1, NULL, 'counsel for Cy Third', NULL, NULL, 5, 4);"
+  );
+  await g.recipient(id, 3, "to", 2);
+  await g.recipient(id, 4, "to", 3);
+
+  const toLines = (mode = "mockup") =>
+    (mode === "mockup" ? docOf(render(g, id), "General_writing").markdown : render(g, id, "filed").documents[0].markdown).split("\n").filter((l) => l.startsWith("To: "));
+  assert.deepEqual(toLines(), [
+    "To: Cara Counsel — counsel for Bert Other and Cy Third (cara@counsel.test)",
+    "To: Dan Registrar — the registry (800 Smithe Street)",
+  ]);
+  assert.equal(g.query(`SELECT COUNT(*) AS n FROM filing_recipients WHERE filing_id = ${id}`)[0].n, 3, "each party keeps its own row");
+
+  // Capacities with no shared lead ending in "for" are joined whole.
+  await g.execute("UPDATE recipients SET capacity = 'agent for Cy Third' WHERE id = 4;");
+  assert.equal(toLines()[0], "To: Cara Counsel — counsel for Bert Other and agent for Cy Third (cara@counsel.test)");
+
+  // A different email is a different person: two lines.
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_email = 'cara2@counsel.test' WHERE party_id = 5;");
+  assert.deepEqual(toLines(), [
+    "To: Cara Counsel — counsel for Bert Other (cara@counsel.test)",
+    "To: Dan Registrar — the registry (800 Smithe Street)",
+    "To: Cara Counsel — agent for Cy Third (cara2@counsel.test)",
+  ]);
+});
+
+test("mergeSharedRecipients merges only rows of one role and one name, email and address, and never an unrecorded row", () => {
+  const row = (id, role, capacity, extra = {}) => ({ id, name: "Cara Counsel", capacity, email: "cara@counsel.test", address: null, party_id: id, role, ordinal: id, ...extra });
+  const merged = mergeSharedRecipients([
+    row(1, "to", "counsel for A"),
+    row(2, "to", "counsel for B"),
+    row(3, "cc", "counsel for C"),
+    row(4, "to", "counsel for C"),
+    row(5, "to", "counsel for A"),
+    row(6, "to", null, { name: null, email: null, unrecorded: true }),
+    row(7, "to", null, { name: null, email: null, unrecorded: true }),
+  ]);
+  assert.deepEqual(
+    merged.map((r) => [r.id, r.role, r.capacity]),
+    [
+      [1, "to", "counsel for A, B and C"],
+      [3, "cc", "counsel for C"],
+      [6, "to", null],
+      [7, "to", null],
+    ]
+  );
+  assert.equal(mergeSharedRecipients([row(1, "to", "counsel for A"), row(2, "to", "counsel for A")])[0].capacity, "counsel for A");
+  assert.equal(mergeSharedRecipients([row(1, "to", "counsel for A"), row(2, "to", null)])[0].capacity, "counsel for A");
+  assert.equal(mergeSharedRecipients([row(1, "to", "counsel for A"), row(2, "to", "counsel for A", { address: "1 Other St" })]).length, 2, "a different address is not merged");
 });
 
 test("a drafting letter's party-linked recipient whose party is not of its proceeding is a hard error naming the recipient", async (t) => {

@@ -16,7 +16,7 @@ import { lawStatementCitationLine, lawStatementMarkers } from "./law-statement-l
 import { dedupeLineMarkers, gapMarker, mockupMessage, printMarkerSets } from "./markers.js";
 import { gap, renderPart, type CurrencyWithheld, type LayoutPart, type ProjectionState, type ProseFormatHit } from "./projections.js";
 import { lawItem, recordLawStatementGlyphs } from "./proposal-inventory.js";
-import { fetchFilingLaw, fetchFilingRecipients, fetchProse, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
+import { fetchFilingLaw, fetchFilingRecipients, fetchProse, mergeSharedRecipients, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
 import { reviewMarkerFor, type RenderContext } from "./render-vaniac-submissions.js";
 import { generalDocumentName } from "./writing-label.js";
@@ -218,7 +218,8 @@ export function renderGeneral(
     }
   });
 
-  const recipients = fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties);
+  // One line per distinct person in each role: two parties with one counsel print one line.
+  const recipients = mergeSharedRecipients(fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties));
   const sent = recipients.filter((r) => r.role !== "bcc");
   // #1234: a Writing whose layout declares `recipients` and has no 'to' row, a cc-only one included,
   // prints a mockup-only gap line where its To lines go. It never joins `unwritten`, so the filed

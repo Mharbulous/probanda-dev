@@ -282,6 +282,27 @@ test("the Sent write records the party rows from case data, and a later matter-d
   assert.deepEqual(printed(g, id), sent);
 });
 
+test("a sent letter to two parties with one counsel prints the one joined To line from its snapshot, which keeps both rows", async (t) => {
+  const { g, id } = await drafted(t);
+  updateCaseData(dirname(g.dbPath), "INSERT INTO parties (party_id, name, lawyer_name, lawyer_email) VALUES (5, 'Cy Third', 'Cara Counsel', 'cara@counsel.test');");
+  await g.execute(
+    "INSERT INTO parties (id, proceeding_id, name, role, ordinal, is_client, case_party_id) VALUES (5, 1, 'Cy Third', 'Respondent', 3, 0, 5); " +
+      "INSERT INTO recipients (id, proceeding_id, name, capacity, email, address, party_id, ordinal) VALUES (4, 1, NULL, 'counsel for Cy Third', NULL, NULL, 5, 4);"
+  );
+  await g.recipient(id, 4, "to", 2);
+  await g.prose(id, "sender", "Fixture Law LLP");
+  const toLine = "To: Cara Counsel — counsel for Bert Other and Cy Third (cara@counsel.test)";
+  const toLines = (mode) => letterOf(render(g, id, mode)).split("\n").filter((l) => l.startsWith("To: "));
+  assert.deepEqual(toLines("mockup"), [toLine]);
+  await send(g, id);
+  assert.deepEqual(g.query(`SELECT recipient_id, capacity, party_id FROM recipients_snapshot WHERE filing_id = ${id} ORDER BY recipient_id`), [
+    { recipient_id: 1, capacity: "counsel for Bert Other", party_id: 2 },
+    { recipient_id: 4, capacity: "counsel for Cy Third", party_id: 5 },
+  ]);
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_email = 'moved@counsel.test' WHERE party_id = 5;");
+  for (const mode of ["mockup", "filed"]) assert.deepEqual(toLines(mode), [toLine], mode);
+});
+
 test("a sent letter's party-linked recipient re-pointed or re-described after the send prints the party and capacity it was sent with, with no 🏷️ line (#1307)", async (t) => {
   const { g, id } = await drafted(t);
   await g.prose(id, "sender", "Fixture Law LLP");

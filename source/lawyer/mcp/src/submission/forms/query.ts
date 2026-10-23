@@ -358,6 +358,52 @@ export function fetchFilingRecipients(dbPath: string, filing: FilingRow, parties
   });
 }
 
+type MergeableRecipient = Pick<FilingRecipientRow, "name" | "capacity" | "email" | "address" | "role" | "unrecorded">;
+
+/** "A", "A and B", "A, B and C". */
+function joinWords(items: string[]): string {
+  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/** Capacities joined into one: distinct ones only, and a shared lead ending in "for" said once, so
+ * "counsel for A" and "counsel for B" read "counsel for A and B". */
+function joinCapacities(capacities: (string | null)[]): string | null {
+  const distinct = [...new Set(capacities.filter((c): c is string => c !== null && c.trim() !== "").map((c) => c.trim()))];
+  if (distinct.length <= 1) return distinct[0] ?? null;
+  const words = distinct.map((c) => c.split(/\s+/));
+  let lead = 0;
+  for (let i = 0; i < Math.min(...words.map((w) => w.length)) - 1; i++) {
+    if (!words.every((w) => w[i] === words[0][i])) break;
+    if (words[0][i].toLowerCase() === "for") lead = i + 1;
+  }
+  if (lead === 0) return joinWords(distinct);
+  return `${words[0].slice(0, lead).join(" ")} ${joinWords(words.map((w) => w.slice(lead).join(" ")))}`;
+}
+
+/**
+ * Recipients resolved to names and addresses, one per distinct person in each role: rows of the same
+ * role whose resolved name, email (ignoring case) and address are the same, such as two parties with
+ * one counsel, become one, at the first one's place, with their capacities joined. The stored rows
+ * and the snapshot keep one row per party; only what is printed or addressed is merged. An
+ * `unrecorded` row is never merged.
+ */
+export function mergeSharedRecipients<T extends MergeableRecipient>(recipients: readonly T[]): T[] {
+  const groups = new Map<string, T[]>();
+  const order: T[][] = [];
+  for (const r of recipients) {
+    const key = r.unrecorded ? null : JSON.stringify([r.role, r.name, r.email?.trim().toLowerCase() ?? null, r.address ?? null]);
+    const group = key === null ? undefined : groups.get(key);
+    if (group !== undefined) {
+      group.push(r);
+      continue;
+    }
+    const fresh = [r];
+    if (key !== null) groups.set(key, fresh);
+    order.push(fresh);
+  }
+  return order.map((group) => (group.length === 1 ? group[0] : { ...group[0], capacity: joinCapacities(group.map((r) => r.capacity)) }));
+}
+
 /** A Writing's own prose blocks (schema v22, slot open text since v33), by slot, each with its row id. */
 export function fetchProse(dbPath: string, filingId: number): Map<string, { id: number; text: string }> {
   return new Map(
