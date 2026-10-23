@@ -11,7 +11,6 @@ Proceeding File no:
 Revision: 1
 Rendered: <TIMESTAMP>
 ---
-<!-- filing 1 proceeding 1 witness_statement 3 -->
 
 | | | |
 | :--- | :---: | ---: |

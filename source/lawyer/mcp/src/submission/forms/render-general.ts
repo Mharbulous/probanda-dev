@@ -187,7 +187,7 @@ export function renderGeneral(
   const date = state.prose.get("date")?.text.trim().replace(/\s+/g, " ") ?? "";
   // The header is built last, because its optional fields are read after the body (the page
   // estimate counts it, and a cited item is unplaced only once every line has printed).
-  const lines: string[] = [`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`];
+  const lines: string[] = [];
   if (!STOCK_UNSTRUCTURED.test(stored.type_file ?? "")) lines.push("", withTag(`# ${title}`, tagAt("type", "title")));
 
   const body: string[] = [];

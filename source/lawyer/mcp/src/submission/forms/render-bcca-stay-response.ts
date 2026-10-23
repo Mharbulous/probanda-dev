@@ -573,7 +573,6 @@ export function renderBccaStayResponse(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx.proceeding, ctx));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(
     bccaCoverPage(captionParties, {

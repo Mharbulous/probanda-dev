@@ -11,7 +11,6 @@ Proceeding File no: S-901433
 Revision: 1
 Rendered: <TIMESTAMP>
 ---
-<!-- filing 1 proceeding 1 -->
 
 | | | |
 | :--- | :---: | ---: |

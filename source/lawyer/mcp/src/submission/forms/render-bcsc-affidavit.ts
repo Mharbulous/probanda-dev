@@ -151,7 +151,6 @@ export function renderAffidavit(ctx: RenderContext, a: AffidavitRow): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} affidavit ${a.id} -->`);
   lines.push("");
   // Rule 22-2(3)'s identifier block, which the Form 109 template prints top right.
   lines.push(`This is Affidavit #${a.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a.execution ?? "________________"}.`);

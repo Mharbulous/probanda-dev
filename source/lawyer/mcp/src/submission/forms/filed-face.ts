@@ -22,8 +22,8 @@ import { ALL_MARKER_GLYPHS, MOCKUP_ONLY_TAG } from "./markers.js";
 // rendered timestamp, review lists) -- not exchanged text.
 const FRONTMATTER_RE = /^---\n[\s\S]*?\n---\n?/;
 
-// Every id-trace HTML comment the renderers append (filing/proceeding
-// header comments, and the per-row `<!-- fact N -->` style traces).
+// Every id-trace HTML comment the renderers append (the per-row
+// `<!-- fact N -->` style traces).
 const HTML_COMMENT_RE = /[ \t]*<!--[\s\S]*?-->/g;
 
 // A whole work-message line the renderer tagged with mockupMessage (markers.ts). Must run before

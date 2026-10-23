@@ -180,7 +180,6 @@ export function renderRequisitionDefaultJudgment(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx, "Requisition"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(
     requisitionWrapper({
@@ -219,7 +218,6 @@ export function renderForm8DefaultJudgment(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx, "Default_judgment"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(caption);
   lines.push("");
@@ -308,7 +306,6 @@ export function renderRequisitionConsent(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx, "Requisition"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(
     requisitionWrapper({
@@ -341,7 +338,6 @@ export function renderConsentOrder(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx, "Consent_order"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(caption);
   lines.push("");

@@ -25,6 +25,9 @@ the text is fixed in source, in four places:
                    no Writing named by its row id, no table.column, no db_meta or
                    snapshot table, no SQL. A bare column name (affidavit_number) and a
                    tool's own parameter names are not caught.
+  mockup comments  each line of the data server's submission code whose string writes an
+                   HTML comment naming a filing or proceeding by its id, because a mockup
+                   lies in the practitioner's own draft folder.
 
 A line holding the marker `internals-ok` is exempt: code that is not a message (a
 query) or that must name an old internal path to move it away. The developer plugin
@@ -251,9 +254,31 @@ def check_errors(repo):
     return found
 
 
+# An HTML comment that names a filing or proceeding by an interpolated id, read before
+# INTERPOLATION removes the `${...}`.
+MOCKUP_ID_COMMENT = re.compile(r"<!--[^>]*\b(?:filing|proceeding)(?:_id)? \$\{")
+
+
+def check_mockup_comments(repo):
+    """Each string in the submission code that writes a filing or proceeding id into a mockup."""
+    found = []
+    for path in sorted((repo / SERVER_SRC / "submission").rglob("*.ts")):
+        if path.name.endswith((".test.ts", ".d.ts")):
+            continue
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if EXEMPT in line:
+                continue
+            for s in STRING.findall(line):
+                hit = MOCKUP_ID_COMMENT.search(s)
+                if hit:
+                    found.append(f"{path.relative_to(repo).as_posix()}:{n}: mockup comment holds record id `{hit.group(0)}`")
+    return found
+
+
 def violations(repo=REPO):
     repo = Path(repo)
-    return check_hooks(repo) + check_templates(repo) + check_file_names(repo) + check_errors(repo)
+    return (check_hooks(repo) + check_templates(repo) + check_file_names(repo) + check_errors(repo)
+            + check_mockup_comments(repo))
 
 
 def main():

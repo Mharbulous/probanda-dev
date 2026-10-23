@@ -172,7 +172,6 @@ export function renderWrittenArguments(ctx: RenderContext, documentKey: PointerD
 
   const lines: string[] = [];
   lines.push(frontmatterFor(ctx, "Written_arguments"));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push(
     styleOfProceedingCaption(captionParties, {

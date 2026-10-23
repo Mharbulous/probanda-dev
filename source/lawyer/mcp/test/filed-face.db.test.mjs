@@ -47,7 +47,7 @@ function withFrontmatter(body) {
 }
 
 test("strips the frontmatter block", () => {
-  const out = toFiledFace(withFrontmatter("<!-- filing 1 proceeding 1 -->\n\nHello.\n"));
+  const out = toFiledFace(withFrontmatter("\nHello.\n"));
   assert.doesNotMatch(out, /Client Name|Document Type|Document Date|________|Revision:|Rendered:/);
   assert.match(out, /Hello\./);
 });

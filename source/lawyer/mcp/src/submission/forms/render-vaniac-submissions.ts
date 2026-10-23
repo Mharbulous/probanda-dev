@@ -1269,7 +1269,6 @@ export function renderWitnessStatements(ctx: RenderContext): { witnessName: stri
     lines.push(
       frontmatterFor("Witness_statement", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription)
     );
-    lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} witness_statement ${s.id} -->`);
     lines.push("");
     lines.push(
       styleOfProceedingCaption(captionParties, {
@@ -1747,7 +1746,6 @@ export function renderEvidenceIndex(ctx: RenderContext): string {
 
   const lines: string[] = [];
   lines.push(frontmatterFor("Evidence_index", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription));
-  lines.push(`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`);
   lines.push("");
   lines.push("| Ex. | Date | Description | Tendered by |");
   lines.push("| --- | --- | --- | --- |");

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-check_internals: a seeded internal term in a hook refusal, a page template or a file-name
-builder is flagged; product vocabulary, code and SessionStart notes are not; the repo is clean.
+check_internals: a seeded internal term in a hook refusal, a page template, a file-name
+builder or a mockup comment is flagged; product vocabulary, code and SessionStart notes are not; the repo is clean.
 
 Run: python -m pytest -q scripts/tests/test_check_internals.py
 """
@@ -43,13 +43,16 @@ export function writeIt(dir: string, ids: number[]) {{
   throw refused({err}, "not_written");
   return join(dir, {leaf});
 }}
+export function renderIt(ctx: Ctx, lines: string[]) {{
+  lines.push({mockup});
+}}
 '''
 
 
 def make_repo(root, reason="Refused: that page is for the practitioner to view.",
               text="A Writing on its Job Board, with its Loose Threads.",
               name='`${id} Notice of Application`', leaf='"Notice of Application.md"',
-              err='`"${title}" was not written`'):
+              err='`"${title}" was not written`', mockup='`Order 1 <!-- order_sought_id ${r.id} -->`'):
     assignment = {"plugins": {
         "lawyer": {"requires": [], "skills": [], "agents": [], "servers": [],
                    "hooks": {"gate": "source/lawyer/hooks/gate.py", "note": "source/lawyer/hooks/note.py"}},
@@ -72,7 +75,7 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
         "source/lawyer/hooks/note.py": NOTE,
         "source/developer/hooks/dev.py": 'REASON = "Refused: use suggestion_box__submit to file it."\n',
         "source/lawyer/mcp/src/templates/job-board/job-board.html": PAGE.format(text=text),
-        "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf, err=err),
+        "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf, err=err, mockup=mockup),
         "source/lawyer/mcp/src/submission/names.test.ts": 'const p = join(dir, "Unstructured.md");\n',
     }
     for rel, body in files.items():
@@ -126,6 +129,15 @@ class CheckInternalsTest(unittest.TestCase):
                 found = self.found(err=err)
                 self.assertEqual(len(found), 1, found)
                 self.assertIn("names.ts:10: error message holds " + label, found[0])
+
+    def test_a_filing_id_in_a_mockup_comment_is_flagged(self):
+        # A row-id trace such as order_sought_id is not this check's business.
+        for mockup in ["`<!-- filing ${ctx.filing.id} proceeding ${ctx.proceeding.id} -->`",
+                       "`<!-- proceeding ${ctx.proceeding.id} -->`"]:
+            with self.subTest(mockup=mockup):
+                found = self.found(mockup=mockup)
+                self.assertEqual(len(found), 1, found)
+                self.assertIn("names.ts:14: mockup comment holds record id", found[0])
 
     def test_the_exemption_marker_clears_one_line(self):
         found = self.found(leaf='"mockups", `Filing ${ids[0]}`); // internals-ok: moves the old folder away')
