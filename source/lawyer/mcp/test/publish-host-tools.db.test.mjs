@@ -56,7 +56,7 @@ async function generalFixture(t) {
   await g.prose(filing_id, "addressee", "Bert Other\n1 Main Street");
   await g.prose(filing_id, "body", "Please pay the invoice.");
   await g.recipient(filing_id, 2, "to");
-  const m = matterOver(t, g.f.scratch);
+  const m = matterOver(t, dirname(g.dbPath));
   const args = { matter_root: m.root, db_path: g.dbPath, filing_id, output_name: "2026-10-01 LT Bert re INV#7413 & costs", format_path: FORMAT_PATH };
   return { ...m, g, args, subfolder: join(m.caseData, "publish-general"), run: (extra = {}) => publishGeneral({ ...args, ...extra }) };
 }
@@ -74,7 +74,7 @@ async function factumFixture(t) {
 async function vaniacFixture(t) {
   const { caseData, dbPath } = await seededCaseData(t, seedVaniacProceeding);
   const m = matterOver(t, caseData);
-  const args = { matter_root: m.root, db_path: dbPath, filing_id: 1, writing_folder: "SUB Opening Submissions Package", round: "opening" };
+  const args = { matter_root: m.root, db_path: dbPath, filing_id: 1, writing_folder: "Opening Submissions Package", round: "opening" };
   const pkg = join(m.draft, args.writing_folder, "Package");
   return { ...m, args, pkg, subfolder: join(m.caseData, "vaniac-submissions"), run: (extra = {}) => publishVaniacPackage({ ...args, ...extra }) };
 }
@@ -277,10 +277,9 @@ test("vaniac: a stale signed witness statement in Package is refused before anyt
   assert.deepEqual(readdirSync(f.pkg).sort(), ["Expert Report of Y.pdf", "Witness Statement of X - signed.pdf"]);
 });
 
-test("vaniac: a writing_folder without the SUB code is refused, and a Package folder that is a link elsewhere", async (t) => {
+test("vaniac: a writing_folder that names no folder is refused, with or without an older build's SUB code, and a Package folder that is a link elsewhere", async (t) => {
   const f = await vaniacFixture(t);
-  assert.throws(() => f.run({ writing_folder: "Opening Submissions Package" }), /SUB <filing folder>/);
-  for (const writing_folder of ["SUB ..", "SUB .", "2026-09-30 SUB .."]) {
+  for (const writing_folder of ["..", ".", "2026-09-30 ..", "SUB ..", "SUB .", "2026-09-30 SUB .."]) {
     assert.equal(codeOf(() => f.run({ writing_folder })), "path_out_of_scope", writing_folder);
   }
   assert.equal(existsSync(f.subfolder), false);

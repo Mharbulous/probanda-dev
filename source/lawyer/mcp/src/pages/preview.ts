@@ -15,7 +15,7 @@
 // The housekeeping approval page's template is served here too; its preview is housekeeping__preview
 // in file-manager's files server (src/housekeeping/preview.ts).
 
-import { basename, dirname, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 
 import type { TemplateSet } from "../compose-template.js";
 import { ValidationError } from "../errors.js";
@@ -149,7 +149,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   );
   const target =
     page === "Litigation Strategy"
-      ? MATTER_BOARD_FILE
+      ? join(draftDir, MATTER_BOARD_FILE)
       : page === "Job Board"
         ? built.paths.job_board_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
         : built.paths.view_page_paths.find((v) => v.name === page && v.filing_id === ids.filing_id)?.path;

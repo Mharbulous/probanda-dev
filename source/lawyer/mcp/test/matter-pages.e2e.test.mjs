@@ -49,7 +49,7 @@ test("two processes rendering one matter at once leave one of each page, both wh
   try {
     await freshSubmissionDb(f.dbPath);
     await seedVaniacProceeding(f.dbPath);
-    const { draft } = draftFolder(f);
+    const { draft, leaf } = draftFolder(f);
     const go = join(f.dir, "go");
 
     for (let i = 0; i < 2; i++) runs.push(startChild({ db_path: f.dbPath, filing_id: 1, client: ASHBOURNE, draft_dir: draft, go_file: go, times: 5 }));
@@ -64,13 +64,16 @@ test("two processes rendering one matter at once leave one of each page, both wh
     // No render here starts a background job, so its status file is allowed but not expected.
     assert.deepEqual(
       readdirSync(draft).filter((name) => name !== "workboard-status.js"),
-      ["Arguments - Job Board 1.html", "Job Board 1.html", "Litigation Strategy.html", "Loose Threads - Job Board 1.html", "Material Facts - Job Board 1.html", "Procedural History - Job Board 1.html", "Raw Research - Job Board 1.html", "SUB Opening Submissions Package"]
+      ["Drafting records", "Litigation Strategy.html", "Opening Submissions Package"]
+    );
+    assert.deepEqual(
+      readdirSync(leaf).filter((name) => name.endsWith(".html")),
+      ["Arguments.html", "Job Board.html", "Loose Threads.html", "Material Facts.html", "Procedural History.html", "Raw Research.html"]
     );
     assert.deepEqual(readdirSync(draft, { recursive: true }).filter((name) => TEMP_OR_NUMBERED.test(name)), [], "no temp file and no numbered copy");
-    const mockups = join(dirname(f.dbPath), "mockups");
-    assert.deepEqual(readdirSync(mockups, { recursive: true }).filter((name) => name.endsWith(".tmp")), [], "nor beside the database");
+    assert.deepEqual(readdirSync(dirname(f.dbPath)).filter((name) => /mockups|\.tmp$/.test(name)), [], "nor beside the database");
 
-    assert.deepEqual(readBoardData(join(draft, "Job Board 1.html")).sections.map((s) => s.meta.filing_id), [1], "the Job Board page parses");
+    assert.deepEqual(readBoardData(join(leaf, "Job Board.html")).sections.map((s) => s.meta.filing_id), [1], "the Job Board page parses");
     const todoList = readFileSync(join(draft, "Litigation Strategy.html"), "utf-8");
     assert.ok(todoList.includes("data-matter-board-shell"), "the Litigation Strategy carries its marker");
     const lines = todoList.split("\n").filter((line) => line.startsWith("window.MATTER_BOARD = "));

@@ -268,7 +268,10 @@ function archiveDroppedFiles(dbPath: string, previous: RenderManifest | null, wr
   const dir = manifestDir(dbPath, previous);
   for (const file of previous.files) {
     if (written.some((doc) => doc.fileName === file.file_name) || basename(file.file_name) !== file.file_name) continue;
-    const renamed = written.find((doc) => doc.documentType === file.document_type);
+    // A one-of-its-type document the render renamed (a retitle) archives under its new name; any other under its own.
+    const sameType = written.filter((doc) => doc.documentType === file.document_type);
+    const single = sameType.length === 1 && previous.files.filter((f) => f.document_type === file.document_type).length === 1;
+    const renamed = single ? sameType[0] : undefined;
     try {
       archiveFile(join(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
     } catch (err) {

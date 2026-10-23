@@ -836,11 +836,14 @@ export function boardDataOf(dbPath, filingId, client = {}, now = nowStamp()) {
   return filingBoardData(dbPath, filing, fetchProceeding(dbPath, filing.proceeding_id), client, now, fetchRevision(dbPath));
 }
 
-/** The Job Board page files at the draft folder's top, sorted. */
+/** The Job Board page files in the draft folder, relative to it, sorted: a Writing's `Job Board.html`
+ * in its own folder, and a board with no Writing's `Job Board <id>.html` at the top. */
 export function jobBoardPages(draftDir) {
-  return readdirSync(draftDir)
-    .filter((name) => /^Job Board .*\.html$/.test(name))
-    .sort();
+  const top = readdirSync(draftDir, { withFileTypes: true });
+  return [
+    ...top.filter((e) => e.isFile() && /^Job Board .*\.html$/.test(e.name)).map((e) => e.name),
+    ...top.filter((e) => e.isDirectory() && existsSync(join(draftDir, e.name, "Job Board.html"))).map((e) => join(e.name, "Job Board.html")),
+  ].sort();
 }
 
 /** The section of the Job Board page whose one section is filing `filingId`'s. */

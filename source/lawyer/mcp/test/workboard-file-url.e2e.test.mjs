@@ -1,7 +1,7 @@
 // The Job Board opened the way the practitioner opens it: double-clicked in Explorer, a file://
 // load with no server behind it (docs/design/2026-09-14 work-board-local-only-design.md). The page
-// is the filing's own Job Board page at the top of its 0. DRAFT folder (ADR 0033, 2026-10-05
-// amendment), opened where the render wrote it; the Litigation Strategy is opened as a lone copy, so a page that still needed a sibling
+// is the filing's own Job Board page in its Writing's folder in 0. DRAFT (ADR 0033, 2026-10-05
+// amendment; spec 2026-10-22), opened where the render wrote it; the Litigation Strategy is opened as a lone copy, so a page that still needed a sibling
 // file would fail here. Drives
 // an installed Chrome or Edge over the DevTools Protocol with Node's built-in WebSocket -- no
 // browser-automation package, per the repo's no-external-packages rule. A machine with neither
@@ -54,7 +54,8 @@ const pageOf = (section) => ({
 });
 
 async function renderSeededBoard(dir) {
-  const dbPath = join(dir, "submission.sqlite");
+  mkdirSync(join(dir, "L7001 Ashgrove", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L7001 Ashgrove", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(
     dbPath,
@@ -94,7 +95,8 @@ const TODOS = {
 };
 
 async function writeSeededMatterBoard(dir) {
-  const dbPath = join(dir, "submission.sqlite");
+  mkdirSync(join(dir, "L7001 Ashgrove", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L7001 Ashgrove", "0. CASE DATA", "submission.sqlite");
   await freshSubmissionDb(dbPath);
   await submissionDataExecute(
     dbPath,
@@ -945,12 +947,13 @@ for (const [name, executable] of BROWSERS) {
 
   test(`the Litigation Strategy in ${name} says rendering may have stalled once its job is killed mid-run`, { timeout: 180000 }, async (t) => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-matter-board-stall-"));
-    const dbPath = join(dir, "submission.sqlite");
+    const dbPath = join(dir, "L7001 Ashgrove", "0. CASE DATA", "submission.sqlite");
     const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
     const status = join(draft, STATUS_FILE);
     const stallMs = 2000;
     let run;
     try {
+      mkdirSync(dirname(dbPath), { recursive: true });
       await seedFilings(dbPath, 150);
       mkdirSync(draft, { recursive: true });
       run = startChild({ db_path: dbPath, ...CLIENT, draft_dir: draft }, { COCLERK_RENDER_STALL_MS: String(stallMs) });

@@ -30,14 +30,18 @@ const { VIEW_PAGES } = await import("../build/submission/view-pages.js");
 
 async function matter(count, { draft = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-render-job-"));
-  const dbPath = join(dir, "submission.sqlite");
+  // Every render writes into the matter's 0. DRAFT beside the db's 0. CASE DATA; `draft` says whether the test passes draft_dir.
+  mkdirSync(join(dir, "L7001 Ashgrove", "0. CASE DATA"), { recursive: true });
+  const dbPath = join(dir, "L7001 Ashgrove", "0. CASE DATA", "submission.sqlite");
   await seedFilings(dbPath, count);
-  const draftDir = draft ? join(dir, "L7001 Ashgrove", "0. DRAFT") : undefined;
-  if (draftDir) mkdirSync(draftDir, { recursive: true });
+  const matterDraft = join(dir, "L7001 Ashgrove", "0. DRAFT");
+  mkdirSync(matterDraft);
+  const draftDir = draft ? matterDraft : undefined;
   return {
     dir,
     dbPath,
     draftDir,
+    matterDraft,
     lockFile: hostLocalPath(dbPath, "render-job.lock"),
     mirrorFile: hostLocalPath(dbPath, "render-job.status.json"),
     cleanup: () => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }),
@@ -142,8 +146,8 @@ test("without all three client fields the job queues nothing, and still replaces
     assert.equal(result.background_job.current, null);
     assert.deepEqual(result.background_job.queued, []);
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done", "the leftover running status is replaced");
-    // #1365 A4: bootstrap records the to-dos it drew for the job beside the mockups; nothing else is there.
-    assert.deepEqual(readdirSync(join(m.dir, "mockups")), ["matter-pages-state.json"], "nothing was rendered");
+    // #1365 A4: bootstrap records the to-dos it drew for the job in the Drafting records; nothing else is there.
+    assert.deepEqual(readdirSync(join(m.draftDir, "Drafting records")), ["matter-pages-state.json"], "nothing was rendered");
   } finally {
     m.cleanup();
   }
@@ -244,7 +248,8 @@ test("a lock held by a live process is joined, not taken over, and nothing rende
     assert.equal(result.background_job.joined, true);
     assert.equal(result.background_job.job_id, "held-elsewhere");
     assert.deepEqual(await awaitBackgroundJobs(), []);
-    assert.equal(existsSync(join(m.dir, "mockups")), false);
+    const records = join(m.matterDraft, "Drafting records");
+    assert.deepEqual(existsSync(records) ? readdirSync(records).filter((name) => name.startsWith("render-manifest-")) : [], [], "nothing rendered");
   } finally {
     holder.kill();
     m.cleanup();
@@ -358,9 +363,9 @@ test("two processes bootstrapping one matter at once render each stale filing ex
     const joined = (await Promise.all(runs.map((run) => run.next("bootstrapped")))).filter((b) => b.background_job.joined);
     assert.ok(joined.length <= 1);
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done");
-    const names = readdirSync(m.draftDir);
-    const boards = Array.from({ length: 40 }, (_, i) => `Job Board ${i + 1}.html`);
-    const views = Array.from({ length: 40 }, (_, i) => VIEW_PAGES.map((page) => `${page.name} - Job Board ${i + 1}.html`)).flat();
+    const names = readdirSync(m.draftDir, { recursive: true }).map(String);
+    const boards = Array.from({ length: 40 }, (_, i) => join(`Notice of Application ${i + 1}`, "Job Board.html"));
+    const views = Array.from({ length: 40 }, (_, i) => VIEW_PAGES.map((page) => join(`Notice of Application ${i + 1}`, `${page.name}.html`))).flat();
     assert.deepEqual(names.filter((name) => name.endsWith(".html")).sort(), [...boards, ...views, "Litigation Strategy.html"].sort(), "a Job Board page and the view pages per filing and the Litigation Strategy, and no other page file");
     assert.deepEqual(names.filter((name) => name.endsWith(".tmp")), [], "no temp file left behind");
     for (const [i, name] of boards.entries()) {
