@@ -1,4 +1,4 @@
-// build-stamp: e1fc96a826b4
+// build-stamp: 707f678cfa31
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77844,6 +77844,21 @@ function fileToolDefinitions() {
         additionalProperties: false
       },
       annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "pdf_pages__compare",
+      description: 'Compare two PDFs page by page, to find what changed between an original (`a`) and a flattened, converted or returned copy (`b`), both absolute paths to `.pdf` files; `pages` (`"X"` or `"X-Y"`) limits the compare to those pages. Pages are paired by number. Each page of both files is drawn at 150 dpi (lowered so it is at most 2000 px wide) with its annotations and form fields, and is cleared only when its size, its rotation, the drawn pixels, its text layer (invisible text included) and the stored data of each embedded image all match. A page that is not cleared is in `flagged` with its `reasons`: `only_in_a` or `only_in_b` (the other file has no such page), `size`, `rotation`, `render` (the drawn pixels differ), `text`, `images`; `changed_share` is the share of pixels that differ when both drawings are the same size. `render`, `rotation`, `size`, `only_in_a` and `only_in_b` are visible differences: for those pages `a` and `b` list the PNGs of each file\'s page (top to bottom, cut into tiles as pdf_pages__images cuts them), and the pages are split in `review_groups`, in order, into as few groups of at most 5 as hold them, of sizes that differ by at most one. A page flagged for `text` or `images` alone looks the same and has no PNGs and no group. Neither PDF is changed: the PNGs go in a new folder in the OS temp directory (`work_dir`, null when no PNG was written), never beside either file. Returns {pages_a, pages_b, cleared: ["X-Y" or "X"], flagged: [{page, reasons, changed_share?, a?, b?}], review_groups: [[page]], work_dir}. Refused as pdf_pages__images refuses (`data_error`, `not_found`, `not_pdf`, `password_protected`, `bad_pages`, `page_too_large`, `renderer_unavailable`), for either file.',
+      inputSchema: {
+        type: "object",
+        properties: {
+          a: { type: "string" },
+          b: { type: "string" },
+          pages: { type: "string" }
+        },
+        required: ["a", "b"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
     }
   ];
 }
@@ -86015,7 +86030,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join22 } from "node:path";
-var BUILD_STAMP = false ? null : "e1fc96a826b4";
+var BUILD_STAMP = false ? null : "707f678cfa31";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -88010,10 +88025,10 @@ function savedCopyOf(raw, record2, front, seams) {
   } catch {
     throw new ValidationError(`${record2}: ${JSON.stringify(url)} is not a URL, so the saved copy has no host folder`);
   }
-  const sha2562 = createHash8("sha256").update(bytes).digest("hex");
-  const to2 = parseKnowledgePath(`_fetched/${host}/${sha2562.slice(0, 12)}.pdf`, label2);
+  const sha2563 = createHash8("sha256").update(bytes).digest("hex");
+  const to2 = parseKnowledgePath(`_fetched/${host}/${sha2563.slice(0, 12)}.pdf`, label2);
   grammarCheck(to2, "file", label2);
-  return { path: kp.path, abs, pdf: { sha256: sha2562, to: to2 } };
+  return { path: kp.path, abs, pdf: { sha256: sha2563, to: to2 } };
 }
 function copySavedCopy(saved, seams, label2) {
   if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
@@ -97187,10 +97202,10 @@ function combinedCriteria(goaled, deadlineIds, page2) {
     const texts = new Set(held.map((h3) => h3.c.text));
     const withReplaces = held.some((h3) => h3.c.replaces !== void 0);
     const withLocators = held.some((h3) => h3.c.locators !== void 0);
-    const pageText = id === "gate" ? GATE_TEXT : [...texts].join("; ");
+    const pageText2 = id === "gate" ? GATE_TEXT : [...texts].join("; ");
     const combined = {
       ...first.c,
-      text: texts.size === 1 ? first.c.text : page2 ? pageText : held.map((h3) => tag(h3.section, h3.c.text)).join("; "),
+      text: texts.size === 1 ? first.c.text : page2 ? pageText2 : held.map((h3) => tag(h3.section, h3.c.text)).join("; "),
       state: worst(held.map((h3) => h3.c.state)),
       outstanding: held.reduce((n3, h3) => n3 + h3.c.outstanding, 0),
       items: held.flatMap((h3) => h3.c.items.map((item) => tag(h3.section, item))),
@@ -105488,7 +105503,7 @@ function parseTag(raw, where) {
   const defeats = (attrs.get("defeats") ?? "").split(",").filter((d3) => d3 !== "");
   return { id, ops, when, defeats };
 }
-function parseFile(path, content, sha2562, isSkill) {
+function parseFile(path, content, sha2563, isSkill) {
   let lines2 = content.split("\n");
   if (lines2.length > 0 && lines2[lines2.length - 1] === "") lines2 = lines2.slice(0, -1);
   lines2 = lines2.map((line) => line.endsWith("\r") ? line.slice(0, -1) : line);
@@ -105551,7 +105566,7 @@ function parseFile(path, content, sha2562, isSkill) {
     if (i3 < 2 && (line.startsWith("Read when:") || line.startsWith("Assumes"))) return;
     if (!owned[i3]) unmapped.push({ line: i3 + 1, text: line });
   });
-  return { path, sha256: sha2562, linesTotal: lines2.length, unmapped, atoms, vocab: isSkill ? vocab : null };
+  return { path, sha256: sha2563, linesTotal: lines2.length, unmapped, atoms, vocab: isSkill ? vocab : null };
 }
 function parseVocabulary(rows22) {
   const ops = [];
@@ -108034,13 +108049,12 @@ import {
   copyFileSync as copyFileSync4,
   existsSync as existsSync44,
   mkdirSync as mkdirSync20,
-  readdirSync as readdirSync26,
+  readdirSync as readdirSync27,
   readFileSync as readFileSync36,
-  statSync as statSync20,
+  statSync as statSync21,
   writeFileSync as writeFileSync13
 } from "node:fs";
-import { homedir as homedir10 } from "node:os";
-import { win32 as pathWin3225 } from "node:path";
+import { win32 as pathWin3226 } from "node:path";
 
 // src/files/coverage-line.ts
 var REASON = "\\S.*";
@@ -108094,9 +108108,23 @@ function checkCoverageLine(text5) {
   }
 }
 
+// src/files/downloads.ts
+import { statSync as statSync19 } from "node:fs";
+import { homedir as homedir10 } from "node:os";
+import { win32 as pathWin3224 } from "node:path";
+var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
+function downloadsDir(env = process.env) {
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3224.join(homedir10(), "Downloads");
+  const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
+  if (!statSync19(dir).isDirectory()) {
+    throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
+  }
+  return dir;
+}
+
 // src/files/text-extract.ts
 import { readFileSync as readFileSync35 } from "node:fs";
-import { win32 as pathWin3224 } from "node:path";
+import { win32 as pathWin3225 } from "node:path";
 
 // src/files/extract/doc.ts
 import { readFileSync as readFileSync31 } from "node:fs";
@@ -108331,7 +108359,7 @@ function docxText(path) {
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync43, mkdtempSync as mkdtempSync2, readFileSync as readFileSync33, statSync as statSync19, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync43, mkdtempSync as mkdtempSync2, readFileSync as readFileSync33, statSync as statSync20, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
 import { extname as extname6, isAbsolute as isAbsolute8, join as join42 } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -114022,7 +114050,7 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute8(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync43(path) || !statSync19(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync43(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync33(path);
   const pending3 = loadPdfium(wasm);
@@ -114220,34 +114248,43 @@ function coverage(rects, [left, bottom, right, top]) {
   return grid.reduce((sum, v3) => sum + v3, 0) / (N3 * N3);
 }
 function renderPng(lib, page2, n3, width, height, top, rows22) {
+  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows22), width, rows22);
+}
+function renderRgb(lib, page2, n3, width, height, top, rows22, flags = 0, form = 0) {
   const bitmap = lib.FPDFBitmap_CreateEx(width, rows22, BITMAP_BGR, 0, 0);
   if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows22} bitmap for page ${n3}`, "page_too_large");
   try {
     lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows22, 4294967295);
-    lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, 0);
+    lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
+    if (form) lib.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
     const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
     const stride = lib.FPDFBitmap_GetStride(bitmap);
     const heap = heapU8(lib);
-    const line = width * 3 + 1;
-    const raw = Buffer.alloc(line * rows22);
+    const rgb = Buffer.alloc(width * 3 * rows22);
     for (let y3 = 0; y3 < rows22; y3++) {
       const src = buffer + y3 * stride;
-      const dst = y3 * line + 1;
+      const dst = y3 * width * 3;
       for (let x3 = 0; x3 < width; x3++) {
-        raw[dst + 3 * x3] = heap[src + 3 * x3 + 2];
-        raw[dst + 3 * x3 + 1] = heap[src + 3 * x3 + 1];
-        raw[dst + 3 * x3 + 2] = heap[src + 3 * x3];
+        rgb[dst + 3 * x3] = heap[src + 3 * x3 + 2];
+        rgb[dst + 3 * x3 + 1] = heap[src + 3 * x3 + 1];
+        rgb[dst + 3 * x3 + 2] = heap[src + 3 * x3];
       }
     }
-    const header = Buffer.alloc(13);
-    header.writeUInt32BE(width, 0);
-    header.writeUInt32BE(rows22, 4);
-    header[8] = 8;
-    header[9] = 2;
-    return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+    return rgb;
   } finally {
     lib.FPDFBitmap_Destroy(bitmap);
   }
+}
+function encodePng(rgb, width, rows22) {
+  const line = width * 3 + 1;
+  const raw = Buffer.alloc(line * rows22);
+  for (let y3 = 0; y3 < rows22; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(rows22, 4);
+  header[8] = 8;
+  header[9] = 2;
+  return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
 }
 var PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 var CRC_TABLE2 = Array.from({ length: 256 }, (_3, n3) => {
@@ -114352,7 +114389,7 @@ var SCANNED_BYTES_PER_PAGE = 500;
 var COPIED_EXTENSIONS = /* @__PURE__ */ new Set([".txt", ".md", ".json", ".htm", ".html"]);
 var unread = (reason) => ({ status: "unread", reason });
 async function extractText(path) {
-  const ext = pathWin3224.extname(path).toLowerCase();
+  const ext = pathWin3225.extname(path).toLowerCase();
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
@@ -114388,22 +114425,26 @@ async function extractText(path) {
   return result;
 }
 
+// src/files/version-name.ts
+import { readdirSync as readdirSync26 } from "node:fs";
+function nextVersionName(dir, stem3, ext) {
+  const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
+  let highest = 0;
+  for (const name of readdirSync26(dir)) {
+    const match = version2.exec(name);
+    if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
+  }
+  return highest === 0 ? `${stem3}${ext}` : `${stem3} v${highest + 1}${ext}`;
+}
+
 // src/files/research-filing.ts
 var LAW_SEGMENT = "6. law";
 var PROTECTED_SEGMENTS3 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
-var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 var MANIFEST = "case-download-manifest.json";
 var SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
 var MAX_SAVE_ATTEMPTS = 100;
 var LAW_TEXT_SUBFOLDER = "law-text";
-function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3225.join(homedir10(), "Downloads");
-  const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
-  if (!statSync20(dir).isDirectory()) {
-    throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
-  }
-  return dir;
-}
 function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE__ */ new Date()) {
   const dir = downloadsDir(env);
   const since = sinceMtime === void 0 ? void 0 : Date.parse(sinceMtime);
@@ -114411,16 +114452,16 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
     throw new DataServerError(`since_mtime is not an ISO timestamp: ${sinceMtime}`, "invalid_argument");
   }
   const entries = [];
-  for (const name of readdirSync26(dir)) {
+  for (const name of readdirSync27(dir)) {
     if (filename !== void 0 && name !== filename) continue;
-    const stat = statSync20(pathWin3225.join(dir, name));
+    const stat = statSync21(pathWin3226.join(dir, name));
     if (!stat.isFile()) continue;
     if (since !== void 0 && stat.mtimeMs < since) continue;
     entries.push({
       filename: name,
       mtime: stat.mtime.toISOString(),
       bytes: stat.size,
-      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(name).toLowerCase())
+      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3226.extname(name).toLowerCase())
     });
   }
   entries.sort((a3, b3) => a3.mtime < b3.mtime ? 1 : a3.mtime > b3.mtime ? -1 : 0);
@@ -114428,7 +114469,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
 }
 function listLawFolder(destinationDir) {
   const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync26(dir).map((name) => ({ name, stat: statSync20(pathWin3225.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  const entries = readdirSync27(dir).map((name) => ({ name, stat: statSync21(pathWin3226.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
   return { entries };
 }
 function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
@@ -114436,18 +114477,18 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   assertBareFilename(sourceFilename, "source_filename");
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
-  const source = pathWin3225.join(downloadsDir(env), sourceFilename);
-  if (!existsSync44(source) || !statSync20(source).isFile()) {
+  const source = pathWin3226.join(downloadsDir(env), sourceFilename);
+  if (!existsSync44(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
-  if (IN_PROGRESS_EXTENSIONS.has(pathWin3225.extname(sourceFilename).toLowerCase())) {
+  if (IN_PROGRESS_EXTENSIONS.has(pathWin3226.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
-  const dest = pathWin3225.join(dir, destName);
+  const dest = pathWin3226.join(dir, destName);
   if (existsSync44(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
-  const bytes = statSync20(source).size;
+  const bytes = statSync21(source).size;
   copyFileSync4(source, dest, constants.COPYFILE_EXCL);
   return { path: dest, bytes };
 }
@@ -114456,14 +114497,14 @@ function appendManifest(destinationDir, record2) {
   if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
     throw new DataServerError("record must be a JSON object", "invalid_argument");
   }
-  const path = pathWin3225.join(dir, MANIFEST);
+  const path = pathWin3226.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
   const records = readFileSync36(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text5, fromScratch) {
   assertBareFilename(filename, "filename");
-  const ext = pathWin3225.extname(filename);
+  const ext = pathWin3226.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
@@ -114481,28 +114522,28 @@ function saveAnswer(destinationDir, filename, text5, fromScratch) {
   }
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
-  const sha2562 = createHash11("sha256").update(body).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2562 };
+  const sha2563 = createHash11("sha256").update(body).digest("hex");
+  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2563 };
 }
 function scratchBytes(destinationDir, fromScratch) {
-  if (typeof fromScratch !== "string" || !pathWin3225.isAbsolute(fromScratch)) {
+  if (typeof fromScratch !== "string" || !pathWin3226.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync44(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3225.dirname(destinationDir));
-  while (pathWin3225.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3225.dirname(law);
-  const root = validateMatterRoot(pathWin3225.dirname(law));
+  let law = existsSync44(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3226.dirname(destinationDir));
+  while (pathWin3226.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3226.dirname(law);
+  const root = validateMatterRoot(pathWin3226.dirname(law));
   const draft = findDraftDir(root);
   if (draft === void 0) {
     throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
   }
-  const scratchDir = pathWin3225.join(draft, ...SCRATCH_SUBFOLDERS);
+  const scratchDir = pathWin3226.join(draft, ...SCRATCH_SUBFOLDERS);
   const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
   assertUnprotected(realScratchDir);
   const source = canonicalRoot(fromScratch, `from_scratch not found: ${fromScratch}`, "not_found");
-  if (pathWin3225.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
+  if (pathWin3226.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
     throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
   }
-  if (!statSync20(source).isFile()) {
+  if (!statSync21(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
   const body = readFileSync36(source);
@@ -114513,7 +114554,7 @@ function scratchBytes(destinationDir, fromScratch) {
 }
 function writeScratch(matterRoot, filename, text5, kind) {
   assertBareFilename(filename, "filename");
-  if (pathWin3225.extname(filename).toLowerCase() !== ".md") {
+  if (pathWin3226.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
   if (typeof text5 !== "string" || text5.length === 0) {
@@ -114538,7 +114579,7 @@ function researchScratchDir(root) {
   let dir = draft;
   let created = false;
   for (const name of SCRATCH_SUBFOLDERS) {
-    dir = pathWin3225.join(dir, name);
+    dir = pathWin3226.join(dir, name);
     try {
       mkdirSync20(dir);
       created = true;
@@ -114557,7 +114598,7 @@ var HEAD_LINES = 5;
 var EXTRACT_CACHE = /* @__PURE__ */ new Map();
 var EXTRACT_CACHE_LIMIT = 64;
 async function cachedExtract(path) {
-  const stat = statSync20(path);
+  const stat = statSync21(path);
   const key = `${stat.size}:${stat.mtimeMs}`;
   const hit = EXTRACT_CACHE.get(path);
   if (hit !== void 0 && hit.key === key) return hit.read;
@@ -114579,11 +114620,11 @@ function pickLawFile(files, wanted) {
   const picked = /* @__PURE__ */ new Set();
   const htmlOnly = [];
   for (const name of named) {
-    if (!HTML_EXTENSIONS.has(pathWin3225.extname(name).toLowerCase())) {
+    if (!HTML_EXTENSIONS.has(pathWin3226.extname(name).toLowerCase())) {
       picked.add(name);
       continue;
     }
-    const stem3 = name.slice(0, -pathWin3225.extname(name).length).toLowerCase();
+    const stem3 = name.slice(0, -pathWin3226.extname(name).length).toLowerCase();
     const sibling = files.find(
       (other) => TEXT_SIBLING_EXTENSIONS.some((ext) => other.toLowerCase() === stem3 + ext)
     );
@@ -114612,7 +114653,7 @@ function nonNegativeInt(value, label2, fallback, min) {
   return value;
 }
 function manifestMarker(law, file) {
-  const path = pathWin3225.join(law, MANIFEST);
+  const path = pathWin3226.join(law, MANIFEST);
   if (!existsSync44(path)) return null;
   let marker = null;
   for (const line of readFileSync36(path, "utf-8").split("\n")) {
@@ -114676,7 +114717,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   if (options.pattern === void 0 && (options.context !== void 0 || options.max_matches !== void 0)) {
     throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
   }
-  const listed = readdirSync26(law).filter((name) => statSync20(pathWin3225.join(law, name)).isFile()).sort();
+  const listed = readdirSync27(law).filter((name) => statSync21(pathWin3226.join(law, name)).isFile()).sort();
   const files = options.file === void 0 ? listed : [pickLawFile(listed, options.file)];
   if (options.pattern !== void 0) {
     const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
@@ -114693,12 +114734,12 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     let truncated = false;
     for (const file of files) {
       if (truncated) break;
-      if (HTML_EXTENSIONS.has(pathWin3225.extname(file).toLowerCase())) {
+      if (HTML_EXTENSIONS.has(pathWin3226.extname(file).toLowerCase())) {
         searched.push({ file, status: "unread", reason: "html_page: an HTML page is never read; search its text sibling" });
         continue;
       }
       if (file === MANIFEST) continue;
-      const read3 = await cachedExtract(pathWin3225.join(law, file));
+      const read3 = await cachedExtract(pathWin3226.join(law, file));
       if (read3.status === "unread") {
         searched.push({ file, status: "unread", reason: read3.reason });
         continue;
@@ -114716,18 +114757,18 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   const below = segments.slice(segments.findIndex((s3) => s3.toLowerCase() === LAW_SEGMENT) + 1);
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
-    outDir = pathWin3225.join(outDir, name);
+    outDir = pathWin3226.join(outDir, name);
     mkdirSync20(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
   const rows22 = [];
   for (const file of files) {
-    const read3 = await cachedExtract(pathWin3225.join(law, file));
+    const read3 = await cachedExtract(pathWin3226.join(law, file));
     if (read3.status === "unread") {
       rows22.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
       continue;
     }
-    const textPath = pathWin3225.join(outDir, `${file}.txt`);
+    const textPath = pathWin3226.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
     writeFileSync13(textPath, body);
     rows22.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
@@ -114754,7 +114795,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
   }
   const pdf = fetched.bytes.subarray(0, 5).toString("latin1") === "%PDF-";
   const ext = pdf ? ".pdf" : ".md";
-  if (pathWin3225.extname(filename).toLowerCase() !== ext) {
+  if (pathWin3226.extname(filename).toLowerCase() !== ext) {
     throw new DataServerError(
       `filename must end in ${ext}, because ${fetched.final_url} returned ${pdf ? "a PDF" : "an HTML page"}: ${filename}`,
       "invalid_filename"
@@ -114830,11 +114871,11 @@ function filledString(value) {
   return typeof value === "string" && value.trim() !== "";
 }
 function writeNewVersion(dir, filename, body) {
-  const ext = pathWin3225.extname(filename);
+  const ext = pathWin3226.extname(filename);
   const stem3 = filename.slice(0, -ext.length);
   for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
     const name = nextVersionName(dir, stem3, ext);
-    const path = pathWin3225.join(dir, name);
+    const path = pathWin3226.join(dir, name);
     try {
       writeFileSync13(path, body, { flag: "wx" });
     } catch (err) {
@@ -114848,29 +114889,19 @@ function writeNewVersion(dir, filename, body) {
     "dest_exists"
   );
 }
-function nextVersionName(dir, stem3, ext) {
-  const escape3 = (text5) => text5.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
-  let highest = 0;
-  for (const name of readdirSync26(dir)) {
-    const match = version2.exec(name);
-    if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
-  }
-  return highest === 0 ? `${stem3}${ext}` : `${stem3} v${highest + 1}${ext}`;
-}
 function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
     if (err.code !== "not_found" || existsSync44(destinationDir)) throw err;
   }
-  const parent = resolveLawDir(pathWin3225.dirname(destinationDir));
-  if (PROTECTED_SEGMENTS3.has(pathWin3225.basename(destinationDir).toLowerCase())) {
+  const parent = resolveLawDir(pathWin3226.dirname(destinationDir));
+  if (PROTECTED_SEGMENTS3.has(pathWin3226.basename(destinationDir).toLowerCase())) {
     throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${destinationDir}`, "protected");
   }
   let created = true;
   try {
-    mkdirSync20(pathWin3225.join(parent, pathWin3225.basename(destinationDir)));
+    mkdirSync20(pathWin3226.join(parent, pathWin3226.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -114878,11 +114909,11 @@ function resolveOrCreateLawDir(destinationDir) {
   return { dir: resolveLawDir(destinationDir), created };
 }
 function resolveLawDir(destinationDir) {
-  if (typeof destinationDir !== "string" || !pathWin3225.isAbsolute(destinationDir)) {
+  if (typeof destinationDir !== "string" || !pathWin3226.isAbsolute(destinationDir)) {
     throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
   }
   const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
-  if (!statSync20(dir).isDirectory()) {
+  if (!statSync21(dir).isDirectory()) {
     throw new DataServerError(`destination is not a folder: ${destinationDir}`, "not_found");
   }
   const segments = dir.split(/[\\/]+/).map((s3) => s3.toLowerCase());
@@ -114949,8 +114980,8 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
-import { readFileSync as readFileSync37, statSync as statSync21 } from "node:fs";
-import { win32 as pathWin3226 } from "node:path";
+import { readFileSync as readFileSync37, statSync as statSync22 } from "node:fs";
+import { win32 as pathWin3227 } from "node:path";
 var PROTECTED_SEGMENTS4 = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -114983,7 +115014,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   if (termList.length === 0 && pattern === null && pin === null) {
     throw new DataServerError("give terms, a regex, or both, or a pinpoint", "invalid_argument");
   }
-  const ext = pathWin3226.extname(file).toLowerCase();
+  const ext = pathWin3227.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
   const bytes = readFileSync37(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
@@ -115056,11 +115087,11 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
 }
 function resolveMatterFile(matterRoot, path) {
   const root = validateMatterRoot(matterRoot);
-  if (typeof path !== "string" || !pathWin3226.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin3227.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   const file = canonicalRoot(path, `file not found: ${path}`, "not_found");
-  if (!statSync21(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
+  if (!statSync22(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
   if (!file.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
     throw new DataServerError(`path is not in this matter: ${file}`, "not_in_matter");
   }
@@ -115288,6 +115319,199 @@ function sectionBlocks(chunks) {
   return { count: blocks2.reduce((n3, b3) => n3 + b3.count, 0), blocks: blocks2 };
 }
 
+// src/files/extract/page-compare.ts
+import { createHash as createHash13 } from "node:crypto";
+import { mkdirSync as mkdirSync21, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync14 } from "node:fs";
+import { tmpdir as tmpdir7 } from "node:os";
+import { join as join44 } from "node:path";
+var FPDF_ANNOT = 1;
+var GROUP_MAX = 5;
+var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
+var sha2562 = (data) => createHash13("sha256").update(data).digest("hex");
+async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
+  return withPdf(
+    args.a,
+    wasm,
+    (lib, docA) => withPdf(args.b, wasm, async (_3, docB) => {
+      const formA = openForm(lib, docA);
+      let formB;
+      try {
+        formB = openForm(lib, docB);
+      } catch (err) {
+        closeForm(lib, formA);
+        throw err;
+      }
+      try {
+        const pagesA = lib.FPDF_GetPageCount(docA);
+        const pagesB = lib.FPDF_GetPageCount(docB);
+        const [first, last] = pageRange(args.pages, Math.max(pagesA, pagesB));
+        const clearedPages = [];
+        const flagged = [];
+        let workDir = null;
+        const write = (side, n3, facts) => {
+          workDir ??= mkdtempSync3(join44(tmpdir7(), "probanda-compare-"));
+          const dir = join44(workDir, side);
+          mkdirSync21(dir, { recursive: true });
+          const tiles = tileRows(facts.width, 0, facts.height);
+          return tiles.map(([top, rows22], i3) => {
+            const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
+            const file = join44(dir, `${name}.png`);
+            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows22) * facts.width * 3);
+            writeFileSync14(file, encodePng(rgb, facts.width, rows22));
+            return file;
+          });
+        };
+        for (let n3 = first; n3 <= last; n3++) {
+          if (n3 > first) await nextTurn();
+          const a3 = n3 <= pagesA ? withPage(lib, docA, n3, (page2) => pageFacts(lib, page2, n3, formA.handle)) : null;
+          if (a3) await nextTurn();
+          const b3 = n3 <= pagesB ? withPage(lib, docB, n3, (page2) => pageFacts(lib, page2, n3, formB.handle)) : null;
+          const entry = { page: n3, reasons: differences(a3, b3) };
+          if (entry.reasons.length === 0) {
+            clearedPages.push(n3);
+            continue;
+          }
+          if (a3 && b3 && a3.width === b3.width && a3.height === b3.height && a3.render !== b3.render) {
+            entry.changed_share = changedShare(a3.rgb, b3.rgb);
+          }
+          if (entry.reasons.some((r3) => VISUAL.has(r3))) {
+            if (a3) entry.a = write("a", n3, a3);
+            if (b3) entry.b = write("b", n3, b3);
+          }
+          flagged.push(entry);
+        }
+        const visual = flagged.filter((f3) => f3.reasons.some((r3) => VISUAL.has(r3))).map((f3) => f3.page);
+        return {
+          pages_a: pagesA,
+          pages_b: pagesB,
+          cleared: ranges(clearedPages),
+          flagged,
+          review_groups: reviewGroups(visual),
+          work_dir: workDir
+        };
+      } finally {
+        closeForm(lib, formB);
+        closeForm(lib, formA);
+      }
+    })
+  );
+}
+function reviewGroups(pages, max = GROUP_MAX) {
+  const count = Math.ceil(pages.length / max);
+  const groups = [];
+  for (let g3 = 0, at = 0; g3 < count; g3++) {
+    const size = Math.floor(pages.length / count) + (g3 < pages.length % count ? 1 : 0);
+    groups.push(pages.slice(at, at += size));
+  }
+  return groups;
+}
+function ranges(pages) {
+  const out = [];
+  for (let i3 = 0; i3 < pages.length; ) {
+    let j3 = i3;
+    while (j3 + 1 < pages.length && pages[j3 + 1] === pages[j3] + 1) j3++;
+    out.push(i3 === j3 ? `${pages[i3]}` : `${pages[i3]}-${pages[j3]}`);
+    i3 = j3 + 1;
+  }
+  return out;
+}
+function differences(a3, b3) {
+  if (!a3) return ["only_in_b"];
+  if (!b3) return ["only_in_a"];
+  const reasons = [];
+  if (a3.size !== b3.size) reasons.push("size");
+  if (a3.rotation !== b3.rotation) reasons.push("rotation");
+  if (a3.render !== b3.render) reasons.push("render");
+  if (a3.text !== b3.text) reasons.push("text");
+  if (a3.images !== b3.images) reasons.push("images");
+  return reasons;
+}
+function changedShare(a3, b3) {
+  let changed = 0;
+  for (let i3 = 0; i3 < a3.length; i3 += 3) {
+    if (a3[i3] !== b3[i3] || a3[i3 + 1] !== b3[i3 + 1] || a3[i3 + 2] !== b3[i3 + 2]) changed++;
+  }
+  return Math.round(changed / (a3.length / 3) * 1e4) / 1e4;
+}
+function pageFacts(lib, page2, n3, form) {
+  const rotation = lib.FPDFPage_GetRotation(page2) * 90;
+  const [w3, h3] = [lib.FPDF_GetPageWidthF(page2), lib.FPDF_GetPageHeightF(page2)];
+  const [uw, uh] = rotation % 180 ? [h3, w3] : [w3, h3];
+  const { width, height } = pageSize(lib, page2, n3, DPI);
+  lib.FORM_OnAfterLoadPage(page2, form);
+  try {
+    const rgb = renderRgb(lib, page2, n3, width, height, 0, height, FPDF_ANNOT, form);
+    return {
+      size: `${uw.toFixed(2)}x${uh.toFixed(2)}`,
+      rotation,
+      width,
+      height,
+      rgb,
+      render: sha2562(rgb),
+      text: sha2562(pageText(lib, page2)),
+      images: sha2562(imageHashes(lib, page2).join(","))
+    };
+  } finally {
+    lib.FORM_OnBeforeClosePage(page2, form);
+  }
+}
+function pageText(lib, page2) {
+  const textPage = lib.FPDFText_LoadPage(page2);
+  if (!textPage) return "";
+  try {
+    const count = lib.FPDFText_CountChars(textPage);
+    if (count <= 0) return "";
+    const bytes = (count + 1) * 2;
+    const ptr = lib.pdfium.wasmExports.malloc(bytes);
+    try {
+      const written = lib.FPDFText_GetText(textPage, 0, count, ptr);
+      const heap = lib.pdfium.HEAPU8;
+      return Buffer.from(heap.subarray(ptr, ptr + Math.max(0, written - 1) * 2)).toString("utf16le");
+    } finally {
+      lib.pdfium.wasmExports.free(ptr);
+    }
+  } finally {
+    lib.FPDFText_ClosePage(textPage);
+  }
+}
+function imageHashes(lib, page2) {
+  const hashes = [];
+  const walk4 = (count, objectAt2) => {
+    for (let i3 = 0; i3 < count; i3++) {
+      const obj = objectAt2(i3);
+      const type = lib.FPDFPageObj_GetType(obj);
+      if (type === OBJ_IMAGE) {
+        const length = lib.FPDFImageObj_GetImageDataRaw(obj, 0, 0);
+        const ptr = lib.pdfium.wasmExports.malloc(Math.max(length, 1));
+        try {
+          lib.FPDFImageObj_GetImageDataRaw(obj, ptr, length);
+          const heap = lib.pdfium.HEAPU8;
+          hashes.push(sha2562(Buffer.from(heap.subarray(ptr, ptr + length))));
+        } finally {
+          lib.pdfium.wasmExports.free(ptr);
+        }
+      } else if (type === OBJ_FORM) {
+        walk4(lib.FPDFFormObj_CountObjects(obj), (j3) => lib.FPDFFormObj_GetObject(obj, j3));
+      }
+    }
+  };
+  walk4(lib.FPDFPage_CountObjects(page2), (i3) => lib.FPDFPage_GetObject(page2, i3));
+  return hashes;
+}
+function openForm(lib, doc) {
+  const info3 = lib.PDFiumExt_OpenFormFillInfo();
+  const handle4 = info3 ? lib.PDFiumExt_InitFormFillEnvironment(doc, info3) : 0;
+  if (!handle4) {
+    if (info3) lib.PDFiumExt_CloseFormFillInfo(info3);
+    throw new DataServerError("the PDF renderer could not draw this PDF's form fields", "renderer_unavailable");
+  }
+  return { info: info3, handle: handle4 };
+}
+function closeForm(lib, { info: info3, handle: handle4 }) {
+  lib.PDFiumExt_ExitFormFillEnvironment(handle4);
+  lib.PDFiumExt_CloseFormFillInfo(info3);
+}
+
 // src/submission/forms/save-job-answer.ts
 var TOOL17 = "research_filing__save_answer";
 var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -115343,9 +115567,9 @@ async function saveAnswerTool(args, env = process.env) {
 }
 
 // src/key-request/tools.ts
-import { createHash as createHash13, randomBytes as randomBytes6 } from "node:crypto";
+import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
 import { createServer as createServer2 } from "node:http";
-import { join as join44 } from "node:path";
+import { join as join45 } from "node:path";
 
 // src/key-request/page.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -115490,7 +115714,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join44(defaultStateDir(env), "key-request.json.dpapi");
+  return join45(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -115633,7 +115857,7 @@ async function handle2(req, res) {
   const token = randomBytes6(24).toString("hex");
   let reply;
   try {
-    const body = requestBody(new URLSearchParams(await readBody(req)), createHash13("sha256").update(token).digest("hex"));
+    const body = requestBody(new URLSearchParams(await readBody(req)), createHash14("sha256").update(token).digest("hex"));
     reply = await post(current.projectUrl, "functions/v1/key-request-submit", body, "save the request");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -116112,6 +116336,9 @@ async function callTool(context, name, rawArgs) {
       pages: args.pages,
       tiles: args.tiles
     });
+  }
+  if (name === "pdf_pages__compare") {
+    return pdfPagesCompare({ a: args.a, b: args.b, pages: args.pages });
   }
   if (isKeyRequestToolName(name)) {
     return callKeyRequestTool(name);
