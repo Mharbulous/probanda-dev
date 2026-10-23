@@ -78,13 +78,32 @@ test("push carries the currency fields the payload supplies", async () => {
   const lc = fakeLegalCommons();
   await index.callTool(context(lc), "legal_commons__push", {
     text: "A limitation period runs from discovery.",
-    authorities: [
-      { citation: "2019 BCCA 1", treatment: "overruled", last_verified_at: "2026-09-01T00:00:00Z" },
-    ],
+    authorities: [{ citation: "2019 BCCA 1", treatment: "overruled" }],
   });
   const pushCall = lc.calls.rpc.find((c) => c.fn === "push_principle");
   assert.equal(pushCall.body.p_authorities[0].treatment, "overruled");
-  assert.equal(pushCall.body.p_authorities[0].last_verified_at, "2026-09-01T00:00:00Z");
+});
+
+// The pool keeps no note-up date (#118), and the input validator checks top-level
+// fields only, so a date nested in an authority must be refused by the tool itself.
+test("push and record_treatment refuse a note-up date", async () => {
+  const lc = fakeLegalCommons();
+  await assert.rejects(
+    () => index.callTool(context(lc), "legal_commons__push", {
+      text: "A limitation period runs from discovery.",
+      authorities: [{ citation: "2019 BCCA 1", last_verified_at: "2026-09-01T00:00:00Z" }],
+    }),
+    /unknown field "last_verified_at"/
+  );
+  await assert.rejects(
+    () => index.callTool(context(lc), "legal_commons__record_treatment", {
+      treating: { citation: "2026 BCCA 100", last_verified_at: "2026-09-01T00:00:00Z" },
+      treated_authority_id: "00000000-0000-4000-8000-000000000002",
+      treatment: "overrules",
+    }),
+    /unknown field "last_verified_at"/
+  );
+  assert.equal(lc.calls.rpc.length, 0, "nothing reaches the pool");
 });
 
 test("record_treatment passes the treating packet and both tenses to the RPC", async () => {
@@ -144,15 +163,28 @@ test("record_treatment rejects a treatment outside the vocabulary, and a tense m
   assert.equal(lc.calls.rpc.length, 0, "nothing reaches the pool");
 });
 
-test("stamp_verified patches last_verified_at, defaulting to now", async () => {
+// PostgREST returns the columns a PATCH's `select` names, else the whole row. The
+// fake row holds a note-up date, as the pool's did before #118.
+test("amend_authority replies with named columns only, never a note-up date", async () => {
   const lc = fakeLegalCommons();
-  await index.callTool(context(lc), "legal_commons__stamp_verified", {
+  lc.patch = async (table, filters = {}, body = {}) => {
+    lc.calls.patch.push({ table, filters, body });
+    const row = {
+      authority_id: "00000000-0000-4000-8000-000000000003", citation: "2026 BCSC 1",
+      title: "x", url: null, authority_type: "case_law", jurisdiction: "BC", disposition: null,
+      last_verified_at: "2026-09-01T00:00:00Z", created_at: "t", updated_at: "t", ...body,
+    };
+    if (!filters.select) return [row];
+    return [Object.fromEntries(filters.select.split(",").map((c) => [c, row[c]]))];
+  };
+  const result = await index.callTool(context(lc), "legal_commons__amend_authority", {
     authority_id: "00000000-0000-4000-8000-000000000003",
+    title: "Reasons for Judgment",
   });
-  const call = lc.calls.patch[0];
-  assert.equal(call.table, "authority");
-  assert.equal(call.filters.authority_id, "eq.00000000-0000-4000-8000-000000000003");
-  assert.ok(typeof call.body.last_verified_at === "string" && call.body.last_verified_at.endsWith("Z"));
+  assert.deepEqual(Object.keys(result.authority).sort(), [
+    "authority_id", "authority_type", "citation", "disposition", "jurisdiction", "title", "url",
+  ]);
+  assert.equal(result.authority.title, "Reasons for Judgment");
 });
 
 test("amend_authority refuses an empty patch and passes the fields it is given", async () => {
@@ -253,7 +285,6 @@ test("every legal_commons tool is registered and matter-free (no matter_id)", ()
     "legal_commons__rule_period_record_verification",
     "legal_commons__rule_period_retire",
     "legal_commons__search",
-    "legal_commons__stamp_verified",
     "legal_commons__treatment_chain",
     "legal_commons__unlink_authority",
   ]);

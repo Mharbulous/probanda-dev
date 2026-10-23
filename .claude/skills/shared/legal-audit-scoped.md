@@ -42,8 +42,7 @@ return shapes and stay read-only.
   `legal_commons__*`. If they **are**, use only the read tools (`browse`,
   `find_candidates`, `lookup_by_citation`, `resolve_by_id`, `treatment_chain`);
   never a write tool (`push`, `merge_authority`, `amend_*`, `link_*`, `unlink_*`,
-  `configure_*`), and never any pool tool that records a treatment or stamps an
-  authority as verified — recording currency is the caller's act, under its own
+  `configure_*`), and never any pool tool that records a treatment — recording currency is the caller's act, under its own
   permission prompt, never this agent's.
 - No pushes/amends to the commons pool.
 - Never cite from training knowledge. Never state uncited law as fact.

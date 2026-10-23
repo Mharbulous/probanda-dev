@@ -26,7 +26,7 @@ BRIDGED = "mcp__remote-devices__" + SERVER
 WRITE = {
     "push", "amend_authority", "amend_authority_edge", "amend_criterion_text",
     "amend_principle_text", "link_authority", "unlink_authority", "merge_authority",
-    "record_treatment", "stamp_verified", "rule_period_push",
+    "record_treatment", "rule_period_push",
     "rule_period_record_verification", "rule_period_retire",
 }
 READ = {
@@ -92,7 +92,7 @@ class CommonsReadOnlyGuardTests(unittest.TestCase):
 
     def test_a_broken_matcher_is_reported(self):
         good = registered_matcher()
-        for broken in (good.replace("|stamp_verified", ""),
+        for broken in (good.replace("|record_treatment", ""),
                        good.replace(SERVER, "plugin_renamed_commons__"),
                        good.replace("(push|", "(push|browse|")):
             with self.subTest(broken=broken):

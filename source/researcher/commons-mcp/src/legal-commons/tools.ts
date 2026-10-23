@@ -53,8 +53,6 @@ export function callLegalCommonsTool(
       return mergeAuthority(client, args);
     case "legal_commons__record_treatment":
       return recordTreatment(client, args);
-    case "legal_commons__stamp_verified":
-      return stampVerified(client, args);
     case "legal_commons__amend_authority":
       return amendAuthority(client, args);
     case "legal_commons__rule_period_push":
@@ -140,6 +138,7 @@ async function push(client: LegalCommonsClient, args: Record<string, unknown>): 
   // so they are checked here (vocabulary constants below).
   for (const [i, a] of (Array.isArray(args.authorities) ? args.authorities : []).entries()) {
     const auth = (a ?? {}) as Record<string, unknown>;
+    refuseNoteUpDate(`push.authorities[${i}]`, auth);
     if (auth.relationship !== undefined && auth.relationship !== null) {
       requireOneOf(`push.authorities[${i}].relationship`, auth.relationship, RELATIONSHIP_VALUES);
     }
@@ -160,10 +159,10 @@ async function push(client: LegalCommonsClient, args: Record<string, unknown>): 
 
 // ---------------------------------------------------------------------------
 // Currency ops. The pool's currency tables (`treatment`, plus
-// `principle_authority.treatment` / `treated_by_authority_id` and
-// `authority.last_verified_at`) had no writer until 2026-09-08, so a pooled
-// authority a higher court overruled stayed "good law" forever. These three ops
-// are that writer. Currency never rewrites pooled principle text: a superseding
+// `principle_authority.treatment` / `treated_by_authority_id`) had no writer
+// until 2026-09-08, so a pooled authority a higher court overruled stayed "good
+// law" forever. These ops are that writer. The pool keeps no note-up date: no
+// tool accepts, writes or returns one (#118). Currency never rewrites pooled principle text: a superseding
 // formulation is pushed as a variant and the old authority gets a treatment
 // edge (design decision D6).
 // ---------------------------------------------------------------------------
@@ -241,6 +240,14 @@ export const EDGE_TREATMENT_VALUES = [
   "abrogated",
 ] as const;
 
+// The input validator checks top-level fields only, and these authority objects
+// travel to the RPC as given, so a note-up date inside one is refused here.
+function refuseNoteUpDate(label: string, authority: unknown): void {
+  if (typeof authority === "object" && authority !== null && "last_verified_at" in authority) {
+    throw new ValidationError(`${label} received unknown field "last_verified_at"`);
+  }
+}
+
 function requireOneOf(label: string, value: unknown, allowed: readonly string[]): string {
   const text = String(value);
   if (!allowed.includes(text)) {
@@ -259,6 +266,7 @@ async function recordTreatment(client: LegalCommonsClient, args: Record<string, 
   if (typeof treating !== "object" || treating === null || Array.isArray(treating)) {
     throw new ValidationError("record_treatment requires treating as an object with a citation");
   }
+  refuseNoteUpDate("record_treatment.treating", treating as Record<string, unknown>);
   const citation = String((treating as Record<string, unknown>).citation ?? "").trim();
   if (!citation) throw new ValidationError("record_treatment requires treating.citation");
 
@@ -279,20 +287,9 @@ async function recordTreatment(client: LegalCommonsClient, args: Record<string, 
   });
 }
 
-// stamp_verified — record that this authority was noted up and is still good
-// law as at a date. Defaults to now, which is the ordinary case (a citator sweep
-// just ran); an explicit date is for stamping as at when the check was made.
-async function stampVerified(client: LegalCommonsClient, args: Record<string, unknown>): Promise<unknown> {
-  const authorityId = String(args.authority_id);
-  const lastVerifiedAt = typeof args.last_verified_at === "string" ? args.last_verified_at : nowIso();
-  const rows = await client.patch(
-    "authority",
-    { authority_id: `eq.${authorityId}` },
-    { last_verified_at: lastVerifiedAt, updated_at: nowIso() }
-  );
-  if (rows.length === 0) throw new ValidationError(`no pooled authority ${authorityId}`);
-  return { stamped: true, authority: rows[0] };
-}
+// The columns an authority reply carries, named rather than the whole row, so no
+// note-up date or column added later reaches a reader (#118).
+const AUTHORITY_REPLY_COLUMNS = "authority_id,citation,title,url,authority_type,jurisdiction,disposition";
 
 // amend_authority — correct an authority row's own identity fields. push_principle
 // never updates an existing citation row, so nothing else can: this is what a
@@ -310,7 +307,11 @@ async function amendAuthority(client: LegalCommonsClient, args: Record<string, u
   }
   body.updated_at = nowIso();
 
-  const rows = await client.patch("authority", { authority_id: `eq.${authorityId}` }, body);
+  const rows = await client.patch(
+    "authority",
+    { authority_id: `eq.${authorityId}`, select: AUTHORITY_REPLY_COLUMNS },
+    body
+  );
   if (rows.length === 0) throw new ValidationError(`no pooled authority ${authorityId}`);
   return { amended: true, authority: rows[0] };
 }

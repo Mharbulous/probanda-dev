@@ -203,15 +203,13 @@ to receive (spec §8 D1) — plus the local bookkeeping the push skill needs:
 - `authorities[]` — join `concept_authorities` → `authorities`, **`verified >= 0` only, never `answered`**
   (a rejected edge is excluded from the payload, matching the hash serializer below —
   the two MUST carry the identical filter or the hash lies about what was pushed):
-  `title`, `citation`, `authority_type`, `jurisdiction`, `disposition`,
-  `last_verified_at` → `authority.*`; `relationship`, `proposition`, `finding`,
+  `title`, `citation`, `authority_type`, `jurisdiction`, `disposition`
+  → `authority.*`; `relationship`, `proposition`, `finding`,
   `obiter`, `treatment` → `principle_authority.*`.
 
-  **`last_verified_at` attests to the source DOCUMENT, not to this edge.** It is stamped
-  on `authorities` only after a verifier re-read that document (see
-  `../shared/verification-protocol.md`); it says nothing about whether this edge's
-  `proposition` or `finding` is right. Edge-level verification is `concept_authorities.verified`
-  (v7.1). Do not let a consumer read the former as the latter.
+  **`last_verified_at` does not cross.** Locally it attests that a verifier re-read the
+  source document (see `../shared/verification-protocol.md`). The pool keeps no
+  note-up date, and its push tool refuses one.
 
 **Never return** `notes` (any table), `file_path`/`file_hash`, `factual_context`,
 `fact_pattern`, `loss_description`, `order_terms`, `pinpoint`, `excerpt`, or
@@ -259,12 +257,12 @@ def push_queue(con):
                 "ORDER BY criterion_order", (cid,)).fetchall()]
         authorities = [
             {"title": a[0], "citation": a[1], "authority_type": a[2],
-             "jurisdiction": a[3], "disposition": a[4], "last_verified_at": a[5],
-             "relationship": a[6], "proposition": a[7], "finding": a[8],
-             "obiter": a[9], "treatment": a[10]}
+             "jurisdiction": a[3], "disposition": a[4],
+             "relationship": a[5], "proposition": a[6], "finding": a[7],
+             "obiter": a[8], "treatment": a[9]}
             for a in con.execute(
                 "SELECT au.title, au.citation, au.authority_type, au.jurisdiction, "
-                "       au.disposition, au.last_verified_at, ca.relationship, "
+                "       au.disposition, ca.relationship, "
                 "       ca.proposition, ca.finding, ca.obiter, ca.treatment "
                 "FROM law.concept_authorities ca "
                 "JOIN law.authorities au ON au.authority_id = ca.authority_id "

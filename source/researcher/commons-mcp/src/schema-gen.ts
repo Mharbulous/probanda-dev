@@ -131,7 +131,6 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
                 relationship: { type: "string" },
                 obiter: { type: "boolean" },
                 treatment: { type: "string" },
-                last_verified_at: { type: "string" },
               },
               required: ["citation"],
               additionalProperties: false,
@@ -241,7 +240,6 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
               authority_type: { type: "string" },
               jurisdiction: { type: "string" },
               disposition: { type: "string" },
-              last_verified_at: { type: "string" },
             },
             required: ["citation"],
             additionalProperties: false,
@@ -254,15 +252,6 @@ export function legalCommonsToolDefinitions(): ToolDefinition[] {
         required: ["treating", "treated_authority_id", "treatment"],
         additionalProperties: false,
       },
-    },
-    {
-      name: legalCommonsPrefixed("stamp_verified"),
-      description:
-        "Record that a pooled authority was noted up and is still good law, stamping its last-verified date. Defaults to now; pass last_verified_at to stamp as at when the check was actually made.",
-      inputSchema: objectSchema([
-        { name: "authority_id", type: "str" },
-        { name: "last_verified_at", type: "str" },
-      ], ["authority_id"]),
     },
     {
       name: legalCommonsPrefixed("amend_authority"),

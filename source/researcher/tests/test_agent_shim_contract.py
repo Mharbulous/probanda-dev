@@ -16,7 +16,7 @@ RESEARCH_LAWYER_PATH = REPO_ROOT / "source" / "researcher" / "agents" / "researc
 
 WRITE_TOOL_PATTERN = re.compile(
     r"legal_commons__(push|merge_authority|amend_|link_|unlink_|configure_"
-    r"|record_treatment|stamp_verified)"
+    r"|record_treatment)"
 )
 
 POOL_READ_TOOLS = {
@@ -140,7 +140,6 @@ class AgentShimContractTests(unittest.TestCase):
         for tool in (
             "mcp__plugin_researcher_commons__legal_commons__push",
             "mcp__plugin_researcher_commons__legal_commons__record_treatment",
-            "mcp__plugin_researcher_commons__legal_commons__stamp_verified",
             "mcp__plugin_researcher_commons__legal_commons__amend_authority",
             "mcp__plugin_researcher_commons__legal_commons__amend_authority_edge",
             "mcp__plugin_researcher_commons__legal_commons__link_authority",

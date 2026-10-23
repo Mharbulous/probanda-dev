@@ -47,12 +47,13 @@ and nothing above belongs in the troubleshooting project. Setup steps:
 
 ## Currency
 
-The `treatment` table, `principle_authority.treatment` /
-`treated_by_authority_id`, and `authority.last_verified_at` are the currency
-columns. They are written by `record_treatment` (an RPC, because it spans the
-treating authority row and the treatment edge in one transaction),
-`push_principle`, and the `stamp_verified` tool. Every one of them is bare
-`text`/`timestamptz` — **there is no CHECK constraint on any treatment value**, so
+The `treatment` table and `principle_authority.treatment` /
+`treated_by_authority_id` are the currency columns. They are written by
+`record_treatment` (an RPC, because it spans the treating authority row and the
+treatment edge in one transaction) and `push_principle`. The pool keeps no
+note-up date: `migrations/0002_retire_note_up_date.sql` drops
+`authority.last_verified_at` (#118). Every currency column is bare
+`text` — **there is no CHECK constraint on any treatment value**, so
 the vocabulary is enforced in the runtime (`../src/legal-commons/tools.ts`,
 `TREATMENT_VALUES` / `EDGE_TREATMENT_VALUES`) and documented for callers in
 `.claude/skills/legal-commons/SKILL.md` § "Currency — treatments, not rewrites".

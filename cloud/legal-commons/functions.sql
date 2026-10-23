@@ -10,7 +10,7 @@
 -- NOT VERIFIED against the deployed pool — see schema.sql.
 --
 -- SCOPE: this file is the RPC surface only, not the whole tool surface. `browse`
--- and the `amend_*` / `link_*` / `unlink_*` / `merge_*` / `stamp_verified` tools
+-- and the `amend_*` / `link_*` / `unlink_*` / `merge_*` tools
 -- operate directly on the tables through PostgREST (the client's
 -- insert/update/delete methods) and define no function here. That is why the
 -- read numbering below skips #4.
@@ -19,8 +19,8 @@
 -- =============================================================================
 -- CURRENCY CHANGE (2026-09-08) — DEPLOYED 2026-09-13 (#499)
 -- =============================================================================
--- `record_treatment` (new) and the `push_principle` currency fix (it now carries
--- `authority.last_verified_at` and the `principle_authority` / `criterion`
+-- `record_treatment` (new) and the `push_principle` currency fix (it then carried
+-- `authority.last_verified_at`, retired by #118 below, and the `principle_authority` / `criterion`
 -- `treatment` values the push payload already supplies) were applied to the
 -- deployed pool on 2026-09-13 through the Supabase SQL editor: both
 -- `create or replace function` statements, the explicit `service_role` grants,
@@ -33,6 +33,17 @@
 -- `push_principle` and 4a10dba657c0f051d8b12a5476fd8ada for `record_treatment`,
 -- both matching this file; `service_role` holds execute on both; PostgREST lists
 -- `/rpc/record_treatment`.
+-- =============================================================================
+
+-- =============================================================================
+-- NOTE-UP DATE RETIRED (2026-10-23, #118) — NOT YET DEPLOYED
+-- =============================================================================
+-- `push_principle` and `record_treatment` below no longer write
+-- `authority.last_verified_at`, and the column is dropped. The pool keeps no
+-- note-up date (lawyer-only-access plan §7 rules 3 and 8). Deploy with
+-- migrations/0002_retire_note_up_date.sql, which carries both functions as
+-- written here. Until it runs, the deployed pool still has the column and the
+-- 2026-09-13 bodies recorded above.
 -- =============================================================================
 
 -- =============================================================================
@@ -303,22 +314,12 @@ begin
     limit 1;
 
     if v_authority_id is null then
-      insert into legal_commons.authority (title, citation, url, authority_type, jurisdiction, disposition, last_verified_at)
+      insert into legal_commons.authority (title, citation, url, authority_type, jurisdiction, disposition)
       values (
         v_auth->>'title', v_auth->>'citation', v_auth->>'url',
-        v_auth->>'authority_type', v_auth->>'jurisdiction', v_auth->>'disposition',
-        (v_auth->>'last_verified_at')::timestamptz
+        v_auth->>'authority_type', v_auth->>'jurisdiction', v_auth->>'disposition'
       )
       returning authority_id into v_authority_id;
-    else
-      -- An already-pooled authority keeps the LATER verification stamp: a push
-      -- carrying an older (or no) stamp must never age the pool's knowledge
-      -- backwards. greatest() ignores nulls, so either side may be null.
-      update legal_commons.authority a
-      set last_verified_at = greatest(a.last_verified_at, (v_auth->>'last_verified_at')::timestamptz),
-          updated_at = now()
-      where a.authority_id = v_authority_id
-        and (v_auth->>'last_verified_at') is not null;
     end if;
 
     insert into legal_commons.principle_authority
@@ -420,11 +421,10 @@ begin
   limit 1;
 
   if v_treating_id is null then
-    insert into legal_commons.authority (title, citation, url, authority_type, jurisdiction, disposition, last_verified_at)
+    insert into legal_commons.authority (title, citation, url, authority_type, jurisdiction, disposition)
     values (
       p_treating->>'title', v_citation, p_treating->>'url',
-      p_treating->>'authority_type', p_treating->>'jurisdiction', p_treating->>'disposition',
-      (p_treating->>'last_verified_at')::timestamptz
+      p_treating->>'authority_type', p_treating->>'jurisdiction', p_treating->>'disposition'
     )
     returning authority_id into v_treating_id;
     v_minted := true;

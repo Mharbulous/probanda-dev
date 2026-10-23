@@ -55,7 +55,6 @@ prompt. A WARN pause inside a push is a content confirmation, a separate thing.
 | Remove a principle-authority edge that should not stand | `legal_commons__unlink_authority` |
 | Fold a duplicate authority row into its canonical row | `legal_commons__merge_authority` |
 | Record that one authority has treated another (overruled, distinguished, followed…) | `legal_commons__record_treatment` |
-| Record that an authority was noted up and is still good law as at a date | `legal_commons__stamp_verified` |
 | Correct a pooled authority's own title, url, or authority_type | `legal_commons__amend_authority` |
 | Share locally verified court-rule overlay records | `legal_commons__rule_period_push` |
 | Find pooled court-rule records for an enactment, optionally by amending regulation, rule_ref or deadline type | `legal_commons__rule_period_find` |
@@ -170,13 +169,6 @@ principle, not per case, which departs from every citator
 `scope` narrows a treatment to part of a decision — a case distinguished on its
 facts is not a case overruled, and saying so in `scope` is what keeps the pooled
 authority usable.
-
-`legal_commons__stamp_verified` is the other half of a noting-up run: it records
-that the authority was checked and is still good law, as at now by default. It
-attests to the **source document**, not to any edge's proposition — it says
-nothing about whether a principle is correctly stated. Stamp only after an actual
-citator or source check; an unstamped authority honestly reports that nobody has
-looked, which is more useful than a stamp nobody earned.
 
 `legal_commons__amend_authority` corrects an authority row's own identity —
 title, url, authority_type. It is what a later **transcript upgrade** of an oral
