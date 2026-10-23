@@ -24,6 +24,7 @@ Do not intentionally run ingestions into the same matter in parallel; queue them
 
 ## Procedure
 
+0. **No document or folder named: scan, report, ingest nothing.** A bare `/ingest` is a new-document scan of the whole matter. Ask nothing. Tell `matter-data` this is a report-only scan of the whole matter, and relay its report by folder of the files the matter does not hold yet. Nothing is ingested in this run, and privilege is decided later, at ingestion. The practitioner then names what to ingest, and that request runs the steps below. Skip steps 1-7 and end with step 8.
 1. **Court decisions only — citation preflight.** Before delegating, check whether
    the authority is already held: `shared/research-priority.md` tier 1 (the
    matter's ingested layer) and tier 2 (the shared pooled layer, where this

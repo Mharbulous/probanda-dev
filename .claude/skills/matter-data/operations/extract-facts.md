@@ -2,7 +2,7 @@
 
 Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
-This operation scans a folder for PDFs not yet in the database and extracts them in bulk. It is the "scan for new documents" entry point — distinct from `ingest.md`, which handles one document the agent already has in hand. Read [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md) for the extraction semantics (hash-before-extraction, honest status then flip, no fuzzy-merge, per-run report contract) — this file does not restate them.
+This operation scans a folder for PDFs not yet in the database and extracts them in bulk. It is the "scan for new documents" entry point — distinct from `ingest.md`, which handles one document the agent already has in hand. Read [`../shared/extraction-protocol.md`](../shared/extraction-protocol.md) for the extraction semantics (hash-before-extraction, honest status then flip, no fuzzy-merge, per-run report contract) — this file does not restate them. §8 is a report-only mode of the same walk and classification, for a bare `/ingest`: it skips §1 and §3b-§7.
 
 ## 1. Folder selection (every run — no persisted config)
 
@@ -206,3 +206,18 @@ After the batch completes, report:
 - verified-0 backlog delta: how much the AI-verifier backlog (`verified = 0` rows) grew as a result of this run.
 
 Writes go through `matter_data__execute` (§2.3), which regenerates `evidence.sql` automatically on success — no separate dump call. Report every INSERT/UPDATE performed during the run.
+
+## 8. Report-only mode (bare `/ingest`)
+
+Reached when `/ingest` names no document or folder. It lists every file in the matter that is not yet held, by folder, and **writes nothing and asks nothing**: every database read goes through `matter_data__query`, nothing is moved, and no question is put. The practitioner names what to ingest afterwards, and that request takes the ordinary paths.
+
+1. **Scope.** Every top-level folder of the matter root, and the loose files directly under it, except folders that hold a never-ingest document type: drafts, and raw or unsorted intake. Privileged and authority folders are scanned: privilege and authority handling happen at ingestion. Interim, until the practitioner's folder map replaces it (TODO: spec 2026-10-23_document-type-glossary-and-folder-map): judge each top-level folder by its name against those two types, and name every folder left out in the report, so a wrong call is visible.
+2. **Walk.** §2's `find_candidate_sources` over each in-scope folder, in the bridged shell or through a host tool, never with `matter_root` as a sandbox path (conventions §2.2).
+3. **Classify.** §3's `classify` for every file. Its semantics are §3's alone.
+4. **Versions.** [`supersede-draft.md`](supersede-draft.md) §1's `candidates` over the `new` files and the registered top-level court rows, with an empty `scan_folder` (the whole matter). Read the pairs only: that operation's §2 onwards, and §6c, are not run. §6's proceeding-linkage check is not run either.
+5. **Report**, naming folders and files, never stores, tables or tools:
+   - one table, a row per folder: counts of new, changed, re-extract, duplicate, superseded, partial and corrupt files;
+   - the new, changed and re-extract files by name, under their folder. A `new` file that `candidates` pairs with another file, and a changed file whose held row is a court document, is marked: ingesting it will be proposed as a supersession;
+   - partial files with their `/ingest` route, and corrupt files with the source ids holding their hash (§3);
+   - non-ingestable extensions found, with counts (§2's `skipped_extensions`);
+   - the folders left out under step 1.

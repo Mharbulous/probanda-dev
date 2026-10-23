@@ -41,6 +41,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 | "Record this client instruction memo" / a client instruction changed or was superseded | operations/ingest.md (gate → ingest-extract.md) |
 | "Ingest this case law / statute / authority" | operations/ingest.md (gate → ingest-extract.md) |
 | "Extract facts from new documents" / "scan for new docs" / "sweep the court file for un-ingested affidavits" / scan `6. LAW\` | operations/extract-facts.md |
+| Bare `/ingest`, no document or folder named / "what's new in this matter?" / list the files the matter does not hold yet, by folder, without ingesting | operations/extract-facts.md §8 (report-only) |
 | "Apply this order's effects to the file" / a court order or counsel-change notice was ingested and the style of cause, trial date, party roster, or counsel of record may now be stale | operations/order-effects.md |
 | "The anchor from source N is recorded" / "that date needs no anchor", on a source carrying `DATE-ANCHOR-PENDING: date not yet recorded as an anchor` | shared/conventions.md §11: clear that marker from that source with the clear statement, in one `matter_data__execute` call. Nothing else is written |
 | "Theorize a fact" (mint a fact the case theory needs, no evidence yet) / "dismiss a theorized fact" | operations/theorize-fact.md |
