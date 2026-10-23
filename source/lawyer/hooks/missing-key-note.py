@@ -10,6 +10,7 @@ The key is the Windows Credential Manager entry source/mcp-shared/commons-key.js
 reads, the generic credential Probanda/cloud-key, unless LEGAL_COMMONS_SUPABASE_KEY
 or SUPABASE_SERVICE_ROLE_KEY is set. Only whether the entry exists is checked: the
 hook frees the handle at once and never decodes, keeps or prints a key's value.
+Tests set PROBANDA_CLOUD_KEY_TARGET to look up another target instead.
 A key an earlier version saved as a file is moved into the entry by the first
 server read, so before that read the hook may still say the key is missing.
 Outside Windows (Cowork's VM) the store is out of reach, so the hook tells the
@@ -63,7 +64,8 @@ def key_present() -> bool | None:
 
     advapi32 = ctypes.windll.advapi32
     handle = ctypes.c_void_p()
-    if advapi32.CredReadW(CLOUD_KEY_TARGET, CRED_TYPE_GENERIC, 0, ctypes.byref(handle)):
+    target = os.environ.get("PROBANDA_CLOUD_KEY_TARGET", CLOUD_KEY_TARGET)
+    if advapi32.CredReadW(target, CRED_TYPE_GENERIC, 0, ctypes.byref(handle)):
         advapi32.CredFree(handle)
         return True
     return False if ctypes.GetLastError() == ERROR_NOT_FOUND else None
