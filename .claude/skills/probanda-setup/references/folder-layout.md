@@ -1,24 +1,23 @@
-# Folder layout: the defaults and how to map a practitioner's own
+# Folder map: where this practitioner keeps each kind of document
 
-The skills assume the layout of the practice Probanda was built for. Each convention is owned where its "Owned by" entry says, and that owner stays the source of truth. This table lists the conventions only so that setup can compare. It does not restate them.
+Every practitioner files differently, so Probanda assumes no layout. Each practitioner has their own folder map: for each document type in `shared/document-types.md`, the folders in a matter where they keep it. The skills that scan, route or check a matter's documents read it through `practice_data__folder_map`. With no map, each of them stops, says so and offers this step. The map belongs to the roster person this device names (Step 4), so it is set up once per person and holds on every device they use.
 
-| Default | Owned by | How it is found | Used for |
-|---|---|---|---|
-| `0. CASE DATA\` beside the matter folders, holding `_practice\` | `matter-data/shared/conventions.md` §2.1 | Probanda's own. Setup creates it (step 3) | every practice tool |
-| `0. CASE DATA\` inside each matter folder, holding that matter's case data | `matter-data/shared/conventions.md` §2.1 | Probanda's own. matter-data's initialize creates it | every tool that reads a matter's case data |
-| `4. LAWYER BRIEF\` directly in each matter folder | `matter-data/shared/conventions.md` §2.2 (root proof) | fixed name | proving a matter folder before case data is set up or written |
-| `0. DRAFT*\` in each matter folder, exactly one | the data server, which looks for the one folder whose name starts with `0. DRAFT` | name prefix | drafts, Job Boards and published court documents |
-| `6. LAW\<issue>\` in each matter folder | the data server's research filing tools | fixed name `6. LAW` | filing legal research and downloaded authorities |
-| `2. SOLICITOR CLIENT`, `3. CORRESPONDENCE`, `5. COURT FILE#…`, `7. DISCOVERY`, `8. TRIAL BRIEF`, `9. DISBURSEMENTS` | the litigation-matter filing profile | matched by keyword, not by exact name | file naming and filing reviews, finding correspondence and court documents |
-| A matter template at `<document root>\ADMIN\0. TEMPLATE\L### Litigation\` | `matter-data/operations/matter-skeleton.md` | fixed path. When it is missing, matter-skeleton asks the practitioner | setting up a new matter's folders |
+Two folders are not part of the map, because Probanda files its own work there:
+
+| Folder | Used for |
+|---|---|
+| one folder in each matter whose name starts with `0. DRAFT` | drafts, Job Boards, published court documents and superseded versions |
+| `6. LAW\<issue>\` in each matter | filing legal research and downloaded authorities |
+
+When the practitioner's matters lack either, say what it is used for and advise adding it to each matter or to their matter template. A practitioner who keeps drafts or authorities there maps those types to them like any other folder.
 
 ## Procedure (step 6 of setup)
 
-1. Ask the practitioner to name one typical matter folder. List its subfolders, read only. Open no file in it.
-2. Show a table under `/show-me` with these columns: each default from the table above, the practitioner's subfolder that matches it under the "How it is found" rule (or "none"), and what it is used for.
-3. For each row:
-   - **Matched:** nothing to do.
-   - **Keyword-matched default with no match:** say that Probanda will find nothing of that type in this practitioner's matters until a folder whose name contains the keyword exists.
-   - **Fixed-name or prefix default (`4. LAWYER BRIEF`, `0. DRAFT`, `6. LAW`) with no match:** advise the practitioner to add a folder with that name to each matter, or to their matter template, and say what it is used for.
-   - **The template is missing:** say that matter-data will ask where it is when it sets up a new matter.
-4. Change nothing. Setup never creates, renames or moves a folder inside a matter. The practitioner makes any change they choose. Nothing about the mapping is recorded.
+1. Call `practice_data__folder_map` with no arguments. Keep its `document_types`. When it says this device names no person, run Step 4 first, then call it again. With `status` `ok`, a map is already recorded: show it under `/show-me` as a table of type name and folders, and ask whether to keep it or revise it. Keep ends this step.
+2. Ask the practitioner to name one typical matter folder. List its subfolders, two levels deep, read only. Open no file in it.
+3. Propose a map: for each document type, the subfolders that hold it, judged from the folder names and the type definitions. One type may have several folders, and one folder may serve several types. Write each folder as a glob relative to the matter folder, with `*` where matters differ (a court file number, a party's name, a trailing plural). Leave out a type the practitioner does not seem to keep. Name every subfolder the proposal does not use.
+4. Show the proposal under `/show-me`, one row per type: its name, its definition and its folders. Ask the practitioner to correct it: what goes where, which types they never file, and which folders hold drafts or unsorted intake, because Probanda never ingests those. Ask one question at a time.
+5. On their yes, call `practice_data__set_folder_map` with the whole map. Relay a refusal word for word and correct the map. Never write the map without that yes.
+6. Change nothing on disk. Setup never creates, renames or moves a folder inside a matter. The practitioner makes any change they choose.
+
+A kind of document that fits no type is proposed as a new type through `/suggestion`.

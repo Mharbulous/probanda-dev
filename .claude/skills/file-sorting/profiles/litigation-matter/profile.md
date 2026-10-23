@@ -1,53 +1,59 @@
 # Litigation matter profile
 
-**Detection:** the root folder follows the firm's standard litigation layout —
-numbered subfolders such as `0. DRAFT`, `2. SOLICITOR CLIENT`,
-`3. CORRESPONDENCE`, `5. COURT FILE#`, etc., per the template tree
-`%USERPROFILE%\Logica Law\Litigation - Documents\ADMIN\0. TEMPLATE\L### Litigation\`.
-The structure is the signal; no separate declaration is needed.
+**Detection:** the root folder is a matter folder: it holds the matter
+pointer (`probanda.json`, or the legacy `coclerk.json`), or at least one of its
+subfolders matches a folder glob in the practitioner's folder map
+(`practice_data__folder_map`). No folder name is the signal.
 
 **Kind:** rename-in-place
 
 **Extension whitelist:** `.pdf .docx .doc .eml .msg .xls`, case-insensitive,
 one glob per extension, nothing else.
 
-## Scope — folder-type table
+## Scope — folder types from the folder map
 
-Map the matter's actual subfolders to the eight reviewable **folder types**
-below. **Match by keyword, not exact string** — numbering and spelling drift
-between matters (`9. DISBURSEMENTs` vs `9. DISBURSEMENTS`; `8. BRIEFs` vs
-`8. TRIAL BRIEF`; a matter may have two court-file folders for two actions).
+Read the practitioner's folder map (`practice_data__folder_map`). It says
+which of the matter's folders hold each document type
+(`shared/document-types.md`). **With `status` `no_map`, stop:** tell the
+practitioner in plain words that Probanda does not yet know where they keep
+each kind of document, offer to set that up (`/probanda-setup`), and never
+assume a layout. The map file and how it works are never named to them.
 
-| Folder type | Match folder name containing… | Folder notes |
+With a map, give each folder of the matter that a map glob matches the first
+**folder type** below whose document types it holds. The folder types group the
+glossary's types for review: each has its own notes file and its own number,
+which `/file-naming`'s code registry ("Typical folders") and the namer use.
+
+| Folder type | Document types | Folder notes |
 |---|---|---|
-| 2 — Solicitor Client | "SOLICITOR" / "CLIENT" | `notes/solicitor-client-notes.md` |
-| 3 — Correspondence | "CORRESPONDENCE" | `notes/correspondence-notes.md` |
-| 4 — Lawyer Brief | "LAWYER BRIEF" | `notes/lawyer-brief-notes.md` |
-| 5 — Court File | "COURT FILE" | `notes/court-document-notes.md` |
-| 6 — Law | "LAW" (not "LAWYER") | `notes/law-notes.md` |
-| 7 — Discovery | "DISCOVERY" | `notes/discovery-notes.md` |
-| 8 — Trial Brief | "BRIEF" / "TRIAL" (not "LAWYER BRIEF") | `notes/trial-brief-notes.md` |
-| 9 — Disbursements | "DISBURSEMENT" | `notes/disbursement-notes.md` |
+| 2 — Solicitor Client | `client_communications`, `retainer_and_billing` | `notes/solicitor-client-notes.md` |
+| 3 — Correspondence | `correspondence_opposing_counsel`, `correspondence_unrepresented_party`, `correspondence_witness`, `correspondence_expert`, `correspondence_court`, `correspondence_non_party` | `notes/correspondence-notes.md` |
+| 4 — Lawyer Brief | `work_product`, `searches` | `notes/lawyer-brief-notes.md` |
+| 5 — Court File | `court_filings` | `notes/court-document-notes.md` |
+| 6 — Law | `authorities` | `notes/law-notes.md` |
+| 7 — Discovery | `documents_exchanged` | `notes/discovery-notes.md` |
+| 8 — Trial Brief | `trial_materials` | `notes/trial-brief-notes.md` |
+| 9 — Disbursements | `disbursement_records` | `notes/disbursement-notes.md` |
 
 **Record each matched folder's exact name and absolute path as listed on disk,
 and reuse that string verbatim everywhere downstream** — namer dispatches,
-`proposal.json`'s folder list, and every path handed to the apply tools. The keyword
-match is for *classification only*: never re-type or abbreviate a folder name
-from memory afterwards. `5. COURT FILE#S-252817` is not `5. COURT FILE#`, and
-a `cd` into the shortened form fails.
+`proposal.json`'s folder list, and every path handed to the apply tools. The
+map match is for *classification only*: never re-type or abbreviate a folder
+name from memory afterwards. A glob such as `Court*` is not the folder it
+matched, and a `cd` into the glob fails.
 
-**Always skip** folders numbered `0` (drafts) and `1` (raw scans / working
-files — e.g. `0. DRAFT`, `1. RAW`, `1. CASEMAP`): these hold working material,
-not finished records, so renaming there adds noise. `0. DRAFT\Superseded` is
-matter-data's deliberate destination for a superseded version of a court document,
-and is skipped like the rest of folder 0. Also skip any non-standard
-folder that doesn't map to a type above (e.g. a `9. AI` scratch folder) unless
-the user explicitly asks for it.
+**Always skip** every folder whose document types are all `never_ingest`
+(drafts, raw or unsorted intake): these hold working material, not finished
+records, so renaming there adds noise. The drafts folder's `Superseded`
+subfolder is matter-data's deliberate destination for a superseded version of a
+court document, and is skipped with it. Also skip any folder the map does not
+name unless the user explicitly asks for it, and name it so the practitioner
+can add it to the map.
 
-**Disambiguation tips:** "LAWYER BRIEF" matches type 4, *not* type 6 (Law) or
-type 8 (Trial Brief). If a matter has two `5. COURT FILE#` folders (two
-actions), treat each as in scope; a document's action number decides which
-one it belongs in.
+**Disambiguation tips:** when a folder holds types of two folder types, it
+takes the first in the table, and the namer is told every type it holds. If
+the map matches two court-filings folders (two actions), treat each as in
+scope; a document's action number decides which one it belongs in.
 
 **Argument rule:** if the caller received a single subfolder path as an
 argument, scope the run to that folder's type only — skip the full sweep. If

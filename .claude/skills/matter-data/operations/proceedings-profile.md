@@ -69,7 +69,7 @@ A secondary entry point, reached with one or more already-registered `main.sourc
 
 Every write below is confirmation-gated exactly as §3 describes — this is authorized skill text, a designated decision point, not an unauthorized interruption.
 
-**Group the supplied sources** by the first path segment of `file_path` (the top-level folder, e.g. `5. COURT FILE #CA59991`); a source outside a `5.*` folder is handled on its own. For each group:
+**Group the supplied sources** by the first path segment of `file_path` (the top-level folder, e.g. `Court File #CA59991`); a source outside a folder the practitioner's folder map gives court filings is handled on its own. For each group:
 
 ### Read court identity directly
 
@@ -81,7 +81,7 @@ Compare the party names on the caption (and their recorded aliases, resolved thr
 
 ### R2 — Court-file folder signal
 
-A signal, never a gate. The group's folder name matches `^5\..*(#|№|No\.?|File)?\s*[A-Z]{0,4}-?\d{4,}` (lenient — the folder name is a hint, not a parser target; the file number from R3's own read is authoritative). R1-pass + R2-hit → the proceeding belongs in `main.proceedings`; continue to R3. R1-pass + R2-miss (a court document, matter parties, but sitting outside any `5.` folder): do not block — report it as a filing question for the caller to surface ("court document for [file no.] found outside a court-file folder — register a proceeding, or refile?") and continue to R3 anyway, since the document may still describe a proceeding worth registering.
+A signal, never a gate. The group's folder is one the practitioner's folder map gives court filings (`practice_data__folder_map`, the caller's answer reused) and its name holds something like a file number, matching `(#|№|No\.?|File)?\s*[A-Z]{0,4}-?\d{4,}` (lenient — the folder name is a hint, not a parser target; the file number from R3's own read is authoritative). R1-pass + R2-hit → the proceeding belongs in `main.proceedings`; continue to R3. R1-pass + R2-miss (a court document, matter parties, but sitting outside any court-filings folder): do not block — report it as a filing question for the caller to surface ("court document for [file no.] found outside a court-file folder — register a proceeding, or refile?") and continue to R3 anyway, since the document may still describe a proceeding worth registering.
 
 ### R3 — Match against existing proceedings
 

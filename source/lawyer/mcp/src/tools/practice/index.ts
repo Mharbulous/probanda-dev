@@ -29,6 +29,7 @@ import {
 } from "./writes.js";
 import { import_invoices, invoices_query } from "./invoices.js";
 import { firm_profile, upsert_firm_profile } from "./firm-profile.js";
+import { folder_map, set_folder_map } from "./folder-map.js";
 import { config_set_root, config_status } from "./config.js";
 import { rule_overlay, upsert_rule_overlay } from "./rule-overlay.js";
 import { render_practice_board } from "./practice-board.js";
@@ -46,6 +47,8 @@ import type { PracticeStore } from "../../practice/store.js";
 const FILE_TOOLS = new Set([
   "practice_data__firm_profile",
   "practice_data__upsert_firm_profile",
+  "practice_data__folder_map",
+  "practice_data__set_folder_map",
   "practice_data__config_status",
   "practice_data__config_set_root",
 ]);
@@ -138,6 +141,10 @@ function route(store: PracticeStore, name: string, args: Record<string, unknown>
       return firm_profile();
     case "practice_data__upsert_firm_profile":
       return upsert_firm_profile(args);
+    case "practice_data__folder_map":
+      return folder_map(args, store.env);
+    case "practice_data__set_folder_map":
+      return set_folder_map(args, store.env);
     case "practice_data__config_status":
       return config_status(args, store.env);
     case "practice_data__config_set_root":

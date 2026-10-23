@@ -5,7 +5,7 @@
   "title": "Notice of Application",
   "exhibit_numbering": "writing",
   "goal_criteria": ["primary-authority", "excerpts", "noting-up", "evidence", "counsel-review", "open-items", "orders-sought", "hearing-date"],
-  "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"],
+  "ingest_inputs": ["court_filings", "documents_exchanged"],
   "companions": ["written-arguments"]
 }
 ```

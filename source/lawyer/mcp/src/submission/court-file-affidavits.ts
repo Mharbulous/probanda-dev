@@ -9,8 +9,9 @@
 // AFFIRMED or SWORN name gives a made date; a FILED name gives the status alone.
 
 import { readdirSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
+import { expandGlob, globsFor, readFolderMap } from "../tools/practice/folder-map.js";
 import { submissionDataQuery } from "./backend.js";
 
 const STATUSES = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"] as const;
@@ -52,22 +53,31 @@ export function deponentCode(name: string): string {
   return `${words[words.length - 1]}${words[0][0].toUpperCase()}`;
 }
 
-/** The proceeding's court-file folder: the one "COURT FILE" folder, or with several the one naming its file number. */
-export function courtFileFolder(matterRoot: string, fileNumber: string | null): { path: string } | { note: string } {
-  let names: string[];
+/** The proceeding's court-file folder: the one folder the practitioner's folder map gives court
+ * filings, or with several the one naming its file number. With no map, a note says so. */
+export function courtFileFolder(
+  matterRoot: string,
+  fileNumber: string | null,
+  env: NodeJS.ProcessEnv = process.env
+): { path: string } | { note: string } {
+  let map: ReturnType<typeof readFolderMap>;
   try {
-    names = readdirSync(matterRoot, { withFileTypes: true })
-      .filter((e) => (e.isDirectory() || e.isSymbolicLink()) && /COURT FILE/i.test(e.name))
-      .map((e) => e.name)
-      .sort();
+    map = readFolderMap(env);
+  } catch (err) {
+    return { note: `the folder map could not be read: ${(err as Error).message}` };
+  }
+  if (map.status === "no_map") return { note: `Probanda does not know where this practitioner keeps court filings (${map.reason})` };
+  let paths: string[];
+  try {
+    paths = [...new Set(globsFor(map.entries, ["court_filings"]).flatMap((glob) => expandGlob(matterRoot, glob)))].sort();
   } catch (err) {
     return { note: `the matter folder could not be listed (${(err as NodeJS.ErrnoException).code ?? "error"})` };
   }
-  if (names.length === 0) return { note: "the matter has no COURT FILE folder" };
-  if (names.length === 1) return { path: join(matterRoot, names[0]) };
-  const fitting = fileNumber ? names.filter((n) => n.toUpperCase().includes(fileNumber.toUpperCase())) : [];
-  if (fitting.length === 1) return { path: join(matterRoot, fitting[0]) };
-  return { note: `no single COURT FILE folder names this proceeding's file number (${names.map((n) => `"${n}"`).join(", ")})` };
+  if (paths.length === 0) return { note: "the matter has no court filings folder" };
+  if (paths.length === 1) return { path: paths[0] };
+  const fitting = fileNumber ? paths.filter((p) => basename(p).toUpperCase().includes(fileNumber.toUpperCase())) : [];
+  if (fitting.length === 1) return { path: fitting[0] };
+  return { note: `no single court filings folder names this proceeding's file number (${paths.map((p) => `"${basename(p)}"`).join(", ")})` };
 }
 
 /** Every file name under the folder, its subfolders included. A folder that cannot be listed is skipped. */

@@ -38,7 +38,7 @@ just a profile.
 
 | Profile | Kind | Detection | profile.md |
 |---|---|---|---|
-| `litigation-matter` | `rename-in-place` | root has the firm's standard numbered-subfolder layout (`0. DRAFT`, `2. SOLICITOR CLIENT`, ... per the user's CLAUDE.md) | `profiles/litigation-matter/profile.md` |
+| `litigation-matter` | `rename-in-place` | root holds the matter pointer, or a subfolder the practitioner's folder map names (`practice_data__folder_map`) | `profiles/litigation-matter/profile.md` |
 | `accounting` | `route-to-destination` | root is, or directly contains, `ACCOUNTING\` with all four of `General Account Bookkeeping\`, `Trust Account Bookkeeping\`, `LOGICA LAW BILLING\`, `Family\` | `profiles/accounting/profile.md` |
 
 (Future profiles land here as their own `profiles/<name>/profile.md` — see
@@ -61,8 +61,9 @@ Given a root folder path and a resolved profile name, read that profile's
 `profile.md` and return everything it documents about scope. What that means
 depends on the profile's **Kind**:
 
-- For a `rename-in-place` profile: the in-scope subfolders (each with its
-  own type/label and the notes chunk it should be reviewed with), the
+- For a `rename-in-place` profile: the in-scope subfolders, resolved from
+  the practitioner's folder map (each with its own type/label and the notes
+  chunk it should be reviewed with), or the no-map stop the profile states, the
   always-skip list, disambiguation tips, the verbatim-path rule, and the
   argument rule.
 - For a `route-to-destination` profile: the in-scope location (e.g. files
@@ -73,7 +74,8 @@ depends on the profile's **Kind**:
 
 Either way, also return the extension whitelist. This is a pure delegation
 to the named profile's document — this skill holds no folder-layout or
-routing knowledge of its own outside `profiles/`.
+routing knowledge of its own outside `profiles/`, and a matter's layout is the
+practitioner's folder map, never a built-in one.
 
 ## Intent: record-backend
 

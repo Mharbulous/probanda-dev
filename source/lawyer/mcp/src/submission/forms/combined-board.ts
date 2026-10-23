@@ -197,7 +197,7 @@ export function combineSections(dbPath: string, sections: WorkBoardData[], page 
       state_label: least !== null ? LIFECYCLE_LABELS[least] : sections.map((s) => `${writingOf(s)}: ${s.meta.state_since === null ? s.meta.state_label : `${s.meta.state_label} ${s.meta.state_since}`}`).join(" · "),
       state_since: null,
       ready_to_retire: false,
-      ...(ingest.length > 0 ? { ingest_inputs: { folders: [...new Set(ingest.flatMap((i) => i.folders))], ready_jobs: [...new Set(ingest.flatMap((i) => i.ready_jobs))] } } : {}),
+      ...(ingest.length > 0 ? { ingest_inputs: { types: [...new Set(ingest.flatMap((i) => i.types))], ready_jobs: [...new Set(ingest.flatMap((i) => i.ready_jobs))] } } : {}),
       ...(sections.every((s) => s.meta.job_only) ? { job_only: true as const } : {}),
       writing_states: sections.map((s) => ({ filing_id: s.meta.filing_id, proceeding_id: s.meta.proceeding_id, title: writingOf(s), state_label: s.meta.state_label, state_since: s.meta.state_since, ready_to_retire: s.meta.ready_to_retire })),
     },

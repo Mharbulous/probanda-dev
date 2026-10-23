@@ -5,7 +5,7 @@
   "title": "Application Response",
   "exhibit_numbering": "writing",
   "goal_criteria": ["orders-positioned", "primary-authority", "excerpts", "noting-up", "evidence", "open-items", "opposing-points", "counsel-review"],
-  "ingest_inputs": ["5. COURT*", "7. DISCOVERY*"],
+  "ingest_inputs": ["court_filings", "documents_exchanged"],
   "companions": ["written-arguments"]
 }
 ```

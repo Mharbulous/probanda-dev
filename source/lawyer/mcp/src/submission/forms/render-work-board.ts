@@ -409,9 +409,9 @@ export interface WorkBoardData {
     state_since: string | null;
     /** True only once the appeal period has run: retiring the filing is the ordinary next step. */
     ready_to_retire: boolean;
-    /** Present only when the filing's stored layout declares `ingest_inputs`: those folders, and the
+    /** Present only when the filing's stored layout declares `ingest_inputs`: those document types, and the
      * ids of this filing's own Ready jobs (never a proceeding-wide job's). Absent on a pre-filing board. */
-    ingest_inputs?: { folders: string[]; ready_jobs: number[] };
+    ingest_inputs?: { types: string[]; ready_jobs: number[] };
     /** True only on a Job Board with no Writing (JOB_BOARD_KIND): `state` is null, `state_label` reads
      * Open or Closed, and the section has no Goal card, criteria or Proposals. */
     job_only?: true;
@@ -1093,7 +1093,7 @@ function declaredCriteria(filing: FilingRow): StockCriterion[] {
     .map((name) => (name === "open-items" ? openItems(declared) : DECLARABLE.get(name) ?? bad(`names "${name}", which is not a goal criterion`)));
 }
 
-/** The matter folders the Writing's jobs read: its stored layout's `ingest_inputs`
+/** The document types the Writing's jobs read: its stored layout's `ingest_inputs`
  * (shared/declared-layout.md section 5). Undefined on a row with no stored layout and on a type
  * declaring none. A value that is not an array of names fails hard, naming the filing. */
 function declaredIngestInputs(filing: FilingRow): string[] | undefined {
@@ -1101,7 +1101,7 @@ function declaredIngestInputs(filing: FilingRow): string[] | undefined {
   const raw = storedLayout(filing).layout.ingest_inputs;
   if (raw === undefined) return undefined;
   if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) {
-    throw new DataServerError(`"${filing.title}": its stored list of folders to read is not a list of names`, "invalid_layout_snapshot");
+    throw new DataServerError(`"${filing.title}": its stored list of document types to read is not a list of names`, "invalid_layout_snapshot");
   }
   return raw as string[];
 }
@@ -1624,7 +1624,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     gate === undefined || gate.state === "met"
       ? tickets
       : tickets.map((t): WorkBoardTicket => (t.category === "ready" && waitsOnGate(t.title) ? { ...t, dispatch_skips: [...t.dispatch_skips, { reason: "before_gate" }] } : t));
-  const folders = declaredIngestInputs(ctx.filing);
+  const inputTypes = declaredIngestInputs(ctx.filing);
   // This filing's own Ready jobs: a proceeding-wide job has no filing, so no declared inputs.
   const readyJobs = board.tickets.filter((t) => t.filing_id === ctx.filing.id && t.ticket.category === "ready").map((t) => t.ticket.id);
 
@@ -1642,7 +1642,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
       state_label: LIFECYCLE_LABELS[ctx.lifecycle.state],
       state_since: ctx.lifecycle.since,
       ready_to_retire: ctx.lifecycle.readyToRetire,
-      ...(folders !== undefined ? { ingest_inputs: { folders, ready_jobs: readyJobs } } : {}),
+      ...(inputTypes !== undefined ? { ingest_inputs: { types: inputTypes, ready_jobs: readyJobs } } : {}),
     },
     tickets: gated,
     seeds,

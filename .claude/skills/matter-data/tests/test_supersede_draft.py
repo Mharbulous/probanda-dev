@@ -65,7 +65,8 @@ def registered(source_id, name, proceeding=1, notes=None, folder=FOLDER):
 
 class CandidateTests(unittest.TestCase):
     def pairs(self, newcomers, rows, pages=None, scan=FOLDER):
-        return FN["candidates"]([{"path": p, "hash": "h"} for p in newcomers], rows,
+        # The folder map, as one practitioner keeps it: court filings in the numbered court-file folders.
+        return FN["candidates"]([{"path": p, "hash": "h", "court": p.upper().startswith("5. COURT")} for p in newcomers], rows,
                                 pages or {}, scan, MATTER_ROOT)
 
     def test_the_title_stem_drops_dates_and_version_tokens(self):

@@ -1,7 +1,7 @@
 // Which files in the matter folders a caller names the case database does not yet hold, read at
 // session entry (/matter-data design-decisions.md #60). The caller passes the folders the opened
-// filing's type declares as its ingest inputs (shared/declared-layout.md section 5), drawn from the
-// solicitor-client, correspondence, court-file and discovery folders.
+// filing's type declares as its ingest inputs (shared/declared-layout.md section 5), document types
+// the practitioner's folder map turns into folders.
 //
 // Spawns /matter-data's references/scripts/ingest_coverage.py the way case/parties-of-record.ts
 // spawns parties_of_record.py: an embedded plumbing driver, the skill's scripts directory on
@@ -32,9 +32,6 @@ def main():
 
 main()
 `.trim();
-
-const FOLDER_GLOBS = ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*", "7. DISCOVERY*"];
-const CORRESPONDENCE_GLOBS = FOLDER_GLOBS.slice(0, 2);
 
 // Hashing a discovery folder over OneDrive can outlast READ_TIMEOUT_MS's 20 s, and 30 s keeps
 // open_session under the Cowork bridge's 60 s limit alongside its other phases. A kill leaves no
@@ -81,13 +78,15 @@ export type IngestCoverage =
 /**
  * The ingest coverage of `folderGlobs` in the matter at `matterRoot` (a host path, used for both the
  * walk and the stored-path comparison) against the matter-data database in `caseDataDir`. The
- * solicitor-client and correspondence folders among them count as correspondence. Never throws: a
- * helper that fails, cannot start or outlives its budget reads `unavailable`, naming the failure.
+ * folders among them in `correspondenceGlobs` count as correspondence. Both come from the
+ * practitioner's folder map (tools/practice/folder-map.ts). Never throws: a helper that fails,
+ * cannot start or outlives its budget reads `unavailable`, naming the failure.
  */
 export function readIngestCoverage(
   caseDataDir: string,
   matterRoot: string,
-  folderGlobs: readonly string[] = FOLDER_GLOBS,
+  folderGlobs: readonly string[],
+  correspondenceGlobs: readonly string[],
   env: NodeJS.ProcessEnv = process.env
 ): IngestCoverage {
   // The script says the same; answering here spares a Python start where there is nothing to read.
@@ -103,7 +102,7 @@ export function readIngestCoverage(
         case_data_dir: caseDataDir,
         matter_root: matterRoot,
         folder_globs: folderGlobs,
-        correspondence_globs: folderGlobs.filter((g) => CORRESPONDENCE_GLOBS.includes(g)),
+        correspondence_globs: folderGlobs.filter((g) => correspondenceGlobs.includes(g)),
       }),
       env,
       timeoutMs,

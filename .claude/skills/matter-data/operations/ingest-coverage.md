@@ -13,8 +13,8 @@ Read-only. For a set of matter folders named by glob, report which of their file
 | Field | Meaning |
 |---|---|
 | `matter_root`, `matter_folder` | as [`ingest-status.md`](ingest-status.md) takes them. The walk and the hashing run against `matter_folder` |
-| `folder_globs` | glob patterns, each matched against the matter folder's own entries (`3. CORRESPONDENCE*`). A pattern takes **every** folder it matches |
-| `correspondence_globs` | the patterns among `folder_globs` whose files count toward the newest correspondence date |
+| `folder_globs` | glob patterns relative to the matter folder, the folders the practitioner's folder map gives the document types asked about (`practice_data__folder_map`). A pattern takes **every** folder it matches. A caller with no folder map has no patterns: it tells the practitioner and offers setup, and never names a folder itself |
+| `correspondence_globs` | the patterns among `folder_globs` that the map gives a correspondence type or client communications, whose files count toward the newest correspondence date |
 
 ## Output
 

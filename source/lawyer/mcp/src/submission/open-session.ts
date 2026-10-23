@@ -17,6 +17,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { readIngestCoverage, type IngestCoverage } from "../case/ingest-coverage.js";
+import { documentTypes, globsFor, readFolderMap, type DocumentType, type FolderMap } from "../tools/practice/folder-map.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
@@ -105,9 +106,10 @@ export interface OpenSessionResult extends BootstrapResult {
    * and the address for service that case data does not hold (counselOffers). The session offers
    * each back to the practitioner, to apply, discard or hold (/draft). */
   counsel_offers?: CounselOffer[];
-  /** Read-only: the files in the folders the opened filing declares as its ingest inputs
-   * (`opened.ingest_inputs.folders`) the case database does not yet hold, and, when a correspondence
-   * folder is among them, the newest dated correspondence it does (/matter-data design-decisions #60).
+  /** Read-only: the files in the folders the practitioner's folder map gives the document types the
+   * opened filing declares as its ingest inputs (`opened.ingest_inputs.types`) the case database does
+   * not yet hold, and, when a correspondence folder is among them, the newest dated correspondence it
+   * does (/matter-data design-decisions #60). With no folder map it is `unavailable`, saying so.
    * `to_ingest` names those files and `records` says, one entry per `to_ingest` path, why each is not
    * held: its verdict, its source, and the source it may be another version of. `folders` names the
    * folder patterns it covered and `checked_at` when it ran, so the input check can stand on it
@@ -136,10 +138,10 @@ export interface OpenSessionResult extends BootstrapResult {
     board_moves?: BoardMove[];
     filing_retired?: true;
     note?: string;
-    /** The opened filing's declared input folders and its Ready jobs, present only when its stored
-     * layout declares `ingest_inputs`. A session reads the folders from here for the pre-claim input
-     * check (/draft job-session.md) and never from the database. */
-    ingest_inputs?: { folders: string[]; ready_jobs: number[] };
+    /** The opened filing's declared input document types and its Ready jobs, present only when its
+     * stored layout declares `ingest_inputs`. A session reads the types from here for the pre-claim
+     * input check (/draft job-session.md) and never from the database. */
+    ingest_inputs?: { types: string[]; ready_jobs: number[] };
   };
   /** Present when that opening render refused: its code and message. The matter's pages are still written. */
   open_refused?: { code: string; message: string };
@@ -243,7 +245,24 @@ function openedIngestCoverage(opened: OpenSessionResult["opened"], dbPath: strin
   if (opened?.filing_id === undefined) return { status: "not_applicable", reason: "no board opened" };
   if (opened.ingest_inputs === undefined) return { status: "not_applicable", reason: "the opened filing declares no ingest inputs" };
   if (opened.ingest_inputs.ready_jobs.length === 0) return { status: "not_applicable", reason: "no Ready job on the opened filing" };
-  return readIngestCoverage(dirname(dbPath), root, opened.ingest_inputs.folders);
+  let types: DocumentType[];
+  let map: FolderMap;
+  try {
+    types = documentTypes();
+    map = readFolderMap(process.env, types);
+  } catch (err) {
+    return { status: "unavailable", reason: `the folder map could not be read: ${(err as Error).message}` };
+  }
+  if (map.status === "no_map") {
+    return { status: "unavailable", reason: `Probanda does not know where this practitioner keeps each kind of document (${map.reason}); offer to set it up` };
+  }
+  const declared = opened.ingest_inputs.types;
+  const unknown = declared.filter((id) => !types.some((t) => t.id === id));
+  if (unknown.length) {
+    return { status: "unavailable", reason: `the filing's stored layout names ${unknown.join(", ")}, which is not a document type; re-snapshot the Writing` };
+  }
+  const correspondence = types.filter((t) => t.id.startsWith("correspondence_") || t.id === "client_communications").map((t) => t.id);
+  return readIngestCoverage(dirname(dbPath), root, globsFor(map.entries, declared), globsFor(map.entries, correspondence));
 }
 
 /** The opened filing's form currency (ADR 0038), when its kind's venue document is a court form. */

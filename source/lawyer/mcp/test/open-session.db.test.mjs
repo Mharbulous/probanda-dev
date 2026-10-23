@@ -336,8 +336,9 @@ test("a per-user coclerk.json with a reachable case_data_root: nothing blocks", 
 // filing's type declares as its ingest inputs the case database does not yet hold, and checks them
 // only when that filing has a Ready job.
 
-/** APPDATA pointing at a case data root with an empty firm overlay, so create_writing reads /draft's shipped tree. */
-function shippedTree(t) {
+/** APPDATA pointing at a case data root with an empty firm overlay, so create_writing reads /draft's shipped tree.
+ * With `map`, this machine names person "pe", whose folder map holds those entries. */
+function shippedTree(t, { map } = {}) {
   const scratch = mkdtempSync(join(tmpdir(), "coclerk-open-session-tree-"));
   const saved = process.env.APPDATA;
   t.after(() => {
@@ -347,9 +348,24 @@ function shippedTree(t) {
   });
   mkdirSync(join(scratch, "case"));
   mkdirSync(join(scratch, "Coclerk"));
-  writeFileSync(join(scratch, "Coclerk", "coclerk.json"), JSON.stringify({ case_data_root: join(scratch, "case") }));
+  writeFileSync(join(scratch, "Coclerk", "coclerk.json"), JSON.stringify({ case_data_root: join(scratch, "case"), ...(map ? { person: "pe" } : {}) }));
+  if (map) {
+    mkdirSync(join(scratch, "case", "_practice", "firm", "folder-maps"), { recursive: true });
+    writeFileSync(join(scratch, "case", "_practice", "firm", "folder-maps", "pe.json"), JSON.stringify({ entries: map }));
+  }
   process.env.APPDATA = scratch;
 }
+
+/** One practitioner's folders, as a folder map gives them. */
+const CORRESPONDENCE_TYPES = ["opposing_counsel", "unrepresented_party", "witness", "expert", "court", "non_party"].map((k) => `correspondence_${k}`);
+const MAP = [
+  { type: "client_communications", folders: ["2. SOLICITOR CLIENT*"] },
+  { type: "retainer_and_billing", folders: ["2. SOLICITOR CLIENT*"] },
+  ...CORRESPONDENCE_TYPES.map((type) => ({ type, folders: ["3. CORRESPONDENCE*"] })),
+  { type: "court_filings", folders: ["5. COURT*"] },
+  { type: "documents_exchanged", folders: ["7. DISCOVERY*"] },
+];
+const LETTER_TYPES = ["client_communications", "retainer_and_billing", ...CORRESPONDENCE_TYPES, "court_filings"];
 
 const LETTER = { forum: null, writing: { tree: { country: "CAN", jurisdiction: "BC", venue: "_NoVenue" }, kind: "letter-to-opposing-counsel", recipient: "opposing-counsel" } };
 const VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
@@ -357,9 +373,9 @@ const SUBMISSIONS = { forum: VANIAC, writing: { tree: { country: "CAN", jurisdic
 
 /** A matter with a 0. DRAFT folder and matter-data stores, whose one Writing is created from a shipped
  * type file; with `ready`, one queued job on that Writing. */
-async function declaringFixture(t, context, { forum, writing }, { ready = true } = {}) {
+async function declaringFixture(t, context, { forum, writing }, { ready = true, map = MAP } = {}) {
   const m = matterFixture(t);
-  shippedTree(t);
+  shippedTree(t, { map });
   await freshSubmissionDb(m.dbPath);
   await submissionDataExecute(m.dbPath, `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', ${forum === null ? "NULL" : `'${forum}'`});`);
   const created = await callTool(context, "drafting_data__create_writing", { db_path: m.dbPath, proceeding_id: 1, ...writing, title: "Letter" });
@@ -383,7 +399,7 @@ test("returns ingest_coverage over the letter's declared folders, naming an unre
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
-  assert.deepEqual(result.opened.ingest_inputs, { folders: ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*"], ready_jobs: [1] });
+  assert.deepEqual(result.opened.ingest_inputs, { types: LETTER_TYPES, ready_jobs: [1] });
   assert.equal(result.ingest_coverage.status, "ok", result.ingest_coverage.reason);
   assert.deepEqual(result.ingest_coverage.to_ingest, ["3. CORRESPONDENCE\\a.pdf"]);
   assert.deepEqual(result.ingest_coverage.missing, ["2. SOLICITOR CLIENT*", "5. COURT*"], "discovery is not a letter's input");
@@ -415,10 +431,23 @@ test("a court filing's coverage checks only court and discovery, so a solicitor-
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
-  assert.deepEqual(result.opened.ingest_inputs, { folders: ["5. COURT*", "7. DISCOVERY*"], ready_jobs: [1] });
+  assert.deepEqual(result.opened.ingest_inputs, { types: ["court_filings", "documents_exchanged"], ready_jobs: [1] });
   assert.equal(result.ingest_coverage.status, "ok", result.ingest_coverage.reason);
   assert.deepEqual(result.ingest_coverage.to_ingest, []);
   assert.deepEqual(result.ingest_coverage.missing, ["5. COURT*", "7. DISCOVERY*"]);
+});
+
+test("with no folder map the coverage check reads unavailable and says so, assuming no layout", async (t) => {
+  const context = await practiceContext(t, { withMatter: false });
+  const m = await declaringFixture(t, context, LETTER, { map: null });
+  mkdirSync(join(m.matterRoot, "3. CORRESPONDENCE"));
+  writeFileSync(join(m.matterRoot, "3. CORRESPONDENCE", "a.pdf"), "a");
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.ingest_coverage.status, "unavailable");
+  assert.match(result.ingest_coverage.reason, /does not know where this practitioner keeps each kind of document/);
+  assert.equal(result.filings.length, 1);
 });
 
 test("a declaring filing with no Ready job is not checked", async (t) => {
@@ -427,7 +456,7 @@ test("a declaring filing with no Ready job is not checked", async (t) => {
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
-  assert.deepEqual(result.opened.ingest_inputs, { folders: ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*"], ready_jobs: [] });
+  assert.deepEqual(result.opened.ingest_inputs, { types: LETTER_TYPES, ready_jobs: [] });
   assert.deepEqual(result.ingest_coverage, { status: "not_applicable", reason: "no Ready job on the opened filing" });
 });
 

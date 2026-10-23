@@ -6,7 +6,7 @@
   "exhibit_numbering": "writing",
   "letterhead": true,
   "goal_criteria": ["primary-authority", "excerpts", "noting-up", "recipients", "open-items", "counsel-review"],
-  "ingest_inputs": ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*"],
+  "ingest_inputs": ["client_communications", "retainer_and_billing", "correspondence_opposing_counsel", "correspondence_unrepresented_party", "correspondence_witness", "correspondence_expert", "correspondence_court", "correspondence_non_party", "court_filings"],
   "parts": [
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "slot:date" },
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "addressee" },

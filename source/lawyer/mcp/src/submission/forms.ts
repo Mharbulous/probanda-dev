@@ -616,9 +616,9 @@ export interface RenderedDocument {
   board_moves?: BoardMove[];
   /** The Job Board only: true when this render wrote the matter's pages. */
   pages_written?: boolean;
-  /** The Job Board only, when the filing's stored layout declares `ingest_inputs`: those folders and
+  /** The Job Board only, when the filing's stored layout declares `ingest_inputs`: those document types and
    * the ids of the filing's own Ready jobs, which take /draft's input check before a claim. */
-  ingest_inputs?: { folders: string[]; ready_jobs: number[] };
+  ingest_inputs?: { types: string[]; ready_jobs: number[] };
 }
 
 export interface RenderResult {

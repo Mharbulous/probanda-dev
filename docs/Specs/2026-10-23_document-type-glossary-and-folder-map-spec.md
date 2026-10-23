@@ -1,6 +1,6 @@
 # Spec: Document-type glossary and per-practitioner folder map
 
-Status: proposed, 2026-10-23. Written in a matter session; implementation is handed to Claude Code.
+Status: implemented, 2026-10-23 (§12). Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (installed copy seen at v0.8.2), with `file-manager` (file-sorting, housekeeping). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-23_bare-ingest-new-document-scan-spec.md
 
@@ -52,7 +52,7 @@ Non-goals: changing file-naming grammar; renaming anyone's folders; per-matter l
 ## 8. Implementation criteria
 1. A glossary file exists listing the types with definitions and the `never_ingest`, `privileged_by_default` and `authority` flags.
 2. The map schema allows one type → many folders and one folder → many types, and is stored outside the plugin.
-3. Grep of shipped skill text for the author's folder names and prefix tests returns only the documented example map and text labelled as one practitioner's layout.
+3. Grep of the read-side consumers (§11.2's read-side table) for the author's folder names and prefix tests returns nothing. Narrowed on 2026-10-23 (§12): `0. DRAFT*` and `6. LAW` stay fixed folders that Probanda writes into, so the write-side group keeps them, and the documented example map (§13) is the only place the rest of the author's layout appears.
 4. extract-facts and ingest-extract choose scope, privilege path and authority cascade from the map, not from path prefixes.
 5. A consumer with no map tells the practitioner and offers setup instead of assuming a layout.
 6. The glossary says how to propose a new type.
@@ -134,3 +134,39 @@ A grep over `.claude/skills` and `source` for the numbered names found about 150
 - §9 Q2 (file-sorting layout model): yes, see §11.3. The glossary's types should take over its eight folder types, and the map should replace its keyword table, rather than a second model beside it.
 - §9 Q3 (proceeding linkage): today's first arm covers only the court-file folder, and the second arm covers `category = 'court'` rows anywhere in the scanned folder. Keeping behaviour (§5) means the "court filings" type alone.
 - §9 Q4 (glossary home): `.claude/skills/shared/` is copied whole into every plugin, and `lawyer` names nothing in another plugin. A glossary at `.claude/skills/shared/document-types.md` is readable by `lawyer`, `litigator` and `file-manager` without a layering ruling.
+
+## 12. Decisions (Brahm, 2026-10-23)
+
+- **Q1, where the map lives: one file per roster person, synced.** `<case_data_root>\_practice\firm\folder-maps\<roster key>.json`, the same pattern as `email-signatures\<key>.htm`. A firm-wide map in `firm.json` was rejected because every lawyer files differently. The resolver takes the person this machine's `probanda.json` names (`person`). No person set, or no file for that person, is the no-map case: the consumer tells the practitioner in plain words and offers setup. It never falls back to another person's map or to the author's layout.
+- **Q5, scope: read side only.** `0. DRAFT*` and `6. LAW` stay fixed folders that Probanda writes into. Moving them onto the map would touch most drafting, publishing and research-filing tools for no gain, because Probanda creates and fills those folders itself. Criterion 3 is narrowed to the read side accordingly. The housekeeping move guard that never takes a destination in a folder numbered 0 or 1 (`housekeeping/zones.ts`) is a write-side guard and is unchanged.
+- **Q2-Q4** as settled in §11.4.
+
+As built: the glossary is `.claude/skills/shared/document-types.md`, and the data server parses it as the one source of the type ids and flags. `practice_data__folder_map` reads the map and resolves stored paths to types and flags, a flag holding only when every type of the path's folder carries it. `practice_data__set_folder_map` writes it on the practitioner's yes. `/probanda-setup` step 6 proposes it. A layout block's `ingest_inputs` names document types, and session entry resolves them through the map. file-sorting's eight folder types stay as groupings of document types, keyed to their notes files and the code registry's "Typical folders".
+
+## 13. Example map: the author's layout
+
+One practitioner's map, for illustration only. It ships nowhere and is never a fallback.
+
+```json
+{
+  "entries": [
+    { "type": "drafts", "folders": ["0. DRAFT*"] },
+    { "type": "raw_intake", "folders": ["1. RAW*", "1. CASEMAP*"] },
+    { "type": "client_communications", "folders": ["2. SOLICITOR CLIENT*"] },
+    { "type": "retainer_and_billing", "folders": ["2. SOLICITOR CLIENT*"] },
+    { "type": "correspondence_opposing_counsel", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "correspondence_unrepresented_party", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "correspondence_witness", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "correspondence_expert", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "correspondence_court", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "correspondence_non_party", "folders": ["3. CORRESPONDENCE*"] },
+    { "type": "work_product", "folders": ["4. LAWYER BRIEF*", "4 LAWYER BRIEF*"] },
+    { "type": "searches", "folders": ["4. LAWYER BRIEF*", "4 LAWYER BRIEF*"] },
+    { "type": "court_filings", "folders": ["5. COURT*"] },
+    { "type": "authorities", "folders": ["6. LAW"] },
+    { "type": "documents_exchanged", "folders": ["7. DISCOVERY*"] },
+    { "type": "trial_materials", "folders": ["8. *BRIEF*", "8. TRIAL*"] },
+    { "type": "disbursement_records", "folders": ["9. DISBURSEMENT*"] }
+  ]
+}
+```

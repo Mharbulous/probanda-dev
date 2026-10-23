@@ -1,6 +1,6 @@
 ---
 name: probanda-setup
-description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and maps the practitioner's matter folders to the layout the skills assume. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
+description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and records where the practitioner keeps each kind of document (their folder map). Also use it, on a device already set up, when another skill reports that Probanda does not yet know where the practitioner keeps each kind of document: it then runs only that step. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -13,14 +13,14 @@ A missing `probanda.json` means Probanda has not been set up on this device. It 
 - Every root, folder and setting is written only after the practitioner approves it under `/show-me`. Ask one question at a time.
 - Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
-- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, and `_practice\firm\firm.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
+- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, `_practice\firm\firm.json`, and this person's folder map. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
 - Setup never writes `practice_quirks` or a credential. `practice_quirks` follows practice-data's Practice quirks rules.
 
 ## Step 1 — Confirm this is a new device
 
 Call `practice_data__config_status`.
 - If `error` is set because `COCLERK_CONFIG_PATH` names a missing file, stop and report it. That file is the authority, and setup never creates the live file in its place.
-- If `exists` is `true`, the device is already set up. A broken file goes to practice-data's Conventions repair, not here.
+- If `exists` is `true`, the device is already set up. When this run was started to record the folder map, go to Step 6 and then hand back. Otherwise a broken file goes to practice-data's Conventions repair, not here.
 - Otherwise continue. Keep its `candidates`, its `cloud_credential` and its `redirected_copies` for later steps. A `redirected_copies` entry means an earlier install wrote its settings where the runtime does not read them. Tell the practitioner, and do not copy it.
 
 ## Step 2 — Find the matter-data root
@@ -52,9 +52,9 @@ Cover both points conversationally:
 
 Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by practice-data's Accounting System Resolution, each when first needed. Setup asks neither.
 
-## Step 6 — Map the folder layout
+## Step 6 — Record the folder map
 
-Follow `references/folder-layout.md`. It compares one of the practitioner's matter folders with the layout the skills assume and advises on any gap. It writes nothing.
+Follow `references/folder-layout.md`. It proposes, from one of the practitioner's matter folders, where they keep each kind of document, and records it only on their yes.
 
 ## Step 7 — Verify and hand back
 

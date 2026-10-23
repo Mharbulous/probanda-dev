@@ -8,6 +8,7 @@
 // replaces that item's value, and the block is validated again after substitution.
 
 import { DataServerError } from "../errors.js";
+import { documentTypes } from "../tools/practice/folder-map.js";
 
 type Json = Record<string, unknown>;
 
@@ -64,8 +65,6 @@ export const GOAL_CRITERIA: readonly string[] = [
   "evidence", "open-items", "opposing-points", "counsel-review", "terms-traced", "recipients", "hearing-date",
 ];
 export const COMPANIONS: readonly string[] = ["written-arguments"];
-/** The matter folders a type may declare as its jobs' ingest inputs (declared-layout.md section 5). */
-export const INGEST_INPUTS: readonly string[] = ["2. SOLICITOR CLIENT*", "3. CORRESPONDENCE*", "5. COURT*", "7. DISCOVERY*"];
 const HEADING_NUMBERING = ["none", "part-roman", "part-arabic", "letter"];
 const PARAGRAPH_NUMBERING = ["none", "restart", "continue"];
 const PART_KEYS = ["heading", "heading_numbering", "paragraph_numbering", "source", "text", "rule_ref"];
@@ -193,8 +192,11 @@ export function validateTypeBlock(raw: unknown, file: string, context: TypeConte
   if (Object.hasOwn(block, "goal_criteria")) requireNameList(block.goal_criteria, GOAL_CRITERIA, file, "goal_criteria");
   if (Object.hasOwn(block, "companions")) requireNameList(block.companions, COMPANIONS, file, "companions");
   if (Object.hasOwn(block, "ingest_inputs")) {
-    requireNameList(block.ingest_inputs, INGEST_INPUTS, file, "ingest_inputs");
-    if ((block.ingest_inputs as unknown[]).length === 0) fail(file, "ingest_inputs", "must name at least one folder; a type that reads no matter folder omits the key");
+    // The document types a type may declare as its jobs' ingest inputs (declared-layout.md section 5):
+    // the glossary's (shared/document-types.md), less the types nothing ingests.
+    const ingestable = documentTypes().filter((t) => !t.flags.includes("never_ingest")).map((t) => t.id);
+    requireNameList(block.ingest_inputs, ingestable, file, "ingest_inputs");
+    if ((block.ingest_inputs as unknown[]).length === 0) fail(file, "ingest_inputs", "must name at least one document type; a type that reads no matter folder omits the key");
   }
   if (Object.hasOwn(block, "page_limit")) {
     const limit = scalar(block, "page_limit", file, true);

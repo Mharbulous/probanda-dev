@@ -31,6 +31,9 @@ import rebuild  # noqa: E402
 import resolve_paths  # noqa: E402
 
 DATABASES = ("main", "law", "privileged")
+# One practitioner's folders, as a folder map would give them.
+FOLDER_GLOBS = ['2. SOLICITOR CLIENT*', '3. CORRESPONDENCE*', '5. COURT*', '7. DISCOVERY*']
+CORRESPONDENCE_GLOBS = FOLDER_GLOBS[:2]
 
 
 def sha(data):
@@ -77,8 +80,8 @@ class IngestCoverageScriptTests(unittest.TestCase):
     def run_script(self):
         return ingest_coverage.run({
             "case_data_dir": str(self.case_data_dir), "matter_root": str(self.matter),
-            "folder_globs": ingest_coverage.FOLDER_GLOBS,
-            "correspondence_globs": ingest_coverage.CORRESPONDENCE_GLOBS})
+            "folder_globs": FOLDER_GLOBS,
+            "correspondence_globs": CORRESPONDENCE_GLOBS})
 
     def test_an_unrecorded_discovery_file_is_to_ingest(self):
         self.build()
@@ -94,7 +97,7 @@ class IngestCoverageScriptTests(unittest.TestCase):
             set(out),
             {"status", "to_ingest", "records", "damaged", "unreadable", "folders", "missing",
              "newest_correspondence", "checked_at"})
-        self.assertEqual(list(out["folders"]), list(ingest_coverage.FOLDER_GLOBS))
+        self.assertEqual(list(out["folders"]), list(FOLDER_GLOBS))
         self.assertEqual(datetime.fromisoformat(out["checked_at"]).utcoffset(), timedelta(0))
 
     def test_each_file_to_ingest_has_its_record_in_the_same_order(self):
@@ -171,7 +174,8 @@ class IngestCoverageScriptTests(unittest.TestCase):
         self.build()
         self.place(r"3. CORRESPONDENCE\a.pdf", b"a")
         res = subprocess.run(
-            [sys.executable, str(SCRIPTS_DIR / "ingest_coverage.py"), str(self.case_data_dir), str(self.matter)],
+            [sys.executable, str(SCRIPTS_DIR / "ingest_coverage.py"), str(self.case_data_dir), str(self.matter),
+             "3. CORRESPONDENCE*"],
             capture_output=True, text=True, stdin=subprocess.DEVNULL)
         self.assertEqual(res.returncode, 0, res.stderr)
         out = json.loads(res.stdout)
