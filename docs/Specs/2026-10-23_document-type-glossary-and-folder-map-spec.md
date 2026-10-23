@@ -68,3 +68,69 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each quoted rule and path above, enumerate every consumer of a literal folder name, and check whether file-sorting or housekeeping already define a layout model; mark what differs and append the table to this spec before changing code.
+
+## 11. Verification against HEAD (b437f3e5, 2026-10-23)
+
+Paths are relative to the repo root. Skills live under `.claude/skills/`, and the data server under `source/lawyer/mcp/src/`.
+
+### 11.1 Quoted evidence (§2)
+
+| Claim | Result | Where |
+|---|---|---|
+| extract-facts §1 offers `RAW`, `3. CORRESPONDENCE`, `5. COURT FILE`, `7. DISCOVERY`, `6. LAW`, custom path | Confirmed. The raw folder is listed as bare `RAW` | `matter-data/operations/extract-facts.md` lines 11-16 |
+| extract-facts §4: stored path beginning `2. SOLICITOR CLIENT` takes Path B inline | Confirmed | same file, line 154 |
+| extract-facts §4: under `6. LAW` the bulk cascade chooses the extractor | Confirmed | same file, line 158 |
+| extract-facts §6: `s.file_path LIKE '5.%'`, "whole-matter self-healing" | Confirmed | same file, lines 184 and 189 |
+| conventions §2.4 example `5. COURT FILE#S-290001\2026-01-05 NOCC.pdf` | Confirmed | `matter-data/shared/conventions.md` line 90 |
+| conventions §2.2 root proof by "a known child such as `4. LAWYER BRIEF`" | Confirmed | same file, line 62 |
+| file-sorting "knows folder layouts, not naming grammar" | Confirmed. It holds a layout model (§11.3) | `file-sorting/SKILL.md` line 4 |
+| `practice_quirks` is the only free-text practitioner key, and no key holds a folder map | Confirmed. The documented keys of the machine's `probanda.json` are `version`, `case_data_root`, `firm`, `review`, `person`, `signature`, `practice_quirks`, `briefing`, `accounting`, `repo_root`, `page_api_port` | `source/lawyer/mcp/src/tools/practice/config.ts` `DOCUMENTED_KEYS` |
+| `1. RAW` as a never-ingest alias existed only in the practitioner's head | Differs. file-sorting's litigation profile already names `1. RAW` and `1. CASEMAP` as folder 1, always skipped. extract-facts lists only `RAW`, and no ingest file treats folder 1 as never-ingest | `file-sorting/profiles/litigation-matter/profile.md` "Always skip" |
+| ingest-extract's solicitor-client rule keys on the folder name | Confirmed: first stored-path segment begins `2. SOLICITOR CLIENT`, "the same match as the ingest-coverage glob" | `matter-data/operations/ingest-extract.md` line 69 |
+
+### 11.2 Consumers of a literal folder name or prefix test (§7 step 2)
+
+Test files and generated `build/` copies are left out. Each row is a consumer, grouped by what it does with the name.
+
+**Read side: scope, privilege, authority, proceeding linkage (spec §4(d))**
+
+| Consumer | Names it uses | What for |
+|---|---|---|
+| `matter-data/operations/extract-facts.md` §1, §4, §6 | `RAW`, `2. SOLICITOR CLIENT`, `3. CORRESPONDENCE`, `5. COURT FILE`, `6. LAW`, `7. DISCOVERY`, `LIKE '5.%'`, `5.*` | scan candidates, privileged path, authority cascade, proceeding self-heal |
+| `matter-data/operations/ingest-extract.md` lines 5, 69, 99-100, 293, 394 | `2. SOLICITOR CLIENT`, `0. DRAFT`, `5. COURT FILE`, `6. LAW\`, `1. RAW` | solicitor-client rule, affidavit draft/filed folder evidence, authority cascade, name check |
+| `matter-data/shared/extraction-protocol.md` line 149 | `6. LAW\` | bulk classification cascade |
+| `matter-data/operations/ingest-unattended.md` lines 70, 86 | `2. SOLICITOR CLIENT`, `6. LAW` | privileged path, cascade tier 4 |
+| `matter-data/operations/ingest-coverage.md`; `matter-data/references/scripts/ingest_coverage.py` `FOLDER_GLOBS`; `source/lawyer/mcp/src/case/ingest-coverage.ts` `FOLDER_GLOBS`, `CORRESPONDENCE_GLOBS` | `2. SOLICITOR CLIENT*`, `3. CORRESPONDENCE*`, `5. COURT*`, `7. DISCOVERY*` | which folders count toward ingest coverage |
+| `source/lawyer/mcp/src/knowledge/declared-layout.ts` `INGEST_INPUTS`; `shared/declared-layout.md` §5 `ingest_inputs` | the same four globs, as a closed vocabulary the runtime validates | which folders a Writing's jobs read before `/draft` claims a job |
+| `matter-data/shared/conventions.md` §2.2, §2.4 | `4. LAWYER BRIEF`, `5. COURT FILE#…` | root proof; stored-path example |
+| `matter-data/operations/proceedings-profile.md` line 72 | `5.*`, `5. COURT FILE #…` | grouping a scan's court rows by folder |
+| `matter-data/operations/supersede-draft.md` line 59 | `5. COURT…` | two newcomers in the same proceeding |
+| `matter-data/SKILL.md` line 43 | `6. LAW\` | routing row |
+| `file-sorting/SKILL.md`; `file-sorting/profiles/litigation-matter/profile.md` and its `notes/` | `0. DRAFT`, `1. RAW`, `1. CASEMAP`, `2.`-`9.` by keyword | folder types, skip list, notes per folder type (§11.3) |
+| `housekeeping/SKILL.md` lines 77-107, 201-226, 254, 264, 324; `source/file-manager/agents/housekeeping-namer.md` lines 88-92 | `0. DRAFT`, folders 0 and 1, `4. LAWYER BRIEF`, `5. COURT FILE#`, `6. LAW`, `7. DISCOVERY`, `9. DISBURSEMENTS` | sweep scope, destinations, proposed folder names |
+| `source/lawyer/mcp/src/housekeeping/zones.ts` (`/^0\. DRAFT/i`, `/^[01]\./`), `proposal.ts`, `resolve.ts` line 372, `preflight.ts` | `0. DRAFT*`, folders 0 and 1, `5. COURT FILE#` | never-a-destination rule, draft destination, folder-stem matching |
+| `probanda-setup/references/folder-layout.md` | every default, as a comparison table | setup step 6. It currently says "Nothing about the mapping is recorded" |
+
+**Write side: folders Probanda writes into**
+
+| Consumer | Name | What for |
+|---|---|---|
+| `source/lawyer/mcp/src/files/matter-root.ts` `findDraftDir`; `submission/forms.ts` `resolveDraftDir`; `submission/*` (writing-folder, publish-host, draft-harness, open-session, matter-pages, assemble-tools, render-manifest, pre-filing, board files); `correspondence/reply-draft.ts`; `file_ops/move.ts` | `0. DRAFT*` | drafts, Job Boards, published documents, `Superseded\`, research scratchpad |
+| `source/lawyer/mcp/src/files/research-filing.ts` (`LAW_SEGMENT = "6. law"`), `legislation-search.ts`, `research/preflight.ts`; `source/researcher/agents/legislation-fetcher.md`, `research-agent.md`, `citation-checker.md`; `shared/legal-research.md`, `shared/research-paralegal/*`, `shared/legal-audit-*.md`, `legal-research/*` | `6. LAW\<issue>\` | filing research and downloaded authorities, and the refusal `not_law_folder` |
+| drafting, publish, assemble, calculate, draft letter types, bill-client, executive-assistant and about 60 further prose files | `0. DRAFT`, `3. CORRESPONDENCE`, `5. COURT FILE`, `9. DISBURSEMENTS` and others | where a draft, a sent letter or a published document is saved or looked for |
+| `0. CASE DATA` (conventions §2.1, `case/backend.ts`, `matter-root.ts`) and the legacy `9. AI` | Probanda's own folders | case data store. Not a practitioner's layout, so outside this spec |
+
+A grep over `.claude/skills` and `source` for the numbered names found about 150 non-test files. The read-side group above is the set §4(d) names. Criterion 3 as written ("grep of shipped skill text ... returns only the documented example map") also covers the whole write-side group.
+
+### 11.3 Existing layout models
+
+- **file-sorting already holds a layout model.** `profiles/litigation-matter/profile.md` maps a matter's subfolders by keyword to eight folder types (2 Solicitor Client, 3 Correspondence, 4 Lawyer Brief, 5 Court File, 6 Law, 7 Discovery, 8 Trial Brief, 9 Disbursements), each with a notes file, and skips folders 0 and 1. It is one firm's layout, shipped in `file-manager`, keyword-matched, not per practitioner and not stored outside the plugin.
+- **probanda-setup** compares a practitioner's matter folder against the defaults (step 6) and deliberately records nothing.
+- **The data server** hard-codes `0. DRAFT*`, `6. LAW` and the four ingest globs, and validates `ingest_inputs` against them.
+- **Where practitioner settings live today:** this machine's `probanda.json` (Roaming), written through `practice_data__upsert_firm_profile` (`practice_quirks`, `person`, `signature`). Firm-wide settings live in `<case_data_root>\_practice\firm\firm.json`.
+
+### 11.4 Open questions the repo settles
+
+- §9 Q2 (file-sorting layout model): yes, see §11.3. The glossary's types should take over its eight folder types, and the map should replace its keyword table, rather than a second model beside it.
+- §9 Q3 (proceeding linkage): today's first arm covers only the court-file folder, and the second arm covers `category = 'court'` rows anywhere in the scanned folder. Keeping behaviour (§5) means the "court filings" type alone.
+- §9 Q4 (glossary home): `.claude/skills/shared/` is copied whole into every plugin, and `lawyer` names nothing in another plugin. A glossary at `.claude/skills/shared/document-types.md` is readable by `lawyer`, `litigator` and `file-manager` without a layering ruling.
