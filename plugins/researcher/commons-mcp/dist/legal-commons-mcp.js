@@ -15774,8 +15774,6 @@ function callLegalCommonsTool(client, name, args) {
       return mergeAuthority(client, args);
     case "legal_commons__record_treatment":
       return recordTreatment(client, args);
-    case "legal_commons__stamp_verified":
-      return stampVerified(client, args);
     case "legal_commons__amend_authority":
       return amendAuthority(client, args);
     case "legal_commons__rule_period_push":
@@ -15827,6 +15825,7 @@ async function treatmentChain(client, args) {
 async function push(client, args) {
   for (const [i, a] of (Array.isArray(args.authorities) ? args.authorities : []).entries()) {
     const auth = a ?? {};
+    refuseNoteUpDate(`push.authorities[${i}]`, auth);
     if (auth.relationship !== void 0 && auth.relationship !== null) {
       requireOneOf(`push.authorities[${i}].relationship`, auth.relationship, RELATIONSHIP_VALUES);
     }
@@ -15899,6 +15898,11 @@ var EDGE_TREATMENT_VALUES = [
   "superseded_by_statute",
   "abrogated"
 ];
+function refuseNoteUpDate(label, authority) {
+  if ("last_verified_at" in authority) {
+    throw new ValidationError(`${label} received unknown field "last_verified_at"`);
+  }
+}
 function requireOneOf(label, value, allowed) {
   const text = String(value);
   if (!allowed.includes(text)) {
@@ -15911,6 +15915,7 @@ async function recordTreatment(client, args) {
   if (typeof treating !== "object" || treating === null || Array.isArray(treating)) {
     throw new ValidationError("record_treatment requires treating as an object with a citation");
   }
+  refuseNoteUpDate("record_treatment.treating", treating);
   const citation = String(treating.citation ?? "").trim();
   if (!citation) throw new ValidationError("record_treatment requires treating.citation");
   const treatment = requireOneOf("record_treatment.treatment", args.treatment, TREATMENT_VALUES);
@@ -15923,17 +15928,7 @@ async function recordTreatment(client, args) {
     p_edge_treatment: edgeTreatment
   });
 }
-async function stampVerified(client, args) {
-  const authorityId = String(args.authority_id);
-  const lastVerifiedAt = typeof args.last_verified_at === "string" ? args.last_verified_at : nowIso();
-  const rows = await client.patch(
-    "authority",
-    { authority_id: `eq.${authorityId}` },
-    { last_verified_at: lastVerifiedAt, updated_at: nowIso() }
-  );
-  if (rows.length === 0) throw new ValidationError(`no pooled authority ${authorityId}`);
-  return { stamped: true, authority: rows[0] };
-}
+var AUTHORITY_REPLY_COLUMNS = "authority_id,citation,title,url,authority_type,jurisdiction,disposition";
 async function amendAuthority(client, args) {
   const authorityId = String(args.authority_id);
   const body = {};
@@ -15944,7 +15939,11 @@ async function amendAuthority(client, args) {
     throw new ValidationError("amend_authority needs at least one of title, url, authority_type");
   }
   body.updated_at = nowIso();
-  const rows = await client.patch("authority", { authority_id: `eq.${authorityId}` }, body);
+  const rows = await client.patch(
+    "authority",
+    { authority_id: `eq.${authorityId}`, select: AUTHORITY_REPLY_COLUMNS },
+    body
+  );
   if (rows.length === 0) throw new ValidationError(`no pooled authority ${authorityId}`);
   return { amended: true, authority: rows[0] };
 }
@@ -16156,8 +16155,7 @@ function legalCommonsToolDefinitions() {
                 finding: { type: "string" },
                 relationship: { type: "string" },
                 obiter: { type: "boolean" },
-                treatment: { type: "string" },
-                last_verified_at: { type: "string" }
+                treatment: { type: "string" }
               },
               required: ["citation"],
               additionalProperties: false
@@ -16254,8 +16252,7 @@ function legalCommonsToolDefinitions() {
               url: { type: "string" },
               authority_type: { type: "string" },
               jurisdiction: { type: "string" },
-              disposition: { type: "string" },
-              last_verified_at: { type: "string" }
+              disposition: { type: "string" }
             },
             required: ["citation"],
             additionalProperties: false
@@ -16268,14 +16265,6 @@ function legalCommonsToolDefinitions() {
         required: ["treating", "treated_authority_id", "treatment"],
         additionalProperties: false
       }
-    },
-    {
-      name: legalCommonsPrefixed("stamp_verified"),
-      description: "Record that a pooled authority was noted up and is still good law, stamping its last-verified date. Defaults to now; pass last_verified_at to stamp as at when the check was actually made.",
-      inputSchema: objectSchema([
-        { name: "authority_id", type: "str" },
-        { name: "last_verified_at", type: "str" }
-      ], ["authority_id"])
     },
     {
       name: legalCommonsPrefixed("amend_authority"),

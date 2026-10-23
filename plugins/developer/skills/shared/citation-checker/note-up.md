@@ -58,7 +58,7 @@ Since: <YYYY-MM-DD> / none
 Client ID: <the verified Westlaw client ID> / not used
 
 ## Pool
-<authority id, last_verified_at, and each treatment_chain edge as the pool records it> / not in pool / not audited: <reason>
+<authority id, and each treatment_chain edge as the pool records it> / not in pool / not audited: <reason>
 
 ## KeyCite Canada
 Status: run / not run: <reason>
