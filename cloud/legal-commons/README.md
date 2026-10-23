@@ -11,9 +11,8 @@ Apply to a fresh Supabase project in order:
    and the `pg_trgm` extension for trigram retrieval.
 2. `functions.sql` — the six RPCs the runtime binds to, plus the schema-exposure
    and `service_role` grant steps at the bottom.
-3. `rule_periods.sql` — the court-rule period tables (`rule_period`,
-   `rule_period_verification`), their four RPCs and their grants, behind the
-   `legal_commons__rule_period_*` tools.
+3. `rule_periods.sql` — the court-rule period table (`rule_period`), its three
+   RPCs and their grants, behind the `legal_commons__rule_period_*` tools.
 
 All three files are idempotent and safe to re-run.
 
@@ -24,6 +23,11 @@ and only at the plan's phase 3:
    `tidy_clause_text` function and the `pinpoint` field. Applied once.
    `migrations/0001_down.sql` undoes it and step 5.
 5. `consequence_functions.sql` — the six functions over those tables. Idempotent.
+
+A fresh project skips `migrations/0003_retire_rule_period_corroboration.sql`.
+On a pool that had the earlier `rule_periods.sql`, it replaces
+`rule_periods_find` and drops `rule_periods_record_verification` and the
+`rule_period_verification` table (#119). It is applied once.
 
 `supabase/` holds the four Edge Functions that run the embedding model.
 `commons-find` is the one the plugin's search tool calls.

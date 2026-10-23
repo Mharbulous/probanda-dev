@@ -8,14 +8,13 @@
 -- One `rule_period` row per pushed overlay record (rule-overlay spec §6). The
 -- whole record is kept as JSON beside the extracted key columns, so a change to
 -- the record shape needs no column change. The key is
--- (jurisdiction, enactment_citation, rule_ref, deadline_type, effective_from);
--- several contributors may hold different rows for one key, and the pool never
--- picks a winner.
+-- (jurisdiction, enactment_citation, rule_ref, deadline_type, effective_from).
+-- A key may hold several rows; rule_periods_find serves only its current one:
+-- the latest live row, else the latest retired row (lawyer-only-access plan §7
+-- rule 15, #119).
 --
--- Status is derived on read (rule_periods_find), never stored, except
--- retirement. `content_hash` is computed by the runtime over the record's
--- operative fields; two live rows for one key with different hashes make that
--- key disputed.
+-- Only retirement is stored. `content_hash` is computed by the runtime over the
+-- record's operative fields; a push with a new hash for a key adds a new row.
 --
 -- Same access model as the other pool tables: no RLS, granted to service_role
 -- only (functions.sql bottom — "write protection is key custody").
@@ -31,6 +30,8 @@
 -- 00000000-0000-0000-0000-000000000000 -> the "no pooled rule period"
 -- exception. So those three functions exist, are in PostgREST's schema cache,
 -- and service_role can execute them and select from `rule_period`.
+-- `rule_periods_record_verification` and its `rule_period_verification` table
+-- are no longer in this file: migrations/0003 drops them (#119).
 -- NOT CHECKED: `rule_periods_push`; the insert/update grants on both tables
 -- (each probe raises before its write); the two indexes; RLS. Live `prosrc`
 -- was not diffed against this file, unlike functions.sql's 2026-09-13 block.
@@ -62,15 +63,6 @@ create unique index if not exists uq_rule_period_live_content on legal_commons.r
   coalesce(effective_from, '-infinity'::date), content_hash
 ) where retired_at is null;
 create index if not exists idx_rule_period_amending on legal_commons.rule_period (jurisdiction, enactment_citation, amending_reg);
-
-create table if not exists legal_commons.rule_period_verification (
-  rule_period_id     uuid not null references legal_commons.rule_period(rule_period_id),
-  verifier           text not null,                            -- opaque per-install id
-  verified_at        timestamptz not null default now(),
-  source_fetched_at  text not null,
-  quote_matched      boolean not null,
-  primary key (rule_period_id, verifier)                       -- a verifier's latest check replaces its earlier one
-);
 
 -- -----------------------------------------------------------------------------
 -- rule_periods_push — one transaction for the whole batch. Each element carries
@@ -194,9 +186,7 @@ $$;
 -- Grants: the same service_role-only model as functions.sql. Re-stated here so
 -- this file is complete on its own against the live pool.
 grant all on legal_commons.rule_period to service_role;
-grant all on legal_commons.rule_period_verification to service_role;
 grant execute on function legal_commons.rule_periods_push(jsonb, text) to service_role;
 grant execute on function legal_commons.rule_periods_find(text, text, text, text, text) to service_role;
-grant execute on function legal_commons.rule_periods_record_verification(uuid, text, boolean, text) to service_role;
 grant execute on function legal_commons.rule_periods_retire(uuid, text, text, text) to service_role;
 notify pgrst, 'reload schema';
