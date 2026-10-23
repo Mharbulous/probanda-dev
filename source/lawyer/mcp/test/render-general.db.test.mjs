@@ -317,7 +317,7 @@ test("a drafting letter's party-linked recipient whose party is not of its proce
     () => render(g, id),
     (err) => {
       assert.equal(err.code, "recipient_party_missing", err.message);
-      assert.match(err.message, /recipient 1 \(counsel for Bert Other\).*party 3/);
+      assert.match(err.message, /a recipient \(counsel for Bert Other\) is linked to a party that is not a party of the proceeding/);
       return true;
     }
   );

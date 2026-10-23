@@ -133,14 +133,14 @@ test("an inventory older than the revision is refused as render first, and the S
   await g.execute(`UPDATE filing_prose SET text = 'A changed first paragraph.' WHERE filing_id = ${id} AND slot = 'body';`);
   const files = mockupFiles(g, id);
   assert.ok("render-manifest.json" in files && Object.keys(files).length > 1, Object.keys(files).join(", "));
-  await assert.rejects(send(g, id), code("render_first", /older than the Writing's revision/));
+  await assert.rejects(send(g, id), code("render_first", /changed after its mockup was last rendered/));
   assert.deepEqual(mockupFiles(g, id), files, "the render manifest and the mockups are byte-identical");
   assert.equal(gateJobs(g, id).length, 0);
   assert.equal(filing(g, id).filed_on, null);
 
   const { filing_id: unrendered } = await g.createLetter({ title: "Never rendered" });
   await g.prose(unrendered, "body", BODY);
-  await assert.rejects(send(g, unrendered), code("render_first", /no render of filing/));
+  await assert.rejects(send(g, unrendered), code("render_first", /has no mockup to check the sent copy against/));
   assert.deepEqual(mockupFiles(g, unrendered), {}, "no render manifest was written");
   assert.equal(existsSync(join(g.draft, "Never rendered")), false, "no mockup was written");
 });
@@ -162,7 +162,7 @@ test("a Writing with no stored text is refused, and nothing is written", async (
   const { g, id } = await drafted(t, { body: null });
   setInventory(g, id, [unquoted]);
   const documents = documentCount(g);
-  await assert.rejects(send(g, id), code("no_stored_text", /no stored text/));
+  await assert.rejects(send(g, id), code("no_stored_text", /has no saved text/));
   assert.deepEqual([filing(g, id).filed_on, documentCount(g), gateJobs(g, id).length], [null, documents, 0]);
 });
 
@@ -828,5 +828,5 @@ test("a venue's letter meeting every criterion is recorded as sent with no Pre-s
 
   const { filing_id: unrendered } = await g.create({ proceeding_id: 2, tree: BCSC_TREE, kind: "letter", title: "Never rendered" });
   await g.prose(unrendered, "body", BODY);
-  await assert.rejects(send(g, unrendered), code("render_first", /no render of filing/));
+  await assert.rejects(send(g, unrendered), code("render_first", /has no mockup to check the sent copy against/));
 });

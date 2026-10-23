@@ -51,14 +51,14 @@ export async function submissionDataRecordServed(args: RecordServedArgs, env: No
     throw new ValidationError(`${TOOL}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
   }
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows as unknown as FilingRow[];
-  if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as served`, "job_board_only");
-  if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
-  if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as served, filed or sent on ${filing.filed_on}`, "already_filed");
+  if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
+  if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as served`, "job_board_only");
+  if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing.filed_on) throw refused(`"${filing.title}" was already recorded as served, filed or sent on ${filing.filed_on}`, "already_filed");
   if (!SERVED_KINDS.has(filing.kind)) {
     throw refused(
-      `filing ${filing.id} is a ${filing.kind}; only a notice of application or an application response is served before filing. ` +
-        "Record a filing through drafting_data__record_filed, or a general Writing through drafting_data__record_sent",
+      `"${filing.title}" is not a notice of application or an application response, the only documents served before filing. ` +
+        "Record a court form as filed, or a letter or general document as sent",
       "not_served_kind"
     );
   }
@@ -87,9 +87,9 @@ export async function submissionDataRecordServed(args: RecordServedArgs, env: No
   );
   if (!written.ok) {
     if (written.failed === 0) {
-      throw refused(`filing ${filing.id}'s database moved past revision ${revision} while it was being recorded; nothing was written. Record it as served again`, "revision_moved");
+      throw refused(`"${filing.title}" changed while it was being recorded; nothing was written. Record it as served again`, "revision_moved");
     }
-    throw refused(`filing ${filing.id} was served, filed or retired while it was being recorded; nothing was written`, "already_filed");
+    throw refused(`"${filing.title}" was served, filed or retired while it was being recorded; nothing was written`, "already_filed");
   }
   const [after] = submissionDataQuery(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]).rows as unknown as { sent_copy_id: number }[];
   return {
@@ -99,8 +99,8 @@ export async function submissionDataRecordServed(args: RecordServedArgs, env: No
     parties_snapshot_rows: snapshot.length,
     revision: fetchRevision(args.db_path),
     note:
-      `Filing ${filing.id} recorded as served on ${args.served_on}; it is frozen as served. ` +
-      (snapshot.length > 0 ? `The ${snapshot.length} party row(s) it was served with were written from case data.` : "Its party rows stand as they were, or its proceeding has no party."),
+      `"${filing.title}" recorded as served on ${args.served_on}; it is frozen as served. ` +
+      (snapshot.length > 0 ? `The details of the ${snapshot.length} part(ies) it was served with were saved from the case records.` : "Its parties' details stand as they were, or its proceeding has no party."),
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }

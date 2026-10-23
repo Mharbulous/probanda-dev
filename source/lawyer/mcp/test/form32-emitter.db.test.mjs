@@ -345,7 +345,7 @@ test("throws when a deployed statement of law has no authorities.citation, inste
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath);
     await submissionDataExecute(f.dbPath, `UPDATE authorities SET citation = NULL WHERE id = 1;`);
-    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /statement\(s\) of law.*authorities\.citation/s);
+    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /statement\(s\) of law.*cite an authority with no citation/s);
   } finally {
     f.cleanup();
   }
@@ -366,10 +366,10 @@ test("throws while associate-judge jurisdiction is undetermined, and emits no fo
     assert.equal(status, 0, `expected validate32 to accept associate_judge: no; stderr: ${stderr}`);
 
     await submissionDataExecute(f.dbPath, `UPDATE hearing_details SET associate_judge = NULL WHERE filing_id = 1;`);
-    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /associate_judge.*not yet determined/s);
+    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /associate judge is not yet settled/s);
 
     await submissionDataExecute(f.dbPath, `DELETE FROM hearing_details WHERE filing_id = 1;`);
-    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /associate_judge.*not yet determined/s);
+    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /associate judge is not yet settled/s);
   } finally {
     f.cleanup();
   }
@@ -394,7 +394,7 @@ test("refuses a filing that isn't a notice_of_application", async () => {
       UPDATE db_meta SET value = '1' WHERE key = 'revision';
       `.trim()
     );
-    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /notice_of_application/);
+    assert.throws(() => submissionFormsEmitForm32(f.dbPath, 1), /is not a Notice of Application/);
   } finally {
     f.cleanup();
   }

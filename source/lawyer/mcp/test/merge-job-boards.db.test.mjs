@@ -304,7 +304,7 @@ test("two pre-filing boards merge onto the lower proceeding's page", async (t) =
   assert.deepEqual(members(readBoardData(join(m.draft, "Job Board - proceeding 3.html"))).map((w) => w.proceeding_id), [3, 4]);
   assert.equal(jobBoardPages(m).includes("Job Board - proceeding 4.html"), false);
   const card = (proceedingId) => submissionFormsBoardCard({ db_path: m.dbPath, proceeding_id: proceedingId, lanes: ["live"] }, ASHBOURNE, NOW).card;
-  assert.throws(() => card(4), code("board_merged", /proceeding 4's board is merged into proceeding 3's board; read the card by proceeding_id 3/));
+  assert.throws(() => card(4), code("board_merged", /proceeding 4's board is merged into proceeding 3's board; read the card on proceeding 3's board/));
   assert.match(card(3), /Job #4 /);
 });
 
@@ -527,7 +527,7 @@ test("board_card reads the merged board by its survivor and refuses the absorbed
   const m = await fixture(t);
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
   const card = (filingId) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: filingId, lanes: ["live", "criteria"] }, ASHBOURNE, NOW).card;
-  assert.throws(() => card(3), code("board_merged", /Job Board 3 is merged into Job Board 1; read the card by filing_id 1/));
+  assert.throws(() => card(3), code("board_merged", /Job Board 3 is merged into Job Board 1; read the card on Job Board 1/));
   const jobs = card(1).split("\n").filter((l) => l.startsWith("- Job #"));
   assert.deepEqual(
     jobs.map((l) => /^- Job #(\d+) [^·]+ · ([^·]+) ·/.exec(l).slice(1, 3).map((s) => s.trim())),

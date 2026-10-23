@@ -203,7 +203,7 @@ test("with draft_dir the render writes the board's page among the matter's pages
 
 test("the render refuses a filed face and a Writing folder", async (t) => {
   const f = await fixture(t);
-  assert.throws(() => render(f.dbPath, f.boardId, { mode: "filed" }), code("job_board_only", /no filed face/));
+  assert.throws(() => render(f.dbPath, f.boardId, { mode: "filed" }), code("job_board_only", /no filed document/));
   assert.throws(() => render(f.dbPath, f.boardId, { presentationDir: join(f.draft, "Paper originals") }), code("job_board_only", /no Writing folder/));
   await assert.rejects(callTool({}, "drafting_forms__render", { db_path: f.dbPath, filing_id: f.boardId, render_mode: "filed" }), code("job_board_only"));
   assert.deepEqual(readdirSync(f.draft), []);
@@ -405,7 +405,7 @@ test("every tool that acts on a Writing's document refuses the board", async (t)
   const before = JSON.stringify(filingsOf(f.dbPath));
   const revision = revisionOf(f.dbPath);
   for (const [tool, args] of Object.entries(calls)) {
-    await assert.rejects(async () => callTool({}, tool, { ...base, ...args }), code("job_board_only", /Job Board with no Writing/), tool);
+    await assert.rejects(async () => callTool({}, tool, { ...base, ...args }), code("job_board_only", /Job Board \d+ has no Writing/), tool);
   }
   assert.equal(JSON.stringify(filingsOf(f.dbPath)), before);
   assert.equal(revisionOf(f.dbPath), revision);

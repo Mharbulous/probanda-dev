@@ -40,6 +40,7 @@ export function isWritingName(name: string): boolean {{
 }}
 export function writeIt(dir: string, ids: number[]) {{
   throw new Error(`drafting_forms__render: ${{ids.join(", ")}} could not be written`);
+  throw refused({err}, "not_written");
   return join(dir, {leaf});
 }}
 '''
@@ -47,7 +48,8 @@ export function writeIt(dir: string, ids: number[]) {{
 
 def make_repo(root, reason="Refused: that page is for the practitioner to view.",
               text="A Writing on its Job Board, with its Loose Threads.",
-              name='`${id} Notice of Application`', leaf='"Notice of Application.md"'):
+              name='`${id} Notice of Application`', leaf='"Notice of Application.md"',
+              err='`"${title}" was not written`'):
     assignment = {"plugins": {
         "lawyer": {"requires": [], "skills": [], "agents": [], "servers": [],
                    "hooks": {"gate": "source/lawyer/hooks/gate.py", "note": "source/lawyer/hooks/note.py"}},
@@ -70,7 +72,7 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
         "source/lawyer/hooks/note.py": NOTE,
         "source/developer/hooks/dev.py": 'REASON = "Refused: use suggestion_box__submit to file it."\n',
         "source/lawyer/mcp/src/templates/job-board/job-board.html": PAGE.format(text=text),
-        "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf),
+        "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf, err=err),
         "source/lawyer/mcp/src/submission/names.test.ts": 'const p = join(dir, "Unstructured.md");\n',
     }
     for rel, body in files.items():
@@ -114,6 +116,16 @@ class CheckInternalsTest(unittest.TestCase):
         found = self.found(leaf='"UNS Notice of Application", "Unstructured.md"')
         self.assertEqual(sorted(f.split(" holds ")[1] for f in found),
                          ["stock type name `UNS`", "stock type name `Unstructured.md`"])
+
+    def test_a_seeded_term_in_a_data_server_error_is_flagged(self):
+        for err, label in [("`Filing ${id}: it was not written`", "filing id"),
+                           ("`${title}: hearing_details.time_estimate_minutes is not set`", "column name"),
+                           ("`db_meta ${key} is not JSON`", "table name"),
+                           ("`no row: SELECT value FROM tickets returned nothing`", "SQL")]:
+            with self.subTest(err=err):
+                found = self.found(err=err)
+                self.assertEqual(len(found), 1, found)
+                self.assertIn("names.ts:10: error message holds " + label, found[0])
 
     def test_the_exemption_marker_clears_one_line(self):
         found = self.found(leaf='"mockups", `Filing ${ids[0]}`); // internals-ok: moves the old folder away')

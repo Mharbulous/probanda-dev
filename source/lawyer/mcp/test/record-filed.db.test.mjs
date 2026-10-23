@@ -87,7 +87,7 @@ test("record_filed refuses a bad date, a missing, retired or filed Writing, and 
     await assert.rejects(record(dbPath, { filed_on }), code("invalid_filed_on"), filed_on);
   }
   await assert.rejects(record(dbPath, { filing_id: 99 }), code("not_found"));
-  await assert.rejects(record(dbPath, { filing_id: 2 }), code("general_writing", /drafting_data__record_sent/));
+  await assert.rejects(record(dbPath, { filing_id: 2 }), code("general_writing", /record it as sent, not as filed/));
   await assert.rejects(record(dbPath, { filing_id: 3 }), code("writing_retired"));
   await assert.rejects(record(dbPath, { filing_id: 4 }), code("already_filed"));
   assert.equal(revision(dbPath), before);

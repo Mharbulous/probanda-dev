@@ -77,24 +77,24 @@ function lawCite(row: LawAssertionRow): string {
 export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): string {
   const { filing, proceeding } = ctx;
   const refuse = (what: string) => {
-    throw new ValidationError(`Filing ${filing.id}: ${what} -- add it before this factum can be assembled.`);
+    throw new ValidationError(`"${filing.title}": ${what} -- add it before this factum can be assembled.`);
   };
   if (filing.kind !== "bcca_factum") {
     throw new ValidationError(
-      `Filing ${filing.id} has kind "${filing.kind}", not "bcca_factum" -- the bcca-factum.md emitter only handles BCCA respondent's factum filings.`
+      `"${filing.title}" is not a Court of Appeal respondent's factum, so it cannot be made as one.`
     );
   }
   if (!ISO_DATE.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
-  if (!proceeding.file_number) refuse(`proceeding ${proceeding.id} has no file_number recorded`);
+  if (!proceeding.file_number) refuse("the proceeding has no court file number recorded");
 
   const captionParties: CaptionParty[] = ctx.parties.map((p) => ({ name: p.name, role: p.role, ordinal: p.ordinal }));
   const groups = groupPartiesByRole(captionParties);
-  if (groups.length < 2) refuse(`only ${groups.length} party role group(s) are recorded on proceeding ${proceeding.id}; an appeal needs an appellant and a respondent`);
+  if (groups.length < 2) refuse(`only ${groups.length} party role(s) are recorded on the proceeding; an appeal needs an appellant and a respondent`);
   const firstAppellant = ctx.parties.find((p) => p.role.toLowerCase() === "appellant");
   const firstRespondent = ctx.parties.find((p) => p.role.toLowerCase() === "respondent");
   if (!firstAppellant || !firstRespondent) refuse(`a party with role "Appellant" and a party with role "Respondent" are needed for the short style`);
   const signer = factumSigner(ctx);
-  if (!signer.roleLabel) refuse(`no party is flagged is_client on proceeding ${proceeding.id}`);
+  if (!signer.roleLabel) refuse("no party of the proceeding is recorded as the client");
   const client = ctx.parties.find((p) => p.is_client === 1)!;
 
   const chronology = fetchChronology(ctx.dbPath, filing.id);
@@ -103,7 +103,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   const opening = prose.get("opening_statement") ?? [];
   if (opening.length === 0) refuse("the opening statement is not recorded");
   const place = (prose.get("signing_place") ?? []).join(" ");
-  if (!place) refuse("the place of signing (signing_place) is not recorded");
+  if (!place) refuse("the place of signing is not recorded");
 
   const factsPosition = prose.get("facts_position") ?? [];
   const facts = fetchFacts(ctx.dbPath, filing.id);
@@ -123,7 +123,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   const missingCitation = submissions.flatMap((s) =>
     (lawBySubmission.get(s.id) ?? []).flatMap((la) => printedLaw(la).filter((st) => st.authority_citation === null).map((st) => st.statement_id))
   );
-  if (missingCitation.length > 0) refuse(`statement(s) of law ${missingCitation.join(", ")} have no authorities.citation`);
+  if (missingCitation.length > 0) refuse(`statement(s) of law ${missingCitation.join(", ")} cite an authority with no citation`);
 
   const orders = fetchOrdersSought(ctx.dbPath, filing.id, "form").filter((o) => o.crossed_out_on === null);
   if (orders.length === 0) refuse("no order sought is recorded for Part 4");

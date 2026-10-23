@@ -90,7 +90,7 @@ test("a retitle keeps the Writing's folder and archives the old-named mockup und
   assert.equal(renderState(g, id), "stale");
   await assert.rejects(
     submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-10-22", sent_copy_text: "x" }, g.seams.env),
-    (err) => err.code === "render_first" && /older than the Writing's revision/.test(err.message)
+    (err) => err.code === "render_first" && /changed after its mockup was last rendered/.test(err.message)
   );
 
   const doc = docOf(render(g, id));
@@ -107,7 +107,7 @@ test("a render never overwrites a file it did not write, and never touches a Wor
   const folder = join(g.draft, HEARING);
   mkdirSync(folder);
   writeFileSync(join(folder, `${HEARING}.md`), "the practitioner's own notes", "utf-8");
-  assert.throws(() => render(g, id), /refusing to overwrite .* carries no render revision stamp/);
+  assert.throws(() => render(g, id), /was not written by Probanda, so it is not overwritten/);
   assert.equal(readFileSync(join(folder, `${HEARING}.md`), "utf-8"), "the practitioner's own notes");
 
   rmSync(join(folder, `${HEARING}.md`));

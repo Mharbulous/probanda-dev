@@ -59,8 +59,8 @@ function resolve(dbPath: string, arg: { filing_id?: number; proceeding_id?: numb
   }
   const [p] = submissionDataQuery(dbPath, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id])
     .rows as unknown as { filings: number }[];
-  if (p === undefined) throw new NotFoundError(`${TOOL}: no proceeding ${id} in ${dbPath}`, "not_found");
-  if (p.filings > 0) throw new ValidationError(`${TOOL}: proceeding ${id} has a Writing, so its own board is no longer drawn -- name a Writing's board by filing_id`, "proceeding_has_writing");
+  if (p === undefined) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
+  if (p.filings > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Job Board", "proceeding_has_writing");
   return { filing_id: null, proceeding_id: id };
 }
 

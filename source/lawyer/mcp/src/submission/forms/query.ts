@@ -140,7 +140,7 @@ export function requireForum(proceeding: ProceedingRow, needsForum: true): Filed
 export function requireForum(proceeding: ProceedingRow, needsForum: boolean): ProceedingRow;
 export function requireForum(proceeding: ProceedingRow, needsForum: boolean): ProceedingRow {
   if (needsForum && proceeding.forum === null) {
-    throw new Error(`Proceeding ${proceeding.id} has forum null, and Writing needs forum parts (needs_forum_parts = 1)`);
+    throw new Error("The proceeding has no court or tribunal recorded, and this Writing prints parts only a court or tribunal supplies");
   }
   return proceeding;
 }
@@ -160,19 +160,19 @@ export function scalarValue(raw: unknown): unknown {
  * or a malformed snapshot. */
 export function storedLayout(filing: FilingRow): StoredLayout {
   const bad = (why: string): never => {
-    throw new DataServerError(`Filing ${filing.id}: layout_snapshot ${why}`, "invalid_layout_snapshot");
+    throw new DataServerError(`"${filing.title}": its stored layout ${why}`, "invalid_layout_snapshot");
   };
-  if (filing.layout_snapshot === null) return bad("is NULL; the Writing has no stored layout");
+  if (filing.layout_snapshot === null) return bad("is missing");
   let parsed: unknown;
   try {
     parsed = JSON.parse(filing.layout_snapshot);
   } catch (err) {
     return bad(`is not valid JSON: ${(err as Error).message}`);
   }
-  if (!isObject(parsed)) return bad("is not a JSON object");
-  if (!isObject(parsed.layout)) bad("has no layout block");
-  if (parsed.venue !== null && !isObject(parsed.venue)) bad("has a venue that is neither a block nor null");
-  if (!isObject(parsed.passage_hashes)) bad("has no passage_hashes object");
+  if (!isObject(parsed)) return bad("is not a layout record");
+  if (!isObject(parsed.layout)) bad("has no layout");
+  if (parsed.venue !== null && !isObject(parsed.venue)) bad("has a court or tribunal part that cannot be read");
+  if (!isObject(parsed.passage_hashes)) bad("has no record of the source passages it was made from");
   return {
     layout: parsed.layout as Json,
     venue: parsed.venue as Json | null,
@@ -191,13 +191,13 @@ export interface VenueHeading extends CaptionHeading {
 /** The venue.md /draft's shipped tree holds for a forum, as a row with no stored layout reads it. */
 function shippedVenueBlock(filing: FilingRow, forum: string): unknown {
   const path = `draft/${forum}/venue.md`;
-  const { layer } = shippedLayer("draft", parseKnowledgePath(path, `filing ${filing.id}'s venue`).rest, {});
+  const { layer } = shippedLayer("draft", parseKnowledgePath(path, `"${filing.title}"'s court or tribunal`).rest, {});
   let content: string;
   try {
     content = readFileSync(layer.abs, "utf-8");
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
-    throw new DataServerError(`Filing ${filing.id}: forum "${forum}" has no venue.md in /draft's shipped tree (${layer.abs})`, "venue_missing");
+    throw new DataServerError(`"${filing.title}": Probanda has no layout for its court or tribunal, ${forum}`, "venue_missing");
   }
   return extractJsonBlock(content, path, true);
 }
@@ -213,7 +213,7 @@ export function venueHeadingFor(filing: FilingRow, proceeding: ProceedingRow): V
   const block =
     filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding.forum === null ? null : shippedVenueBlock(filing, proceeding.forum);
   if (block === null) return null;
-  validateVenueBlock(block, `filing ${filing.id}'s venue block`);
+  validateVenueBlock(block, `"${filing.title}"'s court or tribunal part`);
   const fields = block as Record<string, unknown>;
   return {
     caption_lines: scalarValue(fields.caption_lines) as string | string[],
@@ -228,8 +228,8 @@ export function venueHeadingFor(filing: FilingRow, proceeding: ProceedingRow): V
 export function captionHeadingFor(filing: FilingRow, proceeding: ProceedingRow): VenueHeading {
   const heading = venueHeadingFor(filing, proceeding);
   if (heading === null) {
-    const why = filing.layout_snapshot === null ? `its proceeding ${proceeding.id} has no forum` : "its stored layout has no venue block";
-    throw new DataServerError(`Filing ${filing.id} prints a caption, but ${why}`, "venue_missing");
+    const why = filing.layout_snapshot === null ? "its proceeding has no court or tribunal recorded" : "its stored layout has no court or tribunal part";
+    throw new DataServerError(`"${filing.title}" prints a style of cause, but ${why}`, "venue_missing");
   }
   return heading;
 }
@@ -340,7 +340,7 @@ export function fetchFilingRecipients(dbPath: string, filing: FilingRow, parties
   ).map(({ held, ...r }) => {
     if (held === null) {
       throw new DataServerError(
-        `Filing ${filing.id}: recipient ${r.id} has no recipients_snapshot row, so the values it was sent with were not recorded`,
+        `"${filing.title}": a recipient has no record of the name and address it was sent to, so those were not recorded`,
         "recipient_snapshot_missing"
       );
     }
@@ -349,8 +349,8 @@ export function fetchFilingRecipients(dbPath: string, filing: FilingRow, parties
     if (party !== undefined) return { ...r, name: party.counsel_name ?? party.name, email: party.counsel_email, address: party.address_for_service };
     if (!filing.filed_on) {
       throw new DataServerError(
-        `Filing ${filing.id}: recipient ${r.id}${r.capacity ? ` (${r.capacity})` : ""} is linked to party ${r.party_id}, which is not a party of proceeding ${filing.proceeding_id}; ` +
-          "link it to one of its parties, or clear its party_id",
+        `"${filing.title}": a recipient${r.capacity ? ` (${r.capacity})` : ""} is linked to a party that is not a party of the proceeding; ` +
+          "link it to one of its parties, or unlink it",
         "recipient_party_missing"
       );
     }

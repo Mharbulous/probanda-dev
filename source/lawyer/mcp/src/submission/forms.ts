@@ -328,7 +328,7 @@ function refuseForeignTargets(dir: string, fileNames: readonly string[]): void {
   for (const name of fileNames) {
     const target = join(dir, name);
     if (existsSync(target) && readExistingRevision(target) === undefined) {
-      throw new ValidationError(`drafting_forms__render: refusing to overwrite ${target} -- it carries no render revision stamp, so this renderer did not write it`);
+      throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
     }
   }
 }
@@ -781,7 +781,7 @@ function selectDocuments<T extends { document_type: string }>(documents: T[], wa
   const unknown = wanted.filter((name) => !available.includes(name));
   if (unknown.length > 0) {
     throw new ValidationError(
-      `drafting_forms__render.documents: this filing has no ${unknown.join(", ")} (available: ${available.join(", ")})`
+      `This Writing has no ${unknown.join(", ")} (it has: ${available.join(", ")})`
     );
   }
   return documents.filter((doc) => wanted.includes(doc.document_type));
@@ -955,8 +955,8 @@ export function submissionFormsRender(
   const jobOnly = isJobOnlyBoard(filing);
   if (jobOnly && (renderMode !== "mockup" || presentationDir !== undefined)) {
     throw new ValidationError(
-      `drafting_forms__render: filing ${filingId} is a Job Board with no Writing, so it has no ${renderMode !== "mockup" ? "filed face" : "Writing folder"}; ` +
-        "render it in mockup mode, with draft_dir to rewrite the matter's pages",
+      `Job Board ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; ` +
+        "render only its board and the matter's pages",
       "job_board_only"
     );
   }
@@ -1063,11 +1063,10 @@ export function submissionFormsRender(
       ...trashReport(written),
       ...movedReport,
       note:
-        `Filing ${filingId} was retired on ${filing.retired_on}` +
+        `"${filing.title}" was retired on ${filing.retired_on}` +
         (filing.retirement_reason ? ` (${filing.retirement_reason})` : "") +
-        `. Nothing was rendered and no mockup was written -- a retired filing's mockups stay as they ` +
-        "were at retirement. Recover the filing (clear filings.retired_on and retirement_reason) " +
-        "before rendering it again.",
+        `. Nothing was rendered and no mockup was written -- a retired Writing's mockups stay as they ` +
+        "were at retirement. Recover the Writing before rendering it again.",
       timings: withTotal(timings, started),
     };
   }
@@ -1414,7 +1413,7 @@ export function submissionFormsRenderProceedingBoard(
   const proceeding = fetchProceeding(dbPath, proceedingId);
   if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
-      `Proceeding ${proceedingId} has a filing, so its jobs are on each filing's Job Board -- render a filing_id instead`
+      "This proceeding has a Writing, so its jobs are on each Writing's Job Board -- render a Writing instead"
     );
   }
   const revision = fetchRevision(dbPath);
@@ -1535,7 +1534,7 @@ export function submissionFormsEmitForm32(
   }
 
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__emit_form32");
+  refuseJobOnlyBoard(filing);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1621,7 +1620,7 @@ export function submissionFormsEmitForm33(
   }
 
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__emit_form33");
+  refuseJobOnlyBoard(filing);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1685,7 +1684,7 @@ export function submissionFormsEmitAffidavit(dbPath: string, filingId: number, d
   }
 
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__emit_affidavit");
+  refuseJobOnlyBoard(filing);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1693,12 +1692,12 @@ export function submissionFormsEmitAffidavit(dbPath: string, filingId: number, d
   if (refusal) return refusal;
   if (filing.kind !== "notice_of_application" && filing.kind !== "application_response") {
     throw new ValidationError(
-      `Filing ${filingId} has kind "${filing.kind}" -- the affidavit emitter only handles affidavits supporting a notice_of_application or application_response.`
+      `"${filing.title}" is not a notice of application or an application response, the only Writings whose supporting affidavits are made here.`
     );
   }
   const affidavit = fetchAffidavits(dbPath, filingId).find((a) => a.id === documentId);
   if (affidavit === undefined) {
-    throw new ValidationError(`Document ${documentId} is not an affidavit instrument that filing ${filingId} lists under role 'affidavit'.`);
+    throw new ValidationError(`That document is not an affidavit listed as supporting "${filing.title}".`);
   }
   const ctx = buildContext(dbPath, proceeding, filing, parties, revision, {});
 
@@ -1755,7 +1754,7 @@ export function submissionFormsEmitBccaBook(dbPath: string, filingId: number): E
   }
 
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__emit_bcca_book");
+  refuseJobOnlyBoard(filing);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1794,7 +1793,7 @@ export function submissionFormsEmitBccaFactum(dbPath: string, filingId: number, 
   }
 
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__emit_bcca_factum");
+  refuseJobOnlyBoard(filing);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
   const { parties, drift } = partiesFor(dbPath, proceeding, filing);
@@ -1847,8 +1846,8 @@ export function submissionFormsPreFilingCheck(dbPath: string, filingId: number, 
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing, "drafting_forms__pre_filing_check");
-  if (filing.retired_on) throw new ValidationError(`Filing ${filingId} is retired (${filing.retired_on}); nothing to gate`);
+  refuseJobOnlyBoard(filing);
+  if (filing.retired_on) throw new ValidationError(`"${filing.title}" was retired on ${filing.retired_on}; there is nothing to check before filing`);
   const revision = fetchRevision(dbPath);
   return { filing_id: filingId, revision, ...runPreFilingChecks(dbPath, filingId, packageDir) };
 }
@@ -1861,9 +1860,9 @@ export function fetchFilingById(dbPath: string, filingId: number): FilingRow {
 
 /** A Job Board with no Writing has no document to emit or gate: the filed-face emitters and the
  * pre-filing check refuse it by name, before anything is read for it. */
-function refuseJobOnlyBoard(filing: FilingRow, tool: string): void {
+function refuseJobOnlyBoard(filing: FilingRow): void {
   if (isJobOnlyBoard(filing)) {
-    throw new ValidationError(`${tool}: filing ${filing.id} is a Job Board with no Writing, so it has no document`, "job_board_only");
+    throw new ValidationError(`Job Board ${filing.id} has no Writing, so it has no document`, "job_board_only");
   }
 }
 
@@ -2164,7 +2163,7 @@ export function submissionFormsBootstrap(
   dates: MatterDates = DATES_NOT_READ
 ): BootstrapResult {
   if (!existsSync(dbPath)) {
-    throw new ValidationError(`No submission database found at ${dbPath}. Run drafting_data__migrate first.`);
+    throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }
   const draft = draftDir === undefined ? undefined : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
   const timings: PhaseTimings = [];

@@ -159,7 +159,7 @@ test("without draft_dir the proceeding render writes nothing and returns its sum
 test("a proceeding with a filing is refused: its jobs are on each filing's Job Board", async () => {
   const f = await fixture();
   try {
-    assert.throws(() => submissionFormsRenderProceedingBoard(f.dbPath, 2, CLIENT, PINNED), /filing/);
+    assert.throws(() => submissionFormsRenderProceedingBoard(f.dbPath, 2, CLIENT, PINNED), /has a Writing/);
   } finally {
     f.cleanup();
   }

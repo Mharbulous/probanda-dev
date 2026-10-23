@@ -314,7 +314,7 @@ test("a fabricated venue key fails hard on the caption, the Written Arguments an
     };
 
     assert.throws(() => renderWrittenArguments(ctx, "form"), neverVaniac("venue_unknown", /Proceeding 1 has forum "CAN\/BC\/Nowhere", which has no Written Arguments settings/));
-    assert.throws(() => renderWitnessStatements(ctx), neverVaniac("venue_missing", /Filing 1: forum "CAN\/BC\/Nowhere" has no venue\.md/));
+    assert.throws(() => renderWitnessStatements(ctx), neverVaniac("venue_missing", /Probanda has no layout for its court or tribunal, CAN\/BC\/Nowhere/));
     assert.throws(() => submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }), neverVaniac("type_file_missing", /CAN\/BC\/Nowhere/));
     assert.deepEqual(readdirSync(f.draft), [], "a refused render writes nothing");
   } finally {

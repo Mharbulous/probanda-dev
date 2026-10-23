@@ -91,12 +91,12 @@ const RECORD_ACT: LawyerAct = { unset: "the Sent write has no recorder", act: "r
 function signerSnapshot(dbPath: string, filing: FilingRow, profile: FirmProfile): Record<string, unknown> {
   if (filing.signer_party_id !== null) {
     const [party] = rows<{ id: number; name: string; role: string }>(dbPath, "SELECT id, name, role FROM parties WHERE id = ?", [filing.signer_party_id]);
-    if (party === undefined) throw refused(`filing ${filing.id}'s signing party ${filing.signer_party_id} is not in the database`, "invalid_signer");
+    if (party === undefined) throw refused(`"${filing.title}": its signing party is not in the matter's records`, "invalid_signer");
     return { party_id: party.id, name: party.name, role: party.role };
   }
-  if (filing.signer_key === null) throw refused(`filing ${filing.id} has no signer; set its signer before recording it as sent`, "invalid_signer");
+  if (filing.signer_key === null) throw refused(`"${filing.title}" has no signer; set its signer before recording it as sent`, "invalid_signer");
   const entry = profile.roster.find((candidate) => candidate.key === filing.signer_key);
-  if (entry === undefined) throw refused(`filing ${filing.id}'s signer "${filing.signer_key}" is not on the firm roster`, "invalid_signer");
+  if (entry === undefined) throw refused(`"${filing.title}": its signer "${filing.signer_key}" is not on the firm roster`, "invalid_signer");
   return { ...entry };
 }
 
@@ -106,11 +106,11 @@ function signerSnapshot(dbPath: string, filing: FilingRow, profile: FirmProfile)
 function latestInventory(dbPath: string, filing: FilingRow, revision: number): MarkerInventory {
   const manifest = readManifest(dbPath, filing.id);
   if (manifest === null || manifest.stamp.filing_id !== filing.id) {
-    throw refused(`render first: no render of filing ${filing.id} has recorded an inventory; render its mockup, then record it as sent again`, "render_first");
+    throw refused(`render first: "${filing.title}" has no mockup to check the sent copy against; render its mockup, then record it as sent again`, "render_first");
   }
   if (manifest.stamp.revision < revision) {
     throw refused(
-      `render first: filing ${filing.id}'s latest render is at revision ${manifest.stamp.revision}, older than the Writing's revision ${revision}; ` +
+      `render first: "${filing.title}" changed after its mockup was last rendered; ` +
         "render its mockup, then record it as sent again",
       "render_first"
     );
@@ -167,7 +167,7 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
       [filing.id]
     );
     if (anchor === undefined) {
-      throw refused(`no job on filing ${filing.id} carries a billing anchor for its Pre-send gate job to copy; a letter's save writes Deliver with one (jobs.md §3b)`, "no_billing_anchor");
+      throw refused(`no job on "${filing.title}"'s Job Board says what to bill the Pre-send gate job to; a letter's Deliver job, written when it is saved, says it`, "no_billing_anchor");
     }
     const notDeleted = liveTicketClause(dbPath);
     const job: JobRef = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
@@ -214,7 +214,7 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
 }
 
 function gateChanged(filing: FilingRow): DataServerError {
-  return refused(`filing ${filing.id}'s Pre-send gate job changed while it was being recorded; nothing was written. Record it as sent again`, "pre_send_gate_changed");
+  return refused(`"${filing.title}": its Pre-send gate job changed while it was being recorded; nothing was written. Record it as sent again`, "pre_send_gate_changed");
 }
 
 /** The stored text the sent copy is checked against, in part order: each paragraph of a
@@ -280,13 +280,13 @@ function checkArgs(args: RecordSentArgs): void {
 export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS.ProcessEnv = process.env): Promise<RecordSentResult> {
   checkArgs(args);
   const [filing] = rows<FilingRow>(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
-  if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as sent`, "job_board_only");
-  if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
-  if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
+  if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
+  if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
+  if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing.filed_on) throw refused(`"${filing.title}" was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
   const stored = filing.layout_snapshot === null ? null : storedLayout(filing);
   if (stored === null || stored.layout.renderer !== "general") {
-    throw refused(`filing ${filing.id} is not a general Writing; a bespoke filing records its filing date through drafting_data__record_filed`, "not_a_general_writing");
+    throw refused(`"${filing.title}" is a court form, not a letter or general document; record its filing date as filed, not as sent`, "not_a_general_writing");
   }
   const profile = readFirmProfile(env);
   const recordedBy = rosterLawyer(profile, RECORD_ACT);
@@ -295,8 +295,8 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   const paragraphs = storedParagraphs(args.db_path, filing, stored);
   if (paragraphs.length === 0) {
     throw refused(
-      `filing ${filing.id} has no stored text: none of its slot:<name> parts has a prose row with a paragraph and no terms part has a clause, so there is nothing to check the sent copy against. ` +
-        "Write the text that was sent into its prose rows or clauses, then record it as sent again",
+      `"${filing.title}" has no saved text: none of its parts holds a paragraph or a clause, so there is nothing to check the sent copy against. ` +
+        "Save the text that was sent into it, then record it as sent again",
       "no_stored_text"
     );
   }
@@ -395,9 +395,9 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   const written = await submissionDataWriteAll(args.db_path, statements, env);
   if (!written.ok) {
     if (written.failed === 0) {
-      throw refused(`filing ${filing.id}'s database moved past revision ${revision} while it was being recorded; render first, then record it as sent again`, "render_first");
+      throw refused(`"${filing.title}" changed while it was being recorded; render first, then record it as sent again`, "render_first");
     }
-    if (written.failed <= recordedAt) throw refused(`filing ${filing.id} was sent or retired while it was being recorded; nothing was written`, "already_sent");
+    if (written.failed <= recordedAt) throw refused(`"${filing.title}" was sent or retired while it was being recorded; nothing was written`, "already_sent");
     throw gateChanged(filing);
   }
   const gateJob =
@@ -417,7 +417,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
     // Null when another session finished the job between the read and the write.
     deliver: deliverId === null || written.results[written.results.length - 1].changes === 0 ? null : { ticket_id: deliverId },
     note:
-      `Filing ${filing.id} recorded as sent on ${args.sent_on}; its exhibits are frozen.` +
+      `"${filing.title}" recorded as sent on ${args.sent_on}; its exhibits are frozen.` +
       (comparison.note ? ` ${comparison.note}.` : "") +
       unused,
     ...(written.warning ? { warning: written.warning } : {}),

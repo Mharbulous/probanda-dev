@@ -125,7 +125,7 @@ test("an unknown document name lists each available type once, and a shared type
     assert.throws(
       () => submissionFormsRender(f.dbPath, 1, CLIENT, "mockup", ["list-names"]),
       (err) => {
-        assert.match(err.message, /\(available: Notice_of_application, Affidavit, Written_arguments, Work_board\)$/);
+        assert.match(err.message, /\(it has: Notice_of_application, Affidavit, Written_arguments, Work_board\)$/);
         return true;
       }
     );
@@ -316,7 +316,7 @@ test("the emitter refuses on each 🧩 the mockup shows and on a NULL affidavit_
        DELETE FROM statement_paragraphs WHERE document_id = 20;`,
       /no paragraphs drafted/,
     ],
-    ["a NULL affidavit_number", `UPDATE documents SET affidavit_number = NULL WHERE id = 20;`, /affidavit_number is not recorded/],
+    ["a NULL affidavit_number", `UPDATE documents SET affidavit_number = NULL WHERE id = 20;`, /its affidavit number is not recorded/],
   ];
   for (const [name, sql, message] of cases) {
     const f = seededDbFixture();
@@ -340,7 +340,7 @@ test("the emitter refuses a sworn affidavit with no paragraphs, a document the f
        DELETE FROM statement_paragraphs WHERE id = 110;`
     );
     assert.throws(() => submissionFormsEmitAffidavit(f.dbPath, 1, 21), /no paragraphs are stored/);
-    assert.throws(() => submissionFormsEmitAffidavit(f.dbPath, 1, 30), /not an affidavit instrument that filing 1 lists/);
+    assert.throws(() => submissionFormsEmitAffidavit(f.dbPath, 1, 30), /is not an affidavit listed as supporting/);
   } finally {
     f.cleanup();
   }
@@ -349,7 +349,7 @@ test("the emitter refuses a sworn affidavit with no paragraphs, a document the f
   try {
     await freshSubmissionDb(g.dbPath);
     await seedBcscDefaultJudgment(g.dbPath);
-    assert.throws(() => submissionFormsEmitAffidavit(g.dbPath, 1, 1), /only handles affidavits supporting a notice_of_application or application_response/);
+    assert.throws(() => submissionFormsEmitAffidavit(g.dbPath, 1, 1), /the only Writings whose supporting affidavits are made here/);
   } finally {
     g.cleanup();
   }

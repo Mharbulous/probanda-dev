@@ -197,11 +197,11 @@ function settled(draft: string, title: string, folder: WritingFolder): string {
 export function writingFolderForRender(dbPath: string, filingId: number, title: string): { dir: string; rename?: MockupMove } {
   const draft = draftDirOf(dbPath);
   const folder = writingFolders(dbPath, draft).get(filingId);
-  if (folder === undefined) throw new DataServerError(`filing ${filingId} is a Job Board with no Writing, so it has no folder`, "job_board_only");
+  if (folder === undefined) throw new DataServerError(`Job Board ${filingId} has no Writing, so it has no folder`, "job_board_only");
   if (folder.ambiguous !== undefined) {
     throw new DataServerError(
-      `drafting_forms__render: ${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n) => `"${join(draft, n)}"`).join(", ")}. ` +
-        "Nothing was written. Choose one, then pass it as presentation_dir.",
+      `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n) => `"${join(draft, n)}"`).join(", ")}. ` +
+        "Nothing was written. Choose which one is its folder, then render again naming it.",
       "presentation_dir_ambiguous"
     );
   }

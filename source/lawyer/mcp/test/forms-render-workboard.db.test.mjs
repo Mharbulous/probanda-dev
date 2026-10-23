@@ -1637,7 +1637,7 @@ test("goal: a stored layout declaring a name outside the vocabulary fails the re
     await seedNoticeOfApplication(f.dbPath);
     const stored = { layout: { ...shippedBlock("BCSC/Documents/notice-of-application.md"), goal_criteria: ["constructor"] }, venue: shippedBlock("BCSC/venue.md"), passage_hashes: {} };
     await submissionDataWrite(f.dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
-    assert.throws(() => submissionFormsRender(f.dbPath, 1, ASHBOURNE), /Filing 1: layout_snapshot's goal_criteria names "constructor"/);
+    assert.throws(() => submissionFormsRender(f.dbPath, 1, ASHBOURNE), /its stored completion criteria names "constructor"/);
   } finally {
     f.cleanup();
   }

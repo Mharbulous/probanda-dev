@@ -265,7 +265,7 @@ test("render refuses to overwrite a file in the Writing's folder that carries no
     writeFileSync(join(leaf, "Evidence Index.md"), "the practitioner's own notes\n", "utf-8");
 
     for (const render of [() => renderInto(f, leaf), () => renderFromDraft(f, draft)]) {
-      assert.throws(render, /refusing to overwrite .*Evidence Index\.md.* carries no render revision stamp/);
+      assert.throws(render, /Evidence Index\.md was not written by Probanda, so it is not overwritten/);
     }
     assert.deepEqual(readdirSync(leaf), ["Evidence Index.md"], "refused before any file is written");
     assert.equal(readFileSync(join(leaf, "Evidence Index.md"), "utf-8"), "the practitioner's own notes\n");
