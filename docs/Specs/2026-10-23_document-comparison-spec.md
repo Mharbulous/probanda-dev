@@ -91,3 +91,45 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD (in particular `pdf_pages__images`'s behaviour and the lawyer data server's tool layout, the custom-agent definition format, and the internals-confidentiality doctrine path); mark any that differ, and append the table to this spec before changing code.
+
+## 11. Verification against HEAD (2026-10-23)
+
+| Claim | At HEAD |
+|---|---|
+| `pdf_pages__images` lives in the lawyer data server, returns a `sha256` per image, renders the same page to the same bytes per build, renders scanned pages only, at 150 dpi | Confirmed: `source/lawyer/mcp/src/files/extract/page-images.ts`, schema in `src/schema-gen.ts`, dispatch in `src/dispatch.ts` |
+| (not in the spec) its render flags | It renders **without annotations or form fields** (`FPDF_RenderPageBitmap(..., 0)`). A compare that rendered the same way would miss a form-field value or annotation that flattening dropped, because both sides would render without it. The compare render must draw both. |
+| Custom-agent definition format | Confirmed: `source/lawyer/agents/<name>.md`, frontmatter `name`, `description`, `model`, `effort`, `tools` |
+| Internals-confidentiality doctrine path | Confirmed: `.claude/skills/shared/internals-confidentiality.md`, shipped as `skills/shared/` in every plugin |
+| "Index or router that lists lawyer skills" | `source/assignment.json` (lawyer `skills`, `agents`) and `source/lawyer/roster.json`. The repo keeps no glossary. |
+| The renderer can supply every check | Confirmed in `@embedpdf/pdfium`: text (`FPDFText_*`), rotation (`FPDFPage_GetRotation`), image streams (`FPDFImageObj_GetImageDataRaw`), annotations (`FPDF_ANNOT`), form fields (`PDFiumExt_InitFormFillEnvironment`, `FPDF_FFLDraw`) |
+| (not in the spec) bridged sessions | A read-only agent in a bridged session cannot see host files. `matter-data/operations/verify-law.md` §2 requires staging each file into the session before dispatch. The skill must do the same with the page images. |
+| E2 and E1 figures in §2 | Confirmed in the E2 and E1 ledgers: 75,040 first-call tokens per E2 fan-out agent, 9,017 first-call cache read for `extract-facts` in E1 |
+
+## 12. Implementation plan (Claude Code)
+
+### Critical review
+The design holds: triage in a tool, judgment in a lean agent, orchestration in a skill. Four changes, each because the spec as written would be wrong or wasteful:
+
+1. **The compare renders annotations and form fields** (§11). Without that, a field value lost in flattening is invisible on both sides and the page is cleared silently.
+2. **Non-visual differences go to no agent.** A page whose render is identical but whose text layer or embedded image data differs is flagged (§8.1 holds: it is not cleared), but an agent looking at images cannot see the difference. The skill reports it directly ("the searchable text changed; the page looks the same"). Only pages with a visual reason (`render`, `rotation`, `size`, `only_in_a`, `only_in_b`) are split over agents. The split is therefore over visually flagged pages, not all flagged pages.
+3. **The agent says "no visible difference", not "identical".** §5 forbids calling a flagged page identical on model judgment. The report line is `- p<N>: no visible difference | <what differs>`.
+4. **The even split is computed by the tool**, not by the model: the tool returns `review_groups`, from an exported pure function under test. That keeps arithmetic out of the skill and makes §8.4 testable in the existing harness.
+
+Known limit, accepted for v1: pages are paired by number. When page counts differ, the extra pages are flagged `only_in_a` or `only_in_b`, so a page dropped from the middle flags every later page. Aligning pages by render hash is a follow-up if that case turns up.
+
+Cache warming (§4c.3, §8.5) stays as specified. Lean agents start far smaller than the 75,040 tokens of E2's general-purpose agents, so the saving per agent is smaller, but no experiment has yet measured warming with valid timing. E3 measures it.
+
+### Open questions resolved
+- **Reuse `pdf_pages__images`?** Its internals, not the tool. The compare renders every page (both kinds), with annotations and form fields, and hashes the raw render. It writes PNGs only for visually flagged pages.
+- **Do sub-agents of one type share the cache?** Unknown. The skill works either way, and E3 records each agent's first-call cache read and write.
+- **Can a sub-agent spawn agents?** Assumed not. Orchestration stays in the skill.
+- **Owner:** `lawyer`. Comparing two copies is general practice work, not court-specific.
+- **Word/DOCX:** out of scope for v1. The skill says plainly that it compares PDFs only.
+
+### Build
+1. **Tool `pdf_pages__compare`** in a new `src/files/extract/page-compare.ts`. `page-images.ts` exports the helpers it shares, and its render is split into a raw render (with an annotations-and-forms option) and a PNG encoder. `pdf_pages__images`' output is unchanged, and its tests prove it. Input `{a, b, pages?}`. Per page pair it compares page size, rotation, a hash of the raw render at 150 dpi (with the share of pixels changed when the hashes differ), the text layer, and a hash of each embedded image's data. It returns `{pages_a, pages_b, cleared, flagged: [{page, reasons, changed_share?, a, b}], review_groups, work_dir}`. PNGs go in a new folder in the OS temp directory, only for visually flagged pages. `reviewGroups(pages, 5)` gives ceil(F/5) groups whose sizes differ by at most one.
+2. **Tests** (`test/page-compare.unit.test.mjs`, synthetic PDFs only): an identical pair; one page rotated; a mark added; a page removed and differing page counts; scanned and born-digital pages; a text-layer-only change; a dropped annotation or form field; the inputs' folder unchanged; refusals; and the split cases 16, 74, 5 and 0.
+3. **Agent `compare-pages`** (`source/lawyer/agents/`): Haiku, high effort, `Read` only, the fixed report format above.
+4. **Skill `compare-documents`** (`.claude/skills/`): the tool call, the answer with no agents when there are no review groups, staging in a bridged session, warming (the first agent in the foreground, then the rest in one message within the 5-minute cache lifetime), and one plain answer with no internals. It is listed in `source/assignment.json` and `source/lawyer/roster.json`.
+5. **E3 procedure** in `docs/Research/`.
+6. `build_plugin.py`, `check_plugin.py` and the publishability check. The brief that launched this implementation puts these in scope, overriding §8's scope line.
