@@ -1,6 +1,6 @@
 # Spec: Document comparison (original vs flattened/converted copy)
 
-Status: proposed, 2026-10-23. Written in a matter session; implementation is handed to Claude Code.
+Status: implemented, 2026-10-23 (aabd919e); live after the next lawyer release. E3 (§7 step 7) is still to run. Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (installed copy seen at v0.8.2), plus the lawyer data server. Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: none
 
