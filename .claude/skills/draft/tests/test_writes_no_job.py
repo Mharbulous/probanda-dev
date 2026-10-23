@@ -13,7 +13,8 @@ def paragraph(text, opening):
 
 
 class WritesWithNoJobTest(unittest.TestCase):
-    """A session holding no job outlines a requested write, never runs it (#1433)."""
+    """A session holding no job hands job-only work on a structured filing to /work (#1433), and drafts
+    a letter, email, memo or Unstructured Writing with no job."""
 
     @classmethod
     def setUpClass(cls):
@@ -23,14 +24,15 @@ class WritesWithNoJobTest(unittest.TestCase):
     def test_publish_hand_off_is_job_only(self):
         self.assertIn(
             "Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off "
-            "run only inside an assigned job's approved plan",
+            "run inside an assigned job's approved plan for a structured filing. "
+            "For a Writing drafted under `references/letters.md` or `references/unstructured.md` they run with no job",
             self.procedure,
         )
 
     def test_requested_job_only_work_is_outlined_with_no_job(self):
         scope = paragraph(self.text, "**Scope.**")
         self.assertIn(
-            "No job: requested job-only work (section 7) is outlined, not run here.",
+            "No job: job-only work on a structured filing invokes `/work` for that Writing.",
             scope,
         )
 

@@ -3,10 +3,11 @@ from pathlib import Path
 
 
 DRAFT = Path(__file__).resolve().parents[1]
-DISPATCH = DRAFT / "references" / "dispatch.md"
-PROCEDURE = DRAFT / "references" / "procedure.md"
-TRIAGE = DRAFT / "references" / "loose-thread-triage.md"
-JOB_SESSION = DRAFT / "references" / "job-session.md"
+WORK = DRAFT.parent / "work"
+DISPATCH = WORK / "references" / "dispatch.md"
+PROCEDURE = WORK / "references" / "procedure.md"
+TRIAGE = WORK / "references" / "loose-thread-triage.md"
+JOB_SESSION = WORK / "references" / "job-session.md"
 JOBS_RUN = DRAFT.parent / "drafting-data" / "references" / "jobs-run.md"
 
 
@@ -121,7 +122,7 @@ class LooseThreadTriageTest(unittest.TestCase):
         box = paragraph(self.triage, "**Tooling threads go to the Suggestion Box.**")
         self.assertIn("run `references/suggestion-box.md` over every open `tooling` thread that is not deferred", box)
         self.assertIn("no thread is discarded or sent without the practitioner's answer", box)
-        self.assertTrue((DRAFT / "references" / "suggestion-box.md").is_file())
+        self.assertTrue((WORK / "references" / "suggestion-box.md").is_file())
 
 
 if __name__ == "__main__":

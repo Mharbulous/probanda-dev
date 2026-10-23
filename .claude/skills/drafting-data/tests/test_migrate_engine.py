@@ -1939,8 +1939,8 @@ class TestV32DeliveredAndLayoutFreeze(unittest.TestCase):
 
 class TestLetterStockJobIdioms(unittest.TestCase):
     """jobs-stock.md section 3b's letter save idiom, run as written: a letter's save writes the
-    fixed-text jobs 'Draft the letter' and 'Deliver' (ADR 0024 D10), and a save under the
-    'Availability letter' job writes 'Deliver' alone, blocked by that job."""
+    fixed-text job 'Deliver' alone, blocked by nothing (ADR 0024 D10; no 'Draft the letter' since
+    2026-10-23), and a save under the 'Availability letter' job writes 'Deliver' alone, blocked by that job."""
 
     JOBS = Path(__file__).resolve().parents[1] / "references" / "jobs-stock.md"
     GATE = Path(__file__).resolve().parents[1] / "references" / "jobs-gate.md"
@@ -1968,31 +1968,28 @@ class TestLetterStockJobIdioms(unittest.TestCase):
         con.executescript(self.SEED)
         return con
 
-    def test_a_letter_save_writes_both_jobs_and_the_block(self):
-        self.assertEqual(len(self.blocks), 3)
+    def test_a_letter_save_writes_deliver_alone_and_no_block(self):
+        self.assertEqual(len(self.blocks), 2)
         con = self._db("plain.sqlite")
         con.executescript(self.blocks[0])
-        con.executescript(self.blocks[1])
         self.assertEqual(
             con.execute("SELECT id, filing_id, title, intent, kind, priority FROM tickets WHERE id > 19 ORDER BY id").fetchall(),
-            [
-                (20, 8, "Draft the letter", "Draft this letter and render its mockup for review.", "work", 0),
-                (21, 8, "Deliver", "Send this letter to its recipients and record it as sent.", "work", 0),
-            ],
+            [(20, 8, "Deliver", "Send this letter to its recipients and record it as sent.", "work", 0)],
         )
+        self.assertEqual(con.execute("SELECT count(*) FROM tickets WHERE title = 'Draft the letter'").fetchone(), (0,))
         self.assertEqual(
             con.execute("SELECT ticket_id, ordinal, text FROM ticket_steps ORDER BY ticket_id, ordinal").fetchall(),
-            [(20, 1, "Draft the letter"), (21, 1, "Send the letter to its recipients"), (21, 2, "Record the letter as sent")],
+            [(20, 1, "Send the letter to its recipients"), (20, 2, "Record the letter as sent")],
         )
         self.assertEqual(
             con.execute("SELECT ticket_id, entity, entity_id FROM ticket_scope ORDER BY id").fetchall(),
-            [(20, "filing_prose", None), (20, "filing_recipients", None), (21, "filings", 8), (21, "documents", None)],
+            [(20, "filings", 8), (20, "documents", None)],
         )
-        self.assertEqual(con.execute("SELECT blocker_id, blocked_id FROM ticket_blocks").fetchall(), [(20, 21)])
+        self.assertEqual(con.execute("SELECT blocker_id, blocked_id FROM ticket_blocks").fetchall(), [])
 
     def test_a_save_under_the_availability_letter_job_writes_deliver_alone(self):
         con = self._db("availability.sqlite")
-        con.executescript(self.blocks[2])
+        con.executescript(self.blocks[1])
         self.assertEqual(
             con.execute("SELECT id, title FROM tickets WHERE filing_id = 8 ORDER BY id").fetchall(), [(20, "Deliver")]
         )

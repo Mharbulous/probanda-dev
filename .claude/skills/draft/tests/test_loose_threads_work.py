@@ -14,6 +14,8 @@ from pathlib import Path
 
 DRAFT = Path(__file__).resolve().parents[1]
 REFS = DRAFT / "references"
+WORK = DRAFT.parent / "work"
+WREFS = WORK / "references"
 ROUTE = "**Working the threads without a pick.**"
 
 
@@ -60,7 +62,7 @@ class TriageRouteTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.triage = read(REFS / "loose-thread-triage.md")
+        cls.triage = read(WREFS / "loose-thread-triage.md")
         start = cls.triage.index(ROUTE)
         cls.route = cls.triage[start:cls.triage.index("**Step 4.", start)]
 
@@ -140,7 +142,7 @@ class ExceptionsTest(unittest.TestCase):
         cls.skill = read(DRAFT / "SKILL.md")
 
     def test_an_assigned_job_consumes_no_thread_but_the_loose_threads_job(self):
-        rules = flat(atom(self.job_session, "draft.blocked-job.rules"))
+        rules = flat(atom(read(WREFS / "job-session.md"), "work.blocked-job.rules"))
         self.assertIn("Such a session outlines and consumes no loose thread, with one exception: a job whose intent "
                       "is working the loose threads works and consumes the threads it takes", rules)
         self.assertIn("and still creates no job for them. Every other assigned job is bound as before.", rules)
@@ -167,28 +169,28 @@ class RoutingTest(unittest.TestCase):
     def test_opening_routes_send_the_instruction_to_the_route(self):
         self.assertIn("- \"Work on the loose threads\" asked for, or any reply in a session whose held job's intent "
                       "is to work them: `references/loose-thread-triage.md`, \"Working the threads without a pick\".",
-                      read(REFS / "opening-routes.md"))
+                      read(WREFS / "opening-routes.md"))
 
     def test_dispatch_assigns_the_job_the_instruction_creates(self):
-        dispatch = flat(atom(read(REFS / "dispatch.md"), "draft.dispatch"))
+        dispatch = flat(atom(read(WREFS / "dispatch.md"), "work.dispatch"))
         self.assertIn("The instruction to work on the loose threads names the job it creates, so the session that "
                       "wrote that job is assigned it in the same turn", dispatch)
 
     def test_the_references_table_names_the_route(self):
-        procedure = read(REFS / "procedure.md")
-        self.assertEqual(tag(procedure, "draft.ref.loose-threads-work"), "ops=route_reply,execute")
+        procedure = read(WREFS / "procedure.md")
+        self.assertEqual(tag(procedure, "work.ref.loose-threads-work"), "ops=route_reply,execute")
         self.assertIn("| The practitioner says to work on the loose threads, or the held job's intent is to work them "
                       "(\"Working the threads without a pick\") | `references/loose-thread-triage.md` |",
-                      atom(procedure, "draft.ref.loose-threads-work"))
+                      atom(procedure, "work.ref.loose-threads-work"))
 
 
 class VocabularyTest(unittest.TestCase):
     """(h): every name on the two new atoms is declared. The full lint is rules-dag.draft-map.unit.test.mjs."""
 
     def test_the_new_atoms_use_only_declared_names(self):
-        ops, facts = vocabulary(read(DRAFT / "SKILL.md"))
-        for path, atom_id in ((REFS / "job-session.md", "draft.execute.loose-threads-job"),
-                              (REFS / "procedure.md", "draft.ref.loose-threads-work")):
+        for skill, path, atom_id in ((DRAFT, REFS / "job-session.md", "draft.execute.loose-threads-job"),
+                                     (WORK, WREFS / "procedure.md", "work.ref.loose-threads-work")):
+            ops, facts = vocabulary(read(skill / "SKILL.md"))
             parts = dict(p.split("=", 1) for p in tag(read(path), atom_id).split())
             for op in parts["ops"].split(","):
                 with self.subTest(atom=atom_id, op=op):

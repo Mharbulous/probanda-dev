@@ -32,7 +32,7 @@ class ReplyRouteTest(unittest.TestCase):
         self.assertIn(f"| `{ROUTE}` |", section(self.procedure, "## 15. References"))
 
     def test_opening_routes_names_it(self):
-        self.assertIn(f"`{ROUTE}`", (REFERENCES / "opening-routes.md").read_text(encoding="utf-8"))
+        self.assertIn(f"`draft/{ROUTE}`", (DRAFT.parent / "work" / "references" / "opening-routes.md").read_text(encoding="utf-8"))
 
     def test_the_chat_rules_name_the_exception(self):
         prohibitions = section(self.text, "## 2. Hard prohibitions")

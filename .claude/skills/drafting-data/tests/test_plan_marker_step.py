@@ -47,7 +47,7 @@ class PlanMarkerStepTest(unittest.TestCase):
         self.assertIn("They are never a default plan and are never copied onto another job", stock)
 
     def test_draft_routes_a_marker_job_to_planning(self):
-        session = read("draft", "references", "job-session.md")
+        session = read("work", "references", "job-session.md")
         rule = paragraph(session, "**A job that needs a plan.**")
         self.assertIn(f"`{MARKER}`", rule)
         self.assertIn("the restating check never flags it", rule)

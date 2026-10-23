@@ -20,6 +20,7 @@ const { callTool } = await import("../build/dispatch.js");
 const { skillRulesApplicable } = await import("../build/files/skill-rules.js");
 
 const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "draft");
+const WORK = join(DRAFT, "..", "work");
 const NEVER_OFFER = "draft.shelve.never-offer";
 const SPIN_OFF = "draft.obstacle.spin-off";
 const JOB_RULES = ["draft.shelve.own-job", NEVER_OFFER, "draft.shelve.taken-over"];
@@ -54,7 +55,7 @@ writeFileSync(join(scratch, "coclerk.json"), JSON.stringify({ case_data_root: sc
 process.env.COCLERK_CONFIG_PATH = join(scratch, "coclerk.json");
 test.after(() => rmSync(scratch, { recursive: true, force: true }));
 
-/** A checkout holding a copy of the real /draft skill: SKILL.md, references and node map. */
+/** A checkout holding a copy of the real /draft skill (SKILL.md, references and node map) and of /work (SKILL.md and references). */
 function checkout(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-shelve-"));
   const skill = join(root, ".claude", "skills", "draft");
@@ -66,6 +67,12 @@ function checkout(t) {
   }
   for (const name of readdirSync(join(DRAFT, "rules", "nodes"))) {
     copyFileSync(join(DRAFT, "rules", "nodes", name), join(skill, "rules", "nodes", name));
+  }
+  const work = join(root, ".claude", "skills", "work");
+  mkdirSync(join(work, "references"), { recursive: true });
+  copyFileSync(join(WORK, "SKILL.md"), join(work, "SKILL.md"));
+  for (const e of readdirSync(join(WORK, "references"), { withFileTypes: true })) {
+    if (e.isFile() && e.name.endsWith(".md")) copyFileSync(join(WORK, "references", e.name), join(work, "references", e.name));
   }
   const before = process.env.COCLERK_REPO_ROOT;
   process.env.COCLERK_REPO_ROOT = root;
@@ -187,9 +194,9 @@ test("every operation that served a cluster atom reaches its node", async (t) =>
   for (const [atom, ops] of Object.entries(PILOT_OPS)) {
     for (const op of ops) assert.ok(served[op].has(atom), `${atom} is not reached by ${op}`);
   }
-  // The pilot still serves the pointer that sends each of these operations to the map.
+  // The pilot still serves the pointer that sends each of these operations to the map: /work's, since it moved there.
   for (const op of ["shelve", "release", "restore", "suppress"]) {
-    assert.ok(skillRulesApplicable("draft", op, { job_held: true }).rules.some((r) => r.id === "draft.dispatch.shelve"), op);
+    assert.ok(skillRulesApplicable("work", op, { job_held: true }).rules.some((r) => r.id === "work.dispatch.shelve"), op);
   }
 });
 

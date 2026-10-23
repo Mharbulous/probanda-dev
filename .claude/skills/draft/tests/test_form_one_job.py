@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 SKILLS = Path(__file__).resolve().parents[2]
-JOB_SESSION = SKILLS / "draft" / "references" / "job-session.md"
+JOB_SESSION = SKILLS / "work" / "references" / "job-session.md"
 JOBS_CREATE = SKILLS / "drafting-data" / "references" / "jobs-create.md"
 
 
@@ -18,7 +18,7 @@ class FormIsOneJobTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.rule = atom(JOB_SESSION.read_text(encoding="utf-8"), "draft.outline.form-job")
+        cls.rule = atom(JOB_SESSION.read_text(encoding="utf-8"), "work.outline.form-job")
         cls.create = JOBS_CREATE.read_text(encoding="utf-8")
 
     def test_a_form_is_one_job_with_a_step_per_part(self):
@@ -38,7 +38,7 @@ class FormIsOneJobTest(unittest.TestCase):
 
     def test_jobs_create_points_to_the_rule(self):
         self.assertIn("filling one form is one job with a step per part", self.create)
-        self.assertIn('(`/draft`\'s `job-session.md`, "A form is one job")', self.create)
+        self.assertIn('(`/work`\'s `job-session.md`, "A form is one job")', self.create)
 
 
 if __name__ == "__main__":

@@ -34,14 +34,14 @@ class ResearchJobGapsTest(unittest.TestCase):
 
     def test_complete_refuses_an_open_tier(self):
         session = read("draft", "references", "job-session.md")
-        complete = session[session.index("### Complete"):session.index("## Branch B")]
+        complete = session[session.index("### Complete"):]
         self.assertIn("A research job whose last research return carried a `gap:` line naming a tier not run is not completed", complete)
         self.assertIn("unless the practitioner says in their own words to complete the job without it", complete)
         self.assertIn("an unattended run reports and stops", complete)
 
     def test_complete_compares_memo_headings_with_the_title(self):
         session = read("draft", "references", "job-session.md")
-        complete = session[session.index("### Complete"):session.index("## Branch B")]
+        complete = session[session.index("### Complete"):]
         self.assertIn("compare the saved memo's headings with the job's title", complete)
         self.assertIn("one `## Issue` holding the title verbatim", complete)
         self.assertIn("unless the practitioner says in their own words to complete it as is", complete)

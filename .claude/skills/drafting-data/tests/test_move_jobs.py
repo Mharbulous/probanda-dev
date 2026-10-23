@@ -183,7 +183,7 @@ class SectionTextTests(unittest.TestCase):
 
     def test_every_route_points_at_10c(self):
         for path in (SKILL / "SKILL.md", SKILLS / "draft" / "rules" / "nodes" / "housekeeping.md",
-                     SKILLS / "draft" / "references" / "dispatch.md",
+                     SKILLS / "work" / "references" / "dispatch.md",
                      SKILLS / "draft" / "references" / "retire-filing.md"):
             self.assertRegex(path.read_text(encoding="utf-8"), r"jobs-closeout\.md`? §10c", path.name)
 

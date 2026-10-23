@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 
 
-DISPATCH = Path(__file__).resolve().parents[1] / "references" / "dispatch.md"
-PROCEDURE = Path(__file__).resolve().parents[1] / "references" / "procedure.md"
+DISPATCH = Path(__file__).resolve().parents[2] / "work" / "references" / "dispatch.md"
+PROCEDURE = Path(__file__).resolve().parents[2] / "work" / "references" / "procedure.md"
 
 
 def paragraph(text, opening):

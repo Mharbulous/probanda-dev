@@ -1,15 +1,19 @@
 // SUBSTITUTE for the pilot's acceptance test 1 (contextual-rule-injection spec §16), as rules-DAG
 // plan step 5.7 runs it without a Cowork session: the path a bare /draft open takes to a multi-step
-// job's plan read-back, driven through the real /draft skill's map and pilot atoms. /draft's wiring
-// (SKILL.md, "Rules for each step") reads `rules__at` at draft/enter before session entry, moves
-// first to draft/session, then to draft/job for dispatch, premise check and plan read-back, and
-// calls `skill_rules__applicable` for each operation as before. Between the two moves the session
+// job's plan read-back, driven through the real /draft map and the pilot atoms of /work and /draft.
+// A bare /draft invokes /work, which holds session entry, the opening, dispatch and the premise
+// check, and moves on /draft's map (work/SKILL.md, "Rules for each step"): `rules__at` at
+// draft/enter before session entry, first to draft/session, then to draft/job for dispatch and the
+// premise check; /draft then reads the plan back. Each calls `skill_rules__applicable` for its own
+// operations. Between the two moves the session
 // takes a Ready job of two steps (§16 test 1's board), so the job move reads `job_held` and
 // `job_steps` from the database. On that path the real map holds only the shelve cluster's three
 // job rules (rules-DAG 6.3), which the job move serves because a job is held, and none replaces an
 // atom on the path. So a copy of the map gains two fixture rules, each replacing one atom on that
 // path, the job one conditional on `job_steps: many`, to show the moves recorded in the serve log,
-// `rules__lifecycle` reporting them, and the pilot leaving them out.
+// `rules__lifecycle` reporting them, and the pilot leaving them out. A node rule replaces only a
+// /draft atom, so the two replaced atoms are /draft's own on that path: its `open` pointer and the
+// plan read-back's announcement.
 
 import assert from "node:assert/strict";
 import { appendFileSync, copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -25,13 +29,16 @@ const { skillRulesApplicable } = await import("../build/files/skill-rules.js");
 const { loadRulesDag } = await import("../build/files/rules-dag.js");
 
 const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "draft");
+const WORK = join(DRAFT, "..", "work");
 const OPEN_RULE = "draft.test.open-then";
 const DISPATCH_RULE = "draft.test.dispatch-choose";
 // The real map's rules on draft/job, in file order, served once a job is held.
 const MAP_JOB_RULES = ["draft.shelve.own-job", "draft.shelve.never-offer", "draft.shelve.taken-over"];
+const OPEN_ATOM = "draft.ref.delivery-check";
+const JOB_ATOM = "draft.announce";
 const FIXTURE_RULES = {
-  "session.md": `\n<!-- rule id=${OPEN_RULE} replaces=draft.open.then-opening -->\nFixture rule on draft/session.\n`,
-  "job.md": `\n<!-- rule id=${DISPATCH_RULE} when=job_steps:many replaces=draft.dispatch.choose -->\nFixture rule on draft/job.\n`,
+  "session.md": `\n<!-- rule id=${OPEN_RULE} replaces=${OPEN_ATOM} -->\nFixture rule on draft/session.\n`,
+  "job.md": `\n<!-- rule id=${DISPATCH_RULE} when=job_steps:many replaces=${JOB_ATOM} -->\nFixture rule on draft/job.\n`,
 };
 
 // No step reads the practitioner's coclerk.json: a scratch config for the whole file.
@@ -40,7 +47,7 @@ writeFileSync(join(scratch, "coclerk.json"), JSON.stringify({ case_data_root: sc
 process.env.COCLERK_CONFIG_PATH = join(scratch, "coclerk.json");
 test.after(() => rmSync(scratch, { recursive: true, force: true }));
 
-/** A checkout holding a copy of the real /draft skill: SKILL.md, references and node map, plus `extra` node rules. */
+/** A checkout holding a copy of the real /draft skill (SKILL.md, references and node map, plus `extra` node rules) and of /work. */
 function checkout(t, extra) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-draft-"));
   const skill = join(root, ".claude", "skills", "draft");
@@ -54,6 +61,12 @@ function checkout(t, extra) {
     copyFileSync(join(DRAFT, "rules", "nodes", name), join(skill, "rules", "nodes", name));
   }
   for (const [name, text] of Object.entries(extra)) appendFileSync(join(skill, "rules", "nodes", name), text);
+  const work = join(root, ".claude", "skills", "work");
+  mkdirSync(join(work, "references"), { recursive: true });
+  copyFileSync(join(WORK, "SKILL.md"), join(work, "SKILL.md"));
+  for (const e of readdirSync(join(WORK, "references"), { withFileTypes: true })) {
+    if (e.isFile() && e.name.endsWith(".md")) copyFileSync(join(WORK, "references", e.name), join(work, "references", e.name));
+  }
   const before = process.env.COCLERK_REPO_ROOT;
   process.env.COCLERK_REPO_ROOT = root;
   t.after(() => {
@@ -77,8 +90,8 @@ const SESSION_FACTS = { unattended: false, host: "cowork" };
 const served = (dbPath) =>
   submissionDataQuery(dbPath, "SELECT rule_id, node, path, session_token FROM rule_served ORDER BY id", []).rows;
 const move = (dbPath, to, facts) => callTool({}, "rules__move", { db_path: dbPath, session_token: TOKEN, to, ...(facts ? { facts } : {}) });
-const pilotIds = (operation, facts) => {
-  const result = skillRulesApplicable("draft", operation, facts);
+const pilotIds = (skill, operation, facts) => {
+  const result = skillRulesApplicable(skill, operation, facts);
   return { ids: result.rules.map((r) => r.id), replaced: result.replaced ?? [] };
 };
 /** The session takes job 1, two steps, as assign_job would: in progress and locked to its token. */
@@ -97,20 +110,20 @@ const tag = (xml, id) => new RegExp(`<rule id="${id.replace(/\./g, "\\.")}"[^>]*
 async function walk(dbPath) {
   const enter = await callTool({}, "rules__at", { skill: "draft", path: ["draft", "draft/enter"], facts: SESSION_FACTS });
   const session = await move(dbPath, "draft/session", SESSION_FACTS);
-  const opening = ["enter", "open"].map((op) => pilotIds(op, { job_held: false }));
+  const opening = [...["enter", "open"].map((op) => pilotIds("work", op, { job_held: false })), pilotIds("draft", "open", { job_held: false })];
   await holdJob(dbPath);
   const job = await move(dbPath, "draft/job");
   const jobOps = [
-    pilotIds("dispatch", {}),
-    pilotIds("premise_check", {}),
-    pilotIds("plan_readback", { job_steps: "many", premise: "holds" }),
+    pilotIds("work", "dispatch", {}),
+    pilotIds("work", "premise_check", {}),
+    pilotIds("draft", "plan_readback", { job_steps: "many", premise: "holds" }),
   ];
   return { enter, session, opening, job, jobOps };
 }
 
 test("SUBSTITUTE acceptance test 1: the real map's path serves and records only its own job rules, replacing nothing on the path", async (t) => {
   const dbPath = await matter(t, {});
-  const { enter, session, job, jobOps } = await walk(dbPath);
+  const { enter, session, opening, job, jobOps } = await walk(dbPath);
   assert.equal(enter, '<rules position="draft/enter">\n  <position path="draft draft/enter"/>\n</rules>');
   assert.match(session, /^<rules position="draft\/session" branch="main" serve="full">\n {2}<position path="draft draft\/session"\/>\n/);
   assert.match(session, /<node id="draft\/outline" /);
@@ -119,8 +132,11 @@ test("SUBSTITUTE acceptance test 1: the real map's path serves and records only 
   assert.deepEqual(served(dbPath), MAP_JOB_RULES.map((rule_id) => ({ rule_id, node: "draft/job", path: "draft draft/session draft/job", session_token: TOKEN })));
   assert.match(await callTool({}, "rules__lifecycle", { db_path: dbPath }), new RegExp(`<skill name="draft" root="0" migrated="${loadRulesDag("draft").rules.size}" verified="0">`));
   // The pilot still serves the whole path: nothing is replaced.
-  assert.ok(jobOps[0].ids.includes("draft.dispatch.choose"));
-  assert.ok(jobOps.every(({ replaced }) => replaced.length === 0));
+  assert.ok(opening[0].ids.includes("work.enter.call") && opening[1].ids.includes("work.open.then-opening"));
+  assert.ok(opening[2].ids.includes(OPEN_ATOM));
+  assert.ok(jobOps[0].ids.includes("work.dispatch.choose"));
+  assert.ok(jobOps[2].ids.includes(JOB_ATOM));
+  assert.ok([...opening, ...jobOps].every(({ replaced }) => replaced.length === 0));
 });
 
 test("SUBSTITUTE acceptance test 1: rules on the path are served by the moves, logged, reported, and left out of the pilot", async (t) => {
@@ -146,8 +162,8 @@ test("SUBSTITUTE acceptance test 1: rules on the path are served by the moves, l
   // The real map's own rules (rules-DAG 6.3 onwards) count too.
   assert.match(xml, new RegExp(`<skill name="draft" root="0" migrated="${loadRulesDag("draft").rules.size}" verified="0">`));
   for (const [id, node, atom] of [
-    [OPEN_RULE, "draft/session", "draft.open.then-opening"],
-    [DISPATCH_RULE, "draft/job", "draft.dispatch.choose"],
+    [OPEN_RULE, "draft/session", OPEN_ATOM],
+    [DISPATCH_RULE, "draft/job", JOB_ATOM],
   ]) {
     const line = tag(xml, id);
     assert.match(line, new RegExp(` node="${node.replace("/", "\\/")}" stage="migrated" sessions="1" served="1" `));
@@ -155,11 +171,14 @@ test("SUBSTITUTE acceptance test 1: rules on the path are served by the moves, l
   }
 
   // Coexistence (spec §5): each replaced atom leaves the pilot's answer, and is named in `replaced`.
-  assert.deepEqual(opening[1].replaced, ["draft.open.then-opening"]);
-  assert.ok(!opening[1].ids.includes("draft.open.then-opening"));
-  assert.deepEqual(jobOps[0].replaced, ["draft.dispatch.choose"]);
-  assert.ok(!jobOps[0].ids.includes("draft.dispatch.choose") && jobOps[0].ids.includes("draft.dispatch"));
-  assert.deepEqual([jobOps[1].replaced, jobOps[2].replaced], [[], []]);
-  assert.ok(jobOps[1].ids.includes("draft.premise"));
+  assert.deepEqual(opening[2].replaced, [OPEN_ATOM]);
+  assert.ok(!opening[2].ids.includes(OPEN_ATOM));
+  assert.deepEqual(jobOps[2].replaced, [JOB_ATOM]);
+  assert.ok(!jobOps[2].ids.includes(JOB_ATOM));
   assert.ok(jobOps[2].ids.includes("draft.premise.holds") && jobOps[2].ids.includes("draft.steps"));
+  // /work's atoms are never replaced: the map's rules replace /draft's only.
+  assert.deepEqual([opening[0].replaced, opening[1].replaced, jobOps[0].replaced, jobOps[1].replaced], [[], [], [], []]);
+  assert.ok(opening[1].ids.includes("work.open.then-opening"));
+  assert.ok(jobOps[0].ids.includes("work.dispatch.choose") && jobOps[0].ids.includes("work.dispatch"));
+  assert.ok(jobOps[1].ids.includes("work.premise"));
 });

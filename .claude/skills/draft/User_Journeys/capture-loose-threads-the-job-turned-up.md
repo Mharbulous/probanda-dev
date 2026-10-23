@@ -19,7 +19,7 @@ source: practitioner instruction at `/reflect` on the L8212 `/draft-submission` 
 
    > Two things surfaced that are outside this job — both recorded on the board as loose threads. Carrying on.
 
-   It does not litigate them, rank them, or propose fixes. That is outlining, and this session holds a job. Ranking belongs to an outlining session's loose-thread triage (`references/loose-thread-triage.md`).
+   It does not litigate them, rank them, or propose fixes. That is outlining, and this session holds a job. Ranking belongs to an outlining session's loose-thread triage (`work/references/loose-thread-triage.md`).
 
 3. **Assistant:** carries on with the job's approved plan. The loose threads cost no scope and no tangent turn.
 

@@ -38,7 +38,7 @@ class ReviseOnTheFlyRoutingTest(unittest.TestCase):
         )
 
     def test_opening_routes_names_it(self):
-        self.assertIn(f"`{ROUTE}`", (REFERENCES / "opening-routes.md").read_text(encoding="utf-8"))
+        self.assertIn(f"`draft/{ROUTE}`", (DRAFT.parent / "work" / "references" / "opening-routes.md").read_text(encoding="utf-8"))
 
     def test_substance_and_revise_names_it(self):
         revise = section((REFERENCES / "substance-and-revise.md").read_text(encoding="utf-8"), "## Section 12: Revise")

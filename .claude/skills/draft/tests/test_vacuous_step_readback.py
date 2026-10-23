@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 
+WORK_JOB_SESSION = Path(__file__).resolve().parents[2] / "work" / "references" / "job-session.md"
 JOB_SESSION = Path(__file__).resolve().parents[1] / "references" / "job-session.md"
 TAKE_OVER = Path(__file__).resolve().parents[1] / "references" / "take-over.md"
 
@@ -18,10 +19,11 @@ class VacuousStepReadBackTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = JOB_SESSION.read_text(encoding="utf-8")
-        cls.rule = paragraph(cls.text, "**A step that only restates the request.**")
+        cls.work = WORK_JOB_SESSION.read_text(encoding="utf-8")
+        cls.rule = paragraph(cls.work, "**A step that only restates the request.**")
 
     def test_rule_is_served_before_the_assigning_write(self):
-        self.assertIn("<!-- atom id=draft.steps.restated ops=dispatch,pre_claim,plan_readback,take_over -->", self.text)
+        self.assertIn("<!-- atom id=work.steps.restated ops=dispatch,pre_claim,plan_readback,take_over -->", self.work)
         self.assertIn("Before the assigning write of every ready job, one-step or many-step", self.rule)
 
     def test_step_is_compared_with_title_and_intent_after_normalising(self):
@@ -44,7 +46,7 @@ class VacuousStepReadBackTest(unittest.TestCase):
     def test_taken_over_read_back_defers_to_the_rule(self):
         taken_over = paragraph(TAKE_OVER.read_text(encoding="utf-8"), "**A taken-over job:**")
         self.assertIn(
-            "Where an unfinished step only restates the request (`references/job-session.md`, "
+            "Where an unfinished step only restates the request (`work/references/job-session.md`, "
             '"A step that only restates the request"), name it as naming no work',
             taken_over,
         )
@@ -52,9 +54,9 @@ class VacuousStepReadBackTest(unittest.TestCase):
 
     def test_announce_and_proceed_stops_for_it(self):
         announce = paragraph(self.text, "**Announce and proceed.**")
-        self.assertIn("Once the premise check and the restating check above have passed", announce)
+        self.assertIn("Once the premise check and the restating check (`work/references/job-session.md`) have passed", announce)
         stops = paragraph(self.text, "The only stops before the first step are")
-        self.assertIn("and a step that only restates the request (above).", stops)
+        self.assertIn("and a step that only restates the request (`work/references/job-session.md`).", stops)
 
     def test_one_step_job_is_not_exempt(self):
         self.assertNotIn("dispatched on its recorded intent as below, unchanged", self.text)
