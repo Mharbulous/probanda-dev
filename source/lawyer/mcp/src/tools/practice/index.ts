@@ -89,7 +89,17 @@ export async function callPracticeTool(
       if (!READ_TOOLS.has(name)) throw err;
     }
   }
-  const result = await route(store, name, args);
+  let result: unknown;
+  try {
+    result = await route(store, name, args);
+  } catch (err) {
+    // A refused replay's write is gone, so its question must reach the caller with this error.
+    const refused = replayed.filter((r) => !r.saved);
+    if (refused.length && err instanceof Error) {
+      err.message += refused.map((r) => ` Before this call, Probanda's Cloud refused pending write ${r.write_id} (${r.tool}): ${r.question}`).join("");
+    }
+    throw err;
+  }
   if (replayed.length && result !== null && typeof result === "object" && !Array.isArray(result)) {
     return { ...result, replayed_writes: replayed };
   }

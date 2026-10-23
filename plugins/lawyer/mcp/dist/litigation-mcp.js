@@ -1,4 +1,4 @@
-// build-stamp: ebf6c7bd43bf
+// build-stamp: d1292f0271a3
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75241,6 +75241,18 @@ var CloudUnreachableError = class extends DataServerError {
   }
   detail;
 };
+var CloudResetError = class extends DataServerError {
+  constructor(detail) {
+    super(`Probanda's Cloud may have received this request: the connection was reset before its answer arrived (${detail}).`, "cloud_reset");
+    this.detail = detail;
+  }
+  detail;
+};
+var RESET_CODES = /* @__PURE__ */ new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
+function failure(err) {
+  const cause = err.cause;
+  return { detail: [err.message, cause?.code ?? cause?.message].filter(Boolean).join(": "), code: cause?.code };
+}
 var CloudNotConfiguredError = class extends DataServerError {
   constructor(reason) {
     super(`Probanda's Cloud is not configured: ${reason}. Nothing was saved.`, "cloud_not_configured");
@@ -75261,13 +75273,19 @@ async function callItems(env, fn2, body) {
       body: JSON.stringify(body)
     });
   } catch (err) {
-    const cause = err.cause;
-    throw new CloudUnreachableError([err.message, cause?.code ?? cause?.message].filter(Boolean).join(": "));
+    const { detail, code } = failure(err);
+    throw RESET_CODES.has(code ?? "") ? new CloudResetError(detail) : new CloudUnreachableError(detail);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
+  let text5;
+  try {
+    text5 = await res.text();
+  } catch (err) {
+    throw new CloudResetError(failure(err).detail);
+  }
   let json3;
   try {
-    json3 = JSON.parse(await res.text());
+    json3 = JSON.parse(text5);
   } catch {
     throw new CloudUnreachableError("a reply that is not JSON");
   }
@@ -75954,6 +75972,7 @@ var PracticeStore = class {
       reply = await callItems(this.env, "write", pending3.write);
       if (reply.saved !== true && reply.saved !== false) throw new CloudUnreachableError("a reply with no saved field");
     } catch (err) {
+      if (err instanceof CloudResetError) throw this.outcomeUnknown(writeId, err.detail);
       this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
       throw err;
     }
@@ -75970,8 +75989,9 @@ var PracticeStore = class {
     for (const [writeId, pending3] of queue) {
       const reply = await callItems(this.env, "write", pending3.write);
       if (reply.saved === false) {
+        const question = this.fillQuestion(String(reply.question ?? ""), this.snapshot().items, pending3.local);
         this.kv.apply([{ op: "delete", namespace: PENDING, key: writeId }]);
-        replayed.push({ write_id: writeId, tool: pending3.write.tool, saved: false });
+        replayed.push({ write_id: writeId, tool: pending3.write.tool, saved: false, question });
       } else if (reply.saved === true) {
         await this.applySaved(writeId, pending3, reply, this.snapshot());
         replayed.push({ write_id: writeId, tool: pending3.write.tool, saved: true });
@@ -76033,6 +76053,12 @@ var PracticeStore = class {
   notApplied(writeId, detail) {
     return new DataServerError(
       `Probanda's Cloud saved this write, but it could not be applied to practice.db (${detail}). It is kept as pending write ${writeId} and is applied by the next practice tool call.`,
+      "write_pending"
+    );
+  }
+  outcomeUnknown(writeId, detail) {
+    return new DataServerError(
+      `Probanda's Cloud may have saved this write: the connection was reset before its answer arrived (${detail}). It is kept as pending write ${writeId}, and the next practice tool call sends it again with the same write_id: the cloud saves it once, or answers with a question. Do not repeat this call.`,
       "write_pending"
     );
   }
@@ -77462,7 +77488,7 @@ function fileToolDefinitions() {
     },
     {
       name: "knowledge__read",
-      description: "Read one file of a skill's knowledge tree, merged from two layers: the shipped tree (`<skill>/references/` in the installed plugin's bundled skill source, else a checkout) and the firm's overlay (`<case_data_root>\\_practice\\knowledge\\`). `path` is relative, starting with a skill that owns a tree (draft, publish, assemble, legal-research, docket-clerk), e.g. `draft/CAN/BC/BCSC/venue.md`, or an overlay reserved entry (_superseded, _fetched, _inbox, _hosts.json). Per file the shipped copy wins; when the overlay holds a copy too, `shadowed_local` {path, identical} reports it, compared after line-ending normalization. An index file (`venues.json` at a jurisdiction, `kinds.json` in a Documents folder, or their `.local.json` overlay names) returns the merged `view` instead of text: rows merged by `code` or `file`, the shipped name and fields winning, aliases unioned, `layer` on every row and alias, `conflicts` on the view, and the reserved `_NoVenue` row (`reserved: true`, skipped by every forum picker); a local `name` a shipped row shadows is also reported at the top level as `shadowed_local` [{key, shipped, local}]. A document returns `content`, `learned` (header `learned_by: agent`), `header`, and each item's effective status from the firm's confirmation sidecar: `items` [{rule_ref, status (vetted, confirmed, corrected or unconfirmed; vetted is an item of a vetted file this firm has not confirmed or corrected), freshness (verified, not verified or missing, from this session's sources__check result on the file, if one ran), passage_hash, currency, record, pdf_page?}], `stale_confirmation` (a confirmation whose passage changed; the item reads unconfirmed), `orphaned_confirmations` (rows whose rule_ref is gone), `currency_moved` (the row stands), `corrections` (in force, with `passage_changed`), and `shadowed_sources` [{path, identical}] for each source record its `sources:` list names that the overlay also holds (the shipped copy was read). A /draft type file or venue.md also returns its validated `layout` block, and a /publish format.md its validated `format` block with `defaulted` properties, each with the firm's corrections substituted. Relay `shadowed_local`, `shadowed_sources`, `conflicts` and `corrections` to the practitioner once per session. Fails hard, naming file, field and rule, on a malformed block, index or sidecar, a path breaking the folder grammar, or a missing case_data_root. Every result reports `shipped_from`, `plugin_version` and `build_stamp`. Never touches the network. The overlay's case data root comes from the per-user probanda.json; when that file is absent it comes from the `matter_root` matter pointer's `0. CASE DATA` folder, so pass the `matter_root` that `drafting_forms__open_session` returned.",
+      description: "Read one file of a skill's knowledge tree, merged from two layers: the shipped tree (`<skill>/references/` in the installed plugin's bundled skill source, else a checkout) and the firm's overlay (`<case_data_root>\\_practice\\knowledge\\`). `path` is relative, starting with a skill that owns a tree (draft, publish, assemble, legal-research, docket-clerk), e.g. `draft/CAN/BC/BCSC/venue.md`, or an overlay reserved entry (_superseded, _fetched, _inbox, _hosts.json). Per file the shipped copy wins; when the overlay holds a copy too, `shadowed_local` {path, identical} reports it, compared after line-ending normalization. An index file (`venues.json` at a jurisdiction, `kinds.json` in a Documents folder, or their `.local.json` overlay names) returns the merged `view` instead of text: rows merged by `code` or `file`, the shipped name and fields winning, aliases unioned, `layer` on every row and alias, `conflicts` on the view, and the reserved `_NoVenue` row (`reserved: true`, skipped by every forum picker); a local `name` a shipped row shadows is also reported at the top level as `shadowed_local` [{key, shipped, local}]. A document returns `content`, `learned` (header `learned_by: agent`), `header`, and each item's effective status from the firm's confirmation sidecar: `items` [{rule_ref, status (confirmed, corrected or unconfirmed; unconfirmed until this firm's sidecar confirms or corrects it), freshness (verified, not verified or missing, from this session's sources__check result on the file, if one ran), passage_hash, currency, record, pdf_page?}], `stale_confirmation` (a confirmation whose passage changed; the item reads unconfirmed), `orphaned_confirmations` (rows whose rule_ref is gone), `currency_moved` (the row stands), `corrections` (in force, with `passage_changed`), and `shadowed_sources` [{path, identical}] for each source record its `sources:` list names that the overlay also holds (the shipped copy was read). A /draft type file or venue.md also returns its validated `layout` block, and a /publish format.md its validated `format` block with `defaulted` properties, each with the firm's corrections substituted. Relay `shadowed_local`, `shadowed_sources`, `conflicts` and `corrections` to the practitioner once per session. Fails hard, naming file, field and rule, on a malformed block, index or sidecar, a path breaking the folder grammar, or a missing case_data_root. Every result reports `shipped_from`, `plugin_version` and `build_stamp`. Never touches the network. The overlay's case data root comes from the per-user probanda.json; when that file is absent it comes from the `matter_root` matter pointer's `0. CASE DATA` folder, so pass the `matter_root` that `drafting_forms__open_session` returned.",
       inputSchema: {
         type: "object",
         properties: {
@@ -82369,7 +82395,16 @@ async function callPracticeTool(store, name, args) {
       if (!READ_TOOLS.has(name)) throw err;
     }
   }
-  const result = await route(store, name, args);
+  let result;
+  try {
+    result = await route(store, name, args);
+  } catch (err) {
+    const refused4 = replayed.filter((r3) => !r3.saved);
+    if (refused4.length && err instanceof Error) {
+      err.message += refused4.map((r3) => ` Before this call, Probanda's Cloud refused pending write ${r3.write_id} (${r3.tool}): ${r3.question}`).join("");
+    }
+    throw err;
+  }
   if (replayed.length && result !== null && typeof result === "object" && !Array.isArray(result)) {
     return { ...result, replayed_writes: replayed };
   }
@@ -85952,7 +85987,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync16 } from "node:fs";
 import { join as join21 } from "node:path";
-var BUILD_STAMP = false ? null : "ebf6c7bd43bf";
+var BUILD_STAMP = false ? null : "d1292f0271a3";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -86491,7 +86526,7 @@ function effectiveStatus(input) {
     const hash = passageHash(item.passage);
     const freshness = freshnessOf(item, input.checked);
     const row2 = byRef.get(item.rule_ref);
-    let status2 = input.learned ? "unconfirmed" : "vetted";
+    let status2 = "unconfirmed";
     let practitioner = false;
     if (row2?.status === "corrected") {
       status2 = "corrected";
@@ -86502,7 +86537,7 @@ function effectiveStatus(input) {
       } else {
         out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
       }
-    } else if (input.practitionerConfirms && item.source === "practitioner" && input.learned) {
+    } else if (input.practitionerConfirms && item.source === "practitioner") {
       status2 = "confirmed";
       practitioner = true;
     }
@@ -87550,7 +87585,6 @@ function knowledgeRead(path, seams = {}) {
   const status2 = effectiveStatus({
     items,
     rows: sidecarRows(kp, seams, label2),
-    learned,
     practitionerConfirms: blockKindOf(kp)?.kind === "format",
     checked: memoizedKnowledgeCheck(kp.path)?.sources
   });
@@ -90421,7 +90455,6 @@ function citedStates(stored, filing, seams = {}) {
         field,
         block: block2,
         file,
-        learned: result.learned === true,
         header: result.header,
         snapshot_hash: stored.passage_hashes[rule_ref],
         item: result.items.find((item) => item.rule_ref === rule_ref)
@@ -91107,17 +91140,16 @@ function witnessStatementLabel(witnessName) {
 
 // src/submission/forms/render-general.ts
 function tagOf(state) {
-  if (state.learned) {
-    if (state.item !== void 0 && state.item.status !== "unconfirmed") return "";
+  if (state.item === void 0 || state.item.status === "unconfirmed") {
     const pdf = state.item?.pdf_page ? `, transcribed from PDF p. ${state.item.pdf_page}` : "";
     return `[unverified: ${state.rule_ref}${pdf}]`;
   }
-  const moved = state.item === void 0 || state.item.passage_hash !== state.snapshot_hash || state.item.freshness === "missing";
+  const moved = state.item.passage_hash !== state.snapshot_hash || state.item.freshness === "missing";
   return moved ? `[source changed: ${state.rule_ref}]` : "";
 }
 function confirmationGate(states) {
   return {
-    unconfirmed: states.filter((s3) => s3.learned && (s3.item === void 0 || s3.item.status === "unconfirmed")).map((s3) => s3.rule_ref),
+    unconfirmed: states.filter((s3) => s3.item === void 0 || s3.item.status === "unconfirmed").map((s3) => s3.rule_ref),
     changed_since_snapshot: states.filter((s3) => (s3.item?.passage_hash ?? null) !== s3.snapshot_hash).map((s3) => ({ rule_ref: s3.rule_ref, snapshot_hash: s3.snapshot_hash, current_hash: s3.item?.passage_hash ?? null }))
   };
 }
@@ -91179,9 +91211,9 @@ function authorityCitedLine(ctx, row2) {
 function wordCount(lines2) {
   return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => w3 !== "").length;
 }
-function notice(venue, kind, learned, header) {
-  if (!learned) {
-    return `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by ?? "a practitioner"} on ${header.reviewed_on ?? "an unrecorded date"}, but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.`;
+function notice(venue, kind, header) {
+  if (header.reviewed_by) {
+    return `Note: the ${venue} requirements for ${kind} used here were reviewed by ${header.reviewed_by} on ${header.reviewed_on ?? "an unrecorded date"}, but this firm has not yet confirmed or corrected every item; confirm each item before relying on it.`;
   }
   return `Note: the ${venue} requirements for ${kind} used here were learned by an agent on ${header.accessed ?? "an unrecorded date"} from the venue's published sources and have not been reviewed by a practitioner; unverified items are tagged on the mockup.`;
 }
@@ -91235,7 +91267,7 @@ function renderGeneral(ctx, stored, cited2) {
   const confirmation = [
     ...openFiles.map((file) => {
       const state2 = cited2.find((s3) => s3.file === file);
-      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state2.learned, state2.header);
+      return notice(venueLabel === "" ? "No venue" : venueLabel, title, state2.header);
     }),
     ...unplaced.map((s3) => `${s3.block === "venue" ? "venue " : ""}${s3.field} ${tagOf(s3)}`)
   ];

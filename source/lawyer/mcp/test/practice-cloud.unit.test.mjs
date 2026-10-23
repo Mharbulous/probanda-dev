@@ -218,6 +218,26 @@ test("a reset write the cloud refuses on replay returns its question in replayed
   assert.equal(store.pendingCount(), 0);
 });
 
+test("a refused replay's question reaches the caller when the tool that replayed it then fails (#162)", async (t) => {
+  const { cloud, kv, store } = await setup(t);
+  await seedMatter(store);
+  cloud.mode = "down";
+  await assert.rejects(writes.upsert_task(store, { matt_num: "L100", task_type: "client", description: "Settle it" }), { code: "write_pending" });
+  const [[writeId]] = entries(kv, "pending");
+
+  cloud.mode = "ok";
+  cloud.refuse = (write) => (write.tool === "upsert_task" ? "Is this task still wanted?" : undefined);
+  await assert.rejects(
+    callPracticeTool(store, "practice_data__upsert_task", { matt_num: "L100", task_type: "admin", description: "File the report" }),
+    (err) => {
+      assert.equal(err.code, "refused");
+      assert.ok(err.message.endsWith(` Before this call, Probanda's Cloud refused pending write ${writeId} (upsert_task): Is this task still wanted?`), err.message);
+      return true;
+    }
+  );
+  assert.equal(store.pendingCount(), 0);
+});
+
 test("a wrong key gets the unreachable message with its status", async (t) => {
   const { cloud, kv } = await setup(t);
   const store = new PracticeStore({ ...cloud.env, LEGAL_COMMONS_SUPABASE_KEY: "sb_secret_wrong" }, kv);
