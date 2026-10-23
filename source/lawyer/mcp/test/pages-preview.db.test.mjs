@@ -115,7 +115,7 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   for (const r of [strategy, jobBoard, threads, again]) assert.ok(readdirSync(dirname(r.path)).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
 
-  await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for filing 9/);
+  await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Job Board 9/);
 });
 
 test("a real-data Work Board preview is written beside practice.db", async (t) => {
