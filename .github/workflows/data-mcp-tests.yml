@@ -87,10 +87,9 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      # The board templates' generated modules are gitignored; tsc fails on a missing one without this.
-      - run: node scripts/templates.mjs
-
-      - run: npx tsc
+      # The package's own build: board templates, tsc, then pdfium.wasm beside the page renderer.
+      # Calling tsc directly here once left the wasm out, and every PDF test failed (#166).
+      - run: npm run build
 
       - run: node scripts/bundle.mjs
 
