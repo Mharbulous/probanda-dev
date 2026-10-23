@@ -73,12 +73,12 @@ test("draft_harness: registered after publish_general, taking a step and that st
   assert.ok(at > 0, "not in buildToolDefinitions()");
   assert.equal(tools[at - 1].name, "drafting_forms__publish_general");
   assert.deepEqual(Object.keys(tools[at].inputSchema.properties), [
-    "step", "matter_root", "output_name", "folder", "to", "cc", "subject", "body", "attachments",
+    "step", "matter_root", "output_name", "folder", "to", "cc", "to_service_list", "proceeding_id", "filing_id", "subject", "body", "attachments",
     "db_path", "statement_id", "context_paras", "source_path", "proposed",
   ]);
   assert.deepEqual(tools[at].inputSchema.required, ["step"]);
   const f = fixture(t);
-  await assert.rejects(callTool({}, TOOL, { ...f.args, filing_id: 1 }), /unknown field "filing_id"/);
+  await assert.rejects(callTool({}, TOOL, { ...f.args, bcc: ["x@example.org"] }), /unknown field "bcc"/);
 });
 
 test("draft_harness: an unknown step is refused, through the tool surface and directly, writing nothing", async (t) => {

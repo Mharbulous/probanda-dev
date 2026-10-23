@@ -462,6 +462,25 @@ test("an idle_flag_hours that is not a positive number is refused and nothing is
   assert.equal(idleFlagHours({ APPDATA: join(f.scratch, "no-config") }), null, "an unconfigured matter-data root reads as unset");
 });
 
+test("cc_on_counsel_email lands in firm.json as roster keys, [] clears it, and an unknown key is refused writing nothing", async (t) => {
+  const f = fixture(t);
+  writeFirm(f, { firm_name: "Example Law Corporation", roster: [{ ...ENTRY, active: true }] });
+
+  const result = await upsert_firm_profile({ cc_on_counsel_email: [ENTRY.key] }, f.env);
+  assert.deepEqual(result.changed, ["cc_on_counsel_email"]);
+  assert.deepEqual(readJson(f.firmPath).cc_on_counsel_email, [ENTRY.key]);
+  assert.deepEqual((await firm_profile(f.env)).cc_on_counsel_email, [ENTRY.key]);
+
+  const before = readFileSync(f.firmPath, "utf-8");
+  await assert.rejects(upsert_firm_profile({ cc_on_counsel_email: ["nobody"] }, f.env), /cc_on_counsel_email names key\(s\) not in the firm roster .*nobody/);
+  await assert.rejects(upsert_firm_profile({ cc_on_counsel_email: "x" }, f.env), /cc_on_counsel_email must be a list of roster keys/);
+  assert.equal(readFileSync(f.firmPath, "utf-8"), before, "firm.json untouched");
+
+  await upsert_firm_profile({ cc_on_counsel_email: [] }, f.env);
+  assert.equal("cc_on_counsel_email" in readJson(f.firmPath), false);
+  assert.equal((await firm_profile(f.env)).cc_on_counsel_email, undefined, "unset, firm_profile carries none");
+});
+
 test("input validation failures are hard errors", async (t) => {
   const f = fixture(t);
   await assert.rejects(upsert_firm_profile({}, f.env), /needs at least one of firm_name, roster_entry, person, signature, practice_quirks, letterhead/);

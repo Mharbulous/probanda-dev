@@ -9,7 +9,9 @@
 // <case_data_root>\_practice\drafts, created when absent. From is this machine's
 // person in the firm roster, whose signature template under the firm folder, when present, is used
 // before Outlook's (skills/shared/email.md). An attachment may be any host file, as an enclosure may under ADR 0027
-// (Brahm, #1453). No database is opened, and no file content is returned.
+// (Brahm, #1453). No file content is returned. A database is opened only to address the email from
+// case data (email-recipients.ts): counsel on the service list (to_service_list, optionally one
+// proceeding_id) or a saved Writing's recipients (filing_id), read from db_path, never written.
 
 import { existsSync, mkdirSync, readdirSync, realpathSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
@@ -23,6 +25,7 @@ import { pythonTimeoutMs } from "../python-timeout.js";
 import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { emailSignaturePath, readFirmProfile } from "../tools/practice/firm-profile.js";
 import { assertSegment, confineWritingFolder } from "./bcsc-form-harness.js";
+import { emailRecipients, type EmailRecipients, type RecipientSource } from "./email-recipients.js";
 import { scrutinyReview, type ScrutinyReviewArgs } from "./scrutiny-review.js";
 
 /**
@@ -44,6 +47,12 @@ export interface DraftHarnessArgs extends Omit<ScrutinyReviewArgs, "step" | "mat
   folder?: string;
   to?: string[];
   cc?: string[];
+  /** write_email: address the email to counsel of record on the service list, read from db_path. */
+  to_service_list?: boolean;
+  /** write_email with to_service_list: the one proceeding; omitted, every proceeding's counsel. */
+  proceeding_id?: number;
+  /** write_email: address the email to this saved Writing's recipients, read from db_path. */
+  filing_id?: number;
   subject?: string;
   body?: string;
   /** write_email: any host files, absolute or relative to the matter folder; absolute with no matter. */
@@ -62,8 +71,13 @@ export function draftHarness(args: DraftHarnessArgs, env: NodeJS.ProcessEnv = pr
 function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?: string): unknown {
   const outputName = requireString(args, "output_name");
   const subject = requireString(args, "subject");
-  const body = requireString(args, "body");
-  const to = stringList(args, "to", 1);
+  if (args.body !== undefined && typeof args.body !== "string") {
+    throw new ValidationError(`drafting_forms__draft_harness.body must be a string for step ${args.step}`);
+  }
+  // A blank draft is allowed: omitted, the body is empty.
+  const body = args.body ?? "";
+  const source = recipientSource(args);
+  const to = stringList(args, "to", source === null ? 1 : 0);
   const cc = stringList(args, "cc", 0);
   const attachments = stringList(args, "attachments", 0);
   assertSegment(outputName, "output_name");
@@ -85,10 +99,24 @@ function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?
   }
   const from = sender(env);
   if ("error" in from) return from;
+  let addressed: EmailRecipients | undefined;
+  if (source !== null) {
+    const found = emailRecipients(args.db_path as string, source, from.key, env);
+    // An extra cc the caller gives is added after those read from case data.
+    addressed = { ...found, cc: [...found.cc, ...cc.filter((a) => !found.cc.includes(a))] };
+    if (addressed.to.length === 0) {
+      return {
+        success: false,
+        error: "no_recipients",
+        detail: "Case data holds no email for anyone this email would go to, so it has no To address. Nothing was written.",
+        not_addressed: addressed.not_addressed,
+      };
+    }
+  }
   // The firm drafts folder is Probanda's own, so it is made here; write_eml.py makes a folder under it.
   if (args.matter_root === undefined) mkdirSync(pathWin32.join(root, "_practice", "drafts"), { recursive: true });
 
-  return runPythonDriver({
+  const result = runPythonDriver({
     label: "draft write_email (write_eml.py)",
     driver: writeEmlPath(env, installRoot),
     payload: JSON.stringify({
@@ -96,8 +124,8 @@ function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?
       from_address: from.email,
       closing: from.closing,
       signature_template: emailSignaturePath(env, from.key),
-      to,
-      cc,
+      to: addressed ? addressed.to : to,
+      cc: addressed ? addressed.cc : cc,
       subject,
       body,
       // A relative attachment is read against the matter folder; every path goes in absolute.
@@ -112,9 +140,39 @@ function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?
       "The script writes through a temporary file, so a killed run leaves no draft at the output name: call this tool again. " +
       "A ~<output_name>.<number>.tmp file may be left beside it: tell the practitioner.",
   });
+  return addressed === undefined ? result : { ...(result as object), addressed };
 }
 
-function requireString(args: DraftHarnessArgs, key: "output_name" | "subject" | "body"): string {
+/** The recipient source write_email reads from case data, or null when the caller gives `to`. */
+function recipientSource(args: DraftHarnessArgs): RecipientSource | null {
+  const field = (key: string) => `drafting_forms__draft_harness.${key}`;
+  if (args.to_service_list !== undefined && typeof args.to_service_list !== "boolean") {
+    throw new ValidationError(`${field("to_service_list")} must be true or false`);
+  }
+  const serviceList = args.to_service_list === true;
+  if (args.proceeding_id !== undefined && !serviceList) {
+    throw new ValidationError(`${field("proceeding_id")} is read only with to_service_list: true`);
+  }
+  if (!serviceList && args.filing_id === undefined) return null;
+  if (serviceList && args.filing_id !== undefined) {
+    throw new ValidationError("give either to_service_list or filing_id for step write_email, not both");
+  }
+  for (const key of ["proceeding_id", "filing_id"] as const) {
+    if (args[key] !== undefined && !Number.isInteger(args[key])) throw new ValidationError(`${field(key)} must be a whole number`);
+  }
+  if (args.to !== undefined) {
+    throw new ValidationError(`${field("to")} cannot be given with ${serviceList ? "to_service_list" : "filing_id"}: the recipients come from case data`);
+  }
+  if (args.matter_root === undefined) {
+    throw new ValidationError(`${serviceList ? "to_service_list" : "filing_id"} needs the matter: give matter_root`);
+  }
+  if (typeof args.db_path !== "string" || args.db_path === "") {
+    throw new ValidationError(`${field("db_path")}, the matter's drafting database, is required with ${serviceList ? "to_service_list" : "filing_id"}`);
+  }
+  return serviceList ? { proceeding_id: args.proceeding_id } : { filing_id: args.filing_id as number };
+}
+
+function requireString(args: DraftHarnessArgs, key: "output_name" | "subject"): string {
   const value = args[key];
   if (typeof value !== "string" || value === "") {
     throw new ValidationError(`drafting_forms__draft_harness.${key} is required for step ${args.step}`);

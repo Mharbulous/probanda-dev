@@ -358,6 +358,31 @@ export function fetchFilingRecipients(dbPath: string, filing: FilingRow, parties
   });
 }
 
+/**
+ * A proceeding's counsel on its service list, for an email to all counsel: each `recipients` row with
+ * `forum_default` 1 that is linked to a party, less any client-side party, in ordinal order, as `to`
+ * rows resolved from `parties` as fetchFilingRecipients resolves a drafting Writing's. A row with no
+ * party (the forum's own addressees) is left out. A row whose party is not among `parties` fails hard.
+ */
+export function fetchServiceListCounsel(dbPath: string, proceedingId: number, parties: readonly PartyRow[]): FilingRecipientRow[] {
+  const byId = new Map(parties.map((p) => [p.id, p]));
+  return rows<{ id: number; capacity: string | null; party_id: number; ordinal: number }>(
+    dbPath,
+    "SELECT id, capacity, party_id, ordinal FROM recipients WHERE proceeding_id = ? AND forum_default = 1 AND party_id IS NOT NULL ORDER BY ordinal, id",
+    [proceedingId]
+  ).flatMap((r) => {
+    const party = byId.get(r.party_id);
+    if (party === undefined) {
+      throw new DataServerError(
+        `a service-list entry${r.capacity ? ` (${r.capacity})` : ""} is linked to a party that is not a party of proceeding ${proceedingId}; link it to one of its parties, or unlink it`,
+        "recipient_party_missing"
+      );
+    }
+    if (party.is_client === 1) return [];
+    return [{ ...r, role: "to" as const, name: party.counsel_name ?? party.name, email: party.counsel_email, address: party.address_for_service }];
+  });
+}
+
 type MergeableRecipient = Pick<FilingRecipientRow, "name" | "capacity" | "email" | "address" | "role" | "unrecorded">;
 
 /** "A", "A and B", "A, B and C". */
