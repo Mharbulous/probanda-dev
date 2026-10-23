@@ -21,7 +21,7 @@ source: effort owner's flow selection, 2026-08-23; steps 2, 6 and 10 amended 202
 
    > Served on opposing counsel today.
 
-4. **Assistant:** records that service happened; diarizing the response period is the practitioner's step in a separate session. The mockup re-renders with every item on ⏳ waiting on others — the next move belongs to the other side, and practitioners do not wait on themselves. Nothing nags in the meantime.
+4. **Assistant:** records that service happened; diarizing the response period is the practitioner's step. The mockup re-renders with every item on ⏳ waiting on others — the next move belongs to the other side, and practitioners do not wait on themselves. Nothing nags in the meantime.
 
 5. **Practitioner:** (weeks later) the response has arrived and hands it over.
 

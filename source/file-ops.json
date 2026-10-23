@@ -94,6 +94,7 @@
     {"file": "source/lawyer/mcp/src/knowledge/tools.ts", "op": "fs.rename", "count": 2, "why": "own-overlay", "note": "knowledge__retire moves a learned file and its sidecar within the knowledge overlay into _superseded."},
     {"file": "source/lawyer/mcp/src/knowledge/tools.ts", "op": "fs.unlink", "count": 1, "why": "own-overlay", "note": "Deletes a PDF under the overlay's _fetched folder that no live knowledge file cites."},
     {"file": "source/lawyer/mcp/src/lock-claim.ts", "op": "fs.unlink", "count": 2, "why": "temp", "note": "Probanda's own stale lock and claim files."},
+    {"file": "source/lawyer/mcp/src/migrate-backups.ts", "op": "fs.unlink", "count": 1, "why": "own-database", "note": "After a successful drafting-data or timecamping-data migrate, removes the older timestamped .bak-* copies that tool's engine wrote beside its database, keeping the one taken before this migrate's first hop. Never a hand-labelled copy."},
     {"file": "source/lawyer/mcp/src/page-api/token.ts", "op": "fs.unlink", "count": 1, "why": "temp", "note": "The temp file used to create the page API secret."},
     {"file": "source/lawyer/mcp/src/python-driver.ts", "op": "fs.unlink", "count": 1, "why": "temp", "note": "The temp file used to publish a Python driver in the OS temp folder."},
     {"file": "source/lawyer/mcp/src/python-spawn.ts", "op": "fs.rm", "count": 1, "why": "temp", "note": "Staging folders named coclerk_*_<tag>_ in the OS temp folder."},

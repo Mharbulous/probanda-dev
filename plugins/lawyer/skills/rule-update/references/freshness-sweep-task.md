@@ -11,7 +11,7 @@ A desktop-app scheduled task, `rule-freshness-sweep`, fires once a week, Monday 
 1. Spawns `lawyer:docket-clerk` for workflow 12, "Freshness sweep (no matter)".
 2. Relays the clerk's reply as the run's final message.
 
-That is all. It never runs `/rule-update`, never fetches a regulation's text, never asks for an approval, and never writes an overlay record, a deadline or an anchor. Its one write, made by the clerk, is a to-do whose description begins `Rule change:`. The next morning briefing shows that to-do as "Rule change detected — run /rule-update" (`executive-assistant`, Workflow 2), and the practitioner runs `/rule-update` in a session that is not drafting.
+That is all. It never runs `/rule-update`, never fetches a regulation's text, never asks for an approval, and never writes an overlay record, a deadline or an anchor. Its one write, made by the clerk, is a to-do whose description begins `Rule change:`. The next morning briefing shows that to-do as "Rule change detected — run /rule-update" (`executive-assistant`, Workflow 2), and the practitioner runs `/rule-update`.
 
 ## The task prompt
 
@@ -23,4 +23,4 @@ Weekly rule-freshness sweep. Spawn lawyer:docket-clerk with this prompt: "Freshn
 
 ## Installing it
 
-The practitioner installs it once, in the desktop app, with `create_scheduled_task`: name `rule-freshness-sweep`, cron `0 6 * * 1`, and the prompt above. Running it in a session other than the morning briefing's keeps the briefing session free of the deadline lane.
+The practitioner installs it once, in the desktop app, with `create_scheduled_task`: name `rule-freshness-sweep`, cron `0 6 * * 1`, and the prompt above.

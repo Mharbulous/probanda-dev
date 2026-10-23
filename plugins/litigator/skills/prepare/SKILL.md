@@ -7,7 +7,7 @@ description: >
   record under amended Rule 8-1. Re-run in stages: at the opening, after the pre-filing gate job
   completes, once responses are in, after set-down, and after an adjournment generally. Outlining only: it drafts no document, is never assigned a job, and never touches
   dates. Drafting a Writing's substance or working a job -> /draft. A date or deadline ->
-  the docket-clerk agent, in a separate session.
+  the docket-clerk agent.
 ---
 
 <!-- litigator v0.9.1 -->
@@ -38,7 +38,7 @@ Built for the BCSC **Notice of Application** and **Application Response** only. 
 
 - Never drafts any document, never writes substance, and never invokes `/draft` per document. Each surrounding piece is a job, or a Writing of its own, that a later session works.
 - Is never assigned a job. An outlining session never assigns itself one.
-- Never calls a deadline tool, for any purpose, including recording a past event. A hook on the drafting lane refuses it, but the hook fails open and is only the backstop. This rule is the rule. To record a date the practitioner gives, spawn `lawyer:docket-clerk` once and relay its reply verbatim; it returns only a count (`shared/deadline-isolation.md`, "Calling docket-clerk").
+- Date work, including recording a past event, goes only through `lawyer:docket-clerk` (`shared/deadline-isolation.md`, "Calling docket-clerk").
 - Spawns no sessions and no chips, and hands nothing off inside the session.
 - Is not the triage seat. Whether and when to start or file stays with `task-prioritization`, `/executive-assistant` and the practitioner, before the session opens.
 - Never touches the database except through `/drafting-data`. This skill names no table, column or query. Every write follows `.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations", cited by section below, and the gatekeeper's own references for the forum and the Writing.
@@ -82,7 +82,7 @@ Read the stage off `drafting_forms__board_card`, with `lanes: ["live"]` for the 
 
 Run `/draft`'s outlining branch (`.claude/skills/draft/references/job-session.md` Branch B) at bundle level: the application as a whole, what is sought and against whom, what evidence is in hand, what must be in place before it is heard, and each captured idea. Its rules hold here unchanged: one question at a time, answers recorded in the practitioner's words, nothing proposed, a Proposal picked handled as Branch B says, legal views recorded as the practitioner's propositions, and the closing read-back as the only confirmation. Where Branch B's text and the one-session-one-role rule differ, take the stricter rule.
 
-- **Past events** are read from the matter's `ProceduralHistory.md` and are content. Run its currency check as Branch B does (`.claude/skills/shared/procedural-history.md`), and never ask the practitioner to recount what happened. Never look a date up through deadline work.
+- **Past events** are read from the matter's `ProceduralHistory.md` and are content. Run its currency check as Branch B does (`.claude/skills/shared/procedural-history.md`), and never ask the practitioner to recount what happened.
 - **What waits on what** is the session's call, recorded as waits-on links, as in Branch B. A link to a job is written only once that job exists.
 - **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `/drafting-data` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
 - **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`/drafting-data` §3).

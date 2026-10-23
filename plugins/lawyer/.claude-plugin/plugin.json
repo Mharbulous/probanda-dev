@@ -27,7 +27,7 @@
         ]
       },
       {
-        "matcher": "Skill|mcp__(.+__)?plugin_lawyer_data__practice_data__(active_deadlines|open_tasks|upsert_deadline|upsert_anchor|delete_anchor|rule_overlay|upsert_rule_overlay|render_practice_board)|mcp__(.+__)?plugin_lawyer_data__rules__audit",
+        "matcher": "Skill|mcp__(.+__)?plugin_lawyer_data__rules__audit",
         "hooks": [
           {
             "type": "command",
@@ -36,7 +36,7 @@
               "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
             ],
             "timeout": 10,
-            "statusMessage": "Drafting/deadline session guard"
+            "statusMessage": "Drafting session guard"
           }
         ]
       },
@@ -156,36 +156,6 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
-            ],
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "matcher": "lawyer:docket-clerk",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
-            ],
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "lawyer:docket-clerk",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skills/shared/docket-clerk/hooks/session-lane-guard.py"
             ],
             "timeout": 10
           }

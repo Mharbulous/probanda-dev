@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -225,6 +225,35 @@ test("migrate 5 -> 6 adds sent_mail and leaves a v5 database's rows intact", asy
     { k: "E1_2026-09-01", v: "Call with Jesse" },
     { k: "sent_mail rows", v: 0 },
   ]);
+});
+
+test("a successful migrate keeps only the copy taken before its first hop, never a labelled one", async (t) => {
+  const f = fixture(t);
+  const dbPath = resolveTimecampingDbPath(f.env);
+  const res = spawnSync(
+    process.env.COCLERK_PYTHON || "python",
+    ["-c", "import sys, migrate_engine as m; m.migrate(sys.argv[1], 5)", dbPath],
+    { encoding: "utf-8", env: { ...f.env, PYTHONPATH: timecampingDataMigrateScriptsDir(f.env) } }
+  );
+  assert.equal(res.status, 0, res.stderr);
+  const dir = join(f.root, "_practice");
+  for (const name of ["timecamping.db.bak-20260101T000000Z", "timecamping.db.pre-chrometa.bak"]) writeFileSync(join(dir, name), "");
+
+  const result = await timecampingDataMigrate(f.env);
+
+  assert.deepEqual(result.applied, [{ from: 5, to: 6 }]);
+  assert.equal(result.warnings, undefined);
+  const left = readdirSync(dir).filter((n) => n.startsWith("timecamping.db.")).sort();
+  assert.equal(left.length, 2, `left: ${left}`);
+  assert.ok(left.includes("timecamping.db.pre-chrometa.bak"));
+  const kept = left.find((n) => /^timecamping\.db\.bak-\d{8}T\d{6}Z(-\d+)?$/.test(n));
+  assert.notEqual(kept, "timecamping.db.bak-20260101T000000Z");
+  const version = spawnSync(
+    process.env.COCLERK_PYTHON || "python",
+    ["-c", "import sqlite3, sys; print(sqlite3.connect(sys.argv[1]).execute(\"SELECT value FROM db_meta WHERE key = 'schema_version'\").fetchone()[0])", join(dir, kept)],
+    { encoding: "utf-8" }
+  );
+  assert.equal(version.stdout.trim(), "5", "the kept copy is the pre-migration database");
 });
 
 test("manual completion: a confirmed uncovered proposal leaves the report and survives a re-run; an unconfirmed one stays pending", async (t) => {

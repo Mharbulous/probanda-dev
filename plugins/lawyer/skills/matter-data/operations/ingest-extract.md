@@ -350,7 +350,7 @@ When it fires, add one line to the completion report and write nothing:
 
 > This document sets a date: <the event as the document states it>, <the date as written>, <locator per `../shared/conventions.md` §6>. Record it as an anchor through `lawyer:docket-clerk` (workflow 1, "Store anchor from document"), citing source <source_id> (<title>). Nothing was recorded here.
 
-This step never derives a deadline, never states time remaining, and never calls a `practice_data` anchor or deadline tool. Recording the anchor is `lawyer:docket-clerk`'s job, and doing it here would put this session in the deadline lane (`../../shared/deadline-isolation.md`). An unattended ingest writes a pending marker in place of the line ([`ingest-unattended.md`](ingest-unattended.md), Substitution 1h).
+This step never derives a deadline, never states time remaining, and never calls a `practice_data` anchor or deadline tool. Recording the anchor is `lawyer:docket-clerk`'s job. An unattended ingest writes a pending marker in place of the line ([`ingest-unattended.md`](ingest-unattended.md), Substitution 1h).
 
 ---
 

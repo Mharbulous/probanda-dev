@@ -138,6 +138,9 @@ test("a relocated matter's relative pointer gives db_path under the matter's own
 test("migrates a database that is behind, reports the backup, then bootstraps", async (t) => {
   const m = matterFixture(t);
   oneVersionBehind(m.dbPath);
+  // Older copies from earlier migrates, and one the practitioner labelled by hand.
+  const older = ["submission.sqlite.bak-20260101T000000Z", "submission.sqlite.bak-20260102T000000Z-1"];
+  for (const name of [...older, "submission.sqlite.bak-before-review-seed"]) writeFileSync(join(m.caseDataDir, name), "");
   const context = await practiceContext(t);
   const before = m.pointerBytes();
 
@@ -149,6 +152,10 @@ test("migrates a database that is behind, reports the backup, then bootstraps", 
   assert.equal(result.schema_version, result.current_schema_version);
   assert.ok(result.migrated.backup, "the #353 copy-aside is reported");
   assert.ok(existsSync(result.migrated.backup));
+  assert.equal(result.migrated.warnings, undefined);
+  // Only this migrate's copy and the labelled one are left.
+  const left = readdirSync(m.caseDataDir).filter((f) => f.startsWith("submission.sqlite.bak-")).sort();
+  assert.deepEqual(left, [result.migrated.backup.split(/[\\/]/).at(-1),"submission.sqlite.bak-before-review-seed"].sort());
   assert.match(result.session_token, /^sess-/);
   assert.deepEqual(result.filings, []);
   assert.ok(result.timings.some((p) => p.phase === "migrate"));

@@ -460,7 +460,9 @@ def migrate(
     delete-and-rerun, and for a pre-existing database is copying back the
     timestamped .bak-* file this function writes beside it before applying
     any hop (a fresh create backs up nothing -- there is nothing to
-    protect; #353). A refusal before a hop (the 27 -> 28, 28 -> 29,
+    protect; #353). The MCP wrapper removes older .bak-* copies after a
+    successful migrate, keeping the one taken before its first hop
+    (source/lawyer/mcp/src/migrate-backups.ts). A refusal before a hop (the 27 -> 28, 28 -> 29,
     29 -> 30, 42 -> 43, 46 -> 47 and 58 -> 59 checks) leaves the database at the
     version the hops before it reached.
     Returns the list of (from, to) hops applied -- an empty list means the

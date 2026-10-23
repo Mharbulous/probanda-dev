@@ -29,7 +29,10 @@
 // up nothing) -- added by #353 once a prior schema version existed to
 // migrate FROM (#307). matter-data's heavier plan/apply/restore/backups
 // ceremony stays deliberately unported (KISS): the copy-aside is the whole
-// backup story, and restore is a by-hand file copy.
+// backup story, and restore is a by-hand file copy. After a successful migrate
+// only the copy taken before its first hop is kept (../migrate-backups.ts): once
+// both engine runs below have succeeded, never between them, so the staged run's
+// copy of the original is the one that survives.
 //
 // PYTHONIOENCODING=utf-8 on every spawn, for the reason documented in
 // case/migrate.ts: host Python's stdout otherwise defaults to the Windows
@@ -39,6 +42,7 @@ import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { pruneBackups, timestampedBackups } from "../migrate-backups.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
@@ -110,6 +114,7 @@ export async function submissionDataMigrate(
 
   const lock = await acquireDataLock(dbPath, env);
   try {
+    const backupsBefore = timestampedBackups(dbPath);
     const migrate = (targetVersion?: number) =>
       runDriver(
         "migrate",
@@ -136,6 +141,8 @@ export async function submissionDataMigrate(
       );
       result.warnings = warnings;
     }
+    const pruneWarnings = pruneBackups(dbPath, backupsBefore);
+    if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
     return result;
   } finally {
     lock.release();

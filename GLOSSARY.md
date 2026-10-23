@@ -714,7 +714,7 @@ Describes whether the *extraction or classification* of a row has been quality-c
 _Avoid_: verified as a synonym for "proven" or "true" anywhere in prose.
 
 **Work Board**:
-The practice-wide page (`Work Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board`, in the deadline lane (`shared/html-pages.md`, The Work Board). Its internal name is `practice_board`.
+The practice-wide page (`Work Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board` (`shared/html-pages.md`, The Work Board). Its internal name is `practice_board`.
 _Avoid_: Job Board (one board's page); `Work_board` (the Job Board's internal document type); Litigation Strategy (one matter's page).
 
 **Work marker**:

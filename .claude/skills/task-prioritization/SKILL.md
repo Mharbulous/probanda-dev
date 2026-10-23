@@ -62,7 +62,7 @@ When the user asks "what should I work on?", "what's next?", or wants the ranked
 3. Within Work tier, apply tie-breaking (deadline proximity → net trust)
 4. Display using the [Output format](#output-format) — always show the reasoning
 
-When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`). It shows deadlines, so it is never called from a drafting session.
+When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`).
 
 ### 2. Add a to-do
 
@@ -76,16 +76,12 @@ skill is the only one that creates a to-do, and a drafting session hands its to-
 1. If a client to-do: match against the matter's `matt_num` or the client's name; confirm if ambiguous
 2. Read the matter's open to-dos first (``practice-data`` `open-tasks` with the matter ref). If one
    is the same outcome, or points to the same filing, offer to fold the new work into it instead.
-   Inside a drafting session that read is blocked by the deadline lane guard, so skip it there:
-   `upsert-task`'s refusal (step 4) is the check.
 3. Collect: description, time estimate (optional), deadline (optional), and — when the practitioner
    asks to be reminded on a cadence ("remind me weekly until the order arrives") — the nudge fields:
    `nudge_interval_days` ("weekly" → 7, "monthly" → 30, or an explicit day count; omit for a one-shot
    reminder) and `next_nudge_date` (the first date it should surface; default today + interval, or
    today for a one-shot). A deadline goes in `deadline_date`, never in the description: the
-   description shows on the matter's Litigation Strategy page, which drafting sessions see (ADR 0021 D2). Inside a
-   drafting session, neither ask for nor record a deadline: a to-do's deadline is recorded from a
-   separate session. A to-do about a filing is created only once that filing or pre-filing proceeding exists in the submission
+   description shows on the matter's Litigation Strategy page, which drafting sessions see (ADR 0021 D2). A to-do about a filing is created only once that filing or pre-filing proceeding exists in the submission
    database, and always with its pointer ([workflow 7](#7-point-a-to-do-at-a-filing-or-clear-the-pointer)).
    If it is not saved yet, say so and add nothing: `/draft` saves it first (ADR 0023 D3). A letter
    or email to the forum or to another party is a Writing like any filing: "it's a letter, not a

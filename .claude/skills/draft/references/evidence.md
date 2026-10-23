@@ -39,4 +39,4 @@ Practitioners do not wait on themselves. Waiting is only ever on an external par
 
 Admitted is not yet proved. Selection into a Writing is what turns an admission from paper into proof, and only then does the line go clean. For each admission, ask which proof the practitioner wants put before the tribunal.
 
-Service is the practitioner's act, never the skill's. The skill records that service happened as content of the Writing and re-renders. Diarizing the resulting period is the practitioner's own step in a separate session. The skill still never computes, fetches or restates how long remains, and never stores a deadline in a job, idea or handover. Nothing nags in the meantime.
+Service is the practitioner's act, never the skill's. The skill records that service happened as content of the Writing and re-renders. Diarizing the resulting period is the practitioner's own step. The skill still never computes, fetches or restates how long remains, and never stores a deadline in a job, idea or handover. Nothing nags in the meantime.

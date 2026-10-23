@@ -36,6 +36,7 @@
 import { join } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { pruneBackups, timestampedBackups } from "../migrate-backups.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
@@ -86,6 +87,7 @@ export async function timecampingDataMigrate(
   const dbPath = resolveTimecampingDbPath(env);
   const lock = await acquireDataLock(dbPath, env);
   try {
+    const backupsBefore = timestampedBackups(dbPath);
     const result = runDriver("migrate", driverFile("migrate", MIGRATE_DRIVER), JSON.stringify({ db_path: dbPath }), env);
     if (lock.brokeStale) {
       const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
@@ -95,6 +97,9 @@ export async function timecampingDataMigrate(
       );
       result.warnings = warnings;
     }
+    // After a successful migrate only the copy taken before its first hop is kept (../migrate-backups.ts).
+    const pruneWarnings = pruneBackups(dbPath, backupsBefore);
+    if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
     return result;
   } finally {
     lock.release();

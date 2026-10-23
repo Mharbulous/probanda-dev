@@ -105,7 +105,9 @@ def migrate(db_path, target_version=TARGET_SCHEMA_VERSION, migrations_sql_path=_
     point, not rolled back; recovery for a fresh database is delete-and-rerun,
     and for a pre-existing database is copying back the timestamped .bak-*
     file this function writes beside it before applying any hop (a fresh
-    create backs up nothing -- there is nothing to protect). Returns the
+    create backs up nothing -- there is nothing to protect). The MCP wrapper
+    removes older .bak-* copies after a successful migrate, keeping the one
+    taken before its first hop (source/lawyer/mcp/src/migrate-backups.ts). Returns the
     list of (from, to) hops applied -- an empty list means the database was
     already at target_version."""
     migrations = _load_migrations(migrations_sql_path)

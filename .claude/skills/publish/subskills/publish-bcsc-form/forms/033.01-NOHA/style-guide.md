@@ -15,7 +15,7 @@ a generate-only form.
 1. Every hearing date, time of day, courthouse address and time estimate is
    the practitioner's own content, copied as given. This skill never computes,
    infers or proposes a date or an estimate. A date or deadline question goes
-   to the docket-clerk agent in a separate session.
+   to the docket-clerk agent.
 2. The service dates come from the served copies (the notice of application
    and each application response), as the practitioner gives them.
 3. The orders sought are the paragraph numbers from Part 1 of the notice of

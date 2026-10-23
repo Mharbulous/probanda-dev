@@ -32,13 +32,7 @@ what a rule means. Writes go through the clerk. A question of law met on the way
 1. **Main session only.** If the Agent tool is not in your tool list, stop and return to your
    caller: "/rule-update runs only from the main session. It spawns the docket-clerk agent, and
    a subagent cannot spawn agents. Nothing was changed."
-2. **Not a drafting session.** If this session has run `/draft`, `/publish`,
-   `/polish-substance`, `/assemble` or `/prepare`, stop and say: "Rule updates run in a session
-   that is not drafting. Open a new session and run /rule-update there." Deadline isolation
-   (`shared/deadline-isolation.md`) forbids it, and the session-lane hook would refuse the
-   clerk's reply. Tell the practitioner once that, after this runs, this session is a deadline
-   session and cannot draft.
-3. **Live issue.** Recording a rule is legal work (`shared/live-issue-test.md`). Ask once, in
+2. **Live issue.** Recording a rule is legal work (`shared/live-issue-test.md`). Ask once, in
    one sentence: which matter and which live issue needs this rule, or whether the practitioner
    expressly authorizes it as unbilled firm work. Carry the answer into every clerk spawn. The
    matter is never written into a record.

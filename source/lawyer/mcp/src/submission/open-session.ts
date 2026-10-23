@@ -61,8 +61,10 @@ export interface OpenSessionResult extends BootstrapResult {
    * drafting_forms__render, under which the server rewrites the matter's pages. */
   draft_dir?: string;
   /** Present only when this call migrated the database before bootstrapping. `backup` is the
-   * #353 copy-aside the migrate wrote beside the database, or null if none appeared. */
-  migrated?: { from: number | null; to: number; backup: string | null };
+   * #353 copy-aside the migrate wrote beside the database, or null if none appeared. `warnings`
+   * carries the migrate's own warnings (a stale lock it broke, an older backup it could not
+   * remove), present only when there is one. */
+  migrated?: { from: number | null; to: number; backup: string | null; warnings?: string[] };
   /** The folded-in practice_data__matter_lookup (#590 decision 3). Never fatal: `found: false`
    * carries a one-line `note`. The client_* fields are the identity bootstrap used -- a caller's
    * own value wins over the lookup's -- and are what later drafting_forms__render calls pass. */
@@ -366,8 +368,10 @@ export async function submissionFormsOpenSession(
     (!result.migration_withheld && !result.bundle_outdated && result.schema_version !== null && result.schema_version < result.current_schema_version);
   if (behind) {
     const before = backups(dbPath);
+    let migrateWarnings: string[] = [];
     try {
-      await phase("migrate", () => submissionDataMigrate(dbPath));
+      const done = await phase("migrate", () => submissionDataMigrate(dbPath));
+      if (Array.isArray(done.warnings)) migrateWarnings = done.warnings as string[];
     } catch (err) {
       // The hop that drops the submission copy of counsel waits on the practitioner (party/counsel
       // SSOT): the session goes on at v42, listed and rendered as current, and returns the rows to decide.
@@ -385,7 +389,10 @@ export async function submissionFormsOpenSession(
       result = submissionFormsBootstrap(dbPath, identity, undefined, undefined, undefined, unattended);
     }
     const to = migrationRefused === undefined ? target : result.schema_version;
-    if (to !== null && to !== from) migrated = { from, to, backup: written.length > 0 ? join(dirname(dbPath), written[0]) : null };
+    if (to !== null && to !== from) {
+      migrated = { from, to, backup: written.length > 0 ? join(dirname(dbPath), written[0]) : null };
+      if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
+    }
   }
   for (const t of result.timings) timings.push({ phase: `bootstrap: ${t.phase}`, ms: t.ms });
   const refused = result.migration_required || result.bundle_outdated || result.migration_withheld === true;

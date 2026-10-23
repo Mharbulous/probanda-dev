@@ -85,9 +85,7 @@ GRAND TOTAL:  $[grand total]
 Put the summary to the practitioner with three pills, none preselected:
 
 - **Approve and publish** — the context file is written; open `/publish` with
-  `publish-boc` through its front door. In a session that has already spawned
-  `lawyer:docket-clerk` in full mode, the lane hook refuses this: `publish` is in the drafting
-  lane and the two lanes stay in separate sessions. Say so and offer the other two.
+  `publish-boc` through its front door.
 - **Approve, stop here** — the context file is written and nothing else happens.
 - **Adjust first** — with a required `.elicit-textarea` describing the
   adjustments. Route the change to the member that owns it: disbursements to

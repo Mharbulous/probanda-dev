@@ -144,7 +144,7 @@ file. The full listings stay one question away.
    - **Flags** — WIP silence on funded files; unconfirmed matter lifecycle signals; and each open
      to-do whose description begins `Rule change:` (written by the docket-clerk's rule-freshness
      gate or its freshness sweep), shown as "Rule change detected: <amending reg> — run
-     /rule-update" in a session that is not drafting. Show it every day the to-do stays open. And,
+     /rule-update". Show it every day the to-do stays open. And,
      when either count from Data Fetch step 5 is above zero, one contact-gaps line naming both counts
      and "set up contacts from existing matters".
 5. Add the standing footer count: "N other tracked deadlines, none newly urgent — ask for the full list."
