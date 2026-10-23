@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Track and derive the engagement lifecycle status of every client matter, from intake through offboarding. Use to ask a file's status, which files are active or closing, whether a conflict check or retainer agreement is on file, or to update a matter's status. Trigger on 'what's the status of', 'which files are active', 'update the status on'.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

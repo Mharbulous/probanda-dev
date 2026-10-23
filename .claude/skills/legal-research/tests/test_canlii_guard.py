@@ -75,7 +75,8 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
 
     def test_main_session_block_names_the_currency_tool(self):
         result = call(LOCAL + "browse_legislation")
-        self.assertIn("legislation_currency", result.stderr)
+        self.assertIn("legislation currency check", result.stderr)
+        self.assertNotIn("citation-checker", result.stderr)
 
     def test_non_plugin_subagent_research_call_is_blocked(self):
         # An agent of another plugin, or of the retired single plugin, is not a research agent.

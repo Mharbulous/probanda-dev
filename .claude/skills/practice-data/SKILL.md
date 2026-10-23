@@ -4,6 +4,8 @@ user-invocable: false
 description: The firm's practice records for each client and matter. Look up or update trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines (docket-clerk) or case facts (matter-data).
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

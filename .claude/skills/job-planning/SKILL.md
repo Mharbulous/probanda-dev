@@ -7,6 +7,8 @@ description: >
   done. Use for "plan job N" or "check job N's plan". Working the job -> /draft.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Job planning
 
 A thin front end. The rules are `shared/job-planning.md`'s: read it first and follow it. Nothing here restates them.

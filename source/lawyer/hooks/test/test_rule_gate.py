@@ -54,7 +54,7 @@ RETIRE = {"op": "retire", "id": "rule-1"}
 def refused(result: subprocess.CompletedProcess, *fragments: str) -> bool:
     stderr = result.stderr.decode("utf-8")
     assert result.returncode == 2, stderr
-    assert stderr.startswith("Refused (Rule gate): ")
+    assert stderr.startswith("Refused: ")
     for fragment in fragments:
         assert fragment in stderr
     return True
@@ -131,10 +131,10 @@ def test_a_retire_passes_only_when_asked(tmp_path):
 
 
 def test_fails_closed(tmp_path):
-    assert refused(run(tmp_path, [turn(RULE)], add(RULE), transcript=""), "no transcript_path")
+    assert refused(run(tmp_path, [turn(RULE)], add(RULE), transcript=""), "transcript is not available")
     missing = str(tmp_path / "absent.jsonl")
     assert refused(run(tmp_path, [turn(RULE)], add(RULE), transcript=missing), missing)
-    assert refused(run(tmp_path, [turn(RULE)], {"op": "list"}), "neither add nor retire")
+    assert refused(run(tmp_path, [turn(RULE)], {"op": "list"}), "neither to add nor to retire")
     assert refused(run(tmp_path, [reply(QUESTION)], add(RULE)), "holds no practitioner turn")
 
 

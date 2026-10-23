@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Read the loose files in a litigation matter's main folder into the case database, name each one by the firm's file naming convention (date + code + author/recipient + re/encl/srv + subject + amount) and file it into the matter's folders, and tidy files already in its subfolders that were never read in or carry non-standard names, after the practitioner approves each file on a local approval page. Use for 'housekeeping', or to clean up, organize, audit, standardize, or fix non-standard file names in a litigation matter folder. Litigation matters only.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

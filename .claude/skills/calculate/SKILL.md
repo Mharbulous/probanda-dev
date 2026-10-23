@@ -6,6 +6,8 @@ description: >
   and totals. Never a deadline or limitation date (the docket-clerk agent).
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Calculate
 
 Front door for figures a BC litigation matter needs: BC Court Order Interest Act pre- and

@@ -4,6 +4,8 @@ user-invocable: false
 description: Apply an approved rename manifest (files renamed in place) or an approved routing manifest (files moved to other folders), and hash a set of files before a move. The mechanical rename and move engine of the file-manager plugin, used by a caller that already holds the practitioner's approval (/route-accounting, /housekeeping, /publish's renumber-affidavit). Never proposes a name and never decides what is approved. Naming grammar -> /file-naming.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

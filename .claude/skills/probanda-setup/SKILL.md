@@ -3,6 +3,8 @@ name: probanda-setup
 description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and maps the practitioner's matter folders to the layout the skills assume. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Probanda setup
 
 A missing `probanda.json` means Probanda has not been set up on this device. It is not a fault. This skill sets the device up and then hands back to whatever the practitioner was doing.

@@ -4,6 +4,8 @@ description: "Turn a /draft working rule that just came up in this session into 
 disable-model-invocation: true
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # /rule-migrate
 
 Purpose: a `/draft` working rule has just come up in real work, and the practitioner wants it moved from the pilot's tagged atoms onto the rules map, where each node of practitioner positions carries its own rules. This skill produces one fenced code block that can be copied straight into Claude Code, where the move is made. Then go back to the interrupted work. It never moves, edits or deletes anything itself.

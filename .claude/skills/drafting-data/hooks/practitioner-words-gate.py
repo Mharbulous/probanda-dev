@@ -92,7 +92,7 @@ import json
 import re
 import sys
 
-PREFIX = "Refused (practitioner-words gate, #784): "
+PREFIX = "Refused: "
 TYPED_SOURCES = {"sdk", "typed", "queued"}
 STRUCK = " \x00 "
 GAP = " \x01 "  # where a system-reminder block was cut out of a turn
@@ -107,22 +107,25 @@ SET_ENDS = {"where", "from", "returning", "order", "limit"}
 COMPOUND = {"union", "intersect", "except"}
 REVISIONS = "paragraph_revisions"
 REVISION_READ = ("choice", "origin", "entity", "field", "old_text", "new_text")
+# Plain words for each read column, for a refusal (shared/internals-confidentiality.md).
+PLAIN = {"choice": "choice", "origin": "origin", "entity": "subject", "field": "field",
+         "old_text": "old text", "new_text": "new text"}
 REVISION_CHOICES = ("current", "proposed", "alternative", "other")  # any other choice is refused as unreadable
-REVISION_FIELD = "paragraph_revisions.new_text"
+REVISION_FIELD = "the revised text"
 REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitioner approved: shown whole as the only "
                     "fenced code block in the reply before their last turn, exactly as saved, and approved by a bare "
-                    "yes typed as that turn. One approval admits one write. Its UPDATE writes the same literal as "
-                    "new_text, and 'current' writes old_text unchanged.")
+                    "yes typed as that turn. One approval admits one write. The revised text recorded is exactly the "
+                    "text written into the paragraph, and keeping the current wording records the old text unchanged.")
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Job Board's statement of goals
 MERGE_TOOL = "drafting_data__merge_job_boards"  # two Job Boards joined on the practitioner's yes
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
-GOAL_FIELD = "drafting_data__set_board_goal.statement"
-MERGE_GOAL_FIELD = "drafting_data__merge_job_boards.goal_statement"
+GOAL_FIELD = "the statement of goals"
+MERGE_GOAL_FIELD = "the merged board's statement of goals"
 MOVE_ENTITY = "filing_facts"  # a fact move (paragraph-revision.md §6): the ordinals, no wording
-MOVE_FIELD = "paragraph_revisions.old_text/new_text"
-MOVE_CLOSING = ("A fact move records field 'ordinal', choice 'move' and origin 'practitioner', with old_text and new_text "
-                "the ordinals as text: old_text the ordinal its UPDATE filing_facts guards on in WHERE ... ordinal = "
-                "and new_text the ordinal it sets, for the row WHERE id = entity_id (paragraph-revision.md §6).")
+MOVE_FIELD = "the fact's old and new places"
+MOVE_CLOSING = ("A fact move is recorded as a move of the fact's place, on the practitioner's word, with the fact's old "
+                "and new places as text, and the same script moves that fact from its old place to its new one, as "
+                "the paragraph-revision rules show for moving a fact.")
 
 TOKEN = re.compile(r"""
     (?P<space>\s+) | (?P<comment>--[^\n]*|/\*.*?\*/)
@@ -187,21 +190,21 @@ def table_at(toks, i, table):
 
 def literal(field, value):
     if len(value) != 1 or value[0][0] != "str":
-        raise Unreadable(f"{field} is set to something other than one string literal")
+        raise Unreadable(f"{field} is something other than one plain quoted value")
     return value[0][1]
 
 
-def insert_columns(toks, j, table):
+def insert_columns(toks, j):
     """(an INSERT INTO <table>'s column names, index just past its column list)."""
     if toks[j:j + 1] == [("name", "as")]:
         j += 2
     if toks[j:j + 1] != [("p", "(")]:
-        raise Unreadable(f"an INSERT INTO {table} with no column list")
+        raise Unreadable("a record written with no list of its fields")
     cols, n = split(toks[j + 1:], ("p", ","))
     return [c[0][1] if len(c) == 1 else None for c in cols], j + n + 2
 
 
-def insert_values(toks, j, cols, table):
+def insert_values(toks, j, cols):
     """(each row's value tokens, by VALUES or by INSERT ... SELECT (the select list split on
     top-level commas, stopping at FROM), index just past them)."""
     rows = []
@@ -210,7 +213,7 @@ def insert_values(toks, j, cols, table):
         while toks[j:j + 1] == [("p", "(")]:
             values, n = split(toks[j + 1:], ("p", ","))
             if len(values) != len(cols):
-                raise Unreadable(f"an INSERT INTO {table} whose VALUES do not match its columns")
+                raise Unreadable("a record whose values do not match its fields")
             rows.append(values)
             j += n + 2
             if toks[j:j + 1] != [("p", ",")]:
@@ -219,13 +222,13 @@ def insert_values(toks, j, cols, table):
     elif toks[j:j + 1] == [("name", "select")]:
         items, n = split(toks[j + 1:], ("p", ","), lambda t: t == ("name", "from"))
         if len(items) != len(cols):
-            raise Unreadable(f"an INSERT INTO {table} ... SELECT whose select list does not match its columns")
+            raise Unreadable("a record whose selected values do not match its fields")
         rows.append(items)
         j += n + 1
         if any(t[0] == "name" and t[1] in COMPOUND for t in toks[j:]):
-            raise Unreadable(f"an INSERT INTO {table} ... SELECT with a compound select")
+            raise Unreadable("a record selected from more than one query")
     else:
-        raise Unreadable(f"an INSERT INTO {table} that is neither INSERT ... VALUES nor INSERT ... SELECT")
+        raise Unreadable("a record written neither as a list of values nor as one selection")
     return rows, j
 
 
@@ -242,23 +245,23 @@ def statements(toks):
 
 def revision_inserts(toks, j):
     """Each row an INSERT INTO paragraph_revisions writes, as {column: string} for REVISION_READ."""
-    cols, j = insert_columns(toks, j, REVISIONS)
+    cols, j = insert_columns(toks, j)
     missing = [c for c in REVISION_READ if c not in cols]
     if missing:
-        raise Unreadable(f"an INSERT INTO {REVISIONS} that names no {', '.join(missing)}")
-    rows, _ = insert_values(toks, j, cols, REVISIONS)
+        raise Unreadable(f"a revision record that leaves out its {', '.join(PLAIN[c] for c in missing)}")
+    rows, _ = insert_values(toks, j, cols)
     for row in rows:
-        read = {c: literal(f"{REVISIONS}.{c}", row[cols.index(c)]) for c in REVISION_READ}
+        read = {c: literal(f"the revision's {PLAIN[c]}", row[cols.index(c)]) for c in REVISION_READ}
         if read["entity"] == MOVE_ENTITY:
             # A move takes its own branch (move_failures), so the wording checks never see it.
             value = row[cols.index("entity_id")] if "entity_id" in cols else []
             if len(value) != 1 or value[0][0] != "num":
-                raise Unreadable(f"{REVISIONS}.entity_id of a fact move is something other than one integer literal")
+                raise Unreadable("the fact a move names is something other than one plain number")
             read["entity_id"] = str(int(value[0][1]))
             yield read
             continue
         if read["choice"] not in REVISION_CHOICES:
-            raise Unreadable(f"{REVISIONS}.choice {read['choice']!r}, which is none of {', '.join(REVISION_CHOICES)}")
+            raise Unreadable(f"the revision's choice {read['choice']!r}, which is none of {', '.join(REVISION_CHOICES)}")
         yield read
 
 
@@ -325,16 +328,14 @@ def move_failures(moves, stmts):
     entity_id, guarded on old_text as its ordinal. A move carries no wording, so no transcript."""
     out, updates = [], ordinal_updates(stmts)
     for row in moves:
-        wrote = f"  field: {MOVE_FIELD}\n  wrote: entity_id {row['entity_id']}, old_text {row['old_text']}, new_text {row['new_text']}"
+        wrote = f"  field: {MOVE_FIELD}\n  wrote: fact {row['entity_id']}, from place {row['old_text']} to place {row['new_text']}"
         if (row["field"], row["choice"], row["origin"]) != ("ordinal", "move", "practitioner"):
-            out.append(f"a {MOVE_ENTITY} audit row is a fact move and needs field 'ordinal', choice 'move' and origin "
-                       f"'practitioner'; this one writes field {row['field']!r}, choice {row['choice']!r} and origin "
-                       f"{row['origin']!r}.\n{wrote}")
+            out.append(f"a record of a fact move must say it moves the fact's place, as a move, on the practitioner's "
+                       f"word; this one says {row['field']!r}, {row['choice']!r} and {row['origin']!r}.\n{wrote}")
         elif not any(new == row["new_text"] and row["entity_id"] in ids and row["old_text"] in ordinals
                      for new, ids, ordinals in updates):
-            out.append(f"{MOVE_FIELD} match no UPDATE {MOVE_ENTITY} SET ordinal = {row['new_text']} WHERE id = "
-                       f"{row['entity_id']} AND ordinal = {row['old_text']} in this script, so the audited move is not "
-                       f"the move written.\n{wrote}")
+            out.append(f"this script does not move fact {row['entity_id']} from place {row['old_text']} to place "
+                       f"{row['new_text']}, so the recorded move is not the move made.\n{wrote}")
     return out
 
 
@@ -375,11 +376,11 @@ def revision_failures(rows, stmts, turns=None, last_raw="", last_fences=()):
         if turns is None:
             if row["choice"] == "current":
                 if new != row["old_text"]:
-                    out.append(f"{REVISION_FIELD} differs from old_text, and the choice 'current' keeps the "
-                               f"wording unchanged.\n{wrote}\n  old_text: {row['old_text']}")
+                    out.append(f"{REVISION_FIELD} differs from the text it replaces, and keeping the current "
+                               f"wording leaves it unchanged.\n{wrote}\n  was: {row['old_text']}")
             elif not sets_literal(stmts, row["entity"], row["field"], new):
-                out.append(f"{REVISION_FIELD} is not the literal an UPDATE {row['entity']} SET {row['field']} "
-                           f"in this script writes, so the audited text is not the text written.\n{wrote}")
+                out.append(f"{REVISION_FIELD} is not the text this script writes into the paragraph, so the "
+                           f"record would not match the paragraph.\n{wrote}")
         elif row["choice"] == "current":
             continue
         elif len(last_fences) != 1:
@@ -537,7 +538,7 @@ def board_goal(payload):
         return 0  # not confirmed, or a confirmed write with no statement, which the tool itself refuses
     path = payload.get("transcript_path") or ""
     if not path:
-        return refuse("the hook input names no transcript_path, so there is no record of what the "
+        return refuse("the session transcript is not available, so there is no record of what the "
                       "practitioner approved to check the statement of goals against.")
     try:
         turns, last_raw, last_fences, _ = read_transcript(path)
@@ -570,7 +571,7 @@ def bare_yes(payload, needs, how):
     merge needs confirmed, `how` what the session shows before asking."""
     path = payload.get("transcript_path") or ""
     if not path:
-        return refuse("the hook input names no transcript_path, so there is no record of the "
+        return refuse("the session transcript is not available, so there is no record of the "
                       "practitioner confirming the merge.")
     try:
         last_raw = read_transcript(path)[1]
@@ -598,7 +599,7 @@ def merge_boards(payload):
             return 0
         failure = goal_failure(statement, MERGE_GOAL_FIELD, turns, last_raw, last_fences)
         if failure is not None:
-            return refuse(failure + " Or merge with no goal_statement, which leaves the board needing one.")
+            return refuse(failure + " Or merge with no statement of goals, which leaves the board needing one.")
     return bare_yes(payload, "a merge of two Job Boards needs the practitioner's confirmation that their goals overlap "
                     "or cohere", "Show both boards' statements of goals side by side, ask whether to merge them")
 
@@ -623,9 +624,9 @@ def main():
     try:
         revisions, stmts = revision_writes(script)
     except Unreadable as exc:
-        return refuse(f"cannot read the paragraph revision this script writes: {exc}. Write "
-                      "paragraph_revisions.choice, origin, entity, field, old_text and new_text as plain "
-                      "string literals, in INSERT ... VALUES or INSERT ... SELECT, as paragraph-revision.md shows.")
+        return refuse(f"cannot read the paragraph revision this script writes: {exc}. Write the revision "
+                      "record's choice, origin, subject, field, old text and new text as plain quoted values, "
+                      "as the paragraph-revision rules show.")
     moves = [row for row in revisions if row["entity"] == MOVE_ENTITY]
     revisions = [row for row in revisions if row["entity"] != MOVE_ENTITY]
     move_refusals = move_failures(moves, stmts)
@@ -643,7 +644,7 @@ def main():
         return 0
     path = payload.get("transcript_path") or ""
     if not path:
-        return refuse("the hook input names no transcript_path, so there is no record of "
+        return refuse("the session transcript is not available, so there is no record of "
                       "what the practitioner approved to check the paragraph revision against.")
     try:
         turns, last_raw, last_fences, executed = read_transcript(path)
@@ -664,4 +665,4 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as exc:  # the gate's own failure refuses the call (#784, decision 5)
-        sys.exit(refuse(f"the gate itself failed: {exc!r}"))
+        sys.exit(refuse(f"the check itself failed: {exc!r}"))

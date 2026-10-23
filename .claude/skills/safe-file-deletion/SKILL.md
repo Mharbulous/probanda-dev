@@ -4,6 +4,8 @@ user-invocable: false
 description: Use whenever a file inside a Coclerk client-matter project needs to be removed from the filesystem in a Cowork/shell session -- the user requires all client-file deletions to be recoverable, never permanent. Does NOT apply inside a Git worktree (tracked, untracked, ignored, or `.git` metadata files) -- ordinary repository deletion rules apply there instead -- unless the target is inside a client matter folder, which stays protected even inside a worktree.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Safe file deletion
 
 > **Enforcement ships in two layers.**

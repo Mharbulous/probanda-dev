@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter — walks through locating the last invoice, checking matter-data, pulling unbilled TimeCamp time, cross-referencing phone call logs to catch missed billable time, and building a billing chart in Excel."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

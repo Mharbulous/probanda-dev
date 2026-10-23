@@ -9,6 +9,8 @@ description: >
   For blank form generation or final assembly, use /publish with publish-bcsc-form.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # solver -- Orders Sought (Part 1)
 
 Interactive agent that drafts the orders sought for a BC Supreme Court form. Queries case data for parties and proceedings, presents a draft, loops with the practitioner until approved, and writes to the substance folder.

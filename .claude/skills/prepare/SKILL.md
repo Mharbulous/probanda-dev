@@ -123,5 +123,6 @@ The same shared doctrines `/draft` binds (`.claude/skills/draft/SKILL.md` §3), 
 | The live-issue test | `shared/live-issue-test.md` | Each job's billing anchor. |
 | Job planning | `shared/job-planning.md` | The steps of each job written at the closing read-back. A stock bundle job keeps `/drafting-data` §3b's fixed text. |
 | HTML pages | `shared/html-pages.md` | Every turn. The lead Writing's board is read from `board_summary` and `drafting_forms__board_card`, never from a page, and no page is presented, staged or asked for as a screenshot. |
+| Internals confidentiality | `shared/internals-confidentiality.md` | Every turn and everything the practitioner sees: chat, questions, file and folder names, pages and document text. Job Board, Writing and Loose Threads are product words and stay. No tool, table, field, stock type, folder code, filing id, rule or map name reaches the practitioner, and no explanation of how Probanda works inside. Hides mechanism, never an outcome or an error. |
 
 **No-blocking-checkpoint rule,** as `/draft` §3 states it: writing and rendering never pause for approval. The closing read-back is itself the confirmation, with no separate approve step after it.

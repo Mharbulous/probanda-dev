@@ -4,6 +4,8 @@ user-invocable: false
 description: Internal writer of every skill's knowledge tree. Learns a venue's or audience's requirements for one or two document kinds from official published sources and records them in the calling skill's tree, or confirms, corrects, refreshes or retires a learned file. Invoked by name by a tree-owning skill (draft, publish, or the docket-clerk agent's caller), never by the user.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

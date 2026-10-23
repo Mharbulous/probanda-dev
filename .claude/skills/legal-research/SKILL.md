@@ -6,6 +6,8 @@ description: >
   answering or searching the web, unless the answer is framed explicitly as a hunch. Applying law to facts -> /apply-to-facts.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 <!-- REGRESSION-PRONE: CanLII-first research has recurred repeatedly. See docs/design/2026-09-24 research-lawyer Westlaw-first fix plan.md before editing. Tests: legal-research/tests/. -->
 
 # Legal Research — route to research-agent

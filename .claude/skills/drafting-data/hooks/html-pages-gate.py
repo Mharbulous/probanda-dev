@@ -37,7 +37,9 @@ So this gate refuses:
 
 Glob is never refused, and no other HTML file is. Exempt when COCLERK_HTML_DEV=1
 is in the environment: developing or debugging the generator in Claude Code
-(this repo's .claude/settings.json sets it).
+(this repo's .claude/settings.json sets it). The refusal names neither it nor any
+tool or skill file: a refusal is quoted to the practitioner verbatim
+(shared/internals-confidentiality.md).
 
 Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails OPEN on its own error, loudly on stderr, because its matcher
@@ -162,17 +164,15 @@ def first_hit(texts):
 
 def message(name, shell):
     text = (
-        f'Refused (HTML pages principle, shared/html-pages.md): "{name}" is a Probanda plugin page, '
-        "a human interface generated from the plugin's databases. An agent never views, reads, greps, "
-        "parses, scripts over, authors or requests a screenshot; however, an agent may present "
-        "the html to a human user for them to view, staging it first where presenting needs that, and an agent may view screenshots provided by a "
-        "human user on the user's own initiative. Use the data instead: "
-        "drafting_forms__render naming Work_board returns board_summary; "
-        "drafting_forms__board_card returns what a card holds when opened; "
-        "drafting_forms__open_session returns the page paths and the filing list; /drafting-data's "
-        "query tools and the markdown mockups hold everything else. A change the practitioner wants "
-        "to a page goes to /lawyer:suggestion: never look for or edit the generator. Developing the generator in Claude "
-        "Code: set COCLERK_HTML_DEV=1 (this repo's .claude/settings.json sets it)."
+        f'Refused: "{name}" is a Probanda page, made for a person to view. An agent never views, '
+        "reads, greps, parses, scripts over, authors or requests a screenshot of it; however, an agent "
+        "may present the html to a human user for them to view, staging it first where presenting needs "
+        "that, and an agent may view screenshots provided by a human user on the user's own initiative. "
+        "Use the data instead, as the shared HTML-pages rule says: the board's summary from a render that "
+        "names the Job Board, what a card holds from the board-card tool, and the page paths and the list "
+        "of Writings from session entry. The drafting records and the markdown mockups hold everything "
+        "else. A change the practitioner wants to a page goes to /lawyer:suggestion: never look for or "
+        "edit what makes the page."
     )
     if shell:
         text += " Matched in the command text; a page reached another way is still off limits."

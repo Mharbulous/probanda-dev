@@ -3,6 +3,8 @@ name: probanda-troubleshooting
 description: "Diagnose a Probanda plugin tool, connector or MCP call that fails or behaves unexpectedly: gather the symptom and exact error, have the troubleshooter agent return a ranked checklist of likely causes, work it with the practitioner, and record the fix once they confirm it worked. Not for questions of law, and not for general CI or front-end bugs."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Probanda troubleshooting
 
 The front end to the `researcher:troubleshooter` agent. The agent searches the troubleshooting store and the web, ranks the causes and screens what it records. This skill only briefs it and relays its answer: never search, rank or record yourself.

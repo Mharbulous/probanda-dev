@@ -3,6 +3,8 @@ name: find-document
 description: "Find and present a matter document the practitioner asks to see ('show me the affidavit of X', 'where is the NOCC'): search the matter's folder fresh this turn, name every copy found with its date, send one as a file card with no approval asked, and say what was searched before claiming anything is absent."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Find a document
 
 For a request to see an existing document in a matter: an affidavit, pleading, letter, draft or exhibit. Not for an approval ask.

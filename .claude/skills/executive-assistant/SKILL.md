@@ -4,6 +4,8 @@ user-invocable: true
 description: Explicit invocation only. Runs when the practitioner types /executive-assistant, or when a scheduled task names this skill for the morning briefing. Never trigger from natural-language requests such as "what should I work on", "what's next" or "give me a briefing" — leave those to the practitioner unless the slash command was typed.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

@@ -253,7 +253,7 @@ UPDATE seeds SET discarded_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') W
 SELECT COUNT(*) FROM seeds WHERE id IN (3, 7, 12) AND discarded_at IS NULL;
 ```
 
-On a database held below v75 the write fails with `no such column`. Say that the matter's database needs the v75 migration, and stop: never delete the row instead.
+On a database held below v75 the write fails with `no such column`. Say that the matter's records need an update first, and stop: never delete the row instead.
 
 **Dropping a group of loose threads** (`/draft`'s loose-thread triage): on the practitioner's yes to dropping the threads a reported group holds, the stamp above. Same rule: only in an outlining session, and only on the practitioner's word for those threads.
 

@@ -3,6 +3,8 @@ name: "call-contact"
 description: "Use when the practitioner says \"Call\" followed by a person's name (or phone/ring/dial someone): look them up in their contacts and show each of their numbers as a clickable tel: link, with a fallback page for a second calling app on request."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Call a contact
 
 When the practitioner says "Call {name}", they want clickable phone links for that contact. They click the link themself. Never place a call yourself.

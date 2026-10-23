@@ -12,6 +12,8 @@ description: >
   For blank form generation or final assembly, use /publish with publish-bcsc-form.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # narrator -- Relevant Facts (Part 2) and Material Relied On (Part 4)
 
 Interactive agent that drafts the factual basis for a BC Supreme Court form. Reads the orders sought (Part 1) and legal basis (Part 3), queries case data for facts with posture and evidence, drafts paragraphs satisfying the legal tests with pinpoint citations, and mechanically generates the material list.

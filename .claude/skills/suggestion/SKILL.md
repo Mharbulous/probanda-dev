@@ -3,6 +3,8 @@ name: suggestion
 description: "Turns a practitioner's experience of Probanda into a suggestion to its maintainers, and saves a fix that worked as their own preference. Use at three moments: (1) a task is finished, the practitioner is satisfied, and getting there took corrections, rejections, repeated instructions or workarounds; (2) Probanda has stopped because it cannot do what the practitioner needs (a missing capability or a refusal), after ruling out a setup or configuration fault; (3) the practitioner asks to suggest, request, report a bug or regression, or give feedback on how Probanda works (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), even mid-task. Not for corrections to the practitioner's own document or draft, not mid-task unless the practitioner raises it, not when the only sign is an irritated tone, not for a setup or configuration fault, and not for loose threads, which have their own route into the Suggestion Box."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Suggestion
 
 **The help itself is the survey.** Probanda's job in a session is the practitioner's task. Friction shows up on its own: corrections, rejections, workarounds, repeated questions, too many turns, abandonment. During the task those signals only make Probanda help better. It never logs them and never asks about them. An irritated tone alone is never a pain point, because the irritation may be about the case.
@@ -43,7 +45,7 @@ A preference is a Rule (`shared/paralegal-posture.md` section 9): it is made onl
 2. **Once they have stated it,** ask exactly: "Do you want me to enforce that rule for all future sessions?" **On yes:** write it with `preferences__write({op: "add", skill, instruction})`, the instruction their words exactly as they said them.
    - The instruction is generic and names no client, matter, person, document or path. A refusal from the tool is a question to put to the practitioner, who restates the rule in their own words, then write again.
    - Apply the preference for the rest of this session too.
-   - If the tool reports that `person` is unset, say that preferences need the person key set once through `practice_data__upsert_firm_profile`, and continue without it.
+   - If the tool reports that `person` is unset, say that preferences need this device's user recorded once in the firm profile (`practice_data__upsert_firm_profile` sets it, on the practitioner's yes), naming no tool to them, and continue without it.
 3. **Then offer the suggestion,** if the researcher plugin is installed (section 1): "This might help other lawyers too. Shall I draft a suggestion for the Probanda team?" On yes, go to section 5.
 
 **Enforcing and changing a Rule.** A later request that conflicts with a saved Rule is refused: "I cannot do X because on [date] you created the rule, `Never do X`. If you want me to do X you must first change or remove that rule." The session may then show new wording in a code block. "Approved" does not adopt it: "Changes to rules must come from your own words. To adopt this as the new rule, you must cut & paste the above modified rule into chat." Once the practitioner pastes it or types their own, retire the old Rule with `preferences__write({op: "retire", id})` and add the new one in their words. A Rule binds only the practitioner who made it, in sessions where a Probanda skill was invoked. A practitioner may make a Rule that extends the gate to other situations, for themselves only, and may reverse it.
@@ -78,7 +80,7 @@ The draft is:
 
 Remove every person, entity, matter, document and path, and name the plugin's part generically.
 
-Show the title, the body and every item exactly as they will be posted. Then ask in plain text, under `/show-me`: "Would you like to submit this suggestion?" Yes | No | Modify. Under Yes, state the mechanism: `suggestion_box__submit · saved in Probanda's Cloud · free`.
+Show the title, the body and every item exactly as they will be posted. Then ask in plain text, under `/show-me`: "Would you like to submit this suggestion?" Yes | No | Modify. Under Yes, state the mechanism: `sent to the Probanda team · saved in Probanda's Cloud · free`.
 
 - **Yes.** Only after an explicit yes, call `suggestion_box__submit({title, body, source, items, skill})` with exactly the text shown.
   - Add `previews` only for Previews the practitioner saw rendered. Pass each as `{label, chosen, reason, path}`, with the path a board preview tool returned for a fixture preview. Never read the preview to pass its HTML.

@@ -16,7 +16,7 @@ from test_redirect_delete_to_trash import DEVICE, HookTestCase
 BASH = shutil.which("bash")
 
 
-IN_MATTER = 'builtin echo "refused: $r is in a matter folder; use file_ops__trash" >&2; builtin exit 1'
+IN_MATTER = 'builtin echo "refused: $r is in a matter folder; use the file-manager trash tool" >&2; builtin exit 1'
 
 
 def guarded(listed, flags="-f ", cd=""):
@@ -28,10 +28,10 @@ def guarded(listed, flags="-f ", cd=""):
         + 'm=$(command -p realpath -m -- "$HOME/mnt") && ok=() && for t in ' + listed + "; do "
         'd=$(command -p dirname -- "$t") && r=$(command -p realpath -m -- "$d") || builtin exit 1; '
         'r="${r%/}"; '
-        'if [[ -z $r ]]; then builtin echo "refused: / is above the matter folders; use file_ops__trash" >&2; '
+        'if [[ -z $r ]]; then builtin echo "refused: / is above the matter folders; use the file-manager trash tool" >&2; '
         "builtin exit 1; fi; "
         'case "$r/" in "$m/"*) ' + IN_MATTER + ";; esac; "
-        'case "$m/" in "$r/"*) builtin echo "refused: $r is above the matter folders; use file_ops__trash" >&2; '
+        'case "$m/" in "$r/"*) builtin echo "refused: $r is above the matter folders; use the file-manager trash tool" >&2; '
         "builtin exit 1;; esac; "
         'for e in "$HOME"/mnt/*; do em=$(command -p realpath -m -- "$e") || builtin exit 1; '
         'em="${em%/}"; case "$r/" in "$em/"*) ' + IN_MATTER + ";; esac; done; "
@@ -49,12 +49,12 @@ class DeviceRmRewriteTests(HookTestCase):
             'unalias -a 2>/dev/null; m=$(command -p realpath -m -- "$HOME/mnt") && ok=() && for t in g-1.png; '
             'do d=$(command -p dirname -- "$t") && r=$(command -p realpath -m -- "$d") || builtin exit 1; '
             'r="${r%/}"; if [[ -z $r ]]; then builtin echo "refused: / is above the matter folders; use '
-            'file_ops__trash" >&2; builtin exit 1; fi; case "$r/" in "$m/"*) builtin echo "refused: $r is in '
-            'a matter folder; use file_ops__trash" >&2; builtin exit 1;; esac; case "$m/" in "$r/"*) builtin '
-            'echo "refused: $r is above the matter folders; use file_ops__trash" >&2; builtin exit 1;; esac; '
+            'the file-manager trash tool" >&2; builtin exit 1; fi; case "$r/" in "$m/"*) builtin echo "refused: $r is in '
+            'a matter folder; use the file-manager trash tool" >&2; builtin exit 1;; esac; case "$m/" in "$r/"*) builtin '
+            'echo "refused: $r is above the matter folders; use the file-manager trash tool" >&2; builtin exit 1;; esac; '
             'for e in "$HOME"/mnt/*; do em=$(command -p realpath -m -- "$e") || builtin exit 1; '
             'em="${em%/}"; case "$r/" in "$em/"*) builtin echo "refused: $r is in a matter folder; use '
-            'file_ops__trash" >&2; builtin exit 1;; esac; done; ok+=("$t"); done && '
+            'the file-manager trash tool" >&2; builtin exit 1;; esac; done; ok+=("$t"); done && '
             'command -p rm -f -- "${ok[@]}" )'
         )
         self.assertRewritten(self.call(DEVICE, command, **extra), expected, {"command": command, **extra})
@@ -145,7 +145,7 @@ class DeviceRmExecutionTests(HookTestCase):
         result = self.run_on_device(command)
         self.assertNotEqual(result.returncode, 0, result.stderr)
         self.assertIn("refused:", result.stderr)
-        self.assertIn("use file_ops__trash", result.stderr)
+        self.assertIn("use the file-manager trash tool", result.stderr)
         self.assertTrue(self.keep.exists(), command)
 
     def test_scratch_delete_succeeds(self):

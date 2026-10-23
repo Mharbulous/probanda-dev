@@ -6,6 +6,8 @@ description: >
   Matches: "ingest [path]", "add this to the file", "import this document."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Ingest
 
 Thin routing skill — delegates immediately to the `matter-data` gatekeeper.

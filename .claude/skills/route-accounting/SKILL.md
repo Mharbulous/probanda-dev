@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: In the firm's accounting root, review loose bookkeeping files and route each one to its destination folder, after the user approves a routing plan. Use for 'route-accounting', or to sort/file loose accounting documents. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

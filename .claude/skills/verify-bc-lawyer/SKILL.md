@@ -4,6 +4,8 @@ description: Use when asked to verify someone is a licensed practicing lawyer in
 disable-model-invocation: true
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Verify BC Lawyer
 
 ## Overview

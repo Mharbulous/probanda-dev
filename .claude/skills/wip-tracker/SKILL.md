@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Authoritative source of unbilled work-in-progress per matter. Use for WIP, unbilled time, accumulated hours, retainer headroom, burn rate, whether a retainer can cover pending work, or which files have unbilled time or are near their retainer ceiling.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

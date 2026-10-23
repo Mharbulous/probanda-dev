@@ -7,6 +7,8 @@ description: >
   Filling a form or rendering a document -> /publish.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Assemble
 
 Front door for binding finished documents into one PDF. Assembly is binding

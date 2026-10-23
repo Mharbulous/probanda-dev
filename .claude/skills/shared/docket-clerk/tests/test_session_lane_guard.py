@@ -54,7 +54,8 @@ class SessionLaneGuardTest(unittest.TestCase):
         for name in (self.AUDIT, "mcp__remote-devices__plugin_lawyer_data__rules__audit"):
             result = self.tool(name)
             self.assertEqual(result.returncode, 2, name)
-            self.assertIn("rules__audit", result.stderr)
+            self.assertIn("Blocked: auditing", result.stderr)
+            self.assertNotIn("rules__audit", result.stderr)
         self.assertEqual(self.agent_tool(self.AUDIT).returncode, 2)
         self.assertEqual(self.tool("mcp__plugin_lawyer_data__rules__at").returncode, 0)
 

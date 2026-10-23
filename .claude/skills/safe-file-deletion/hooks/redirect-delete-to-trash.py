@@ -545,7 +545,7 @@ def recorded_matter_folders():
     library = os.path.dirname(os.path.abspath(root))
     con = sqlite3.connect("file:" + Path(db).as_posix() + "?mode=ro", uri=True)
     try:
-        rows = con.execute("SELECT value FROM kv_store WHERE namespace = 'item'").fetchall()
+        rows = con.execute("SELECT value FROM kv_store WHERE namespace = 'item'").fetchall()  # internals-ok: a query, not a message
     finally:
         con.close()
     folders = []
@@ -844,7 +844,7 @@ def device_word(text, quoting):
 
 
 def device_refusal(message):
-    return 'builtin echo "refused: ' + message + '; use file_ops__trash" >&2; builtin exit 1'
+    return 'builtin echo "refused: ' + message + '; use the file-manager trash tool" >&2; builtin exit 1'
 
 
 def under_mount(text, quoting):
@@ -904,14 +904,14 @@ def device_rm_rewrite(command):
 
 def block_message(label, offending):
     lines = [
-        "Do not delete this directly - call the file-manager tool file_ops__trash with this"
-        " path; it moves the item to <root>/" + TRASH_DIRNAME + "/<same relative path>.",
+        "Do not delete this directly - move this path with the file-manager plugin's trash tool;"
+        " it moves the item to <root>/" + TRASH_DIRNAME + "/<same relative path>.",
         "Blocked pattern: " + label,
     ]
     if offending is not None:
         lines.append("Location outside any Git worktree: " + str(Path(os.path.abspath(offending))))
     lines.append(
-        "If file_ops__trash is not available in this session, the file-manager plugin is not"
+        "If that trash tool is not available in this session, the file-manager plugin is not"
         " enabled and this deletion is refused: tell the practitioner that it needs file-manager."
         " Never fall back to a shell move or delete, or the Write tool."
     )

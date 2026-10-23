@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Use when extracting or indexing research questions from AI legal research memos — Westlaw AI-Assisted Research memos (.docx), Alexi Instant/Pro Memos (.docx/.pdf), or a mixed folder of both. Trigger on requests to extract questions, create a question index, or catalog/organize multiple legal research memo files.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

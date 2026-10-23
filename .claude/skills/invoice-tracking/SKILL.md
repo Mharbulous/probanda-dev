@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Import invoice CSV exports (LEAP, PCLaw, Clio, UNITY, etc.) and store normalized invoice state in the practice database. Use when an invoice export CSV is uploaded or mentioned, to import or update invoice records, or to ask which matters have outstanding invoices. Stores state only; performs no billing-period reasoning.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

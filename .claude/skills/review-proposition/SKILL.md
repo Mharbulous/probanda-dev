@@ -4,6 +4,8 @@ user-invocable: false
 description: Use when presenting a proposition of law and its authority to the practitioner for review or rewording, such as a scrutiny finding review job. Fixed template, no commentary.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Review proposition
 
 A fixed template for putting one proposition of law in front of the practitioner. Follow it strictly, in this order, with nothing added and nothing left out. It is a template, not a conversation.

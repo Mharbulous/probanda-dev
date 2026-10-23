@@ -4,6 +4,8 @@ user-invocable: false
 description: Sole gatekeeper for the layer-3 shared legal-commons pool — matter-free legal principles, authorities, criteria, and treatments in Supabase, reached only through the legal_commons__* MCP tools.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # legal-commons — Router
 
 Sole gatekeeper for **layer 3**: the shared, matter-free pool of generalized

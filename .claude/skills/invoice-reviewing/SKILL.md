@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Review a draft invoice against time entries and invoice data before sending. Use to check, review, or sanity-check a draft invoice or a matter's billing before sending, or whether entries are missing or amounts look unusual.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

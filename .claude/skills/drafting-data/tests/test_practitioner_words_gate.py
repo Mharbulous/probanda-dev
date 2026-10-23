@@ -16,7 +16,7 @@ TURN = "I want an order for a list of documents, verified by affidavit."
 RECOMPOSED = "Draft the order for a verified list of documents"
 CUT = "an order for a list of documents"
 
-GOAL_FIELD = "field: drafting_data__set_board_goal.statement"
+GOAL_FIELD = "field: the statement of goals"
 GOAL_REFUSAL = "a confirmed statement of goals is neither"
 
 
@@ -377,7 +377,7 @@ class BoardGoalTest(GateTestCase):
         self.assertPassed(self.run_goal(None, status="declined", transcript=""))
 
     def test_a_confirmed_statement_needs_a_transcript(self):
-        self.assertRefused(self.run_goal(self.STATEMENT, transcript=""), "no transcript_path")
+        self.assertRefused(self.run_goal(self.STATEMENT, transcript=""), "transcript is not available")
         missing = str(Path(self.tmp.name) / "absent.jsonl")
         self.assertRefused(self.run_goal(self.STATEMENT, transcript=missing), missing)
 
@@ -407,30 +407,30 @@ class ParagraphRevisionTest(GateTestCase):
         self.write_transcript(turn_line(ASK), reply_line(shown(ALTERNATIVE)), turn_line("Let me think about it."),
                               reply_line("Take your time."), turn_line("Yes"))
         self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 0")
+                           "field: the revised text", "exactly one fenced code block", "that reply holds 0")
 
     def test_a_second_paragraph_in_the_reply_is_refused(self):
         self.write_transcript(turn_line(ASK), reply_line(shown(REVISED) + "\n\n```\n" + ALTERNATIVE + "\n```"),
                               turn_line("Yes"))
         self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 2")
+                           "field: the revised text", "exactly one fenced code block", "that reply holds 2")
 
     def test_a_shown_paragraph_is_refused_when_the_last_turn_is_not_a_bare_yes(self):
         for last_turn in ("Yes, but say April 2nd.", "Go with the alternative."):
             with self.subTest(last_turn=last_turn):
                 self.approved(ALTERNATIVE, last_turn)
                 self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                                   "field: paragraph_revisions.new_text", "not a bare yes", f"last turn: {last_turn}")
+                                   "field: the revised text", "not a bare yes", f"last turn: {last_turn}")
 
     def test_a_fabricated_revision_is_refused(self):
         fabricated = "The invoice was never delivered."
         self.approved(REVISED)
         self.assertRefused(self.run_hook(revision(fabricated, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", f"wrote: {fabricated}",
+                           "field: the revised text", f"wrote: {fabricated}",
                            "not, character for character", f"shown: {REVISED}")
         self.approved(fabricated)
         self.assertRefused(self.run_hook(revision(fabricated, "proposed", "practitioner")),
-                           "field: paragraph_revisions.new_text", f"wrote: {fabricated}", "not an unbroken run")
+                           "field: the revised text", f"wrote: {fabricated}", "not an unbroken run")
 
     def test_one_approval_admits_one_revision(self):
         self.approved(REVISED)
@@ -438,20 +438,20 @@ class ParagraphRevisionTest(GateTestCase):
         self.assertRefused(self.run_hook(both), "writes 2 paragraph revisions", f"wrote: {ALTERNATIVE}")
         self.approved(REVISED, "Yes", *execute_lines(revision(REVISED, "proposed", "practitioner")))
         self.assertRefused(self.run_hook(revision(REVISED, "proposed", "practitioner")),
-                           "already written, or attempted", "field: paragraph_revisions.new_text")
+                           "already written, or attempted", "field: the revised text")
 
     def test_a_revision_whose_update_writes_other_text_is_refused(self):
         self.write_transcript(turn_line(ASK))
         for sql in (revision(REVISED, "proposed", "practitioner", update_text=ALTERNATIVE),
                     revision(REVISED, "proposed", "practitioner").replace("UPDATE facts", "UPDATE submissions")):
             with self.subTest(sql=sql[:60]):
-                self.assertRefused(self.run_hook(sql), "field: paragraph_revisions.new_text",
-                                   "UPDATE facts SET postulate")
+                self.assertRefused(self.run_hook(sql), "field: the revised text",
+                                   "not the text this script writes into the paragraph")
 
     def test_keeping_the_current_wording_needs_unchanged_text(self):
         self.assertPassed(self.run_hook(revision(OLD, "current", "practitioner"), transcript=""))
         self.assertRefused(self.run_hook(revision(REVISED, "current", "practitioner")),
-                           "field: paragraph_revisions.new_text", "differs from old_text")
+                           "field: the revised text", "differs from the text it replaces")
 
     def test_an_insert_select_revision_passes(self):
         self.approved(REVISED)
@@ -465,11 +465,11 @@ class ParagraphRevisionTest(GateTestCase):
         self.assertNotEqual(sql, revision(REVISED, "proposed", "practitioner"))
         self.assertRefused(self.run_hook(sql), "cannot read the paragraph revision")
         self.assertRefused(self.run_hook(revision(REVISED, "move", "practitioner")),
-                           "cannot read the paragraph revision", "paragraph_revisions.choice 'move'")
+                           "cannot read the paragraph revision", "the revision's choice 'move'")
 
     def test_a_wording_revision_needs_a_transcript(self):
         self.assertRefused(self.run_hook(revision(REVISED, "proposed", "practitioner"), transcript=""),
-                           "no transcript_path")
+                           "transcript is not available")
         missing = str(Path(self.tmp.name) / "absent.jsonl")
         self.assertRefused(self.run_hook(revision(REVISED, "proposed", "practitioner"), transcript=missing), missing)
 
@@ -477,7 +477,7 @@ class ParagraphRevisionTest(GateTestCase):
         # The answer is no practitioner turn, so the reply showing the paragraph is still unanswered.
         self.write_transcript(turn_line(ASK), reply_line(shown(ALTERNATIVE)), *answer_lines("Approve it?", "Yes"))
         self.assertRefused(self.run_hook(revision(ALTERNATIVE, "alternative", "model")),
-                           "field: paragraph_revisions.new_text", "exactly one fenced code block", "that reply holds 0")
+                           "field: the revised text", "exactly one fenced code block", "that reply holds 0")
 
     def test_a_widget_selection_does_not_approve_a_revision(self):
         self.write_transcript(turn_line(ASK), reply_line(shown(ALTERNATIVE)), widget_line("Yes", "No"),
@@ -506,27 +506,27 @@ class FactMoveTest(GateTestCase):
 
     def test_a_move_whose_new_text_differs_from_the_set_value_is_refused(self):
         self.assertRefused(self.run_hook(self.moved(self.A_ROW.replace("'3', '4'", "'3', '5'"))),
-                           "field: paragraph_revisions.old_text/new_text", "new_text 5", "SET ordinal = 5")
+                           "field: the fact's old and new places", "from place 3 to place 5", "not the move made")
 
     def test_a_move_whose_old_text_differs_from_the_where_guard_is_refused(self):
         self.assertRefused(self.run_hook(self.moved(self.A_ROW.replace("'3', '4'", "'2', '4'"))),
-                           "field: paragraph_revisions.old_text/new_text", "old_text 2", "AND ordinal = 2")
+                           "field: the fact's old and new places", "from place 2 to place 4", "not the move made")
 
     def test_a_move_with_no_update_filing_facts_is_refused(self):
         sql = self.swap()
         inserts = sql[sql.index("INSERT INTO paragraph_revisions"):]
-        self.assertRefused(self.run_hook(inserts), "field: paragraph_revisions.old_text/new_text",
-                           "match no UPDATE filing_facts")
+        self.assertRefused(self.run_hook(inserts), "field: the fact's old and new places",
+                           "does not move fact 31")
 
     def test_a_move_with_the_wrong_choice_or_field_is_refused(self):
         for label, row in (("choice", self.A_ROW.replace("'move'", "'other'")),
                            ("field", self.A_ROW.replace("'ordinal'", "'position'"))):
             with self.subTest(label):
-                self.assertRefused(self.run_hook(self.moved(row)), "needs field 'ordinal', choice 'move'")
+                self.assertRefused(self.run_hook(self.moved(row)), "must say it moves the fact's place")
 
     def test_a_move_whose_entity_id_is_not_a_literal_fails_closed(self):
         self.assertRefused(self.run_hook(self.moved(self.A_ROW.replace(" 31,", " (SELECT 31),"))),
-                           "cannot read the paragraph revision", "entity_id of a fact move")
+                           "cannot read the paragraph revision", "the fact a move names")
 
 
 class MergeJobBoardsGateTest(unittest.TestCase):
@@ -577,7 +577,7 @@ class MergeJobBoardsGateTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         stderr = result.stderr.decode("utf-8")
         self.assertIn(GOAL_REFUSAL, stderr)
-        self.assertIn("drafting_data__merge_job_boards.goal_statement", stderr)
+        self.assertIn("the merged board's statement of goals", stderr)
 
     def test_a_goal_said_earlier_still_needs_the_bare_yes_to_merge(self):
         result = self.run_merge(turn_line(f"the goal is {self.GOAL}"), reply_line("Merge them with that goal?"),

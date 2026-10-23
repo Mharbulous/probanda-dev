@@ -3,6 +3,8 @@ name: polish-substance
 description: Holistic review of all four substance parts of a BC Supreme Court form draft. Use to review substance, check cross-references, or finalize a draft for assembly, or `polish-substance`. Requires all four part files. Part files and assembly -> /publish.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

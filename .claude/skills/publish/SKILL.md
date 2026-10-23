@@ -8,6 +8,8 @@ description: >
   Binding, or a letter PDF -> /assemble.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Publish
 
 Front door for turning one drafted text into one court document: filling a

@@ -4,6 +4,8 @@ disable-model-invocation: true
 description: Import trust balance CSV exports, store retainer balances in the practice database, and answer funded/depleted retainer queries. Use when a trust listing CSV is uploaded or mentioned, to check a matter's trust balance, or to ask which files have a depleted or funded retainer.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

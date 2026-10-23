@@ -5,6 +5,8 @@ description: Assemble a complete, sourced briefing for a single client matter be
 user-invocable: true
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # File Review Prep
 
 Pure read-only synthesizer. Assembles a structured, sourced briefing for one matter by

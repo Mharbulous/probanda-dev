@@ -4,6 +4,8 @@ user-invocable: false
 description: Sole gatekeeper for the per-matter drafting database — Writings and their proceedings, the shared substance they are built from (parties, facts, documents, witnesses, authorities, relief, submissions, opposing points, gaps), job process state, counsel's review records, and the mockups rendered from them. Not the authority on what the law is (legal-research) or deadlines (docket-clerk); it stores and serves the underlying data they consult. Distinct from /matter-data — the drafting database is separate, not an extension of matter-data's main/law/privileged split.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

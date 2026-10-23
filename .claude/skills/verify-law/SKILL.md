@@ -8,6 +8,8 @@ description: >
   clear unverified legal edges. What the law is -> /legal-research.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # verify-law
 
 (Formerly also `/verify-authorities`, now this front door's `verify-authorities` subskill.)

@@ -11,6 +11,8 @@ description: >
   For blank form generation or final assembly, use /publish with publish-bcsc-form.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # bcsc-legal-basis -- Legal Basis (Part 3)
 
 Interactive agent that drafts the legal basis for a BC Supreme Court form. Reads the orders sought (Part 1), identifies the legal test for each order, cites authorities, loops with the practitioner until approved, and writes to the substance folder.

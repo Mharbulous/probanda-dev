@@ -79,8 +79,8 @@ class GateTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         out = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(out["permissionDecision"], "deny")
-        self.assertIn("HTML pages principle", out["permissionDecisionReason"])
-        self.assertIn("board_summary", out["permissionDecisionReason"])
+        self.assertIn("is a Probanda page", out["permissionDecisionReason"])
+        self.assertIn("the board's summary", out["permissionDecisionReason"])
         return out["permissionDecisionReason"]
 
     def assertAllowed(self, result):
@@ -230,9 +230,10 @@ class GateTest(unittest.TestCase):
                                 text=True, encoding="utf-8", env=env)
         self.assertDenied(result)
 
-    def test_the_message_names_a_settings_file_that_sets_the_exemption(self):
+    def test_the_exemption_is_set_in_settings_and_never_named_in_the_refusal(self):
         result = call("Read", {"file_path": PAGE_PATHS[0]})
-        self.assertIn("this repo's .claude/settings.json sets it", result.stdout)
+        self.assertNotIn("COCLERK_HTML_DEV", result.stdout)
+        self.assertNotIn("__", result.stdout)
         settings = Path(__file__).resolve().parents[3] / "settings.json"
         env = json.loads(settings.read_text(encoding="utf-8")).get("env", {})
         self.assertEqual(env.get("COCLERK_HTML_DEV"), "1")

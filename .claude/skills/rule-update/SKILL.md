@@ -10,6 +10,8 @@ description: >
   a rule change. Never from a drafting session. Never edits the shipped rule files.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 # Rule update — drive the docket-clerk's workflow 10
 
 The `lawyer:docket-clerk` agent records a rule change in the firm rule overlay

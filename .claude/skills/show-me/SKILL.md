@@ -4,6 +4,8 @@ user-invocable: false
 description: "Standardize how a decision or a question about a document is presented to a human: one decision at a time, asked in line as plain text, with the source documents themselves presented for the human to check (page-extracted, the passage highlighted) rather than quoted or described, the current and proposed text shown in full, full context rather than a curated slice, and any missing-data claim verified at its source. Applies before any approval ask or sign-off, including before presenting any draft or proposal for sign-off, and before any question to the practitioner about a specific document, an approval, a factual question or a question asked again: the document's file card goes out with the question every time it is asked. Also applies whenever the practitioner asks to be shown a Job or Jobs, which it displays in one fixed layout."
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |

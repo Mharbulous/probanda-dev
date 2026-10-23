@@ -88,9 +88,9 @@ def strings(value):
 
 
 def how_to_present(paths):
-    return ("Present " + ", ".join(f'"{p}"' for p in paths) + " as a file card now, before ending the turn "
-            "(shared/html-pages.md, \"Present each page by its path\"), with the card tool in your tool list "
-            "(shared/present-files.md). If mcp__cowork__present_files is listed, call it with that path. If only "
+    return ("Present " + ", ".join(f'"{p}"' for p in paths) + " as a file card now, before ending the turn, "
+            "by its path, with the card tool in your tool list, as the shared rules for HTML pages and for "
+            "presenting a file say. If the Cowork present_files tool is listed, call it with that path. If only "
             "SendUserFile is listed, first check that get_device_info's connectedFolders covers the matter folder "
             "and, if not, make the one device_request_folder_access call for the matter folder, then stage that "
             "page alone with device_stage_files and call SendUserFile on the staged path. If neither is listed, "

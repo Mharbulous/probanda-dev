@@ -4,6 +4,8 @@ user-invocable: false
 description: Resolve a folder's filing profile — a litigation matter (renames files in place) or the firm's accounting root (routes loose files to sibling destination folders) — which of its subfolders or destinations are in scope, and how that profile's review record is looked up and recorded. Domain-aware companion to /file-naming — knows folder layouts, not naming grammar. Used internally by /housekeeping and /route-accounting.
 ---
 
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
 ## Contents
 
 | Section | Read when |
