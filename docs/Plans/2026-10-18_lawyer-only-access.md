@@ -98,8 +98,8 @@ From [Keys: one-time-link delivery, device keys, paralegal keys, rotation and re
 3. **No device limit.** The per-account caps (section 6) are the only bound.
 4. **No staff key type.** A paralegal's or articling student's device joins through the device flow, approved from the lawyer's verified email, and belongs to the lawyer's account. No personal data about the staff member is stored. Only a verified account can add a device.
 5. **No self-service revocation.** A lawyer asks Probanda and Brahm revokes by hand. The automatic revocations are suspension, the unclicked 14-day link and the collision (section 2).
-6. **No rotation feature.** Revoke plus re-add issues a fresh key.
-7. **Revocation takes effect at the device's next request**, because `serve()` looks up the key on every call. The refusal is the existing `401 {"error":"not authorized"}`. Revocation stops writes, never reads of local data ([55](https://github.com/Mharbulous/probanda-dev/issues/55) point 4).
+6. **Keys expire after 30 days and renew silently** (Brahm, 2026-10-22, replacing "no rotation feature"). Each key row has `expires_at`. A `key-renew` function, called with a live key, issues a fresh key with a new 30-day term and returns it to the waiting plugin, which writes it straight to the credential store. The key is never shown. The old key stays valid until the new key's first call, and the cloud then revokes it, so a failed local write cannot strand the device. The plugin renews once its key is 23 or more days old. A device that misses renewal is re-added through the one-time link (rule 2). Revoke plus re-add still issues a fresh key at any time.
+7. **Revocation or expiry takes effect at the device's next request**, because `serve()` looks up the key on every call. The refusal is the existing `401 {"error":"not authorized"}`, the same for an expired key as for a revoked one. Revocation stops writes, never reads of local data ([55](https://github.com/Mharbulous/probanda-dev/issues/55) point 4).
 8. **One key for all three services.** `troubleshoot__configure_credential` and the troubleshooting store's `sb_secret_` credential file (`source/researcher/commons-mcp/src/troubleshoot/config.ts`) go away.
 9. **No per-key scopes.** Each function allows either every live lawyer-account key or only the project secret. `access.install_key` loses `scopes`, and `serve(…, {scope})` becomes a yes/no flag.
 10. **The tenant comes from the device's own `practice.db`** at sign-in or device addition. A key with no tenant works for the commons, suggestions and troubleshooting, and the items functions refuse it.
@@ -145,7 +145,7 @@ From [Usage metering, caps, enumeration alerts, canary rows and account sharing]
 2. **No canary rows.** No fabricated entry is ever served. Instead each reply from `commons-find` and `commons-read` lists a principle's authorities in an order fixed by the account: sorted by SHA-256 of account id, principle id and authority id. A copy is recognised by scoring copied principles against each account's expected order.
 3. **What counts.** Calls feed the token bucket. Records returned feed the daily cap. A record is one principle, authority, treatment, rule period or troubleshooting entry in a reply.
 4. **Per lawyer account.** Until accounts are built, counting is per key, which covers Brahm's minted bridge keys. Calls with the project secret are not metered. A provisional account has a lower shared-read cap (item 6) and otherwise the same limits as a verified one (Brahm, [111](https://github.com/Mharbulous/probanda-dev/issues/111)).
-5. **Mechanism.** One SQL function in `access` replaces `resolve_key`: it looks up the key and spends a token in one round trip. `access.usage (account, hour, function, calls, records)` holds the counters, `access.limit` holds every number (changeable without a redeploy), with the account state as a column so a number can differ for provisional accounts, and `access.alert` records each alert. `serve()` checks the daily cap before the work runs and adds the record count after it, so a reply can exceed the cap by at most one page.
+5. **Mechanism.** One SQL function in `access` replaces `resolve_key`: it looks up the key, refuses it when revoked or past `expires_at` (section 3.6), and spends a token in one round trip. `access.usage (account, hour, function, calls, records)` holds the counters, `access.limit` holds every number (changeable without a redeploy), with the account state as a column so a number can differ for provisional accounts, and `access.alert` records each alert. `serve()` checks the daily cap before the work runs and adds the record count after it, so a reply can exceed the cap by at most one page.
 6. **Starting numbers**, to be tuned from Brahm's own usage:
    - token bucket: 30 calls of burst, refilling 10 a minute, on every lawyer-key call;
    - shared reads (`commons-find`, `commons-read`, `troubleshoot-search`): 2,000 records a day per account, and 200 while the account is provisional. A provisional account traces to someone who never proved identity, so the fingerprint deters nothing there. The token bucket, page sizes, write caps and items functions do not differ by state. A read refused at the provisional cap gets the same 429 as any read cap and never mentions the account's state;
@@ -222,6 +222,7 @@ Every deletion reads "removed from the live database at once and from backups wi
 | Abandoned application | Deleted when its 14-day link lapses (nightly `pg_cron`) |
 | Same-name candidates' detail pages | Never stored |
 | Collision loser | User Data and directory fields deleted at the collision. The event row stays. |
+| Revoked and expired key rows (hash, label, dates) | As the account record. A renewal adds a row, and the old row stays as the record. |
 | `access.usage` | 90 days |
 | `access.alert` | 12 months |
 | Item ledger (`ledger.*`, no value in clear) | While any key for the practice is live, then 90 days after the last is revoked |
@@ -272,6 +273,7 @@ Stage 1 of that plan is applied and deployed, and the Suggestion Box is live. Th
 - **Open decision 2 is settled differently:** the maintainer secret is `POOL_SECRET_KEY` or a maintainer-only file, never the plugin's credential file, and the plugin on Brahm's machines uses a minted key (section 4.5).
 - **Decision 8 is revised** by section 7 rule 16: a lawyer key loses `stamp_verified` and `rule_period_record_verification`. The maintainer writes stay with the project secret, and each of them makes a version (section 7 rule 9).
 - **`resolve_key`** is replaced by the metering function (section 6.5), and `install_key.label` becomes Probanda-made (section 3.11).
+- **Keys expire after 30 days and renew silently** (section 3.6, 2026-10-22). Stage 4 adds `expires_at`, `key-renew` and the plugin's renewal.
 
 ## 11. Not decided here
 
