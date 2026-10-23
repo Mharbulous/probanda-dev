@@ -14,7 +14,9 @@ PNG and PDF pass anywhere, because show-me's highlight extracts are review
 evidence that lives in the container and never belongs on the PC. Staged HTML
 pages sit under uploads/, so html-pages-gate's staging allowlist is untouched.
 The Code tab and local Cowork have no /mnt/user-data and are never refused.
-Exempt when COCLERK_SENDFILE_ANY=1 is in the environment.
+Exempt when COCLERK_SENDFILE_ANY=1 is in the environment (for developing in a cloud
+session). The refusal does not name it, nor any skill section: a refusal is quoted
+to the practitioner verbatim (shared/internals-confidentiality.md).
 
 Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails OPEN on its own error, loudly on stderr, as html-pages-gate does.
@@ -45,12 +47,11 @@ def refused(path):
 
 def message(path):
     return (
-        f'Refused (show-me, "Presenting a file saved on the PC"): "{path}" is not a staged path. '
+        f'Refused: "{path}" is not a staged copy of the file saved on the PC. '
         "On this cloud-linked host a card made from a container copy, a conversion or a Windows path "
         "offers only Download. Stage the file saved on the PC with device_stage_files(paths: [<PC path>]) "
         "and call SendUserFile on the stagedPath it returns (/mnt/user-data/uploads/...): that card offers "
-        "Open in Word and Show in Explorer. A show-me highlight extract (.pdf or .png) is sent as it is. "
-        "Developing in a cloud session: set COCLERK_SENDFILE_ANY=1."
+        "Open in Word and Show in Explorer. A highlighted page extract (.pdf or .png) is sent as it is."
     )
 
 

@@ -68,6 +68,17 @@ def skill_lane(raw):
     return next((lane for lane, names in LANES.items() if name in names), None), f"/{name}"
 
 
+def shown(label):
+    """A label as the practitioner may see it: a slash command as typed, anything else (a tool or
+    agent name) in plain words (shared/internals-confidentiality.md)."""
+    return label if label.startswith("/") else "the deadline work"
+
+
+def started(label):
+    """What started the session's work, in parentheses, only when it is a slash command."""
+    return f" ({label})" if label.startswith("/") else ""
+
+
 def lane_from_transcript(path):
     """Return [lane, label] for the first lane the main session entered, or None."""
     with open(path, encoding="utf-8") as lines:
@@ -136,8 +147,8 @@ def main():
     if AUDIT_TOOL_RE.search(payload.get("tool_name") or ""):
         # The audit shows rules hidden from /draft (rules-DAG spec §4.9); it enters no lane.
         if held and held[0] == "drafting":
-            sys.stderr.write("Blocked: rules__audit is for review and testing sessions, never a drafting "
-                             f"session ({held[1]}). Start a new session to audit the rules.\n")
+            sys.stderr.write("Blocked: auditing Probanda's guidance is for a review session, never a drafting "
+                             f"session{started(held[1])}. Start a new session for the audit.\n")
             return 2
         return 0
     lane, label = entry(payload)
@@ -152,9 +163,9 @@ def main():
     if held[0] == lane:
         return 0
     sys.stderr.write(
-        f"Blocked: this session has already entered the {held[0]} lane ({held[1]}). Drafting and "
+        f"Blocked: this session is already doing {held[0]} work{started(held[1])}. Drafting and "
         "deadline work stay in separate sessions so a draft is never shaped by a known "
-        f"deadline. Start a new session for {label}.\n"
+        f"deadline. Start a new session for {shown(label)}.\n"
     )
     return 2
 

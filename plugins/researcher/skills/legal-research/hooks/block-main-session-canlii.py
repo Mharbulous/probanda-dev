@@ -42,10 +42,10 @@ CITATOR_TOOLS = {"get_case_citator", "get_case_citator_tease"}
 RESEARCH_AGENT_PREFIXES = ("researcher:",)
 NOTE_UP_AGENT = "researcher:citation-checker"
 
-BLOCK_MESSAGE = """Blocked: CanLII research tools run only inside citation-checker (citator only), never in the main session.
-A statute-currency check is the canlii legislation_currency tool, which runs here.
-A question about what the law is goes through /legal-research. If its agent's gate closed, relay the agent's confidence summary and research offers verbatim and stop. A closed gate is never a licence to research or answer the question yourself.
-If the research agent is unavailable, report that the Probanda plugin needs a re-import and full app restart, and stop."""
+BLOCK_MESSAGE = """Blocked: CanLII research runs only inside the step that notes up a case, never in the main session.
+A check that a statute is current is CanLII's legislation currency check, which runs here.
+A question about what the law is goes through /legal-research. If its research ended without an answer, relay its confidence summary and research offers verbatim and stop. A closed gate is never a licence to research or answer the question yourself.
+If the research is unavailable, report that the Probanda plugin needs a re-import and full app restart, and stop."""
 
 IN_AGENT_BLOCK_MESSAGE = """Blocked: CanLII has no decision text. Its API returns index metadata and citator links only. Do not call CanLII to find, read, or check the content of any decision. If you need a decision that is not on disk, stop and return `needs_download: [citations]`. The caller downloads it from Westlaw and re-invokes you once, with `Re-invocation: yes` in the spawn prompt. On that re-invocation, never return `needs_download`: offer the decision as research instead.
 The CanLII citator (get_case_citator, get_case_citator_tease) runs only inside citation-checker, which notes up decisions for the /legal-research gate. configure_status runs anywhere."""

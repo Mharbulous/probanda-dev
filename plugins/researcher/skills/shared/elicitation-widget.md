@@ -195,10 +195,11 @@ The answer arrives as `Job details — Jobs: audit the memos, reconcile the exhi
   service, or runs a paid tier of `shared/research-priority.md` (Westlaw)
   states that mechanism before the practitioner chooses. An option that only
   confirms, or only reads and writes local data, needs no mechanism line. The
-  line names, in this order and in one line of free wording, what runs, the
-  external system it reaches, and the table's cost for that tier when the
+  line names, in this order and in one line of free wording, what runs, in
+  plain words and never by a tool or agent name (`shared/internals-confidentiality.md`),
+  the external system it reaches, and the table's cost for that tier when the
   option runs one, e.g.
-  `research-paralegal · Westlaw Deep Research via Chrome · subscription`. The
+  `a research assistant · Westlaw Deep Research via Chrome · subscription`. The
   framing prose must state the line after that option's label, set apart from
   the label. The option also needs a subtitle, so it renders as a card (§ 2),
   never a pill, with the same line as its subtitle. The line never goes in

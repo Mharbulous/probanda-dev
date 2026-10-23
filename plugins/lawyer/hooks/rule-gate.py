@@ -33,7 +33,7 @@ import json
 import re
 import sys
 
-PREFIX = "Refused (Rule gate): "
+PREFIX = "Refused: "
 ENFORCE_QUESTION = "Do you want me to enforce that rule for all future sessions?"
 TYPED_SOURCES = {"sdk", "typed", "queued"}
 STRUCK = " \x00 "
@@ -48,7 +48,7 @@ REMOVAL = re.compile(r"(?i)\b(remove|retire|delete|drop|cancel|revoke|reverse|re
 CEREMONY = ("A Rule is made only in the practitioner's own words: ask \"" + ENFORCE_QUESTION + "\" and save the "
             "instruction exactly as they said it only after their next turn is a bare yes. To change a Rule, show the "
             "new wording in a code block and ask them to paste it into chat: \"Approved\" never adopts it. Retire a "
-            "Rule only when their own words ask to remove or replace it (shared/paralegal-posture.md section 9).")
+            "Rule only when their own words ask to remove or replace it.")
 
 
 def norm(text):
@@ -150,10 +150,10 @@ def main():
     tool_input = payload.get("tool_input") or {}
     op = tool_input.get("op")
     if op not in ("add", "retire"):
-        return refuse(f"op {op!r} is neither add nor retire, so the gate cannot read it.")
+        return refuse(f"the request ({op!r}) is neither to add nor to retire a Rule, so it cannot be checked.")
     path = payload.get("transcript_path") or ""
     if not path:
-        return refuse("the hook input names no transcript_path, so there is no record of what the practitioner said.")
+        return refuse("the session transcript is not available, so there is no record of what the practitioner said.")
     try:
         turns, last_reply, shown, retired = read_transcript(path)
     except OSError as exc:
@@ -170,7 +170,7 @@ def main():
                       f"  last turn: {last[:200]}")
     instruction = tool_input.get("instruction")
     if not isinstance(instruction, str) or not instruction.strip():
-        return refuse("the add names no instruction.")
+        return refuse("the new Rule has no wording.")
     if retired:
         if asks_change and norm(instruction) in norm(last):
             return 0

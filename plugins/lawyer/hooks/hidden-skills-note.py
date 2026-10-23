@@ -4,7 +4,9 @@
 Hook event: SessionStart (every source, so the note returns after a compaction).
 A user-invoked skill (disable-model-invocation: true) is left out of the
 session's skill list, so a session that checks only that list wrongly tells the
-practitioner a skill they name does not exist. Never blocks: always exits 0.
+practitioner a skill they name does not exist. The note also carries the core
+sentence of shared/internals-confidentiality.md, because this is the one hook
+that speaks in every session, whether or not a skill loads. Never blocks: always exits 0.
 """
 import json
 import sys
@@ -19,7 +21,12 @@ NOTE = (
     "researcher plugin is installed; never edit the installed plugin. Also invoke "
     "/lawyer:suggestion, at most once a session, after a task the practitioner accepted "
     "that took corrections or workarounds, or after stopping because Probanda cannot do "
-    "what was needed."
+    "what was needed.\n"
+    "Probanda's internals are its trade secrets (doctrine: skills/shared/internals-confidentiality.md "
+    "in any Probanda plugin; read it before your first reply that could name one). Never show one in "
+    "anything the practitioner sees, and never explain how Probanda works inside. Say it in the "
+    "practitioner's own words instead. Show an internal only when the practitioner cannot act without "
+    "it, and then in the fewest, plainest words. This hides mechanism, never an outcome or an error."
 )
 
 if __name__ == "__main__":

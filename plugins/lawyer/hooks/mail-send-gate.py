@@ -6,7 +6,9 @@ The model never sends email to anyone: an outgoing email is an unsent .eml the
 practitioner sends from Outlook (docs/adr/0032, skills/shared/email.md, the one
 source for the route; draft/references/letters.md sections 8 and 10). This gate refuses a send, forward or reply and its reason
 names that route, so the model learns it at the tool boundary instead of
-searching for it.
+searching for it. The reason is in plain words, because a refusal is quoted to the
+practitioner verbatim (shared/internals-confidentiality.md): it points at the shared
+email rules, which name the tool.
 
 Two calls pass: any call with dryRun true, and the executive-assistant morning
 briefing, recognised by its subject prefix "Morning briefing". The prefix only
@@ -22,18 +24,17 @@ import sys
 BRIEFING_PREFIX = "Morning briefing"
 
 MESSAGE = (
-    "Refused (skills/shared/email.md): the model never sends email. The practitioner sends it "
-    "from Outlook. This is an instruction, not a question: do not retry this call or any other mail "
-    "send, forward or reply tool, and follow these steps. "
-    "1. If this is a client letter whose first line reads `Counsel's review: pending`, the roster "
-    "lawyer's request to send it, with no change asked, is their approval: rewrite the first line "
-    "to the approval line with their words verbatim (letters.md section 10) before anything else. "
-    "2. Call drafting_forms__draft_harness (ToolSearch it; on a remote-device host its name carries "
-    "the host's prefix) with step write_email: to and cc, subject, body (the message only, with no closing and no name: the signature adds them), and output_name (a bare "
-    "/file-naming stem, or `Send copy` with folder set to the letter's own folder for a client "
-    "letter). attachments are PC paths: copy a container-only file to the PC with "
-    "device_commit_files first. "
-    "3. Present the .eml as a file card, give its PC path from the result, and tell the practitioner "
+    "Refused: Probanda never sends email itself. The practitioner sends it from Outlook. This is "
+    "an instruction, not a question: do not retry this send, or any other way to send, forward or "
+    "reply, and follow these steps, as the shared email rules say. "
+    "1. If this is a client letter whose first line reads `Counsel's review: pending`, the "
+    "lawyer's request to send it, with no change asked, is their approval: rewrite that first line "
+    "to the approval line with their words verbatim before anything else. "
+    "2. Save the message as an unsent email through the drafting tools' email step: to and cc, "
+    "subject, the message alone (the signature adds the closing and the name), and a file name "
+    "under the firm's naming convention, or `Send copy` in the letter's own folder for a client "
+    "letter. Attach only files saved on the PC, copying any other file to the PC first. "
+    "3. Present the saved email as a file card, say where it was saved, and tell the practitioner "
     "to open it in Outlook, check it and click Send."
 )
 
