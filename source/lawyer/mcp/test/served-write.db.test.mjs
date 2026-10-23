@@ -86,7 +86,7 @@ test("record_served refuses, writing nothing, a bad date or copy, a missing, ret
   }
   await assert.rejects(record(dbPath, { served_copy_path: join(dir, "missing.pdf") }), code("invalid_served_copy"));
   await assert.rejects(record(dbPath, { filing_id: 99 }), code("not_found"));
-  await assert.rejects(record(dbPath, { filing_id: 2 }), code("not_served_kind", /record_filed/));
+  await assert.rejects(record(dbPath, { filing_id: 2 }), code("not_served_kind", /Record a court form as filed/));
   await assert.rejects(record(dbPath, { filing_id: 3 }), code("writing_retired"));
   await assert.rejects(record(dbPath, { filing_id: 4 }), code("already_filed"));
   assert.equal(revision(dbPath), before);

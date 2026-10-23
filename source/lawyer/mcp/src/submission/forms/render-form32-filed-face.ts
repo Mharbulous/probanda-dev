@@ -265,7 +265,7 @@ const NO_ORDERS = "[orders sought: none recorded]";
 export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarning[]): string {
   if (ctx.filing.kind !== "notice_of_application") {
     throw new ValidationError(
-      `Filing ${ctx.filing.id} has kind "${ctx.filing.kind}", not "notice_of_application" -- the Form 32 emitter only handles Notice of Application filings.`
+      `"${ctx.filing.title}" is not a Notice of Application, so it cannot be filled as Form 32.`
     );
   }
 
@@ -275,7 +275,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
   // emit prints a placeholder in the sentence's place instead (the frontmatter loop below).
   if (hearing?.associate_judge == null && warnings === undefined) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: hearing_details.associate_judge is not yet determined -- refusing to emit a Form 32 whose jurisdiction sentence nobody confirmed. Set it to 1 (within the jurisdiction of an associate judge) or 0 (not within), then emit again.`
+      `"${ctx.filing.title}": whether the application is within the jurisdiction of an associate judge is not yet settled, so Form 32 is not filled with a jurisdiction sentence nobody confirmed. Record whether it is within that jurisdiction, then fill the form again.`
     );
   }
   const facts = fetchPart2Facts(ctx.dbPath, ctx.filing.id);
@@ -286,13 +286,13 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
   const pureLawOn = ctx.filing.pure_law_on ?? null;
   if (part2Content > 0 && pureLawOn !== null) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: Part 2 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's pure-law decision of ${pureLawOn} is also on record. One of the two is wrong: remove the Part 2 ${factsRhetoric.length > 0 ? "content" : "facts"}, or clear filings.pure_law_on and pure_law_note together, then emit again.`
+      `"${ctx.filing.title}": Part 2 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's decision of ${pureLawOn} that the application pleads no facts is also on record. One of the two is wrong: remove the Part 2 ${factsRhetoric.length > 0 ? "content" : "facts"}, or withdraw counsel's decision and its note together, then fill the form again.`
     );
   }
   if (part2Content === 0 && pureLawOn === null) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: Part 2 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 2 fact, or record counsel's decision that this application pleads no facts (filings.pure_law_on and pure_law_note together), then emit again.`
+        `"${ctx.filing.title}": Part 2 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 2 fact, or record counsel's decision, with its note, that this application pleads no facts, then fill the form again.`
       );
     }
     warnings.push({
@@ -338,7 +338,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
   if (missingCitationIds.length > 0) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: statement(s) of law ${missingCitationIds.join(", ")} have no authorities.citation -- refusing to emit a filed document with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this filing's deployed submissions.`
+        `"${ctx.filing.title}": statement(s) of law ${missingCitationIds.join(", ")} cite an authority with no citation, so the filed document is not made with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this document's submissions.`
       );
     }
     for (const id of missingCitationIds) {

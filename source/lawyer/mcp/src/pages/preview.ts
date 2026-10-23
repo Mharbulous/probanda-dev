@@ -156,7 +156,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   const pageFile = target === undefined ? undefined : relative(draftDir, target);
   const html = built.pages.find((p) => p.name === pageFile)?.html;
   if (target === undefined || html === undefined) {
-    const which = ids.filing_id !== undefined ? `filing ${ids.filing_id}` : `proceeding ${ids.proceeding_id}`;
+    const which = ids.filing_id !== undefined ? `Job Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
   return { path: writePreview(dirname(target), stem(basename(target)), html, false) };

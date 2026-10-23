@@ -28,7 +28,7 @@ export function renderAffidavitFiledFace(ctx: RenderContext, a: AffidavitRow): s
     );
   }
   if (a.affidavit_number === null) {
-    throw new ValidationError(`Affidavit ${a.id} (${a.label}): affidavit_number is not recorded. Record it through /drafting-data, then emit again.`);
+    throw new ValidationError(`${a.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
   }
   const paragraphs = rows<{ text: string }>(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a.id]);
   // A sworn affidavit relied on with no stored paragraphs owes no 🧩, but has no text to fill.

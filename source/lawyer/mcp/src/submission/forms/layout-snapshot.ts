@@ -165,10 +165,10 @@ export interface CitedState {
 export function citedStates(stored: StoredLayout, filing: FilingRow, seams: KnowledgeSeams = {}): CitedState[] {
   const out: CitedState[] = [];
   const read = (block: BlockKind, raw: Json, file: string | null) => {
-    const cited = citedItems(raw, block, file ?? `filing ${filing.id}'s stored ${block} block`);
+    const cited = citedItems(raw, block, file ?? `"${filing.title}"'s stored layout`);
     if (cited.length === 0) return;
     if (file === null) {
-      throw new DataServerError(`Filing ${filing.id}: its stored ${block} block cites ${cited.map((c) => c.rule_ref).join(", ")} but records no file to read`, "invalid_layout_snapshot");
+      throw new DataServerError(`"${filing.title}": its layout cites ${cited.map((c) => c.rule_ref).join(", ")} but records no source to read them from`, "invalid_layout_snapshot");
     }
     const result = knowledgeRead(file, seams);
     for (const { rule_ref, field } of cited) {

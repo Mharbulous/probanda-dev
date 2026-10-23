@@ -436,14 +436,14 @@ const signatureBlock: Projection = (ctx, _part, state) => {
     const id = ctx.filing.signer_party_id;
     if (id === null) return [SIGNING_SPACE, gap(ctx, state, "signer not chosen")];
     const party = ctx.parties.find((p) => p.id === id);
-    if (party === undefined) throw new DataServerError(`Filing ${ctx.filing.id}: signer_party_id ${id} is not a party of proceeding ${ctx.proceeding.id}`, "invalid_signer");
+    if (party === undefined) throw new DataServerError(`"${ctx.filing.title}": its signer is not a party of the proceeding`, "invalid_signer");
     return [SIGNING_SPACE, party.name];
   }
   const key = ctx.filing.signer_key;
   if (key === null) return [SIGNING_SPACE, gap(ctx, state, "signer not chosen")];
   const profile = readFirmProfile();
   const entry = profile.roster.find((e) => e.key === key);
-  if (entry === undefined) throw new DataServerError(`Filing ${ctx.filing.id}: signer_key "${key}" is not a key in the firm roster`, "invalid_signer");
+  if (entry === undefined) throw new DataServerError(`"${ctx.filing.title}": its signer "${key}" is not in the firm roster`, "invalid_signer");
   const lines: string[] = [];
   if (state.letterhead && typeof entry.closing === "string" && entry.closing !== "") lines.push(entry.closing, "");
   if (profile.person !== key) lines.push(SIGNING_SPACE);
@@ -487,8 +487,8 @@ export function renderPart(ctx: RenderContext, part: LayoutPart, state: Projecti
   const projection = BUILT_PROJECTIONS.get(part.source);
   if (projection === undefined) {
     throw new DataServerError(
-      `Filing ${ctx.filing.id}: its stored layout declares source "${part.source}", which this runtime does not print ` +
-        `(${UNBUILT_PROJECTIONS.get(part.source) ?? "not in the vocabulary"})`,
+      `"${ctx.filing.title}": its layout holds a part this version of Probanda cannot print yet ` +
+        `(${UNBUILT_PROJECTIONS.get(part.source) ?? "an unknown part"})`,
       "projection_not_built"
     );
   }

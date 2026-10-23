@@ -120,10 +120,10 @@ interface FilingDates {
   retired_on: string | null;
 }
 
-function notDrafting(filingId: number, row: FilingDates): ValidationError | null {
+function notDrafting(title: string, row: FilingDates): ValidationError | null {
   const act = row.retired_on ? `retired on ${row.retired_on}` : row.filed_on ? `sent on ${row.filed_on}` : null;
   if (!act) return null;
-  return new ValidationError(`re-snapshot is allowed only while the Writing is drafting; filing ${filingId} was ${act}`, "writing_not_drafting");
+  return new ValidationError(`"${title}"'s layout can be refreshed only while it is being drafted; it was ${act}`, "writing_not_drafting");
 }
 
 /** The dedicated re-snapshot write (spec section 5): only while drafting; moves the revision through
@@ -137,19 +137,19 @@ export async function resnapshotWriting(
   if (!Number.isInteger(filingId)) throw new ValidationError(`filing id ${filingId} is not an integer`, "invalid_filing_id");
   const filing = submissionDataQuery(
     dbPath,
-    "SELECT f.id, f.kind, f.filed_on, f.retired_on, p.forum FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?",
+    "SELECT f.id, f.kind, f.title, f.filed_on, f.retired_on, p.forum FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?",
     [filingId]
-  ).rows[0] as unknown as (FilingDates & { kind: string; forum: string | null }) | undefined;
-  if (!filing) throw new NotFoundError(`no filing ${filingId} in ${dbPath}`, "not_found");
-  if (isJobOnlyBoard(filing)) throw new ValidationError(`filing ${filingId} is a Job Board with no Writing, so it has no stored layout to re-snapshot`, "job_board_only");
-  const refused = notDrafting(filingId, filing);
+  ).rows[0] as unknown as (FilingDates & { kind: string; title: string; forum: string | null }) | undefined;
+  if (!filing) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
+  if (isJobOnlyBoard(filing)) throw new ValidationError(`Job Board ${filingId} has no Writing, so it has no layout to refresh`, "job_board_only");
+  const refused = notDrafting(filing.title, filing);
   if (refused) throw refused;
 
   let key: TreeKey;
   if (filing.forum !== null) {
     const segments = filing.forum.split("/");
     if (segments.length !== 3) {
-      throw new ValidationError(`filing ${filingId}'s forum "${filing.forum}" is not a <Country>/<Jurisdiction>/<Venue> tree key`, "invalid_forum");
+      throw new ValidationError(`"${filing.title}": its proceeding's court or tribunal, ${filing.forum}, is not one Probanda can name`, "invalid_forum");
     }
     const [country, jurisdiction, venue] = segments;
     key = { country, jurisdiction, venue, kind: filing.kind };
@@ -157,7 +157,7 @@ export async function resnapshotWriting(
     // shared/knowledge-tree.md: the _NoVenue jurisdiction is the writer's; the calling skill passes it and never infers it.
     if (!opts.jurisdiction) {
       throw new ValidationError(
-        `filing ${filingId} sits on a proceeding with no forum: a forum-less Writing re-snapshots under the writer's jurisdiction, which the calling skill passes`,
+        `"${filing.title}" sits on a proceeding with no court or tribunal, so its layout is refreshed under the writer's jurisdiction, which was not given`,
         "jurisdiction_required"
       );
     }
@@ -177,10 +177,10 @@ export async function resnapshotWriting(
     "SELECT layout_snapshot, filed_on, retired_on, (SELECT value FROM db_meta WHERE key = 'revision') AS revision FROM filings WHERE id = ?",
     [filingId]
   ).rows[0] as unknown as FilingDates & { layout_snapshot: string | null; revision: string };
-  const refusedAfter = notDrafting(filingId, after);
+  const refusedAfter = notDrafting(filing.title, after);
   if (refusedAfter) throw refusedAfter;
   if (after.layout_snapshot !== composed.layout_snapshot) {
-    throw new ValidationError(`filing ${filingId}'s re-snapshot did not land: its stored snapshot differs from the one written`, "writing_not_drafting");
+    throw new ValidationError(`"${filing.title}"'s layout was not refreshed: the saved layout differs from the one written`, "writing_not_drafting");
   }
   return { filing_id: filingId, needs_forum_parts: composed.needs_forum_parts, type_file: composed.type_file, revision: Number(after.revision) };
 }

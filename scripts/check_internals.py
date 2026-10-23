@@ -6,7 +6,7 @@ Usage:
 
 The runtime doctrine `.claude/skills/shared/internals-confidentiality.md` keeps
 Probanda's internals out of everything user-visible. This lint enforces it where
-the text is fixed in source, in three places:
+the text is fixed in source, in four places:
 
   hook messages    every prose string in a shipped hook script that a plugin.json
                    wires to an event other than SessionStart, because a refusal is
@@ -20,6 +20,11 @@ the text is fixed in source, in three places:
                    call (as a function or on path, never an array's .join(), and each
                    return line of a top-level function whose name says it builds a
                    name, folder, directory, path or label (filingFolderName, typeLabel).
+  error messages   each error the data server's submission code throws or refuses with,
+                   and each refusal's `detail`, which the drafting skills quote verbatim:
+                   no Writing named by its row id, no table.column, no db_meta or
+                   snapshot table, no SQL. A bare column name (affidavit_number) and a
+                   tool's own parameter names are not caught.
 
 A line holding the marker `internals-ok` is exempt: code that is not a message (a
 query) or that must name an old internal path to move it away. The developer plugin
@@ -209,9 +214,46 @@ def check_file_names(repo):
     return found
 
 
+# What a data-server error may not name: the Writing by its row id, a table.column, a database
+# table or SQL. A tool's own parameter names stay: a call the session got wrong names them.
+ERROR_TERMS = [
+    ("filing id", re.compile(r"\b[Ff]iling (?:\d+|\{\}|<id>)")),
+    ("column name", re.compile(r"\b[a-z]+(?:_[a-z]+)*\.[a-z]+_[a-z_]+\b")),
+    ("table name", re.compile(r"\bdb_meta\b|\b\w+_snapshot row\b")),
+    ("SQL", TERMS[[label for label, _ in TERMS].index("SQL")][1]),
+]
+ERROR_START = re.compile(r"new \w*Error\(\s*|\b(?:refused?|bad)\(\s*|\bdetail:\s*")
+
+
+def check_errors(repo):
+    """The message of each error the data server throws, and each refusal's `detail`, in the
+    submission code the drafting skills quote verbatim."""
+    found = []
+    for path in sorted((repo / SERVER_SRC / "submission").rglob("*.ts")):
+        if path.name.endswith((".test.ts", ".d.ts")):
+            continue
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        for m in ERROR_START.finditer(text):
+            first = STRING.match(text, m.end())
+            if first is None:
+                continue
+            # A message may run on over `+` joins: read the strings up to the call's end.
+            end = text.find("\n", first.end())
+            chunk = text[m.end():text.find(");", m.end()) if text.find(");", m.end()) != -1 else end]
+            line = text.count("\n", 0, m.start()) + 1
+            if any(EXEMPT in lines[i] for i in range(line - 1, line - 1 + chunk.count("\n") + 1)):
+                continue
+            message = " ".join(INTERPOLATION.sub("{}", s) for s in STRING.findall(chunk))
+            for label, rx in ERROR_TERMS:
+                for hit in rx.finditer(message):
+                    found.append(f"{path.relative_to(repo).as_posix()}:{line}: error message holds {label} `{hit.group(0)}`")
+    return found
+
+
 def violations(repo=REPO):
     repo = Path(repo)
-    return check_hooks(repo) + check_templates(repo) + check_file_names(repo)
+    return check_hooks(repo) + check_templates(repo) + check_file_names(repo) + check_errors(repo)
 
 
 def main():

@@ -198,7 +198,7 @@ test("refuses when the pointer resolves but no submission database exists there"
   const context = await practiceContext(t, { withMatter: false });
   await assert.rejects(
     callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }),
-    /No submission database found.*Run drafting_data__migrate/
+    /No drafting records found.*Set the matter.s drafting records up first/
   );
   assert.equal(existsSync(m.dbPath), false, "open_session never creates a database");
 });

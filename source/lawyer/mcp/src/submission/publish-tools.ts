@@ -66,7 +66,7 @@ export function publishGeneral(args: PublishGeneralArgs, env: NodeJS.ProcessEnv 
     return {
       success: false,
       error: "bespoke_renderer",
-      detail: `Filing ${args.filing_id}'s stored layout declares the bespoke renderer, which publish-general never renders. Name the subskill that fills this kind.`,
+      detail: "This document is filled by its own form step, never by the general one. Use the step that fills this kind of document.",
     };
   }
   const format = knowledgeRead(args.format_path, { env, installRoot });
@@ -125,7 +125,7 @@ export function publishVaniacPackage(args: PublishVaniacArgs, env: NodeJS.Proces
   if (refused) return refused;
   const sources = filed.documents.filter((doc) => SOURCES.has(doc.file_name) || WITNESS_SOURCE.test(doc.file_name));
   if (!sources.some((doc) => doc.file_name === "Written Arguments.md")) {
-    return { success: false, error: "not_vaniac", detail: `Filing ${args.filing_id}'s filed render has no Written Arguments.md: it is not a VanIAC submissions package.` };
+    return { success: false, error: "not_vaniac", detail: "This document has no Written Arguments: it is not a VanIAC submissions package." };
   }
   const witnesses: string[] = [];
   for (const doc of sources) {

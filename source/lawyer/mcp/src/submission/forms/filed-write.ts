@@ -41,19 +41,19 @@ function refused(message: string, code: string): DataServerError {
 export async function submissionDataRecordFiled(args: RecordFiledArgs, env: NodeJS.ProcessEnv = process.env): Promise<RecordFiledResult> {
   if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows as unknown as FilingRow[];
-  if (filing === undefined) throw new NotFoundError(`${TOOL}: no filing ${args.filing_id} in ${args.db_path}`, "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`filing ${filing.id} is a Job Board with no Writing, so there is nothing to record as filed`, "job_board_only");
-  if (filing.retired_on) throw refused(`filing ${filing.id} was retired on ${filing.retired_on}`, "writing_retired");
+  if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
+  if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as filed`, "job_board_only");
+  if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on && filing.sent_copy_id !== null && SERVED_KINDS.has(filing.kind)) {
     throw refused(
-      `filing ${filing.id} was recorded as served on ${filing.filed_on} under amended Rule 8-1 and stays frozen as served. ` +
+      `"${filing.title}" was recorded as served on ${filing.filed_on} under amended Rule 8-1 and stays frozen as served. ` +
         "Its registry filing is a step of the Set down for hearing or File the served response job, which saves the filed copy",
       "served_writing"
     );
   }
-  if (filing.filed_on) throw refused(`filing ${filing.id} was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
+  if (filing.filed_on) throw refused(`"${filing.title}" was already recorded as filed or sent on ${filing.filed_on}`, "already_filed");
   if (filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general") {
-    throw refused(`filing ${filing.id} is a general Writing; record it as sent through drafting_data__record_sent`, "general_writing");
+    throw refused(`"${filing.title}" is a letter or general document; record it as sent, not as filed`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
   const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL, env);
@@ -70,9 +70,9 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
   );
   if (!written.ok) {
     if (written.failed === 0) {
-      throw refused(`filing ${filing.id}'s database moved past revision ${revision} while it was being recorded; nothing was written. Record it as filed again`, "revision_moved");
+      throw refused(`"${filing.title}" changed while it was being recorded; nothing was written. Record it as filed again`, "revision_moved");
     }
-    throw refused(`filing ${filing.id} was filed, sent or retired while it was being recorded; nothing was written`, "already_filed");
+    throw refused(`"${filing.title}" was filed, sent or retired while it was being recorded; nothing was written`, "already_filed");
   }
   return {
     filing_id: filing.id,
@@ -80,8 +80,8 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
     parties_snapshot_rows: snapshot.length,
     revision: fetchRevision(args.db_path),
     note:
-      `Filing ${filing.id} recorded as filed on ${args.filed_on}; its exhibits are frozen. ` +
-      (snapshot.length > 0 ? `The ${snapshot.length} party row(s) it was filed with were written from case data.` : "Its party rows stand as they were, or its proceeding has no party."),
+      `"${filing.title}" recorded as filed on ${args.filed_on}; its exhibits are frozen. ` +
+      (snapshot.length > 0 ? `The details of the ${snapshot.length} part(ies) it was filed with were saved from the case records.` : "Its parties' details stand as they were, or its proceeding has no party."),
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }

@@ -1178,8 +1178,7 @@ function refuseAbsorbedCard(dbPath: string, board: BoardRef): void {
   if (!index.absorbed(board)) return;
   const survivor = index.survivorOf(board);
   if (survivor.filing_id !== null && fetchFiling(dbPath, survivor.filing_id).retired_on) return;
-  const by = survivor.filing_id === null ? `proceeding_id ${survivor.proceeding_id}` : `filing_id ${survivor.filing_id}`;
-  throw new ValidationError(`drafting_forms__board_card: ${boardLabel(board)} is merged into ${boardLabel(survivor)}; read the card by ${by}`, "board_merged");
+  throw new ValidationError(`${boardLabel(board)} is merged into ${boardLabel(survivor)}; read the card on ${boardLabel(survivor)}`, "board_merged");
 }
 
 /**
@@ -1228,11 +1227,11 @@ export function submissionFormsBoardCard(
   } else {
     const proceeding = fetchProceeding(args.db_path, args.proceeding_id as number);
     if (fetchAllFilingsForProceeding(args.db_path, proceeding.id).length > 0) {
-      throw new ValidationError(`Proceeding ${proceeding.id} has a filing, so its jobs are on each filing's Job Board -- read a card by filing_id instead`);
+      throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Job Board -- read the card there");
     }
     refuseAbsorbedCard(args.db_path, { filing_id: null, proceeding_id: proceeding.id });
     if (lanes.includes("criteria") || lanes.includes("proposed")) {
-      throw new ValidationError(`drafting_forms__board_card: proceeding ${proceeding.id} has no filing, so its section has no completion criteria and no Proposed lane`);
+      throw new ValidationError("This proceeding has no Writing yet, so its board has no completion criteria and no Proposed lane");
     }
     section = boardSectionOf(
       args.db_path,

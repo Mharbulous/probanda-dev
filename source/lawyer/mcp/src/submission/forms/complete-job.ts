@@ -86,7 +86,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
       const rendered = submissionFormsRender(args.db_path, filingId, client, "mockup", ["Work_board"], undefined, undefined, undefined, args.session_token, args.draft_dir, todos, dates);
       const board = rendered.documents.find((d) => d.document_type === "Work_board") as RenderedDocument | undefined;
       if (board === undefined) {
-        return { pages_written: false, pages_refused: { code: "render_refused", message: rendered.note ?? `the render of filing ${filingId} returned no Job Board` } };
+        return { pages_written: false, pages_refused: { code: "render_refused", message: rendered.note ?? "the render returned no Job Board page" } };
       }
       return {
         pages_written: board.pages_written === true,

@@ -84,11 +84,11 @@ export function readStored(dbPath: string, key: string): StoredGoals | null {
   try {
     parsed = JSON.parse(row.value) as StoredGoals;
   } catch {
-    throw new DataServerError(`db_meta ${key} is not JSON, so its statement of goals cannot be read`, "invalid_board_goal");
+    throw new DataServerError("A board's saved statement of goals is damaged, so it cannot be read", "invalid_board_goal");
   }
   const own = parsed.status === NEEDS_CONSOLIDATION || (parsed.status === null && (parsed.merged ?? []).length > 0) ? [] : [parsed.status];
   if (![...own, ...(parsed.merged ?? []).map((m) => m.status)].every((s) => STATUSES.includes(s as BoardGoalsStatus))) {
-    throw new DataServerError(`db_meta ${key} has a status that is not confirmed, inferred, declined or ${NEEDS_CONSOLIDATION}`, "invalid_board_goal");
+    throw new DataServerError("A board's saved statement of goals has a status Probanda does not know", "invalid_board_goal");
   }
   return parsed;
 }
@@ -193,9 +193,9 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
   } else {
     const [p] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id])
       .rows as unknown as { filings: number }[];
-    if (p === undefined) throw new NotFoundError(`${TOOL}: no proceeding ${id} in ${args.db_path}`, "not_found");
+    if (p === undefined) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
     if (p.filings > 0) {
-      throw new ValidationError(`${TOOL}: proceeding ${id} has a Writing, so its own board is no longer drawn -- set the goal on a Writing's board by filing_id`, "proceeding_has_writing");
+      throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- set the goal on a Writing's Job Board", "proceeding_has_writing");
     }
   }
   const index = new BoardIndex(args.db_path);

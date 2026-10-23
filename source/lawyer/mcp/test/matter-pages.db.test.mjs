@@ -975,7 +975,7 @@ test("board_card refuses no selector, an unknown lane, a job not on the section,
     refused({ filing_id: 1, loose_threads_from_jobs: [] }, /loose_threads_from_jobs: name at least one job id/);
     refused({ filing_id: 1, lanes: ["held"] }, /no lane held/);
     refused({ filing_id: 1, jobs: [2, 12, 99] }, /no Job #12, Job #99 on this section/);
-    refused({ proceeding_id: 1, jobs: [2] }, /Proceeding 1 has a filing/);
+    refused({ proceeding_id: 1, jobs: [2] }, /This proceeding has a Writing/);
   } finally {
     f.cleanup();
   }
@@ -1020,7 +1020,7 @@ test("board_card reads a proceeding with no filing", async () => {
     for (const lane of ["criteria", "goal", "proposed"]) {
       assert.throws(
         () => submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: [lane] }, {}, FIRST),
-        (err) => err instanceof ValidationError && /has no filing, so its section has no completion criteria and no Proposed lane/.test(err.message),
+        (err) => err instanceof ValidationError && /has no Writing yet, so its board has no completion criteria and no Proposed lane/.test(err.message),
         lane
       );
     }

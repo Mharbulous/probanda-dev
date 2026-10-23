@@ -411,15 +411,15 @@ export function buildTocRows(
   docs.forEach((d) => {
     if (d.role === "affidavit") {
       const detail = affidavitDetails.get(d.document_id);
-      const deponent = detail?.deponent_name ?? onMissing(`document ${d.document_id}'s deponent name`, { table: "documents.deponent", id: d.document_id, item: `${d.label}: deponent` });
+      const deponent = detail?.deponent_name ?? onMissing(`${d.label}'s deponent name`, { table: "documents.deponent", id: d.document_id, item: `${d.label}: deponent` });
       const number = detail?.affidavit_number ? ` #${detail.affidavit_number}` : "";
-      const filedDate = d.document_date ?? onMissing(`document ${d.document_id}'s filed date`, { table: "documents.document_date", id: d.document_id, item: `${d.label}: filed date` });
+      const filedDate = d.document_date ?? onMissing(`${d.label}'s filed date`, { table: "documents.document_date", id: d.document_id, item: `${d.label}: filed date` });
       newPart(`Affidavit${number} of ${deponent}, filed ${filedDate}`, 1);
       const exhibits = fetchAttachedExhibits(dbPath, d.document_id);
       exhibits.forEach((ex) => {
         const num =
           exhibitMap.get(ex.document_id) ??
-          onMissing(`exhibit document ${ex.document_id}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
+          onMissing(`${ex.label}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
         out.push({ text: `Exhibit ${num}: ${ex.label} (${ex.document_date ?? "undated"})`, indent: 2, part: null });
       });
     } else {

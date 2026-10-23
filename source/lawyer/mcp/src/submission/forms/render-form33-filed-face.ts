@@ -158,7 +158,7 @@ function struckSubmissionIds(dbPath: string, submissionIds: number[]): Set<numbe
 export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarning[]): string {
   if (ctx.filing.kind !== "application_response") {
     throw new ValidationError(
-      `Filing ${ctx.filing.id} has kind "${ctx.filing.kind}", not "application_response" -- the Form 33 emitter only handles Application Response filings.`
+      `"${ctx.filing.title}" is not an Application Response, so it cannot be filled as Form 33.`
     );
   }
 
@@ -167,24 +167,24 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
 
   if (!respondedTo) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: cannot resolve the served notice this application response responds to -- ` +
-        `no filing_positions rows exist, and the proceeding does not have exactly one document carrying opposing_orders.`
+      `"${ctx.filing.title}": the notice of application this response answers cannot be found -- ` +
+        `no position is recorded on any of its orders, and the proceeding does not hold exactly one served notice with its orders recorded.`
     );
   }
   if (respondedTo.document_date === null) {
     if (warnings === undefined) {
-      throw new ValidationError(`Filing ${ctx.filing.id}: the served notice document (id ${respondedTo.id}) has no document_date -- cannot fill "notice_dated".`);
+      throw new ValidationError(`"${ctx.filing.title}": the served notice of application has no date recorded, so the form's notice date cannot be filled.`);
     }
     warnings.push({ kind: "missing_datum", field_or_id: "notice_dated", message: `Date of the notice of application: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
   }
   if (positions.length === 0) {
-    throw new ValidationError(`Filing ${ctx.filing.id}: no positions taken on any order of the served notice -- nothing to assemble.`);
+    throw new ValidationError(`"${ctx.filing.title}": no position is taken on any order of the served notice -- nothing to assemble.`);
   }
   const unpositioned = fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id);
   if (unpositioned.length > 0) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: ${unpositioned.length} order(s) of the served notice have no position taken ` +
+        `"${ctx.filing.title}": ${unpositioned.length} order(s) of the served notice have no position taken ` +
           `(paragraph(s) ${unpositioned.map((o) => o.paragraph_number).join(", ")}) -- the mockup's ⬜ marker is the ` +
           `fail-visible surface for this; the filed face refuses instead of omitting silently.`
       );
@@ -201,7 +201,7 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
   if (!hearing?.time_estimate_minutes) {
     if (warnings === undefined) {
-      throw new ValidationError(`Filing ${ctx.filing.id}: hearing_details.time_estimate_minutes is not set -- cannot fill "time_estimate".`);
+      throw new ValidationError(`"${ctx.filing.title}": the hearing's time estimate is not recorded, so the form's time estimate cannot be filled.`);
     }
     warnings.push({ kind: "missing_datum", field_or_id: "time_estimate", message: `Time estimate: not recorded. The form shows ${TIME_ESTIMATE_PLACEHOLDER}.` });
   }
@@ -259,7 +259,7 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   if (missingCitationIds.length > 0) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: statement(s) of law ${missingCitationIds.join(", ")} have no authorities.citation -- refusing to emit a filed document with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this filing's deployed submissions.`
+        `"${ctx.filing.title}": statement(s) of law ${missingCitationIds.join(", ")} cite an authority with no citation, so the filed document is not made with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this document's submissions.`
       );
     }
     for (const id of missingCitationIds) {
@@ -274,13 +274,13 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   const pureLawOn = ctx.filing.pure_law_on ?? null;
   if (part4Content > 0 && pureLawOn !== null) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: Part 4 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's pure-law decision of ${pureLawOn} is also on record. One of the two is wrong: remove the Part 4 ${factsRhetoric.length > 0 ? "content" : "facts"}, or clear filings.pure_law_on and pure_law_note together, then emit again.`
+      `"${ctx.filing.title}": Part 4 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's decision of ${pureLawOn} that the response pleads no facts is also on record. One of the two is wrong: remove the Part 4 ${factsRhetoric.length > 0 ? "content" : "facts"}, or withdraw counsel's decision and its note together, then fill the form again.`
     );
   }
   if (part4Content === 0 && pureLawOn === null) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: Part 4 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 4 fact, or record counsel's decision that this application response pleads no facts (filings.pure_law_on and pure_law_note together), then emit again.`
+        `"${ctx.filing.title}": Part 4 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 4 fact, or record counsel's decision, with its note, that this application response pleads no facts, then fill the form again.`
       );
     }
     warnings.push({
@@ -294,7 +294,7 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   if (hearingDate === null) {
     if (warnings === undefined) {
       throw new ValidationError(
-        `Filing ${ctx.filing.id}: hearing_details.hearing_date_position is not set, or is 'agree' or 'propose_other' with no proposed_hearing -- cannot fill "hearing_date" (Rule 8-1(10)(b)(iv)).`
+        `"${ctx.filing.title}": the response's position on the hearing date is not recorded, or it agrees or proposes another date with no proposed date recorded, so the form's hearing date cannot be filled (Rule 8-1(10)(b)(iv)).`
       );
     }
     warnings.push({

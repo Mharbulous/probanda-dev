@@ -258,7 +258,7 @@ test("refuses a filing whose proceeding has no file_number recorded", async () =
     await freshSubmissionDb(f.dbPath);
     writePartiesOfRecord(dirname(f.dbPath), STAY_RESPONSE_CASE_DATA);
     await submissionDataExecute(f.dbPath, SEED + `UPDATE proceedings SET file_number = NULL WHERE id = 1;`);
-    assert.throws(() => submissionFormsEmitBccaBook(f.dbPath, 1), /file_number/);
+    assert.throws(() => submissionFormsEmitBccaBook(f.dbPath, 1), /no court file number recorded/);
   } finally {
     f.cleanup();
   }
@@ -270,7 +270,7 @@ test("refuses a filing with fewer than two party role groups", async () => {
     await freshSubmissionDb(f.dbPath);
     writePartiesOfRecord(dirname(f.dbPath), STAY_RESPONSE_CASE_DATA);
     await submissionDataExecute(f.dbPath, SEED + `DELETE FROM parties WHERE role = 'Appellant';`);
-    assert.throws(() => submissionFormsEmitBccaBook(f.dbPath, 1), /party role group/);
+    assert.throws(() => submissionFormsEmitBccaBook(f.dbPath, 1), /party role\(s\) are recorded/);
   } finally {
     f.cleanup();
   }
@@ -407,7 +407,7 @@ test("refuses a filing that is neither bcca_stay_response nor bcca_factum", asyn
     );
     assert.throws(
       () => submissionFormsEmitBccaBook(f.dbPath, 1),
-      /has kind "requisition_default_judgment", not "bcca_stay_response" or "bcca_factum"/
+      /is not a Court of Appeal stay-application response or respondent's factum/
     );
   } finally {
     f.cleanup();

@@ -82,7 +82,7 @@ interface BoaTocEntry {
 export function renderBccaBookFiledFace(ctx: RenderContext): string {
   if (ctx.filing.kind !== "bcca_stay_response" && ctx.filing.kind !== "bcca_factum") {
     throw new ValidationError(
-      `Filing ${ctx.filing.id} has kind "${ctx.filing.kind}", not "bcca_stay_response" or "bcca_factum" -- the bcca-book.md emitter only handles BCCA stay-application response books and respondent's factums.`
+      `"${ctx.filing.title}" is not a Court of Appeal stay-application response or respondent's factum, so it has no book to make.`
     );
   }
   const isFactum = ctx.filing.kind === "bcca_factum";
@@ -92,13 +92,13 @@ export function renderBccaBookFiledFace(ctx: RenderContext): string {
   const fileNumber = proceeding.file_number;
   if (!fileNumber) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: proceeding ${proceeding.id} has no file_number recorded -- add it before this filing can be assembled.`
+      `"${ctx.filing.title}": the proceeding has no court file number recorded -- add it before this document can be assembled.`
     );
   }
   const registry = proceeding.registry;
   if (!registry) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: proceeding ${proceeding.id} has no registry recorded -- add it before this filing can be assembled.`
+      `"${ctx.filing.title}": the proceeding has no registry recorded -- add it before this document can be assembled.`
     );
   }
 
@@ -106,7 +106,7 @@ export function renderBccaBookFiledFace(ctx: RenderContext): string {
   const roleGroups = groupPartiesByRole(captionParties);
   if (roleGroups.length < 2) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: only ${roleGroups.length} party role group(s) recorded on proceeding ${proceeding.id} -- an appeal needs both an appellant and a respondent party before this filing can be assembled.`
+      `"${ctx.filing.title}": only ${roleGroups.length} party role(s) are recorded on the proceeding -- an appeal needs both an appellant and a respondent party before this document can be assembled.`
     );
   }
 
@@ -114,7 +114,7 @@ export function renderBccaBookFiledFace(ctx: RenderContext): string {
   const firstRespondent = firstPartyWithRole(ctx.parties, "Respondent");
   if (!firstAppellant || !firstRespondent) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: proceeding ${proceeding.id} needs a party with role "Appellant" and a party with role "Respondent" to compose short_style -- add the missing role before this filing can be assembled.`
+      `"${ctx.filing.title}": the proceeding needs a party with role "Appellant" and a party with role "Respondent" to compose the short style of cause -- add the missing role before this document can be assembled.`
     );
   }
   const shortStyle = `${firstAppellant.name} vs. ${firstRespondent.name}`;
@@ -123,7 +123,7 @@ export function renderBccaBookFiledFace(ctx: RenderContext): string {
   const clientGroup = client ? roleGroups.find((g) => g.role === client.role) : undefined;
   if (!clientGroup) {
     throw new ValidationError(
-      `Filing ${ctx.filing.id}: no party is flagged is_client on proceeding ${proceeding.id} -- each book's title line needs to know the filing party's role. Flag the responding party as the client before this filing can be assembled.`
+      `"${ctx.filing.title}": no party of the proceeding is recorded as the client -- each book's title line needs to know the filing party's role. Record the responding party as the client before this document can be assembled.`
     );
   }
   const filingPartyLabel = possessive(pluralizeRole(clientGroup.role, clientGroup.names.length));
@@ -180,7 +180,7 @@ export function renderBccaBookFiledFace(ctx: RenderContext): string {
       unverifiedDelta,
       (what) => {
         throw new ValidationError(
-          `Filing ${ctx.filing.id}: response_book_toc cannot be composed -- ${what} is missing. Add it before this filing can be assembled.`
+          `"${ctx.filing.title}": the response book's table of contents cannot be composed -- ${what} is missing. Add it before this document can be assembled.`
         );
       }
     );

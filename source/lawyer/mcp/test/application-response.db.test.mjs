@@ -183,7 +183,7 @@ test("Application Response states the respondent's position on the applicant's h
     for (const [position, date] of [["NULL", "NULL"], ["'agree'", "NULL"]]) {
       await set(position, date);
       assert.match(mockup(), /^The application respondent\(s\) 🧩$/m);
-      assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /hearing_date_position/);
+      assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /position on the hearing date is not recorded/);
       const lenient = submissionFormsEmitForm33(f.dbPath, 1, undefined, {}, { lenient: true });
       assert.match(lenient.markdown, /^hearing_date: The application respondent\(s\) \[agree, or propose other hearing date\(s\)\]\.$/m);
       assert.ok(lenient.warnings.some((w) => w.field_or_id === "hearing_date"));
@@ -370,7 +370,7 @@ test("throws when a deployed statement of law has no authorities.citation, inste
       INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
       `.trim()
     );
-    assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /statement\(s\) of law.*authorities\.citation/s);
+    assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /statement\(s\) of law.*cite an authority with no citation/s);
   } finally {
     f.cleanup();
   }
@@ -469,7 +469,7 @@ test("refuses a filing that isn't an application_response", async () => {
       UPDATE db_meta SET value = '1' WHERE key = 'revision';
       `.trim()
     );
-    assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /application_response/);
+    assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), /is not an Application Response/);
   } finally {
     f.cleanup();
   }

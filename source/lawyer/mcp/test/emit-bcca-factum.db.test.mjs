@@ -110,7 +110,7 @@ test("authorities and paragraph numbers match the mockup the practitioner review
 test("refuses a filing that isn't bcca_factum", async () => {
   const f = await seeded("INSERT INTO filings (id, proceeding_id, kind, title) VALUES (2, 1, 'bcca_stay_response', 'Stay');");
   try {
-    assert.throws(() => submissionFormsEmitBccaFactum(f.dbPath, 2, "2026-09-16"), /has kind "bcca_stay_response", not "bcca_factum"/);
+    assert.throws(() => submissionFormsEmitBccaFactum(f.dbPath, 2, "2026-09-16"), /is not a Court of Appeal respondent's factum/);
   } finally {
     f.cleanup();
   }
@@ -118,11 +118,11 @@ test("refuses a filing that isn't bcca_factum", async () => {
 
 test("names the missing cover-critical or required field", async () => {
   const cases = [
-    ["UPDATE proceedings SET file_number = NULL WHERE id = 1;", /no file_number recorded/],
-    ["UPDATE parties SET is_client = 0;", /no party is flagged is_client/],
-    ["DELETE FROM filing_prose WHERE slot = 'signing_place';", /place of signing \(signing_place\)/],
+    ["UPDATE proceedings SET file_number = NULL WHERE id = 1;", /no court file number recorded/],
+    ["UPDATE parties SET is_client = 0;", /no party of the proceeding is recorded as the client/],
+    ["DELETE FROM filing_prose WHERE slot = 'signing_place';", /place of signing is not recorded/],
     ["DELETE FROM filing_chronology;", /chronology has no events/],
-    ["UPDATE authorities SET citation = NULL WHERE id = 1;", /have no authorities.citation/],
+    ["UPDATE authorities SET citation = NULL WHERE id = 1;", /cite an authority with no citation/],
   ];
   for (const [sql, expected] of cases) {
     const f = await seeded(sql);

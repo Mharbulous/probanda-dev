@@ -49,7 +49,7 @@ export function readViewed(dbPath: string, board: BoardRef): string[] {
     parsed = undefined;
   }
   if (!Array.isArray(parsed) || !parsed.every((k) => typeof k === "string")) {
-    throw new DataServerError(`db_meta ${key} is not a JSON array of strings, so the board's viewed order cannot be read`, "invalid_board_viewed");
+    throw new DataServerError("A board's saved viewing order is damaged, so it cannot be read", "invalid_board_viewed");
   }
   return parsed as string[];
 }

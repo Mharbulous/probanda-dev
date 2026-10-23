@@ -360,8 +360,8 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (23, 'filing_pros
 
 One fixed-text job, written when the practitioner accepts `/draft`'s conversion offer after the Sent write succeeds on an `unstructured` or `unstructured-<recipient>` Writing (`draft/references/unstructured.md` section 5). It turns that Writing into a general type file, so the next Writing of its type is a Structured Writing. It is unbilled firm infrastructure (`shared/live-issue-test.md` §1). The text below is the whole record of its title, intent and steps; it lives here and nowhere else, and a session never rewords it.
 
-- Title: `Make <filings.title> a Structured Writing`, the Writing's own title copied character for character. A reader matches the job by the prefix `Make ` and the suffix ` a Structured Writing`.
-- Intent: `Turn this Writing into a type file so the next <filings.title> is a Structured Writing. Unbilled: firm infrastructure.`
+- Title: `Keep the layout of <filings.title> for next time`, the Writing's own title copied character for character. A reader matches the job by the prefix `Keep the layout of ` and the suffix ` for next time`, or, on a job written before 2026-10-22, by the old prefix `Make ` and suffix ` a Structured Writing`.
+- Intent: `Record this document's layout so the next <filings.title> is drafted from it. Unbilled: firm infrastructure.`
 - Step 1: `Compose the candidate layout from the frozen Writing, structure only`
 - Step 2: `Run /localize create with the practitioner layout and, for a court form, the saved copy of the linked form`
 - No scope rows: `/localize` writes the knowledge tree, never this database. No step offers retirement: recording a Writing as sent never leads to a retirement offer (ADR 0042 D8).
@@ -370,7 +370,7 @@ One fixed-text job, written when the practitioner accepts `/draft`'s conversion 
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 9, 'Make Notice of discontinuance a Structured Writing', 'Turn this Writing into a type file so the next Notice of discontinuance is a Structured Writing. Unbilled: firm infrastructure.', 'work', 0, '<matter>|unbilled firm infrastructure', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+  VALUES (1, 9, 'Keep the layout of Notice of discontinuance for next time', 'Record this document''s layout so the next Notice of discontinuance is drafted from it. Unbilled: firm infrastructure.', 'work', 0, '<matter>|unbilled firm infrastructure', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
 ```
 
 Call 3 on the recovered literal id (here `30`):

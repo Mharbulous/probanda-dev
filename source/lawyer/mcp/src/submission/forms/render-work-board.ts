@@ -1084,7 +1084,7 @@ function declaredCriteria(filing: FilingRow): StockCriterion[] {
   const raw = storedLayout(filing).layout.goal_criteria;
   if (raw === undefined) return [];
   const bad = (why: string): never => {
-    throw new DataServerError(`Filing ${filing.id}: layout_snapshot's goal_criteria ${why}`, "invalid_layout_snapshot");
+    throw new DataServerError(`"${filing.title}": its stored completion criteria ${why}`, "invalid_layout_snapshot");
   };
   if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) return bad("is not an array of names");
   const declared = raw as string[];
@@ -1101,7 +1101,7 @@ function declaredIngestInputs(filing: FilingRow): string[] | undefined {
   const raw = storedLayout(filing).layout.ingest_inputs;
   if (raw === undefined) return undefined;
   if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) {
-    throw new DataServerError(`Filing ${filing.id}: layout_snapshot's ingest_inputs is not an array of names`, "invalid_layout_snapshot");
+    throw new DataServerError(`"${filing.title}": its stored list of folders to read is not a list of names`, "invalid_layout_snapshot");
   }
   return raw as string[];
 }
