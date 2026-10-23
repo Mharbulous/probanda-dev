@@ -47,8 +47,9 @@ You find out whether one letter went out and whether it arrived, from evidence, 
 
 | Field | Meaning |
 |---|---|
-| `matter_root` | The matter folder. Every path you read is under it |
+| `matter_root` | The matter folder. Every path you read is under it, except under `sent_mail_only` |
 | `letter_path`, `file_name`, `file_size` | The letter file, its basename and its size in bytes |
+| `sent_mail_only` | Optional. True when the session cannot let you see the matter folder (a bridged Cowork session). `letter_path`, and each image and `pdf` in the letter's page manifest, is then a staged copy of the letter outside `matter_root`, and those are the only files you read. You read the letter and search the mail, and check nothing in the matter folder (section 5, "Sent mail only") |
 | `environment_notes` | The practitioner's environment notes, copied by the caller. May be absent |
 | `methods` | Optional. Check only these methods. Absent means every method the letter states |
 | `draft` | Optional. A Job Board draft that may be this letter: `writing_id`, `mockup_path`, `addressee`, `subject`, `date`, and `last_changed` when the board shows one |
@@ -94,11 +95,15 @@ For every method, "this letter" means the same date, addressee and subject, and 
 
 **Not tested on real letters.** The registered mail, process server and by hand rows, and the combinations of registered mail with hand delivery and of a covering letter with a process server, were refined against how real examples are filed. For email only the filed side was seen, never a sent folder. For ordinary mail, fax, courier and Adobe Sign no example was found: those checklists come from practice, not from the files.
 
+**Sent mail only.** Under `sent_mail_only`, search only the mail places a checklist names: the sent folders, and the folders the notes name for incoming mail. Search no file in the matter folder. A check whose evidence is found in the mail is `confirmed` as usual. A check whose checklist names only mail places, such as email delivered, ends as usual. Every other check is `could_not_check`, with `searched` listing the mail folders you searched and `note` exactly `bridged session: the matter folder is not visible`. This covers every stated method, so each one is still reported.
+
 **Combinations.** A letter stating more than one method is confirmed sent only when every stated method is confirmed sent for every addressee, and the same for delivered. Otherwise `overall` is `open`, and each method keeps its own state.
 
 ## 6. The draft
 
 A draft counts as this letter only when its addressee, subject and date all match the letter's. Otherwise set `is_this_letter` to false and compare nothing.
+
+When it matches under `sent_mail_only`, the draft at `mockup_path` cannot be read, so compare nothing: set `differs` and `sync_allowed` to false, `sync_blocked_by` to exactly `bridged session: the matter folder is not visible`, and `sent_text_source` to the letter's path relative to `matter_root`.
 
 When it matches, read the draft at `mockup_path` and the sent text from the file the evidence points to: the letter file itself when a method is confirmed sent for it. A PDF is read only through its page manifest. When that file is a PDF with no manifest in `page_manifests`, compare nothing: set `differs` and `sync_allowed` to false, `sync_blocked_by` to exactly `needs page images`, and `sent_text_source` to its path. Otherwise set `differs` when a paragraph of either is missing from the other, ignoring whitespace, quote style, markers and comments in the mockup.
 
@@ -146,4 +151,4 @@ When it matches, read the draft at `mockup_path` and the sent text from the file
 }
 ```
 
-`draft` is null when the dispatch gave none. `overall` is `confirmed` only when every stated method is confirmed sent for every addressee. Paths are relative to `matter_root`. Addressees appear only by their number, never by name or address.
+`draft` is null when the dispatch gave none. `overall` is `confirmed` only when every stated method is confirmed sent for every addressee. Paths are relative to `matter_root`, and a staged path never appears in the result. Addressees appear only by their number, never by name or address.
