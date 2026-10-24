@@ -1,4 +1,4 @@
-// build-stamp: b22a11145343
+// build-stamp: 4fc6fd256f4c
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -76071,407 +76071,6 @@ var PracticeStore = class {
 // src/dispatch.ts
 import { dirname as dirname25 } from "node:path";
 
-// src/knowledge/index.ts
-var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
-var ALIAS_SOURCES = ["official", "practitioner", "agent"];
-var NO_VENUE = "_NoVenue";
-function invalid(file, where, rule) {
-  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_index");
-}
-function objectAt(value, file, where) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) invalid(file, where, "must be an object");
-  return value;
-}
-function onlyKeys(obj, allowed, file, where) {
-  const extra = Object.keys(obj).filter((key) => !allowed.includes(key));
-  if (extra.length) invalid(file, where, `unknown field(s) ${extra.join(", ")} (allowed: ${allowed.join(", ")})`);
-}
-function stringAt(obj, key, file, where, required2) {
-  const value = obj[key];
-  if (value === void 0) {
-    if (required2) invalid(file, `${where}.${key}`, "is required");
-    return void 0;
-  }
-  if (typeof value !== "string" || value === "") invalid(file, `${where}.${key}`, "must be a non-empty string");
-  return value;
-}
-function arrayAt(obj, key, file, where, required2) {
-  const value = obj[key];
-  if (value === void 0) {
-    if (required2) invalid(file, `${where}.${key}`, "is required");
-    return [];
-  }
-  if (!Array.isArray(value)) invalid(file, `${where}.${key}`, "must be an array");
-  return value;
-}
-function aliasesOf(obj, file, where, layer, required2) {
-  return arrayAt(obj, "aliases", file, where, required2).map((raw, i3) => {
-    const at = `${where}.aliases[${i3}]`;
-    const alias = objectAt(raw, file, at);
-    onlyKeys(alias, ["name", "source", "ref", "recorded"], file, at);
-    const local = layer === "local";
-    const out = { name: stringAt(alias, "name", file, at, true), layer };
-    const source = stringAt(alias, "source", file, at, local);
-    if (source !== void 0 && !ALIAS_SOURCES.includes(source)) invalid(file, `${at}.source`, `must be one of ${ALIAS_SOURCES.join(", ")}`);
-    const ref = stringAt(alias, "ref", file, at, local);
-    const recorded = stringAt(alias, "recorded", file, at, local);
-    return { ...out, ...source ? { source } : {}, ...ref ? { ref } : {}, ...recorded ? { recorded } : {} };
-  });
-}
-var STAMP_KEYS = ["plugin_version", "shipped_from"];
-function stampProblem(obj) {
-  if (obj.plugin_version !== void 0 && obj.plugin_version !== null && (typeof obj.plugin_version !== "string" || obj.plugin_version === "")) {
-    return ["plugin_version", "must be a non-empty string or null"];
-  }
-  if (obj.shipped_from !== void 0 && obj.shipped_from !== "install" && obj.shipped_from !== "checkout") {
-    return ["shipped_from", 'must be "install" or "checkout"'];
-  }
-  return null;
-}
-function checkStamp(obj, file, where) {
-  const problem = stampProblem(obj);
-  if (problem) invalid(file, `${where}.${problem[0]}`, problem[1]);
-}
-function provenance(obj, file, where) {
-  const out = {};
-  for (const key of ["source", "ref", "recorded"]) {
-    const value = stringAt(obj, key, file, where, false);
-    if (value !== void 0) out[key] = value;
-  }
-  return out;
-}
-function unionAliases(into, extra) {
-  const seen = new Set(into.map((alias) => normalizeName(alias.name)));
-  for (const alias of extra) {
-    const key = normalizeName(alias.name);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    into.push(alias);
-  }
-}
-function compare(conflicts, key, field, shipped, local) {
-  if (shipped === void 0 || local === void 0 || shipped === local) return;
-  conflicts.push({ key, field, shipped, local, ...field === "name" ? { shadowed_local: true } : {} });
-}
-function notVenueRow(raw, file, where, layer) {
-  const row2 = objectAt(raw, file, where);
-  onlyKeys(row2, ["name", "aliases", "resolves_to", "source", "ref", "recorded", "note", ...STAMP_KEYS], file, where);
-  checkStamp(row2, file, where);
-  if (row2.resolves_to !== NO_VENUE) invalid(file, `${where}.resolves_to`, `must be "${NO_VENUE}"`);
-  if (row2.source !== "practitioner") invalid(file, `${where}.source`, 'must be "practitioner"');
-  const note = stringAt(row2, "note", file, where, false);
-  return {
-    name: stringAt(row2, "name", file, where, true),
-    aliases: aliasesOf(row2, file, where, layer, true),
-    resolves_to: NO_VENUE,
-    source: "practitioner",
-    ref: stringAt(row2, "ref", file, where, true),
-    recorded: stringAt(row2, "recorded", file, where, true),
-    ...note ? { note } : {},
-    layer
-  };
-}
-var VENUES_KEYS = ["jurisdiction", "name", "venues", "not_venues"];
-var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
-var NO_VENUE_ROW = { code: NO_VENUE, name: "No venue", aliases: [], layer: "shipped", reserved: true };
-function mergeVenues(shipped, local) {
-  const conflicts = [];
-  const view = { jurisdiction: null, name: null, venues: [], not_venues: [], conflicts };
-  const byCode = /* @__PURE__ */ new Map();
-  const notByName = /* @__PURE__ */ new Map();
-  if (shipped) {
-    const doc = objectAt(shipped.doc, shipped.file, "the index");
-    onlyKeys(doc, VENUES_KEYS, shipped.file, "the index");
-    view.jurisdiction = stringAt(doc, "jurisdiction", shipped.file, "the index", true);
-    view.name = stringAt(doc, "name", shipped.file, "the index", true);
-    arrayAt(doc, "venues", shipped.file, "the index", true).forEach((raw, i3) => {
-      const where = `venues[${i3}]`;
-      const row2 = objectAt(raw, shipped.file, where);
-      onlyKeys(row2, VENUE_ROW_KEYS, shipped.file, where);
-      checkStamp(row2, shipped.file, where);
-      const code = stringAt(row2, "code", shipped.file, where, true);
-      if (byCode.has(code)) invalid(shipped.file, where, `code "${code}" appears twice`);
-      const venue = {
-        code,
-        name: stringAt(row2, "name", shipped.file, where, true),
-        aliases: aliasesOf(row2, shipped.file, where, "shipped", true),
-        ...provenance(row2, shipped.file, where),
-        layer: "shipped"
-      };
-      byCode.set(code, venue);
-      view.venues.push(venue);
-    });
-    arrayAt(doc, "not_venues", shipped.file, "the index", false).forEach((raw, i3) => {
-      const row2 = notVenueRow(raw, shipped.file, `not_venues[${i3}]`, "shipped");
-      notByName.set(normalizeName(row2.name), row2);
-      view.not_venues.push(row2);
-    });
-  }
-  if (local) {
-    const doc = objectAt(local.doc, local.file, "the index");
-    onlyKeys(doc, VENUES_KEYS, local.file, "the index");
-    const jurisdiction = stringAt(doc, "jurisdiction", local.file, "the index", false);
-    const name = stringAt(doc, "name", local.file, "the index", false);
-    compare(conflicts, "(index)", "jurisdiction", view.jurisdiction ?? void 0, jurisdiction);
-    compare(conflicts, "(index)", "name", view.name ?? void 0, name);
-    view.jurisdiction ??= jurisdiction ?? null;
-    view.name ??= name ?? null;
-    arrayAt(doc, "venues", local.file, "the index", false).forEach((raw, i3) => {
-      const where = `venues[${i3}]`;
-      const row2 = objectAt(raw, local.file, where);
-      onlyKeys(row2, VENUE_ROW_KEYS, local.file, where);
-      checkStamp(row2, local.file, where);
-      const code = stringAt(row2, "code", local.file, where, true);
-      const aliases = aliasesOf(row2, local.file, where, "local", false);
-      const existing = byCode.get(code);
-      if (existing) {
-        if (existing.layer === "local") invalid(local.file, where, `code "${code}" appears twice`);
-        compare(conflicts, code, "name", existing.name, stringAt(row2, "name", local.file, where, false));
-        unionAliases(existing.aliases, aliases);
-        return;
-      }
-      const venue = {
-        code,
-        name: stringAt(row2, "name", local.file, where, true),
-        aliases,
-        ...provenance(row2, local.file, where),
-        layer: "local"
-      };
-      if (row2.aliases === void 0) invalid(local.file, `${where}.aliases`, "is required on a venue learned only in the overlay");
-      byCode.set(code, venue);
-      view.venues.push(venue);
-    });
-    arrayAt(doc, "not_venues", local.file, "the index", false).forEach((raw, i3) => {
-      const row2 = notVenueRow(raw, local.file, `not_venues[${i3}]`, "local");
-      const existing = notByName.get(normalizeName(row2.name));
-      if (existing) {
-        unionAliases(existing.aliases, row2.aliases);
-        return;
-      }
-      notByName.set(normalizeName(row2.name), row2);
-      view.not_venues.push(row2);
-    });
-  }
-  view.venues.push(NO_VENUE_ROW);
-  return view;
-}
-var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
-function recipientOf(row2, file, where, noVenue) {
-  if (!noVenue) {
-    if (row2.recipient !== void 0) invalid(file, `${where}.recipient`, "appears only under _NoVenue");
-    return void 0;
-  }
-  const recipient = stringAt(row2, "recipient", file, where, false);
-  if (recipient !== void 0 && !AUDIENCES.includes(recipient)) {
-    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")} (a letter to the client never enters the tree)`);
-  }
-  return recipient;
-}
-function mergeKinds(shipped, local, noVenue) {
-  const conflicts = [];
-  const view = { kinds: [], conflicts };
-  const byFile = /* @__PURE__ */ new Map();
-  const rows22 = (source) => {
-    const doc = objectAt(source.doc, source.file, "the index");
-    onlyKeys(doc, ["kinds"], source.file, "the index");
-    return arrayAt(doc, "kinds", source.file, "the index", true).map((raw, i3) => {
-      const where = `kinds[${i3}]`;
-      const row2 = objectAt(raw, source.file, where);
-      onlyKeys(row2, KIND_ROW_KEYS, source.file, where);
-      checkStamp(row2, source.file, where);
-      const file = stringAt(row2, "file", source.file, where, true);
-      if (file.endsWith(".md")) {
-        throw new DataServerError(
-          `${source.file}: ${where}: kinds row file "${file}" must be the type file's name without ".md" ("${file.slice(0, -3)}")`,
-          "grammar_violation"
-        );
-      }
-      return { row: row2, where, file };
-    });
-  };
-  if (shipped) {
-    for (const { row: row2, where, file } of rows22(shipped)) {
-      if (byFile.has(file)) invalid(shipped.file, where, `file "${file}" appears twice`);
-      const recipient = recipientOf(row2, shipped.file, where, noVenue);
-      if (noVenue && recipient === void 0) invalid(shipped.file, `${where}.recipient`, "is required under _NoVenue");
-      const kind = {
-        file,
-        name: stringAt(row2, "name", shipped.file, where, true),
-        aliases: aliasesOf(row2, shipped.file, where, "shipped", true),
-        ...recipient ? { recipient } : {},
-        layer: "shipped"
-      };
-      byFile.set(file, kind);
-      view.kinds.push(kind);
-    }
-  }
-  if (local) {
-    for (const { row: row2, where, file } of rows22(local)) {
-      const aliases = aliasesOf(row2, local.file, where, "local", false);
-      const recipient = recipientOf(row2, local.file, where, noVenue);
-      const existing = byFile.get(file);
-      if (existing) {
-        if (existing.layer === "local") invalid(local.file, where, `file "${file}" appears twice`);
-        compare(conflicts, file, "name", existing.name, stringAt(row2, "name", local.file, where, false));
-        compare(conflicts, file, "recipient", existing.recipient, recipient);
-        unionAliases(existing.aliases, aliases);
-        continue;
-      }
-      if (row2.aliases === void 0) invalid(local.file, `${where}.aliases`, "is required on a kind learned only in the overlay");
-      if (noVenue && recipient === void 0) invalid(local.file, `${where}.recipient`, "is required under _NoVenue");
-      const kind = {
-        file,
-        name: stringAt(row2, "name", local.file, where, true),
-        aliases,
-        ...recipient ? { recipient } : {},
-        layer: "local"
-      };
-      byFile.set(file, kind);
-      view.kinds.push(kind);
-    }
-  }
-  return view;
-}
-function normalizeName(name) {
-  const words = wordsOf(name);
-  if (words.length > 1 && words[0] === "the") words.shift();
-  return words.join("");
-}
-function wordsOf(text5) {
-  return text5.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
-}
-var VENUE_STOPWORDS = [["court"], ["tribunal"], ["of"], ["the"], ["british", "columbia"]];
-var KIND_STOPWORDS = [["of"], ["the"], ["form"]];
-function tokensOf(text5, stopwords) {
-  const words = wordsOf(text5);
-  const out = [];
-  for (let i3 = 0; i3 < words.length; ) {
-    const stop = stopwords.find((phrase) => phrase.every((word, k3) => words[i3 + k3] === word));
-    if (stop) {
-      i3 += stop.length;
-      continue;
-    }
-    out.push(words[i3]);
-    i3 += 1;
-  }
-  return out;
-}
-function initialsOf(name) {
-  const words = name.normalize("NFKC").match(/[\p{L}\p{N}]+/gu) ?? [];
-  return words.filter((word) => new RegExp("^\\p{Lu}", "u").test(word)).map((word) => word[0]).join("").toLowerCase();
-}
-function withoutAffix(code, affix) {
-  if (affix === "" || code === affix) return [];
-  const out = [];
-  if (code.startsWith(affix)) out.push(code.slice(affix.length));
-  if (code.endsWith(affix)) out.push(code.slice(0, code.length - affix.length));
-  return out;
-}
-function resolveAmong(given, entities, jurisdiction, stopwords) {
-  const n3 = normalizeName(given);
-  if (n3 === "") throw new ValidationError(`resolve: ${JSON.stringify(given)} holds no letters or digits`);
-  const equal = [];
-  for (const entity of entities) {
-    const hit = entity.names.find((candidate) => normalizeName(candidate.text) === n3);
-    if (hit) equal.push({ entity, via: hit.via });
-  }
-  if (equal.length === 1) {
-    const { entity, via } = equal[0];
-    return {
-      result: "resolved",
-      code: entity.code,
-      name: entity.name,
-      via,
-      row: entity.row,
-      ...entity.not_venue ? { not_venue: entity.not_venue } : {}
-    };
-  }
-  if (equal.length > 1) {
-    return { result: "ambiguous", alias_split: equal.map(({ entity, via }) => ({ code: entity.code, name: entity.name, via })) };
-  }
-  const j3 = normalizeName(jurisdiction);
-  const givenTokens = tokensOf(given, stopwords);
-  const ours2 = new Set(givenTokens);
-  const candidates = [];
-  const add = (entity, rule) => {
-    if (!candidates.some((c3) => c3.code === entity.code && c3.name === entity.name && c3.rule === rule)) {
-      candidates.push({ code: entity.code, name: entity.name, rule });
-    }
-  };
-  for (const entity of entities) {
-    if (entity.affix) {
-      const code = normalizeName(entity.code);
-      if (withoutAffix(code, j3).includes(n3) || j3 + n3 === code) add(entity, "jurisdiction_affix");
-    }
-    const initials = initialsOf(entity.name);
-    if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity, "acronym");
-    if (givenTokens.length > 0) {
-      for (const { text: text5, via } of entity.names) {
-        if (via === "code") continue;
-        const other = tokensOf(text5, stopwords);
-        if (other.length === 0) continue;
-        const theirs = new Set(other);
-        if (givenTokens.every((t3) => theirs.has(t3)) || other.every((t3) => ours2.has(t3))) {
-          add(entity, "token_containment");
-          break;
-        }
-      }
-    }
-  }
-  return candidates.length ? { result: "near_miss", candidates } : { result: "not_found" };
-}
-function resolveVenue(view, given, jurisdiction) {
-  const entities = [];
-  for (const row2 of view.venues) {
-    if (row2.reserved) continue;
-    entities.push({
-      code: row2.code,
-      name: row2.name,
-      names: [
-        { text: row2.code, via: "code" },
-        { text: row2.name, via: "name" },
-        ...row2.aliases.map((alias) => ({ text: alias.name, via: "alias" }))
-      ],
-      row: row2,
-      affix: true
-    });
-  }
-  for (const nv of view.not_venues) {
-    entities.push({
-      code: NO_VENUE,
-      name: nv.name,
-      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text5) => ({ text: text5, via: "not_venue" })),
-      row: NO_VENUE_ROW,
-      not_venue: nv,
-      affix: false
-    });
-  }
-  return resolveAmong(given, entities, jurisdiction, VENUE_STOPWORDS);
-}
-function resolveKind(view, given, jurisdiction, noVenue, recipient) {
-  if (noVenue && recipient === void 0) {
-    throw new ValidationError(`a _NoVenue resolve needs \`recipient\` (${AUDIENCES.join(", ")})`);
-  }
-  if (!noVenue && recipient !== void 0) {
-    throw new ValidationError("`recipient` applies only under _NoVenue; a venue's kinds carry no recipient");
-  }
-  if (recipient !== void 0 && !AUDIENCES.includes(recipient)) {
-    throw new ValidationError(`recipient must be one of ${AUDIENCES.join(", ")}`);
-  }
-  const entities = view.kinds.filter((row2) => recipient === void 0 || row2.recipient === recipient).map((row2) => ({
-    code: row2.file,
-    name: row2.name,
-    names: [
-      { text: row2.file, via: "code" },
-      { text: row2.name, via: "name" },
-      ...row2.aliases.map((alias) => ({ text: alias.name, via: "alias" }))
-    ],
-    row: row2,
-    affix: false
-  }));
-  return resolveAmong(given, entities, jurisdiction, KIND_STOPWORDS);
-}
-
 // src/tools/practice/rule-overlay.ts
 import { randomUUID as randomUUID2 } from "node:crypto";
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -76509,28 +76108,17 @@ async function upsert_rule_overlay(store, args) {
   }]);
   return items.get(id)?.data.record;
 }
-function compare2(a3, b3) {
+function compare(a3, b3) {
   const [x3, y3] = [String(a3 ?? ""), String(b3 ?? "")];
   return x3 < y3 ? -1 : x3 > y3 ? 1 : 0;
 }
 async function rule_overlay(store, args) {
   const records = store.rows("rule_overlay").filter((row2) => ["deadline_type", "amending_reg", "status"].every((key) => !args[key] || row2[key] === String(args[key]))).map((row2) => row2.record);
-  records.sort((a3, b3) => compare2(a3.deadline_type, b3.deadline_type) || compare2(a3.effective_from, b3.effective_from));
+  records.sort((a3, b3) => compare(a3.deadline_type, b3.deadline_type) || compare(a3.effective_from, b3.effective_from));
   return { records };
 }
 
-// src/schema-gen.ts
-var PAGE_NAMES = [
-  "Work Board",
-  "Litigation Strategy",
-  "Job Board",
-  "Procedural History",
-  "Material Facts",
-  "Raw Research",
-  "Arguments",
-  "Loose Threads",
-  "Housekeeping approval"
-];
+// src/schema/shared.ts
 function schemaFor(field) {
   const type = field.type === "num" ? "number" : field.type === "bool" ? "boolean" : field.type === "obj" ? "object" : "string";
   const schema = { type };
@@ -76547,6 +76135,9 @@ function objectSchema(fields, required2 = []) {
     additionalProperties: false
   };
 }
+var SQL_PARAMS = { type: "array", items: {}, description: "Scalars only. Bind a list as one JSON string: IN (SELECT value FROM json_each(?))" };
+
+// src/schema/practice.ts
 function practicePrefixed(name) {
   return `practice_data__${name}`;
 }
@@ -77133,7 +76724,8 @@ function practiceToolDefinitions() {
   });
   return tools;
 }
-var SQL_PARAMS = { type: "array", items: {}, description: "Scalars only. Bind a list as one JSON string: IN (SELECT value FROM json_each(?))" };
+
+// src/schema/case-data.ts
 function caseDataPrefixed(name) {
   return `matter_data__${name}`;
 }
@@ -77222,6 +76814,8 @@ function caseDataToolDefinitions() {
     }
   ];
 }
+
+// src/schema/time-pipeline.ts
 function timePipelinePrefixed(name) {
   return `time_pipeline__${name}`;
 }
@@ -77283,6 +76877,8 @@ function timePipelineToolDefinitions() {
     }
   ];
 }
+
+// src/schema/timecamping.ts
 function timecampingPrefixed(name) {
   return `timecamping_data__${name}`;
 }
@@ -77326,6 +76922,420 @@ function timecampingToolDefinitions() {
     }
   ];
 }
+
+// src/knowledge/index.ts
+var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
+var ALIAS_SOURCES = ["official", "practitioner", "agent"];
+var NO_VENUE = "_NoVenue";
+function invalid(file, where, rule) {
+  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_index");
+}
+function objectAt(value, file, where) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) invalid(file, where, "must be an object");
+  return value;
+}
+function onlyKeys(obj, allowed, file, where) {
+  const extra = Object.keys(obj).filter((key) => !allowed.includes(key));
+  if (extra.length) invalid(file, where, `unknown field(s) ${extra.join(", ")} (allowed: ${allowed.join(", ")})`);
+}
+function stringAt(obj, key, file, where, required2) {
+  const value = obj[key];
+  if (value === void 0) {
+    if (required2) invalid(file, `${where}.${key}`, "is required");
+    return void 0;
+  }
+  if (typeof value !== "string" || value === "") invalid(file, `${where}.${key}`, "must be a non-empty string");
+  return value;
+}
+function arrayAt(obj, key, file, where, required2) {
+  const value = obj[key];
+  if (value === void 0) {
+    if (required2) invalid(file, `${where}.${key}`, "is required");
+    return [];
+  }
+  if (!Array.isArray(value)) invalid(file, `${where}.${key}`, "must be an array");
+  return value;
+}
+function aliasesOf(obj, file, where, layer, required2) {
+  return arrayAt(obj, "aliases", file, where, required2).map((raw, i3) => {
+    const at = `${where}.aliases[${i3}]`;
+    const alias = objectAt(raw, file, at);
+    onlyKeys(alias, ["name", "source", "ref", "recorded"], file, at);
+    const local = layer === "local";
+    const out = { name: stringAt(alias, "name", file, at, true), layer };
+    const source = stringAt(alias, "source", file, at, local);
+    if (source !== void 0 && !ALIAS_SOURCES.includes(source)) invalid(file, `${at}.source`, `must be one of ${ALIAS_SOURCES.join(", ")}`);
+    const ref = stringAt(alias, "ref", file, at, local);
+    const recorded = stringAt(alias, "recorded", file, at, local);
+    return { ...out, ...source ? { source } : {}, ...ref ? { ref } : {}, ...recorded ? { recorded } : {} };
+  });
+}
+var STAMP_KEYS = ["plugin_version", "shipped_from"];
+function stampProblem(obj) {
+  if (obj.plugin_version !== void 0 && obj.plugin_version !== null && (typeof obj.plugin_version !== "string" || obj.plugin_version === "")) {
+    return ["plugin_version", "must be a non-empty string or null"];
+  }
+  if (obj.shipped_from !== void 0 && obj.shipped_from !== "install" && obj.shipped_from !== "checkout") {
+    return ["shipped_from", 'must be "install" or "checkout"'];
+  }
+  return null;
+}
+function checkStamp(obj, file, where) {
+  const problem = stampProblem(obj);
+  if (problem) invalid(file, `${where}.${problem[0]}`, problem[1]);
+}
+function provenance(obj, file, where) {
+  const out = {};
+  for (const key of ["source", "ref", "recorded"]) {
+    const value = stringAt(obj, key, file, where, false);
+    if (value !== void 0) out[key] = value;
+  }
+  return out;
+}
+function unionAliases(into, extra) {
+  const seen = new Set(into.map((alias) => normalizeName(alias.name)));
+  for (const alias of extra) {
+    const key = normalizeName(alias.name);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    into.push(alias);
+  }
+}
+function compare2(conflicts, key, field, shipped, local) {
+  if (shipped === void 0 || local === void 0 || shipped === local) return;
+  conflicts.push({ key, field, shipped, local, ...field === "name" ? { shadowed_local: true } : {} });
+}
+function notVenueRow(raw, file, where, layer) {
+  const row2 = objectAt(raw, file, where);
+  onlyKeys(row2, ["name", "aliases", "resolves_to", "source", "ref", "recorded", "note", ...STAMP_KEYS], file, where);
+  checkStamp(row2, file, where);
+  if (row2.resolves_to !== NO_VENUE) invalid(file, `${where}.resolves_to`, `must be "${NO_VENUE}"`);
+  if (row2.source !== "practitioner") invalid(file, `${where}.source`, 'must be "practitioner"');
+  const note = stringAt(row2, "note", file, where, false);
+  return {
+    name: stringAt(row2, "name", file, where, true),
+    aliases: aliasesOf(row2, file, where, layer, true),
+    resolves_to: NO_VENUE,
+    source: "practitioner",
+    ref: stringAt(row2, "ref", file, where, true),
+    recorded: stringAt(row2, "recorded", file, where, true),
+    ...note ? { note } : {},
+    layer
+  };
+}
+var VENUES_KEYS = ["jurisdiction", "name", "venues", "not_venues"];
+var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
+var NO_VENUE_ROW = { code: NO_VENUE, name: "No venue", aliases: [], layer: "shipped", reserved: true };
+function mergeVenues(shipped, local) {
+  const conflicts = [];
+  const view = { jurisdiction: null, name: null, venues: [], not_venues: [], conflicts };
+  const byCode = /* @__PURE__ */ new Map();
+  const notByName = /* @__PURE__ */ new Map();
+  if (shipped) {
+    const doc = objectAt(shipped.doc, shipped.file, "the index");
+    onlyKeys(doc, VENUES_KEYS, shipped.file, "the index");
+    view.jurisdiction = stringAt(doc, "jurisdiction", shipped.file, "the index", true);
+    view.name = stringAt(doc, "name", shipped.file, "the index", true);
+    arrayAt(doc, "venues", shipped.file, "the index", true).forEach((raw, i3) => {
+      const where = `venues[${i3}]`;
+      const row2 = objectAt(raw, shipped.file, where);
+      onlyKeys(row2, VENUE_ROW_KEYS, shipped.file, where);
+      checkStamp(row2, shipped.file, where);
+      const code = stringAt(row2, "code", shipped.file, where, true);
+      if (byCode.has(code)) invalid(shipped.file, where, `code "${code}" appears twice`);
+      const venue = {
+        code,
+        name: stringAt(row2, "name", shipped.file, where, true),
+        aliases: aliasesOf(row2, shipped.file, where, "shipped", true),
+        ...provenance(row2, shipped.file, where),
+        layer: "shipped"
+      };
+      byCode.set(code, venue);
+      view.venues.push(venue);
+    });
+    arrayAt(doc, "not_venues", shipped.file, "the index", false).forEach((raw, i3) => {
+      const row2 = notVenueRow(raw, shipped.file, `not_venues[${i3}]`, "shipped");
+      notByName.set(normalizeName(row2.name), row2);
+      view.not_venues.push(row2);
+    });
+  }
+  if (local) {
+    const doc = objectAt(local.doc, local.file, "the index");
+    onlyKeys(doc, VENUES_KEYS, local.file, "the index");
+    const jurisdiction = stringAt(doc, "jurisdiction", local.file, "the index", false);
+    const name = stringAt(doc, "name", local.file, "the index", false);
+    compare2(conflicts, "(index)", "jurisdiction", view.jurisdiction ?? void 0, jurisdiction);
+    compare2(conflicts, "(index)", "name", view.name ?? void 0, name);
+    view.jurisdiction ??= jurisdiction ?? null;
+    view.name ??= name ?? null;
+    arrayAt(doc, "venues", local.file, "the index", false).forEach((raw, i3) => {
+      const where = `venues[${i3}]`;
+      const row2 = objectAt(raw, local.file, where);
+      onlyKeys(row2, VENUE_ROW_KEYS, local.file, where);
+      checkStamp(row2, local.file, where);
+      const code = stringAt(row2, "code", local.file, where, true);
+      const aliases = aliasesOf(row2, local.file, where, "local", false);
+      const existing = byCode.get(code);
+      if (existing) {
+        if (existing.layer === "local") invalid(local.file, where, `code "${code}" appears twice`);
+        compare2(conflicts, code, "name", existing.name, stringAt(row2, "name", local.file, where, false));
+        unionAliases(existing.aliases, aliases);
+        return;
+      }
+      const venue = {
+        code,
+        name: stringAt(row2, "name", local.file, where, true),
+        aliases,
+        ...provenance(row2, local.file, where),
+        layer: "local"
+      };
+      if (row2.aliases === void 0) invalid(local.file, `${where}.aliases`, "is required on a venue learned only in the overlay");
+      byCode.set(code, venue);
+      view.venues.push(venue);
+    });
+    arrayAt(doc, "not_venues", local.file, "the index", false).forEach((raw, i3) => {
+      const row2 = notVenueRow(raw, local.file, `not_venues[${i3}]`, "local");
+      const existing = notByName.get(normalizeName(row2.name));
+      if (existing) {
+        unionAliases(existing.aliases, row2.aliases);
+        return;
+      }
+      notByName.set(normalizeName(row2.name), row2);
+      view.not_venues.push(row2);
+    });
+  }
+  view.venues.push(NO_VENUE_ROW);
+  return view;
+}
+var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
+function recipientOf(row2, file, where, noVenue) {
+  if (!noVenue) {
+    if (row2.recipient !== void 0) invalid(file, `${where}.recipient`, "appears only under _NoVenue");
+    return void 0;
+  }
+  const recipient = stringAt(row2, "recipient", file, where, false);
+  if (recipient !== void 0 && !AUDIENCES.includes(recipient)) {
+    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")} (a letter to the client never enters the tree)`);
+  }
+  return recipient;
+}
+function mergeKinds(shipped, local, noVenue) {
+  const conflicts = [];
+  const view = { kinds: [], conflicts };
+  const byFile = /* @__PURE__ */ new Map();
+  const rows22 = (source) => {
+    const doc = objectAt(source.doc, source.file, "the index");
+    onlyKeys(doc, ["kinds"], source.file, "the index");
+    return arrayAt(doc, "kinds", source.file, "the index", true).map((raw, i3) => {
+      const where = `kinds[${i3}]`;
+      const row2 = objectAt(raw, source.file, where);
+      onlyKeys(row2, KIND_ROW_KEYS, source.file, where);
+      checkStamp(row2, source.file, where);
+      const file = stringAt(row2, "file", source.file, where, true);
+      if (file.endsWith(".md")) {
+        throw new DataServerError(
+          `${source.file}: ${where}: kinds row file "${file}" must be the type file's name without ".md" ("${file.slice(0, -3)}")`,
+          "grammar_violation"
+        );
+      }
+      return { row: row2, where, file };
+    });
+  };
+  if (shipped) {
+    for (const { row: row2, where, file } of rows22(shipped)) {
+      if (byFile.has(file)) invalid(shipped.file, where, `file "${file}" appears twice`);
+      const recipient = recipientOf(row2, shipped.file, where, noVenue);
+      if (noVenue && recipient === void 0) invalid(shipped.file, `${where}.recipient`, "is required under _NoVenue");
+      const kind = {
+        file,
+        name: stringAt(row2, "name", shipped.file, where, true),
+        aliases: aliasesOf(row2, shipped.file, where, "shipped", true),
+        ...recipient ? { recipient } : {},
+        layer: "shipped"
+      };
+      byFile.set(file, kind);
+      view.kinds.push(kind);
+    }
+  }
+  if (local) {
+    for (const { row: row2, where, file } of rows22(local)) {
+      const aliases = aliasesOf(row2, local.file, where, "local", false);
+      const recipient = recipientOf(row2, local.file, where, noVenue);
+      const existing = byFile.get(file);
+      if (existing) {
+        if (existing.layer === "local") invalid(local.file, where, `file "${file}" appears twice`);
+        compare2(conflicts, file, "name", existing.name, stringAt(row2, "name", local.file, where, false));
+        compare2(conflicts, file, "recipient", existing.recipient, recipient);
+        unionAliases(existing.aliases, aliases);
+        continue;
+      }
+      if (row2.aliases === void 0) invalid(local.file, `${where}.aliases`, "is required on a kind learned only in the overlay");
+      if (noVenue && recipient === void 0) invalid(local.file, `${where}.recipient`, "is required under _NoVenue");
+      const kind = {
+        file,
+        name: stringAt(row2, "name", local.file, where, true),
+        aliases,
+        ...recipient ? { recipient } : {},
+        layer: "local"
+      };
+      byFile.set(file, kind);
+      view.kinds.push(kind);
+    }
+  }
+  return view;
+}
+function normalizeName(name) {
+  const words = wordsOf(name);
+  if (words.length > 1 && words[0] === "the") words.shift();
+  return words.join("");
+}
+function wordsOf(text5) {
+  return text5.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+}
+var VENUE_STOPWORDS = [["court"], ["tribunal"], ["of"], ["the"], ["british", "columbia"]];
+var KIND_STOPWORDS = [["of"], ["the"], ["form"]];
+function tokensOf(text5, stopwords) {
+  const words = wordsOf(text5);
+  const out = [];
+  for (let i3 = 0; i3 < words.length; ) {
+    const stop = stopwords.find((phrase) => phrase.every((word, k3) => words[i3 + k3] === word));
+    if (stop) {
+      i3 += stop.length;
+      continue;
+    }
+    out.push(words[i3]);
+    i3 += 1;
+  }
+  return out;
+}
+function initialsOf(name) {
+  const words = name.normalize("NFKC").match(/[\p{L}\p{N}]+/gu) ?? [];
+  return words.filter((word) => new RegExp("^\\p{Lu}", "u").test(word)).map((word) => word[0]).join("").toLowerCase();
+}
+function withoutAffix(code, affix) {
+  if (affix === "" || code === affix) return [];
+  const out = [];
+  if (code.startsWith(affix)) out.push(code.slice(affix.length));
+  if (code.endsWith(affix)) out.push(code.slice(0, code.length - affix.length));
+  return out;
+}
+function resolveAmong(given, entities, jurisdiction, stopwords) {
+  const n3 = normalizeName(given);
+  if (n3 === "") throw new ValidationError(`resolve: ${JSON.stringify(given)} holds no letters or digits`);
+  const equal = [];
+  for (const entity of entities) {
+    const hit = entity.names.find((candidate) => normalizeName(candidate.text) === n3);
+    if (hit) equal.push({ entity, via: hit.via });
+  }
+  if (equal.length === 1) {
+    const { entity, via } = equal[0];
+    return {
+      result: "resolved",
+      code: entity.code,
+      name: entity.name,
+      via,
+      row: entity.row,
+      ...entity.not_venue ? { not_venue: entity.not_venue } : {}
+    };
+  }
+  if (equal.length > 1) {
+    return { result: "ambiguous", alias_split: equal.map(({ entity, via }) => ({ code: entity.code, name: entity.name, via })) };
+  }
+  const j3 = normalizeName(jurisdiction);
+  const givenTokens = tokensOf(given, stopwords);
+  const ours2 = new Set(givenTokens);
+  const candidates = [];
+  const add = (entity, rule) => {
+    if (!candidates.some((c3) => c3.code === entity.code && c3.name === entity.name && c3.rule === rule)) {
+      candidates.push({ code: entity.code, name: entity.name, rule });
+    }
+  };
+  for (const entity of entities) {
+    if (entity.affix) {
+      const code = normalizeName(entity.code);
+      if (withoutAffix(code, j3).includes(n3) || j3 + n3 === code) add(entity, "jurisdiction_affix");
+    }
+    const initials = initialsOf(entity.name);
+    if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity, "acronym");
+    if (givenTokens.length > 0) {
+      for (const { text: text5, via } of entity.names) {
+        if (via === "code") continue;
+        const other = tokensOf(text5, stopwords);
+        if (other.length === 0) continue;
+        const theirs = new Set(other);
+        if (givenTokens.every((t3) => theirs.has(t3)) || other.every((t3) => ours2.has(t3))) {
+          add(entity, "token_containment");
+          break;
+        }
+      }
+    }
+  }
+  return candidates.length ? { result: "near_miss", candidates } : { result: "not_found" };
+}
+function resolveVenue(view, given, jurisdiction) {
+  const entities = [];
+  for (const row2 of view.venues) {
+    if (row2.reserved) continue;
+    entities.push({
+      code: row2.code,
+      name: row2.name,
+      names: [
+        { text: row2.code, via: "code" },
+        { text: row2.name, via: "name" },
+        ...row2.aliases.map((alias) => ({ text: alias.name, via: "alias" }))
+      ],
+      row: row2,
+      affix: true
+    });
+  }
+  for (const nv of view.not_venues) {
+    entities.push({
+      code: NO_VENUE,
+      name: nv.name,
+      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text5) => ({ text: text5, via: "not_venue" })),
+      row: NO_VENUE_ROW,
+      not_venue: nv,
+      affix: false
+    });
+  }
+  return resolveAmong(given, entities, jurisdiction, VENUE_STOPWORDS);
+}
+function resolveKind(view, given, jurisdiction, noVenue, recipient) {
+  if (noVenue && recipient === void 0) {
+    throw new ValidationError(`a _NoVenue resolve needs \`recipient\` (${AUDIENCES.join(", ")})`);
+  }
+  if (!noVenue && recipient !== void 0) {
+    throw new ValidationError("`recipient` applies only under _NoVenue; a venue's kinds carry no recipient");
+  }
+  if (recipient !== void 0 && !AUDIENCES.includes(recipient)) {
+    throw new ValidationError(`recipient must be one of ${AUDIENCES.join(", ")}`);
+  }
+  const entities = view.kinds.filter((row2) => recipient === void 0 || row2.recipient === recipient).map((row2) => ({
+    code: row2.file,
+    name: row2.name,
+    names: [
+      { text: row2.file, via: "code" },
+      { text: row2.name, via: "name" },
+      ...row2.aliases.map((alias) => ({ text: alias.name, via: "alias" }))
+    ],
+    row: row2,
+    affix: false
+  }));
+  return resolveAmong(given, entities, jurisdiction, KIND_STOPWORDS);
+}
+
+// src/schema/file.ts
+var PAGE_NAMES = [
+  "Work Board",
+  "Litigation Strategy",
+  "Job Board",
+  "Procedural History",
+  "Material Facts",
+  "Raw Research",
+  "Arguments",
+  "Loose Threads",
+  "Housekeeping approval"
+];
 function fileToolDefinitions() {
   return [
     {
@@ -77903,6 +77913,8 @@ function fileToolDefinitions() {
     }
   ];
 }
+
+// src/schema/submission-data.ts
 function submissionDataPrefixed(name) {
   return `drafting_data__${name}`;
 }
@@ -78279,6 +78291,8 @@ function submissionDataToolDefinitions() {
     }
   ];
 }
+
+// src/schema/submission-forms.ts
 function formsPrefixed(name) {
   return `drafting_forms__${name}`;
 }
@@ -78650,6 +78664,8 @@ function submissionFormsToolDefinitions() {
     }
   ];
 }
+
+// src/schema/cloud-key.ts
 function cloudKeyToolDefinitions() {
   return [
     {
@@ -78671,6 +78687,8 @@ function cloudKeyToolDefinitions() {
     }
   ];
 }
+
+// src/schema-gen.ts
 function buildToolDefinitions() {
   return [
     ...practiceToolDefinitions(),
@@ -86311,7 +86329,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "b22a11145343";
+var BUILD_STAMP = false ? null : "4fc6fd256f4c";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };

@@ -1,4 +1,4 @@
-// build-stamp: 93a2eb1a7823
+// build-stamp: 43e46593a041
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15470,7 +15470,7 @@ var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 
-// src/schema-gen.ts
+// src/schema/file-ops.ts
 function fileOpsToolDefinitions() {
   return [
     {
@@ -15522,6 +15522,8 @@ function fileOpsToolDefinitions() {
     }
   ];
 }
+
+// src/schema/housekeeping.ts
 function housekeepingToolDefinitions() {
   const matterRun = {
     matter_root: { type: "string" },
@@ -15661,6 +15663,8 @@ function housekeepingToolDefinitions() {
     }
   ];
 }
+
+// src/schema-gen.ts
 function buildFileManagerToolDefinitions() {
   return [
     ...fileOpsToolDefinitions(),

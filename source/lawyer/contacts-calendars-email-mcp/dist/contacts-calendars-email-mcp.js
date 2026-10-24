@@ -1,4 +1,4 @@
-// build-stamp: c953cea0467d
+// build-stamp: 9a9c537d4ff5
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107655,7 +107655,7 @@ var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 
-// src/schema-gen.ts
+// src/schema/mail.ts
 function mailToolDefinitions() {
   const errors = " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), `mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
@@ -107885,6 +107885,8 @@ function mailToolDefinitions() {
     }
   ];
 }
+
+// src/schema/calendar.ts
 function calendarToolDefinitions() {
   const errors = " Errors: `dav_not_configured` (run mail__configure_credential with the calendar fields), `dav_auth` (the server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
   return [
@@ -107923,6 +107925,8 @@ function calendarToolDefinitions() {
     }
   ];
 }
+
+// src/schema/contacts.ts
 function contactsToolDefinitions() {
   const errors = " Errors: `dav_not_configured` (run mail__configure_credential with the contacts fields), `dav_auth` (the server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
   return [
@@ -107952,6 +107956,8 @@ function contactsToolDefinitions() {
     }
   ];
 }
+
+// src/schema-gen.ts
 function buildContactsCalendarsEmailToolDefinitions() {
   return [
     ...mailToolDefinitions(),
