@@ -18,7 +18,8 @@ class NoteTests(unittest.TestCase):
         output = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "SessionStart")
         note = output["additionalContext"]
-        for token in ("/litigator:draft", "report to a client", "supplement", "evidence", "say-so"):
+        for token in ("/litigator:draft", "report to a client", "supplement", "evidence", "say-so",
+                      "An email is never drafted in chat", ".eml"):
             with self.subTest(token=token):
                 self.assertIn(token, note)
 
