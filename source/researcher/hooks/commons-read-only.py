@@ -18,7 +18,6 @@ except Exception as exc:  # a crash would let the write through
     sys.stderr.write(f"Refused: commons-read-only cannot load its helper: {exc!r}\n")
     sys.exit(2)
 
-hook_io.payload()
 hook_io.deny(
     "Probanda's shared legal-commons pool is read-only for now. Writing to it "
     "(push, amend, link, merge, record, stamp, retire) is not available in this "

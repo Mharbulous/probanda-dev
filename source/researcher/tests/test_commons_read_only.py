@@ -110,6 +110,15 @@ class CommonsReadOnlyGuardTests(unittest.TestCase):
         self.assertEqual(decision["hookEventName"], "PreToolUse")
         self.assertEqual(decision["permissionDecision"], "deny")
 
+    def test_guard_denies_a_payload_it_cannot_parse(self):
+        # A crash exits 1, which lets the write through.
+        for payload in ("", "{not json"):
+            with self.subTest(payload=payload):
+                result = subprocess.run([sys.executable, str(HOOK)], input=payload,
+                                        capture_output=True, text=True, encoding="utf-8")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
+
 
 if __name__ == "__main__":
     unittest.main()

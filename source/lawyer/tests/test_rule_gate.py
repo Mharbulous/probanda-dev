@@ -37,10 +37,10 @@ def widget(*values: str) -> dict:
 
 def run(tmp_path: Path, lines: list, tool_input: dict, transcript: str | None = None) -> subprocess.CompletedProcess:
     path = tmp_path / "session.jsonl"
-    path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+    path.write_text("".join(json.dumps(line, ensure_ascii=False) + "\n" for line in lines), encoding="utf-8")
     payload = {"hook_event_name": "PreToolUse", "tool_name": "mcp__plugin_lawyer_data__preferences__write",
                "tool_input": tool_input, "transcript_path": str(path) if transcript is None else transcript}
-    return subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload).encode("utf-8"),
+    return subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                           capture_output=True, timeout=30)
 
 
@@ -63,6 +63,13 @@ def refused(result: subprocess.CompletedProcess, *fragments: str) -> bool:
 def test_an_add_in_the_practitioners_words_passes_after_a_yes_to_the_question(tmp_path):
     lines = [turn(RULE), reply(f"Noted. {QUESTION}"), turn("Yes")]
     result = run(tmp_path, lines, add(RULE))
+    assert result.returncode == 0, result.stderr
+
+
+def test_an_add_in_accented_words_passes(tmp_path):
+    rule = "Never send a letter to Mme Gagné before I have read it — not even a covering letter."
+    lines = [turn(rule), reply(f"Noted. {QUESTION}"), turn("Yes")]
+    result = run(tmp_path, lines, add(rule))
     assert result.returncode == 0, result.stderr
 
 
