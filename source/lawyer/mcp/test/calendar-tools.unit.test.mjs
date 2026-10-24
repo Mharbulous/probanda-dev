@@ -448,7 +448,7 @@ test("list_events refuses calendars that is not a list of names as a validation 
   for (const calendars of ["Work", ["Work", 3], { Work: true }]) {
     const error = await errorOf(context(dav), "calendar__list_events", { start: "2026-10-01", end: "2026-10-02", calendars });
     assert.notEqual(error.code, "dav_error", JSON.stringify(calendars));
-    assert.match(error.message, /calendars must be a list of calendar names/);
+    assert.match(error.message, /calendars must be an array|calendars must be a list of calendar names/);
   }
   assert.equal(dav.logins.length, 0, "no sign-in for a refused call");
 });

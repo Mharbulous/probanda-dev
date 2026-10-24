@@ -360,7 +360,7 @@ test("the nine tools are registered on the file-manager server only and dispatch
     await assert.rejects(callFileManagerTool("housekeeping__journal_append", { matter_root: m.root, run_id, row_id: "x", outcome: "maybe" }), /must be one of: done, failed/);
     await assert.rejects(
       callFileManagerTool("file_ops__move", { matter_root: m.root, source: m.at(LETTER), destination: m.at(LETTER), create_folders: "3. CORRESPONDENCE" }),
-      /create_folders must be an array of strings/
+      /create_folders must be an array/
     );
   } finally {
     m.cleanup();

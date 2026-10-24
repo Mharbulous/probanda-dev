@@ -1,4 +1,4 @@
-// build-stamp: 2c3a23ebaf4b
+// build-stamp: f89022b33dc1
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15713,6 +15713,7 @@ function validateValue(label, value, schema) {
   if (type === "object" && !isPlainObject3(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
   const allowedValues = schema.enum;
   if (allowedValues && !allowedValues.includes(value)) {
     throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);

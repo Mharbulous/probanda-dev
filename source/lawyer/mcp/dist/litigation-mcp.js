@@ -1,4 +1,4 @@
-// build-stamp: 2720aa0a5698
+// build-stamp: 05ddc554f25e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -78743,6 +78743,7 @@ function validateValue(label2, value, schema) {
   if (type === "object" && !isPlainObject3(value)) {
     throw new ValidationError(`${label2} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label2} must be an array`);
   const allowedValues = schema.enum;
   if (allowedValues && !allowedValues.includes(value)) {
     throw new ValidationError(`${label2} must be one of: ${allowedValues.join(", ")}`);
@@ -86372,7 +86373,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "2720aa0a5698";
+var BUILD_STAMP = false ? null : "05ddc554f25e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
