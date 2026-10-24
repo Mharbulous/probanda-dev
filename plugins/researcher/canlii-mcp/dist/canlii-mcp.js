@@ -21097,6 +21097,9 @@ var StdioServerTransport = class {
   }
 };
 
+// src/index.ts
+import { pathToFileURL } from "node:url";
+
 // src/schema.ts
 var CaseIdSchema = external_exports.record(external_exports.string(), external_exports.string());
 var CaseSchema = external_exports.object({
@@ -21622,7 +21625,7 @@ function sanitizeError(message) {
   return message.replace(/api_key=[^&\s]*/gi, "api_key=REDACTED");
 }
 function errorResponse(message) {
-  return textResponse(sanitizeError(message));
+  return { ...textResponse(sanitizeError(message)), isError: true };
 }
 var dateParametersSchema = {
   publishedBefore: dateSchema.describe("Date first published on CanLII (YYYY-MM-DD)"),
@@ -21905,7 +21908,13 @@ Starting without a key; call configure_credential to supply one.
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
-main().catch((error2) => {
-  console.error("Fatal error:", error2);
-  process.exit(1);
-});
+var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  main().catch((error2) => {
+    console.error("Fatal error:", error2);
+    process.exit(1);
+  });
+}
+export {
+  errorResponse
+};
