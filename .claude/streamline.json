@@ -1,0 +1,4 @@
+{
+  "include": ["source", ".claude/skills", "public", "scripts"],
+  "exclude": ["plugins"]
+}

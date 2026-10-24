@@ -87,8 +87,6 @@ fails CLOSED: a checked write it cannot read, a missing transcript, or any error
 of its own refuses the call and says why.
 """
 import difflib
-import html
-import json
 import re
 import sys
 from pathlib import Path
@@ -96,21 +94,13 @@ from pathlib import Path
 try:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
     import hook_io
+    from transcript import GAP, STRUCK, approval, fences, norm, practitioner_turns
 except Exception as exc:  # a crash would let the call through
     sys.stderr.write(f"Refused: practitioner-words-gate cannot load its helper: {exc!r}\n")
     sys.exit(2)
 
 PREFIX = "Refused: "
-TYPED_SOURCES = {"sdk", "typed", "queued"}
-STRUCK = " \x00 "
-GAP = " \x01 "  # where a system-reminder block was cut out of a turn
-REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 ECHO = 300  # the most of a nearest turn a refusal shows
-COMMAND_ARGS = re.compile(r"<command-args>(.*?)</command-args>", re.S)
-DATA_VALUE = re.compile(r"""data-value\s*=\s*(?:"([^"]*)"|'([^']*)')""")
-FENCE = re.compile(r"^```[^\n]*\n(.*?)^```", re.M | re.S)
-# A whole practitioner turn that approves the session's proposal, as approval() normalizes it.
-APPROVALS = {"yes", "approved", "approve", "agreed", "go ahead", "yes, go ahead", "ok", "okay", "do it"}
 SET_ENDS = {"where", "from", "returning", "order", "limit"}
 COMPOUND = {"union", "intersect", "except"}
 REVISIONS = "paragraph_revisions"
@@ -411,104 +401,19 @@ def revision_failures(rows, stmts, turns=None, last_raw="", last_fences=()):
     return out
 
 
-def text_of(content):
-    if isinstance(content, list):
-        return "\n".join(part.get("text", "") for part in content
-                         if isinstance(part, dict) and part.get("type") == "text")
-    return content if isinstance(content, str) else ""
-
-
-def words(text):
-    """text with every system-reminder block cut out, or "" when that leaves no words (#1366)."""
-    text = REMINDER.sub(GAP, text)
-    return text if text.replace(GAP, "").strip() else ""
-
-
-def strike(turn, values):
-    for value in sorted(values, key=len, reverse=True):
-        turn = re.sub(r"(?<!\w)" + re.escape(value) + r"(?!\w)", STRUCK, turn)
-    return turn
-
-
-def approval(turn):
-    """Whether a turn, its struck widget values and cut reminders removed, is a bare yes."""
-    return norm(turn.replace(STRUCK.strip(), " ").replace(GAP.strip(), " ")).rstrip(".!") in APPROVALS
-
-
-def fences(text):
-    """Each fenced code block's content in text, its final newline dropped."""
-    return [b[:-1] if b.endswith("\n") else b for b in FENCE.findall(text)]
-
-
 def read_transcript(path):
     """(practitioner turns with earlier widget values struck, the last practitioner turn with no
     widget value struck, every fenced block, as shown, of the session's visible reply (text parts
     and SendUserMessage messages) between the previous practitioner turn and the last, and the
     scripts of drafting_data__execute calls since the last practitioner turn that a result has
     answered)."""
-    turns, widget_values = [], set()
-    last_raw, last_fences = "", ()
-    shown, executes, executed = [], {}, []
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            try:
-                rec = json.loads(line)
-            except ValueError:
-                continue  # a line the harness is still writing
-            content = (rec.get("message") or {}).get("content")
-            parts = [p for p in content if isinstance(p, dict)] if isinstance(content, list) else []
-            if rec.get("type") == "assistant":
-                for part in parts:
-                    if part.get("type") == "text" and not rec.get("isSidechain"):
-                        shown += fences(part.get("text") or "")
-                    if part.get("type") != "tool_use":
-                        continue
-                    name = part.get("name") or ""
-                    tool_input = part.get("input") or {}
-                    if name.endswith("SendUserMessage") and not rec.get("isSidechain"):
-                        message = tool_input.get("message")
-                        shown += fences(message if isinstance(message, str) else "")
-                    elif name.endswith("drafting_data__execute") and not rec.get("isSidechain"):
-                        executes[part.get("id")] = tool_input.get("sql_script") or ""
-                    if name.endswith("show_widget"):
-                        code = "\n".join(v for v in (part.get("input") or {}).values() if isinstance(v, str))
-                        widget_values |= {html.unescape(a or b) for a, b in DATA_VALUE.findall(code)
-                                          if (a or b).strip()}
-            elif rec.get("type") == "user":
-                for part in parts:
-                    if part.get("type") == "tool_result" and part.get("tool_use_id") in executes:
-                        executed.append(executes.pop(part.get("tool_use_id")))
-                origin = rec.get("origin")
-                if rec.get("isMeta") or not isinstance(origin, dict) or origin.get("kind") != "human":
-                    continue
-                turn = words(text_of(content))
-                if rec.get("promptSource") is None:
-                    # A slash command carries no promptSource: only its arguments are the practitioner's words.
-                    args = COMMAND_ARGS.search(turn) if "<command-name>" in turn else None
-                    if not args:
-                        continue
-                    turn = words(args.group(1))
-                elif rec["promptSource"] not in TYPED_SOURCES:
-                    continue
-                if turn:
-                    turns.append(strike(turn, widget_values))
-                    last_raw, last_fences = turn, tuple(shown)
-                    shown, executes, executed = [], {}, []
-            elif rec.get("type") == "attachment":
-                queued = rec.get("attachment") or {}
-                origin = queued.get("origin")
-                if (queued.get("type") == "queued_command" and not queued.get("isMeta") and isinstance(origin, dict)
-                        and origin.get("kind") == "human"):
-                    turn = words(text_of(queued.get("prompt")))
-                    if turn:
-                        turns.append(strike(turn, widget_values))
-                        last_raw, last_fences = turn, tuple(shown)
-                        shown, executes, executed = [], {}, []
-    return turns, last_raw, last_fences, executed
-
-
-def norm(text):
-    return " ".join(text.split()).casefold()
+    *segments, tail = practitioner_turns(path)
+    last = segments[-1] if segments else None
+    last_raw = last.raw if last else ""
+    last_fences = tuple(block for part in last.reply for block in fences(part)) if last else ()
+    executed = [call.input.get("sql_script") or "" for call in tail.calls
+                if call.name.endswith("drafting_data__execute") and not call.sidechain and call.result is not None]
+    return [segment.struck for segment in segments], last_raw, last_fences, executed
 
 
 def nearest(value, turns):

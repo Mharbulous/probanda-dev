@@ -18,8 +18,8 @@ This gate is the Global Rule: it applies to every user, and only the Probanda te
   visible reply earlier in this session (the pasted replacement). A bare "Approved" does neither.
   Known limit: the gate cannot tell which Rule the turn names, only that it asks for a change.
 
-A practitioner turn is read as Probanda's other transcript gates read one (copied, not imported,
-so this hook depends on no other plugin): a `user` line with no isMeta, origin kind "human", and promptSource "sdk", "typed" or "queued"; a
+A practitioner turn is read as Probanda's other transcript gates read one (shared/scripts/transcript.py):
+a `user` line with no isMeta, origin kind "human", and promptSource "sdk", "typed" or "queued"; a
 queued_command attachment with origin kind "human"; or the command-args of a slash command. Every
 <system-reminder> block is cut out, and every data-value of the session's earlier show_widget calls
 is struck, so a widget echo supplies no words. A run ignores case and runs of whitespace;
@@ -28,8 +28,6 @@ punctuation and word order count.
 Exit 0 allows the call; exit 2 refuses it and the session reads stderr. The gate fails CLOSED: a
 missing transcript, an op it does not know, or any error of its own refuses the call.
 """
-import html
-import json
 import re
 import sys
 from pathlib import Path
@@ -40,20 +38,13 @@ try:
     sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
                                      HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
     import hook_io
+    from transcript import STRUCK, approval, fences, norm, practitioner_turns
 except Exception as exc:  # a crash would let the call through
     sys.stderr.write(f"Refused: rule-gate cannot load its helper: {exc!r}\n")
     sys.exit(2)
 
 PREFIX = "Refused: "
 ENFORCE_QUESTION = "Do you want me to enforce that rule for all future sessions?"
-TYPED_SOURCES = {"sdk", "typed", "queued"}
-STRUCK = " \x00 "
-GAP = " \x01 "  # where a system-reminder block was cut out of a turn
-REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
-COMMAND_ARGS = re.compile(r"<command-args>(.*?)</command-args>", re.S)
-DATA_VALUE = re.compile(r"""data-value\s*=\s*(?:"([^"]*)"|'([^']*)')""")
-FENCE = re.compile(r"^```[^\n]*\n(.*?)^```", re.M | re.S)
-APPROVALS = {"yes", "approved", "approve", "agreed", "go ahead", "yes, go ahead", "ok", "okay", "do it"}
 REMOVAL = re.compile(r"(?i)\b(remove|retire|delete|drop|cancel|revoke|reverse|replace|change|amend|modify|"
                      r"update|undo|forget|withdraw|scrap|no longer)\b")
 CEREMONY = ("A Rule is made only in the practitioner's own words: ask \"" + ENFORCE_QUESTION + "\" and save the "
@@ -62,93 +53,16 @@ CEREMONY = ("A Rule is made only in the practitioner's own words: ask \"" + ENFO
             "Rule only when their own words ask to remove or replace it.")
 
 
-def norm(text):
-    return " ".join(text.split()).casefold()
-
-
-def text_of(content):
-    if isinstance(content, list):
-        return "\n".join(part.get("text", "") for part in content
-                         if isinstance(part, dict) and part.get("type") == "text")
-    return content if isinstance(content, str) else ""
-
-
-def words(text):
-    """text with every system-reminder block cut out, or "" when that leaves no words."""
-    text = REMINDER.sub(GAP, text)
-    return text if text.replace(GAP, "").strip() else ""
-
-
-def strike(turn, values):
-    for value in sorted(values, key=len, reverse=True):
-        turn = re.sub(r"(?<!\w)" + re.escape(value) + r"(?!\w)", STRUCK, turn)
-    return turn
-
-
-def approval(turn):
-    """Whether a turn, its struck widget values and cut reminders removed, is a bare yes."""
-    return norm(turn.replace(STRUCK.strip(), " ").replace(GAP.strip(), " ")).rstrip(".!") in APPROVALS
-
-
 def read_transcript(path):
     """(practitioner turns with widget values struck, the session's visible reply between the turn
     before the last and the last, every fenced block the session's visible replies showed before
     the last turn, whether a preferences__write retire was called since the last turn)."""
-    turns, widget_values = [], set()
-    visible, last_reply, shown = [], "", []
-    retired = False
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            try:
-                rec = json.loads(line)
-            except ValueError:
-                continue  # a line the harness is still writing
-            content = (rec.get("message") or {}).get("content")
-            parts = [p for p in content if isinstance(p, dict)] if isinstance(content, list) else []
-            turn = ""
-            if rec.get("type") == "assistant":
-                for part in parts:
-                    if part.get("type") == "text" and not rec.get("isSidechain"):
-                        visible.append(part.get("text") or "")
-                    if part.get("type") != "tool_use":
-                        continue
-                    name = part.get("name") or ""
-                    tool_input = part.get("input") or {}
-                    if name.endswith("SendUserMessage") and not rec.get("isSidechain"):
-                        message = tool_input.get("message")
-                        visible.append(message if isinstance(message, str) else "")
-                    elif (name.endswith("preferences__write") and not rec.get("isSidechain")
-                          and tool_input.get("op") == "retire"):
-                        retired = True
-                    if name.endswith("show_widget"):
-                        code = "\n".join(v for v in tool_input.values() if isinstance(v, str))
-                        widget_values |= {html.unescape(a or b) for a, b in DATA_VALUE.findall(code)
-                                          if (a or b).strip()}
-                continue
-            if rec.get("type") == "user":
-                origin = rec.get("origin")
-                if rec.get("isMeta") or not isinstance(origin, dict) or origin.get("kind") != "human":
-                    continue
-                turn = words(text_of(content))
-                if rec.get("promptSource") is None:
-                    # A slash command carries no promptSource: only its arguments are the practitioner's words.
-                    args = COMMAND_ARGS.search(turn) if "<command-name>" in turn else None
-                    if not args:
-                        continue
-                    turn = words(args.group(1))
-                elif rec["promptSource"] not in TYPED_SOURCES:
-                    continue
-            elif rec.get("type") == "attachment":
-                queued = rec.get("attachment") or {}
-                origin = queued.get("origin")
-                if (queued.get("type") == "queued_command" and not queued.get("isMeta") and isinstance(origin, dict)
-                        and origin.get("kind") == "human"):
-                    turn = words(text_of(queued.get("prompt")))
-            if turn:
-                turns.append(strike(turn, widget_values))
-                last_reply, visible, retired = "\n".join(visible), [], False
-                shown += FENCE.findall(last_reply)
-    return turns, last_reply, shown, retired
+    *segments, tail = practitioner_turns(path)
+    replies = ["\n".join(segment.reply) for segment in segments]
+    shown = [block for reply in replies for block in fences(reply)]
+    retired = any(call.name.endswith("preferences__write") and not call.sidechain and call.input.get("op") == "retire"
+                  for call in tail.calls)
+    return [segment.struck for segment in segments], (replies or [""])[-1], shown, retired
 
 
 def refuse(message):

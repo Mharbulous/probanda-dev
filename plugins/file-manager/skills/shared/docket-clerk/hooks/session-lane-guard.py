@@ -10,7 +10,6 @@ The lane marker in the temp dir is a cache: when it is missing, as after a sessi
 resumes on another host, the lane is rebuilt from the session transcript.
 Fails OPEN on any unexpected error, loudly.
 """
-import json
 import re
 import sys
 import tempfile
@@ -18,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import hook_io  # noqa: E402
+import transcript  # noqa: E402
 
 LANES = {
     "drafting": {"draft", "publish", "polish-substance", "assemble", "prepare", "work"},
@@ -52,26 +52,24 @@ def started(label):
 
 def lane_from_transcript(path):
     """Return [lane, label] for the first lane the main session entered, or None."""
-    with open(path, encoding="utf-8") as lines:
-        for line in lines:
-            record = json.loads(line) if line.strip() else {}
-            if record.get("isSidechain"):
-                continue
-            content = (record.get("message") or {}).get("content")
-            if record.get("type") == "user":
-                texts = [content] if isinstance(content, str) else [
-                    part.get("text") or "" for part in content or [] if part.get("type") == "text"]
-                for text in texts:
-                    match = COMMAND_RE.search(text) or SLASH_RE.match(text)
-                    lane, label = skill_lane(match.group(1) if match else "")
+    for record in transcript.records(path):
+        if record.get("isSidechain"):
+            continue
+        content = (record.get("message") or {}).get("content")
+        if record.get("type") == "user":
+            texts = [content] if isinstance(content, str) else [
+                part.get("text") or "" for part in content or [] if part.get("type") == "text"]
+            for text in texts:
+                match = COMMAND_RE.search(text) or SLASH_RE.match(text)
+                lane, label = skill_lane(match.group(1) if match else "")
+                if lane:
+                    return [lane, label]
+        elif record.get("type") == "assistant" and isinstance(content, list):
+            for part in content:
+                if part.get("type") == "tool_use" and part.get("name") == "Skill":
+                    lane, label = skill_lane((part.get("input") or {}).get("skill") or "")
                     if lane:
                         return [lane, label]
-            elif record.get("type") == "assistant" and isinstance(content, list):
-                for part in content:
-                    if part.get("type") == "tool_use" and part.get("name") == "Skill":
-                        lane, label = skill_lane((part.get("input") or {}).get("skill") or "")
-                        if lane:
-                            return [lane, label]
     return None
 
 
