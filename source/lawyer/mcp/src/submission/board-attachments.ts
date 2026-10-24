@@ -6,13 +6,14 @@
 // A client letter's counsel's-review status lives only in its review draft's first line
 // (/draft letters.md section 10). That one line is read, from each `.md` at the top of the folder,
 // and nothing else of the file is read or drawn. A path that leaves the matter's draft folder, by its
-// stored or its real path, or whose real path lies in a privileged or disclosed tree, is reported and
+// stored or its real path, or whose real path lies where nothing is read (files/zones.ts), is reported and
 // never read; a path with nothing at it is reported as missing, and one that cannot be read as
 // unreadable, never dropped.
 
 import { closeSync, existsSync, openSync, readdirSync, readSync, realpathSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
+import { zoneProblem } from "../files/zones.js";
 import type { AttachedDraft, WorkBoardData } from "./forms/render-work-board.js";
 
 /** The hold line's opening (/draft letters.md section 10); the rest of the line is the status. */
@@ -89,7 +90,7 @@ export function attachedDrafts(draftDir: string, section: WorkBoardData): Attach
     if (!existsSync(abs)) return { ...entry, state: "missing", review: [] };
     try {
       const real = realpathSync.native(abs);
-      if (leavesDraftFolder(relative(realpathSync.native(draftDir), real)) || real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) {
+      if (leavesDraftFolder(relative(realpathSync.native(draftDir), real)) || zoneProblem("read", real)) {
         return { ...entry, state: "outside", review: [] };
       }
       const isFolder = statSync(abs).isDirectory();

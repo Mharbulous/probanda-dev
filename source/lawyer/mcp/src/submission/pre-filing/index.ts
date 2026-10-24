@@ -8,6 +8,7 @@ import { existsSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import { ValidationError } from "../../errors.js";
+import { zoneProblem } from "../../files/zones.js";
 import { exhibitNumbersForFiling, fetchFilingDocuments } from "../forms/render-vaniac-submissions.js";
 import type { FilingRow } from "../forms/query.js";
 import { submissionDataQuery } from "../backend.js";
@@ -40,7 +41,7 @@ export function resolvePackageDir(packageDir: string): string {
   if (!existsSync(dir) || !statSync(dir).isDirectory()) throw refuse("it does not exist or is not a folder");
   const real = realpathSync.native(dir);
   const parts = real.split(/[\\/]/);
-  if (parts.some((p) => /^(privileged|disclosed)$/i.test(p))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (zoneProblem("read", real)) throw refuse("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   const draftIdx = parts.findIndex((p) => /^0\. DRAFT/i.test(p));
   if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse("it must lie beneath the matter's 0. DRAFT folder");
   if (basename(real).toLowerCase() !== basename(dir).toLowerCase() || dirname(real).toLowerCase() !== realpathSync.native(dirname(dir)).toLowerCase()) {

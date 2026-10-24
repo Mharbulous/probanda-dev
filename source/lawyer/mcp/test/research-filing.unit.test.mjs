@@ -30,6 +30,7 @@ function fixture() {
     "6. LAW/Issue/2020 BCSC 1.pdf": "already filed\n",
     "6. LAW junk/x.pdf": "x\n",
     "4. LAWYER BRIEF/CoWork/privileged/6. LAW/p.pdf": "p\n",
+    "TRASH/6. LAW/t.pdf": "t\n",
   };
   for (const [rel, body] of Object.entries(files)) {
     mkdirSync(join(matter, rel, ".."), { recursive: true });
@@ -75,6 +76,7 @@ test("resolveLawDir refuses everything outside an existing 6. LAW tree", () => {
     assert.equal(codeOf(() => resolveLawDir(join(f.matter, "6. LAW junk"))), "not_law_folder");
     assert.equal(codeOf(() => resolveLawDir(join(f.law, "..", "..", "6. LAW junk"))), "not_law_folder");
     assert.equal(codeOf(() => resolveLawDir(f.at("4. LAWYER BRIEF/CoWork/privileged/6. LAW"))), "protected");
+    assert.equal(codeOf(() => resolveLawDir(f.at("TRASH/6. LAW"))), "protected");
 
     assert.equal(resolveLawDir(f.law).toLowerCase(), f.law.toLowerCase());
     assert.equal(resolveLawDir(join(f.law, "..", "Issue")).toLowerCase(), f.law.toLowerCase());

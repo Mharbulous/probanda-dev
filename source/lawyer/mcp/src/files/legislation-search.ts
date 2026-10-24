@@ -22,8 +22,8 @@ import { DataServerError } from "../errors.js";
 import { htmlBlocks } from "../sources/fetch.js";
 import { validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
+import { zoneProblem } from "./zones.js";
 
-const PROTECTED_SEGMENTS = new Set(["privileged", "disclosed"]);
 const TEXT_EXTENSIONS = new Set([".md", ".txt"]);
 const HTML_EXTENSIONS = new Set([".htm", ".html"]);
 const EXTRACTED_EXTENSIONS = new Set([".pdf", ".docx"]);
@@ -242,8 +242,8 @@ function resolveMatterFile(matterRoot: string, path: string): string {
   if (!file.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
     throw new DataServerError(`path is not in this matter: ${file}`, "not_in_matter");
   }
-  if (file.split(/[\\/]+/).some((s) => PROTECTED_SEGMENTS.has(s.toLowerCase()))) {
-    throw new DataServerError(`path is inside a privileged/disclosed tree: ${file}`, "protected");
+  if (zoneProblem("read", file)) {
+    throw new DataServerError(`path is inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${file}`, "protected");
   }
   return file;
 }

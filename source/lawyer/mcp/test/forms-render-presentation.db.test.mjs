@@ -170,6 +170,9 @@ test("render refuses a draft_dir that is not the database's own draft folder, or
     const privilegedDraft = join(f.dir, "privileged", "0. DRAFT");
     mkdirSync(privilegedDraft, { recursive: true });
     assert.throws(() => renderFromDraft(f, privilegedDraft), /privileged or disclosed/);
+    const trashedDraft = join(f.dir, "TRASH", "0. DRAFT");
+    mkdirSync(trashedDraft, { recursive: true });
+    assert.throws(() => renderFromDraft(f, trashedDraft), /TRASH or 0\. CASE DATA/);
     assert.ok(!existsSync(leaf));
     assert.deepEqual(readdirSync(otherDraft), []);
   } finally {

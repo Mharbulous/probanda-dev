@@ -27,6 +27,7 @@ import type { AddressInfo } from "node:net";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { zoneProblem } from "../files/zones.js";
 import { renderApprovalPage, simplePage, stalePage } from "./page.js";
 import { Checker, INFORMATION_ONLY, validateEntries } from "./proposal.js";
 import {
@@ -41,7 +42,6 @@ import {
   requireProposal,
   writeNewDurably,
 } from "./run-dir.js";
-import { inFirewall } from "./zones.js";
 
 interface Grant {
   matter: Matter;
@@ -253,7 +253,7 @@ function file(grant: Grant, rowId: string, res: ServerResponse): void {
     return send(res, 404, "text/plain; charset=utf-8", "The file is no longer there");
   }
   const inside = pathWin32.relative(grant.matter.root, real);
-  if (inside.startsWith("..") || pathWin32.isAbsolute(inside) || inFirewall(inside.split(pathWin32.sep))) {
+  if (inside.startsWith("..") || pathWin32.isAbsolute(inside) || zoneProblem("run-files", real)) {
     return send(res, 403, "text/plain; charset=utf-8", "This file is not opened from the page");
   }
   const ext = pathWin32.extname(real).toLowerCase();

@@ -5,7 +5,7 @@
 // outside folders 0 and 1, TRASH, and any privileged or disclosed tree, with two exceptions: the
 // matter's `0. DRAFT*` folder itself, only for "Move to 0. DRAFT unchanged", which keeps the
 // current name; and that folder's `Superseded` subfolder, only for matter-data's supersede-draft
-// (`superseded`), under any name (the rules live in housekeeping/zones.ts). Only folders named in
+// (`superseded`), under any name (the rules live in files/zones.ts). Only folders named in
 // `create_folders` are created. It never overwrites and never adds a suffix, and refuses a
 // cross-device move before creating anything. Every refusal is thrown before the first filesystem change. Even under a race
 // it never overwrites: the destination is claimed by an exclusive create before the rename
@@ -15,10 +15,10 @@ import { closeSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, r
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
-import { POINTER_FILES, validateMatterRoot } from "../files/matter-root.js";
+import { validateMatterRoot } from "../files/matter-root.js";
+import { isDraftFolder, supersededDestinationProblem, zoneProblem } from "../files/zones.js";
 import { bareNameProblem } from "../housekeeping/proposal.js";
 import { sameFile } from "../housekeeping/resolve.js";
-import { destinationProblem, inFirewall, isDraftFolder, supersededDestinationProblem } from "../housekeeping/zones.js";
 
 export interface MoveResult {
   moved_from: string;
@@ -59,14 +59,8 @@ export function fileOpsMove(
     if (err instanceof DataServerError) throw err;
     throw new DataServerError(`source does not exist: ${source}`, "not_found");
   }
-  const srcRel = relativeInside(root, src, "source");
-  const srcSegments = srcRel.split(pathWin32.sep).map((s) => s.toLowerCase());
-  if (
-    (srcSegments.length === 1 && POINTER_FILES.includes(srcSegments[0])) ||
-    srcSegments[0] === "trash" ||
-    srcSegments[0] === "0. case data" ||
-    inFirewall(srcSegments)
-  ) {
+  relativeInside(root, src, "source");
+  if (zoneProblem("move-from", src, root)) {
     throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
 
@@ -95,13 +89,13 @@ export function fileOpsMove(
       throw new DataServerError(`with superseded, create_folders may name only ${destDir}: ${other}`, "invalid_argument");
     }
   } else if (draftUnchanged) {
-    if (destinationProblem(destSegments, true)) {
+    if (zoneProblem("move-to", destDir, root, true)) {
       throw new DataServerError(`draft_unchanged moves only into the matter's 0. DRAFT folder: ${destination}`, "invalid_argument");
     }
     if (name !== pathWin32.basename(src)) {
       throw new DataServerError(`Move to 0. DRAFT unchanged keeps the current name (${pathWin32.basename(src)}), not ${name}`, "draft_name_changed");
     }
-  } else if (destinationProblem(destSegments)) {
+  } else if (zoneProblem("move-to", destDir, root)) {
     throw new DataServerError(
       `destination is protected (folders 0 and 1 except Move to 0. DRAFT unchanged, TRASH, or a privileged/disclosed tree): ${destination}`,
       "protected"

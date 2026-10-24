@@ -356,6 +356,9 @@ test("package_dir confinement: outside 0. DRAFT, or inside privileged/, is refus
     const priv = join(f.root, "0. DRAFT", "privileged", "pkg");
     mkdirSync(priv, { recursive: true });
     assert.throws(() => submissionFormsPreFilingCheck(f.dbPath, 1, priv), /privileged or disclosed/);
+    const trashed = join(f.root, "0. DRAFT", "TRASH", "pkg");
+    mkdirSync(trashed, { recursive: true });
+    assert.throws(() => submissionFormsPreFilingCheck(f.dbPath, 1, trashed), /TRASH or 0\. CASE DATA/);
     assert.throws(() => submissionFormsPreFilingCheck(f.dbPath, 1, "relative/path"), /absolute/);
   } finally {
     f.cleanup();

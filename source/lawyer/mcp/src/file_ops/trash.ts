@@ -20,11 +20,10 @@ import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
 import { POINTER_FILES } from "../files/matter-root.js";
+import { zoneProblem } from "../files/zones.js";
 
 const TRASH = "TRASH";
 const TRASH_LOG = ".trash-log.jsonl";
-// Path segments this tool never moves out of: the databases folder and the firewall zones.
-const PROTECTED_SEGMENTS = new Set(["0. case data", "privileged", "disclosed"]);
 
 export interface TrashPlan {
   would_move_from: string;
@@ -75,14 +74,7 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date()): Tr
   }
 
   const rel = pathWin32.relative(root, target);
-  const relParts = rel ? rel.split(pathWin32.sep) : [];
-  const first = relParts[0]?.toLowerCase();
-  if (
-    relParts.length === 0 ||
-    (relParts.length === 1 && POINTER_FILES.includes(first)) ||
-    first === TRASH.toLowerCase() ||
-    target.split(pathWin32.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))
-  ) {
+  if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"

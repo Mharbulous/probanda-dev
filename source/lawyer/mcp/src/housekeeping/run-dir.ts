@@ -17,9 +17,9 @@ import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
 import { existingCaseDataFolder, validateMatterRoot } from "../files/matter-root.js";
+import { zoneProblem } from "../files/zones.js";
 import { writeStatusFile } from "../submission/render-job.js";
 import { type Approval, type Proposal, validateApproval, validateProposal } from "./proposal.js";
-import { inFirewall } from "./zones.js";
 
 /**
  * Fixed-width local timestamp to the millisecond plus a short random suffix:
@@ -93,8 +93,7 @@ export function existingRunDir(matter: Matter, runId: string): string {
 function confineRunDir(matter: Matter, runId: string): string {
   const expected = pathWin32.join(matter.housekeeping, runId);
   const real = realpathSync.native(expected);
-  const segments = pathWin32.relative(matter.caseData, real).split(pathWin32.sep);
-  if (real.toLowerCase() !== expected.toLowerCase() || inFirewall(segments)) {
+  if (real.toLowerCase() !== expected.toLowerCase() || zoneProblem("run-files", real)) {
     throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
   }
   return real;

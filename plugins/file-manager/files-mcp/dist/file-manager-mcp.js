@@ -1,4 +1,4 @@
-// build-stamp: 43e46593a041
+// build-stamp: 9c709817547f
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15734,7 +15734,7 @@ import {
   renameSync,
   statSync as statSync3
 } from "node:fs";
-import { win32 as pathWin323 } from "node:path";
+import { win32 as pathWin324 } from "node:path";
 
 // src/files/matter-root.ts
 import { existsSync as existsSync4, readdirSync as readdirSync4, readFileSync as readFileSync2, statSync as statSync2 } from "node:fs";
@@ -16715,52 +16715,88 @@ function existingCaseDataFolder(root, env = process.env) {
   return canon;
 }
 
+// src/files/zones.ts
+import { win32 as pathWin323 } from "node:path";
+var FIREWALL = /^(privileged|disclosed)$/i;
+var TRASH = /^trash$/i;
+var CASE_DATA = /^0\. case data$/i;
+var DRAFT_FOLDER = /^0\. DRAFT/i;
+var FOLDERS_0_AND_1 = /^[01]\./;
+var ZONES = {
+  read: { anywhere: [FIREWALL, TRASH, CASE_DATA], top: [], phrase: "never read" },
+  scan: { anywhere: [FIREWALL, TRASH, CASE_DATA, DRAFT_FOLDER], top: [], phrase: "never scanned" },
+  write: { anywhere: [FIREWALL, TRASH, CASE_DATA], top: [], phrase: "never written to" },
+  "move-from": { anywhere: [FIREWALL, CASE_DATA], top: [TRASH], phrase: "never moved out of" },
+  "move-to": { anywhere: [FIREWALL], top: [TRASH, FOLDERS_0_AND_1], phrase: "never a destination" },
+  "run-files": { anywhere: [FIREWALL], top: [], phrase: "never used for run files" }
+};
+function isDraftFolder(name) {
+  return DRAFT_FOLDER.test(name);
+}
+function zoneProblem(purpose, path, root, draftUnchanged = false) {
+  const zone = ZONES[purpose];
+  const segments = path.split(/[\\/]+/);
+  if (segments.some((s) => FIREWALL.test(s))) return `a privileged or disclosed folder is ${zone.phrase}`;
+  const below = root === void 0 ? [] : pathWin323.relative(root, path).split(pathWin323.sep).filter(Boolean);
+  if (purpose === "move-to" && draftUnchanged) {
+    return below.length === 1 && DRAFT_FOLDER.test(below[0]) ? null : "Move to 0. DRAFT unchanged moves only into the matter's 0. DRAFT folder";
+  }
+  const blocked = segments.find((s) => zone.anywhere.some((rule) => rule.test(s)));
+  if (blocked) return `${blocked} is ${zone.phrase}`;
+  if (below.length && zone.top.some((rule) => rule.test(below[0]))) return `${below[0]} is ${zone.phrase}`;
+  if (purpose === "move-from") {
+    if (below.length === 0) return "the matter folder itself is never moved";
+    if (below.length === 1 && POINTER_FILES.includes(below[0].toLowerCase())) return "the matter pointer is never moved";
+  }
+  return null;
+}
+function supersededDestinationProblem(segments, draftFolder) {
+  return segments.length === 2 && segments[0].toLowerCase() === draftFolder.toLowerCase() && segments[1].toLowerCase() === "superseded" ? null : `a superseded version moves only into ${draftFolder}\\Superseded`;
+}
+
 // src/file_ops/trash.ts
-var TRASH = "TRASH";
+var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
-var PROTECTED_SEGMENTS = /* @__PURE__ */ new Set(["0. case data", "privileged", "disclosed"]);
 function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
-  if (typeof path !== "string" || !pathWin323.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin324.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   let target;
   try {
-    target = pathWin323.join(realpathSync2.native(pathWin323.dirname(path)), pathWin323.basename(path));
+    target = pathWin324.join(realpathSync2.native(pathWin324.dirname(path)), pathWin324.basename(path));
     lstatSync(target);
   } catch {
     throw new DataServerError(`path does not exist: ${path}`, "not_found");
   }
   const stat = lstatSync(target);
   const ancestors = [target];
-  for (let dir = pathWin323.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin323.dirname(dir)) {
+  for (let dir = pathWin324.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin324.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync5(pathWin323.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync5(pathWin324.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin323.join(dir, marker))));
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin324.join(dir, marker))));
   if (root === void 0) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
-  const rel = pathWin323.relative(root, target);
-  const relParts = rel ? rel.split(pathWin323.sep) : [];
-  const first = relParts[0]?.toLowerCase();
-  if (relParts.length === 0 || relParts.length === 1 && POINTER_FILES.includes(first) || first === TRASH.toLowerCase() || target.split(pathWin323.sep).some((segment) => PROTECTED_SEGMENTS.has(segment.toLowerCase()))) {
+  const rel = pathWin324.relative(root, target);
+  if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
-      `path is protected (the workspace root, the matter pointer, ${TRASH}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
+      `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }
-  let dest = pathWin323.join(root, TRASH, rel);
+  let dest = pathWin324.join(root, TRASH2, rel);
   if (present(dest)) {
     const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin323.extname(dest);
+    const ext = stat.isDirectory() ? "" : pathWin324.extname(dest);
     dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
     if (present(dest)) {
       throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
@@ -16768,7 +16804,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   if (dryRun) return { would_move_from: target, would_move_to: dest };
   const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync5(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync2(pathWin323.dirname(dest), { recursive: true });
+  mkdirSync2(pathWin324.dirname(dest), { recursive: true });
   try {
     renameSync(target, dest);
   } catch (err) {
@@ -16782,7 +16818,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   try {
     const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin323.join(root, TRASH, TRASH_LOG), line + "\n", "utf-8");
+    appendFileSync(pathWin324.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
   } catch (err) {
     result.log_error = err instanceof Error ? err.message : String(err);
   }
@@ -16806,11 +16842,11 @@ function stamp(d) {
 
 // src/file_ops/move.ts
 import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
-import { win32 as pathWin328 } from "node:path";
+import { win32 as pathWin329 } from "node:path";
 
 // src/housekeeping/proposal.ts
 import { realpathSync as realpathSync3 } from "node:fs";
-import { win32 as pathWin324 } from "node:path";
+import { win32 as pathWin325 } from "node:path";
 var SECTIONS = ["offered", "ingested_only", "deferred"];
 var ACTION_GROUPS = {
   file: "Rename and move",
@@ -17023,7 +17059,7 @@ function canonical(path) {
   try {
     return realpathSync3.native(path);
   } catch {
-    return pathWin324.resolve(path);
+    return pathWin325.resolve(path);
   }
 }
 var MAX_PROBLEMS = 20;
@@ -17090,7 +17126,7 @@ var Checker = class {
 
 // src/housekeeping/resolve.ts
 import { readdirSync as readdirSync7, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
-import { win32 as pathWin327 } from "node:path";
+import { win32 as pathWin328 } from "node:path";
 
 // src/practice/matter-data-root.ts
 import { existsSync as existsSync6, readFileSync as readFileSync3 } from "node:fs";
@@ -17125,7 +17161,7 @@ function resolveCaseDataRoot(env = process.env, fallback) {
 
 // src/housekeeping/name-gate.ts
 import { existsSync as existsSync7 } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
+import { win32 as pathWin326 } from "node:path";
 var DRIVER = `import contextlib, io, json, sys
 import name_gate
 payload = json.load(sys.stdin)
@@ -17148,9 +17184,9 @@ function fileNamingSkillDir(env = process.env, installRoot) {
     plugin: "lawyer",
     installRoot
   });
-  const dir = pathWin325.join(shipped.root, "file-naming");
+  const dir = pathWin326.join(shipped.root, "file-naming");
   for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
-    if (!existsSync7(pathWin325.join(dir, ...rel))) {
+    if (!existsSync7(pathWin326.join(dir, ...rel))) {
       throw new DataServerError(
         `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
         "repo_root_missing"
@@ -17166,10 +17202,10 @@ function runNameGate(groups, env = process.env) {
   const parsed = runPythonDriver({
     label: "file-naming name gate",
     driver: pythonDriverFile("housekeeping-name-gate", DRIVER),
-    payload: JSON.stringify({ registry: pathWin325.join(dir, "references", "code-registry.md"), groups: live }),
+    payload: JSON.stringify({ registry: pathWin326.join(dir, "references", "code-registry.md"), groups: live }),
     env,
     timeoutMs: READ_TIMEOUT_MS,
-    extraEnv: { PYTHONPATH: pathWin325.join(dir, "scripts") }
+    extraEnv: { PYTHONPATH: pathWin326.join(dir, "scripts") }
   });
   let next = 0;
   return groups.map((g) => g.names.length > 0 ? parsed.groups[next++] : []);
@@ -17178,7 +17214,7 @@ function runNameGate(groups, env = process.env) {
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
 import { closeSync as closeSync2, existsSync as existsSync9, fsyncSync, mkdirSync as mkdirSync3, openSync as openSync2, readdirSync as readdirSync6, readFileSync as readFileSync5, realpathSync as realpathSync4, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
-import { win32 as pathWin326 } from "node:path";
+import { win32 as pathWin327 } from "node:path";
 
 // src/submission/render-job.ts
 import { closeSync, existsSync as existsSync8, openSync, readFileSync as readFileSync4, renameSync as renameSync2, statSync as statSync4, unlinkSync as unlinkSync2, utimesSync, writeFileSync as writeFileSync2, writeSync } from "node:fs";
@@ -17210,29 +17246,6 @@ function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
   return code;
 }
 
-// src/housekeeping/zones.ts
-var FIREWALL_SEGMENTS = /* @__PURE__ */ new Set(["privileged", "disclosed"]);
-var DRAFT_FOLDER = /^0\. DRAFT/i;
-function isDraftFolder(name) {
-  return DRAFT_FOLDER.test(name);
-}
-function inFirewall(segments) {
-  return segments.some((s) => FIREWALL_SEGMENTS.has(s.toLowerCase()));
-}
-function destinationProblem(segments, draftUnchanged = false) {
-  if (draftUnchanged) {
-    return segments.length === 1 && DRAFT_FOLDER.test(segments[0]) ? null : "Move to 0. DRAFT unchanged moves only into the matter's 0. DRAFT folder";
-  }
-  if (inFirewall(segments)) return "a privileged or disclosed folder is never a destination";
-  const first = segments[0] ?? "";
-  if (first.toLowerCase() === "trash") return "TRASH is never a destination";
-  if (/^[01]\./.test(first)) return `${first} is never a destination`;
-  return null;
-}
-function supersededDestinationProblem(segments, draftFolder) {
-  return segments.length === 2 && segments[0].toLowerCase() === draftFolder.toLowerCase() && segments[1].toLowerCase() === "superseded" ? null : `a superseded version moves only into ${draftFolder}\\Superseded`;
-}
-
 // src/housekeeping/run-dir.ts
 var RUN_ID_RE = /^\d{8}-\d{6}(?:\d{3})?-[0-9a-f]{4}$/;
 var PROPOSAL = "proposal.json";
@@ -17241,7 +17254,7 @@ var JOURNAL = "applied.jsonl";
 function openMatter(matterRoot) {
   const root = validateMatterRoot(matterRoot);
   const caseData = existingCaseDataFolder(root);
-  return { root, caseData, housekeeping: pathWin326.join(caseData, "housekeeping") };
+  return { root, caseData, housekeeping: pathWin327.join(caseData, "housekeeping") };
 }
 function mintRunId(now = /* @__PURE__ */ new Date()) {
   const p = (n, width = 2) => String(n).padStart(width, "0");
@@ -17254,14 +17267,14 @@ function assertRunId(runId) {
   }
 }
 function createRun(matter, now = /* @__PURE__ */ new Date()) {
-  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin326.dirname(dir)) {
+  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin327.dirname(dir)) {
     if (existsSync9(dir) && realpathSync4.native(dir).toLowerCase() !== dir.toLowerCase()) {
       throw new DataServerError(`${dir} resolves elsewhere (${realpathSync4.native(dir)})`, "path_out_of_scope");
     }
   }
   for (; ; ) {
     const runId = mintRunId(now);
-    const dir = pathWin326.join(matter.housekeeping, runId);
+    const dir = pathWin327.join(matter.housekeeping, runId);
     if (existsSync9(dir)) continue;
     mkdirSync3(dir, { recursive: true });
     return { runId, dir: confineRunDir(matter, runId) };
@@ -17269,21 +17282,20 @@ function createRun(matter, now = /* @__PURE__ */ new Date()) {
 }
 function existingRunDir(matter, runId) {
   assertRunId(runId);
-  const dir = pathWin326.join(matter.housekeeping, runId);
+  const dir = pathWin327.join(matter.housekeeping, runId);
   if (!isDirectory2(dir)) throw new DataServerError(`no run directory ${runId} under ${matter.housekeeping}`, "run_not_found");
   return confineRunDir(matter, runId);
 }
 function confineRunDir(matter, runId) {
-  const expected = pathWin326.join(matter.housekeeping, runId);
+  const expected = pathWin327.join(matter.housekeeping, runId);
   const real = realpathSync4.native(expected);
-  const segments = pathWin326.relative(matter.caseData, real).split(pathWin326.sep);
-  if (real.toLowerCase() !== expected.toLowerCase() || inFirewall(segments)) {
+  if (real.toLowerCase() !== expected.toLowerCase() || zoneProblem("run-files", real)) {
     throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
   }
   return real;
 }
 function runFilePath(runDir, fileName) {
-  const path = pathWin326.join(runDir, fileName);
+  const path = pathWin327.join(runDir, fileName);
   if (existsSync9(path) && realpathSync4.native(path).toLowerCase() !== path.toLowerCase()) {
     throw new DataServerError(`${fileName} in the run directory resolves elsewhere: ${path}`, "path_out_of_scope");
   }
@@ -17301,14 +17313,14 @@ function newerRun(matter, runId) {
 function newestProposalRun(matter) {
   const runs = listRuns(matter);
   for (let i = runs.length - 1; i >= 0; i--) {
-    if (readProposal(pathWin326.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
+    if (readProposal(pathWin327.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
   }
   return null;
 }
 function readProposal(runDir, runId, root) {
   let text;
   try {
-    text = readFileSync5(pathWin326.join(runDir, PROPOSAL), "utf-8");
+    text = readFileSync5(pathWin327.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -17330,7 +17342,7 @@ function requireProposal(runDir, runId, root) {
 function readApproval(runDir, runId) {
   let text;
   try {
-    text = readFileSync5(pathWin326.join(runDir, APPROVAL), "utf-8");
+    text = readFileSync5(pathWin327.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -17350,7 +17362,7 @@ function requireApproval(runDir, runId) {
   if (approval2) return approval2;
   if (problem) {
     throw new DataServerError(
-      `run ${runId}: the saved approval ${pathWin326.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
+      `run ${runId}: the saved approval ${pathWin327.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
       "approval_corrupt"
     );
   }
@@ -17360,7 +17372,7 @@ function readJournal(runDir) {
   const lines = /* @__PURE__ */ new Map();
   let text;
   try {
-    text = readFileSync5(pathWin326.join(runDir, JOURNAL), "utf-8");
+    text = readFileSync5(pathWin327.join(runDir, JOURNAL), "utf-8");
   } catch {
     return lines;
   }
@@ -17422,7 +17434,7 @@ function templateRoot(env = process.env) {
       "template_missing"
     );
   }
-  return pathWin327.join(pathWin327.dirname(caseData), "ADMIN", "0. TEMPLATE", "L### Litigation");
+  return pathWin328.join(pathWin328.dirname(caseData), "ADMIN", "0. TEMPLATE", "L### Litigation");
 }
 async function resolveRun(matterRoot, runId, env = process.env) {
   const matter = openMatter(matterRoot);
@@ -17443,7 +17455,7 @@ function planRows(matter, proposal2, approval2, journal, env) {
   const out = [];
   for (const entry of approval2.rows) {
     const row3 = rows.get(entry.row_id);
-    const oldPath = row3 ? pathWin327.join(matter.root, row3.current_path) : "";
+    const oldPath = row3 ? pathWin328.join(matter.root, row3.current_path) : "";
     const decision = row3 ? decide(proposal2, row3) : { kind: "invalid", error: "the row is not in proposal.json" };
     const res = { row_id: entry.row_id, kind: decision.kind, move: false, old_path: oldPath, folders_to_create: [], ok: false };
     const line = journal.get(entry.row_id);
@@ -17472,7 +17484,7 @@ function planRows(matter, proposal2, approval2, journal, env) {
       folder: folderCheck(matter.root, decision, folder, row3, proposal2, template)
     };
     res.name = decision.name;
-    res.new_path = pathWin327.join(folder.abs, decision.name);
+    res.new_path = pathWin328.join(folder.abs, decision.name);
     res.move = res.new_path !== oldPath;
   }
   return out;
@@ -17509,8 +17521,8 @@ function checkRows(planned, proposal2, env) {
 function decide(proposal2, row3) {
   const invalid = (error2) => ({ kind: "invalid", error: error2 });
   const a = row3.action;
-  const currentName = pathWin327.basename(row3.current_path);
-  const currentFolder = pathWin327.dirname(row3.current_path);
+  const currentName = pathWin328.basename(row3.current_path);
+  const currentFolder = pathWin328.dirname(row3.current_path);
   if (row3.section !== "offered" || !a) return invalid(`the row was not offered for a decision (${row3.section})`);
   if (INFORMATION_ONLY.includes(a.kind)) return invalid(`the row is information only (${a.kind}): nothing is approved on it`);
   switch (a.kind) {
@@ -17552,7 +17564,7 @@ function clashCheck(res, claimed) {
   if (other) return { ok: false, reason: `row ${other} files to the same name` };
   claimed.set(key, res.row_id);
   if (!exists(res.new_path) || sameFile(res.new_path, res.old_path)) return { ok: true };
-  return { ok: false, reason: `a file named ${pathWin327.basename(res.new_path)} is already in ${res.folder}` };
+  return { ok: false, reason: `a file named ${pathWin328.basename(res.new_path)} is already in ${res.folder}` };
 }
 function mapFolder(root, rel) {
   let abs = root;
@@ -17561,28 +17573,28 @@ function mapFolder(root, rel) {
   for (const segment of rel.split(/[\\/]+/)) {
     if (missing.length === 0 && isDirectory2(abs)) {
       const found = matchName(childDirs2(abs), segment);
-      if (found.ambiguous) ambiguous ??= `${segment} matches ${found.ambiguous.join(" and ")} in ${pathWin327.relative(root, abs) || "the matter root"}`;
+      if (found.ambiguous) ambiguous ??= `${segment} matches ${found.ambiguous.join(" and ")} in ${pathWin328.relative(root, abs) || "the matter root"}`;
       if (found.name) {
-        abs = pathWin327.join(abs, found.name);
+        abs = pathWin328.join(abs, found.name);
         continue;
       }
     }
-    abs = pathWin327.join(abs, segment);
+    abs = pathWin328.join(abs, segment);
     missing.push(abs);
   }
-  return { abs, rel: pathWin327.relative(root, abs), missing, ambiguous };
+  return { abs, rel: pathWin328.relative(root, abs), missing, ambiguous };
 }
 function folderCheck(root, decision, folder, row3, proposal2, template) {
   if (folder.ambiguous) return { ok: false, reason: `the folder is ambiguous: ${folder.ambiguous}` };
-  const problem = destinationProblem(folder.rel.split(pathWin327.sep), decision.kind === "draft_unchanged");
+  const problem = zoneProblem("move-to", folder.abs, root, decision.kind === "draft_unchanged");
   if (problem) return { ok: false, reason: problem };
   if (decision.kind === "draft_unchanged") {
     return folder.missing.length ? { ok: false, reason: `${proposal2.draft_folder} does not exist` } : { ok: true };
   }
   for (const missing of folder.missing) {
-    const rel = pathWin327.relative(root, missing);
+    const rel = pathWin328.relative(root, missing);
     if (row3.action?.create_folder && same(rel, decision.folderRel)) continue;
-    const problem2 = template.creatable(rel.split(pathWin327.sep));
+    const problem2 = template.creatable(rel.split(pathWin328.sep));
     if (problem2) return { ok: false, reason: problem2 };
   }
   return { ok: true };
@@ -17610,7 +17622,7 @@ var TemplateTree = class {
       if (found.name.endsWith("#") && segment.toLowerCase() === found.name.toLowerCase()) {
         return `${shown}: a court-file folder needs its action number`;
       }
-      cursor = pathWin327.join(cursor, found.name);
+      cursor = pathWin328.join(cursor, found.name);
     }
     return null;
   }
@@ -17683,34 +17695,33 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
     throw new DataServerError("draft_unchanged and superseded are two different moves; pass one", "invalid_argument");
   }
   for (const [label, p] of [["source", source], ["destination", destination], ...createFolders.map((f) => ["create_folders", f])]) {
-    if (typeof p !== "string" || !pathWin328.isAbsolute(p)) {
+    if (typeof p !== "string" || !pathWin329.isAbsolute(p)) {
       throw new DataServerError(`${label} must be an absolute host path: ${p}`, "invalid_path");
     }
   }
   for (const folder of createFolders) {
-    const problem = bareNameProblem(pathWin328.basename(folder));
-    if (problem) throw new DataServerError(`folder name ${JSON.stringify(pathWin328.basename(folder))} ${problem}; it is never created: ${folder}`, "invalid_filename");
+    const problem = bareNameProblem(pathWin329.basename(folder));
+    if (problem) throw new DataServerError(`folder name ${JSON.stringify(pathWin329.basename(folder))} ${problem}; it is never created: ${folder}`, "invalid_filename");
   }
   let src;
   try {
-    src = pathWin328.join(realpathSync6.native(pathWin328.dirname(source)), pathWin328.basename(source));
+    src = pathWin329.join(realpathSync6.native(pathWin329.dirname(source)), pathWin329.basename(source));
     if (!lstatSync2(src).isFile()) throw new DataServerError(`source is not a file: ${source}`, "not_a_file");
   } catch (err) {
     if (err instanceof DataServerError) throw err;
     throw new DataServerError(`source does not exist: ${source}`, "not_found");
   }
-  const srcRel = relativeInside(root, src, "source");
-  const srcSegments = srcRel.split(pathWin328.sep).map((s) => s.toLowerCase());
-  if (srcSegments.length === 1 && POINTER_FILES.includes(srcSegments[0]) || srcSegments[0] === "trash" || srcSegments[0] === "0. case data" || inFirewall(srcSegments)) {
+  relativeInside(root, src, "source");
+  if (zoneProblem("move-from", src, root)) {
     throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
-  const name = pathWin328.basename(destination);
+  const name = pathWin329.basename(destination);
   const nameProblem = bareNameProblem(name);
   if (nameProblem) throw new DataServerError(`destination file name ${nameProblem}: ${destination}`, "invalid_filename");
-  const destDir = resolveDeepestExisting(pathWin328.dirname(destination));
+  const destDir = resolveDeepestExisting(pathWin329.dirname(destination));
   const destRel = relativeInside(root, destDir, "destination");
   if (destRel === "") throw new DataServerError(`destination must be inside a matter folder, not the matter root: ${destination}`, "protected");
-  const destSegments = destRel.split(pathWin328.sep);
+  const destSegments = destRel.split(pathWin329.sep);
   if (superseded) {
     const drafts = readdirSync8(root, { withFileTypes: true }).filter((e) => (e.isDirectory() || e.isSymbolicLink()) && isDraftFolder(e.name)).map((e) => e.name);
     if (drafts.length !== 1) {
@@ -17722,41 +17733,41 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
     if (supersededDestinationProblem(destSegments, drafts[0])) {
       throw new DataServerError(`superseded moves only into ${drafts[0]}\\Superseded: ${destination}`, "invalid_argument");
     }
-    const other = createFolders.find((f) => pathWin328.resolve(f).toLowerCase() !== destDir.toLowerCase());
+    const other = createFolders.find((f) => pathWin329.resolve(f).toLowerCase() !== destDir.toLowerCase());
     if (other !== void 0) {
       throw new DataServerError(`with superseded, create_folders may name only ${destDir}: ${other}`, "invalid_argument");
     }
   } else if (draftUnchanged) {
-    if (destinationProblem(destSegments, true)) {
+    if (zoneProblem("move-to", destDir, root, true)) {
       throw new DataServerError(`draft_unchanged moves only into the matter's 0. DRAFT folder: ${destination}`, "invalid_argument");
     }
-    if (name !== pathWin328.basename(src)) {
-      throw new DataServerError(`Move to 0. DRAFT unchanged keeps the current name (${pathWin328.basename(src)}), not ${name}`, "draft_name_changed");
+    if (name !== pathWin329.basename(src)) {
+      throw new DataServerError(`Move to 0. DRAFT unchanged keeps the current name (${pathWin329.basename(src)}), not ${name}`, "draft_name_changed");
     }
-  } else if (destinationProblem(destSegments)) {
+  } else if (zoneProblem("move-to", destDir, root)) {
     throw new DataServerError(
       `destination is protected (folders 0 and 1 except Move to 0. DRAFT unchanged, TRASH, or a privileged/disclosed tree): ${destination}`,
       "protected"
     );
   }
   const missing = [];
-  for (let dir = destDir; !exists2(dir); dir = pathWin328.dirname(dir)) missing.unshift(dir);
-  const approved = new Set(createFolders.map((f) => pathWin328.resolve(f).toLowerCase()));
+  for (let dir = destDir; !exists2(dir); dir = pathWin329.dirname(dir)) missing.unshift(dir);
+  const approved = new Set(createFolders.map((f) => pathWin329.resolve(f).toLowerCase()));
   const unapproved = missing.filter((dir) => !approved.has(dir.toLowerCase()));
   if (unapproved.length) {
     throw new DataServerError(`destination folder does not exist and was not approved for creation: ${unapproved[0]}`, "folder_not_approved");
   }
   const onPath = createFolders.filter((f) => {
-    const dir = pathWin328.resolve(f).toLowerCase();
+    const dir = pathWin329.resolve(f).toLowerCase();
     return destDir.toLowerCase() !== dir && !destDir.toLowerCase().startsWith(dir + "\\");
   });
   if (onPath.length) throw new DataServerError(`create_folders must lie on the destination's own path: ${onPath[0]}`, "invalid_argument");
-  const dest = pathWin328.join(destDir, name);
+  const dest = pathWin329.join(destDir, name);
   if (dest === src) throw new DataServerError(`source and destination are the same path: ${src}`, "invalid_argument");
   if (present2(dest) && !sameFile(src, dest)) {
     throw new DataServerError(`destination already exists; nothing is overwritten: ${dest}`, "dest_exists");
   }
-  const existingAncestor = missing.length ? pathWin328.dirname(missing[0]) : destDir;
+  const existingAncestor = missing.length ? pathWin329.dirname(missing[0]) : destDir;
   if (statSync7(src).dev !== statSync7(existingAncestor).dev) {
     throw new DataServerError(`cannot move across devices; nothing was moved: ${src} -> ${dest}`, "cross_device");
   }
@@ -17793,23 +17804,23 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   return { moved_from: src, moved_to: realpathSync6.native(dest), created_folders: missing };
 }
 function relativeInside(root, path, label) {
-  const rel = pathWin328.relative(root, path);
-  if (rel.startsWith("..") || pathWin328.isAbsolute(rel)) {
+  const rel = pathWin329.relative(root, path);
+  if (rel.startsWith("..") || pathWin329.isAbsolute(rel)) {
     throw new DataServerError(`${label} is not under the matter root ${root}: ${path}`, "path_out_of_scope");
   }
   return rel;
 }
 function resolveDeepestExisting(target) {
   const tail = [];
-  let cursor = pathWin328.resolve(target);
+  let cursor = pathWin329.resolve(target);
   for (; ; ) {
     try {
       const base = realpathSync6.native(cursor);
-      return tail.length ? pathWin328.join(base, ...tail.reverse()) : base;
+      return tail.length ? pathWin329.join(base, ...tail.reverse()) : base;
     } catch {
-      const parent = pathWin328.dirname(cursor);
-      if (parent === cursor) return pathWin328.resolve(target);
-      tail.push(pathWin328.basename(cursor));
+      const parent = pathWin329.dirname(cursor);
+      if (parent === cursor) return pathWin329.resolve(target);
+      tail.push(pathWin329.basename(cursor));
       cursor = parent;
     }
   }
@@ -17833,15 +17844,15 @@ function present2(path) {
 
 // src/file_ops/move-from-downloads.ts
 import { closeSync as closeSync4, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync4, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync9, unlinkSync as unlinkSync4 } from "node:fs";
-import { win32 as pathWin3210 } from "node:path";
+import { win32 as pathWin3211 } from "node:path";
 
 // src/files/downloads.ts
 import { statSync as statSync8 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { win32 as pathWin329 } from "node:path";
+import { win32 as pathWin3210 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin329.join(homedir3(), "Downloads");
+  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin3210.join(homedir3(), "Downloads");
   const dir = canonicalRoot(probe, `Downloads folder not found at ${probe}`, "downloads_missing");
   if (!statSync8(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe}`, "downloads_missing");
@@ -17869,7 +17880,7 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   const root = validateMatterRoot(matterRoot);
   const sourceProblem = bareNameProblem(sourceFilename);
   if (sourceProblem) throw new DataServerError(`source_filename ${sourceProblem}: ${sourceFilename}`, "invalid_filename");
-  const src = pathWin3210.join(downloadsDir(env), sourceFilename);
+  const src = pathWin3211.join(downloadsDir(env), sourceFilename);
   let isFile2;
   try {
     isFile2 = lstatSync3(src).isFile();
@@ -17877,25 +17888,25 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (!isFile2) throw new DataServerError(`source is not a file: ${src}`, "not_a_file");
-  if (IN_PROGRESS_EXTENSIONS.has(pathWin3210.extname(sourceFilename).toLowerCase())) {
+  if (IN_PROGRESS_EXTENSIONS.has(pathWin3211.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
-  if (typeof destination !== "string" || !pathWin3210.isAbsolute(destination)) {
+  if (typeof destination !== "string" || !pathWin3211.isAbsolute(destination)) {
     throw new DataServerError(`destination must be an absolute host path: ${destination}`, "invalid_path");
   }
-  const name = pathWin3210.basename(destination);
+  const name = pathWin3211.basename(destination);
   const nameProblem = bareNameProblem(name);
   if (nameProblem) throw new DataServerError(`destination file name ${nameProblem}: ${destination}`, "invalid_filename");
   let destDir;
   try {
-    destDir = realpathSync7.native(pathWin3210.dirname(destination));
+    destDir = realpathSync7.native(pathWin3211.dirname(destination));
     if (!statSync9(destDir).isDirectory()) throw new Error("not a folder");
   } catch {
-    throw new DataServerError(`destination folder does not exist; no folder is created: ${pathWin3210.dirname(destination)}`, "not_found");
+    throw new DataServerError(`destination folder does not exist; no folder is created: ${pathWin3211.dirname(destination)}`, "not_found");
   }
   const destRel = relativeInside(root, destDir, "destination");
   if (destRel === "") throw new DataServerError(`destination must be inside a matter folder, not the matter root: ${destination}`, "protected");
-  if (destinationProblem(destRel.split(pathWin3210.sep))) {
+  if (zoneProblem("move-to", destDir, root)) {
     throw new DataServerError(
       `destination is protected (folders 0 and 1, TRASH, or a privileged/disclosed tree): ${destination}`,
       "protected"
@@ -17905,11 +17916,11 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   if (dev(src) !== dev(destDir)) {
     throw new DataServerError(`cannot move across drives; nothing was moved: ${src} -> ${destDir}`, "cross_device");
   }
-  const ext = pathWin3210.extname(name);
+  const ext = pathWin3211.extname(name);
   const stem = name.slice(0, name.length - ext.length);
   let dest;
   for (let attempt = 0; attempt < MAX_ATTEMPTS && dest === void 0; attempt++) {
-    const candidate = pathWin3210.join(destDir, nextVersionName(destDir, stem, ext));
+    const candidate = pathWin3211.join(destDir, nextVersionName(destDir, stem, ext));
     try {
       closeSync4(openSync4(candidate, "wx"));
       dest = candidate;
@@ -17940,12 +17951,12 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   const result = {
     moved_from: src,
     moved_to: movedTo,
-    versioned: pathWin3210.basename(movedTo).toLowerCase() !== name.toLowerCase()
+    versioned: pathWin3211.basename(movedTo).toLowerCase() !== name.toLowerCase()
   };
   try {
-    const logDir = pathWin3210.join(openMatter(root).caseData, "file-manager");
+    const logDir = pathWin3211.join(openMatter(root).caseData, "file-manager");
     mkdirSync5(logDir, { recursive: true });
-    appendLineDurably(pathWin3210.join(logDir, MOVE_LOG), JSON.stringify({ when: now.toISOString(), from: src, to: movedTo }));
+    appendLineDurably(pathWin3211.join(logDir, MOVE_LOG), JSON.stringify({ when: now.toISOString(), from: src, to: movedTo }));
   } catch (err) {
     result.log_error = err instanceof Error ? err.message : String(err);
   }
@@ -17953,19 +17964,19 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
 }
 
 // src/housekeeping/order.ts
-import { win32 as pathWin3211 } from "node:path";
+import { win32 as pathWin3212 } from "node:path";
 var CAP = 50;
 function rotation(matter, runId) {
   const earlier = listRuns(matter).filter((id) => id < runId);
   for (let i = earlier.length - 1; i >= 0; i--) {
     const id = earlier[i];
-    const dir = pathWin3211.join(matter.housekeeping, id);
+    const dir = pathWin3212.join(matter.housekeeping, id);
     const { proposal: proposal2 } = readProposal(dir, id, matter.root);
     if (!proposal2) continue;
     const { approval: approval2, problem } = readApproval(dir, id);
     if (problem) {
       throw new DataServerError(
-        `run ${id}: the saved approval ${pathWin3211.join(dir, APPROVAL)} is unreadable, so rotation cannot be read from it (if it is only locked, retry): ${problem}`,
+        `run ${id}: the saved approval ${pathWin3212.join(dir, APPROVAL)} is unreadable, so rotation cannot be read from it (if it is only locked, retry): ${problem}`,
         "approval_corrupt"
       );
     }
@@ -18089,9 +18100,9 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
 
 // src/housekeeping/preflight.ts
 import { readdirSync as readdirSync10 } from "node:fs";
-import { win32 as pathWin3212 } from "node:path";
+import { win32 as pathWin3213 } from "node:path";
 function preflight(matterRoot, includeTemplate = false, env = process.env) {
-  const pointerless = typeof matterRoot === "string" && pathWin3212.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
+  const pointerless = typeof matterRoot === "string" && pathWin3213.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
   const out = pointerless ? { half_commit: [], case_data_found: false } : halfCommits(matterRoot, env);
   if (includeTemplate) {
     const root = templateRoot(env);
@@ -18105,13 +18116,13 @@ function halfCommits(matterRoot, env) {
   const dir = caseDataFolder(matterRoot, env);
   const found = isDirectory2(dir);
   return {
-    half_commit: found ? readdirSync10(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3212.join(dir, name)) : [],
+    half_commit: found ? readdirSync10(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3213.join(dir, name)) : [],
     case_data_found: found
   };
 }
 function folderTree(root, rel) {
   const out = [];
-  const entries = readdirSync10(pathWin3212.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  const entries = readdirSync10(pathWin3213.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
   for (const name of entries) {
     const child = rel ? `${rel}\\${name}` : name;
     out.push(child, ...folderTree(root, child));
@@ -18123,7 +18134,7 @@ function folderTree(root, rel) {
 import { createHash as createHash2 } from "node:crypto";
 import { createReadStream, lstatSync as lstatSync4, realpathSync as realpathSync8 } from "node:fs";
 import { pipeline } from "node:stream/promises";
-import { win32 as pathWin3213 } from "node:path";
+import { win32 as pathWin3214 } from "node:path";
 async function reconcile(matterRoot, runId, env = process.env) {
   const matter = openMatter(matterRoot);
   const ids = runId === void 0 ? listRuns(matter) : [runId];
@@ -18163,9 +18174,9 @@ async function moveRow(proposal2, res) {
   const old = await hashAt(res.old_path);
   const dest = await hashAt(newPath);
   if (old.kind !== "absent" && dest.kind !== "absent" && sameFile(res.old_path, newPath)) {
-    const onDisk = pathWin3213.basename(realpathSync8.native(res.old_path));
+    const onDisk = pathWin3214.basename(realpathSync8.native(res.old_path));
     if (!holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
-    return onDisk === pathWin3213.basename(newPath) ? row(res, "moved", "post_move_steps") : notMoved(res);
+    return onDisk === pathWin3214.basename(newPath) ? row(res, "moved", "post_move_steps") : notMoved(res);
   }
   if (old.kind !== "absent" && !holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
   if (old.kind === "absent") {
@@ -18187,7 +18198,7 @@ async function trashRow(matter, proposal2, res, all) {
   if (old.kind === "absent") return row(res, "trashed", "journal_done");
   if (!holds(old, r.hash)) return row(res, "changed", "journal_failed", "changed since approval");
   const twin = r.twin;
-  const candidates = [pathWin3213.join(matter.root, twin.path)];
+  const candidates = [pathWin3214.join(matter.root, twin.path)];
   const twinRes = twin.row_id === void 0 ? void 0 : all.find((x) => x.row_id === twin.row_id);
   if (twinRes?.new_path) candidates.push(twinRes.new_path);
   for (const path of candidates) {
@@ -18569,7 +18580,7 @@ function housekeepingPreview(args) {
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { createReadStream as createReadStream2, existsSync as existsSync12, realpathSync as realpathSync9, statSync as statSync10 } from "node:fs";
 import { createServer } from "node:http";
-import { win32 as pathWin3214 } from "node:path";
+import { win32 as pathWin3215 } from "node:path";
 var MAX_BODY = 5 * 1024 * 1024;
 var CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 var FILE_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
@@ -18686,7 +18697,7 @@ async function approve(grant, req, res) {
   if (shown.length) {
     return json(res, 400, { error: `Rows ${shown.join(", ")} are shown for information only and cannot be approved. Nothing was approved.` });
   }
-  const path = pathWin3214.join(grant.runDir, APPROVAL);
+  const path = pathWin3215.join(grant.runDir, APPROVAL);
   if (existsSync12(path)) return json(res, 409, { error: savedApprovalError(grant) });
   const approval2 = { run_id: grant.runId, approved_at: (/* @__PURE__ */ new Date()).toISOString(), rows: posted.rows };
   try {
@@ -18707,18 +18718,18 @@ function file(grant, rowId, res) {
   if (!rel) return send(res, 404, "text/plain; charset=utf-8", "No such file on this page");
   let real;
   try {
-    real = realpathSync9.native(pathWin3214.join(grant.matter.root, rel));
+    real = realpathSync9.native(pathWin3215.join(grant.matter.root, rel));
     if (!statSync10(real).isFile()) throw new Error("not a file");
   } catch {
     return send(res, 404, "text/plain; charset=utf-8", "The file is no longer there");
   }
-  const inside = pathWin3214.relative(grant.matter.root, real);
-  if (inside.startsWith("..") || pathWin3214.isAbsolute(inside) || inFirewall(inside.split(pathWin3214.sep))) {
+  const inside = pathWin3215.relative(grant.matter.root, real);
+  if (inside.startsWith("..") || pathWin3215.isAbsolute(inside) || zoneProblem("run-files", real)) {
     return send(res, 403, "text/plain; charset=utf-8", "This file is not opened from the page");
   }
-  const ext = pathWin3214.extname(real).toLowerCase();
+  const ext = pathWin3215.extname(real).toLowerCase();
   const type = INLINE_TYPES[ext];
-  const name = encodeURIComponent(pathWin3214.basename(real));
+  const name = encodeURIComponent(pathWin3215.basename(real));
   res.writeHead(200, {
     "Content-Type": type ?? "application/octet-stream",
     "Content-Disposition": `${type ? "inline" : "attachment"}; filename*=UTF-8''${name}`,
@@ -18734,14 +18745,14 @@ function servedFile(req, token, name, res) {
   }
   if (req.method !== "GET") return send(res, 405, "text/plain; charset=utf-8", "Method not allowed");
   if (!Object.hasOwn(grant.files, name)) return send(res, 404, "text/plain; charset=utf-8", "Not found");
-  const path = pathWin3214.join(grant.folder, grant.files[name]);
+  const path = pathWin3215.join(grant.folder, grant.files[name]);
   try {
     if (!statSync10(path).isFile()) throw new Error("not a file");
   } catch {
     return send(res, 404, "text/plain; charset=utf-8", "Not found");
   }
   res.writeHead(200, {
-    "Content-Type": FILE_TYPES[pathWin3214.extname(path).toLowerCase()] ?? "application/octet-stream",
+    "Content-Type": FILE_TYPES[pathWin3215.extname(path).toLowerCase()] ?? "application/octet-stream",
     "Content-Security-Policy": FILE_CSP,
     "X-Content-Type-Options": "nosniff",
     "Cache-Control": "no-store",
@@ -18781,7 +18792,7 @@ function send(res, status, type, body) {
 }
 
 // src/housekeeping/wait.ts
-import { win32 as pathWin3215 } from "node:path";
+import { win32 as pathWin3216 } from "node:path";
 var WAIT_TIMEOUT_MS = 45e3;
 var POLL_MS = 300;
 async function waitApproval(matterRoot, runId, env = process.env) {
@@ -18792,7 +18803,7 @@ async function waitApproval(matterRoot, runId, env = process.env) {
   for (; ; ) {
     const { approval: approval2, problem } = readApproval(dir, runId);
     if (approval2) return { status: "approved", run_id: runId, approved_at: approval2.approved_at, rows: approval2.rows.length };
-    if (problem) return { status: "corrupt", run_id: runId, file: pathWin3215.join(dir, APPROVAL), problem };
+    if (problem) return { status: "corrupt", run_id: runId, file: pathWin3216.join(dir, APPROVAL), problem };
     const newer = newerRun(matter, runId);
     if (newer !== null) return { status: "invalidated", run_id: runId, newer_run: newer };
     const waited = Date.now() - started;

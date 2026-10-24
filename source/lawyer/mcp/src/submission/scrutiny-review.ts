@@ -19,6 +19,7 @@ import { win32 as pathWin32 } from "node:path";
 import { authorityPdfCacheDir, resolveAuthoritySource, type AuthoritySource } from "../case/authority-source.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { PathOutOfScopeError, resolveWithin } from "../files/scope.js";
+import { zoneProblem } from "../files/zones.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { READ_TIMEOUT_MS } from "../python-timeout.js";
@@ -32,7 +33,6 @@ const BUDGET_MS = 30_000;
 const PRESENTATION_FOLDER = "Scrutiny review";
 /** The only names this step writes, and so the only files it deletes. */
 const OWN_FILE = /^((proposed )?(1 cited|2 context) - .+\.(pdf|png)|3 finding - .+\.txt)(\.tmp)?$/i;
-const PROTECTED_SEGMENTS = new Set(["0. case data", "privileged", "disclosed"]);
 const PINPOINT_PARAGRAPH = /paras?\.?\s*(\d+)/i;
 /** A finding's "para N", "paras N, M", "paras N and M" and "paras N-M" lists. */
 const FINDING_PARAS = /\bparas?\.?\s*(\d+(?:\s*(?:,\s*(?:and\s+)?|and\s+|[-–]\s*)\d+)*)/gi;
@@ -369,8 +369,7 @@ function confineMatterFile(root: string, given: string, label: string): string {
     throw new PathOutOfScopeError(`${label} must lie inside the matter folder ${root}: ${given}`);
   }
   const resolved = resolveWithin(root, relative, label, false);
-  const segments = pathWin32.relative(root, resolved).toLowerCase().split(pathWin32.sep);
-  if (segments.some((segment) => segment === "trash" || PROTECTED_SEGMENTS.has(segment))) {
+  if (zoneProblem("write", resolved)) {
     throw new PathOutOfScopeError(`${label} lies in TRASH, 0. CASE DATA or a privileged or disclosed folder: ${given}`);
   }
   return resolved;

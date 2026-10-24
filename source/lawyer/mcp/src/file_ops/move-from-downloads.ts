@@ -3,7 +3,7 @@
 // and nothing here copies or deletes a file. The source is a bare file name in the OS Downloads
 // folder (the server finds the folder itself). The destination is a full file path in an existing
 // matter folder outside folders 0 and 1, TRASH and any privileged or disclosed tree (the rules in
-// housekeeping/zones.ts); no folder is created. A taken name gets the next " vN", so nothing is
+// files/zones.ts); no folder is created. A taken name gets the next " vN", so nothing is
 // overwritten, even under a race: the name is claimed by an exclusive create before the rename
 // replaces that placeholder. A move across drives is refused before anything changes. Every move is
 // logged to `<matter-data folder>\file-manager\move-log.jsonl`.
@@ -15,9 +15,9 @@ import { DataServerError } from "../errors.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "../files/downloads.js";
 import { validateMatterRoot } from "../files/matter-root.js";
 import { nextVersionName } from "../files/version-name.js";
+import { zoneProblem } from "../files/zones.js";
 import { bareNameProblem } from "../housekeeping/proposal.js";
 import { appendLineDurably, openMatter } from "../housekeeping/run-dir.js";
-import { destinationProblem } from "../housekeeping/zones.js";
 import { relativeInside } from "./move.js";
 
 const MOVE_LOG = "move-log.jsonl";
@@ -78,7 +78,7 @@ export function fileOpsMoveFromDownloads(
   }
   const destRel = relativeInside(root, destDir, "destination");
   if (destRel === "") throw new DataServerError(`destination must be inside a matter folder, not the matter root: ${destination}`, "protected");
-  if (destinationProblem(destRel.split(pathWin32.sep))) {
+  if (zoneProblem("move-to", destDir, root)) {
     throw new DataServerError(
       `destination is protected (folders 0 and 1, TRASH, or a privileged/disclosed tree): ${destination}`,
       "protected"

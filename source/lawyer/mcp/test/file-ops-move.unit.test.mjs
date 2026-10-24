@@ -16,6 +16,7 @@ function fixture() {
     "3. CORRESPONDENCE/taken.pdf": "already here",
     "4. LAWYER BRIEF/CoWork/privileged/p.pdf": "p",
     "0. CASE DATA/main.sqlite": "db",
+    "8. NOTES/0. CASE DATA/nested.pdf": "nested",
     "TRASH/old.pdf": "old",
     "draft.docx": "draft",
   });
@@ -35,6 +36,7 @@ test("file_ops__move refuses every protected source and destination, touching no
       [() => fileOpsMove(m.root, m.at("coclerk.json"), m.at("3. CORRESPONDENCE/coclerk.json")), "protected"],
       [() => fileOpsMove(m.root, m.at("TRASH/old.pdf"), m.at("3. CORRESPONDENCE/old.pdf")), "protected"],
       [() => fileOpsMove(m.root, m.at("0. CASE DATA/main.sqlite"), m.at("3. CORRESPONDENCE/main.sqlite")), "protected"],
+      [() => fileOpsMove(m.root, m.at("8. NOTES/0. CASE DATA/nested.pdf"), m.at("3. CORRESPONDENCE/nested.pdf")), "protected"],
       [() => fileOpsMove(m.root, m.at("4. LAWYER BRIEF/CoWork/privileged/p.pdf"), m.at("3. CORRESPONDENCE/p.pdf")), "protected"],
       [() => fileOpsMove(m.root, src, join(outside, ROOT_FILE)), "path_out_of_scope"],
       [() => fileOpsMove(m.root, src, m.at(ROOT_FILE + ".bak")), "protected"],

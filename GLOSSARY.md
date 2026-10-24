@@ -75,6 +75,7 @@ terms:
   - Matter reference
   - Matter role
   - Matter row key
+  - Matter zone
   - Merge (Job Boards)
   - Merge (jobs)
   - Mockup
@@ -445,6 +446,10 @@ _Avoid_: party (matter-data's record of a role in a proceeding); participant.
 **Matter row key**:
 Not a practitioner-facing identifier at all: the practice database's internal generated primary key on a matter row, carried as a `matter_id` foreign-key column on its dependent tables. It is never displayed. The storage name `matter_id` is also used, unrelatedly, as the key under which case data and application state store the *matter reference* — those names are load-bearing in schema, JSON, and Python and are deliberately not being changed. Read `matter_id` as the name of a column, never as "the ID we show".
 _Avoid_: writing "matter ID" in any prose a practitioner reads, for any of the three senses.
+
+**Matter zone**:
+A folder in a matter that a given act may not touch. The privileged and disclosed trees are off-limits to every act. TRASH and 0. CASE DATA are never read, scanned or written into, a scan also skips the 0. DRAFT folder, and a move never puts a file into folders 0 and 1 or TRASH. One module decides, by the act's purpose (`source/lawyer/mcp/src/files/zones.ts`).
+_Avoid_: protected segments, excluded folders; firewall for anything beyond the privileged and disclosed trees.
 
 **Merge (Job Boards)**:
 The practitioner's act that joins one Job Board into another after confirming that their goals overlap or cohere. The survivor takes every Writing, job and loose thread of both and keeps every goal of both. A board with a Writing survives over one without, otherwise the older one.

@@ -38,12 +38,12 @@ import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
 import { extractText } from "./text-extract.js";
 import { nextVersionName } from "./version-name.js";
+import { zoneProblem } from "./zones.js";
 
+// Belt-and-braces: a `6. LAW` folder never sits under a firewall zone, so the segment rule
+// already excludes those. Keep the zones check anyway -- do not delete the segment rule believing
+// the zones check covers it; it does not (it says nothing about where the folder is).
 const LAW_SEGMENT = "6. law";
-// Belt-and-braces: a `6. LAW` folder never sits under a firewall zone, so the segment rule above
-// already excludes these. Keep this check anyway -- do not delete the segment rule believing
-// this one covers it; it does not (it says nothing about where the folder is).
-const PROTECTED_SEGMENTS = new Set(["privileged", "disclosed"]);
 const MANIFEST = "case-download-manifest.json";
 // The research agent's scratchpad, under the matter's 0. DRAFT folder (practitioner's decision, 2026-10-05).
 const SCRATCH_SUBFOLDERS = ["AI Scratchpad", "research-agent"];
@@ -534,8 +534,8 @@ export async function lawFolderText(
 }
 
 function assertUnprotected(realDir: string): void {
-  if (realDir.split(/[\\/]+/).some((s) => PROTECTED_SEGMENTS.has(s.toLowerCase()))) {
-    throw new DataServerError(`the scratchpad would be inside a privileged/disclosed tree: ${realDir}`, "protected");
+  if (zoneProblem("write", realDir)) {
+    throw new DataServerError(`the scratchpad would be inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${realDir}`, "protected");
   }
 }
 
@@ -703,8 +703,8 @@ function resolveOrCreateLawDir(destinationDir: string): { dir: string; created: 
     if ((err as DataServerError).code !== "not_found" || existsSync(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin32.dirname(destinationDir));
-  if (PROTECTED_SEGMENTS.has(pathWin32.basename(destinationDir).toLowerCase())) {
-    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${destinationDir}`, "protected");
+  if (zoneProblem("write", pathWin32.join(parent, pathWin32.basename(destinationDir)))) {
+    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${destinationDir}`, "protected");
   }
   let created = true;
   try {
@@ -734,8 +734,8 @@ export function resolveLawDir(destinationDir: string): string {
   if (!segments.includes(LAW_SEGMENT)) {
     throw new DataServerError(`destination_dir is not inside a matter's 6. LAW tree: ${dir}`, "not_law_folder");
   }
-  if (segments.some((s) => PROTECTED_SEGMENTS.has(s))) {
-    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree: ${dir}`, "protected");
+  if (zoneProblem("write", dir)) {
+    throw new DataServerError(`destination_dir is inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${dir}`, "protected");
   }
   return dir;
 }

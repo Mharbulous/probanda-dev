@@ -9,6 +9,7 @@ import { extname, win32 as pathWin32 } from "node:path";
 import { DataServerError, ValidationError } from "../errors.js";
 import { validateMatterRoot } from "../files/matter-root.js";
 import { assertContained, PathOutOfScopeError, resolveWithin } from "../files/scope.js";
+import { zoneProblem } from "../files/zones.js";
 import { CompoundFile } from "./cfb.js";
 import { decodeWords, parseMime } from "./eml.js";
 import type { HighlightRun } from "./highlight.js";
@@ -38,8 +39,6 @@ export const MESSAGE_EXTENSIONS = new Set([".msg", ".eml"]);
 const BODY_LIMIT = 100_000;
 const SCAN_LIMIT = 2_000;
 const OTHER_CANDIDATES = 5;
-/** Folder names never read: the draft folder, the trash, case data, and the firewall trees. */
-const EXCLUDED_DIR = /^(0\. DRAFT.*|TRASH|0\. CASE DATA|privileged|disclosed)$/i;
 
 // ---------------------------------------------------------------------------------------------
 // .msg ([MS-OXMSG]): MAPI properties in __substg1.0_<tag><type> streams and a fixed-size
@@ -286,7 +285,7 @@ export function scanMessageHeaders(root: string): { messages: ScannedMessage[]; 
       const full = pathWin32.join(dir, entry.name);
       const relPath = rel ? `${rel}\\${entry.name}` : entry.name;
       if (entry.isDirectory() || entry.isSymbolicLink()) {
-        if (EXCLUDED_DIR.test(entry.name)) continue;
+        if (zoneProblem("scan", full)) continue;
         // A link is followed only while its target stays in the matter and outside the excluded folders.
         let real: string;
         try {
@@ -296,7 +295,7 @@ export function scanMessageHeaders(root: string): { messages: ScannedMessage[]; 
         } catch {
           continue;
         }
-        if (pathWin32.relative(root, real).split("\\").some((s) => EXCLUDED_DIR.test(s))) continue;
+        if (zoneProblem("scan", real)) continue;
         if (!walk(real, relPath)) return false;
         continue;
       }
@@ -325,8 +324,7 @@ export interface ReadMessageArgs {
 }
 
 function rejectFirewall(relative: string): void {
-  const segments = relative.split(/[\\/]+/);
-  if (segments.slice(0, -1).some((s) => EXCLUDED_DIR.test(s) && !/^0\. DRAFT/i.test(s))) {
+  if (zoneProblem("read", pathWin32.dirname(relative))) {
     throw new PathOutOfScopeError(`path lies in a folder this tool never reads (TRASH, 0. CASE DATA, privileged, disclosed): ${relative}`);
   }
 }

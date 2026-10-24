@@ -10,6 +10,7 @@ import { readdirSync, realpathSync, statSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { zoneProblem } from "../files/zones.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { type GateGroup, type GateResult, runNameGate } from "./name-gate.js";
 import { type Approval, INFORMATION_ONLY, type Proposal, type Row } from "./proposal.js";
@@ -23,7 +24,6 @@ import {
   requireApproval,
   requireProposal,
 } from "./run-dir.js";
-import { destinationProblem } from "./zones.js";
 
 export type Kind =
   | "rename_and_file"
@@ -308,7 +308,7 @@ function mapFolder(root: string, rel: string): MappedFolder {
 
 function folderCheck(root: string, decision: Decision, folder: MappedFolder, row: Row, proposal: Proposal, template: TemplateTree): Check {
   if (folder.ambiguous) return { ok: false, reason: `the folder is ambiguous: ${folder.ambiguous}` };
-  const problem = destinationProblem(folder.rel.split(pathWin32.sep), decision.kind === "draft_unchanged");
+  const problem = zoneProblem("move-to", folder.abs, root, decision.kind === "draft_unchanged");
   if (problem) return { ok: false, reason: problem };
   if (decision.kind === "draft_unchanged") {
     return folder.missing.length ? { ok: false, reason: `${proposal.draft_folder} does not exist` } : { ok: true };

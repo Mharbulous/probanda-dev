@@ -29,6 +29,7 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { findDraftDir } from "../files/matter-root.js";
+import { zoneProblem } from "../files/zones.js";
 import { isInventoryEntry, type InventoryEntry } from "./forms/proposal-inventory.js";
 import type { WritingLabel } from "./forms/writing-label.js";
 
@@ -253,7 +254,7 @@ export function resolveDraftDir(draftDir: string, param = "drafting_forms__boots
     throw refuse("does not exist");
   }
   if (!/^0\. DRAFT/i.test(basename(real))) throw refuse("must be the matter's 0. DRAFT folder");
-  if (real.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (zoneProblem("write", real)) throw refuse("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   return dir;
 }
 

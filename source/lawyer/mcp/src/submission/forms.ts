@@ -141,6 +141,7 @@ import type { KnowledgeSeams } from "../knowledge/tree.js";
 import { noteUpDue, stampDoc } from "./forms/proposal-inventory.js";
 import { scanUntrackedCitations } from "./forms/citation-scan.js";
 import { DataServerError, ValidationError } from "../errors.js";
+import { zoneProblem } from "../files/zones.js";
 import { runPreFilingChecks, type PreFilingChecksResult } from "./pre-filing/index.js";
 import { confineCaseDataFolder, writeSubstanceFile } from "./substance-file.js";
 
@@ -805,7 +806,7 @@ function resolvePresentationDir(dbPath: string, presentationDir: string, filingT
     throw refuse("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
   }
   if (!/^0\. DRAFT/i.test(basename(parent))) throw refuse("its parent must be the matter's 0. DRAFT folder");
-  if (parent.split(/[\\/]/).some((part) => /^(privileged|disclosed)$/i.test(part))) throw refuse("it lies inside a privileged or disclosed tree");
+  if (zoneProblem("write", parent)) throw refuse("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   if (parent.toLowerCase() !== realpathSync.native(draftDirOf(dbPath)).toLowerCase()) throw refuse("its parent must be the 0. DRAFT folder of this database's matter");
   // A folder made while the title still ended in the style of proceeding keeps that name.
   const titles = [filingTitle, ...(styleOfCause ? [`${filingTitle} - ${styleOfCause}`] : [])].map((t) => sanitizeForPath(t).toLowerCase());

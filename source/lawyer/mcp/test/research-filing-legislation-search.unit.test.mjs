@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 
 import { drawImage, imagePdfBytes } from "./helpers/synthetic-docs.mjs";
@@ -201,6 +201,10 @@ test("refusals: outside the matter, a firewall tree, and bad arguments", (t) => 
 
   assert.equal(codeOf(() => legislationSearch(s.matter, stray, ["court"])), "not_in_matter");
   assert.equal(codeOf(() => legislationSearch(s.matter, secret, ["court"])), "protected");
+  const trashed = join(s.matter, "TRASH", "Fixture Act.md");
+  mkdirSync(dirname(trashed));
+  writeFileSync(trashed, ACT);
+  assert.equal(codeOf(() => legislationSearch(s.matter, trashed, ["court"])), "protected");
   assert.equal(codeOf(() => legislationSearch(s.matter, "Fixture Act.md", ["court"])), "invalid_path");
   assert.equal(codeOf(() => legislationSearch(s.matter, join(s.law, "absent.md"), ["court"])), "not_found");
   assert.equal(codeOf(() => legislationSearch(s.matter, s.act)), "invalid_argument");
