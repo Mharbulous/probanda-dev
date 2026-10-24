@@ -348,6 +348,31 @@ test("execute writes rows in one transaction, and query only accepts read-only s
   );
 });
 
+test("execute and bulk_upsert replace the live file and leave no staged sibling beside it", async (t) => {
+  const f = fixture(t);
+  await timecampingDataMigrate(f.env);
+  const dir = join(f.root, "_practice");
+
+  await timecampingDataExecute(
+    `INSERT INTO source_fetch_log (source_name, local_date, status, row_count, fetched_at)
+     VALUES ('timecamp_time_entries', '2026-08-27', 'fetched', 3, '2026-08-28T00:00:00Z');`,
+    f.env
+  );
+  const path = join(f.root, "upsert.jsonl");
+  writeFileSync(path, JSON.stringify({
+    table: "source_fetch_log",
+    key: ["source_name", "local_date"],
+    row: { source_name: "sent_mail", local_date: "2026-08-27", status: "fetched", row_count: 1, fetched_at: "2026-08-28T00:00:00Z" },
+  }) + "\n", "utf-8");
+  await timecampingDataBulkUpsert(path, f.env);
+
+  assert.deepEqual(
+    timecampingDataQuery("SELECT source_name FROM source_fetch_log WHERE local_date = ? ORDER BY source_name", ["2026-08-27"], f.env).rows,
+    [{ source_name: "sent_mail" }, { source_name: "timecamp_time_entries" }]
+  );
+  assert.deepEqual(readdirSync(dir).filter((name) => name.startsWith("coclerk_")), []);
+});
+
 test("splice.sql returns only the gate-violation line, and no evidence, for a partially-fetched day", async (t) => {
   const f = fixture(t);
   await timecampingDataMigrate(f.env);

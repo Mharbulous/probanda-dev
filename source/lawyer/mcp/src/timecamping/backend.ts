@@ -79,6 +79,26 @@ def do_query(req):
     return {"rows": rows}
 
 
+def copy_fsync(src, dst):
+    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
+    shutil.copy2(src, dst)
+    with open(dst, 'rb+') as fh:
+        os.fsync(fh.fileno())
+    return dst
+
+
+def replace_live(staged, db_path):
+    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
+    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
+    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_timecamping_replace_{os.environ["COCLERK_STAGING_TAG"]}.db')
+    try:
+        copy_fsync(staged, sibling)
+        os.replace(sibling, db_path)
+    finally:
+        if os.path.exists(sibling):
+            os.remove(sibling)
+
+
 def do_execute(req):
     db_path = req['db_path']
     if not os.path.exists(db_path):
@@ -98,14 +118,14 @@ def do_execute(req):
             try:
                 con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        # Copy the mutated binary back only after a successful commit and a
-        # closed connection -- never mutate the live (possibly synced) file
-        # in place.
-        shutil.copy2(staged, db_path)
+        # Replace the live file only after a successful commit and a closed
+        # connection -- never mutate the live (possibly synced) file in place.
+        replace_live(staged, db_path)
         return {"ok": True}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -201,7 +221,7 @@ def do_bulk_upsert(req):
             con.close()
         # Same copy-back discipline as execute: only after a clean commit and
         # a closed connection, never mutating the live file in place.
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return {"lines": lines, "rows": rows}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -251,13 +271,10 @@ export interface BulkUpsertResult {
   warning?: string;
 }
 
-// The copy-back is one shutil.copy2 onto the live file, so a kill inside it can leave
-// timecamping.db truncated, and execute keeps no backup of its own (issue #612).
+// The copy-back renames a flushed sibling over the live file, so a kill leaves timecamping.db
+// whole, either before or after the write.
 const EXECUTE_TIMEOUT_ADVICE =
-  "The write may already have committed: verify before retrying (/timecamping-data Operation Routing). " +
-  "If the database no longer opens, the kill landed while it was being copied back and left it " +
-  "truncated. The newest timecamping.db.bak-* beside it, if a migrate has written one, is the only " +
-  "copy, and it predates every write made since that migrate.";
+  "The write may already have committed: verify before retrying (/timecamping-data Operation Routing).";
 
 // A bulk_upsert is a whole day's evidence file in one transaction -- like
 // time_pipeline__bulk_apply, killing a slow but healthy load is worse than

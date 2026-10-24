@@ -105,7 +105,7 @@ test("an execute that outlives its budget fails with a named timeout", async () 
 });
 
 // #604: the UPDATE runs first and the CTE never finishes in budget, so the kill lands inside Python before COMMIT.
-// Not covered: a kill during the copy-back (runHelper notes it can truncate db_path), and a Cowork bridge that gives
+// Not covered: a kill after the rename that replaces db_path, and a Cowork bridge that gives
 // up at 60s while WRITE_TIMEOUT_MS runs on. Both tell the caller "failed" after a change, hence the re-read rule.
 test("an execute killed mid-script leaves the database untouched", async () => {
   const f = await migratedDb();
@@ -121,6 +121,17 @@ test("an execute killed mid-script leaves the database untouched", async () => {
     );
     assert.deepEqual(submissionDataQuery(f.dbPath, "SELECT value FROM db_meta WHERE key = 'revision'").rows, [{ value: "0" }]);
     // #703: the killed helper's staging copy does not outlive it.
+    assert.deepEqual(readdirSync(dirname(f.dbPath)).filter((name) => name.startsWith("coclerk_")), []);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("an execute replaces the live file and leaves no staged sibling beside it", async () => {
+  const f = await migratedDb();
+  try {
+    await submissionDataExecute(f.dbPath, "UPDATE db_meta SET value = '7' WHERE key = 'revision';");
+    assert.deepEqual(submissionDataQuery(f.dbPath, "SELECT value FROM db_meta WHERE key = 'revision'").rows, [{ value: "7" }]);
     assert.deepEqual(readdirSync(dirname(f.dbPath)).filter((name) => name.startsWith("coclerk_")), []);
   } finally {
     f.cleanup();

@@ -74,6 +74,26 @@ def do_query(req):
     return {"rows": rows}
 
 
+def copy_fsync(src, dst):
+    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
+    shutil.copy2(src, dst)
+    with open(dst, 'rb+') as fh:
+        os.fsync(fh.fileno())
+    return dst
+
+
+def replace_live(staged, db_path):
+    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
+    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
+    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_submission_replace_{os.environ["COCLERK_STAGING_TAG"]}.sqlite')
+    try:
+        copy_fsync(staged, sibling)
+        os.replace(sibling, db_path)
+    finally:
+        if os.path.exists(sibling):
+            os.remove(sibling)
+
+
 def do_execute(req):
     db_path = req['db_path']
     if not os.path.exists(db_path):
@@ -93,15 +113,15 @@ def do_execute(req):
             try:
                 con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
             changes = con.total_changes
         finally:
             con.close()
-        # Copy the mutated binary back only after a successful commit and a
-        # closed connection -- never mutate the live (possibly synced) file
-        # in place.
-        shutil.copy2(staged, db_path)
+        # Replace the live file only after a successful commit and a closed
+        # connection -- never mutate the live (possibly synced) file in place.
+        replace_live(staged, db_path)
         return {"ok": True, "changes": changes}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -131,11 +151,12 @@ def do_write(req):
                 out = {"ok": True, "rowid": cur.lastrowid, "changes": cur.rowcount}
                 con.execute("COMMIT")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return out
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -172,11 +193,12 @@ def do_write_all(req):
                         return {"ok": False, "failed": i, "changes": cur.rowcount}
                 con.execute("COMMIT")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return {"ok": True, "results": results}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -432,9 +454,8 @@ function sidecarQuery(request: QueryRequest): Record<string, unknown> {
 }
 
 function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
-  // The copy-back is a sub-second tail of the call, so the kill lands inside it only if the copy
-  // itself hangs past the whole budget -- which would otherwise hold the server forever. It can
-  // then leave db_path truncated, and execute keeps no backup of its own.
+  // The budget stops a hung copy-back from holding the server forever. replace_live renames a
+  // flushed sibling over db_path, so a kill at any point leaves db_path whole, old or new.
   return runPythonDriver({
     label: "drafting-data sqlite helper",
     driver: helperFile(),
