@@ -7,8 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-HOOK = Path(__file__).resolve().parent.parent / "rule-gate.py"
-PLUGIN_JSON = Path(__file__).resolve().parents[2] / "plugin.json"
+HOOK = Path(__file__).resolve().parent.parent / "hooks" / "rule-gate.py"
+PLUGIN_JSON = Path(__file__).resolve().parents[1] / "plugin.json"
 QUESTION = "Do you want me to enforce that rule for all future sessions?"
 RULE = "Never send a letter before I have read it."
 NEW_RULE = "Never send a letter before I have read it, unless it is a covering letter."

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-HOOK = Path(__file__).resolve().parent.parent / "missing-key-note.py"
+HOOK = Path(__file__).resolve().parent.parent / "hooks" / "missing-key-note.py"
 SECRET = "sb_secret_do-not-echo"
 CRED_TYPE_GENERIC = 1
 CRED_PERSIST_SESSION = 1

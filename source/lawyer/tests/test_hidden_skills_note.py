@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 
-PLUGIN_DIR = Path(__file__).resolve().parents[2]
+PLUGIN_DIR = Path(__file__).resolve().parents[1]
 HOOK = PLUGIN_DIR / "hooks" / "hidden-skills-note.py"
 HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/hooks/hidden-skills-note.py"
 

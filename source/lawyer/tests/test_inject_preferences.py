@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HOOK = Path(__file__).resolve().parent.parent / "inject-preferences.py"
+HOOK = Path(__file__).resolve().parent.parent / "hooks" / "inject-preferences.py"
 
 
 def run(config: Path) -> subprocess.CompletedProcess:
