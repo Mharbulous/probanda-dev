@@ -51,7 +51,7 @@ def is_protected(path, cwd):
 def main():
     if os.environ.get("COCLERK_HTML_DEV") == "1":
         return 0
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     cwd = payload.get("cwd")
     if in_source_repo(cwd):
         return 0

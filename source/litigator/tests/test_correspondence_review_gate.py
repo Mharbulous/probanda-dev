@@ -55,7 +55,7 @@ class GateTests(unittest.TestCase):
         payload = {"tool_name": tool_name, "tool_input": tool_input}
         if records is not None:
             payload["transcript_path"] = self.transcript(records)
-        result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload),
+        result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload, ensure_ascii=False),
                                 capture_output=True, text=True, encoding="utf-8")
         self.assertEqual(result.returncode, 0, result.stderr)
         if not result.stdout.strip():
@@ -72,6 +72,10 @@ class GateTests(unittest.TestCase):
 
     def test_whitespace_differences_do_not_matter(self):
         self.assertEqual(self.write_email(review(BODY.replace("\n", "\n\n  ")))[0], "allow")
+
+    def test_allows_non_ascii_text_the_reviewer_read(self):
+        body = BODY.replace("wrote", "wrote — through Mr. Gagné —")
+        self.assertEqual(self.write_email(review(body), body=body)[0], "allow")
 
     def test_refuses_with_no_review(self):
         decision, reason = self.write_email([])

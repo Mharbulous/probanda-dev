@@ -144,7 +144,7 @@ def refusal(command, cwd):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     command = (payload.get("tool_input") or {}).get("command")
     if payload.get("tool_name") not in ("Bash", "PowerShell") or not isinstance(command, str):
         return 0

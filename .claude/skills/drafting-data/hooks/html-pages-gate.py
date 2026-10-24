@@ -196,7 +196,7 @@ def deny(reason):
 def main():
     if os.environ.get("COCLERK_HTML_DEV") == "1":
         return 0
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     tool = payload.get("tool_name") or ""
     tool_input = payload.get("tool_input") or {}
     shell = False

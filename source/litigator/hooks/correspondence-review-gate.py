@@ -99,7 +99,7 @@ def deny(message):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     name = payload.get("tool_name") or ""
     tool_input = payload.get("tool_input") or {}
     if name in ("Write", "Edit", "MultiEdit"):

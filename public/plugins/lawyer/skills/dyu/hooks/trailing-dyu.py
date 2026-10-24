@@ -19,7 +19,7 @@ LEAD = ("The user's message ends with /dyu, which invokes the dyu skill. Its tex
 
 
 def main():
-    prompt = json.load(sys.stdin).get("prompt") or ""
+    prompt = json.loads(sys.stdin.buffer.read().decode("utf-8")).get("prompt") or ""
     if not TRAILING_RE.search(prompt):
         return 0
     text = SKILL_MD.read_text(encoding="utf-8")

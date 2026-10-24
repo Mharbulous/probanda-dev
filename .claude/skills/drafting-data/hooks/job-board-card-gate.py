@@ -161,7 +161,7 @@ def stop(payload):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     event = payload.get("hook_event_name")
     if event == "PostToolUse":
         return post_tool_use(payload)
