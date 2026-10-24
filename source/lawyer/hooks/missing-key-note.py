@@ -27,6 +27,12 @@ import os
 import sys
 from pathlib import Path
 
+HERE = Path(__file__).resolve()
+# shared/scripts in the built plugin, else in this repo's source tree
+sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+import hook_io  # noqa: E402
+
 TELL = (
     "Early in this session, before other Probanda work, tell the practitioner once, in this one "
     "sentence: \"This computer has no Probanda key yet, so suggestions to the Probanda team and "
@@ -71,21 +77,8 @@ def key_present() -> bool | None:
     return False if ctypes.GetLastError() == ERROR_NOT_FOUND else None
 
 
-def config_path() -> Path:
-    override = os.environ.get("COCLERK_CONFIG_PATH")
-    if override:
-        return Path(override)
-    appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    candidates = [
-        Path(appdata) / "Probanda" / "probanda.json",
-        Path(appdata) / "Coclerk" / "probanda.json",
-        Path(appdata) / "Coclerk" / "coclerk.json",
-    ]
-    return next((path for path in candidates if path.is_file()), candidates[0])
-
-
 def held_count() -> int:
-    log = config_path().parent / "suggestions.local.json"
+    log = hook_io.config_path().parent / "suggestions.local.json"
     if not log.is_file():
         return 0
     return len(json.loads(log.read_text(encoding="utf-8")).get("held", []))
@@ -104,12 +97,8 @@ def context() -> str | None:
 def main() -> None:
     text = context()
     if text:
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}}))
+        hook_io.note("SessionStart", text)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as err:  # never block a session start, but say so
-        print(f"missing-key-note: {err}", file=sys.stderr)
-    sys.exit(0)
+    hook_io.run(main, "missing-key-note")  # never blocks a session start

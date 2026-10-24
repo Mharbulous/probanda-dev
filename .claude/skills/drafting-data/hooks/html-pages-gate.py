@@ -49,10 +49,13 @@ silently. Fails OPEN on its own error, loudly on stderr, because its matcher
 spans Read and a bug here must not block every read.
 """
 import fnmatch
-import json
 import os
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
 
 # "to do list" is the Litigation Strategy page's name before 2026-10-08, kept so an old copy not
 # yet moved to TRASH is still refused.
@@ -149,17 +152,6 @@ def grep_hit(tool_input, cwd):
     return pages_near(folder)
 
 
-def strings(value):
-    if isinstance(value, str):
-        yield value
-    elif isinstance(value, dict):
-        for item in value.values():
-            yield from strings(item)
-    elif isinstance(value, list):
-        for item in value:
-            yield from strings(item)
-
-
 def first_hit(texts):
     for text in texts:
         match = PAGE_ANYWHERE.search(text)
@@ -185,18 +177,10 @@ def message(name, shell):
     return text
 
 
-def deny(reason):
-    sys.stdout.write(json.dumps({"hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": reason,
-    }}) + "\n")
-
-
 def main():
     if os.environ.get("COCLERK_HTML_DEV") == "1":
         return 0
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     tool = payload.get("tool_name") or ""
     tool_input = payload.get("tool_input") or {}
     shell = False
@@ -210,26 +194,16 @@ def main():
         hit = first_hit([command]) if isinstance(command, str) else None
         shell = True
     elif DEVICE_TOOL.fullmatch(tool):
-        texts = strings(tool_input.get("path")) if FOLDER_TOOL.fullmatch(tool) else strings(tool_input)
+        texts = hook_io.strings(tool_input.get("path")) if FOLDER_TOOL.fullmatch(tool) else hook_io.strings(tool_input)
         if STAGE_TOOL.fullmatch(tool):
             texts = (t for t in texts if not STAGEABLE.fullmatch(basename(t).lower()))
         hit = first_hit(texts)
     else:
         hit = None
     if hit:
-        deny(message(hit, shell))
+        return hook_io.deny(message(hit, shell))
     return 0
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("html-pages-gate hook error (allowing call): " + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(0)
+    hook_io.run(main, "html-pages-gate")

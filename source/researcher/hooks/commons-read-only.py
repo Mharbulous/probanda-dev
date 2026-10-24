@@ -5,18 +5,22 @@ Probanda ships the commons read side only. Pushing matter-derived principles or
 rule records to the shared pool is withheld until COMMANDMENTS.md says how it may
 be done, so every write tool is refused here.
 """
-import json
 import sys
+from pathlib import Path
 
-json.loads(sys.stdin.buffer.read().decode("utf-8"))
-print(json.dumps({
-    "hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": (
-            "Probanda's shared legal-commons pool is read-only for now. Writing to it "
-            "(push, amend, link, merge, record, stamp, retire) is not available in this "
-            "plugin. Tell the user the write was not made."
-        ),
-    }
-}))
+try:
+    HERE = Path(__file__).resolve()
+    # shared/scripts in the built plugin, else in this repo's source tree
+    sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                     HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+    import hook_io
+except Exception as exc:  # a crash would let the write through
+    sys.stderr.write(f"Refused: commons-read-only cannot load its helper: {exc!r}\n")
+    sys.exit(2)
+
+hook_io.payload()
+hook_io.deny(
+    "Probanda's shared legal-commons pool is read-only for now. Writing to it "
+    "(push, amend, link, merge, record, stamp, retire) is not available in this "
+    "plugin. Tell the user the write was not made."
+)

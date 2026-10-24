@@ -18,8 +18,14 @@ own guard refuses every real send except one to the From address itself.
 Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails OPEN on its own error, loudly on stderr, as staged-file-gate does.
 """
-import json
 import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve()
+# shared/scripts in the built plugin, else in this repo's source tree
+sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+import hook_io  # noqa: E402
 
 BRIEFING_PREFIX = "Morning briefing"
 
@@ -47,26 +53,11 @@ def allowed(tool_input):
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
-    tool_input = payload.get("tool_input") or {}
+    tool_input = hook_io.payload().get("tool_input") or {}
     if not allowed(tool_input):
-        sys.stdout.write(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": MESSAGE,
-        }}) + "\n")
+        return hook_io.deny(MESSAGE)
     return 0
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("mail-send-gate hook error (allowing call): " + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(0)
+    hook_io.run(main, "mail-send-gate")

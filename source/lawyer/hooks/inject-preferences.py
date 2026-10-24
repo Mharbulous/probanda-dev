@@ -15,9 +15,14 @@ Never blocks the session: always exits 0.
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
+
+HERE = Path(__file__).resolve()
+# shared/scripts in the built plugin, else in this repo's source tree
+sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+import hook_io  # noqa: E402
 
 FRAMING = (
     "Your saved preferences: standing instructions (Rules) this person asked Probanda to follow, "
@@ -38,21 +43,8 @@ POINTER = (
 )
 
 
-def config_path() -> Path:
-    override = os.environ.get("COCLERK_CONFIG_PATH")
-    if override:
-        return Path(override)
-    appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    candidates = [
-        Path(appdata) / "Probanda" / "probanda.json",
-        Path(appdata) / "Coclerk" / "probanda.json",
-        Path(appdata) / "Coclerk" / "coclerk.json",
-    ]
-    return next((path for path in candidates if path.is_file()), candidates[0])
-
-
 def context() -> str | None:
-    path = config_path()
+    path = hook_io.config_path()
     if not path.is_file():
         return POINTER
     try:
@@ -81,12 +73,8 @@ def context() -> str | None:
 def main() -> None:
     text = context()
     if text:
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}}))
+        hook_io.note("SessionStart", text)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as err:  # never block a session start, but say so
-        print(f"inject-preferences: {err}", file=sys.stderr)
-    sys.exit(0)
+    hook_io.run(main, "inject-preferences")  # never blocks a session start

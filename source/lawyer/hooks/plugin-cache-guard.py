@@ -6,10 +6,15 @@ plugin, found from CLAUDE_PLUGIN_ROOT. No path-text matching: the config folder,
 other vendors' plugins and every other location are untouched.
 Never fires with COCLERK_HTML_DEV=1 or in the plugin's source repo. Fails open, loudly.
 """
-import json
 import os
 import sys
 from pathlib import Path
+
+HERE = Path(__file__).resolve()
+# shared/scripts in the built plugin, else in this repo's source tree
+sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+import hook_io  # noqa: E402
 
 PROBANDA = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer")
 REASON = (
@@ -51,27 +56,16 @@ def is_protected(path, cwd):
 def main():
     if os.environ.get("COCLERK_HTML_DEV") == "1":
         return 0
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     cwd = payload.get("cwd")
     if in_source_repo(cwd):
         return 0
     tool_input = payload.get("tool_input") or {}
     path = tool_input.get("file_path") or tool_input.get("notebook_path")
     if isinstance(path, str) and path and is_protected(path, cwd):
-        sys.stdout.write(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": REASON,
-        }}) + "\n")
+        return hook_io.deny(REASON)
     return 0
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("plugin-cache-guard hook error (allowing call): "
-                         + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(0)
+    hook_io.run(main, "plugin-cache-guard")

@@ -182,7 +182,8 @@ class ResolvedLocationTests(HookTestCase):
                               "tool_input": {"command": 'rm -f "' + self.ostemp.as_posix() + '/real.txt"'}})
         out = io.StringIO()
         with mock.patch.object(hook.os.path, "realpath", side_effect=OSError("boom")), \
-                mock.patch("sys.stdin", io.StringIO(payload)), contextlib.redirect_stdout(out):
+                mock.patch("sys.stdin", io.TextIOWrapper(io.BytesIO(payload.encode("utf-8")))), \
+                contextlib.redirect_stdout(out):
             hook.main()
         decision = json.loads(out.getvalue())["hookSpecificOutput"]
         self.assertEqual(decision["permissionDecision"], "deny")

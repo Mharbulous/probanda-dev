@@ -21,10 +21,13 @@ to the practitioner verbatim (shared/internals-confidentiality.md).
 Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails OPEN on its own error, loudly on stderr, as html-pages-gate does.
 """
-import json
 import os
 import posixpath
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
 
 CONTAINER_ROOT = "/mnt/user-data"
 STAGED = "/mnt/user-data/uploads/"
@@ -55,35 +58,16 @@ def message(path):
     )
 
 
-def deny(reason):
-    sys.stdout.write(json.dumps({"hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": reason,
-    }}) + "\n")
-
-
 def main():
     if os.environ.get("COCLERK_SENDFILE_ANY") == "1" or not os.path.isdir(CONTAINER_ROOT):
         return 0
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     tool_input = payload.get("tool_input") or {}
     for path in strings(tool_input.get("files")):
         if refused(path):
-            deny(message(path))
-            break
+            return hook_io.deny(message(path))
     return 0
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("staged-file-gate hook error (allowing call): " + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(0)
+    hook_io.run(main, "staged-file-gate")

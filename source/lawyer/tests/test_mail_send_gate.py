@@ -28,7 +28,7 @@ def test_a_send_is_refused_with_the_draft_route():
     assert output["permissionDecision"] == "deny"
     assert output["permissionDecisionReason"].startswith("Refused: Probanda never sends email itself.")
     assert "open it in Outlook, check it and click Send" in output["permissionDecisionReason"]
-    assert result.stdout.decode("utf-8").endswith("}\n") or result.stdout.decode("utf-8").endswith("}\r\n")
+    assert result.stdout.endswith(b"\n")
 
 
 def test_a_dry_run_and_the_morning_briefing_pass_silently():

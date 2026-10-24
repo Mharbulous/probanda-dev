@@ -91,6 +91,14 @@ import html
 import json
 import re
 import sys
+from pathlib import Path
+
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+    import hook_io
+except Exception as exc:  # a crash would let the call through
+    sys.stderr.write(f"Refused: practitioner-words-gate cannot load its helper: {exc!r}\n")
+    sys.exit(2)
 
 PREFIX = "Refused: "
 TYPED_SOURCES = {"sdk", "typed", "queued"}
@@ -525,8 +533,7 @@ def echo(value, turn):
 
 
 def refuse(message):
-    sys.stderr.write(PREFIX + message + "\n")
-    return 2
+    return hook_io.refuse(PREFIX + message)
 
 
 def board_goal(payload):
@@ -613,7 +620,7 @@ def merge_jobs(payload):
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     if (payload.get("tool_name") or "").endswith(GOAL_TOOL):
         return board_goal(payload)
     if (payload.get("tool_name") or "").endswith(MERGE_TOOL):
@@ -661,8 +668,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    try:
-        sys.exit(main())
-    except Exception as exc:  # the gate's own failure refuses the call (#784, decision 5)
-        sys.exit(refuse(f"the check itself failed: {exc!r}"))
+    # the gate's own failure refuses the call (#784, decision 5)
+    hook_io.run(main, "practitioner-words-gate", closed=lambda exc: refuse(f"the check itself failed: {exc!r}"))

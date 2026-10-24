@@ -58,7 +58,7 @@ class SubagentGateGuardTests(unittest.TestCase):
     def test_malformed_input_fails_open_loudly(self):
         result = run_hook("not json")
         self.assertEqual(result.returncode, 0)
-        self.assertIn("hook error (allowing call)", result.stderr)
+        self.assertIn("hook error (allowing)", result.stderr)
 
     def test_hook_is_registered_on_the_skill_tool(self):
         manifest = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))
