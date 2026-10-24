@@ -1,4 +1,4 @@
-// build-stamp: 9c709817547f
+// build-stamp: 2c3a23ebaf4b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16622,7 +16622,8 @@ def do_execute(req, resolved):
                 try:
                     con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
                 except Exception:
-                    con.execute("ROLLBACK")
+                    if con.in_transaction:
+                        con.execute("ROLLBACK")
                     raise
             if bootstrap:
                 con.executescript(triggers_sql)

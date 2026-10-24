@@ -1,4 +1,4 @@
-// build-stamp: 9f50e172333c
+// build-stamp: 2720aa0a5698
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79975,7 +79975,8 @@ def do_execute(req, resolved):
                 try:
                     con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
                 except Exception:
-                    con.execute("ROLLBACK")
+                    if con.in_transaction:
+                        con.execute("ROLLBACK")
                     raise
             if bootstrap:
                 con.executescript(triggers_sql)
@@ -83303,6 +83304,26 @@ def do_query(req):
     return {"rows": rows}
 
 
+def copy_fsync(src, dst):
+    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
+    shutil.copy2(src, dst)
+    with open(dst, 'rb+') as fh:
+        os.fsync(fh.fileno())
+    return dst
+
+
+def replace_live(staged, db_path):
+    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
+    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
+    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_timecamping_replace_{os.environ["COCLERK_STAGING_TAG"]}.db')
+    try:
+        copy_fsync(staged, sibling)
+        os.replace(sibling, db_path)
+    finally:
+        if os.path.exists(sibling):
+            os.remove(sibling)
+
+
 def do_execute(req):
     db_path = req['db_path']
     if not os.path.exists(db_path):
@@ -83322,14 +83343,14 @@ def do_execute(req):
             try:
                 con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        # Copy the mutated binary back only after a successful commit and a
-        # closed connection -- never mutate the live (possibly synced) file
-        # in place.
-        shutil.copy2(staged, db_path)
+        # Replace the live file only after a successful commit and a closed
+        # connection -- never mutate the live (possibly synced) file in place.
+        replace_live(staged, db_path)
         return {"ok": True}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -83425,7 +83446,7 @@ def do_bulk_upsert(req):
             con.close()
         # Same copy-back discipline as execute: only after a clean commit and
         # a closed connection, never mutating the live file in place.
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return {"lines": lines, "rows": rows}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -83448,7 +83469,7 @@ print(json.dumps(main()))
 function helperFile3() {
   return pythonDriverFile("timecamping-sqlite", PY_HELPER3);
 }
-var EXECUTE_TIMEOUT_ADVICE2 = "The write may already have committed: verify before retrying (/timecamping-data Operation Routing). If the database no longer opens, the kill landed while it was being copied back and left it truncated. The newest timecamping.db.bak-* beside it, if a migrate has written one, is the only copy, and it predates every write made since that migrate.";
+var EXECUTE_TIMEOUT_ADVICE2 = "The write may already have committed: verify before retrying (/timecamping-data Operation Routing).";
 function runHelper3(request2, env) {
   const write = request2.op !== "query";
   const defaultMs = request2.op === "bulk_upsert" ? WRITE_TIMEOUT_MS : write ? EXECUTE_TIMEOUT_MS : READ_TIMEOUT_MS;
@@ -83621,6 +83642,26 @@ def do_query(req):
     return {"rows": rows}
 
 
+def copy_fsync(src, dst):
+    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
+    shutil.copy2(src, dst)
+    with open(dst, 'rb+') as fh:
+        os.fsync(fh.fileno())
+    return dst
+
+
+def replace_live(staged, db_path):
+    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
+    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
+    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_submission_replace_{os.environ["COCLERK_STAGING_TAG"]}.sqlite')
+    try:
+        copy_fsync(staged, sibling)
+        os.replace(sibling, db_path)
+    finally:
+        if os.path.exists(sibling):
+            os.remove(sibling)
+
+
 def do_execute(req):
     db_path = req['db_path']
     if not os.path.exists(db_path):
@@ -83640,15 +83681,15 @@ def do_execute(req):
             try:
                 con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
             changes = con.total_changes
         finally:
             con.close()
-        # Copy the mutated binary back only after a successful commit and a
-        # closed connection -- never mutate the live (possibly synced) file
-        # in place.
-        shutil.copy2(staged, db_path)
+        # Replace the live file only after a successful commit and a closed
+        # connection -- never mutate the live (possibly synced) file in place.
+        replace_live(staged, db_path)
         return {"ok": True, "changes": changes}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -83678,11 +83719,12 @@ def do_write(req):
                 out = {"ok": True, "rowid": cur.lastrowid, "changes": cur.rowcount}
                 con.execute("COMMIT")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return out
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -83719,11 +83761,12 @@ def do_write_all(req):
                         return {"ok": False, "failed": i, "changes": cur.rowcount}
                 con.execute("COMMIT")
             except Exception:
-                con.execute("ROLLBACK")
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
                 raise
         finally:
             con.close()
-        shutil.copy2(staged, db_path)
+        replace_live(staged, db_path)
         return {"ok": True, "results": results}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -86329,7 +86372,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "9f50e172333c";
+var BUILD_STAMP = false ? null : "2720aa0a5698";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
