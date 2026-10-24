@@ -1,6 +1,6 @@
 # Tests
 
-Run everything with `node scripts/test.mjs` after a build (`npm test` builds first), or one tier with `node scripts/test.mjs unit`. The runner prints the five slowest files on every run.
+The whole suite and each tier run nightly in the `data-mcp-tests` workflow, with `node scripts/test.mjs` after a build (`npm test` builds first), or one tier with `node scripts/test.mjs unit`. The runner prints the five slowest files on every run. A session never runs them: it runs only a test file it wrote or changed, after a build, with `node --test <file>`.
 
 Three rules:
 
