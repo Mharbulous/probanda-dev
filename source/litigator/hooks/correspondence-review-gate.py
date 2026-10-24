@@ -25,7 +25,6 @@ Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails CLOSED on a missing transcript or its own error, as
 practitioner-words-gate does.
 """
-import json
 import sys
 from pathlib import Path
 
@@ -35,6 +34,7 @@ try:
     sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
                                      HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
     import hook_io
+    from transcript import practitioner_turns
 except Exception as exc:  # a crash would let the call through
     sys.stderr.write(f"Refused: correspondence-review-gate cannot load its helper: {exc!r}\n")
     sys.exit(2)
@@ -65,38 +65,15 @@ def path_key(text):
     return text.replace("\\\\", "/").replace("\\", "/").casefold()
 
 
-def result_text(content):
-    if isinstance(content, list):
-        return "\n".join(p.get("text", "") for p in content if isinstance(p, dict))
-    return content if isinstance(content, str) else ""
-
-
 def read_transcript(path):
     """(prompts of returned source-tracer calls, texts of returned write_email results), the
     session's own calls only."""
-    reviews, writes, results = {}, {}, {}
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            try:
-                rec = json.loads(line)
-            except ValueError:
-                continue  # a line the harness is still writing
-            if rec.get("isSidechain"):
-                continue
-            content = (rec.get("message") or {}).get("content")
-            parts = [p for p in content if isinstance(p, dict)] if isinstance(content, list) else []
-            for part in parts:
-                if part.get("type") == "tool_use":
-                    name = part.get("name") or ""
-                    tool_input = part.get("input") or {}
-                    if name in ("Agent", "Task") and str(tool_input.get("subagent_type", "")).endswith(REVIEWER):
-                        reviews[part.get("id")] = tool_input.get("prompt") or ""
-                    elif name.endswith("drafting_forms__draft_harness") and tool_input.get("step") == "write_email":
-                        writes[part.get("id")] = True
-                elif part.get("type") == "tool_result" and not part.get("is_error"):
-                    results[part.get("tool_use_id")] = result_text(part.get("content"))
-    returned = [prompt for use_id, prompt in reviews.items() if use_id in results]
-    written = [results[use_id] for use_id in writes if use_id in results]
+    calls = [call for segment in practitioner_turns(path) for call in segment.calls
+             if not call.sidechain and call.result is not None and not call.is_error]
+    returned = [call.input.get("prompt") or "" for call in calls if call.name in ("Agent", "Task")
+                and str(call.input.get("subagent_type", "")).endswith(REVIEWER)]
+    written = [call.result for call in calls if call.name.endswith("drafting_forms__draft_harness")
+               and call.input.get("step") == "write_email"]
     return returned, written
 
 
