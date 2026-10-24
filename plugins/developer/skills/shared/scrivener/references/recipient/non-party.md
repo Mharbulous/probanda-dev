@@ -10,8 +10,6 @@ Read when: the recipient is anyone no other recipient file covers: an insurer, a
 
 **Tone baseline:** Formal, courteous and plain. Explain who you act for and why you are writing, without arguing the client's case.
 
-**Any legal proposition needs research first.** A statement of what the law requires of the recipient appears only as the request gives it, cited. Otherwise return it as an open item.
-
 ---
 
 ## Structure
@@ -31,14 +29,3 @@ When a matter needs fuller guidance for one kind of recipient (an insurer, a rec
 
 - **Arguing the dispute.** Give the recipient only what it needs to act.
 - **Implying authority you do not have.** A request is a request. Do not present it as an obligation unless the request gives that as researched.
-
----
-
-## Checklist Before Returning the Text
-
-- [ ] The request appears in the first paragraph and is specific
-- [ ] The recipient's connection to the facts is stated
-- [ ] Every enclosure, including any client authorization, is named
-- [ ] A response date is stated as a calendar date
-- [ ] No legal proposition appears unless the request gives it, cited
-- [ ] Nothing privileged or personal is disclosed without the client's instructions

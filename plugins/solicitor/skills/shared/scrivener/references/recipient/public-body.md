@@ -10,8 +10,6 @@ Read when: the recipient is a public body that is not a venue (the police, a pro
 
 **Tone baseline:** Formal, factual, courteous and firm. State what happened and what you ask the body to do. Do not editorialize, and do not characterize anyone's motives.
 
-**Any legal proposition needs research first.** A statement of what a bylaw, statute or rule of conduct requires appears only as the request gives it, cited. Otherwise return it as an open item.
-
 ---
 
 ## Structure
@@ -50,15 +48,3 @@ Read when: the recipient is a public body that is not a venue (the police, a pro
 - **Using a complaint as leverage in the civil matter.** Never link a report to the body with a demand on the other side.
 - **Overstatement.** Do not call conduct "illegal" or "criminal" unless the request gives that conclusion as researched and necessary to the request.
 - **Advocacy for the client's whole case.** Give the body only what it needs to act on its own mandate.
-
----
-
-## Checklist Before Returning the Text
-
-- [ ] The request appears in the first paragraph and is specific
-- [ ] Facts are dated, particular and supportable, and separate from opinion
-- [ ] Every enclosure is named and referred to
-- [ ] A response date is stated as a calendar date
-- [ ] No legal proposition appears unless the request gives it, cited
-- [ ] Nothing in the letter links the report to a civil demand
-- [ ] The letter reads well if disclosed to the person it concerns

@@ -39,7 +39,3 @@ If the party is **unrepresented**, you may write directly.
 ### Formerly Represented Parties
 
 If the opposing party was previously represented but the retainer has ended, confirm the lawyer is no longer on the record (check court filings if litigation is active) before the first letter.
-
-## Before Sending
-
-- [ ] Confirmed the opposing party is **not currently represented** (or you have counsel's consent to write directly)

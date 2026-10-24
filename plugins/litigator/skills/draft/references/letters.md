@@ -63,7 +63,8 @@ Every letter type lays out the standard letter elements as parts of their own: t
 **The body comes from the scrivener** (`shared/correspondence-isolation.md`). This session composes and revises no sentence of a letter's body, an email's body or a covering note. Spawn the `lawyer:scrivener` agent for the body, with:
 
 - `recipient`: the audience's `recipient` in section 1, `court` for a venue's letter, `client` for a client letter.
-- `capacity`: `counsel-of-record`, unless the letter makes a settlement offer (`without-prejudice`) or is about the firm's own account with its client (`firm-as-creditor`).
+- `capacity`: `counsel-of-record`, or `firm-as-creditor` when the letter is about the firm's own account with its client.
+- `mode`: `without-prejudice` when the letter makes a settlement offer or concession, otherwise none.
 - `audience`: who else may read it, when the practitioner or the type file says.
 - `purpose`: in the practitioner's words.
 - `facts`: each fact the letter is to state, with its source locator, section 2's documents among them. Locators only: never a summary of what a source says.

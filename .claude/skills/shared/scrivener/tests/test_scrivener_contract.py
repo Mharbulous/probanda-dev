@@ -57,7 +57,55 @@ class AgentTests(unittest.TestCase):
                     self.assertTrue((path.parent / rel).is_file() or (REFS / rel).is_file(), rel)
 
 
+    def test_never_list_is_checked_before_return(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("## 5. Never in the text", agent)
+        for item in ("apology that implies fault", "understandable or reasonable",
+                     "without restating the position already taken and what changed",
+                     "why the client wants something", "answering every point",
+                     "Any fact without its source", "Adopting the other side's characterization"):
+            with self.subTest(item=item):
+                self.assertIn(item, agent)
+        self.assertIn("Check the text against section 5's list, last, every time.", agent)
+
+    def test_without_prejudice_is_a_mode_not_a_capacity(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("- `mode`: `without-prejudice`", agent)
+        self.assertIn("## 4. Without-prejudice mode", agent)
+        self.assertFalse((REFS / "capacity" / "without-prejudice.md").exists())
+
+
+class BudgetTests(unittest.TestCase):
+    KB = 1024
+    BUDGETS = {"core.md": 8, "recipient": 10, "capacity": 3, "audience": 3}
+
+    def test_every_file_is_within_its_byte_budget(self):
+        files = [(REFS / "core.md", 8)]
+        for folder in ("recipient", "capacity", "audience"):
+            found = sorted((REFS / folder).glob("*.md"))
+            self.assertTrue(found, folder)
+            files += [(path, self.BUDGETS[folder]) for path in found]
+        for path, kb in files:
+            with self.subTest(file=path.relative_to(REFS).as_posix()):
+                self.assertLessEqual(path.stat().st_size, kb * self.KB)
+
+
+class OnePlaceTests(unittest.TestCase):
+    def test_each_rule_lives_once(self):
+        corpus = list(REFS.rglob("*.md")) + LETTER_FILES
+        for phrase in ("Assume a judge reads it", "Any legal proposition needs research first"):
+            hits = [p.name for p in corpus if phrase.lower() in p.read_text(encoding="utf-8").lower()]
+            with self.subTest(phrase=phrase):
+                self.assertEqual(len(hits), 1, hits)
+
+
 class LetterFileTests(unittest.TestCase):
+    def test_no_checklist_restates_a_file(self):
+        for path in LETTER_FILES + sorted((REFS / "recipient").glob("*.md")):
+            with self.subTest(file=path.name):
+                self.assertNotIn("Checklist", path.read_text(encoding="utf-8"))
+                self.assertNotIn("## Before Sending", path.read_text(encoding="utf-8"))
+
     def test_six_letter_files_keep_their_layout_and_point_to_their_wording(self):
         self.assertEqual(len(LETTER_FILES), 6)
         for path in LETTER_FILES:

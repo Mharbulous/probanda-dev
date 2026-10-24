@@ -2,16 +2,6 @@
 
 Read when: the recipient is the person or entity on the other side of a dispute, not their lawyer. This is one of the most ethically sensitive categories of legal correspondence. Whether the firm may write to them at all is settled before the request reaches you. Every item in this file is the firm's own practice.
 
-## Contents
-- Writing to an Unrepresented or Formerly Represented Party
-- Tone and Approach
-- Demand Letters
-- Pre-Litigation Correspondence
-- Notices of Default
-- Examples
-
----
-
 ## Writing to an Unrepresented or Formerly Represented Party
 
 To an **unrepresented** party, you must not:
@@ -23,8 +13,6 @@ To a **formerly represented** party:
 - Where the request says the end of the representation is not yet confirmed, open with: "We understand you are no longer represented by [lawyer] in this matter. Please confirm."
 - Otherwise open with: "We understand [former counsel] no longer represents you in this matter. If that is incorrect, please have your lawyer contact us immediately."
 - Do not assume the party is now unsophisticated: they may retain new counsel at any time.
-
----
 
 ## Tone and Approach
 
@@ -41,8 +29,6 @@ To a **formerly represented** party:
 - **Ultimatums with no legal basis.** "If you do not pay by Friday we will ensure you never work in this industry again" is both unenforceable and potentially actionable. Stick to consequences you can actually deliver: filing a claim, registering a lien, pursuing enforcement.
 - **Legal advice to the opposing party.** Do not explain what their legal options are, what defences they might have, or what a court would likely do to them. You act for your client, not theirs.
 - **Anything that could be construed as harassment.** Repeated letters with escalating threats, or communication designed to embarrass rather than advance the claim.
-
----
 
 ## Demand Letters
 
@@ -66,8 +52,6 @@ A demand letter to an opposing party follows this order:
 - Name the key documents enclosed where they strengthen the demand.
 - Do not overstate damages or include speculative heads of loss: keep to what you can prove.
 
----
-
 ## Pre-Litigation Correspondence
 
 Before a lawsuit is filed, your correspondence serves several purposes:
@@ -79,8 +63,6 @@ Before a lawsuit is filed, your correspondence serves several purposes:
 
 Pre-litigation letters should be calibrated: firm enough to be taken seriously, measured enough that a court would view your client as the reasonable party.
 
----
-
 ## Notices of Default
 
 When the opposing party has a contractual obligation and has failed to perform:
@@ -90,8 +72,6 @@ When the opposing party has a contractual obligation and has failed to perform:
 - State the cure period if the contract provides one
 - State the consequences under the contract if the default is not cured (termination, acceleration, forfeiture of deposit, etc.)
 - Preserve your client's right to pursue all available remedies
-
----
 
 ## Examples
 
@@ -119,11 +99,6 @@ These are patterns to adapt, not fixed text.
 > Our client reserves all rights and remedies available at law and in equity, including the right to claim additional damages for delay.
 >
 > We recommend you obtain independent legal advice regarding this matter.
->
-> Yours truly,
->
-> **[Lawyer Name]**
-> [Firm Name]
 
 ### Example 2: Notice of Default Under Contract
 
@@ -143,11 +118,6 @@ These are patterns to adapt, not fixed text.
 > Our client reserves all rights and remedies under the Lease, at law, and in equity.
 >
 > We recommend you obtain independent legal advice regarding this matter.
->
-> Yours truly,
->
-> **[Lawyer Name]**
-> [Firm Name]
 
 ### Example 3: Pre-Litigation Warning — Breach of Non-Competition Agreement
 
@@ -172,8 +142,3 @@ These are patterns to adapt, not fixed text.
 > Our client reserves all rights and remedies available at law and in equity.
 >
 > We recommend you obtain independent legal advice regarding this matter without delay.
->
-> Yours truly,
->
-> **[Lawyer Name]**
-> [Firm Name]

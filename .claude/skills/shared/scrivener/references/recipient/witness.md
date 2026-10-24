@@ -2,26 +2,11 @@
 
 Read when: the recipient is a non-party, non-expert witness with factual knowledge relevant to the litigation. Every item in this file is the firm's own practice.
 
-## Contents
-- Core Principles
-- First Contact Letters
-- Subpoena / Summons Accompaniment Letters
-- Scheduling Interviews or Examinations for Discovery
-- Thank-You Letters
-- Reluctant or Uncooperative Witnesses
-- What NOT to Do
-- Ethical Guardrails
-- Examples
-
----
-
 ## Core Principles
 
 **These people are not your client.** Every letter must reflect that. You cannot give them legal advice, you cannot create an impression that you represent their interests, and you cannot do anything that looks like coaching or inducement. Your goal is cooperation, and cooperation flows from clarity, respect and minimal imposition.
 
 **Tone baseline:** Professional, courteous, plain-language. Assume the recipient has never been involved in litigation before. Avoid legalese unless you are quoting a document they have received (e.g., a subpoena), and when you do, explain it immediately.
-
----
 
 ## First Contact Letters
 
@@ -35,8 +20,6 @@ The first letter sets the relationship. Get these elements right:
 6. **Reassurance.** Make clear this is voluntary at this stage (if it is). Let them know they are free to consult their own lawyer if they wish.
 
 **Do not** include a detailed summary of your client's position. Do not characterize the evidence. Do not tell them what you expect them to say.
-
----
 
 ## Subpoena / Summons Accompaniment Letters
 
@@ -54,8 +37,6 @@ The letter should:
 
 **Do not** minimize the legal obligation. Do not say "this is just a formality" if noncompliance has consequences. Be honest but not threatening.
 
----
-
 ## Scheduling Interviews or Examinations for Discovery
 
 When arranging an interview (informal) or examination for discovery (formal, under the Rules):
@@ -65,8 +46,6 @@ When arranging an interview (informal) or examination for discovery (formal, und
 - **Estimate duration.** Give your honest best estimate. Do not say "15 minutes" if you know it will be two hours.
 - **Explain logistics.** Where, how to get there, parking, whether it can be done by video, whether they need to bring anything.
 - **For formal examinations**, name the enclosed or relevant notice or order and explain what it means.
-
----
 
 ## Thank-You Letters
 
@@ -78,8 +57,6 @@ Send one after every interview, examination or trial appearance. These are short
 - If their involvement is complete, tell them.
 
 This is not just courtesy: it preserves goodwill for future contact if needed.
-
----
 
 ## Reluctant or Uncooperative Witnesses
 
@@ -96,8 +73,6 @@ Tone shift: firmer, but still professional. Never hostile.
 - Imply they will be held in contempt simply for being uncooperative before a subpoena is issued.
 - Suggest their reluctance will be used against them or disclosed to the court in a way that damages them.
 
----
-
 ## What NOT to Do
 
 This is non-negotiable:
@@ -109,15 +84,11 @@ This is non-negotiable:
 - **Do not discuss other witnesses' evidence.** Do not tell Witness A what Witness B said.
 - **Do not pressure.** Persistent follow-up is fine. Harassment is not. Know the line.
 
----
-
 ## Ethical Guardrails
 
 - Under the BC Code of Professional Conduct (Chapter 7), you must not deceive or mislead a witness, and you must not discourage a witness from giving evidence or cooperating with the other side.
 - An independent witness is entitled to speak with either side. You cannot ask them to speak only with you.
 - If a conversation is important, confirm it in writing afterward.
-
----
 
 ## Examples
 

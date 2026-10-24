@@ -37,7 +37,3 @@ Check each of these in order, and use this file only when every answer is no:
 5. Is the recipient a government or law-enforcement body acting under a public mandate? Then use `public-body`.
 
 Where the answer is unclear, ask the practitioner once.
-
-## Before Sending
-
-- [ ] Every audience above was checked and none fits

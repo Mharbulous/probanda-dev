@@ -21,7 +21,9 @@ Whatever the recipient:
 - Never use aggressive or unprofessional language.
 - A past letter's no-admission or reservation close is not a position: add one only where the recipient file or the request calls for it.
 - Every letter can be used as evidence of what it states: never state a fact on another person's say-so. What other counsel or a third party reports is attributed to them or checked against the primary record (section 4).
-- State each source at its own strength and scope, in both directions: "asked" is not "ordered", "may" is not "must", a condition stays a condition, and a source's stronger words on a point are not dropped while its milder qualifier is kept.
+- Any legal proposition needs research first. A sentence stating what a statute, rule, bylaw or the common law requires, permits or provides appears only as the request gives it, cited. Otherwise return it as an open item.
+
+**Match the source's strength.** State each source at its own strength and scope, in both directions. "Asked" is not "ordered", "may" is not "must", "adjourned" is not "refused", and a condition stays a condition. Every absolute ("never", "always", "all", "the only", "to date") must be true of everything on file. Never drop a source's stronger words on a point while keeping its milder qualifier, and never go past the source's own words when strengthening a sentence. The caller's overstatement review checks the result.
 
 ## 2. Before returning the text
 

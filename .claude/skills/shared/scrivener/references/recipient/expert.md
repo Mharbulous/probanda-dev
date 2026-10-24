@@ -2,19 +2,9 @@
 
 Read when: the recipient is an expert witness retained to give opinion evidence. Every item in this file is the firm's own practice.
 
-## Contents
-- Audience Profile
-- Tone and Register
-- Types of Correspondence
-- What to Avoid
-- BC-Specific Requirements: Rule 11-2
-- Examples
-
 ## Audience Profile
 
-Expert witnesses are professionals retained to provide opinion evidence in litigation. They include forensic accountants, engineers, medical specialists, valuators, actuaries and other specialists. They are highly credentialed professionals and must be treated as peers, not subordinates. Everything written to them is potentially producible (`../audience/judge-as-exhibit.md`).
-
----
+Expert witnesses are professionals retained to provide opinion evidence in litigation. They include forensic accountants, engineers, medical specialists and valuators. They are highly credentialed professionals and must be treated as peers, not subordinates. Everything written to them is potentially producible (`../audience/judge-as-exhibit.md`).
 
 ## Tone and Register
 
@@ -22,8 +12,6 @@ Expert witnesses are professionals retained to provide opinion evidence in litig
 - Respect their expertise. Frame requests as questions, not instructions. Say "We would appreciate your opinion on..." rather than "Please conclude that..."
 - Be precise and organized. Experts bill for their time. Do not waste it with vague requests or disorganized materials.
 - Avoid legalese when explaining the factual context. Translate legal concepts into plain language where needed.
-
----
 
 ## Types of Correspondence
 
@@ -76,8 +64,6 @@ When reviewing a draft report and requesting revisions:
 - What you can put in writing: logistics (date, time, location of the preparation session), a list of the topics you intend to cover (framed neutrally), and the documents the expert should review in advance.
 - Any substantive discussion of how the expert should handle particular challenges belongs in an in-person or telephone meeting, not in correspondence.
 
----
-
 ## What to Avoid
 
 1. **Do not suggest conclusions.** Never write "we believe the value is $X" or "it would be helpful if your report concluded that..." This undermines the expert's independence and, if disclosed, destroys credibility.
@@ -88,19 +74,14 @@ When reviewing a draft report and requesting revisions:
 
 4. **Be careful about multiple drafts.** In BC, draft expert reports are generally producible if they reveal the substance of communications between counsel and the expert. Limit the number of drafts. Frame your feedback as questions, not as tracked-changes edits to the expert's own words.
 
----
-
 ## BC-Specific Requirements: Rule 11-2
 
 Under the BC Supreme Court Civil Rules, Rule 11-2:
 
-- An expert's report must include a signed certification that the expert is aware of their duty to assist the court and is not an advocate for any party.
 - The expert must disclose the instructions provided to them (the substance of the questions asked and the facts and assumptions they were given).
 - The report must include the expert's qualifications, the facts and assumptions relied upon, their opinion, and the reasons for it.
 
 **Practical implication:** the instructions are disclosed, so every letter of instruction is written for its other readers (`../audience/judge-as-exhibit.md`).
-
----
 
 ## Examples
 
@@ -109,8 +90,6 @@ These are patterns to adapt, not fixed text.
 ### Example 1: Initial Retainer Letter
 
 > Dear Dr. Okafor,
->
-> Re: *Smith v. Jones*, Vancouver Registry No. S-224567
 >
 > We write to retain you as an expert in forensic accounting in the above action. We act for the plaintiff, Linda Smith.
 >
@@ -135,19 +114,10 @@ These are patterns to adapt, not fixed text.
 > **Confidentiality:** All materials provided to you are confidential and should not be disclosed to anyone without our prior authorization.
 >
 > We look forward to working with you. Please confirm your availability and willingness to accept this retainer at your earliest convenience.
->
-> Yours truly,
->
-> [Lawyer Name]
-> [Firm Name]
-
----
 
 ### Example 2: Follow-Up on a Draft Report
 
 > Dear Dr. Okafor,
->
-> Re: *Smith v. Jones* -- Draft Valuation Report
 >
 > Thank you for providing your draft report dated May 15, 2026. We have reviewed it and have the following questions:
 >
@@ -160,34 +130,3 @@ These are patterns to adapt, not fixed text.
 > 4. Opposing counsel has disclosed a report from their expert, Mark Travers, CPA, which we enclose. You are not obligated to respond to it, but if there are aspects of Mr. Travers' methodology or conclusions that you believe warrant comment, we would welcome your observations.
 >
 > Please let us know if you have any questions or if you require additional materials.
->
-> Yours truly,
->
-> [Lawyer Name]
-> [Firm Name]
-
----
-
-### Example 3: Instructions for a New Question
-
-> Dear Dr. Okafor,
->
-> Re: *Smith v. Jones* -- Additional Question
->
-> A new issue has arisen in this proceeding that we would like your assistance with.
->
-> The respondent has disclosed that Jones Construction Ltd. entered into a contract on May 1, 2024 -- approximately six weeks before the separation date -- to purchase a commercial property at 400 Industrial Road, Surrey, BC for $1,200,000. The purchase completed on August 15, 2024. We enclose a copy of the purchase agreement and the completion documents.
->
-> We would appreciate your opinion on the following:
->
-> 1. Should this property be included in your valuation of Jones Construction Ltd. as of the separation date (June 15, 2024)?
-> 2. If so, at what value should it be included, given that the purchase had been agreed to but had not yet completed as of that date?
->
-> For the purpose of this question, please assume that the separation date is not in dispute.
->
-> If this additional question materially changes your fee estimate, please let us know before proceeding.
->
-> Yours truly,
->
-> [Lawyer Name]
-> [Firm Name]

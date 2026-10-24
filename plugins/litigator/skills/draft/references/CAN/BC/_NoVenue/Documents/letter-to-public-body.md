@@ -27,7 +27,3 @@ How every letter is drafted, checked on its mockup and sent is `references/lette
 ## Recipients
 
 Whether the opposing party or counsel is copied is a choice the practitioner makes on each letter, never a default.
-
-## Before Sending
-
-- [ ] Confirmed the body is not a venue (it prescribes no form or procedure for this letter)
