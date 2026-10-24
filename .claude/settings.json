@@ -14,7 +14,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/inject-commandments.js"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/inject-commandments.js"
+            ],
             "timeout": 15,
             "statusMessage": "Loading COMMANDMENTS.md"
           }
@@ -28,14 +30,18 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-commandments.js"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-commandments.js"
+            ],
             "timeout": 15,
             "statusMessage": "COMMANDMENTS.md shell guard"
           },
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/public-repo-guard.js"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/public-repo-guard.js"
+            ],
             "timeout": 15,
             "statusMessage": "Public repository guard"
           }
@@ -47,16 +53,34 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/public-repo-guard.js"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/public-repo-guard.js"
+            ],
             "timeout": 15,
             "statusMessage": "Public repository guard"
           },
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/public-folder-scan.js"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/public-folder-scan.js"
+            ],
             "timeout": 30,
             "statusMessage": "Public folder scan"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/no-regression-suite.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "No regression suite guard"
           }
         ]
       }
