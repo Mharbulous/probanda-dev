@@ -130,7 +130,7 @@ lookup — tool absent, unconfigured, or erroring after a retry — is
   the filed Point in Time page and bulletin as before. (It replaced `research-paralegal`'s legislation-currency
   mode on 2026-10-06.)
 - **The general renderer's filed-render gate** (`currency_gate_failed`,
-  `source/lawyer/mcp/src/submission/forms.ts`) — reads the currency result
+  `source/lawyer/mcp/src/submission/forms/filed-gates.ts`) — reads the currency result
   stored through `/drafting-data` on the relied-on authority and refuses an unsent Writing's filed face while
   an implied clause names an enactment whose result is not `current`, or whose
   cited provision's result is not `current`, and tags the line per provision. It

@@ -1,4 +1,4 @@
-// build-stamp: 468c1829be9a
+// build-stamp: 9f50e172333c
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -76069,7 +76069,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname25 } from "node:path";
+import { dirname as dirname29 } from "node:path";
 
 // src/tools/practice/rule-overlay.ts
 import { randomUUID as randomUUID2 } from "node:crypto";
@@ -86329,7 +86329,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "468c1829be9a";
+var BUILD_STAMP = false ? null : "9f50e172333c";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -93163,11 +93163,6 @@ async function submissionDataSetStep(args, env = process.env) {
   };
 }
 
-// src/submission/forms.ts
-import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync34, mkdirSync as mkdirSync17, realpathSync as realpathSync9, renameSync as renameSync7, unlinkSync as unlinkSync8 } from "node:fs";
-import { basename as basename8, dirname as dirname20, extname as extname3, isAbsolute as isAbsolute7, join as join37, resolve as resolve8 } from "node:path";
-
 // src/submission/writing-folder.ts
 import { existsSync as existsSync27, mkdirSync as mkdirSync12, readdirSync as readdirSync13, readFileSync as readFileSync22, renameSync as renameSync5, rmdirSync, statSync as statSync12, unlinkSync as unlinkSync6 } from "node:fs";
 import { dirname as dirname14, extname as extname2, join as join29 } from "node:path";
@@ -93390,2507 +93385,94 @@ function moveCaseDataMockups(dbPath) {
   return moves;
 }
 
-// src/submission/filing-order.ts
-var DAY_MS = 864e5;
-var HOUR_MS = 36e5;
-function localMs(date3, hours = 0, minutes = 0) {
-  const [y3, m3, d3] = date3.split("-").map(Number);
-  return new Date(y3, m3 - 1, d3, hours, minutes, 0, 0).getTime();
+// src/submission/forms/timings.ts
+function elapsedMs(start2) {
+  return Math.round((performance.now() - start2) * 10) / 10;
 }
-function stampMs(stamp2) {
-  const [date3, time3] = stamp2.split(" ");
-  const [hh, mm] = (time3 ?? "00:00").split(":").map(Number);
-  return localMs(date3, hh, mm);
+function timed(timings, phase, fn2) {
+  const start2 = performance.now();
+  const value = fn2();
+  timings.push({ phase, ms: elapsedMs(start2) });
+  return value;
 }
-function isImminent(hearingDate, now) {
-  if (hearingDate === null) return false;
-  const hearing = localMs(hearingDate);
-  if (hearing - localMs(now.slice(0, 10)) > 7 * DAY_MS) return false;
-  const endOfHearingDay = localMs(hearingDate, 23, 59);
-  return stampMs(now) - endOfHearingDay <= 12 * HOUR_MS;
+function withTotal(timings, start2) {
+  timings.push({ phase: "total", ms: elapsedMs(start2) });
+  return timings;
 }
-function orderFilings(filings, now) {
-  const band = (f3) => f3.retired ? 3 : isImminent(f3.hearing_date, now) ? 0 : f3.latest_activity === null ? 2 : 1;
-  return [...filings].sort((a3, b3) => {
-    const bandA = band(a3);
-    const bandB = band(b3);
-    if (bandA !== bandB) return bandA - bandB;
-    if (bandA === 0 && a3.hearing_date !== b3.hearing_date) return a3.hearing_date < b3.hearing_date ? -1 : 1;
-    if (bandA === 1 && a3.latest_activity !== b3.latest_activity) return a3.latest_activity > b3.latest_activity ? -1 : 1;
-    return a3.filing_id - b3.filing_id;
-  });
-}
-function orderByRecency(filings) {
-  const band = (f3) => f3.retired ? 2 : f3.latest_activity === null ? 1 : 0;
-  return [...filings].sort((a3, b3) => {
-    const bandA = band(a3);
-    const bandB = band(b3);
-    if (bandA !== bandB) return bandA - bandB;
-    if (bandA === 0 && a3.latest_activity !== b3.latest_activity) return a3.latest_activity > b3.latest_activity ? -1 : 1;
-    return a3.filing_id - b3.filing_id;
-  });
+function nowStamp() {
+  const d3 = /* @__PURE__ */ new Date();
+  const pad = (n3) => String(n3).padStart(2, "0");
+  return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())} ${pad(d3.getHours())}:${pad(d3.getMinutes())}`;
 }
 
-// src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync23 } from "node:fs";
-
-// src/submission/forms/render-application-response.ts
-function rows7(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function fetchHearingDetails(dbPath, filingId) {
-  const found = rows7(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
-}
-function hearingDateSentence(hearing) {
-  const date3 = hearing?.proposed_hearing;
-  switch (hearing?.hearing_date_position) {
-    case "none_proposed":
-      return "";
-    case "agree":
-      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
-    case "propose_other":
-      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
-    default:
-      return null;
-  }
-}
-function formatTimeEstimate(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function fetchFilingPositions(dbPath, filingId) {
-  return rows7(
-    dbPath,
-    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
-            fp.position, fp.proposed_terms
-     FROM filing_positions fp
-     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
-     WHERE fp.filing_id = ?
-     ORDER BY oo.paragraph_number`,
-    [filingId]
-  );
-}
-function resolveRespondedToDocument(dbPath, proceedingId, positions) {
-  const positionedIds = new Set(positions.map((p3) => p3.document_id));
-  let documentId;
-  if (positionedIds.size === 1) {
-    documentId = [...positionedIds][0];
-  } else if (positionedIds.size === 0) {
-    const candidates = rows7(
-      dbPath,
-      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
-      [proceedingId]
-    );
-    if (candidates.length === 1) documentId = candidates[0].document_id;
-  }
-  if (documentId === void 0) return void 0;
-  const found = rows7(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
-  return found[0];
-}
-function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows7(
-    dbPath,
-    `SELECT oo.id, oo.paragraph_number, oo.wording
-     FROM opposing_orders oo
-     WHERE oo.document_id = ?
-       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
-     ORDER BY oo.paragraph_number`,
-    [documentId, filingId]
-  );
-}
-function fetchFacts(dbPath, filingId) {
-  return rows7(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part4'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows7(
-    dbPath,
-    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
-    [filingId]
-  );
-  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
-}
-function provenanceLabel(p3) {
-  if (p3 === "served_with_this_response") return "served with this application response";
-  if (p3 === "already_in_court_file") return "already in the court file";
-  return "";
-}
-function fetchStatementsOfFact(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows7(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-function witnessBackedFlags(dbPath, factIds) {
-  if (factIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = factIds.map(() => "?").join(",");
-  const found = rows7(
-    dbPath,
-    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
-     FROM facts f WHERE f.id IN (${placeholders})`,
-    factIds
-  );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function frontmatterFor2(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Application_response",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function afsCheckbox(party) {
-  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
-  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
-  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-}
-function renderApplicationResponse(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id);
-  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
-  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
-  const lines2 = [];
-  lines2.push(frontmatterFor2(ctx.proceeding, ctx));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "APPLICATION RESPONSE"
-    })
-  );
-  lines2.push("");
-  const clientName = client?.name ?? gapMarker("gap");
-  const applicantName = applicant?.name ?? gapMarker("gap");
-  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
-  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
-  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
-  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
-  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
-  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
-  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
-  lines2.push(
-    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
-  );
-  lines2.push("");
-  if (hearingDate !== "") {
-    lines2.push(hearingDate);
-    lines2.push("");
-  }
-  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
-  lines2.push("");
-  const consented = positions.filter((p3) => p3.position === "consented");
-  const opposed = positions.filter((p3) => p3.position === "opposed");
-  const noPosition = positions.filter((p3) => p3.position === "no_position");
-  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
-  lines2.push("");
-  if (consented.length === 0) {
-    lines2.push("NONE");
-  } else {
-    consented.forEach((p3) => {
-      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
-      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
-    });
-  }
-  lines2.push("");
-  lines2.push("## PART 2: ORDER(S) OPPOSED");
-  lines2.push("");
-  if (opposed.length === 0) {
-    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
-  lines2.push("");
-  if (noPosition.length === 0) {
-    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  if (unpositioned.length > 0) {
-    lines2.push("## Positions not yet taken");
-    lines2.push("");
-    unpositioned.forEach((o3) => {
-      const marker = unpositionedOrderMarker();
-      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
-      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
-    });
-    lines2.push("");
-  }
-  let partNum = 0;
-  lines2.push("## PART 4: FACTUAL BASIS");
-  lines2.push("");
-  const factParagraphs = /* @__PURE__ */ new Map();
-  for (const entry of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
-    partNum += 1;
-    if (entry.kind === "rhetoric") {
-      lines2.push(...renderRhetoricLine(ctx, entry.row, partNum, ""));
-      continue;
-    }
-    const f3 = entry.item;
-    factParagraphs.set(f3.id, partNum);
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
-    const witnessSuppressed = suppressedFactIds.has(f3.id);
-    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
-    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
-    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens = [witnessMarker, courtRecordPin, looseThread];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      statementSets.push(statementTokens);
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      statementTokens.push(doubtMarker(s3.doubt));
-      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens.push(...statementTokens);
-      recordFactStatementGlyphs(
-        ctx.inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens);
-    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
-    const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
-  }
-  lines2.push("");
-  lines2.push("## PART 5: LEGAL BASIS");
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      partNum += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry.row, partNum, ""), "");
-      continue;
-    }
-    const s3 = entry.item;
-    recordParagraph(ctx, s3.id, "form", partNum);
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      partNum,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      looseThread,
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    partNum = result.nextPara;
-  }
-  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
-  lines2.push("");
-  docs.forEach((d3, i3) => {
-    const copy = copyMarkers.get(d3.document_id) ?? "";
-    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
-    const provenancePart = provenance4 ? ` (${provenance4})` : "";
-    lines2.push(
-      `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
-    );
-  });
-  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
-  lines2.push("");
-  lines2.push("**Address for service filed:**");
-  const afs = afsCheckbox(client);
-  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
-  lines2.push(afs);
-  lines2.push("");
-  lines2.push(checkboxOrderBlock([]));
-  lines2.push("");
-  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-bcca-stay-response.ts
-function rows8(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function fetchFacts2(dbPath, filingId) {
-  return rows8(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-function fetchStatementsOfFact2(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows8(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of fetchStatementsOfFact2(dbPath, facts.map((f3) => f3.id))) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const lines2 = [];
-  let para = startPara;
-  facts.forEach((f3) => {
-    para += 1;
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    recordGlyphs(inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    const factTokens = [
-      suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
-      courtRecordPin
-    ];
-    const tokens = [...factTokens];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      tokens.push(...statementTokens);
-      recordFactStatementGlyphs(
-        inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-      const doubtAndCopy = [doubtMarker(s3.doubt), s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : ""];
-      tokens.push(...doubtAndCopy);
-      statementSets.push([...statementTokens, ...doubtAndCopy]);
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens);
-    factTokens.push(reviewMarkerFor(review, inventory, lineGlyphs, "facts", f3.id, f3.postulate));
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
-    lines2.push(`${para}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para} -->`}`);
-    if (courtRecordCite) lines2.push(`   > ${courtRecordCite} <!-- fact ${para} -->`);
-  });
-  return { lines: lines2, nextPara: para };
-}
-function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
-  const lines2 = [];
-  let para = startPara;
-  let run = [];
-  const flush = () => {
-    if (run.length === 0) return;
-    const result = renderFactParagraphs(ctx.dbPath, run, para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
-    lines2.push(...result.lines);
-    para = result.nextPara;
-    run = [];
-  };
-  for (const entry of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
-    if (entry.kind === "host") {
-      run.push(entry.item);
-      continue;
-    }
-    flush();
-    para += 1;
-    lines2.push(...renderRhetoricLine(ctx, entry.row, para, ""));
-  }
-  flush();
-  return { lines: lines2, nextPara: para };
-}
-function fetchAffidavitDetails(dbPath, documentIds) {
-  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows8(
-    dbPath,
-    `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
-     FROM documents d
-     LEFT JOIN witnesses w ON w.id = d.deponent
-     WHERE d.id IN (${placeholders})`,
-    documentIds
-  );
-  return new Map(found.map((r3) => [r3.document_id, r3]));
-}
-function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
-  return rows8(
-    dbPath,
-    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
-     FROM filing_submissions fs
-     JOIN submission_law slk ON slk.submission_id = fs.submission_id
-     JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
-     JOIN authorities a ON a.id = sl.authority_id
-     WHERE fs.filing_id = ? AND fs.document = 'form' AND ${BRIEF_ONLY_CAP_SQL}
-       AND a.id NOT IN (SELECT authority_id FROM opposing_authorities WHERE proceeding_id = ? AND authority_id IS NOT NULL)
-     GROUP BY a.style_of_cause_or_title, a.citation
-     ORDER BY a.style_of_cause_or_title COLLATE NOCASE`,
-    [filingId, proceedingId]
-  );
-}
-function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows8(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
-  return found[0]?.n ?? 0;
-}
-function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
-  return rows8(
-    dbPath,
-    `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
-     FROM statements_of_fact sof
-     JOIN documents d ON d.id = sof.exhibit_id
-     WHERE sof.instrument = ? AND sof.exhibit_id IS NOT NULL`,
-    [affidavitDocumentId]
-  );
-}
-function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
-  const out = [];
-  const parts = [];
-  const newPart = (text5, indent) => {
-    out.push({ text: text5, indent, part: parts.length });
-    parts.push({ bookmark: text5 });
-  };
-  out.push({ text: "Cover Page", indent: 0, part: "cover" });
-  out.push({ text: "Table of Contents", indent: 0, part: "toc" });
-  out.push({ text: "Part 1: Evidence, Exhibits or Affidavits", indent: 0, part: null });
-  docs.forEach((d3) => {
-    if (d3.role === "affidavit") {
-      const detail = affidavitDetails.get(d3.document_id);
-      const deponent = detail?.deponent_name ?? onMissing(`${d3.label}'s deponent name`, { table: "documents.deponent", id: d3.document_id, item: `${d3.label}: deponent` });
-      const number3 = detail?.affidavit_number ? ` #${detail.affidavit_number}` : "";
-      const filedDate = d3.document_date ?? onMissing(`${d3.label}'s filed date`, { table: "documents.document_date", id: d3.document_id, item: `${d3.label}: filed date` });
-      newPart(`Affidavit${number3} of ${deponent}, filed ${filedDate}`, 1);
-      const exhibits = fetchAttachedExhibits(dbPath, d3.document_id);
-      exhibits.forEach((ex) => {
-        const num = exhibitMap.get(ex.document_id) ?? onMissing(`${ex.label}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
-        out.push({ text: `Exhibit ${num}: ${ex.label} (${ex.document_date ?? "undated"})`, indent: 2, part: null });
-      });
-    } else {
-      newPart(`${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}`, 1);
-    }
-  });
-  newPart("Part 2: Written Argument", 0);
-  out.push({ text: "Part 1: Statement of Facts", indent: 1, part: null });
-  out.push({ text: "Part 2: Issues", indent: 1, part: null });
-  out.push({ text: "Part 3: Analysis", indent: 1, part: null });
-  out.push({ text: "Part 4: Order(s) Sought", indent: 1, part: null });
-  if (hasAuthorities || unverifiedDelta) newPart("Part 3: Table of Authorities", 0);
-  return { rows: out, parts };
-}
-function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta) {
-  const out = [];
-  out.push("## TABLE OF CONTENTS");
-  out.push("");
-  out.push(
-    "<!-- Required by e-CI \xA71.2. Page numbers are TBD until the combined PDF is assembled -- fill in then, and confirm this table's numbering matches the PDF's actual page numbering (e-CI \xA71.3). -->"
-  );
-  out.push("");
-  out.push("| Item | Page |");
-  out.push("| :--- | ---: |");
-  const { rows: rows22 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
-    const marker = gapMarker("gap");
-    recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
-    return marker;
-  });
-  rows22.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
-  out.push("");
-  return out;
-}
-function frontmatterFor3(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Response_book",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function recordContactGaps(inv, contacts) {
-  for (const c3 of contacts) {
-    for (const cell of contactCells(c3, gapMarker("gap"))) {
-      recordCriterionGlyphs(inv, cell.text, ["\u{1F9E9}"], { table: `counsel_of_record.${cell.column}`, id: c3.partyId, item: `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}: ${cell.missing}` });
-    }
-  }
-}
-function positionsSentence(positions) {
-  return positions.map((p3) => `paragraph ${p3.paragraph_number} (${p3.wording})`).join("; ");
-}
-function renderBccaStayResponse(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearingDate = rows8(
-    ctx.dbPath,
-    "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
-    [ctx.filing.id]
-  )[0];
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const affidavitDetails = fetchAffidavitDetails(ctx.dbPath, docs.map((d3) => d3.document_id));
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of submissionFactStatements) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const authorities = fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, ctx.proceeding.id);
-  const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, ctx.proceeding.id) === 0;
-  const roleGroups = groupPartiesByRole(captionParties2);
-  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
-  const applicantGroup = applicant ? roleGroups.find((g3) => g3.role === applicant.role) : void 0;
-  const lowerCourtRoles = buildLowerCourtRoleByRole(ctx.parties);
-  const contacts = roleGroups.map((g3) => {
-    const rep = ctx.parties.find((p3) => p3.role === g3.role);
-    return {
-      role: g3.role,
-      names: g3.names,
-      partyId: rep.id,
-      counselName: rep?.counsel_name ?? null,
-      counselFirm: rep?.counsel_firm ?? null,
-      addressForService: rep?.address_for_service ?? null,
-      counselPhone: rep?.counsel_phone ?? null,
-      counselEmail: rep?.counsel_email ?? null
-    };
-  });
-  const lines2 = [];
-  lines2.push(frontmatterFor3(ctx.proceeding, ctx));
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: "Response Book",
-      titleLine: "RESPONSE BOOK",
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      onAppealFrom: {
-        judge: ctx.proceeding.under_appeal_judge,
-        court: ctx.proceeding.under_appeal_court,
-        pronounced: ctx.proceeding.under_appeal_pronounced
-      },
-      accessRestrictions: ctx.proceeding.access_restrictions,
-      lowerCourtRoleByRole: lowerCourtRoles,
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  recordContactGaps(ctx.inventory, contacts);
-  lines2.push("");
-  lines2.push(...buildToc(ctx.inventory, docs, affidavitDetails, exhibitMap, ctx.dbPath, authorities.length > 0, unverifiedDelta));
-  const respondents = clientGroup ? `, ${formatNameList(clientGroup.names)}` : ` ${gapMarker("gap")}`;
-  const applicants = applicantGroup ? formatNameList(applicantGroup.names) : gapMarker("gap");
-  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const returnable = hearingDate?.hearing_date ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, respondents, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Respondents" });
-  recordCriterionGlyphs(ctx.inventory, applicants, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
-  recordCriterionGlyphs(ctx.inventory, filedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date the stay application was filed" });
-  recordCriterionGlyphs(ctx.inventory, returnable, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Hearing date" });
-  lines2.push(`Response of: the ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length) : "Respondent"}${respondents}`);
-  lines2.push(
-    `THIS IS A RESPONSE TO the stay application of the ${applicantGroup ? pluralizeRole(applicantGroup.role, applicantGroup.names.length) : "Applicant"}, ${applicants}, filed ${filedOn}, returnable ${returnable}${hearingDate?.hearing_time ? ` at ${hearingDate.hearing_time}` : ""}.`
-  );
-  lines2.push("");
-  lines2.push(
-    "<!-- Response book per the registrar's completion instructions (R. 21(2), leave & stay version): cover page and table of contents rendered above (e-CI \xA71.2 Required), Part 1 evidence/affidavits NOT already in the application book, Part 2 written argument with its own required cover page (e-CI \xA72.1) (MAX 5 PAGES stay-only; Arial 12, 1.5-spaced, margins >= 2.5 cm), optional Part 3 table of authorities computed as a delta against the application book's own table (e-CI \xA71.2). File AND serve at least 2 business days before the hearing (R. 21(1)(a)); one PDF <= 200 MB via CSO. Book assembly is manual for this kind -- assemble from this mockup's parts. -->"
-  );
-  lines2.push("");
-  lines2.push("## PART 1: EVIDENCE, EXHIBITS OR AFFIDAVITS");
-  lines2.push("");
-  lines2.push("<!-- Only material not otherwise included in the application book or another respondent's response book (e-CI \xA71.2). -->");
-  if (docs.length === 0) {
-    lines2.push(`NONE ${gapMarker("question")}`);
-  } else {
-    docs.forEach((d3, i3) => {
-      const detail = affidavitDetails.get(d3.document_id);
-      const deponent = d3.role === "affidavit" && detail?.deponent_name ? `, deponent ${detail.deponent_name}` : "";
-      const number3 = d3.role === "affidavit" && detail?.affidavit_number ? ` (#${detail.affidavit_number})` : "";
-      const copy = copyMarkers.get(d3.document_id) ?? "";
-      lines2.push(
-        `${i3 + 1}. ${d3.label}${number3}${d3.document_date ? ` (${d3.document_date})` : ""}${deponent}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
-      );
-    });
-  }
-  lines2.push("");
-  lines2.push("## PART 2: WRITTEN ARGUMENT");
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: "Memorandum of Argument",
-      titleLine: `WRITTEN ARGUMENT OF THE ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length).toUpperCase() : "RESPONDENT"} ON A STAY APPLICATION`,
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      lowerCourtRoleByRole: lowerCourtRoles,
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  lines2.push("");
-  lines2.push(
-    "<!-- e-CI \xA72.1: the written argument carries its own required cover page, separate from the book's outer cover. Paragraphs number consecutively from the Statement of Facts through Order Sought (e-CI \xA72.2). -->"
-  );
-  lines2.push("");
-  let para = 0;
-  lines2.push("### Part 1: Statement of Facts");
-  lines2.push("");
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  lines2.push(...factResult.lines);
-  para = factResult.nextPara;
-  lines2.push("");
-  lines2.push("### Part 2: Issues");
-  lines2.push("");
-  const consented = positions.filter((p3) => p3.position === "consented");
-  const opposed = positions.filter((p3) => p3.position === "opposed");
-  const noPosition = positions.filter((p3) => p3.position === "no_position");
-  opposed.forEach((p3) => {
-    para += 1;
-    lines2.push(`${para}. Whether the order sought in paragraph ${p3.paragraph_number} of the notice of application should be granted: ${p3.wording} <!-- order ${p3.paragraph_number} -->`);
-  });
-  if (consented.length > 0) {
-    para += 1;
-    lines2.push(`${para}. The ${client?.role ?? "Respondent"}(s) consent(s) to the order(s) sought in ${positionsSentence(consented)}.`);
-  }
-  if (noPosition.length > 0) {
-    para += 1;
-    lines2.push(`${para}. The ${client?.role ?? "Respondent"}(s) take(s) no position on the order(s) sought in ${positionsSentence(noPosition)}.`);
-  }
-  if (opposed.length + consented.length + noPosition.length === 0) {
-    lines2.push(mockupMessage(gapMarker("question"), "No position has been recorded on any order sought in the notice of application."));
-  }
-  lines2.push("");
-  if (unpositioned.length > 0) {
-    lines2.push("#### Positions not yet taken");
-    lines2.push("");
-    unpositioned.forEach((o3) => {
-      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${unpositionedOrderMarker()} <!-- order ${o3.paragraph_number} -->`);
-    });
-    lines2.push("");
-  }
-  lines2.push("### Part 3: Analysis");
-  lines2.push("");
-  lines2.push(
-    "<!-- e-CI \xA72.1 (stay-only): a brief statement of the reasons why the stay should or should not be granted, which should include the respondent's position on (e) the merits of the proposed appeal, (f) irreparable harm, and (g) the balance of inconvenience. -->"
-  );
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      para += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry.row, para, ""), "");
-      continue;
-    }
-    const s3 = entry.item;
-    recordParagraph(ctx, s3.id, "form", para);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      para,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    para = result.nextPara;
-  }
-  lines2.push("### Part 4: Order(s) Sought");
-  lines2.push("");
-  let orderNum = 0;
-  for (const entry of interleave(orders, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (o3) => o3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      para += 1;
-      lines2.push(...renderRhetoricLine(ctx, entry.row, para, ""));
-      continue;
-    }
-    const o3 = entry.item;
-    const wording = o3.wording_override ?? o3.wording;
-    if (o3.crossed_out_on !== null) {
-      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
-    } else {
-      orderNum += 1;
-      para += 1;
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
-      lines2.push(`${para}. ${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
-    }
-  }
-  if (orderNum === 0) {
-    const line = mockupMessage(gapMarker("gap"), "No order sought has been recorded for this response.");
-    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Order sought" });
-    lines2.push(line);
-  }
-  lines2.push("");
-  const preparer = client?.counsel_name ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, preparer, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Preparer" });
-  lines2.push(`Prepared by: ${preparer}`);
-  lines2.push("");
-  lines2.push("## PART 3: TABLE OF AUTHORITIES (OPTIONAL)");
-  lines2.push("");
-  lines2.push(
-    unverifiedDelta ? "<!-- Alphabetical. The application book's own table of authorities has not yet been transcribed into opposing_authorities for this proceeding, so every authority this filing cites is listed below (e-CI \xA71.2) -- the delta exclusion is unverified until that transcription happens. -->" : "<!-- Alphabetical; excludes authorities already referenced in the application book (e-CI \xA71.2), computed against the transcribed opposing_authorities rows. -->"
-  );
-  if (authorities.length === 0) {
-    lines2.push("NONE");
-  } else {
-    authorities.forEach((a3, i3) => {
-      const citation = a3.citation ? `, ${a3.citation}` : ` ${gapMarker("gap")}`;
-      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.id, item: `${a3.style_of_cause_or_title}: citation` });
-      lines2.push(`${i3 + 1}. ${a3.style_of_cause_or_title}${citation}`);
-    });
-    if (unverifiedDelta) {
-      lines2.push(
-        mockupMessage(
-          gapMarker("question"),
-          "Opposing application book's table of authorities not yet transcribed -- this list may include authorities that must be excluded once it is."
-        )
-      );
-    }
-  }
-  lines2.push("");
-  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-bcca-factum.ts
-function rows9(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function pushGap(ctx, lines2, line, field, item) {
-  recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: field, item });
-  lines2.push(line);
-}
-var WORDS_PER_PAGE = 300;
-var PARTS_PAGE_LIMIT = 30;
-var OPENING_STATEMENT_PAGE_LIMIT = 1;
-var MONTHS2 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-function longDate(iso2) {
-  const m3 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso2);
-  if (!m3) return iso2;
-  return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
-}
-function fetchChronology(dbPath, filingId) {
-  return rows9(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
-}
-function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows9(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
-  return new Map(
-    found.map((r3) => [
-      r3.slot,
-      r3.text.split(/\n\s*\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "")
-    ])
-  );
-}
-function fetchCitedStatements(dbPath, lawAssertionIds) {
-  if (lawAssertionIds.length === 0) return [];
-  const placeholders = lawAssertionIds.map(() => "?").join(",");
-  return rows9(
-    dbPath,
-    `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
-     FROM statements_of_law sl
-     JOIN authorities a ON a.id = sl.authority_id
-     WHERE sl.law_assertion_id IN (${placeholders})
-       AND ${BRIEF_ONLY_CAP_SQL}
-     ORDER BY sl.id`,
-    lawAssertionIds
-  );
-}
-function factumAuthorities(dbPath, lawParas) {
-  const byAuthority = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    const entry = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, paras: [] };
-    const para = lawParas.get(s3.law_assertion_id);
-    if (!entry.paras.includes(para)) entry.paras.push(para);
-    byAuthority.set(s3.authority_id, entry);
-  }
-  return [...byAuthority.values()].map((a3) => ({ ...a3, paras: a3.paras.sort((x3, y3) => x3 - y3) })).sort((x3, y3) => x3.authority.localeCompare(y3.authority, "en", { sensitivity: "base" }));
-}
-function factumLawAssertionIds(dbPath, filingId) {
-  const submissions = fetchSubmissions(dbPath, filingId, "form");
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(dbPath, submissions.map((s3) => s3.id)));
-  const ids = [];
-  for (const s3 of submissions) {
-    for (const la2 of lawBySubmission.get(s3.id) ?? []) {
-      if (!ids.includes(la2.lawAssertionId)) ids.push(la2.lawAssertionId);
-    }
-  }
-  return ids;
-}
-var BOOK_AUTHORITY_KINDS = /* @__PURE__ */ new Set(["case", "doctrine", "statute", "regulation"]);
-function factumBookAuthorities(dbPath, filingId) {
-  const lawParas = new Map(factumLawAssertionIds(dbPath, filingId).map((id) => [id, 0]));
-  const key = (title, citation) => `${title}\0${citation ?? ""}`;
-  const kinds = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) kinds.set(key(s3.title, s3.citation), s3.kind);
-  return factumAuthorities(dbPath, lawParas).filter((a3) => BOOK_AUTHORITY_KINDS.has(kinds.get(key(a3.authority, a3.citation)) ?? "")).map(({ authority, citation }) => ({ authority, citation }));
-}
-function factumEnactments(dbPath, lawParas) {
-  const enactments = /* @__PURE__ */ new Map();
-  const rules = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    if (s3.kind === "rule") {
-      rules.set(s3.authority_id, `${s3.title}${s3.citation ? `, ${s3.citation}` : ""}`);
-      continue;
-    }
-    if (s3.kind !== "statute" && s3.kind !== "regulation") continue;
-    const entry = enactments.get(s3.authority_id) ?? { authority_id: s3.authority_id, title: s3.title, citation: s3.citation, excerpts: [] };
-    if (s3.excerpt && !entry.excerpts.some((e3) => e3.text === s3.excerpt && e3.pinpoint === s3.pinpoint)) {
-      entry.excerpts.push({ pinpoint: s3.pinpoint, text: s3.excerpt });
-    }
-    enactments.set(s3.authority_id, entry);
-  }
+// src/submission/forms/render-context.ts
+function buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now = nowStamp()) {
+  const rendered = now;
   return {
-    enactments: [...enactments.values()].sort((x3, y3) => x3.title.localeCompare(y3.title, "en", { sensitivity: "base" })),
-    rules: [...rules.values()]
+    dbPath,
+    proceeding: requireForum(proceeding, filing.needs_forum_parts === 1),
+    parties: parties2,
+    filing,
+    revision,
+    rendered,
+    // Lifecycle (schema v17): derived here, once per render, from the filing's own dates, its
+    // hearing_details row, and the caller-supplied appeal deadline -- `today` is `rendered`'s own
+    // date part, so the board's state and its Rendered stamp can never disagree.
+    lifecycle: deriveLifecycle(filing, fetchHearingDate(dbPath, filing.id), rendered.slice(0, 10), appealDeadline),
+    clientName: client.clientName ?? proceeding.matter_reference,
+    clientNo: client.clientNo ?? "",
+    matterNo: client.matterNo ?? "",
+    matterDescription: client.matterDescription ?? "",
+    // Fresh per filing: every renderSubmissionParagraphs call site fills it, recordReserveInventory
+    // reads it back. See the field's own doc comment on RenderContext.
+    paragraphLedger: /* @__PURE__ */ new Map(),
+    // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
+    // Job Board reads it back last. See the field's own doc comment on RenderContext. The
+    // filed-face emitters and the pre-filing check build a context through here too and simply
+    // carry the empty array -- neither renders the board.
+    inventory: [],
+    // Read once per render; the forum emit sites print 🧐 from it. The filed-face emitters and the
+    // pre-filing check carry it too and never read it.
+    review: fetchReviewState(dbPath, proceeding.id)
   };
 }
-function factumSigner(ctx) {
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  if (!client) return { roleLabel: null, name: null, line: null };
-  const group = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }))).find((g3) => g3.role === client.role);
-  const roleLabel = pluralizeRole(client.role, group?.names.length ?? 1);
-  return client.counsel_name ? { roleLabel, name: client.counsel_name, line: `Counsel for the ${roleLabel}` } : { roleLabel, name: client.name, line: roleLabel };
+function fetchApprovalsMark(dbPath) {
+  const found = submissionDataQuery(dbPath, "SELECT COALESCE(MAX(id), 0) AS mark FROM review_approvals", []).rows;
+  return found[0].mark;
 }
-function factumRecordLabel(roleLabel) {
-  const role = roleLabel ?? "Respondent";
-  return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
-}
-function frontmatterFor4(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Factum",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
+function stampFor(filingId, proceeding, client, now, revision, schemaVersion, buildStamp, approvals) {
+  return {
+    filing_id: filingId,
+    revision,
+    approvals,
+    schema_version: schemaVersion,
+    build_stamp: buildStamp,
+    client_name: client.clientName ?? proceeding.matter_reference,
+    client_no: client.clientNo ?? "",
+    matter_no: client.matterNo ?? "",
+    date: now.slice(0, 10)
   };
-  return frontmatterHeader(fields);
 }
-function wordCount2(lines2) {
-  return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => /[\p{L}\p{N}]/u.test(w3)).length;
+function layoutFor(filing) {
+  return filing.layout_snapshot === null ? null : storedLayout(filing);
 }
-function pageBudgetLine(label2, words, limit, limitNote) {
-  const pages = Math.max(1, Math.ceil(words / WORDS_PER_PAGE));
-  const over = words > limit * WORDS_PER_PAGE;
-  return `- ${label2}: ${words} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
+function generalLayoutFor(filing) {
+  const stored = layoutFor(filing);
+  return stored !== null && stored.layout.renderer === "general" ? stored : null;
 }
-function renderBccaFactum(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const roleGroups = groupPartiesByRole(captionParties2);
-  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
-  const signer = factumSigner(ctx);
-  const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
-  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of submissionFactStatements) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  const contacts = roleGroups.map((g3) => {
-    const rep = ctx.parties.find((p3) => p3.role === g3.role);
-    return {
-      role: g3.role,
-      names: g3.names,
-      partyId: rep.id,
-      counselName: rep?.counsel_name ?? null,
-      counselFirm: rep?.counsel_firm ?? null,
-      addressForService: rep?.address_for_service ?? null,
-      counselPhone: rep?.counsel_phone ?? null,
-      counselEmail: rep?.counsel_email ?? null
-    };
-  });
-  const title = factumRecordLabel(signer.roleLabel);
-  const lines2 = [];
-  lines2.push(frontmatterFor4(ctx.proceeding, ctx));
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: title,
-      titleLine: title.toUpperCase(),
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      onAppealFrom: {
-        judge: ctx.proceeding.under_appeal_judge,
-        court: ctx.proceeding.under_appeal_court,
-        pronounced: ctx.proceeding.under_appeal_pronounced
-      },
-      accessRestrictions: ctx.proceeding.access_restrictions,
-      lowerCourtRoleByRole: buildLowerCourtRoleByRole(ctx.parties),
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  recordContactGaps(ctx.inventory, contacts);
-  lines2.push("");
-  lines2.push(
-    "<!-- Respondent's factum per tpl_factum_respondent.dotx and the factum completion instructions (R. 25(4)): Arial 12, 1.5 spacing, single space between paragraphs, margins >= 2.5 cm, pages numbered from the cover. No wet signature -- the name of the person authorizing filing is enough (R. 79(4)). -->"
-  );
-  lines2.push("");
-  lines2.push("## TABLE OF CONTENTS");
-  lines2.push("");
-  lines2.push("<!-- Word builds this from the headings; page numbers fill when the assembled document's fields update. -->");
-  lines2.push("");
-  for (const heading of [
-    "CHRONOLOGY",
-    "OPENING STATEMENT",
-    "PART 1 - STATEMENT OF FACTS",
-    "PART 2 - ISSUES ON APPEAL",
-    "PART 3 - ARGUMENT",
-    "PART 4 - NATURE OF ORDER SOUGHT",
-    "APPENDICES: LIST OF AUTHORITIES",
-    "APPENDICES: ENACTMENTS"
-  ]) {
-    lines2.push(`- ${heading}`);
-  }
-  lines2.push("");
-  lines2.push("## CHRONOLOGY");
-  lines2.push("");
-  const chronology = fetchChronology(ctx.dbPath, ctx.filing.id);
-  if (chronology.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No chronology events recorded."), 0, "Chronology");
-  } else {
-    lines2.push("| Date | Event |");
-    lines2.push("| :--- | :--- |");
-    chronology.forEach((c3) => lines2.push(`| ${longDate(c3.event_date)} | ${c3.event} |`));
-  }
-  lines2.push("");
-  lines2.push("## OPENING STATEMENT");
-  lines2.push("");
-  const opening = prose.get("opening_statement") ?? [];
-  if (opening.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No opening statement recorded."), 1, "Opening statement");
-  } else {
-    opening.forEach((p3) => {
-      lines2.push(p3);
-      lines2.push("");
-    });
-  }
-  lines2.push("");
-  let para = 0;
-  const partsStart = lines2.length;
-  lines2.push("## PART 1 - STATEMENT OF FACTS");
-  lines2.push("");
-  const factsPosition = prose.get("facts_position") ?? [];
-  if (factsPosition.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
-  }
-  factsPosition.forEach((p3) => {
-    para += 1;
-    lines2.push(`${para}. ${p3}`);
-  });
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  lines2.push(...factResult.lines);
-  para = factResult.nextPara;
-  lines2.push("");
-  lines2.push("## PART 2 - ISSUES ON APPEAL");
-  lines2.push("");
-  if (submissions.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
-  }
-  submissions.forEach((s3) => {
-    para += 1;
-    const answers = points.filter((pt3) => pt3.answered_by_submission_id === s3.id).map((pt3) => pt3.component);
-    lines2.push(`${para}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
-  });
-  lines2.push("");
-  const unanswered = points.filter((pt3) => pt3.answered_by_submission_id === null);
-  if (unanswered.length > 0) {
-    lines2.push("#### Points not yet answered");
-    lines2.push("");
-    unanswered.forEach((pt3) => {
-      lines2.push(`- ${pt3.component}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt3.id} -->`);
-    });
-    lines2.push("");
-  }
-  lines2.push("## PART 3 - ARGUMENT");
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      para += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry.row, para, ""), "");
-      continue;
-    }
-    const s3 = entry.item;
-    recordParagraph(ctx, s3.id, "form", para);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      para,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    para = result.nextPara;
-  }
-  lines2.push("## PART 4 - NATURE OF ORDER SOUGHT");
-  lines2.push("");
-  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders")) {
-    para += 1;
-    lines2.push(...renderRhetoricLine(ctx, row2, para, ""), "");
-  }
-  para += 1;
-  const seeks = signer.roleLabel && signer.roleLabel.endsWith("s") ? "seek" : "seeks";
-  lines2.push(`${para}. The ${(signer.roleLabel ?? "respondent").toLowerCase()} ${seeks} an Order:`);
-  lines2.push("");
-  const liveOrders = orders.filter((o3) => o3.crossed_out_on === null);
-  orders.forEach((o3) => {
-    const wording = o3.wording_override ?? o3.wording;
-    if (o3.crossed_out_on !== null) {
-      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
-    } else {
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
-      lines2.push(`${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
-    }
-    lines2.push("");
-  });
-  if (liveOrders.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No order sought recorded. The order must include a costs disposition."), 4, "Order sought");
-    lines2.push("");
-  }
-  para += 1;
-  lines2.push(`${para}. All of which is respectfully submitted.`);
-  const partsEnd = lines2.length;
-  lines2.push("");
-  const place = (prose.get("signing_place") ?? []).join(" ");
-  const signingPlace = place || gapMarker("gap");
-  const signerName = signer.name ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, signingPlace, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Place of signing" });
-  recordCriterionGlyphs(ctx.inventory, signerName, ["\u{1F9E9}"], { table: "form_fields", id: 6, item: "Name authorizing filing" });
-  lines2.push(`Dated at the City of ${signingPlace}, Province of British Columbia, this [month] [day] of [year]. <!-- date supplied when the factum is assembled -->`);
-  lines2.push("");
-  lines2.push(signerName);
-  lines2.push(signer.line ?? "");
-  lines2.push("");
-  lines2.push("## APPENDICES: LIST OF AUTHORITIES");
-  lines2.push("");
-  const authorities = factumAuthorities(ctx.dbPath, renderedLawAssertions);
-  if (authorities.length === 0) {
-    lines2.push("None.");
-  } else {
-    lines2.push("| Authorities | Page # in factum | Para # in factum |");
-    lines2.push("| :--- | :---: | :---: |");
-    authorities.forEach((a3) => {
-      const citation = a3.citation ?? gapMarker("gap");
-      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.authority_id, item: `${a3.authority}: citation` });
-      lines2.push(`| ${a3.authority}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
-    });
-  }
-  lines2.push("");
-  lines2.push("## APPENDICES: ENACTMENTS");
-  lines2.push("");
-  const { enactments, rules } = factumEnactments(ctx.dbPath, renderedLawAssertions);
-  if (enactments.length === 0) {
-    lines2.push("None.");
-    lines2.push("");
-  }
-  enactments.forEach((e3) => {
-    lines2.push(`**${e3.title}**${e3.citation ? `, ${e3.citation}` : ""}`);
-    lines2.push("");
-    if (e3.excerpts.length === 0) {
-      const line = mockupMessage(gapMarker("gap"), "No excerpt recorded for this enactment.");
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "enactment_excerpts", id: e3.authority_id, item: `${e3.title}: excerpt` });
-      lines2.push(line);
-      lines2.push("");
-    }
-    e3.excerpts.forEach((x3) => {
-      for (const l3 of x3.text.split("\n")) if (l3.trim() !== "") lines2.push(`> ${l3}`);
-      if (x3.pinpoint) lines2.push(`> (${x3.pinpoint})`);
-      lines2.push("");
-    });
-  });
-  if (rules.length > 0) {
-    lines2.push("#### Court rules not in this appendix");
-    lines2.push("");
-    lines2.push("These authorities are recorded as rules. The appendix takes acts and regulations only, so they are left out of the filed factum, and they are left out of the Book of Authorities too, unless recorded as a regulation. They stay on the Appendix: List of Authorities either way.");
-    lines2.push("");
-    rules.forEach((r3) => lines2.push(`- ${r3}`));
-    lines2.push("");
-  }
-  lines2.push("## Page budget");
-  lines2.push("");
-  lines2.push(`Estimated at ${WORDS_PER_PAGE} words a page. Confirm in Word once the factum is assembled.`);
-  lines2.push("");
-  lines2.push(pageBudgetLine("Opening Statement", wordCount2(opening), OPENING_STATEMENT_PAGE_LIMIT, "the opening statement is limited to one page."));
-  lines2.push(
-    pageBudgetLine(
-      "Parts 1-4",
-      wordCount2(lines2.slice(partsStart, partsEnd)),
-      PARTS_PAGE_LIMIT,
-      "Parts 1-4 are limited to 30 pages; more pages need an order under R. 48(1)(f)."
-    )
-  );
-  return lines2.join("\n").trimEnd() + "\n";
+function hasLiveTags(general) {
+  return general !== null && Object.keys(general.passage_hashes).length > 0;
+}
+function renderStateFor(dbPath, stamp2, filing, digest) {
+  const state = renderState(dbPath, filing.id, stamp2, digest);
+  return state === "fresh" && hasLiveTags(generalLayoutFor(filing)) ? "stale" : state;
 }
 
-// src/submission/forms/render-bcsc-affidavit.ts
-function rows10(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
-function placedDocumentIds(text5) {
-  return [...text5.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
-}
-function letterFor(index) {
-  let out = "";
-  for (let n3 = index + 1; n3 > 0; n3 = Math.floor((n3 - 1) / 26)) out = String.fromCharCode(65 + (n3 - 1) % 26) + out;
-  return out;
-}
-function exhibitLetters(paragraphTexts) {
-  const letters = /* @__PURE__ */ new Map();
-  for (const text5 of paragraphTexts) {
-    for (const id of placedDocumentIds(text5)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
-  }
-  return letters;
-}
-function withExhibitLetters(text5, letters) {
-  return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
-}
-function fetchAffidavits(dbPath, filingId) {
-  return rows10(
-    dbPath,
-    `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     LEFT JOIN witnesses w ON w.id = d.deponent
-     WHERE fd.filing_id = ? AND fd.role = 'affidavit' AND d.instrument = 'affidavit'
-     ORDER BY fd.ordinal`,
-    [filingId]
-  );
-}
-function affidavitFileName(a3) {
-  return `${a3.label.replace(/[\\/:*?"<>|]/g, "_").trim()}.md`;
-}
-function fetchParagraphLinks(dbPath, paragraphIds) {
-  if (paragraphIds.length === 0) return [];
-  const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows10(
-    dbPath,
-    `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
-     FROM paragraph_statements_of_fact psof
-     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
-     WHERE psof.statement_paragraph_id IN (${placeholders})
-     ORDER BY sof.id`,
-    paragraphIds
-  );
-}
-function fetchPlacedInProceeding(dbPath, proceedingId) {
-  const texts = rows10(
-    dbPath,
-    `SELECT sp.text FROM statement_paragraphs sp
-     JOIN documents d ON d.id = sp.document_id
-     WHERE d.proceeding_id = ? AND d.instrument = 'affidavit'`,
-    [proceedingId]
-  );
-  return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
-}
-function frontmatterFor5(ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType: "Affidavit",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function renderAffidavit(ctx, a3) {
-  const paragraphs = rows10(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
-  const links = fetchParagraphLinks(
-    ctx.dbPath,
-    paragraphs.map((p3) => p3.id)
-  );
-  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
-  const placedInProceeding = fetchPlacedInProceeding(ctx.dbPath, ctx.proceeding.id);
-  const labels = fetchDocumentLabels(ctx.dbPath, [.../* @__PURE__ */ new Set([...letters.keys(), ...links.flatMap((l3) => l3.exhibit_id === null ? [] : [l3.exhibit_id])])]);
-  const labelOf = (id) => labels.get(id) ?? `document ${id}`;
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const deponent = a3.deponent_name ?? "________________";
-  const lines2 = [];
-  lines2.push(frontmatterFor5(ctx));
-  lines2.push("");
-  lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "AFFIDAVIT"
-    })
-  );
-  lines2.push("");
-  lines2.push(`I, ${deponent}, swear (or affirm) that:`);
-  lines2.push("");
-  const affidavitGaps = [
-    ...a3.deponent_name === null ? [{ text: "no deponent recorded", what: "deponent" }] : [],
-    ...paragraphs.length === 0 && a3.execution === null ? [{ text: "no paragraphs drafted", what: "paragraphs" }] : []
-  ];
-  for (const gap2 of affidavitGaps) {
-    const line = mockupMessage(gapMarker("gap"), gap2.text);
-    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "documents", id: a3.id, item: `${a3.label}: ${gap2.what}` });
-    lines2.push(line);
-  }
-  paragraphs.forEach((p3, i3) => {
-    const n3 = i3 + 1;
-    const own = links.filter((l3) => l3.statement_paragraph_id === p3.id);
-    const tag = own.length > 0 ? ` [facts ${own.map((l3) => `F${l3.fact_id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
-    recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: linked fact` });
-    lines2.push(`${n3}. ${withExhibitLetters(p3.text, letters)}${tag} <!-- statement_paragraph ${n3} -->`);
-    if (own.length === 0) return;
-    const tendered = new Set(own.map((l3) => l3.exhibit_id));
-    for (const id of new Set(placedDocumentIds(p3.text))) {
-      if (tendered.has(id)) continue;
-      const line = mockupMessage(gapMarker("gap"), `Exhibit "${letters.get(id)}" (${labelOf(id)}) is attached here, but no statement of fact linked to this paragraph tenders it`);
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: Exhibit "${letters.get(id)}" tendered` });
-      lines2.push(`   ${line}`);
-    }
-    for (const l3 of own) {
-      if (l3.exhibit_id === null || placedInProceeding.has(l3.exhibit_id)) continue;
-      const line = mockupMessage(gapMarker("gap"), `${labelOf(l3.exhibit_id)} is tendered by a statement of fact linked to this paragraph, but no affidavit in this proceeding attaches it`);
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statements_of_fact", id: l3.statement_of_fact_id, item: `${a3.label}, paragraph ${n3}: ${labelOf(l3.exhibit_id)} attached` });
-      lines2.push(`   ${line}`);
-    }
-  });
-  lines2.push("");
-  const swearMarker = a3.execution === null && links.length > 0 ? "\u2712\uFE0F" : "";
-  recordGlyphs(ctx.inventory, swearMarker, ["\u2712\uFE0F"], { table: "documents", id: a3.id, item: a3.label, witness_id: a3.witness_id ?? void 0 });
-  lines2.push(`SWORN (OR AFFIRMED) BEFORE ME at ${a3.signed_at ?? "________________"}, British Columbia on ${a3.execution ?? "________________"}. ${swearMarker}`.trim());
-  lines2.push("");
-  lines2.push("________________________________");
-  lines2.push("A commissioner for taking affidavits for British Columbia");
-  lines2.push("");
-  lines2.push("________________________________");
-  lines2.push(deponent);
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-requisition.ts
-function rows11(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function fetchAlternatives(dbPath, chosenId) {
-  return rows11(
-    dbPath,
-    `SELECT id, wording, template_key, template_values, crossed_out_on
-     FROM order_sought WHERE alternative_to = ?`,
-    [chosenId]
-  );
-}
-function fetchPlacedAlternativeIds(dbPath, filing) {
-  if (filing.kind !== "requisition_default_judgment") return [];
-  return rows11(
-    dbPath,
-    `SELECT o.id FROM order_sought o
-     JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
-     WHERE fo.filing_id = ? AND fo.document = 'form'`,
-    [filing.id]
-  ).map((r3) => r3.id);
-}
-function frontmatterFor6(ctx, documentType) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType,
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function captionParties(ctx) {
-  return ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-}
-var TEMPLATE_NOT_CHOSEN = "(template not chosen)";
-var UNRECOGNIZED_TEMPLATE_KEY = 'unrecognized template_key "';
-function renderTemplate(key, valuesJson) {
-  if (!key) return `${gapMarker("unchosen")} ${TEMPLATE_NOT_CHOSEN}`;
-  let values = {};
-  if (valuesJson) {
-    try {
-      values = JSON.parse(valuesJson);
-    } catch {
-      values = {};
-    }
-  }
-  switch (key) {
-    case "sum_certain":
-      return `pay to the plaintiff(s) the sum of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "damages_to_be_assessed":
-      return "pay to the plaintiff(s) damages to be assessed";
-    case "delivery_or_assessed_value":
-      return `deliver up ${values.description ?? "(not recorded)"}, or pay the assessed value of it if delivery cannot be made`;
-    case "assessed_value_for_operative":
-      return "pay to the plaintiff(s) the assessed value of the goods claimed";
-    case "interest_as_claimed":
-      return `pay to the plaintiff(s) interest as claimed in the amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "interest_coia":
-      return "interest under the Court Order Interest Act";
-    case "costs_fixed":
-      return `pay to the plaintiff(s) costs in the fixed amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "costs_to_be_assessed":
-      return "pay to the plaintiff(s) costs to be assessed";
-    default:
-      return `${gapMarker("not_recorded")} ${UNRECOGNIZED_TEMPLATE_KEY}${key}"`;
-  }
-}
-function recordTemplateChoice(inv, r3) {
-  if (!r3.template_key) inv.push({ generating: true, slug: "choose-template", marker: "\u2B1C", table: "order_sought", id: r3.id, item: r3.wording, doc: "" });
-}
-function renderRequisitionDefaultJudgment(ctx) {
-  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
-  const plaintiff = ctx.parties.find((p3) => p3.is_client === 1) ?? ctx.parties.find((p3) => p3.is_applicant === 1);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "REQUISITION - GENERAL"
-  });
-  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
-  const filedBy = plaintiff ? `${plaintiff.role}, ${plaintiff.name}` : gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
-  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Filed by" });
-  const required2 = `Search for a Response to Civil Claim filed on behalf of the Defendant, ${defendantNames} and if no Response to Civil Claim has been filed, please enter default judgment.`;
-  const checklist = [];
-  const draftOrderDoc = docs.find((d3) => d3.role === "order");
-  const affidavitDoc = docs.find((d3) => d3.role === "affidavit");
-  const orderItem = "Draft default judgment";
-  const affidavitItem = "Affidavit of service and non-delivery of a response to civil claim";
-  const orderGap = draftOrderDoc ? "" : gapMarker("unchosen");
-  const affidavitGap = affidavitDoc ? "" : gapMarker("unchosen");
-  recordGlyphs(ctx.inventory, orderGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "order", item: orderItem });
-  recordGlyphs(ctx.inventory, affidavitGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "affidavit", item: affidavitItem });
-  checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
-  checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
-  const lines2 = [];
-  lines2.push(frontmatterFor6(ctx, "Requisition"));
-  lines2.push("");
-  lines2.push(
-    requisitionWrapper({
-      captionMarkdown: caption2,
-      titleLine: "REQUISITION - GENERAL",
-      filedBy,
-      required: required2,
-      checklistLeadIn: "This requisition is supported by the following:",
-      checklist
-    })
-  );
-  lines2.push("");
-  if (plaintiff) lines2.push(signatureBlock({ name: plaintiff.name, role: plaintiff.role, counselName: plaintiff.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderForm8DefaultJudgment(ctx) {
-  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
-  const chosen = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "DEFAULT JUDGMENT"
-  });
-  const lines2 = [];
-  lines2.push(frontmatterFor6(ctx, "Default_judgment"));
-  lines2.push("");
-  lines2.push(caption2);
-  lines2.push("");
-  lines2.push(
-    `The plaintiff(s) having filed and served a notice of civil claim and the defendant(s) ${defendantNames} having failed to file and serve a response to civil claim within the time allowed;`
-  );
-  lines2.push("");
-  let opNum = 0;
-  chosen.forEach((r3) => {
-    if (r3.crossed_out_on !== null) {
-      lines2.push(`~~the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}~~ <!-- order crossed-out ${r3.id} -->`);
-      lines2.push("");
-    } else {
-      opNum += 1;
-      const prefix = opNum === 1 ? "THIS COURT ORDERS" : "THIS COURT FURTHER ORDERS";
-      recordTemplateChoice(ctx.inventory, r3);
-      const provision = `${prefix} that the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}.`;
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, provision, r3);
-      lines2.push(`${provision}${review ? ` ${review}` : ""} <!-- order_sought_id ${r3.id} -->`);
-      lines2.push("");
-    }
-    const alternatives = fetchAlternatives(ctx.dbPath, r3.id);
-    for (const alt of alternatives) {
-      if (alt.crossed_out_on !== null) {
-        lines2.push(`~~in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}~~ <!-- order crossed-out ${alt.id} -->`);
-        continue;
-      }
-      recordTemplateChoice(ctx.inventory, alt);
-      const altProvision = `THIS COURT FURTHER ORDERS that, in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}.`;
-      const altReview = reviewMarkerFor(ctx.review, ctx.inventory, altProvision, "order_sought", alt.id, alt.wording);
-      lines2.push(`${altProvision}${altReview ? ` ${altReview}` : ""} <!-- order_sought_id ${alt.id} -->`);
-    }
-    if (alternatives.length > 0) lines2.push("");
-  });
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderRequisitionConsent(ctx) {
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
-  const filedBy = applicant ? `${applicant.role}, ${applicant.name}` : gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Filed by" });
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "REQUISITION FOR CONSENT ORDER"
-  });
-  const checklist = [
-    "The rule or other enactment relied on is Rule 8-3.",
-    "Attached to this requisition is a draft of the order required.",
-    "Each party affected has consented to the order.",
-    "No party is under a legal disability."
-  ];
-  const lines2 = [];
-  lines2.push(frontmatterFor6(ctx, "Requisition"));
-  lines2.push("");
-  lines2.push(
-    requisitionWrapper({
-      captionMarkdown: caption2,
-      titleLine: "REQUISITION FOR CONSENT ORDER",
-      filedBy,
-      required: "An order by consent.",
-      checklist
-    })
-  );
-  lines2.push("");
-  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderConsentOrder(ctx) {
-  const applicants = ctx.parties.filter((p3) => p3.is_applicant === 1);
-  const applicantNames = applicants.map((p3) => p3.name).join(", ") || ctx.parties.find((p3) => p3.is_client === 1)?.name || gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, applicantNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const withCounsel = ctx.parties.filter((p3) => p3.counsel_name);
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "CONSENT ORDER"
-  });
-  const lines2 = [];
-  lines2.push(frontmatterFor6(ctx, "Consent_order"));
-  lines2.push("");
-  lines2.push(caption2);
-  lines2.push("");
-  lines2.push(`BEFORE A REGISTRAR )  ${ctx.rendered.slice(0, 10)}  )  )`);
-  lines2.push("");
-  lines2.push(`ON THE APPLICATION of ${applicantNames} without a hearing and by consent;`);
-  lines2.push("");
-  lines2.push("THIS COURT ORDERS that:");
-  let includedOrderNum = 0;
-  let crossedOutOrderNum = 0;
-  relief.forEach((r3) => {
-    const wording = r3.wording_override ?? r3.wording;
-    if (r3.crossed_out_on !== null) {
-      crossedOutOrderNum += 1;
-      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
-      return;
-    }
-    includedOrderNum += 1;
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", r3);
-    lines2.push(`${includedOrderNum}. ${wording}${review ? ` ${review}` : ""} <!-- order ${includedOrderNum} -->`);
-  });
-  lines2.push("");
-  lines2.push("THE FOLLOWING PARTIES APPROVE THE FORM OF THIS ORDER AND CONSENT TO EACH OF THE ORDERS, IF ANY, THAT ARE INDICATED ABOVE AS BEING BY CONSENT");
-  lines2.push("");
-  for (const party of withCounsel) {
-    lines2.push(`Signature of ${party.counsel_name}, lawyer for the ${party.role}, ${party.name}`);
-    lines2.push(`${party.counsel_name}`);
-    lines2.push("");
-  }
-  lines2.push("By the Court.");
-  lines2.push("");
-  lines2.push("Registrar");
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-companions.ts
-function rows12(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
-  ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
-  ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
-]);
-function writtenArgumentsVenue(proceeding) {
-  const venue = proceeding.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding.forum);
-  if (venue === void 0) {
-    throw new DataServerError(
-      `Proceeding ${proceeding.id} has forum ${proceeding.forum === null ? "null" : `"${proceeding.forum}"`}, which has no Written Arguments settings`,
-      "venue_unknown"
-    );
-  }
-  return venue;
-}
-function frontmatterFor7(ctx, documentType) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? venueHeadingFor(ctx.filing, ctx.proceeding)?.display_label ?? "",
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType,
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function renderWrittenArguments(ctx, documentKey) {
-  const venue = writtenArgumentsVenue(ctx.proceeding);
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const clientRole = client?.role ?? "Party";
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, documentKey);
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
-  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(ctx.dbPath, factIds, opposingPartyIds(ctx.parties), ctx.rendered.slice(0, 10));
-  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
-  for (const s3 of statementRows) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, documentKey);
-  const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
-  const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
-  const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
-  const servedRows = submissionIds.length === 0 ? [] : rows12(
-    ctx.dbPath,
-    `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
-           FROM order_sought_served_by sb
-           JOIN order_sought o ON o.id = sb.order_sought_id
-           WHERE sb.submission_id IN (${submissionIds.map(() => "?").join(",")})`,
-    submissionIds
-  );
-  const servedBySubmission = /* @__PURE__ */ new Map();
-  for (const r3 of servedRows) {
-    const list = servedBySubmission.get(r3.submission_id) ?? [];
-    list.push(r3);
-    servedBySubmission.set(r3.submission_id, list);
-  }
-  function struckSubmission(submissionId) {
-    const served = servedBySubmission.get(submissionId) ?? [];
-    if (served.length === 0 || !served.every((s3) => s3.crossed_out_on !== null)) return null;
-    return served[0];
-  }
-  const lines2 = [];
-  lines2.push(frontmatterFor7(ctx, "Written_arguments"));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: `WRITTEN ARGUMENT OF THE ${clientRole.toUpperCase()}`
-    })
-  );
-  lines2.push("");
-  lines2.push("## Submissions");
-  lines2.push("");
-  let n3 = 1;
-  const struckLines = [];
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      lines2.push("", ...renderRhetoricLine(ctx, entry.row, n3, ""), "");
-      n3 += 1;
-      continue;
-    }
-    const s3 = entry.item;
-    const struck = struckSubmission(s3.id);
-    if (struck) {
-      struckLines.push(`~~${s3.contention}~~ (crossed out \u2014 supports order_sought ${struck.order_sought_id}, "${struck.wording}") <!-- submission_id ${s3.id} -->`);
-      continue;
-    }
-    recordParagraph(ctx, s3.id, documentKey, n3 - 1);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      n3 - 1,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    n3 = result.nextPara + 1;
-  }
-  for (const line of struckLines) lines2.push(line);
-  if (struckLines.length > 0) lines2.push("");
-  if (venue.awardCap) {
-    lines2.push(`${n3}. The award sought is within the Tribunal's Rule 24(j) cap.`);
-    if (total <= 25e4) {
-      lines2.push(`   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}.`);
-    } else {
-      lines2.push(
-        `   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}. [PRACTITIONER \u2014 total exceeds the Rule 24(j) cap; Rule 24(h) consent position required]`
-      );
-    }
-    lines2.push("");
-    n3 += 1;
-  }
-  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "orders")) {
-    lines2.push(...renderRhetoricLine(ctx, row2, n3, ""), "");
-    n3 += 1;
-  }
-  const askVerb = `asks ${venue.tribunal}`;
-  lines2.push(`${n3}. The ${clientRole} ${askVerb} to award the following relief.`);
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  includedRelief.forEach((r3, i3) => {
-    const wording = r3.wording_override ?? r3.wording;
-    const amountPart = r3.amount !== null ? `$${r3.amount.toLocaleString("en-US")} \u2014 ` : "";
-    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
-    const petitum = unservedPetitumMarker(r3.hasServedBy);
-    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
-    const workMarkers = dedupeLineMarkers([jurMarker, petitum]);
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
-    const lineMarkers = printMarkerSets([dedupeLineMarkers([workMarkers, review])]);
-    lines2.push(`   (${letters[i3] ?? i3 + 1}) ${amountPart}${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- relief_item ${letters[i3] ?? i3 + 1} -->`);
-  });
-  if (venue.interestAndCosts) {
-    lines2.push(`   (${letters[includedRelief.length] ?? "x"}) interest;`);
-    lines2.push(`   (${letters[includedRelief.length + 1] ?? "y"}) costs.`);
-  }
-  lines2.push("");
-  for (const r3 of crossedOutRelief) {
-    const wording = r3.wording_override ?? r3.wording;
-    lines2.push(`~~${wording}~~ <!-- order crossed-out order_sought_id ${r3.id} -->`);
-  }
-  if (crossedOutRelief.length > 0) lines2.push("");
-  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  if (opposingPoints.length > 0) {
-    lines2.push("## Opposing points");
-    lines2.push("");
-    for (const op of opposingPoints) {
-      const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
-      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
-      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
-      const status2 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
-      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
-      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status2 ? ` ${status2}` : ""} <!-- opposing_point_id ${op.id} -->`);
-    }
-    lines2.push("");
-  }
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function fetchProceedingOrders(dbPath, proceedingId) {
-  const orders = rows12(
-    dbPath,
-    `SELECT o.id, o.wording, o.crossed_out_on,
-            EXISTS(
-              SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
-              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
-            ) AS has_served_by
-     FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
-    [proceedingId]
-  );
-  const edgesByOrder = fetchJurisdictionEdges(dbPath, orders.map((o3) => o3.id));
-  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
-}
-function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
-  const filings = rows12(
-    dbPath,
-    // A Job Board with no Writing deploys nothing.
-    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
-    [proceedingId, filingId, JOB_BOARD_KIND]
-  );
-  const orders = /* @__PURE__ */ new Set();
-  const submissions = /* @__PURE__ */ new Set();
-  for (const f3 of filings) {
-    for (const r3 of rows12(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
-      orders.add(r3.order_sought_id);
-    }
-    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
-    for (const r3 of rows12(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
-      submissions.add(r3.submission_id);
-    }
-  }
-  return { orders, submissions };
-}
-function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
-  const relied = rows12(
-    dbPath,
-    `SELECT sl.law_assertion_id FROM submission_law sl
-       JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
-       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
-       JOIN filings f ON f.id = fs.filing_id
-      WHERE f.proceeding_id = ? AND f.retired_on IS NULL
-     UNION
-     SELECT r.law_assertion_id FROM order_sought_requires r
-       JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id
-       JOIN filings f ON f.id = fo.filing_id
-      WHERE f.proceeding_id = ? AND f.retired_on IS NULL AND r.law_assertion_id IS NOT NULL`,
-    [proceedingId, proceedingId]
-  );
-  return new Set(relied.map((r3) => r3.law_assertion_id));
-}
-function fetchProceedingSubmissions(dbPath, proceedingId) {
-  return rows12(
-    dbPath,
-    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
-    [proceedingId]
-  );
-}
-function fetchStruckSubmissionIds(dbPath, proceedingId) {
-  const served = rows12(
-    dbPath,
-    `SELECT sb.submission_id, o.crossed_out_on
-     FROM order_sought_served_by sb
-     JOIN order_sought o ON o.id = sb.order_sought_id
-     WHERE o.proceeding_id = ?`,
-    [proceedingId]
-  );
-  const bySubmission = /* @__PURE__ */ new Map();
-  for (const r3 of served) {
-    const allStruckSoFar = bySubmission.get(r3.submission_id) ?? true;
-    bySubmission.set(r3.submission_id, allStruckSoFar && r3.crossed_out_on !== null);
-  }
-  return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
-}
-function recordReserveInventory(ctx) {
-  const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const deployedOrders = /* @__PURE__ */ new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
-  const deployedSubmissions = /* @__PURE__ */ new Set([...formIds.submissionIds, ...waIds.submissionIds]);
-  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
-  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
-  const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
-  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
-  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    factIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
-  for (const s3 of statementRows) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
-  const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
-  function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
-    return renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      startPara,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions2,
-      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
-      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
-      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
-      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
-      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
-      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-  }
-  for (const o3 of orders) {
-    if (deployedOrders.has(o3.id) || o3.crossed_out_on !== null) continue;
-    recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
-    recordGlyphs(ctx.inventory, unservedPetitumMarker(o3.hasServedBy), ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
-  }
-  const numbered = submissions.filter((s3) => ctx.paragraphLedger.has(s3.id));
-  const held = submissions.filter(
-    (s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id) && (deployedSubmissions.has(s3.id) || !elsewhere.submissions.has(s3.id))
-  );
-  for (const documentKey of ["form", "written_argument"]) {
-    const group = numbered.filter((s3) => ctx.paragraphLedger.get(s3.id)?.document === documentKey).sort((a3, b3) => (ctx.paragraphLedger.get(a3.id)?.para ?? 0) - (ctx.paragraphLedger.get(b3.id)?.para ?? 0));
-    const renderedLawAssertions2 = /* @__PURE__ */ new Map();
-    for (const s3 of group) {
-      const entry = ctx.paragraphLedger.get(s3.id);
-      if (entry === void 0) continue;
-      recordBody(s3, entry.para - 1, renderedLawAssertions2, "");
-    }
-  }
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  let r3 = 0;
-  for (const s3 of held) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
-}
-
-// src/submission/forms/render-notice-of-application.ts
-function rows13(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows13(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
-}
-var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
-function fetchFacts3(dbPath, filingId, part) {
-  return rows13(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
-     ORDER BY ff.ordinal`,
-    [filingId, part]
-  );
-}
-function fetchStatementsOfFact3(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows13(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-function fetchWitnessBackedFlags(dbPath, factIds) {
-  if (factIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = factIds.map(() => "?").join(",");
-  const found = rows13(
-    dbPath,
-    `SELECT f.id AS fact_id,
-            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
-     FROM facts f WHERE f.id IN (${placeholders})`,
-    factIds
-  );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function frontmatterFor8(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Notice_of_application",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function formatTimeEstimate2(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function renderNoticeOfApplication(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
-  const served = ctx.parties.filter((p3) => p3.to_be_served === 1);
-  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const facts = fetchFacts3(ctx.dbPath, ctx.filing.id, "part2");
-  const statementsOfFact = fetchStatementsOfFact3(
-    ctx.dbPath,
-    facts.map((f3) => f3.id)
-  );
-  const witnessBacked = fetchWitnessBackedFlags(
-    ctx.dbPath,
-    facts.map((f3) => f3.id)
-  );
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const lines2 = [];
-  lines2.push(frontmatterFor8(ctx.proceeding, ctx));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "NOTICE OF APPLICATION"
-    })
-  );
-  lines2.push("");
-  const applicantName = applicant?.name ?? gapMarker("gap");
-  const servedNames = served.map((p3) => p3.name).join(", ") || gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate2(hearing.time_estimate_minutes) : gapMarker("gap");
-  const jurisdiction = hearing?.associate_judge == null ? ASSOCIATE_JUDGE_UNDETERMINED_LINE : hearing.associate_judge === 1 ? "This matter is within the jurisdiction of an associate judge." : "This matter is not within the jurisdiction of an associate judge.";
-  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, servedNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Parties to be served" });
-  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Time estimate" });
-  recordCriterionGlyphs(ctx.inventory, jurisdiction, ["\u2B1C"], { table: "filings", id: ctx.filing.id, item: "Associate judge jurisdiction", instance: "associate-judge" });
-  lines2.push(`Name of applicant: ${applicantName}`);
-  lines2.push(`To: ${servedNames}`);
-  lines2.push("");
-  lines2.push(
-    `TAKE NOTICE that an application will be made by the applicant to the presiding judge or associate judge at the courthouse at ${ctx.proceeding.courthouse_address ?? "________________"} on a date to be set by Notice of Hearing of Application for the orders set out in Part 1 below.`
-  );
-  lines2.push("");
-  lines2.push(`The applicant estimates that the application will take: ${estimate}`);
-  lines2.push(`The applicant proposes that the matter will be heard on ${hearing?.proposed_hearing ?? "________________"}.`);
-  lines2.push(jurisdiction);
-  lines2.push("");
-  lines2.push("## PART 1: ORDER(S) SOUGHT");
-  lines2.push("");
-  let includedOrderNum = 0;
-  let crossedOutOrderNum = 0;
-  for (const entry of interleave(relief, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (r3) => r3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      includedOrderNum += 1;
-      lines2.push(...renderRhetoricLine(ctx, entry.row, includedOrderNum, ""));
-      continue;
-    }
-    const r3 = entry.item;
-    const wording = r3.wording_override ?? r3.wording;
-    if (r3.crossed_out_on !== null) {
-      crossedOutOrderNum += 1;
-      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
-      continue;
-    }
-    includedOrderNum += 1;
-    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
-    const petitum = unservedPetitumMarker(r3.hasServedBy);
-    const looseThread = looseThreadMarker(true, waIds.orderIds.has(r3.id));
-    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_orders", id: r3.pointer_id, item: r3.wording });
-    const workMarkers = dedupeLineMarkers([jurMarker, petitum, looseThread]);
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
-    const lineMarkers = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, review]), looseThread]);
-    lines2.push(`${includedOrderNum}. ${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- order ${includedOrderNum} -->`);
-  }
-  lines2.push("");
-  let partNum = 0;
-  lines2.push("## PART 2: FACTUAL BASIS");
-  lines2.push("");
-  const factParagraphs = /* @__PURE__ */ new Map();
-  for (const entry of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
-    partNum += 1;
-    if (entry.kind === "rhetoric") {
-      lines2.push(...renderRhetoricLine(ctx, entry.row, partNum, ""));
-      continue;
-    }
-    const f3 = entry.item;
-    factParagraphs.set(f3.id, partNum);
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
-    const witnessSuppressed = suppressedFactIds.has(f3.id);
-    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
-    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
-    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens = [witnessMarker, courtRecordPin, looseThread];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      statementSets.push(statementTokens);
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      statementTokens.push(doubtMarker(s3.doubt));
-      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens.push(...statementTokens);
-      recordFactStatementGlyphs(
-        ctx.inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens);
-    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
-    const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
-  }
-  lines2.push("");
-  lines2.push("## PART 3: LEGAL BASIS");
-  lines2.push("");
-  let submissionNum = 0;
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry.kind === "rhetoric") {
-      submissionNum += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry.row, submissionNum, ""), "");
-      continue;
-    }
-    const s3 = entry.item;
-    recordParagraph(ctx, s3.id, "form", submissionNum);
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      submissionNum,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      looseThread,
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    submissionNum = result.nextPara;
-  }
-  lines2.push("## PART 4: MATERIAL TO BE RELIED ON");
-  lines2.push("");
-  const tenderStatus = fetchDocumentTenderStatus(
-    ctx.dbPath,
-    docs.map((d3) => d3.document_id),
-    ctx.rendered.slice(0, 10)
-  );
-  docs.forEach((d3, i3) => {
-    const copy = copyMarkers.get(d3.document_id) ?? "";
-    let tenderMarkers = "";
-    if (isExhibitTenderRole(d3.role)) {
-      const st3 = tenderStatus.get(d3.document_id);
-      tenderMarkers = dedupeLineMarkers([st3.spentGlyphs, unsponsoredExhibitMarker(st3.hasTender)]);
-    }
-    const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
-    recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const printed = printMarkerSets([markers]);
-    lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
-  });
-  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
-  lines2.push("");
-  lines2.push(checkboxOrderBlock([]));
-  lines2.push("");
-  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, true));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/filler-registry.ts
-var VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
-var BCSC = "CAN/BC/BCSC";
-var BCCA = "CAN/BC/BCCA";
-function supportingAffidavits(ctx, out) {
-  return fetchAffidavits(ctx.dbPath, ctx.filing.id).map(
-    (a3) => out.document("Affidavit", affidavitFileName(a3), () => renderAffidavit(ctx, a3), affidavitLabel(a3))
-  );
-}
-var FILLERS = [
-  {
-    venue: VANIAC,
-    kind: "submissions_package",
-    // #380's resolution: for a VanIAC filing, the Written Arguments IS the venue document -- its
-    // pointer rows read document='form', and no separate 'written_argument' companion is appended.
-    filler: (ctx, out) => [
-      out.document("Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "form")),
-      out.document("Evidence_index", "Evidence Index.md", () => renderEvidenceIndex(ctx)),
-      ...out.witnessStatements()
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "notice_of_application",
-    filler: (ctx, out) => [
-      out.document("Notice_of_application", "Notice of Application.md", () => renderNoticeOfApplication(ctx)),
-      ...supportingAffidavits(ctx, out)
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "requisition_default_judgment",
-    filler: (ctx, out) => [
-      out.document("Requisition", "Form 17 Draft Requisition.md", () => renderRequisitionDefaultJudgment(ctx)),
-      out.document("Default_judgment", "Form 8 Default Judgment.md", () => renderForm8DefaultJudgment(ctx))
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "requisition_consent",
-    filler: (ctx, out) => [
-      out.document("Requisition", "Requisition for Consent Order.md", () => renderRequisitionConsent(ctx)),
-      out.document("Consent_order", "Consent Order.md", () => renderConsentOrder(ctx))
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "application_response",
-    filler: (ctx, out) => [
-      out.document("Application_response", "Application Response.md", () => renderApplicationResponse(ctx)),
-      ...supportingAffidavits(ctx, out)
-    ]
-  },
-  {
-    venue: BCCA,
-    kind: "bcca_stay_response",
-    // Like VanIAC (#380 item 5), the written argument inside the response book IS the substantive
-    // venue document (#436).
-    filler: (ctx, out) => [out.document("Response_book", "Response Book.md", () => renderBccaStayResponse(ctx))]
-  },
-  {
-    venue: BCCA,
-    kind: "bcca_factum",
-    // The factum IS the substantive venue document too (#648).
-    filler: (ctx, out) => [out.document("Factum", "Factum.md", () => renderBccaFactum(ctx))]
-  }
-];
-var REGISTERED_FILLERS = FILLERS.map(({ venue, kind }) => ({ venue, kind }));
-function fillerName(key) {
-  return `${key.venue} + ${key.kind}`;
-}
-function readShipped(path, seams) {
-  const kp = parseKnowledgePath(path, "type file lookup");
-  const { layer } = shippedLayer(kp.skill, kp.rest, seams);
-  try {
-    return readFileSync23(layer.abs, "utf-8");
-  } catch (err) {
-    if (err.code !== "ENOENT") throw err;
-    throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
-  }
-}
-function resolveTypeFile(venue, kind, seams = {}) {
-  const segments = venue.split("/");
-  if (segments.length !== 3 || segments.some((segment) => segment === "")) {
-    throw new DataServerError(`forum "${venue}" is not a knowledge-tree key <Country>/<Jurisdiction>/<Venue>`, "invalid_forum");
-  }
-  const noVenue = segments[2] === NO_VENUE;
-  const documents = `draft/${venue}/Documents`;
-  const indexPath = `${documents}/kinds.json`;
-  let doc;
-  try {
-    doc = JSON.parse(readShipped(indexPath, seams));
-  } catch (err) {
-    if (err instanceof DataServerError) throw err;
-    throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
-  }
-  const rows22 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
-  if (rows22.length !== 1) {
-    throw new DataServerError(
-      `${indexPath}: ${rows22.length === 0 ? "no row lists" : `${rows22.length} rows list`} kind "${kind}" as an alias${rows22.length === 0 ? "" : ` (${rows22.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
-      "kind_unresolved"
-    );
-  }
-  const file = `${documents}/${rows22[0].file}.md`;
-  const block2 = extractJsonBlock(readShipped(file, seams), file, true);
-  validateTypeBlock(block2, file, { noVenue });
-  return { file, block: block2 };
-}
-function composeFiller(venue, kind, seams = {}) {
-  const type = resolveTypeFile(venue, kind, seams);
-  if (type.block.renderer !== "bespoke") {
-    throw new DataServerError(
-      `${type.file}: renderer "${type.block.renderer}" has no filler; a general type renders from the Writing's stored layout snapshot, never through compose`,
-      "no_renderer"
-    );
-  }
-  const registered = venue.split("/")[2] === NO_VENUE ? void 0 : FILLERS.find((entry) => entry.venue === venue && entry.kind === kind);
-  if (registered === void 0) {
-    throw new DataServerError(
-      `${type.file} declares renderer "bespoke", but no filler is registered for venue ${venue}, kind ${kind}: the missing filler is "${fillerName({ venue, kind })}"`,
-      "no_filler"
-    );
-  }
-  return { ...type, filler: registered.filler };
-}
+// src/submission/forms/render.ts
+import { basename as basename9, dirname as dirname22, join as join37 } from "node:path";
 
 // src/submission/matter-pages.ts
-import { existsSync as existsSync31, mkdirSync as mkdirSync15, readdirSync as readdirSync17, readFileSync as readFileSync25 } from "node:fs";
+import { existsSync as existsSync31, mkdirSync as mkdirSync15, readdirSync as readdirSync17, readFileSync as readFileSync24 } from "node:fs";
 import { dirname as dirname18, join as join35, relative as relative3 } from "node:path";
 
 // src/file_ops/trash.ts
@@ -96270,14 +93852,14 @@ var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:fle
 var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
 // src/submission/forms/arguments-page.ts
-function rows14(dbPath, sql, params = []) {
+function rows7(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function tableHeld(dbPath, table) {
-  return rows14(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
+  return rows7(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
 }
 function columnHeld2(dbPath, table, column) {
-  return rows14(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
+  return rows7(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
 }
 function buildArgumentsData(dbPath, filing) {
   const filings = Array.isArray(filing) ? filing : [filing];
@@ -96291,7 +93873,7 @@ function buildArgumentsData(dbPath, filing) {
 }
 function argumentsFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const submissions = rows14(
+  const submissions = rows7(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
@@ -96301,7 +93883,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
     [...ids, proceedingId]
   );
-  const deployments = rows14(
+  const deployments = rows7(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
      FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
@@ -96309,22 +93891,22 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
      ORDER BY f.id`,
     [proceedingId]
   );
-  const facts = rows14(
+  const facts = rows7(
     dbPath,
     `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
      WHERE f.proceeding_id = ? ORDER BY f.id`,
     [proceedingId]
   );
   const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows14(
+  const law = rows7(
     dbPath,
     `SELECT sl.submission_id, la.proposition, ${killedOn}
      FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
      WHERE la.proceeding_id = ? ORDER BY la.id`,
     [proceedingId]
   );
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows14(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows14(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
+  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows7(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
+  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows7(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
   const links = [
     ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
     ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
@@ -96338,7 +93920,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
       source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
       linked: []
     })),
-    ...rows14(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
+    ...rows7(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
       (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
     )
   ];
@@ -96503,11 +94085,11 @@ var material_facts_html_default = '@@include(view-head.html)@@\n<title>Material 
 var procedural_history_html_default = '@@include(view-head.html)@@\n<title>Procedural History</title>\n<style>\n@@include(board.css)@@\n\n@@include(facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Procedural History</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(facts.js)@@\n</script>\n</body>\n</html>';
 
 // src/submission/forms/facts-pages.ts
-function rows15(dbPath, sql, params = []) {
+function rows8(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function factsInFilingOrder(dbPath, filingId) {
-  const found = rows15(
+  const found = rows8(
     dbPath,
     `SELECT f.*, cr.label AS court_record_label
      FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
@@ -96531,7 +94113,7 @@ function factsInFilingOrder(dbPath, filingId) {
 }
 function statementsOf(dbPath, factIds) {
   if (factIds.length === 0) return [];
-  return rows15(
+  return rows8(
     dbPath,
     `SELECT sof.*, w.name AS witness_name, ins.label AS instrument_label, ex.label AS exhibit_label
      FROM statements_of_fact sof
@@ -96629,7 +94211,7 @@ var MATERIAL_FACTS = {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync30, linkSync as linkSync2, mkdirSync as mkdirSync14, readFileSync as readFileSync24, unlinkSync as unlinkSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync30, linkSync as linkSync2, mkdirSync as mkdirSync14, readFileSync as readFileSync23, unlinkSync as unlinkSync7, writeFileSync as writeFileSync8 } from "node:fs";
 import { dirname as dirname16, join as join31 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
@@ -96637,7 +94219,7 @@ var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
   if (!existsSync30(path)) return DEFAULT_PAGE_API_PORT;
-  const value = JSON.parse(readFileSync24(path, "utf-8"))?.page_api_port;
+  const value = JSON.parse(readFileSync23(path, "utf-8"))?.page_api_port;
   if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
@@ -96661,7 +94243,7 @@ function pageApiSecret(env) {
       unlinkSync7(temp);
     }
   }
-  const secret = readFileSync24(path);
+  const secret = readFileSync23(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -97120,14 +94702,14 @@ function rawResearchClass(row2) {
   if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
   return row2.in_use ? "in_use" : "undecided";
 }
-function rows16(dbPath, sql, params = []) {
+function rows9(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var columnsHeld = /* @__PURE__ */ new Set();
 function columnHeld3(dbPath, table, column) {
   const key = `${dbPath}\0${table}.${column}`;
   if (columnsHeld.has(key)) return true;
-  const held = rows16(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
+  const held = rows9(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
   if (held) columnsHeld.add(key);
   return held;
 }
@@ -97138,7 +94720,7 @@ function propositionKilledOnColumn(dbPath) {
   return columnHeld3(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
 }
 function fetchStatements(dbPath, proceedingId) {
-  return rows16(
+  return rows9(
     dbPath,
     `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
             ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
@@ -97179,13 +94761,13 @@ function buildRawResearchData(dbPath, filing) {
 function rawResearchFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
   const here = merged ? "this board's Writings" : "this Writing";
-  const propositions = rows16(
+  const propositions = rows9(
     dbPath,
     `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
     [proceedingId]
   );
   const statements = fetchStatements(dbPath, proceedingId);
-  const links = rows16(
+  const links = rows9(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
      FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
@@ -97193,7 +94775,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
-  const onFiling = rows16(
+  const onFiling = rows9(
     dbPath,
     `SELECT s.id, s.contention
      FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
@@ -97201,7 +94783,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
     ids
   );
-  const elsewhere = rows16(
+  const elsewhere = rows9(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      WHERE s.proceeding_id = ? AND s.killed_on IS NULL
@@ -97209,7 +94791,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId, ...ids]
   );
-  const required2 = rows16(
+  const required2 = rows9(
     dbPath,
     `SELECT r.law_assertion_id, r.excerpt_id,
             EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
@@ -97217,7 +94799,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
     [...ids, proceedingId]
   );
-  const citedHere = new Set(rows16(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
+  const citedHere = new Set(rows9(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
   const onFilingIds = new Set(onFiling.map((s3) => s3.id));
   const present3 = (list) => list.filter((id) => id !== null);
   const deployed = /* @__PURE__ */ new Set([
@@ -99118,7 +96700,7 @@ function guardTargets(names, views) {
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
     const file = join35(draftDir, name);
-    if (existsSync31(file) && !readFileSync25(file, "utf-8").includes(marker)) {
+    if (existsSync31(file) && !readFileSync24(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -99134,7 +96716,7 @@ function stem(fileName) {
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text5 = readFileSync25(file, "utf-8");
+  const text5 = readFileSync24(file, "utf-8");
   return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
@@ -99273,7 +96855,7 @@ function isRecord(value) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync25(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync24(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -99695,6 +97277,3438 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
   };
 }
 
+// src/submission/forms/legend.ts
+var LEGEND_HEADING = "## Legend";
+var GLYPH_ALTERNATIVES = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length).map((g3) => g3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+var RUN_RE = new RegExp(`(?:${GLYPH_ALTERNATIVES.join("|")})+`, "g");
+function scannedText(markdown) {
+  let inFence = false;
+  const kept = markdown.split("\n").filter((line) => {
+    if (line.trim().startsWith("```")) {
+      inFence = !inFence;
+      return false;
+    }
+    return !inFence;
+  });
+  return kept.join("\n").replace(/<!--[\s\S]*?-->/g, " ");
+}
+function row(cells) {
+  return `|${cells.map((cell) => cell ? ` ${cell} ` : " ").join("|")}|`;
+}
+function buildLegend(markdown, documentType) {
+  const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
+  const present3 = new Set(sets.flat());
+  const rows22 = [];
+  const notes = [];
+  for (const symbol of SYMBOLS) {
+    if (!present3.has(symbol.glyph)) continue;
+    const work = symbol.work && symbol.actor ? `${symbol.work} (${symbol.actor})` : symbol.work;
+    rows22.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
+    if (symbol.modelNote) notes.push(`${symbol.glyph}: ${symbol.modelNote}`);
+    for (const placement of PLACEMENTS) {
+      if (placement.glyph !== symbol.glyph || !(placement.documents?.includes(documentType) ?? true)) continue;
+      rows22.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
+      if (placement.modelNote) notes.push(`${placement.glyph} (${placement.line ?? documentType}): ${placement.modelNote}`);
+    }
+  }
+  for (const combination of COMBINATIONS) {
+    const glyphs = splitGlyphs(combination.key);
+    if (!sets.some((set) => glyphs.every((g3) => set.includes(g3)))) continue;
+    rows22.push(row([combination.key, "", combination.meaning, combination.work]));
+    if (combination.modelNote) notes.push(`${combination.key}: ${combination.modelNote}`);
+  }
+  if (rows22.length === 0) return { text: "", notes: [] };
+  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows22].join("\n") + "\n", notes };
+}
+function withLegend(markdown, documentType) {
+  const legend = buildLegend(markdown, documentType);
+  return { markdown: legend.text ? `${markdown.trimEnd()}
+
+${legend.text}` : markdown, symbolNotes: legend.notes };
+}
+function legendNotes(mockup, documentType) {
+  const at = mockup.lastIndexOf(`
+${LEGEND_HEADING}
+`);
+  return buildLegend(at === -1 ? mockup : mockup.slice(0, at), documentType).notes;
+}
+
+// src/submission/form-currency.ts
+var KIND_FORM_KEYS = { notice_of_application: "form-32", application_response: "form-33" };
+var UPDATE_DOC = "publish/subskills/publish-bcsc-form/references/form-update.md";
+var STEMS = {
+  "form-17": ["requisition-consent", "requisition-default-judgment"],
+  "form-32": ["notice-of-application"],
+  "form-33": ["application-response"]
+};
+function formCurrency(formKey, today4, seams = {}) {
+  const read3 = (path) => skillSourceRead(path, seams.env, void 0, void 0, seams.installRoot).content;
+  const record2 = JSON.parse(read3("shared/docket-clerk/references/rule-freshness.json"));
+  const identityFiles = [];
+  const lists = [];
+  let front = null;
+  for (const stem3 of STEMS[formKey] ?? [formKey]) {
+    const identityFile = `publish/CAN/BC/BCSC/Documents/${stem3}.md`;
+    let file;
+    try {
+      file = readFrontMatter(read3(`publish/references/CAN/BC/BCSC/Documents/${stem3}.md`), identityFile) ?? {};
+    } catch (err) {
+      if (!(err instanceof DataServerError && err.code === "not_found")) throw err;
+      lists.push([]);
+      continue;
+    }
+    identityFiles.push(identityFile);
+    front ??= file;
+    const listed = file.conformed_to;
+    lists.push(Array.isArray(listed) ? listed.filter((reg) => typeof reg === "string") : []);
+  }
+  let formNumber;
+  if (front === null) formNumber = /^form-(\d+(?:\.\d+)?)$/.exec(formKey)?.[1] ?? null;
+  else formNumber = typeof front.form_number === "string" ? front.form_number : null;
+  const conformedTo = lists[0].filter((reg) => lists.every((list) => list.includes(reg)));
+  const unconformed = [];
+  for (const enactment of record2.enactments) {
+    for (const change of enactment.pending_changes ?? []) {
+      if (formNumber === null || !change.forms?.includes(formNumber)) continue;
+      if (!change.amending_reg || !change.commencement_date || change.commencement_date > today4) continue;
+      if (conformedTo.includes(change.amending_reg)) continue;
+      unconformed.push({
+        amending_reg: change.amending_reg,
+        amending_oic: change.amending_oic ?? null,
+        commencement_date: change.commencement_date,
+        enactment: enactment.name
+      });
+    }
+  }
+  const label2 = formNumber === null ? formKey : `Form ${formNumber}`;
+  let warning = null;
+  if (unconformed.length > 0) {
+    const clauses = unconformed.map(
+      (c3) => `${c3.amending_reg}${c3.amending_oic ? ` (${c3.amending_oic})` : ""}, in force ${c3.commencement_date}, is recorded as amending this form, and the shipped ${label2} template, emitter and type file are not recorded as conformed to it`
+    );
+    warning = `${label2}: ${clauses.join("; ")}.`;
+  } else if (front === null) {
+    warning = `${label2}: no identity file ships for this form, so its conformance to the enactment changes on record cannot be read.`;
+  }
+  return {
+    form_key: formKey,
+    form_number: formNumber,
+    today: today4,
+    identity_file: front === null ? null : identityFiles.join(", "),
+    conformed_to: conformedTo,
+    unconformed,
+    warning,
+    update_doc: UPDATE_DOC
+  };
+}
+
+// src/submission/forms/filed-face.ts
+var FRONTMATTER_RE = /^---\n[\s\S]*?\n---\n?/;
+var HTML_COMMENT_RE = /[ \t]*<!--[\s\S]*?-->/g;
+var MOCKUP_ONLY_LINE_RE = new RegExp(`^.*${MOCKUP_ONLY_TAG}[ \\t]*\\n?`, "gm");
+var GAP_LINE_RE = /^🧩 _+ <!-- .* -->[ \t]*\n?/gm;
+var MOCKUP_ONLY_HEADINGS = [
+  "Source trace",
+  "Facts attributed to this witness, not yet in this statement",
+  "Opposing points",
+  // Application Response (build #386): opposing_orders with no filing_positions row for this
+  // filing -- belt-and-suspenders, since Form 33's real filed face comes from the separate
+  // assembly-mode emitter (assembly-application-response.ts), not this transform. BCCA stay
+  // response (renderer compliance fix following #436): emitted as #### inside "### Part 2:
+  // Issues" -- stripSections' level-aware matching handles both without a kind-specific branch.
+  "Positions not yet taken",
+  // BCCA factum (#648): opposing points no submission answers yet, the Enactments appendix's
+  // held-back court rules, and the page budget estimate.
+  "Points not yet answered",
+  "Court rules not in this appendix",
+  "Page budget",
+  // The general renderer's Layout confirmation, Blind copies, Authorities cited and Page budget are
+  // optional header fields (render-general.ts), which FRONTMATTER_RE drops with the header.
+  // The legend of the symbols on a mockup, its last section (forms/legend.ts).
+  "Legend"
+];
+var INLINE_TAG_RES = [
+  / \(quoting .*?\)(?= \(|\r?$)/gm,
+  / \[facts [^\]]*\]/g,
+  / 🧩 \[GAP -- no fact linked\]/g,
+  / \[PRACTITIONER — total exceeds the Rule 24\(j\) cap; Rule 24\(h\) consent position required\]/g,
+  / \[unverified: [^\]]*\]/g,
+  / \[source changed: [^\]]*\]/g,
+  / \(killed \d{4}-\d{2}-\d{2}\)/g,
+  / \(settled by counsel \d{4}-\d{2}-\d{2} over scrutiny finding\)/g,
+  / \(no stated fact needed, per counsel \d{4}-\d{2}-\d{2}\)/g,
+  / \(no stated law needed, per counsel \d{4}-\d{2}-\d{2}\)/g,
+  / \[currency: [^\]]*\]/g,
+  / \(overruled: .*?\)(?= ⛔)/g,
+  / \(scrutiny failed: .*\)/g,
+  / \(note-up: .*\)/g,
+  / \(rhetorical\)/g,
+  / \(states law, no authority linked\)/g,
+  / \(states fact beyond its record\)/g
+];
+var MESSAGE_LINE_RES = [
+  /^🧩 no facts attributed to this witness$/m
+];
+var STRUCK_LINE_RE = /^[ \t]*~~.*~~[ \t]*\n?/gm;
+function stripSections(markdown) {
+  let out = markdown;
+  for (const heading of MOCKUP_ONLY_HEADINGS) {
+    const startRe = new RegExp(`\\n(#{2,6}) ${heading}\\n`);
+    for (; ; ) {
+      const start2 = out.match(startRe);
+      if (!start2 || start2.index === void 0) break;
+      const level = start2[1].length;
+      const afterHeadingStart = start2.index + start2[0].length;
+      const nextRe = new RegExp(`\\n#{1,${level}} `, "g");
+      nextRe.lastIndex = afterHeadingStart;
+      const next = nextRe.exec(out);
+      const end = next ? next.index : out.length;
+      out = out.slice(0, start2.index) + out.slice(end);
+    }
+  }
+  return out;
+}
+function stripGlyphs(markdown) {
+  let out = markdown;
+  for (const glyph2 of ALL_MARKER_GLYPHS) {
+    out = out.split(glyph2).join("");
+  }
+  return out;
+}
+function isFenceLine(line) {
+  return line.trim().startsWith("```");
+}
+function tidy(markdown) {
+  let inFence = false;
+  const lines2 = markdown.split("\n").map((line) => {
+    if (isFenceLine(line)) {
+      inFence = !inFence;
+      return line;
+    }
+    if (inFence || line.trim() === "") return inFence ? line : "";
+    const match = line.match(/^(\s*)(.*)$/s);
+    const [, lead, rest] = match ?? ["", "", line];
+    const collapsedRest = rest.replace(/[ \t]{2,}/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")").replace(/[ \t]+$/, "");
+    return lead + collapsedRest;
+  });
+  return lines2.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+}
+function toFiledFace(markdown) {
+  let out = markdown.replace(FRONTMATTER_RE, "");
+  out = out.replace(MOCKUP_ONLY_LINE_RE, "");
+  out = out.replace(GAP_LINE_RE, "");
+  out = out.replace(HTML_COMMENT_RE, "");
+  out = stripSections(out);
+  for (const re3 of INLINE_TAG_RES) out = out.replace(re3, "");
+  for (const re3 of MESSAGE_LINE_RES) out = out.replace(re3, "");
+  out = out.replace(STRUCK_LINE_RE, "");
+  out = stripGlyphs(out);
+  return tidy(out);
+}
+
+// src/submission/forms/citation-scan.ts
+var UNTRACKED_CITATION_TABLE = "untracked_citations";
+var YEAR = String.raw`(?:1[6-9]|20)\d{2}`;
+var NEUTRAL = String.raw`\b${YEAR}\s+(?=[A-Za-z]*[A-Z][A-Za-z]*[A-Z])[A-Z][A-Za-z]{1,7}\s+\d+\b`;
+var REPORTER = String.raw`[[(]${YEAR}[\])],?\s+(?:\d+\s+)?[A-Z][A-Za-z.&]*(?:\s+[A-Z][A-Za-z.&]*){0,2}(?:\s+\(\d+(?:st|nd|rd|th|d)\))?\s+\d+\b`;
+var STATUTE = String.raw`\b(?:R\.?\s?)?S\.?\s?(?:[A-Z]\.?){1,3}\s+${YEAR},?\s+c\.?\s*[A-Z]?-?\d+(?:\.\d+)?\b|\b[A-Z][A-Za-z]{0,3}\.?\s?Reg\.?\s+\d+\/\d{2,4}\b|\bSOR\/\d{2,4}-\d+\b`;
+var CITATION_RE = new RegExp(`${NEUTRAL}|${REPORTER}|${STATUTE}`, "g");
+var ITALIC_NAME_RE = /(?<![*_\w])([*_])(?![*_\s])((?:[^*_\n]+?\sv\.?\s[^*_\n]+?)|(?:(?:Re|Reference re)\s[^*_\n]+?))\1(?![*_\w])/g;
+function normalCitation(s3) {
+  return s3.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim();
+}
+function normalName(s3) {
+  return s3.toLowerCase().replace(/\bv\./g, "v").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+function lineHits(line) {
+  const names = [...line.matchAll(ITALIC_NAME_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, name: m3[2].trim() }));
+  const citations = [...line.matchAll(CITATION_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, citation: m3[0].trim() }));
+  const hits = [];
+  const joined = /* @__PURE__ */ new Set();
+  for (const n3 of names) {
+    const next = citations.findIndex((c3) => c3.start >= n3.end && /^[\s,]*$/.test(line.slice(n3.end, c3.start)));
+    if (next >= 0) {
+      joined.add(next);
+      hits.push({ text: `${n3.name}, ${citations[next].citation}`, name: n3.name, citation: citations[next].citation });
+    } else {
+      hits.push({ text: n3.name, name: n3.name, citation: null });
+    }
+  }
+  citations.forEach((c3, i3) => {
+    if (!joined.has(i3)) hits.push({ text: c3.citation, name: null, citation: c3.citation });
+  });
+  return hits;
+}
+function textHits(filedFace) {
+  const hits = [];
+  let fenced = false;
+  for (const line of filedFace.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced || /^\s*>/.test(line)) continue;
+    hits.push(...lineHits(line));
+  }
+  return hits;
+}
+function tracked(hit, rows22) {
+  if (hit.citation !== null) {
+    const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
+    if (rows22.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
+  }
+  if (hit.name !== null) {
+    const wanted = normalName(hit.name);
+    if (rows22.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
+  }
+  return false;
+}
+function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
+  const rows22 = submissionDataQuery(
+    dbPath,
+    "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
+    [proceedingId]
+  ).rows;
+  const seen = /* @__PURE__ */ new Set();
+  const lines2 = [];
+  for (const doc of docs) {
+    for (const hit of textHits(toFiledFace(doc.markdown))) {
+      const keys = [...hit.citation === null ? [] : [`c:${normalCitation(hit.citation)}`], ...hit.name === null ? [] : [`n:${normalName(hit.name)}`]];
+      const repeat = keys.some((k3) => seen.has(k3));
+      keys.forEach((k3) => seen.add(k3));
+      if (repeat) continue;
+      if (tracked(hit, rows22)) continue;
+      const item = `cited but not tracked: ${hit.text}`;
+      inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
+      lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
+    }
+  }
+  return lines2;
+}
+
+// src/submission/forms/render-notice-of-application.ts
+function rows10(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchHearingDetails(dbPath, filingId) {
+  const found = rows10(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
+function fetchFacts(dbPath, filingId, part) {
+  return rows10(
+    dbPath,
+    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
+     FROM filing_facts ff
+     JOIN facts f ON f.id = ff.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
+     ORDER BY ff.ordinal`,
+    [filingId, part]
+  );
+}
+function fetchStatementsOfFact(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows10(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})`,
+    factIds
+  );
+}
+function fetchWitnessBackedFlags(dbPath, factIds) {
+  if (factIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = factIds.map(() => "?").join(",");
+  const found = rows10(
+    dbPath,
+    `SELECT f.id AS fact_id,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
+     FROM facts f WHERE f.id IN (${placeholders})`,
+    factIds
+  );
+  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+}
+function frontmatterFor2(proceeding, ctx) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType: "Notice_of_application",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function formatTimeEstimate(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+function renderNoticeOfApplication(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
+  const served = ctx.parties.filter((p3) => p3.to_be_served === 1);
+  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, "part2");
+  const statementsOfFact = fetchStatementsOfFact(
+    ctx.dbPath,
+    facts.map((f3) => f3.id)
+  );
+  const witnessBacked = fetchWitnessBackedFlags(
+    ctx.dbPath,
+    facts.map((f3) => f3.id)
+  );
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of statementsOfFact) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const lines2 = [];
+  lines2.push(frontmatterFor2(ctx.proceeding, ctx));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "NOTICE OF APPLICATION"
+    })
+  );
+  lines2.push("");
+  const applicantName = applicant?.name ?? gapMarker("gap");
+  const servedNames = served.map((p3) => p3.name).join(", ") || gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const jurisdiction = hearing?.associate_judge == null ? ASSOCIATE_JUDGE_UNDETERMINED_LINE : hearing.associate_judge === 1 ? "This matter is within the jurisdiction of an associate judge." : "This matter is not within the jurisdiction of an associate judge.";
+  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of applicant" });
+  recordCriterionGlyphs(ctx.inventory, servedNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Parties to be served" });
+  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, jurisdiction, ["\u2B1C"], { table: "filings", id: ctx.filing.id, item: "Associate judge jurisdiction", instance: "associate-judge" });
+  lines2.push(`Name of applicant: ${applicantName}`);
+  lines2.push(`To: ${servedNames}`);
+  lines2.push("");
+  lines2.push(
+    `TAKE NOTICE that an application will be made by the applicant to the presiding judge or associate judge at the courthouse at ${ctx.proceeding.courthouse_address ?? "________________"} on a date to be set by Notice of Hearing of Application for the orders set out in Part 1 below.`
+  );
+  lines2.push("");
+  lines2.push(`The applicant estimates that the application will take: ${estimate}`);
+  lines2.push(`The applicant proposes that the matter will be heard on ${hearing?.proposed_hearing ?? "________________"}.`);
+  lines2.push(jurisdiction);
+  lines2.push("");
+  lines2.push("## PART 1: ORDER(S) SOUGHT");
+  lines2.push("");
+  let includedOrderNum = 0;
+  let crossedOutOrderNum = 0;
+  for (const entry of interleave(relief, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (r3) => r3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      includedOrderNum += 1;
+      lines2.push(...renderRhetoricLine(ctx, entry.row, includedOrderNum, ""));
+      continue;
+    }
+    const r3 = entry.item;
+    const wording = r3.wording_override ?? r3.wording;
+    if (r3.crossed_out_on !== null) {
+      crossedOutOrderNum += 1;
+      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
+      continue;
+    }
+    includedOrderNum += 1;
+    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
+    const petitum = unservedPetitumMarker(r3.hasServedBy);
+    const looseThread = looseThreadMarker(true, waIds.orderIds.has(r3.id));
+    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_orders", id: r3.pointer_id, item: r3.wording });
+    const workMarkers = dedupeLineMarkers([jurMarker, petitum, looseThread]);
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
+    const lineMarkers = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, review]), looseThread]);
+    lines2.push(`${includedOrderNum}. ${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- order ${includedOrderNum} -->`);
+  }
+  lines2.push("");
+  let partNum = 0;
+  lines2.push("## PART 2: FACTUAL BASIS");
+  lines2.push("");
+  const factParagraphs = /* @__PURE__ */ new Map();
+  for (const entry of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
+    partNum += 1;
+    if (entry.kind === "rhetoric") {
+      lines2.push(...renderRhetoricLine(ctx, entry.row, partNum, ""));
+      continue;
+    }
+    const f3 = entry.item;
+    factParagraphs.set(f3.id, partNum);
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
+    const witnessSuppressed = suppressedFactIds.has(f3.id);
+    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
+    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
+    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
+    const tokens = [witnessMarker, courtRecordPin, looseThread];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      statementSets.push(statementTokens);
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      statementTokens.push(doubtMarker(s3.doubt));
+      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
+      tokens.push(...statementTokens);
+      recordFactStatementGlyphs(
+        ctx.inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens);
+    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
+    const citationLines = [
+      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
+      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
+    ];
+    const trace = `<!-- fact ${partNum} -->`;
+    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
+    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+  }
+  lines2.push("");
+  lines2.push("## PART 3: LEGAL BASIS");
+  lines2.push("");
+  let submissionNum = 0;
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      submissionNum += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry.row, submissionNum, ""), "");
+      continue;
+    }
+    const s3 = entry.item;
+    recordParagraph(ctx, s3.id, "form", submissionNum);
+    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      submissionNum,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      looseThread,
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    submissionNum = result.nextPara;
+  }
+  lines2.push("## PART 4: MATERIAL TO BE RELIED ON");
+  lines2.push("");
+  const tenderStatus = fetchDocumentTenderStatus(
+    ctx.dbPath,
+    docs.map((d3) => d3.document_id),
+    ctx.rendered.slice(0, 10)
+  );
+  docs.forEach((d3, i3) => {
+    const copy = copyMarkers.get(d3.document_id) ?? "";
+    let tenderMarkers = "";
+    if (isExhibitTenderRole(d3.role)) {
+      const st3 = tenderStatus.get(d3.document_id);
+      tenderMarkers = dedupeLineMarkers([st3.spentGlyphs, unsponsoredExhibitMarker(st3.hasTender)]);
+    }
+    const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
+    recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
+    const printed = printMarkerSets([markers]);
+    lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
+  });
+  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
+  lines2.push("");
+  lines2.push(checkboxOrderBlock([]));
+  lines2.push("");
+  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, true));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-requisition.ts
+function rows11(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchAlternatives(dbPath, chosenId) {
+  return rows11(
+    dbPath,
+    `SELECT id, wording, template_key, template_values, crossed_out_on
+     FROM order_sought WHERE alternative_to = ?`,
+    [chosenId]
+  );
+}
+function fetchPlacedAlternativeIds(dbPath, filing) {
+  if (filing.kind !== "requisition_default_judgment") return [];
+  return rows11(
+    dbPath,
+    `SELECT o.id FROM order_sought o
+     JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
+     WHERE fo.filing_id = ? AND fo.document = 'form'`,
+    [filing.id]
+  ).map((r3) => r3.id);
+}
+function frontmatterFor3(ctx, documentType) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function captionParties(ctx) {
+  return ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+}
+var TEMPLATE_NOT_CHOSEN = "(template not chosen)";
+var UNRECOGNIZED_TEMPLATE_KEY = 'unrecognized template_key "';
+function renderTemplate(key, valuesJson) {
+  if (!key) return `${gapMarker("unchosen")} ${TEMPLATE_NOT_CHOSEN}`;
+  let values = {};
+  if (valuesJson) {
+    try {
+      values = JSON.parse(valuesJson);
+    } catch {
+      values = {};
+    }
+  }
+  switch (key) {
+    case "sum_certain":
+      return `pay to the plaintiff(s) the sum of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "damages_to_be_assessed":
+      return "pay to the plaintiff(s) damages to be assessed";
+    case "delivery_or_assessed_value":
+      return `deliver up ${values.description ?? "(not recorded)"}, or pay the assessed value of it if delivery cannot be made`;
+    case "assessed_value_for_operative":
+      return "pay to the plaintiff(s) the assessed value of the goods claimed";
+    case "interest_as_claimed":
+      return `pay to the plaintiff(s) interest as claimed in the amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "interest_coia":
+      return "interest under the Court Order Interest Act";
+    case "costs_fixed":
+      return `pay to the plaintiff(s) costs in the fixed amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "costs_to_be_assessed":
+      return "pay to the plaintiff(s) costs to be assessed";
+    default:
+      return `${gapMarker("not_recorded")} ${UNRECOGNIZED_TEMPLATE_KEY}${key}"`;
+  }
+}
+function recordTemplateChoice(inv, r3) {
+  if (!r3.template_key) inv.push({ generating: true, slug: "choose-template", marker: "\u2B1C", table: "order_sought", id: r3.id, item: r3.wording, doc: "" });
+}
+function renderRequisitionDefaultJudgment(ctx) {
+  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
+  const plaintiff = ctx.parties.find((p3) => p3.is_client === 1) ?? ctx.parties.find((p3) => p3.is_applicant === 1);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "REQUISITION - GENERAL"
+  });
+  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
+  const filedBy = plaintiff ? `${plaintiff.role}, ${plaintiff.name}` : gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
+  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Filed by" });
+  const required2 = `Search for a Response to Civil Claim filed on behalf of the Defendant, ${defendantNames} and if no Response to Civil Claim has been filed, please enter default judgment.`;
+  const checklist = [];
+  const draftOrderDoc = docs.find((d3) => d3.role === "order");
+  const affidavitDoc = docs.find((d3) => d3.role === "affidavit");
+  const orderItem = "Draft default judgment";
+  const affidavitItem = "Affidavit of service and non-delivery of a response to civil claim";
+  const orderGap = draftOrderDoc ? "" : gapMarker("unchosen");
+  const affidavitGap = affidavitDoc ? "" : gapMarker("unchosen");
+  recordGlyphs(ctx.inventory, orderGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "order", item: orderItem });
+  recordGlyphs(ctx.inventory, affidavitGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "affidavit", item: affidavitItem });
+  checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
+  checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push("");
+  lines2.push(
+    requisitionWrapper({
+      captionMarkdown: caption2,
+      titleLine: "REQUISITION - GENERAL",
+      filedBy,
+      required: required2,
+      checklistLeadIn: "This requisition is supported by the following:",
+      checklist
+    })
+  );
+  lines2.push("");
+  if (plaintiff) lines2.push(signatureBlock({ name: plaintiff.name, role: plaintiff.role, counselName: plaintiff.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderForm8DefaultJudgment(ctx) {
+  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
+  const chosen = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "DEFAULT JUDGMENT"
+  });
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Default_judgment"));
+  lines2.push("");
+  lines2.push(caption2);
+  lines2.push("");
+  lines2.push(
+    `The plaintiff(s) having filed and served a notice of civil claim and the defendant(s) ${defendantNames} having failed to file and serve a response to civil claim within the time allowed;`
+  );
+  lines2.push("");
+  let opNum = 0;
+  chosen.forEach((r3) => {
+    if (r3.crossed_out_on !== null) {
+      lines2.push(`~~the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}~~ <!-- order crossed-out ${r3.id} -->`);
+      lines2.push("");
+    } else {
+      opNum += 1;
+      const prefix = opNum === 1 ? "THIS COURT ORDERS" : "THIS COURT FURTHER ORDERS";
+      recordTemplateChoice(ctx.inventory, r3);
+      const provision = `${prefix} that the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}.`;
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, provision, r3);
+      lines2.push(`${provision}${review ? ` ${review}` : ""} <!-- order_sought_id ${r3.id} -->`);
+      lines2.push("");
+    }
+    const alternatives = fetchAlternatives(ctx.dbPath, r3.id);
+    for (const alt of alternatives) {
+      if (alt.crossed_out_on !== null) {
+        lines2.push(`~~in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}~~ <!-- order crossed-out ${alt.id} -->`);
+        continue;
+      }
+      recordTemplateChoice(ctx.inventory, alt);
+      const altProvision = `THIS COURT FURTHER ORDERS that, in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}.`;
+      const altReview = reviewMarkerFor(ctx.review, ctx.inventory, altProvision, "order_sought", alt.id, alt.wording);
+      lines2.push(`${altProvision}${altReview ? ` ${altReview}` : ""} <!-- order_sought_id ${alt.id} -->`);
+    }
+    if (alternatives.length > 0) lines2.push("");
+  });
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderRequisitionConsent(ctx) {
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
+  const filedBy = applicant ? `${applicant.role}, ${applicant.name}` : gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Filed by" });
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "REQUISITION FOR CONSENT ORDER"
+  });
+  const checklist = [
+    "The rule or other enactment relied on is Rule 8-3.",
+    "Attached to this requisition is a draft of the order required.",
+    "Each party affected has consented to the order.",
+    "No party is under a legal disability."
+  ];
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push("");
+  lines2.push(
+    requisitionWrapper({
+      captionMarkdown: caption2,
+      titleLine: "REQUISITION FOR CONSENT ORDER",
+      filedBy,
+      required: "An order by consent.",
+      checklist
+    })
+  );
+  lines2.push("");
+  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderConsentOrder(ctx) {
+  const applicants = ctx.parties.filter((p3) => p3.is_applicant === 1);
+  const applicantNames = applicants.map((p3) => p3.name).join(", ") || ctx.parties.find((p3) => p3.is_client === 1)?.name || gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, applicantNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const withCounsel = ctx.parties.filter((p3) => p3.counsel_name);
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "CONSENT ORDER"
+  });
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Consent_order"));
+  lines2.push("");
+  lines2.push(caption2);
+  lines2.push("");
+  lines2.push(`BEFORE A REGISTRAR )  ${ctx.rendered.slice(0, 10)}  )  )`);
+  lines2.push("");
+  lines2.push(`ON THE APPLICATION of ${applicantNames} without a hearing and by consent;`);
+  lines2.push("");
+  lines2.push("THIS COURT ORDERS that:");
+  let includedOrderNum = 0;
+  let crossedOutOrderNum = 0;
+  relief.forEach((r3) => {
+    const wording = r3.wording_override ?? r3.wording;
+    if (r3.crossed_out_on !== null) {
+      crossedOutOrderNum += 1;
+      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
+      return;
+    }
+    includedOrderNum += 1;
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", r3);
+    lines2.push(`${includedOrderNum}. ${wording}${review ? ` ${review}` : ""} <!-- order ${includedOrderNum} -->`);
+  });
+  lines2.push("");
+  lines2.push("THE FOLLOWING PARTIES APPROVE THE FORM OF THIS ORDER AND CONSENT TO EACH OF THE ORDERS, IF ANY, THAT ARE INDICATED ABOVE AS BEING BY CONSENT");
+  lines2.push("");
+  for (const party of withCounsel) {
+    lines2.push(`Signature of ${party.counsel_name}, lawyer for the ${party.role}, ${party.name}`);
+    lines2.push(`${party.counsel_name}`);
+    lines2.push("");
+  }
+  lines2.push("By the Court.");
+  lines2.push("");
+  lines2.push("Registrar");
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/unplaced-facts.ts
+var FACTS_PART = /* @__PURE__ */ new Map([
+  ["notice_of_application", "part2"],
+  ["application_response", "part4"]
+]);
+function fetchUnplacedFacts(dbPath, filing) {
+  const part = FACTS_PART.get(filing.kind);
+  if (part === void 0 || filing.filed_on || filing.retired_on) return [];
+  return submissionDataQuery(
+    dbPath,
+    `SELECT fs.submission_id, sf.fact_id, f.postulate
+     FROM filing_submissions fs
+     JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+     JOIN submission_facts sf ON sf.submission_id = fs.submission_id
+     JOIN facts f ON f.id = sf.fact_id
+     WHERE fs.filing_id = ? AND fs.document = 'form'
+       AND NOT EXISTS (SELECT 1 FROM filing_facts ff
+                        WHERE ff.filing_id = fs.filing_id AND ff.document = 'form' AND ff.part = ? AND ff.fact_id = sf.fact_id)
+     ORDER BY fs.ordinal, sf.fact_id`,
+    [filing.id, part]
+  ).rows;
+}
+function refuseUnplacedFacts(dbPath, filing, tool) {
+  const unplaced = fetchUnplacedFacts(dbPath, filing);
+  if (unplaced.length === 0) return;
+  throw new ValidationError(
+    `Refusing ${tool}: Writing ${filing.id} has submissions resting on facts its facts Part does not hold, which the filed face would drop: ` + unplaced.map((u3) => `submission ${u3.submission_id}, fact ${u3.fact_id} ${JSON.stringify(u3.postulate)}`).join("; ") + `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${FACTS_PART.get(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
+    "facts_not_placed"
+  );
+}
+
+// src/submission/forms/render-response.ts
+function selectDocuments(documents, wanted) {
+  if (!wanted || wanted.length === 0) return documents;
+  const available = [...new Set(documents.map((doc) => doc.document_type))];
+  const unknown2 = wanted.filter((name) => !available.includes(name));
+  if (unknown2.length > 0) {
+    throw new ValidationError(
+      `This Writing has no ${unknown2.join(", ")} (it has: ${available.join(", ")})`
+    );
+  }
+  return documents.filter((doc) => wanted.includes(doc.document_type));
+}
+function symbolNotes(notes) {
+  return notes.length > 0 ? { symbol_notes: notes } : {};
+}
+function listDocuments(documents, wanted) {
+  return documents.map((doc) => ({
+    document_type: doc.document_type,
+    ...doc.path ? { path: doc.path } : {},
+    file_name: doc.file_name,
+    markdown_chars: doc.markdown.length,
+    ...wanted?.includes(doc.document_type) ? { markdown: doc.markdown, ...symbolNotes(doc.symbol_notes ?? []) } : {}
+  }));
+}
+var HEARING_WITHHELD = "[withheld from drafting context]";
+var NOA_HEARING = /^(The applicant proposes that the matter will be heard on )(.*?)(\.)$/m;
+var BCCA_HEARING = /^(THIS IS A RESPONSE TO the stay application .*, returnable )(.*?)(?: at (.*?))?\.$/m;
+function withholdHearing(doc) {
+  if (doc.markdown === void 0) return doc;
+  const unlessBlank = (value, blank) => value === blank ? value : HEARING_WITHHELD;
+  const markdown = doc.markdown.replace(NOA_HEARING, (_m, head, proposed, tail) => `${head}${unlessBlank(proposed, "________________")}${tail}`).replace(
+    BCCA_HEARING,
+    (_m, head, date3, time3) => `${head}${unlessBlank(date3, gapMarker("gap"))}${time3 === void 0 ? "" : ` at ${HEARING_WITHHELD}`}.`
+  );
+  return { ...doc, markdown };
+}
+
+// src/submission/forms/filed-gates.ts
+function findMissingLawCitations(markdown) {
+  const ids = [];
+  const lines2 = markdown.split("\n");
+  lines2.forEach((line, i3) => {
+    if (!line.includes(CITATION_MISSING)) return;
+    for (let j3 = i3; j3 <= i3 + 1 && j3 < lines2.length; j3++) {
+      const m3 = lines2[j3].match(/<!-- statement_of_law_id (\d+) -->/);
+      if (m3) {
+        ids.push(Number(m3[1]));
+        break;
+      }
+    }
+  });
+  return ids;
+}
+function findUnrenderableOrders(markdown) {
+  const ids = [];
+  for (const line of markdown.split("\n")) {
+    if (!line.includes(TEMPLATE_NOT_CHOSEN) && !line.includes(UNRECOGNIZED_TEMPLATE_KEY)) continue;
+    const m3 = line.match(/<!-- order_sought_id (\d+) -->/);
+    if (m3) ids.push(Number(m3[1]));
+  }
+  return ids;
+}
+function finishFiledRender({
+  dbPath,
+  filingId,
+  revision,
+  filing,
+  built,
+  cited: cited2,
+  documentTypes: documentTypes2,
+  timings,
+  started
+}) {
+  const deliverable = built;
+  const missing = deliverable.map((doc) => ({ doc, ids: findMissingLawCitations(doc.markdown) })).filter((r3) => r3.ids.length > 0);
+  if (missing.length > 0) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      citation_gate_failed: true,
+      note: `Refusing to render the filed face: statement(s) of law with no authorities.citation would print "${CITATION_MISSING}". ` + missing.map((r3) => `${r3.doc.documentType}: statement_of_law id(s) ${r3.ids.join(", ")}`).join("; ") + ". Add the missing citation(s), or remove those statements from this filing's deployed submissions, then call drafting_forms__render again.",
+      timings: withTotal(timings, started)
+    };
+  }
+  if (deliverable.some((doc) => doc.markdown.includes(ASSOCIATE_JUDGE_UNDETERMINED_LINE))) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      associate_judge_gate_failed: true,
+      note: "Refusing to render the filed face: hearing_details.associate_judge is not yet determined, so neither Form 32 jurisdiction sentence can be printed. Set it to 1 (within the jurisdiction of an associate judge) or 0 (not within), then call drafting_forms__render again.",
+      timings: withTotal(timings, started)
+    };
+  }
+  const unrenderable = deliverable.map((doc) => ({ doc, ids: findUnrenderableOrders(doc.markdown) })).filter((r3) => r3.ids.length > 0);
+  if (unrenderable.length > 0) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      template_key_gate_failed: true,
+      note: "Refusing to render the filed face: deployed order(s) with no usable order_sought.template_key would print an operative sentence that orders nothing. " + unrenderable.map((r3) => `${r3.doc.documentType}: order_sought id(s) ${r3.ids.join(", ")}`).join("; ") + ". Set each template_key to one of renderTemplate's eight values, or remove those orders from this filing's deployed orders, then call drafting_forms__render again.",
+      timings: withTotal(timings, started)
+    };
+  }
+  const gate = confirmationGate(cited2);
+  const changed = gate.changed_since_snapshot.length > 0 ? { changed_since_snapshot: gate.changed_since_snapshot } : {};
+  if (gate.unconfirmed.length > 0) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      confirmation_gate_failed: true,
+      unconfirmed: gate.unconfirmed,
+      ...changed,
+      note: `Refusing to render the filed face: the stored layout cites item(s) no roster lawyer has confirmed: ${gate.unconfirmed.join(", ")}. The mockup tags each one [unverified: ...]; confirm each through /localize at mockup review, then call drafting_forms__render again.` + (gate.changed_since_snapshot.length > 0 ? ` Changed since the snapshot: ${gate.changed_since_snapshot.map((c3) => c3.rule_ref).join(", ")}; re-snapshot the Writing, then confirm.` : ""),
+      timings: withTotal(timings, started)
+    };
+  }
+  const unwritten = deliverable.flatMap((doc) => doc.unwritten ?? []);
+  if (unwritten.length > 0) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      unwritten_gate_failed: true,
+      unwritten,
+      ...changed,
+      note: `Refusing to render the filed face: part(s) of the stored layout have no content: ${unwritten.join(", ")}. The mockup shows each as a \u{1F9E9} line; write each slot's filing_prose row, or add the rows each projection reads, then call drafting_forms__render again.`,
+      timings: withTotal(timings, started)
+    };
+  }
+  const proseFormat = deliverable.flatMap((doc) => doc.prose_format ?? []);
+  if (proseFormat.length > 0) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      prose_format_gate_failed: true,
+      prose_format: proseFormat,
+      ...changed,
+      note: "Refusing to render the filed face: prose line(s) hold text that is not printed wording: " + proseFormat.map((h3) => `${h3.slot} (${h3.rules.join(", ")}): "${h3.line}"`).join("; ") + ". The mockup flags each with `\u{1F9E9} <!-- format: ... -->`; rewrite each line as printed wording, a blank as ________, then call drafting_forms__render again.",
+      timings: withTotal(timings, started)
+    };
+  }
+  const currencyWithheld2 = deliverable.flatMap((doc) => doc.currency_withheld ?? []);
+  if (currencyWithheld2.length > 0 && !filing.filed_on) {
+    return {
+      filing_id: filingId,
+      revision,
+      documents: [],
+      currency_gate_failed: true,
+      currency_withheld: currencyWithheld2,
+      ...changed,
+      note: "Refusing to render the filed face: implied clause(s) name an enactment whose statute-currency result is not `current`: " + currencyWithheld2.map((w3) => `clause_id ${w3.clause_id} (${currencyLabel(w3)})`).join(", ") + ". Reword each clause without the enactment, or record `current` results for the enactment and its cited provision, relayed by /legal-research, through /drafting-data, then call drafting_forms__render again.",
+      timings: withTotal(timings, started)
+    };
+  }
+  refuseUnplacedFacts(dbPath, filing, "drafting_forms__render");
+  const documents = deliverable.map((doc) => ({
+    document_type: doc.documentType,
+    file_name: doc.fileName,
+    markdown: toFiledFace(doc.markdown)
+  }));
+  const layout = layoutFor(filing);
+  return { filing_id: filingId, revision, documents: selectDocuments(documents, documentTypes2), ...changed, ...layout ? { stored_layout: layout } : {}, timings: withTotal(timings, started) };
+}
+
+// src/submission/forms/filing-reads.ts
+function fetchFilingById(dbPath, filingId) {
+  const found = submissionDataQuery(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]).rows;
+  if (found.length === 0) throw new ValidationError(`No filing found with id ${filingId}`);
+  return found[0];
+}
+function refuseJobOnlyBoard(filing) {
+  if (isJobOnlyBoard(filing)) {
+    throw new ValidationError(`Job Board ${filing.id} has no Writing, so it has no document`, "job_board_only");
+  }
+}
+function readDbMetaValue(dbPath, key) {
+  const rows22 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  return rows22.length > 0 ? rows22[0].value : null;
+}
+function readSchemaVersion(dbPath) {
+  const value = readDbMetaValue(dbPath, "schema_version");
+  return value === null ? null : Number(value);
+}
+
+// src/submission/forms/mockup-files.ts
+import { existsSync as existsSync32, mkdirSync as mkdirSync16, renameSync as renameSync7, unlinkSync as unlinkSync8 } from "node:fs";
+import { basename as basename7, dirname as dirname19, extname as extname3, join as join36 } from "node:path";
+function existingMockupPaths(dbPath, filingId) {
+  const manifest = readManifest(dbPath, filingId);
+  if (manifest === null) return [];
+  const dir = manifestDir(dbPath, manifest);
+  return manifest.files.map((f3) => join36(dir, f3.file_name)).filter((p3) => existsSync32(p3));
+}
+function fileStem(fileName) {
+  return fileName.slice(0, fileName.length - extname3(fileName).length);
+}
+function archiveIfStale(filePath, formLabel, currentRevision) {
+  const existingRevision = readExistingRevision(filePath);
+  if (existingRevision === void 0 || existingRevision === currentRevision) return;
+  archiveFile(filePath, formLabel, existingRevision);
+}
+function archiveFile(filePath, formLabel, revision) {
+  const archiveDir = join36(dirname19(filePath), "archive");
+  mkdirSync16(archiveDir, { recursive: true });
+  const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
+  let archivePath = join36(archiveDir, `${name}${extname3(filePath)}`);
+  for (let n3 = 2; existsSync32(archivePath); n3++) archivePath = join36(archiveDir, `${name} (${n3})${extname3(filePath)}`);
+  renameSync7(filePath, archivePath);
+}
+function archiveDroppedFiles(dbPath, previous, written) {
+  if (!previous) return;
+  const dir = manifestDir(dbPath, previous);
+  for (const file of previous.files) {
+    if (written.some((doc) => doc.fileName === file.file_name) || basename7(file.file_name) !== file.file_name) continue;
+    const sameType = written.filter((doc) => doc.documentType === file.document_type);
+    const single = sameType.length === 1 && previous.files.filter((f3) => f3.document_type === file.document_type).length === 1;
+    const renamed = single ? sameType[0] : void 0;
+    try {
+      archiveFile(join36(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
+    } catch (err) {
+      if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
+    }
+  }
+}
+function writeDocument2(baseDir, output, revision) {
+  mkdirSync16(baseDir, { recursive: true });
+  const filePath = join36(baseDir, output.fileName);
+  archiveIfStale(filePath, fileStem(output.fileName), revision);
+  const code = writeStatusFile(filePath, output.markdown);
+  if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
+  return filePath;
+}
+var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
+function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
+  for (const name of names) {
+    const file = join36(dir, name);
+    try {
+      if (existsSync32(file)) unlinkSync8(file);
+    } catch (err) {
+      if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
+    }
+  }
+}
+var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
+function removeOldBoardFiles(dir) {
+  const stale = readExistingRevision(join36(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
+  removeRetiredBoardFiles(dirname19(dir));
+}
+function refuseForeignTargets(dir, fileNames2) {
+  for (const name of fileNames2) {
+    const target = join36(dir, name);
+    if (existsSync32(target) && readExistingRevision(target) === void 0) {
+      throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
+    }
+  }
+}
+
+// src/submission/forms/render-dirs.ts
+import { existsSync as existsSync33, realpathSync as realpathSync7 } from "node:fs";
+import { basename as basename8, dirname as dirname20, isAbsolute as isAbsolute6, resolve as resolve7 } from "node:path";
+function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCause) {
+  if (!isAbsolute6(presentationDir)) {
+    throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
+  }
+  const dir = resolve7(presentationDir);
+  const refuse2 = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
+  let parent;
+  try {
+    parent = realpathSync7.native(dirname20(dir));
+  } catch {
+    throw refuse2("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
+  }
+  if (!/^0\. DRAFT/i.test(basename8(parent))) throw refuse2("its parent must be the matter's 0. DRAFT folder");
+  if (zoneProblem("write", parent)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
+  if (parent.toLowerCase() !== realpathSync7.native(draftDirOf(dbPath)).toLowerCase()) throw refuse2("its parent must be the 0. DRAFT folder of this database's matter");
+  const titles = [filingTitle, ...styleOfCause ? [`${filingTitle} - ${styleOfCause}`] : []].map((t3) => sanitizeForPath(t3).toLowerCase());
+  const name = basename8(dir).replace(/^\d{4}-\d{2}-\d{2} /, "").toLowerCase();
+  if (!titles.includes(name)) {
+    throw refuse2(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
+  }
+  if (existsSync33(dir) && dirname20(realpathSync7.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+    throw refuse2("it resolves outside its 0. DRAFT folder");
+  }
+  return dir;
+}
+function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.draft_dir") {
+  const draft = resolveDraftDir(draftDir, param2);
+  if (realpathSync7.native(draft).toLowerCase() !== realpathSync7.native(draftDirOf(dbPath)).toLowerCase()) {
+    throw new ValidationError(`${param2} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
+  }
+  return draft;
+}
+
+// src/submission/forms/filler-registry.ts
+import { readFileSync as readFileSync25 } from "node:fs";
+
+// src/submission/forms/render-application-response.ts
+function rows12(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchHearingDetails2(dbPath, filingId) {
+  const found = rows12(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+function hearingDateSentence(hearing) {
+  const date3 = hearing?.proposed_hearing;
+  switch (hearing?.hearing_date_position) {
+    case "none_proposed":
+      return "";
+    case "agree":
+      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
+    case "propose_other":
+      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
+    default:
+      return null;
+  }
+}
+function formatTimeEstimate2(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+function fetchFilingPositions(dbPath, filingId) {
+  return rows12(
+    dbPath,
+    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
+            fp.position, fp.proposed_terms
+     FROM filing_positions fp
+     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
+     WHERE fp.filing_id = ?
+     ORDER BY oo.paragraph_number`,
+    [filingId]
+  );
+}
+function resolveRespondedToDocument(dbPath, proceedingId, positions) {
+  const positionedIds = new Set(positions.map((p3) => p3.document_id));
+  let documentId;
+  if (positionedIds.size === 1) {
+    documentId = [...positionedIds][0];
+  } else if (positionedIds.size === 0) {
+    const candidates = rows12(
+      dbPath,
+      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
+      [proceedingId]
+    );
+    if (candidates.length === 1) documentId = candidates[0].document_id;
+  }
+  if (documentId === void 0) return void 0;
+  const found = rows12(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  return found[0];
+}
+function fetchUnpositionedOrders(dbPath, filingId, documentId) {
+  return rows12(
+    dbPath,
+    `SELECT oo.id, oo.paragraph_number, oo.wording
+     FROM opposing_orders oo
+     WHERE oo.document_id = ?
+       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
+     ORDER BY oo.paragraph_number`,
+    [documentId, filingId]
+  );
+}
+function fetchFacts2(dbPath, filingId) {
+  return rows12(
+    dbPath,
+    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
+     FROM filing_facts ff
+     JOIN facts f ON f.id = ff.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part4'
+     ORDER BY ff.ordinal`,
+    [filingId]
+  );
+}
+function fetchPartSixProvenance(dbPath, filingId) {
+  const found = rows12(
+    dbPath,
+    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
+    [filingId]
+  );
+  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
+}
+function provenanceLabel(p3) {
+  if (p3 === "served_with_this_response") return "served with this application response";
+  if (p3 === "already_in_court_file") return "already in the court file";
+  return "";
+}
+function fetchStatementsOfFact2(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows12(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})`,
+    factIds
+  );
+}
+function witnessBackedFlags(dbPath, factIds) {
+  if (factIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = factIds.map(() => "?").join(",");
+  const found = rows12(
+    dbPath,
+    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
+     FROM facts f WHERE f.id IN (${placeholders})`,
+    factIds
+  );
+  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+}
+function frontmatterFor4(proceeding, ctx) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType: "Application_response",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function afsCheckbox(party) {
+  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
+  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
+  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+}
+function renderApplicationResponse(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
+  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
+  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
+  const statementsOfFact = fetchStatementsOfFact2(ctx.dbPath, facts.map((f3) => f3.id));
+  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of statementsOfFact) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
+  const lines2 = [];
+  lines2.push(frontmatterFor4(ctx.proceeding, ctx));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "APPLICATION RESPONSE"
+    })
+  );
+  lines2.push("");
+  const clientName = client?.name ?? gapMarker("gap");
+  const applicantName = applicant?.name ?? gapMarker("gap");
+  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate2(hearing.time_estimate_minutes) : gapMarker("gap");
+  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
+  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
+  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
+  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
+  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
+  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
+  lines2.push(
+    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
+  );
+  lines2.push("");
+  if (hearingDate !== "") {
+    lines2.push(hearingDate);
+    lines2.push("");
+  }
+  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
+  lines2.push("");
+  const consented = positions.filter((p3) => p3.position === "consented");
+  const opposed = positions.filter((p3) => p3.position === "opposed");
+  const noPosition = positions.filter((p3) => p3.position === "no_position");
+  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
+  lines2.push("");
+  if (consented.length === 0) {
+    lines2.push("NONE");
+  } else {
+    consented.forEach((p3) => {
+      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
+      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
+    });
+  }
+  lines2.push("");
+  lines2.push("## PART 2: ORDER(S) OPPOSED");
+  lines2.push("");
+  if (opposed.length === 0) {
+    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
+  lines2.push("");
+  if (noPosition.length === 0) {
+    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  if (unpositioned.length > 0) {
+    lines2.push("## Positions not yet taken");
+    lines2.push("");
+    unpositioned.forEach((o3) => {
+      const marker = unpositionedOrderMarker();
+      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
+      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
+    });
+    lines2.push("");
+  }
+  let partNum = 0;
+  lines2.push("## PART 4: FACTUAL BASIS");
+  lines2.push("");
+  const factParagraphs = /* @__PURE__ */ new Map();
+  for (const entry of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
+    partNum += 1;
+    if (entry.kind === "rhetoric") {
+      lines2.push(...renderRhetoricLine(ctx, entry.row, partNum, ""));
+      continue;
+    }
+    const f3 = entry.item;
+    factParagraphs.set(f3.id, partNum);
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
+    const witnessSuppressed = suppressedFactIds.has(f3.id);
+    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
+    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
+    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
+    const tokens = [witnessMarker, courtRecordPin, looseThread];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      statementSets.push(statementTokens);
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      statementTokens.push(doubtMarker(s3.doubt));
+      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
+      tokens.push(...statementTokens);
+      recordFactStatementGlyphs(
+        ctx.inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens);
+    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
+    const citationLines = [
+      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
+      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
+    ];
+    const trace = `<!-- fact ${partNum} -->`;
+    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
+    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+  }
+  lines2.push("");
+  lines2.push("## PART 5: LEGAL BASIS");
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      partNum += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry.row, partNum, ""), "");
+      continue;
+    }
+    const s3 = entry.item;
+    recordParagraph(ctx, s3.id, "form", partNum);
+    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      partNum,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      looseThread,
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    partNum = result.nextPara;
+  }
+  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
+  lines2.push("");
+  docs.forEach((d3, i3) => {
+    const copy = copyMarkers.get(d3.document_id) ?? "";
+    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
+    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
+    const provenancePart = provenance4 ? ` (${provenance4})` : "";
+    lines2.push(
+      `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
+    );
+  });
+  STANDARD_MATERIAL_LINES.forEach((text5, i3) => lines2.push(`${docs.length + i3 + 1}. ${text5}`));
+  lines2.push("");
+  lines2.push("**Address for service filed:**");
+  const afs = afsCheckbox(client);
+  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
+  lines2.push(afs);
+  lines2.push("");
+  lines2.push(checkboxOrderBlock([]));
+  lines2.push("");
+  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcca-stay-response.ts
+function rows13(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchFacts3(dbPath, filingId) {
+  return rows13(
+    dbPath,
+    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.ordinal AS filing_ordinal
+     FROM filing_facts ff
+     JOIN facts f ON f.id = ff.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
+     ORDER BY ff.ordinal`,
+    [filingId]
+  );
+}
+function fetchStatementsOfFact3(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows13(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})`,
+    factIds
+  );
+}
+function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of fetchStatementsOfFact3(dbPath, facts.map((f3) => f3.id))) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const lines2 = [];
+  let para = startPara;
+  facts.forEach((f3) => {
+    para += 1;
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    recordGlyphs(inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    const factTokens = [
+      suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
+      courtRecordPin
+    ];
+    const tokens = [...factTokens];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      tokens.push(...statementTokens);
+      recordFactStatementGlyphs(
+        inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+      const doubtAndCopy = [doubtMarker(s3.doubt), s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : ""];
+      tokens.push(...doubtAndCopy);
+      statementSets.push([...statementTokens, ...doubtAndCopy]);
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens);
+    factTokens.push(reviewMarkerFor(review, inventory, lineGlyphs, "facts", f3.id, f3.postulate));
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
+    lines2.push(`${para}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para} -->`}`);
+    if (courtRecordCite) lines2.push(`   > ${courtRecordCite} <!-- fact ${para} -->`);
+  });
+  return { lines: lines2, nextPara: para };
+}
+function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
+  const lines2 = [];
+  let para = startPara;
+  let run = [];
+  const flush = () => {
+    if (run.length === 0) return;
+    const result = renderFactParagraphs(ctx.dbPath, run, para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
+    lines2.push(...result.lines);
+    para = result.nextPara;
+    run = [];
+  };
+  for (const entry of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
+    if (entry.kind === "host") {
+      run.push(entry.item);
+      continue;
+    }
+    flush();
+    para += 1;
+    lines2.push(...renderRhetoricLine(ctx, entry.row, para, ""));
+  }
+  flush();
+  return { lines: lines2, nextPara: para };
+}
+function fetchAffidavitDetails(dbPath, documentIds) {
+  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = documentIds.map(() => "?").join(",");
+  const found = rows13(
+    dbPath,
+    `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
+     FROM documents d
+     LEFT JOIN witnesses w ON w.id = d.deponent
+     WHERE d.id IN (${placeholders})`,
+    documentIds
+  );
+  return new Map(found.map((r3) => [r3.document_id, r3]));
+}
+function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
+  return rows13(
+    dbPath,
+    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
+     FROM filing_submissions fs
+     JOIN submission_law slk ON slk.submission_id = fs.submission_id
+     JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
+     JOIN authorities a ON a.id = sl.authority_id
+     WHERE fs.filing_id = ? AND fs.document = 'form' AND ${BRIEF_ONLY_CAP_SQL}
+       AND a.id NOT IN (SELECT authority_id FROM opposing_authorities WHERE proceeding_id = ? AND authority_id IS NOT NULL)
+     GROUP BY a.style_of_cause_or_title, a.citation
+     ORDER BY a.style_of_cause_or_title COLLATE NOCASE`,
+    [filingId, proceedingId]
+  );
+}
+function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
+  const found = rows13(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  return found[0]?.n ?? 0;
+}
+function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
+  return rows13(
+    dbPath,
+    `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
+     FROM statements_of_fact sof
+     JOIN documents d ON d.id = sof.exhibit_id
+     WHERE sof.instrument = ? AND sof.exhibit_id IS NOT NULL`,
+    [affidavitDocumentId]
+  );
+}
+function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
+  const out = [];
+  const parts = [];
+  const newPart = (text5, indent) => {
+    out.push({ text: text5, indent, part: parts.length });
+    parts.push({ bookmark: text5 });
+  };
+  out.push({ text: "Cover Page", indent: 0, part: "cover" });
+  out.push({ text: "Table of Contents", indent: 0, part: "toc" });
+  out.push({ text: "Part 1: Evidence, Exhibits or Affidavits", indent: 0, part: null });
+  docs.forEach((d3) => {
+    if (d3.role === "affidavit") {
+      const detail = affidavitDetails.get(d3.document_id);
+      const deponent = detail?.deponent_name ?? onMissing(`${d3.label}'s deponent name`, { table: "documents.deponent", id: d3.document_id, item: `${d3.label}: deponent` });
+      const number3 = detail?.affidavit_number ? ` #${detail.affidavit_number}` : "";
+      const filedDate = d3.document_date ?? onMissing(`${d3.label}'s filed date`, { table: "documents.document_date", id: d3.document_id, item: `${d3.label}: filed date` });
+      newPart(`Affidavit${number3} of ${deponent}, filed ${filedDate}`, 1);
+      const exhibits = fetchAttachedExhibits(dbPath, d3.document_id);
+      exhibits.forEach((ex) => {
+        const num = exhibitMap.get(ex.document_id) ?? onMissing(`${ex.label}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
+        out.push({ text: `Exhibit ${num}: ${ex.label} (${ex.document_date ?? "undated"})`, indent: 2, part: null });
+      });
+    } else {
+      newPart(`${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}`, 1);
+    }
+  });
+  newPart("Part 2: Written Argument", 0);
+  out.push({ text: "Part 1: Statement of Facts", indent: 1, part: null });
+  out.push({ text: "Part 2: Issues", indent: 1, part: null });
+  out.push({ text: "Part 3: Analysis", indent: 1, part: null });
+  out.push({ text: "Part 4: Order(s) Sought", indent: 1, part: null });
+  if (hasAuthorities || unverifiedDelta) newPart("Part 3: Table of Authorities", 0);
+  return { rows: out, parts };
+}
+function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta) {
+  const out = [];
+  out.push("## TABLE OF CONTENTS");
+  out.push("");
+  out.push(
+    "<!-- Required by e-CI \xA71.2. Page numbers are TBD until the combined PDF is assembled -- fill in then, and confirm this table's numbering matches the PDF's actual page numbering (e-CI \xA71.3). -->"
+  );
+  out.push("");
+  out.push("| Item | Page |");
+  out.push("| :--- | ---: |");
+  const { rows: rows22 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
+    const marker = gapMarker("gap");
+    recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
+    return marker;
+  });
+  rows22.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
+  out.push("");
+  return out;
+}
+function frontmatterFor5(proceeding, ctx) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType: "Response_book",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function recordContactGaps(inv, contacts) {
+  for (const c3 of contacts) {
+    for (const cell of contactCells(c3, gapMarker("gap"))) {
+      recordCriterionGlyphs(inv, cell.text, ["\u{1F9E9}"], { table: `counsel_of_record.${cell.column}`, id: c3.partyId, item: `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}: ${cell.missing}` });
+    }
+  }
+}
+function positionsSentence(positions) {
+  return positions.map((p3) => `paragraph ${p3.paragraph_number} (${p3.wording})`).join("; ");
+}
+function renderBccaStayResponse(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
+  const hearingDate = rows13(
+    ctx.dbPath,
+    "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
+    [ctx.filing.id]
+  )[0];
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
+  const facts = fetchFacts3(ctx.dbPath, ctx.filing.id);
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const affidavitDetails = fetchAffidavitDetails(ctx.dbPath, docs.map((d3) => d3.document_id));
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of submissionFactStatements) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const authorities = fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, ctx.proceeding.id);
+  const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, ctx.proceeding.id) === 0;
+  const roleGroups = groupPartiesByRole(captionParties2);
+  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
+  const applicantGroup = applicant ? roleGroups.find((g3) => g3.role === applicant.role) : void 0;
+  const lowerCourtRoles = buildLowerCourtRoleByRole(ctx.parties);
+  const contacts = roleGroups.map((g3) => {
+    const rep = ctx.parties.find((p3) => p3.role === g3.role);
+    return {
+      role: g3.role,
+      names: g3.names,
+      partyId: rep.id,
+      counselName: rep?.counsel_name ?? null,
+      counselFirm: rep?.counsel_firm ?? null,
+      addressForService: rep?.address_for_service ?? null,
+      counselPhone: rep?.counsel_phone ?? null,
+      counselEmail: rep?.counsel_email ?? null
+    };
+  });
+  const lines2 = [];
+  lines2.push(frontmatterFor5(ctx.proceeding, ctx));
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: "Response Book",
+      titleLine: "RESPONSE BOOK",
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      onAppealFrom: {
+        judge: ctx.proceeding.under_appeal_judge,
+        court: ctx.proceeding.under_appeal_court,
+        pronounced: ctx.proceeding.under_appeal_pronounced
+      },
+      accessRestrictions: ctx.proceeding.access_restrictions,
+      lowerCourtRoleByRole: lowerCourtRoles,
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  recordContactGaps(ctx.inventory, contacts);
+  lines2.push("");
+  lines2.push(...buildToc(ctx.inventory, docs, affidavitDetails, exhibitMap, ctx.dbPath, authorities.length > 0, unverifiedDelta));
+  const respondents = clientGroup ? `, ${formatNameList(clientGroup.names)}` : ` ${gapMarker("gap")}`;
+  const applicants = applicantGroup ? formatNameList(applicantGroup.names) : gapMarker("gap");
+  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const returnable = hearingDate?.hearing_date ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, respondents, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Respondents" });
+  recordCriterionGlyphs(ctx.inventory, applicants, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
+  recordCriterionGlyphs(ctx.inventory, filedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date the stay application was filed" });
+  recordCriterionGlyphs(ctx.inventory, returnable, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Hearing date" });
+  lines2.push(`Response of: the ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length) : "Respondent"}${respondents}`);
+  lines2.push(
+    `THIS IS A RESPONSE TO the stay application of the ${applicantGroup ? pluralizeRole(applicantGroup.role, applicantGroup.names.length) : "Applicant"}, ${applicants}, filed ${filedOn}, returnable ${returnable}${hearingDate?.hearing_time ? ` at ${hearingDate.hearing_time}` : ""}.`
+  );
+  lines2.push("");
+  lines2.push(
+    "<!-- Response book per the registrar's completion instructions (R. 21(2), leave & stay version): cover page and table of contents rendered above (e-CI \xA71.2 Required), Part 1 evidence/affidavits NOT already in the application book, Part 2 written argument with its own required cover page (e-CI \xA72.1) (MAX 5 PAGES stay-only; Arial 12, 1.5-spaced, margins >= 2.5 cm), optional Part 3 table of authorities computed as a delta against the application book's own table (e-CI \xA71.2). File AND serve at least 2 business days before the hearing (R. 21(1)(a)); one PDF <= 200 MB via CSO. Book assembly is manual for this kind -- assemble from this mockup's parts. -->"
+  );
+  lines2.push("");
+  lines2.push("## PART 1: EVIDENCE, EXHIBITS OR AFFIDAVITS");
+  lines2.push("");
+  lines2.push("<!-- Only material not otherwise included in the application book or another respondent's response book (e-CI \xA71.2). -->");
+  if (docs.length === 0) {
+    lines2.push(`NONE ${gapMarker("question")}`);
+  } else {
+    docs.forEach((d3, i3) => {
+      const detail = affidavitDetails.get(d3.document_id);
+      const deponent = d3.role === "affidavit" && detail?.deponent_name ? `, deponent ${detail.deponent_name}` : "";
+      const number3 = d3.role === "affidavit" && detail?.affidavit_number ? ` (#${detail.affidavit_number})` : "";
+      const copy = copyMarkers.get(d3.document_id) ?? "";
+      lines2.push(
+        `${i3 + 1}. ${d3.label}${number3}${d3.document_date ? ` (${d3.document_date})` : ""}${deponent}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
+      );
+    });
+  }
+  lines2.push("");
+  lines2.push("## PART 2: WRITTEN ARGUMENT");
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: "Memorandum of Argument",
+      titleLine: `WRITTEN ARGUMENT OF THE ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length).toUpperCase() : "RESPONDENT"} ON A STAY APPLICATION`,
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      lowerCourtRoleByRole: lowerCourtRoles,
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  lines2.push("");
+  lines2.push(
+    "<!-- e-CI \xA72.1: the written argument carries its own required cover page, separate from the book's outer cover. Paragraphs number consecutively from the Statement of Facts through Order Sought (e-CI \xA72.2). -->"
+  );
+  lines2.push("");
+  let para = 0;
+  lines2.push("### Part 1: Statement of Facts");
+  lines2.push("");
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  lines2.push(...factResult.lines);
+  para = factResult.nextPara;
+  lines2.push("");
+  lines2.push("### Part 2: Issues");
+  lines2.push("");
+  const consented = positions.filter((p3) => p3.position === "consented");
+  const opposed = positions.filter((p3) => p3.position === "opposed");
+  const noPosition = positions.filter((p3) => p3.position === "no_position");
+  opposed.forEach((p3) => {
+    para += 1;
+    lines2.push(`${para}. Whether the order sought in paragraph ${p3.paragraph_number} of the notice of application should be granted: ${p3.wording} <!-- order ${p3.paragraph_number} -->`);
+  });
+  if (consented.length > 0) {
+    para += 1;
+    lines2.push(`${para}. The ${client?.role ?? "Respondent"}(s) consent(s) to the order(s) sought in ${positionsSentence(consented)}.`);
+  }
+  if (noPosition.length > 0) {
+    para += 1;
+    lines2.push(`${para}. The ${client?.role ?? "Respondent"}(s) take(s) no position on the order(s) sought in ${positionsSentence(noPosition)}.`);
+  }
+  if (opposed.length + consented.length + noPosition.length === 0) {
+    lines2.push(mockupMessage(gapMarker("question"), "No position has been recorded on any order sought in the notice of application."));
+  }
+  lines2.push("");
+  if (unpositioned.length > 0) {
+    lines2.push("#### Positions not yet taken");
+    lines2.push("");
+    unpositioned.forEach((o3) => {
+      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${unpositionedOrderMarker()} <!-- order ${o3.paragraph_number} -->`);
+    });
+    lines2.push("");
+  }
+  lines2.push("### Part 3: Analysis");
+  lines2.push("");
+  lines2.push(
+    "<!-- e-CI \xA72.1 (stay-only): a brief statement of the reasons why the stay should or should not be granted, which should include the respondent's position on (e) the merits of the proposed appeal, (f) irreparable harm, and (g) the balance of inconvenience. -->"
+  );
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      para += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry.row, para, ""), "");
+      continue;
+    }
+    const s3 = entry.item;
+    recordParagraph(ctx, s3.id, "form", para);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      para,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    para = result.nextPara;
+  }
+  lines2.push("### Part 4: Order(s) Sought");
+  lines2.push("");
+  let orderNum = 0;
+  for (const entry of interleave(orders, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (o3) => o3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      para += 1;
+      lines2.push(...renderRhetoricLine(ctx, entry.row, para, ""));
+      continue;
+    }
+    const o3 = entry.item;
+    const wording = o3.wording_override ?? o3.wording;
+    if (o3.crossed_out_on !== null) {
+      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
+    } else {
+      orderNum += 1;
+      para += 1;
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
+      lines2.push(`${para}. ${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
+    }
+  }
+  if (orderNum === 0) {
+    const line = mockupMessage(gapMarker("gap"), "No order sought has been recorded for this response.");
+    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Order sought" });
+    lines2.push(line);
+  }
+  lines2.push("");
+  const preparer = client?.counsel_name ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, preparer, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Preparer" });
+  lines2.push(`Prepared by: ${preparer}`);
+  lines2.push("");
+  lines2.push("## PART 3: TABLE OF AUTHORITIES (OPTIONAL)");
+  lines2.push("");
+  lines2.push(
+    unverifiedDelta ? "<!-- Alphabetical. The application book's own table of authorities has not yet been transcribed into opposing_authorities for this proceeding, so every authority this filing cites is listed below (e-CI \xA71.2) -- the delta exclusion is unverified until that transcription happens. -->" : "<!-- Alphabetical; excludes authorities already referenced in the application book (e-CI \xA71.2), computed against the transcribed opposing_authorities rows. -->"
+  );
+  if (authorities.length === 0) {
+    lines2.push("NONE");
+  } else {
+    authorities.forEach((a3, i3) => {
+      const citation = a3.citation ? `, ${a3.citation}` : ` ${gapMarker("gap")}`;
+      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.id, item: `${a3.style_of_cause_or_title}: citation` });
+      lines2.push(`${i3 + 1}. ${a3.style_of_cause_or_title}${citation}`);
+    });
+    if (unverifiedDelta) {
+      lines2.push(
+        mockupMessage(
+          gapMarker("question"),
+          "Opposing application book's table of authorities not yet transcribed -- this list may include authorities that must be excluded once it is."
+        )
+      );
+    }
+  }
+  lines2.push("");
+  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcca-factum.ts
+function rows14(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function pushGap(ctx, lines2, line, field, item) {
+  recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: field, item });
+  lines2.push(line);
+}
+var WORDS_PER_PAGE = 300;
+var PARTS_PAGE_LIMIT = 30;
+var OPENING_STATEMENT_PAGE_LIMIT = 1;
+var MONTHS2 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function longDate(iso2) {
+  const m3 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso2);
+  if (!m3) return iso2;
+  return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
+}
+function fetchChronology(dbPath, filingId) {
+  return rows14(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
+}
+function fetchProseParagraphs(dbPath, filingId) {
+  const found = rows14(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  return new Map(
+    found.map((r3) => [
+      r3.slot,
+      r3.text.split(/\n\s*\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "")
+    ])
+  );
+}
+function fetchCitedStatements(dbPath, lawAssertionIds) {
+  if (lawAssertionIds.length === 0) return [];
+  const placeholders = lawAssertionIds.map(() => "?").join(",");
+  return rows14(
+    dbPath,
+    `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
+     FROM statements_of_law sl
+     JOIN authorities a ON a.id = sl.authority_id
+     WHERE sl.law_assertion_id IN (${placeholders})
+       AND ${BRIEF_ONLY_CAP_SQL}
+     ORDER BY sl.id`,
+    lawAssertionIds
+  );
+}
+function factumAuthorities(dbPath, lawParas) {
+  const byAuthority = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
+    const entry = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, paras: [] };
+    const para = lawParas.get(s3.law_assertion_id);
+    if (!entry.paras.includes(para)) entry.paras.push(para);
+    byAuthority.set(s3.authority_id, entry);
+  }
+  return [...byAuthority.values()].map((a3) => ({ ...a3, paras: a3.paras.sort((x3, y3) => x3 - y3) })).sort((x3, y3) => x3.authority.localeCompare(y3.authority, "en", { sensitivity: "base" }));
+}
+function factumLawAssertionIds(dbPath, filingId) {
+  const submissions = fetchSubmissions(dbPath, filingId, "form");
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(dbPath, submissions.map((s3) => s3.id)));
+  const ids = [];
+  for (const s3 of submissions) {
+    for (const la2 of lawBySubmission.get(s3.id) ?? []) {
+      if (!ids.includes(la2.lawAssertionId)) ids.push(la2.lawAssertionId);
+    }
+  }
+  return ids;
+}
+var BOOK_AUTHORITY_KINDS = /* @__PURE__ */ new Set(["case", "doctrine", "statute", "regulation"]);
+function factumBookAuthorities(dbPath, filingId) {
+  const lawParas = new Map(factumLawAssertionIds(dbPath, filingId).map((id) => [id, 0]));
+  const key = (title, citation) => `${title}\0${citation ?? ""}`;
+  const kinds = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) kinds.set(key(s3.title, s3.citation), s3.kind);
+  return factumAuthorities(dbPath, lawParas).filter((a3) => BOOK_AUTHORITY_KINDS.has(kinds.get(key(a3.authority, a3.citation)) ?? "")).map(({ authority, citation }) => ({ authority, citation }));
+}
+function factumEnactments(dbPath, lawParas) {
+  const enactments = /* @__PURE__ */ new Map();
+  const rules = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
+    if (s3.kind === "rule") {
+      rules.set(s3.authority_id, `${s3.title}${s3.citation ? `, ${s3.citation}` : ""}`);
+      continue;
+    }
+    if (s3.kind !== "statute" && s3.kind !== "regulation") continue;
+    const entry = enactments.get(s3.authority_id) ?? { authority_id: s3.authority_id, title: s3.title, citation: s3.citation, excerpts: [] };
+    if (s3.excerpt && !entry.excerpts.some((e3) => e3.text === s3.excerpt && e3.pinpoint === s3.pinpoint)) {
+      entry.excerpts.push({ pinpoint: s3.pinpoint, text: s3.excerpt });
+    }
+    enactments.set(s3.authority_id, entry);
+  }
+  return {
+    enactments: [...enactments.values()].sort((x3, y3) => x3.title.localeCompare(y3.title, "en", { sensitivity: "base" })),
+    rules: [...rules.values()]
+  };
+}
+function factumSigner(ctx) {
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  if (!client) return { roleLabel: null, name: null, line: null };
+  const group = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }))).find((g3) => g3.role === client.role);
+  const roleLabel = pluralizeRole(client.role, group?.names.length ?? 1);
+  return client.counsel_name ? { roleLabel, name: client.counsel_name, line: `Counsel for the ${roleLabel}` } : { roleLabel, name: client.name, line: roleLabel };
+}
+function factumRecordLabel(roleLabel) {
+  const role = roleLabel ?? "Respondent";
+  return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
+}
+function frontmatterFor6(proceeding, ctx) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType: "Factum",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function wordCount2(lines2) {
+  return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => /[\p{L}\p{N}]/u.test(w3)).length;
+}
+function pageBudgetLine(label2, words, limit, limitNote) {
+  const pages = Math.max(1, Math.ceil(words / WORDS_PER_PAGE));
+  const over = words > limit * WORDS_PER_PAGE;
+  return `- ${label2}: ${words} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
+}
+function renderBccaFactum(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const roleGroups = groupPartiesByRole(captionParties2);
+  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
+  const signer = factumSigner(ctx);
+  const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts3(ctx.dbPath, ctx.filing.id);
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of submissionFactStatements) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  const contacts = roleGroups.map((g3) => {
+    const rep = ctx.parties.find((p3) => p3.role === g3.role);
+    return {
+      role: g3.role,
+      names: g3.names,
+      partyId: rep.id,
+      counselName: rep?.counsel_name ?? null,
+      counselFirm: rep?.counsel_firm ?? null,
+      addressForService: rep?.address_for_service ?? null,
+      counselPhone: rep?.counsel_phone ?? null,
+      counselEmail: rep?.counsel_email ?? null
+    };
+  });
+  const title = factumRecordLabel(signer.roleLabel);
+  const lines2 = [];
+  lines2.push(frontmatterFor6(ctx.proceeding, ctx));
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: title,
+      titleLine: title.toUpperCase(),
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      onAppealFrom: {
+        judge: ctx.proceeding.under_appeal_judge,
+        court: ctx.proceeding.under_appeal_court,
+        pronounced: ctx.proceeding.under_appeal_pronounced
+      },
+      accessRestrictions: ctx.proceeding.access_restrictions,
+      lowerCourtRoleByRole: buildLowerCourtRoleByRole(ctx.parties),
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  recordContactGaps(ctx.inventory, contacts);
+  lines2.push("");
+  lines2.push(
+    "<!-- Respondent's factum per tpl_factum_respondent.dotx and the factum completion instructions (R. 25(4)): Arial 12, 1.5 spacing, single space between paragraphs, margins >= 2.5 cm, pages numbered from the cover. No wet signature -- the name of the person authorizing filing is enough (R. 79(4)). -->"
+  );
+  lines2.push("");
+  lines2.push("## TABLE OF CONTENTS");
+  lines2.push("");
+  lines2.push("<!-- Word builds this from the headings; page numbers fill when the assembled document's fields update. -->");
+  lines2.push("");
+  for (const heading of [
+    "CHRONOLOGY",
+    "OPENING STATEMENT",
+    "PART 1 - STATEMENT OF FACTS",
+    "PART 2 - ISSUES ON APPEAL",
+    "PART 3 - ARGUMENT",
+    "PART 4 - NATURE OF ORDER SOUGHT",
+    "APPENDICES: LIST OF AUTHORITIES",
+    "APPENDICES: ENACTMENTS"
+  ]) {
+    lines2.push(`- ${heading}`);
+  }
+  lines2.push("");
+  lines2.push("## CHRONOLOGY");
+  lines2.push("");
+  const chronology = fetchChronology(ctx.dbPath, ctx.filing.id);
+  if (chronology.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No chronology events recorded."), 0, "Chronology");
+  } else {
+    lines2.push("| Date | Event |");
+    lines2.push("| :--- | :--- |");
+    chronology.forEach((c3) => lines2.push(`| ${longDate(c3.event_date)} | ${c3.event} |`));
+  }
+  lines2.push("");
+  lines2.push("## OPENING STATEMENT");
+  lines2.push("");
+  const opening = prose.get("opening_statement") ?? [];
+  if (opening.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No opening statement recorded."), 1, "Opening statement");
+  } else {
+    opening.forEach((p3) => {
+      lines2.push(p3);
+      lines2.push("");
+    });
+  }
+  lines2.push("");
+  let para = 0;
+  const partsStart = lines2.length;
+  lines2.push("## PART 1 - STATEMENT OF FACTS");
+  lines2.push("");
+  const factsPosition = prose.get("facts_position") ?? [];
+  if (factsPosition.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
+  }
+  factsPosition.forEach((p3) => {
+    para += 1;
+    lines2.push(`${para}. ${p3}`);
+  });
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  lines2.push(...factResult.lines);
+  para = factResult.nextPara;
+  lines2.push("");
+  lines2.push("## PART 2 - ISSUES ON APPEAL");
+  lines2.push("");
+  if (submissions.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  }
+  submissions.forEach((s3) => {
+    para += 1;
+    const answers = points.filter((pt3) => pt3.answered_by_submission_id === s3.id).map((pt3) => pt3.component);
+    lines2.push(`${para}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
+  });
+  lines2.push("");
+  const unanswered = points.filter((pt3) => pt3.answered_by_submission_id === null);
+  if (unanswered.length > 0) {
+    lines2.push("#### Points not yet answered");
+    lines2.push("");
+    unanswered.forEach((pt3) => {
+      lines2.push(`- ${pt3.component}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt3.id} -->`);
+    });
+    lines2.push("");
+  }
+  lines2.push("## PART 3 - ARGUMENT");
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      para += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry.row, para, ""), "");
+      continue;
+    }
+    const s3 = entry.item;
+    recordParagraph(ctx, s3.id, "form", para);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      para,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    para = result.nextPara;
+  }
+  lines2.push("## PART 4 - NATURE OF ORDER SOUGHT");
+  lines2.push("");
+  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders")) {
+    para += 1;
+    lines2.push(...renderRhetoricLine(ctx, row2, para, ""), "");
+  }
+  para += 1;
+  const seeks = signer.roleLabel && signer.roleLabel.endsWith("s") ? "seek" : "seeks";
+  lines2.push(`${para}. The ${(signer.roleLabel ?? "respondent").toLowerCase()} ${seeks} an Order:`);
+  lines2.push("");
+  const liveOrders = orders.filter((o3) => o3.crossed_out_on === null);
+  orders.forEach((o3) => {
+    const wording = o3.wording_override ?? o3.wording;
+    if (o3.crossed_out_on !== null) {
+      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
+    } else {
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
+      lines2.push(`${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
+    }
+    lines2.push("");
+  });
+  if (liveOrders.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No order sought recorded. The order must include a costs disposition."), 4, "Order sought");
+    lines2.push("");
+  }
+  para += 1;
+  lines2.push(`${para}. All of which is respectfully submitted.`);
+  const partsEnd = lines2.length;
+  lines2.push("");
+  const place = (prose.get("signing_place") ?? []).join(" ");
+  const signingPlace = place || gapMarker("gap");
+  const signerName = signer.name ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, signingPlace, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Place of signing" });
+  recordCriterionGlyphs(ctx.inventory, signerName, ["\u{1F9E9}"], { table: "form_fields", id: 6, item: "Name authorizing filing" });
+  lines2.push(`Dated at the City of ${signingPlace}, Province of British Columbia, this [month] [day] of [year]. <!-- date supplied when the factum is assembled -->`);
+  lines2.push("");
+  lines2.push(signerName);
+  lines2.push(signer.line ?? "");
+  lines2.push("");
+  lines2.push("## APPENDICES: LIST OF AUTHORITIES");
+  lines2.push("");
+  const authorities = factumAuthorities(ctx.dbPath, renderedLawAssertions);
+  if (authorities.length === 0) {
+    lines2.push("None.");
+  } else {
+    lines2.push("| Authorities | Page # in factum | Para # in factum |");
+    lines2.push("| :--- | :---: | :---: |");
+    authorities.forEach((a3) => {
+      const citation = a3.citation ?? gapMarker("gap");
+      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.authority_id, item: `${a3.authority}: citation` });
+      lines2.push(`| ${a3.authority}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
+    });
+  }
+  lines2.push("");
+  lines2.push("## APPENDICES: ENACTMENTS");
+  lines2.push("");
+  const { enactments, rules } = factumEnactments(ctx.dbPath, renderedLawAssertions);
+  if (enactments.length === 0) {
+    lines2.push("None.");
+    lines2.push("");
+  }
+  enactments.forEach((e3) => {
+    lines2.push(`**${e3.title}**${e3.citation ? `, ${e3.citation}` : ""}`);
+    lines2.push("");
+    if (e3.excerpts.length === 0) {
+      const line = mockupMessage(gapMarker("gap"), "No excerpt recorded for this enactment.");
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "enactment_excerpts", id: e3.authority_id, item: `${e3.title}: excerpt` });
+      lines2.push(line);
+      lines2.push("");
+    }
+    e3.excerpts.forEach((x3) => {
+      for (const l3 of x3.text.split("\n")) if (l3.trim() !== "") lines2.push(`> ${l3}`);
+      if (x3.pinpoint) lines2.push(`> (${x3.pinpoint})`);
+      lines2.push("");
+    });
+  });
+  if (rules.length > 0) {
+    lines2.push("#### Court rules not in this appendix");
+    lines2.push("");
+    lines2.push("These authorities are recorded as rules. The appendix takes acts and regulations only, so they are left out of the filed factum, and they are left out of the Book of Authorities too, unless recorded as a regulation. They stay on the Appendix: List of Authorities either way.");
+    lines2.push("");
+    rules.forEach((r3) => lines2.push(`- ${r3}`));
+    lines2.push("");
+  }
+  lines2.push("## Page budget");
+  lines2.push("");
+  lines2.push(`Estimated at ${WORDS_PER_PAGE} words a page. Confirm in Word once the factum is assembled.`);
+  lines2.push("");
+  lines2.push(pageBudgetLine("Opening Statement", wordCount2(opening), OPENING_STATEMENT_PAGE_LIMIT, "the opening statement is limited to one page."));
+  lines2.push(
+    pageBudgetLine(
+      "Parts 1-4",
+      wordCount2(lines2.slice(partsStart, partsEnd)),
+      PARTS_PAGE_LIMIT,
+      "Parts 1-4 are limited to 30 pages; more pages need an order under R. 48(1)(f)."
+    )
+  );
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcsc-affidavit.ts
+function rows15(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
+function placedDocumentIds(text5) {
+  return [...text5.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
+}
+function letterFor(index) {
+  let out = "";
+  for (let n3 = index + 1; n3 > 0; n3 = Math.floor((n3 - 1) / 26)) out = String.fromCharCode(65 + (n3 - 1) % 26) + out;
+  return out;
+}
+function exhibitLetters(paragraphTexts) {
+  const letters = /* @__PURE__ */ new Map();
+  for (const text5 of paragraphTexts) {
+    for (const id of placedDocumentIds(text5)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
+  }
+  return letters;
+}
+function withExhibitLetters(text5, letters) {
+  return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
+}
+function fetchAffidavits(dbPath, filingId) {
+  return rows15(
+    dbPath,
+    `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     LEFT JOIN witnesses w ON w.id = d.deponent
+     WHERE fd.filing_id = ? AND fd.role = 'affidavit' AND d.instrument = 'affidavit'
+     ORDER BY fd.ordinal`,
+    [filingId]
+  );
+}
+function affidavitFileName(a3) {
+  return `${a3.label.replace(/[\\/:*?"<>|]/g, "_").trim()}.md`;
+}
+function fetchParagraphLinks(dbPath, paragraphIds) {
+  if (paragraphIds.length === 0) return [];
+  const placeholders = paragraphIds.map(() => "?").join(",");
+  return rows15(
+    dbPath,
+    `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
+     FROM paragraph_statements_of_fact psof
+     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
+     WHERE psof.statement_paragraph_id IN (${placeholders})
+     ORDER BY sof.id`,
+    paragraphIds
+  );
+}
+function fetchPlacedInProceeding(dbPath, proceedingId) {
+  const texts = rows15(
+    dbPath,
+    `SELECT sp.text FROM statement_paragraphs sp
+     JOIN documents d ON d.id = sp.document_id
+     WHERE d.proceeding_id = ? AND d.instrument = 'affidavit'`,
+    [proceedingId]
+  );
+  return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
+}
+function frontmatterFor7(ctx) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType: "Affidavit",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function renderAffidavit(ctx, a3) {
+  const paragraphs = rows15(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const links = fetchParagraphLinks(
+    ctx.dbPath,
+    paragraphs.map((p3) => p3.id)
+  );
+  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
+  const placedInProceeding = fetchPlacedInProceeding(ctx.dbPath, ctx.proceeding.id);
+  const labels = fetchDocumentLabels(ctx.dbPath, [.../* @__PURE__ */ new Set([...letters.keys(), ...links.flatMap((l3) => l3.exhibit_id === null ? [] : [l3.exhibit_id])])]);
+  const labelOf = (id) => labels.get(id) ?? `document ${id}`;
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const deponent = a3.deponent_name ?? "________________";
+  const lines2 = [];
+  lines2.push(frontmatterFor7(ctx));
+  lines2.push("");
+  lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "AFFIDAVIT"
+    })
+  );
+  lines2.push("");
+  lines2.push(`I, ${deponent}, swear (or affirm) that:`);
+  lines2.push("");
+  const affidavitGaps = [
+    ...a3.deponent_name === null ? [{ text: "no deponent recorded", what: "deponent" }] : [],
+    ...paragraphs.length === 0 && a3.execution === null ? [{ text: "no paragraphs drafted", what: "paragraphs" }] : []
+  ];
+  for (const gap2 of affidavitGaps) {
+    const line = mockupMessage(gapMarker("gap"), gap2.text);
+    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "documents", id: a3.id, item: `${a3.label}: ${gap2.what}` });
+    lines2.push(line);
+  }
+  paragraphs.forEach((p3, i3) => {
+    const n3 = i3 + 1;
+    const own = links.filter((l3) => l3.statement_paragraph_id === p3.id);
+    const tag = own.length > 0 ? ` [facts ${own.map((l3) => `F${l3.fact_id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
+    recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: linked fact` });
+    lines2.push(`${n3}. ${withExhibitLetters(p3.text, letters)}${tag} <!-- statement_paragraph ${n3} -->`);
+    if (own.length === 0) return;
+    const tendered = new Set(own.map((l3) => l3.exhibit_id));
+    for (const id of new Set(placedDocumentIds(p3.text))) {
+      if (tendered.has(id)) continue;
+      const line = mockupMessage(gapMarker("gap"), `Exhibit "${letters.get(id)}" (${labelOf(id)}) is attached here, but no statement of fact linked to this paragraph tenders it`);
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: Exhibit "${letters.get(id)}" tendered` });
+      lines2.push(`   ${line}`);
+    }
+    for (const l3 of own) {
+      if (l3.exhibit_id === null || placedInProceeding.has(l3.exhibit_id)) continue;
+      const line = mockupMessage(gapMarker("gap"), `${labelOf(l3.exhibit_id)} is tendered by a statement of fact linked to this paragraph, but no affidavit in this proceeding attaches it`);
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statements_of_fact", id: l3.statement_of_fact_id, item: `${a3.label}, paragraph ${n3}: ${labelOf(l3.exhibit_id)} attached` });
+      lines2.push(`   ${line}`);
+    }
+  });
+  lines2.push("");
+  const swearMarker = a3.execution === null && links.length > 0 ? "\u2712\uFE0F" : "";
+  recordGlyphs(ctx.inventory, swearMarker, ["\u2712\uFE0F"], { table: "documents", id: a3.id, item: a3.label, witness_id: a3.witness_id ?? void 0 });
+  lines2.push(`SWORN (OR AFFIRMED) BEFORE ME at ${a3.signed_at ?? "________________"}, British Columbia on ${a3.execution ?? "________________"}. ${swearMarker}`.trim());
+  lines2.push("");
+  lines2.push("________________________________");
+  lines2.push("A commissioner for taking affidavits for British Columbia");
+  lines2.push("");
+  lines2.push("________________________________");
+  lines2.push(deponent);
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-companions.ts
+function rows16(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
+  ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
+  ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
+]);
+function writtenArgumentsVenue(proceeding) {
+  const venue = proceeding.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding.forum);
+  if (venue === void 0) {
+    throw new DataServerError(
+      `Proceeding ${proceeding.id} has forum ${proceeding.forum === null ? "null" : `"${proceeding.forum}"`}, which has no Written Arguments settings`,
+      "venue_unknown"
+    );
+  }
+  return venue;
+}
+function frontmatterFor8(ctx, documentType) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? venueHeadingFor(ctx.filing, ctx.proceeding)?.display_label ?? "",
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+function renderWrittenArguments(ctx, documentKey) {
+  const venue = writtenArgumentsVenue(ctx.proceeding);
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const clientRole = client?.role ?? "Party";
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, documentKey);
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
+  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(ctx.dbPath, factIds, opposingPartyIds(ctx.parties), ctx.rendered.slice(0, 10));
+  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
+  for (const s3 of statementRows) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, documentKey);
+  const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
+  const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
+  const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
+  const servedRows = submissionIds.length === 0 ? [] : rows16(
+    ctx.dbPath,
+    `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
+           FROM order_sought_served_by sb
+           JOIN order_sought o ON o.id = sb.order_sought_id
+           WHERE sb.submission_id IN (${submissionIds.map(() => "?").join(",")})`,
+    submissionIds
+  );
+  const servedBySubmission = /* @__PURE__ */ new Map();
+  for (const r3 of servedRows) {
+    const list = servedBySubmission.get(r3.submission_id) ?? [];
+    list.push(r3);
+    servedBySubmission.set(r3.submission_id, list);
+  }
+  function struckSubmission(submissionId) {
+    const served = servedBySubmission.get(submissionId) ?? [];
+    if (served.length === 0 || !served.every((s3) => s3.crossed_out_on !== null)) return null;
+    return served[0];
+  }
+  const lines2 = [];
+  lines2.push(frontmatterFor8(ctx, "Written_arguments"));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: `WRITTEN ARGUMENT OF THE ${clientRole.toUpperCase()}`
+    })
+  );
+  lines2.push("");
+  lines2.push("## Submissions");
+  lines2.push("");
+  let n3 = 1;
+  const struckLines = [];
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry.kind === "rhetoric") {
+      lines2.push("", ...renderRhetoricLine(ctx, entry.row, n3, ""), "");
+      n3 += 1;
+      continue;
+    }
+    const s3 = entry.item;
+    const struck = struckSubmission(s3.id);
+    if (struck) {
+      struckLines.push(`~~${s3.contention}~~ (crossed out \u2014 supports order_sought ${struck.order_sought_id}, "${struck.wording}") <!-- submission_id ${s3.id} -->`);
+      continue;
+    }
+    recordParagraph(ctx, s3.id, documentKey, n3 - 1);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      n3 - 1,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    n3 = result.nextPara + 1;
+  }
+  for (const line of struckLines) lines2.push(line);
+  if (struckLines.length > 0) lines2.push("");
+  if (venue.awardCap) {
+    lines2.push(`${n3}. The award sought is within the Tribunal's Rule 24(j) cap.`);
+    if (total <= 25e4) {
+      lines2.push(`   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}.`);
+    } else {
+      lines2.push(
+        `   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}. [PRACTITIONER \u2014 total exceeds the Rule 24(j) cap; Rule 24(h) consent position required]`
+      );
+    }
+    lines2.push("");
+    n3 += 1;
+  }
+  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "orders")) {
+    lines2.push(...renderRhetoricLine(ctx, row2, n3, ""), "");
+    n3 += 1;
+  }
+  const askVerb = `asks ${venue.tribunal}`;
+  lines2.push(`${n3}. The ${clientRole} ${askVerb} to award the following relief.`);
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  includedRelief.forEach((r3, i3) => {
+    const wording = r3.wording_override ?? r3.wording;
+    const amountPart = r3.amount !== null ? `$${r3.amount.toLocaleString("en-US")} \u2014 ` : "";
+    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
+    const petitum = unservedPetitumMarker(r3.hasServedBy);
+    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
+    const workMarkers = dedupeLineMarkers([jurMarker, petitum]);
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
+    const lineMarkers = printMarkerSets([dedupeLineMarkers([workMarkers, review])]);
+    lines2.push(`   (${letters[i3] ?? i3 + 1}) ${amountPart}${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- relief_item ${letters[i3] ?? i3 + 1} -->`);
+  });
+  if (venue.interestAndCosts) {
+    lines2.push(`   (${letters[includedRelief.length] ?? "x"}) interest;`);
+    lines2.push(`   (${letters[includedRelief.length + 1] ?? "y"}) costs.`);
+  }
+  lines2.push("");
+  for (const r3 of crossedOutRelief) {
+    const wording = r3.wording_override ?? r3.wording;
+    lines2.push(`~~${wording}~~ <!-- order crossed-out order_sought_id ${r3.id} -->`);
+  }
+  if (crossedOutRelief.length > 0) lines2.push("");
+  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  if (opposingPoints.length > 0) {
+    lines2.push("## Opposing points");
+    lines2.push("");
+    for (const op of opposingPoints) {
+      const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
+      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
+      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
+      const status2 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
+      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
+      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status2 ? ` ${status2}` : ""} <!-- opposing_point_id ${op.id} -->`);
+    }
+    lines2.push("");
+  }
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function fetchProceedingOrders(dbPath, proceedingId) {
+  const orders = rows16(
+    dbPath,
+    `SELECT o.id, o.wording, o.crossed_out_on,
+            EXISTS(
+              SELECT 1 FROM order_sought_served_by sb
+              JOIN submissions s ON s.id = sb.submission_id
+              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
+            ) AS has_served_by
+     FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
+    [proceedingId]
+  );
+  const edgesByOrder = fetchJurisdictionEdges(dbPath, orders.map((o3) => o3.id));
+  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
+}
+function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
+  const filings = rows16(
+    dbPath,
+    // A Job Board with no Writing deploys nothing.
+    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
+    [proceedingId, filingId, JOB_BOARD_KIND]
+  );
+  const orders = /* @__PURE__ */ new Set();
+  const submissions = /* @__PURE__ */ new Set();
+  for (const f3 of filings) {
+    for (const r3 of rows16(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
+      orders.add(r3.order_sought_id);
+    }
+    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
+    for (const r3 of rows16(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
+      submissions.add(r3.submission_id);
+    }
+  }
+  return { orders, submissions };
+}
+function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
+  const relied = rows16(
+    dbPath,
+    `SELECT sl.law_assertion_id FROM submission_law sl
+       JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
+       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+       JOIN filings f ON f.id = fs.filing_id
+      WHERE f.proceeding_id = ? AND f.retired_on IS NULL
+     UNION
+     SELECT r.law_assertion_id FROM order_sought_requires r
+       JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id
+       JOIN filings f ON f.id = fo.filing_id
+      WHERE f.proceeding_id = ? AND f.retired_on IS NULL AND r.law_assertion_id IS NOT NULL`,
+    [proceedingId, proceedingId]
+  );
+  return new Set(relied.map((r3) => r3.law_assertion_id));
+}
+function fetchProceedingSubmissions(dbPath, proceedingId) {
+  return rows16(
+    dbPath,
+    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
+    [proceedingId]
+  );
+}
+function fetchStruckSubmissionIds(dbPath, proceedingId) {
+  const served = rows16(
+    dbPath,
+    `SELECT sb.submission_id, o.crossed_out_on
+     FROM order_sought_served_by sb
+     JOIN order_sought o ON o.id = sb.order_sought_id
+     WHERE o.proceeding_id = ?`,
+    [proceedingId]
+  );
+  const bySubmission = /* @__PURE__ */ new Map();
+  for (const r3 of served) {
+    const allStruckSoFar = bySubmission.get(r3.submission_id) ?? true;
+    bySubmission.set(r3.submission_id, allStruckSoFar && r3.crossed_out_on !== null);
+  }
+  return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
+}
+function recordReserveInventory(ctx) {
+  const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const deployedOrders = /* @__PURE__ */ new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
+  const deployedSubmissions = /* @__PURE__ */ new Set([...formIds.submissionIds, ...waIds.submissionIds]);
+  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
+  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
+  const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
+  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
+  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    factIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
+  for (const s3 of statementRows) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
+  const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
+  function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
+    return renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      startPara,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions2,
+      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
+      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
+      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
+      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
+      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
+      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+  }
+  for (const o3 of orders) {
+    if (deployedOrders.has(o3.id) || o3.crossed_out_on !== null) continue;
+    recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
+    recordGlyphs(ctx.inventory, unservedPetitumMarker(o3.hasServedBy), ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
+  }
+  const numbered = submissions.filter((s3) => ctx.paragraphLedger.has(s3.id));
+  const held = submissions.filter(
+    (s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id) && (deployedSubmissions.has(s3.id) || !elsewhere.submissions.has(s3.id))
+  );
+  for (const documentKey of ["form", "written_argument"]) {
+    const group = numbered.filter((s3) => ctx.paragraphLedger.get(s3.id)?.document === documentKey).sort((a3, b3) => (ctx.paragraphLedger.get(a3.id)?.para ?? 0) - (ctx.paragraphLedger.get(b3.id)?.para ?? 0));
+    const renderedLawAssertions2 = /* @__PURE__ */ new Map();
+    for (const s3 of group) {
+      const entry = ctx.paragraphLedger.get(s3.id);
+      if (entry === void 0) continue;
+      recordBody(s3, entry.para - 1, renderedLawAssertions2, "");
+    }
+  }
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  let r3 = 0;
+  for (const s3 of held) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
+}
+
+// src/submission/forms/filler-registry.ts
+var VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
+var BCSC = "CAN/BC/BCSC";
+var BCCA = "CAN/BC/BCCA";
+function supportingAffidavits(ctx, out) {
+  return fetchAffidavits(ctx.dbPath, ctx.filing.id).map(
+    (a3) => out.document("Affidavit", affidavitFileName(a3), () => renderAffidavit(ctx, a3), affidavitLabel(a3))
+  );
+}
+var FILLERS = [
+  {
+    venue: VANIAC,
+    kind: "submissions_package",
+    // #380's resolution: for a VanIAC filing, the Written Arguments IS the venue document -- its
+    // pointer rows read document='form', and no separate 'written_argument' companion is appended.
+    filler: (ctx, out) => [
+      out.document("Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "form")),
+      out.document("Evidence_index", "Evidence Index.md", () => renderEvidenceIndex(ctx)),
+      ...out.witnessStatements()
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "notice_of_application",
+    filler: (ctx, out) => [
+      out.document("Notice_of_application", "Notice of Application.md", () => renderNoticeOfApplication(ctx)),
+      ...supportingAffidavits(ctx, out)
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "requisition_default_judgment",
+    filler: (ctx, out) => [
+      out.document("Requisition", "Form 17 Draft Requisition.md", () => renderRequisitionDefaultJudgment(ctx)),
+      out.document("Default_judgment", "Form 8 Default Judgment.md", () => renderForm8DefaultJudgment(ctx))
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "requisition_consent",
+    filler: (ctx, out) => [
+      out.document("Requisition", "Requisition for Consent Order.md", () => renderRequisitionConsent(ctx)),
+      out.document("Consent_order", "Consent Order.md", () => renderConsentOrder(ctx))
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "application_response",
+    filler: (ctx, out) => [
+      out.document("Application_response", "Application Response.md", () => renderApplicationResponse(ctx)),
+      ...supportingAffidavits(ctx, out)
+    ]
+  },
+  {
+    venue: BCCA,
+    kind: "bcca_stay_response",
+    // Like VanIAC (#380 item 5), the written argument inside the response book IS the substantive
+    // venue document (#436).
+    filler: (ctx, out) => [out.document("Response_book", "Response Book.md", () => renderBccaStayResponse(ctx))]
+  },
+  {
+    venue: BCCA,
+    kind: "bcca_factum",
+    // The factum IS the substantive venue document too (#648).
+    filler: (ctx, out) => [out.document("Factum", "Factum.md", () => renderBccaFactum(ctx))]
+  }
+];
+var REGISTERED_FILLERS = FILLERS.map(({ venue, kind }) => ({ venue, kind }));
+function fillerName(key) {
+  return `${key.venue} + ${key.kind}`;
+}
+function readShipped(path, seams) {
+  const kp = parseKnowledgePath(path, "type file lookup");
+  const { layer } = shippedLayer(kp.skill, kp.rest, seams);
+  try {
+    return readFileSync25(layer.abs, "utf-8");
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
+  }
+}
+function resolveTypeFile(venue, kind, seams = {}) {
+  const segments = venue.split("/");
+  if (segments.length !== 3 || segments.some((segment) => segment === "")) {
+    throw new DataServerError(`forum "${venue}" is not a knowledge-tree key <Country>/<Jurisdiction>/<Venue>`, "invalid_forum");
+  }
+  const noVenue = segments[2] === NO_VENUE;
+  const documents = `draft/${venue}/Documents`;
+  const indexPath = `${documents}/kinds.json`;
+  let doc;
+  try {
+    doc = JSON.parse(readShipped(indexPath, seams));
+  } catch (err) {
+    if (err instanceof DataServerError) throw err;
+    throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
+  }
+  const rows22 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
+  if (rows22.length !== 1) {
+    throw new DataServerError(
+      `${indexPath}: ${rows22.length === 0 ? "no row lists" : `${rows22.length} rows list`} kind "${kind}" as an alias${rows22.length === 0 ? "" : ` (${rows22.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
+      "kind_unresolved"
+    );
+  }
+  const file = `${documents}/${rows22[0].file}.md`;
+  const block2 = extractJsonBlock(readShipped(file, seams), file, true);
+  validateTypeBlock(block2, file, { noVenue });
+  return { file, block: block2 };
+}
+function composeFiller(venue, kind, seams = {}) {
+  const type = resolveTypeFile(venue, kind, seams);
+  if (type.block.renderer !== "bespoke") {
+    throw new DataServerError(
+      `${type.file}: renderer "${type.block.renderer}" has no filler; a general type renders from the Writing's stored layout snapshot, never through compose`,
+      "no_renderer"
+    );
+  }
+  const registered = venue.split("/")[2] === NO_VENUE ? void 0 : FILLERS.find((entry) => entry.venue === venue && entry.kind === kind);
+  if (registered === void 0) {
+    throw new DataServerError(
+      `${type.file} declares renderer "bespoke", but no filler is registered for venue ${venue}, kind ${kind}: the missing filler is "${fillerName({ venue, kind })}"`,
+      "no_filler"
+    );
+  }
+  return { ...type, filler: registered.filler };
+}
+
+// src/submission/forms/render-documents.ts
+function renderDocument(ctx, timings, documentType, fileName, render, label2 = typeLabel(documentType, fileName)) {
+  const from = ctx.inventory.length;
+  const markdown = timed(timings, `render ${fileName}`, render);
+  stampDoc(ctx.inventory, from, documentType);
+  return { documentType, fileName, markdown, label: label2 };
+}
+function venueDocumentsForFiling(ctx, timings, general, cited2) {
+  if (general !== null) {
+    const name = generalDocumentName(String(scalarValue(general.layout.title)), ctx.filing.title);
+    const fileName = `${sanitizeForPath(name)}.md`;
+    let unwritten = [];
+    let currencyWithheld2 = [];
+    let proseFormat = [];
+    const doc = renderDocument(
+      ctx,
+      timings,
+      GENERAL_DOCUMENT_TYPE,
+      fileName,
+      () => {
+        const rendered = renderGeneral(ctx, general, cited2);
+        unwritten = rendered.unwritten;
+        currencyWithheld2 = rendered.currency_withheld;
+        proseFormat = rendered.prose_format;
+        return rendered.markdown;
+      },
+      { short: name, long: name }
+    );
+    return {
+      docs: [{ ...doc, unwritten, currency_withheld: currencyWithheld2, prose_format: proseFormat }],
+      companions: general.layout.companions ?? []
+    };
+  }
+  const { filler, block: block2 } = composeFiller(requireForum(ctx.proceeding, true).forum, ctx.filing.kind);
+  const docs = filler(ctx, {
+    document: (documentType, fileName, render, label2) => renderDocument(ctx, timings, documentType, fileName, render, label2),
+    witnessStatements: () => {
+      const from = ctx.inventory.length;
+      const statements = timed(timings, "render Witness statements", () => renderWitnessStatements(ctx));
+      stampDoc(ctx.inventory, from, "Witness_statement");
+      return statements.map((ws2) => ({
+        documentType: "Witness_statement",
+        fileName: `Witness Statement - ${sanitizeForPath(ws2.witnessName)}.md`,
+        markdown: ws2.markdown,
+        label: witnessStatementLabel(ws2.witnessName)
+      }));
+    }
+  });
+  return { docs, companions: block2.companions ?? [] };
+}
+function documentsForFiling(ctx, timings, general, cited2) {
+  const { docs, companions } = venueDocumentsForFiling(ctx, timings, general, cited2);
+  docs[0] = { ...docs[0], label: withSubject(docs[0].label, ctx.filing.title) };
+  if (companions.includes("written-arguments")) {
+    docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));
+  }
+  const from = ctx.inventory.length;
+  recordReserveInventory(ctx);
+  stampDoc(ctx.inventory, from, RESERVE_INVENTORY_DOC);
+  return docs;
+}
+
+// src/submission/forms/writing-parties.ts
+import { dirname as dirname21 } from "node:path";
+function partiesFor(dbPath, proceeding, filing) {
+  if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
+  return draftingParties(dirname21(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
+}
+function partiesDigest({ parties: parties2, drift }) {
+  return sha256(
+    JSON.stringify({
+      rows: drift.rows,
+      parties: parties2.map((p3) => [p3.id, p3.counsel_name, p3.counsel_firm, p3.counsel_email, p3.counsel_phone, p3.address_for_service])
+    })
+  );
+}
+function driftReport(drift) {
+  return {
+    ...drift.rows.length > 0 ? { parties_drift: drift.rows } : {},
+    ...drift.unchecked ? { parties_drift_note: drift.unchecked.note } : {}
+  };
+}
+function partiesDriftRefusal(filingId, revision, drift, tool) {
+  if (drift.rows.length === 0) return null;
+  return {
+    filing_id: filingId,
+    revision,
+    parties_drift_gate_failed: true,
+    ...driftReport(drift),
+    note: "Refusing to render the filed face: counsel of record and the address for service, which case data owns, could not be read for party row(s): " + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + `. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again.`
+  };
+}
+
+// src/submission/forms/render.ts
+function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mockup", documentTypes2, appealDeadline, presentationDir, now = nowStamp(), sessionToken, draftDir, todos = TODOS_NOT_READ, dates = DATES_NOT_READ, onPages, seams = {}) {
+  if (presentationDir !== void 0 && renderMode !== "mockup") {
+    throw new ValidationError("drafting_forms__render.presentation_dir is mockup mode only -- a filed-face render writes nothing to disk");
+  }
+  if (draftDir !== void 0 && renderMode !== "mockup") {
+    throw new ValidationError("drafting_forms__render.draft_dir is mockup mode only -- a filed-face render writes nothing to disk");
+  }
+  if (draftDir !== void 0 && presentationDir !== void 0) {
+    throw new ValidationError("drafting_forms__render takes draft_dir or presentation_dir, never both");
+  }
+  const timings = [];
+  const started = performance.now();
+  const schemaVersion = timed(timings, "schema_check", () => readSchemaVersion(dbPath));
+  const currentVersion = timed(timings, "schema_target", () => renderableSchemaVersion(currentSchemaVersion()));
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      documents: [],
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__render again.`,
+      timings: withTotal(timings, started)
+    };
+  }
+  const loadStart = performance.now();
+  const filing = fetchFilingById(dbPath, filingId);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const jobOnly = isJobOnlyBoard(filing);
+  if (jobOnly && (renderMode !== "mockup" || presentationDir !== void 0)) {
+    throw new ValidationError(
+      `Job Board ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; render only its board and the matter's pages`,
+      "job_board_only"
+    );
+  }
+  const chosenDir = presentationDir === void 0 ? void 0 : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding.style_of_cause);
+  const pagesDir = draftDir !== void 0 ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== void 0 ? dirname22(chosenDir) : void 0;
+  const moved = renderMode === "mockup" ? timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath)) : [];
+  const movedReport = moved.length > 0 ? { mockups_moved: moved } : {};
+  const revision = fetchRevision(dbPath);
+  const approvals = fetchApprovalsMark(dbPath);
+  const loadMs = elapsedMs(loadStart);
+  const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);
+  const { parties: parties2, drift } = retiredMockup || jobOnly ? { parties: [], drift: { rows: [] } } : timed(timings, "parties_drift", () => partiesFor(dbPath, proceeding, filing));
+  const contextStart = performance.now();
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now);
+  timings.push({ phase: "load_filing", ms: loadMs + elapsedMs(contextStart) });
+  const writePages = (section3) => {
+    if (!pagesDir) return void 0;
+    const pages = writeMatterPages(dbPath, pagesDir, client, now, revision, todos, dates, timings, { section: section3 });
+    onPages?.(pages);
+    return { pages, change: recordPagesState(dbPath, todos, section3, sessionToken) };
+  };
+  const boardDocument = (section3, written, withSummary) => {
+    const path = written ? pagePathFor(written.pages, section3.meta) : void 0;
+    return {
+      document_type: "Work_board",
+      ...path !== void 0 ? { path } : {},
+      file_name: path !== void 0 ? basename9(path) : "Job Board.html",
+      // On a merged board the summary reads the whole board, as its page draws it.
+      ...withSummary ? { board_summary: renderBoardSummary(boardSectionOf(dbPath, section3, client, ctx.rendered, revision, dates), client, todos) } : {},
+      ...written?.change ?? {},
+      pages_written: written !== void 0,
+      ...section3.meta.ingest_inputs ? { ingest_inputs: section3.meta.ingest_inputs } : {}
+    };
+  };
+  const trashReport2 = (written) => ({
+    ...written?.pages.moved_to_trash ? { moved_to_trash: written.pages.moved_to_trash } : {},
+    ...written?.pages.trash_skipped ? { trash_skipped: written.pages.trash_skipped } : {}
+  });
+  const deadlines = deadlineCriteria(dates, filingId);
+  if (jobOnly) {
+    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx));
+    selectDocuments([{ document_type: "Work_board" }], documentTypes2);
+    const written = writePages(section3);
+    return {
+      filing_id: filingId,
+      revision,
+      job_board_only: true,
+      documents: [boardDocument(section3, written, true)],
+      ...written ? { view_page_paths: written.pages.view_page_paths } : {},
+      ...trashReport2(written),
+      ...movedReport,
+      ...filing.retired_on ? {
+        filing_retired: true,
+        note: `Job Board ${filingId} was closed on ${filing.retired_on}, so it has no page. Recover it (clear filings.retired_on and retirement_reason) before working it again.`
+      } : {},
+      ...sessionToken ? { session_token: sessionToken } : {},
+      rendered_at: ctx.rendered,
+      timings: withTotal(timings, started)
+    };
+  }
+  if (retiredMockup) {
+    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
+    if (pagesDir) selectDocuments([{ document_type: "Work_board" }], documentTypes2);
+    const written = writePages(section3);
+    return {
+      filing_id: filingId,
+      filing_retired: true,
+      documents: [boardDocument(section3, written, true)],
+      ...written ? { view_page_paths: written.pages.view_page_paths } : {},
+      ...trashReport2(written),
+      ...movedReport,
+      note: `"${filing.title}" was retired on ${filing.retired_on}` + (filing.retirement_reason ? ` (${filing.retirement_reason})` : "") + `. Nothing was rendered and no mockup was written -- a retired Writing's mockups stay as they were at retirement. Recover the Writing before rendering it again.`,
+      timings: withTotal(timings, started)
+    };
+  }
+  const report = driftReport(drift);
+  const refusal2 = renderMode === "filed" ? partiesDriftRefusal(filingId, revision, drift, "drafting_forms__render") : null;
+  if (refusal2) return { ...refusal2, documents: [], timings: withTotal(timings, started) };
+  const driftDigest = partiesDigest({ parties: parties2, drift });
+  const formKey = KIND_FORM_KEYS[filing.kind];
+  const currency = formKey === void 0 ? void 0 : timed(timings, "form_currency", () => formCurrency(formKey, now.slice(0, 10), seams));
+  const folder = renderMode !== "mockup" ? void 0 : chosenDir !== void 0 ? { dir: chosenDir } : writingFolderForRender(dbPath, filingId, filing.title);
+  const baseDir = folder?.dir;
+  const general = generalLayoutFor(filing);
+  const liveTags = hasLiveTags(general);
+  const stamp2 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
+  const fresh = stamp2 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp2, driftDigest));
+  const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
+  const finishMockup = (documents2, section3, renderedAt) => {
+    const due = noteUpDue(section3.proposals);
+    const tail = {
+      ...report,
+      ...sessionToken ? { session_token: sessionToken } : {},
+      rendered_at: renderedAt,
+      ...currency ? { form_currency: currency } : {},
+      ...due.length > 0 ? { note_up_due: due } : {},
+      ...movedReport,
+      ...folder?.rename ? { writing_folder_rename: folder.rename } : {}
+    };
+    if (pagesDir) {
+      selectDocuments([...documents2, { document_type: "Work_board" }], documentTypes2);
+      refuseForeignMatterPages(pagesDir, dbPath);
+      const projected = listDocuments(documents2, documentTypes2);
+      const written = writePages(section3);
+      const board = boardDocument(section3, written, documentTypes2?.includes("Work_board") ?? false);
+      const views = written ? { view_page_paths: written.pages.view_page_paths } : {};
+      return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...views, ...trashReport2(written), ...tail, timings: withTotal(timings, started) };
+    }
+    const inline = [...documents2, boardDocument(section3, void 0, documentTypes2?.includes("Work_board") ?? false)];
+    return { filing_id: filingId, revision, documents: selectDocuments(inline, documentTypes2).map(withholdHearing), ...tail, timings: withTotal(timings, started) };
+  };
+  if (hit) {
+    timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
+    const section3 = timed(timings, "board_section", () => buildWorkBoardData({ ...ctx, inventory: hit.manifest.inventory }, deadlines));
+    const documents2 = hit.manifest.files.map((f3) => {
+      const markdown = hit.contents.get(f3.file_name);
+      return {
+        document_type: f3.document_type,
+        path: join37(hit.dir, f3.file_name),
+        file_name: f3.file_name,
+        markdown,
+        ...symbolNotes(legendNotes(markdown, f3.document_type))
+      };
+    });
+    return finishMockup(documents2, section3, hit.manifest.rendered_at);
+  }
+  const cited2 = general === null ? [] : timed(timings, "layout_status", () => citedStates(general, filing));
+  const built = documentsForFiling(ctx, timings, general, cited2);
+  if (drift.rows.length > 0) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
+  if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };
+  if (renderMode === "filed") return finishFiledRender({ dbPath, filingId, revision, filing, built, cited: cited2, documentTypes: documentTypes2, timings, started });
+  const untracked = timed(
+    timings,
+    "citation_scan",
+    () => scanUntrackedCitations(dbPath, ctx.proceeding.id, built, ctx.inventory)
+  );
+  if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
+  refuseForeignTargets(baseDir, built.map((doc) => doc.fileName));
+  timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
+  timed(timings, "archive dropped files", () => archiveDroppedFiles(dbPath, readManifest(dbPath, filingId), built));
+  const finished = built.map((doc) => ({ ...doc, ...withLegend(doc.markdown, doc.documentType) }));
+  const documents = finished.map((doc) => ({
+    document_type: doc.documentType,
+    path: timed(timings, `write ${doc.fileName}`, () => writeDocument2(baseDir, doc, revision)),
+    file_name: doc.fileName,
+    markdown: doc.markdown,
+    ...symbolNotes(doc.symbolNotes)
+  }));
+  if (stamp2) {
+    timed(
+      timings,
+      "manifest_write",
+      () => writeManifest(dbPath, filingId, {
+        stamp: stamp2,
+        folder: basename9(baseDir),
+        rendered_at: ctx.rendered,
+        files: finished.map((doc) => ({ document_type: doc.documentType, file_name: doc.fileName, sha256: sha256(doc.markdown), label: doc.label })),
+        inventory: ctx.inventory,
+        parties_drift: driftDigest
+      })
+    );
+  }
+  const section2 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
+  return finishMockup(documents, section2, ctx.rendered);
+}
+
+// src/submission/forms/proceeding-board.ts
+function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {}, now = nowStamp(), sessionToken, draftDir, todos = TODOS_NOT_READ, dates = DATES_NOT_READ) {
+  const timings = [];
+  const started = performance.now();
+  const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir);
+  const proceeding = fetchProceeding(dbPath, proceedingId);
+  if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
+    throw new ValidationError(
+      "This proceeding has a Writing, so its jobs are on each Writing's Job Board -- render a Writing instead"
+    );
+  }
+  const revision = fetchRevision(dbPath);
+  const section2 = timed(
+    timings,
+    "board_section",
+    () => buildPreFilingBoardData(dbPath, proceeding, {
+      revision,
+      matter: client.matterNo ?? "",
+      client: client.clientName ?? proceeding.matter_reference,
+      rendered: now
+    })
+  );
+  let pages;
+  let change;
+  if (draft !== void 0) {
+    pages = writeMatterPages(dbPath, draft, client, now, revision, todos, dates, timings, { section: section2 });
+    change = recordPagesState(dbPath, todos, section2, sessionToken);
+  }
+  return {
+    proceeding_id: proceedingId,
+    revision,
+    board_summary: renderBoardSummary(boardSectionOf(dbPath, section2, client, now, revision, dates), client, todos),
+    ...pages ?? {},
+    ...pages !== void 0 ? { job_board_path: pagePathFor(pages, section2.meta) } : {},
+    pages_written: pages !== void 0,
+    ...change ?? {},
+    ...sessionToken ? { session_token: sessionToken } : {},
+    rendered_at: now,
+    timings: withTotal(timings, started)
+  };
+}
+
 // src/submission/forms/render-form32-filed-face.ts
 function rows17(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
@@ -100009,6 +101023,545 @@ function renderForm32FiledFace(ctx, warnings) {
   return lines2.join("\n").trimEnd() + "\n";
 }
 
+// src/submission/forms/render-form33-filed-face.ts
+function rows18(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+var NOTICE_DATE_PLACEHOLDER = "[notice date]";
+var HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
+var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
+var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
+function formatTimeEstimate4(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+function factStatementCitationLine3(exhibitMap, labelMap, s3) {
+  const parts = [];
+  if (s3.instrument_id !== null) {
+    const instrumentLabel = labelMap.get(s3.instrument_id);
+    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
+    if (s3.pinpoint) parts.push(s3.pinpoint);
+  } else if (s3.pinpoint) {
+    parts.push(s3.pinpoint);
+  }
+  if (s3.exhibit_id !== null) {
+    const num = exhibitMap.get(s3.exhibit_id);
+    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
+    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
+    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
+  }
+  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
+}
+function lawStatementCitationLine3(row2) {
+  if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}` : null;
+  const citation = row2.authority_citation ?? CITATION_MISSING;
+  let pin = row2.pinpoint;
+  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
+    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
+  }
+  return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
+}
+function pushExcerptBlockquote2(lines2, excerpt, citationLine) {
+  if (!excerpt) return;
+  for (const line of excerpt.split("\n")) {
+    if (line.trim() === "") continue;
+    lines2.push(`> ${line}`);
+  }
+  if (citationLine) lines2.push(citationLine);
+}
+function struckSubmissionIds(dbPath, submissionIds) {
+  if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
+  const placeholders = submissionIds.map(() => "?").join(",");
+  const served = rows18(
+    dbPath,
+    `SELECT sb.submission_id, o.crossed_out_on
+     FROM order_sought_served_by sb
+     JOIN order_sought o ON o.id = sb.order_sought_id
+     WHERE sb.submission_id IN (${placeholders})`,
+    submissionIds
+  );
+  const crossedFlagsBySubmission = /* @__PURE__ */ new Map();
+  for (const r3 of served) {
+    const list = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
+    list.push(r3.crossed_out_on !== null);
+    crossedFlagsBySubmission.set(r3.submission_id, list);
+  }
+  const struck = /* @__PURE__ */ new Set();
+  for (const [submissionId, flags] of crossedFlagsBySubmission) {
+    if (flags.length > 0 && flags.every(Boolean)) struck.add(submissionId);
+  }
+  return struck;
+}
+function renderForm33FiledFace(ctx, warnings) {
+  if (ctx.filing.kind !== "application_response") {
+    throw new ValidationError(
+      `"${ctx.filing.title}" is not an Application Response, so it cannot be filled as Form 33.`
+    );
+  }
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  if (!respondedTo) {
+    throw new ValidationError(
+      `"${ctx.filing.title}": the notice of application this response answers cannot be found -- no position is recorded on any of its orders, and the proceeding does not hold exactly one served notice with its orders recorded.`
+    );
+  }
+  if (respondedTo.document_date === null) {
+    if (warnings === void 0) {
+      throw new ValidationError(`"${ctx.filing.title}": the served notice of application has no date recorded, so the form's notice date cannot be filled.`);
+    }
+    warnings.push({ kind: "missing_datum", field_or_id: "notice_dated", message: `Date of the notice of application: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
+  }
+  if (positions.length === 0) {
+    throw new ValidationError(`"${ctx.filing.title}": no position is taken on any order of the served notice -- nothing to assemble.`);
+  }
+  const unpositioned = fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id);
+  if (unpositioned.length > 0) {
+    if (warnings === void 0) {
+      throw new ValidationError(
+        `"${ctx.filing.title}": ${unpositioned.length} order(s) of the served notice have no position taken (paragraph(s) ${unpositioned.map((o3) => o3.paragraph_number).join(", ")}) -- the mockup's \u2B1C marker is the fail-visible surface for this; the filed face refuses instead of omitting silently.`
+      );
+    }
+    for (const o3 of unpositioned) {
+      warnings.push({
+        kind: "missing_datum",
+        field_or_id: `order ${o3.paragraph_number}`,
+        message: `Order ${o3.paragraph_number} of the notice of application: no position taken. This response leaves it out.`
+      });
+    }
+  }
+  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
+  if (!hearing?.time_estimate_minutes) {
+    if (warnings === void 0) {
+      throw new ValidationError(`"${ctx.filing.title}": the hearing's time estimate is not recorded, so the form's time estimate cannot be filled.`);
+    }
+    warnings.push({ kind: "missing_datum", field_or_id: "time_estimate", message: `Time estimate: not recorded. The form shows ${TIME_ESTIMATE_PLACEHOLDER}.` });
+  }
+  const orders = positions.map((p3) => ({
+    order: p3.paragraph_number,
+    position: p3.position === "consented" ? "consent" : p3.position === "opposed" ? "oppose" : "no-position",
+    terms: p3.position === "consented" ? p3.proposed_terms ?? "" : ""
+  }));
+  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const struck = struckSubmissionIds(
+    ctx.dbPath,
+    submissions.map((s3) => s3.id)
+  );
+  const liveSubmissions = submissions.filter((s3) => !struck.has(s3.id));
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const liveSubmissionIds = liveSubmissions.map((s3) => s3.id);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, liveSubmissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map());
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, liveSubmissionIds));
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const part4Statements = fetchFactStatements(
+    ctx.dbPath,
+    facts.map((f3) => f3.id)
+  );
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...part4Statements, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const missingCitationIds = liveSubmissions.flatMap(
+    (s3) => (lawBySubmission.get(s3.id) ?? []).flatMap(
+      (la2) => la2.statements.filter((st3) => passesBriefOnlyCap(st3) && st3.authority_citation === null).map((st3) => st3.statement_id)
+    )
+  );
+  if (missingCitationIds.length > 0) {
+    if (warnings === void 0) {
+      throw new ValidationError(
+        `"${ctx.filing.title}": statement(s) of law ${missingCitationIds.join(", ")} cite an authority with no citation, so the filed document is not made with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this document's submissions.`
+      );
+    }
+    for (const id of missingCitationIds) {
+      warnings.push({ kind: "missing_datum", field_or_id: `statement ${id}`, message: `Statement of law ${id}: its authority has no citation. Part 5 shows ${CITATION_MISSING}.` });
+    }
+  }
+  const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
+  const part4Content = facts.length + factsRhetoric.length;
+  const pureLawOn = ctx.filing.pure_law_on ?? null;
+  if (part4Content > 0 && pureLawOn !== null) {
+    throw new ValidationError(
+      `"${ctx.filing.title}": Part 4 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's decision of ${pureLawOn} that the response pleads no facts is also on record. One of the two is wrong: remove the Part 4 ${factsRhetoric.length > 0 ? "content" : "facts"}, or withdraw counsel's decision and its note together, then fill the form again.`
+    );
+  }
+  if (part4Content === 0 && pureLawOn === null) {
+    if (warnings === void 0) {
+      throw new ValidationError(
+        `"${ctx.filing.title}": Part 4 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 4 fact, or record counsel's decision, with its note, that this application response pleads no facts, then fill the form again.`
+      );
+    }
+    warnings.push({
+      kind: "missing_datum",
+      field_or_id: "part4",
+      message: `Factual basis (Part 4): no facts are recorded, and counsel has recorded no decision that the response pleads none. Part 4 shows ${NO_FACTUAL_BASIS2}.`
+    });
+  }
+  const hearingDate = hearingDateSentence(hearing);
+  if (hearingDate === null) {
+    if (warnings === void 0) {
+      throw new ValidationError(
+        `"${ctx.filing.title}": the response's position on the hearing date is not recorded, or it agrees or proposes another date with no proposed date recorded, so the form's hearing date cannot be filled (Rule 8-1(10)(b)(iv)).`
+      );
+    }
+    warnings.push({
+      kind: "missing_datum",
+      field_or_id: "hearing_date",
+      message: `Whether the application respondent agrees with the applicant's hearing date: not recorded. The form shows ${HEARING_DATE_PLACEHOLDER}.`
+    });
+  }
+  const front = [
+    "---",
+    `notice_dated: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
+    // "Nil." when the applicant proposed no date: the form then prints no hearing-date line.
+    `hearing_date: ${hearingDate === "" ? "Nil." : hearingDate ?? `The application respondent(s) ${HEARING_DATE_PLACEHOLDER}.`}`,
+    `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate4(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
+    `orders: ${JSON.stringify(orders)}`,
+    ...pureLawOn !== null ? ["pure_law_confirmed: true"] : [],
+    "---"
+  ];
+  const body = [];
+  let n3 = 1;
+  body.push("## Part 4");
+  body.push("");
+  if (part4Content === 0 && pureLawOn === null) {
+    body.push(`${n3}. ${NO_FACTUAL_BASIS2}`);
+    n3 += 1;
+  } else if (part4Content === 0) {
+    body.push("Nil.");
+  } else {
+    for (const entry of interleave(facts, factsRhetoric, (f3) => f3.filing_ordinal)) {
+      if (entry.kind === "rhetoric") {
+        body.push(...renderRhetoricFiled(entry.row, n3, ""));
+        n3 += 1;
+        continue;
+      }
+      const f3 = entry.item;
+      body.push(`${n3}. ${f3.postulate}`);
+      n3 += 1;
+      if (f3.court_record !== null && f3.court_record_pinpoint) body.push(`> (${f3.court_record_pinpoint})`);
+      for (const stmt of part4Statements) {
+        if (stmt.fact_id !== f3.id || stmt.purpose === "impeachment") continue;
+        const citationLine = factStatementCitationLine3(exhibitMap, labelMap, stmt);
+        if (citationLine) body.push(citationLine);
+      }
+    }
+  }
+  body.push("");
+  body.push("## Part 5");
+  body.push("");
+  const part4FactIds = new Set(facts.map((f3) => f3.id));
+  const part5Facts = (submissionId) => (factsBySubmission.get(submissionId) ?? []).filter((f3) => !part4FactIds.has(f3.factId));
+  const submissionsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions");
+  if (submissionsRhetoric.length === 0 && liveSubmissions.every((s3) => part5Facts(s3.id).length === 0 && (lawBySubmission.get(s3.id) ?? []).length === 0)) {
+    body.push("Nil.");
+  } else {
+    const renderedLawAssertions = /* @__PURE__ */ new Map();
+    for (const entry of interleave(liveSubmissions, submissionsRhetoric, (s3) => s3.filing_ordinal)) {
+      if (entry.kind === "rhetoric") {
+        body.push(...renderRhetoricFiled(entry.row, n3, ""));
+        n3 += 1;
+        continue;
+      }
+      const s3 = entry.item;
+      for (const f3 of part5Facts(s3.id)) {
+        body.push(`${n3}. ${f3.postulate}`);
+        n3 += 1;
+        for (const stmt of f3.statements) {
+          if (stmt.purpose === "impeachment") continue;
+          pushExcerptBlockquote2(body, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine3(exhibitMap, labelMap, stmt));
+        }
+      }
+      for (const la2 of lawBySubmission.get(s3.id) ?? []) {
+        const priorPara = renderedLawAssertions.get(la2.lawAssertionId);
+        if (priorPara !== void 0) {
+          body.push(`${n3}. As set out in paragraph ${priorPara}, above, ${la2.proposition}`);
+          n3 += 1;
+          continue;
+        }
+        renderedLawAssertions.set(la2.lawAssertionId, n3);
+        body.push(`${n3}. ${la2.proposition}`);
+        n3 += 1;
+        for (const stmt of la2.statements.filter(passesBriefOnlyCap)) {
+          pushExcerptBlockquote2(body, stmt.excerpt, lawStatementCitationLine3(stmt));
+        }
+      }
+    }
+  }
+  body.push("");
+  body.push("## Part 6");
+  body.push("");
+  for (const d3 of docs) {
+    body.push(`- ${d3.label}${d3.document_date ? `, dated ${d3.document_date}` : ""}`);
+  }
+  for (const text5 of STANDARD_MATERIAL_LINES) body.push(`- ${text5}`);
+  return front.join("\n") + "\n" + body.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/publish-sidecar.ts
+function publishFileName(substanceFile) {
+  return substanceFile.replace(/\.md$/, "-publish.json");
+}
+function captionContext(ctx) {
+  const groups = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal })));
+  const caption2 = (g3) => g3 === void 0 ? null : g3.names.map((n3) => n3.toUpperCase()).join("\n");
+  const role = (g3) => g3 === void 0 ? null : pluralizeRole(g3.role, g3.names.length);
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? client;
+  const served = ctx.parties.filter((p3) => p3.to_be_served === 1).map((p3) => p3.name);
+  return {
+    court_file_number: ctx.proceeding.file_number,
+    // The registry is read here and nowhere else in the caption: the one place the proceeding's
+    // registry name reaches asm32/asm33 (see the Form 32 registry-name spec of 2026-10-09).
+    registry: ctx.proceeding.registry,
+    court_location: ctx.proceeding.courthouse_address,
+    plaintiff_caption: caption2(groups[0]),
+    plaintiff_role: role(groups[0]),
+    defendant_caption: caption2(groups[1]),
+    defendant_role: role(groups[1]),
+    additional_captions: groups.slice(2).map((g3) => ({ caption: caption2(g3), role_label: role(g3) })),
+    correction_required: [],
+    client_name: client?.name ?? null,
+    lawyer_name: client?.counsel_name ?? null,
+    applicant_names: applicant?.name ?? null,
+    to_affected_parties: served.length > 0 ? served.join(", ") : null,
+    // The .docx is named from it, so no character Windows forbids in a file name survives.
+    title: ctx.filing.title.replace(/[\\/:*?"<>|]/g, "_").trim()
+  };
+}
+function boardWarnings(ctx) {
+  const section2 = filingBoardData(ctx.dbPath, ctx.filing, ctx.proceeding, {}, ctx.rendered, ctx.revision);
+  const criteria = section2.criteria ?? [];
+  const warnings = [];
+  for (const c3 of criteria) {
+    if (c3.state !== "met") {
+      warnings.push({ kind: "unmet_criterion", field_or_id: c3.id, message: criterionLine(c3, criteria, false).replace(/^- /, "") });
+      if (c3.id === "gate") for (const item of c3.items) warnings.push({ kind: "unmet_criterion", field_or_id: "gate", message: `Pre-filing gate: ${item}` });
+    }
+    for (const item of c3.items) {
+      if (item.startsWith("\u{1F92B} ")) warnings.push({ kind: "other", field_or_id: c3.id, message: `Suppressed: ${item.slice("\u{1F92B} ".length)}` });
+    }
+  }
+  return warnings;
+}
+function publishSidecar(ctx, emitterWarnings, coverNotes) {
+  const warnings = [
+    ...emitterWarnings,
+    ...boardWarnings(ctx),
+    ...coverNotes.map((message) => ({ kind: "other", field_or_id: "session", message }))
+  ];
+  return { json: JSON.stringify({ caption: captionContext(ctx), warnings }, null, 2) + "\n", warnings };
+}
+
+// src/submission/substance-file.ts
+import { existsSync as existsSync34, mkdirSync as mkdirSync17, realpathSync as realpathSync8, writeFileSync as writeFileSync9 } from "node:fs";
+import { win32 as pathWin3215 } from "node:path";
+var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
+function confineCaseDataFolder(dbPath, caseDataFolder2) {
+  if (!pathWin3215.isAbsolute(caseDataFolder2)) {
+    throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder2}`);
+  }
+  const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /matter-data initialize on this matter first.`, "case_data_missing");
+  const dbFolder = canonicalRoot(pathWin3215.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
+  if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
+    throw new PathOutOfScopeError(
+      `case_data_folder must be the matter's matter-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder2} (${folder})`
+    );
+  }
+  return folder;
+}
+function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTANCE_FOLDER]) {
+  const dirs = folders.map((_3, i3) => pathWin3215.join(caseData, ...folders.slice(0, i3 + 1)));
+  const path = pathWin3215.join(dirs[dirs.length - 1], fileName);
+  for (const p3 of [...dirs, path]) {
+    if (existsSync34(p3) && realpathSync8.native(p3).toLowerCase() !== p3.toLowerCase()) {
+      throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync8.native(p3)})`);
+    }
+  }
+  for (const dir of dirs) if (!existsSync34(dir)) mkdirSync17(dir);
+  writeFileSync9(path, markdown, "utf-8");
+  return path;
+}
+
+// src/submission/forms/emit-bcsc-forms.ts
+function unplacedFactWarnings(dbPath, filing) {
+  return fetchUnplacedFacts(dbPath, filing).map((u3) => ({
+    kind: "other",
+    field_or_id: `fact ${u3.fact_id}`,
+    message: `A submission rests on a fact the facts Part does not hold, so the form leaves it out: ${JSON.stringify(u3.postulate)}.`
+  }));
+}
+function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
+  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
+  const schemaVersion = readSchemaVersion(dbPath);
+  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form32 again.`
+    };
+  }
+  const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form32");
+  if (refusal2) return refusal2;
+  const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
+  if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form32");
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const markdown = renderForm32FiledFace(ctx, lenient);
+  const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
+  const publishName = publishFileName("form-32.md");
+  return {
+    filing_id: filingId,
+    revision,
+    file_name: "form-32.md",
+    markdown,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-32.md", markdown) },
+    publish_file_name: publishName,
+    publish_json: sidecar2.json,
+    ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
+    warnings: sidecar2.warnings,
+    form_currency: formCurrency("form-32", nowStamp().slice(0, 10), seams)
+  };
+}
+function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
+  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
+  const schemaVersion = readSchemaVersion(dbPath);
+  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form33 again.`
+    };
+  }
+  const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form33");
+  if (refusal2) return refusal2;
+  const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
+  if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form33");
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const markdown = renderForm33FiledFace(ctx, lenient);
+  const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
+  const publishName = publishFileName("form-33.md");
+  return {
+    filing_id: filingId,
+    revision,
+    file_name: "form-33.md",
+    markdown,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-33.md", markdown) },
+    publish_file_name: publishName,
+    publish_json: sidecar2.json,
+    ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
+    warnings: sidecar2.warnings,
+    form_currency: formCurrency("form-33", nowStamp().slice(0, 10), seams)
+  };
+}
+
+// src/submission/forms/emit-affidavit.ts
+function rows19(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function renderAffidavitFiledFace(ctx, a3) {
+  const gaps = renderAffidavit(ctx, a3).split("\n").filter((l3) => l3.includes("\u{1F9E9}")).map((l3) => l3.replace(/<!--.*?-->/g, "").trim());
+  if (gaps.length > 0) {
+    throw new ValidationError(
+      `Affidavit ${a3.id} (${a3.label}): its mockup still shows \u{1F9E9}, so its filed face is withheld:
+${gaps.join("\n")}
+Resolve each through /drafting-data, re-render the mockup, then emit again.`
+    );
+  }
+  if (a3.affidavit_number === null) {
+    throw new ValidationError(`${a3.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
+  }
+  const paragraphs = rows19(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  if (paragraphs.length === 0) {
+    throw new ValidationError(`Affidavit ${a3.id} (${a3.label}): no paragraphs are stored, so there is no text to emit.`);
+  }
+  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
+  const ids = [...letters.keys()];
+  const docs = new Map(
+    ids.length === 0 ? [] : rows19(
+      ctx.dbPath,
+      `SELECT id, label, file_path FROM documents WHERE id IN (${ids.map(() => "?").join(",")})`,
+      ids
+    ).map((d3) => [d3.id, d3])
+  );
+  const exhibits = ids.map((id) => ({ letter: letters.get(id), label: docs.get(id).label, file_path: docs.get(id).file_path }));
+  const lines2 = [];
+  lines2.push("---");
+  lines2.push(`deponent: ${a3.deponent_name}`);
+  lines2.push(`affidavit_number: ${a3.affidavit_number}`);
+  lines2.push(`exhibits: ${JSON.stringify(exhibits)}`);
+  lines2.push("---");
+  lines2.push("");
+  paragraphs.forEach((p3, i3) => lines2.push(`${i3 + 1}. ${withExhibitLetters(p3.text, letters)}`));
+  return lines2.join("\n") + "\n";
+}
+
+// src/submission/forms/emit-supporting-affidavit.ts
+function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFolder2) {
+  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
+  const schemaVersion = readSchemaVersion(dbPath);
+  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_affidavit again.`
+    };
+  }
+  const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_affidavit");
+  if (refusal2) return refusal2;
+  if (filing.kind !== "notice_of_application" && filing.kind !== "application_response") {
+    throw new ValidationError(
+      `"${filing.title}" is not a notice of application or an application response, the only Writings whose supporting affidavits are made here.`
+    );
+  }
+  const affidavit = fetchAffidavits(dbPath, filingId).find((a3) => a3.id === documentId);
+  if (affidavit === void 0) {
+    throw new ValidationError(`That document is not an affidavit listed as supporting "${filing.title}".`);
+  }
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const markdown = renderAffidavitFiledFace(ctx, affidavit);
+  const fileName = `affidavit-${documentId}.md`;
+  return {
+    filing_id: filingId,
+    document_id: documentId,
+    revision,
+    file_name: fileName,
+    markdown,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, fileName, markdown) }
+  };
+}
+
 // src/submission/forms/emit-bcca-book.ts
 function possessive(name) {
   return name.endsWith("s") ? `${name}'` : `${name}'s`;
@@ -100199,7 +101752,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const place = (prose.get("signing_place") ?? []).join(" ");
   if (!place) refuse2("the place of signing is not recorded");
   const factsPosition = prose.get("facts_position") ?? [];
-  const facts = fetchFacts2(ctx.dbPath, filing.id);
+  const facts = fetchFacts3(ctx.dbPath, filing.id);
   const factsRhetoric = fetchRhetoric(ctx.dbPath, filing.id, "form", "facts");
   if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse2("Part 1 has neither a position on the appellants' facts nor any fact");
   const submissions = fetchSubmissions(ctx.dbPath, filing.id, "form");
@@ -100332,729 +101885,65 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   return [...front, ...body].join("\n").trimEnd() + "\n";
 }
 
-// src/submission/forms/render-form33-filed-face.ts
-function rows18(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-var NOTICE_DATE_PLACEHOLDER = "[notice date]";
-var HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
-var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
-var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
-function formatTimeEstimate4(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function factStatementCitationLine3(exhibitMap, labelMap, s3) {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
+// src/submission/forms/emit-bcca.ts
+function submissionFormsEmitBccaBook(dbPath, filingId) {
+  const schemaVersion = readSchemaVersion(dbPath);
+  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_book again.`
+    };
   }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
-}
-function lawStatementCitationLine3(row2) {
-  if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}` : null;
-  const citation = row2.authority_citation ?? CITATION_MISSING;
-  let pin = row2.pinpoint;
-  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
-    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
-  return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
-}
-function pushExcerptBlockquote2(lines2, excerpt, citationLine) {
-  if (!excerpt) return;
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines2.push(`> ${line}`);
-  }
-  if (citationLine) lines2.push(citationLine);
-}
-function struckSubmissionIds(dbPath, submissionIds) {
-  if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
-  const placeholders = submissionIds.map(() => "?").join(",");
-  const served = rows18(
-    dbPath,
-    `SELECT sb.submission_id, o.crossed_out_on
-     FROM order_sought_served_by sb
-     JOIN order_sought o ON o.id = sb.order_sought_id
-     WHERE sb.submission_id IN (${placeholders})`,
-    submissionIds
-  );
-  const crossedFlagsBySubmission = /* @__PURE__ */ new Map();
-  for (const r3 of served) {
-    const list = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
-    list.push(r3.crossed_out_on !== null);
-    crossedFlagsBySubmission.set(r3.submission_id, list);
-  }
-  const struck = /* @__PURE__ */ new Set();
-  for (const [submissionId, flags] of crossedFlagsBySubmission) {
-    if (flags.length > 0 && flags.every(Boolean)) struck.add(submissionId);
-  }
-  return struck;
-}
-function renderForm33FiledFace(ctx, warnings) {
-  if (ctx.filing.kind !== "application_response") {
-    throw new ValidationError(
-      `"${ctx.filing.title}" is not an Application Response, so it cannot be filled as Form 33.`
-    );
-  }
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  if (!respondedTo) {
-    throw new ValidationError(
-      `"${ctx.filing.title}": the notice of application this response answers cannot be found -- no position is recorded on any of its orders, and the proceeding does not hold exactly one served notice with its orders recorded.`
-    );
-  }
-  if (respondedTo.document_date === null) {
-    if (warnings === void 0) {
-      throw new ValidationError(`"${ctx.filing.title}": the served notice of application has no date recorded, so the form's notice date cannot be filled.`);
-    }
-    warnings.push({ kind: "missing_datum", field_or_id: "notice_dated", message: `Date of the notice of application: not recorded. The form shows ${NOTICE_DATE_PLACEHOLDER}.` });
-  }
-  if (positions.length === 0) {
-    throw new ValidationError(`"${ctx.filing.title}": no position is taken on any order of the served notice -- nothing to assemble.`);
-  }
-  const unpositioned = fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id);
-  if (unpositioned.length > 0) {
-    if (warnings === void 0) {
-      throw new ValidationError(
-        `"${ctx.filing.title}": ${unpositioned.length} order(s) of the served notice have no position taken (paragraph(s) ${unpositioned.map((o3) => o3.paragraph_number).join(", ")}) -- the mockup's \u2B1C marker is the fail-visible surface for this; the filed face refuses instead of omitting silently.`
-      );
-    }
-    for (const o3 of unpositioned) {
-      warnings.push({
-        kind: "missing_datum",
-        field_or_id: `order ${o3.paragraph_number}`,
-        message: `Order ${o3.paragraph_number} of the notice of application: no position taken. This response leaves it out.`
-      });
-    }
-  }
-  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
-  if (!hearing?.time_estimate_minutes) {
-    if (warnings === void 0) {
-      throw new ValidationError(`"${ctx.filing.title}": the hearing's time estimate is not recorded, so the form's time estimate cannot be filled.`);
-    }
-    warnings.push({ kind: "missing_datum", field_or_id: "time_estimate", message: `Time estimate: not recorded. The form shows ${TIME_ESTIMATE_PLACEHOLDER}.` });
-  }
-  const orders = positions.map((p3) => ({
-    order: p3.paragraph_number,
-    position: p3.position === "consented" ? "consent" : p3.position === "opposed" ? "oppose" : "no-position",
-    terms: p3.position === "consented" ? p3.proposed_terms ?? "" : ""
-  }));
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id);
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const struck = struckSubmissionIds(
-    ctx.dbPath,
-    submissions.map((s3) => s3.id)
-  );
-  const liveSubmissions = submissions.filter((s3) => !struck.has(s3.id));
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const liveSubmissionIds = liveSubmissions.map((s3) => s3.id);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, liveSubmissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map());
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, liveSubmissionIds));
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const part4Statements = fetchFactStatements(
-    ctx.dbPath,
-    facts.map((f3) => f3.id)
-  );
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...part4Statements, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const missingCitationIds = liveSubmissions.flatMap(
-    (s3) => (lawBySubmission.get(s3.id) ?? []).flatMap(
-      (la2) => la2.statements.filter((st3) => passesBriefOnlyCap(st3) && st3.authority_citation === null).map((st3) => st3.statement_id)
-    )
-  );
-  if (missingCitationIds.length > 0) {
-    if (warnings === void 0) {
-      throw new ValidationError(
-        `"${ctx.filing.title}": statement(s) of law ${missingCitationIds.join(", ")} cite an authority with no citation, so the filed document is not made with "${CITATION_MISSING}" in it. Add the missing citation(s), or remove those statements from this document's submissions.`
-      );
-    }
-    for (const id of missingCitationIds) {
-      warnings.push({ kind: "missing_datum", field_or_id: `statement ${id}`, message: `Statement of law ${id}: its authority has no citation. Part 5 shows ${CITATION_MISSING}.` });
-    }
-  }
-  const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
-  const part4Content = facts.length + factsRhetoric.length;
-  const pureLawOn = ctx.filing.pure_law_on ?? null;
-  if (part4Content > 0 && pureLawOn !== null) {
-    throw new ValidationError(
-      `"${ctx.filing.title}": Part 4 (factual basis) has ${facts.length} fact(s)${factsRhetoric.length > 0 ? ` and ${factsRhetoric.length} rhetorical paragraph(s)` : ""} recorded and counsel's decision of ${pureLawOn} that the response pleads no facts is also on record. One of the two is wrong: remove the Part 4 ${factsRhetoric.length > 0 ? "content" : "facts"}, or withdraw counsel's decision and its note together, then fill the form again.`
-    );
-  }
-  if (part4Content === 0 && pureLawOn === null) {
-    if (warnings === void 0) {
-      throw new ValidationError(
-        `"${ctx.filing.title}": Part 4 (factual basis) has no facts recorded and no pure-law decision of counsel is on record. Add at least one Part 4 fact, or record counsel's decision, with its note, that this application response pleads no facts, then fill the form again.`
-      );
-    }
-    warnings.push({
-      kind: "missing_datum",
-      field_or_id: "part4",
-      message: `Factual basis (Part 4): no facts are recorded, and counsel has recorded no decision that the response pleads none. Part 4 shows ${NO_FACTUAL_BASIS2}.`
-    });
-  }
-  const hearingDate = hearingDateSentence(hearing);
-  if (hearingDate === null) {
-    if (warnings === void 0) {
-      throw new ValidationError(
-        `"${ctx.filing.title}": the response's position on the hearing date is not recorded, or it agrees or proposes another date with no proposed date recorded, so the form's hearing date cannot be filled (Rule 8-1(10)(b)(iv)).`
-      );
-    }
-    warnings.push({
-      kind: "missing_datum",
-      field_or_id: "hearing_date",
-      message: `Whether the application respondent agrees with the applicant's hearing date: not recorded. The form shows ${HEARING_DATE_PLACEHOLDER}.`
-    });
-  }
-  const front = [
-    "---",
-    `notice_dated: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
-    // "Nil." when the applicant proposed no date: the form then prints no hearing-date line.
-    `hearing_date: ${hearingDate === "" ? "Nil." : hearingDate ?? `The application respondent(s) ${HEARING_DATE_PLACEHOLDER}.`}`,
-    `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate4(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
-    `orders: ${JSON.stringify(orders)}`,
-    ...pureLawOn !== null ? ["pure_law_confirmed: true"] : [],
-    "---"
-  ];
-  const body = [];
-  let n3 = 1;
-  body.push("## Part 4");
-  body.push("");
-  if (part4Content === 0 && pureLawOn === null) {
-    body.push(`${n3}. ${NO_FACTUAL_BASIS2}`);
-    n3 += 1;
-  } else if (part4Content === 0) {
-    body.push("Nil.");
-  } else {
-    for (const entry of interleave(facts, factsRhetoric, (f3) => f3.filing_ordinal)) {
-      if (entry.kind === "rhetoric") {
-        body.push(...renderRhetoricFiled(entry.row, n3, ""));
-        n3 += 1;
-        continue;
-      }
-      const f3 = entry.item;
-      body.push(`${n3}. ${f3.postulate}`);
-      n3 += 1;
-      if (f3.court_record !== null && f3.court_record_pinpoint) body.push(`> (${f3.court_record_pinpoint})`);
-      for (const stmt of part4Statements) {
-        if (stmt.fact_id !== f3.id || stmt.purpose === "impeachment") continue;
-        const citationLine = factStatementCitationLine3(exhibitMap, labelMap, stmt);
-        if (citationLine) body.push(citationLine);
-      }
-    }
-  }
-  body.push("");
-  body.push("## Part 5");
-  body.push("");
-  const part4FactIds = new Set(facts.map((f3) => f3.id));
-  const part5Facts = (submissionId) => (factsBySubmission.get(submissionId) ?? []).filter((f3) => !part4FactIds.has(f3.factId));
-  const submissionsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions");
-  if (submissionsRhetoric.length === 0 && liveSubmissions.every((s3) => part5Facts(s3.id).length === 0 && (lawBySubmission.get(s3.id) ?? []).length === 0)) {
-    body.push("Nil.");
-  } else {
-    const renderedLawAssertions = /* @__PURE__ */ new Map();
-    for (const entry of interleave(liveSubmissions, submissionsRhetoric, (s3) => s3.filing_ordinal)) {
-      if (entry.kind === "rhetoric") {
-        body.push(...renderRhetoricFiled(entry.row, n3, ""));
-        n3 += 1;
-        continue;
-      }
-      const s3 = entry.item;
-      for (const f3 of part5Facts(s3.id)) {
-        body.push(`${n3}. ${f3.postulate}`);
-        n3 += 1;
-        for (const stmt of f3.statements) {
-          if (stmt.purpose === "impeachment") continue;
-          pushExcerptBlockquote2(body, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine3(exhibitMap, labelMap, stmt));
-        }
-      }
-      for (const la2 of lawBySubmission.get(s3.id) ?? []) {
-        const priorPara = renderedLawAssertions.get(la2.lawAssertionId);
-        if (priorPara !== void 0) {
-          body.push(`${n3}. As set out in paragraph ${priorPara}, above, ${la2.proposition}`);
-          n3 += 1;
-          continue;
-        }
-        renderedLawAssertions.set(la2.lawAssertionId, n3);
-        body.push(`${n3}. ${la2.proposition}`);
-        n3 += 1;
-        for (const stmt of la2.statements.filter(passesBriefOnlyCap)) {
-          pushExcerptBlockquote2(body, stmt.excerpt, lawStatementCitationLine3(stmt));
-        }
-      }
-    }
-  }
-  body.push("");
-  body.push("## Part 6");
-  body.push("");
-  for (const d3 of docs) {
-    body.push(`- ${d3.label}${d3.document_date ? `, dated ${d3.document_date}` : ""}`);
-  }
-  for (const text5 of STANDARD_MATERIAL_LINES) body.push(`- ${text5}`);
-  return front.join("\n") + "\n" + body.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/unplaced-facts.ts
-var FACTS_PART = /* @__PURE__ */ new Map([
-  ["notice_of_application", "part2"],
-  ["application_response", "part4"]
-]);
-function fetchUnplacedFacts(dbPath, filing) {
-  const part = FACTS_PART.get(filing.kind);
-  if (part === void 0 || filing.filed_on || filing.retired_on) return [];
-  return submissionDataQuery(
-    dbPath,
-    `SELECT fs.submission_id, sf.fact_id, f.postulate
-     FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
-     JOIN submission_facts sf ON sf.submission_id = fs.submission_id
-     JOIN facts f ON f.id = sf.fact_id
-     WHERE fs.filing_id = ? AND fs.document = 'form'
-       AND NOT EXISTS (SELECT 1 FROM filing_facts ff
-                        WHERE ff.filing_id = fs.filing_id AND ff.document = 'form' AND ff.part = ? AND ff.fact_id = sf.fact_id)
-     ORDER BY fs.ordinal, sf.fact_id`,
-    [filing.id, part]
-  ).rows;
-}
-function refuseUnplacedFacts(dbPath, filing, tool) {
-  const unplaced = fetchUnplacedFacts(dbPath, filing);
-  if (unplaced.length === 0) return;
-  throw new ValidationError(
-    `Refusing ${tool}: Writing ${filing.id} has submissions resting on facts its facts Part does not hold, which the filed face would drop: ` + unplaced.map((u3) => `submission ${u3.submission_id}, fact ${u3.fact_id} ${JSON.stringify(u3.postulate)}`).join("; ") + `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${FACTS_PART.get(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
-    "facts_not_placed"
-  );
-}
-
-// src/submission/publish-sidecar.ts
-function publishFileName(substanceFile) {
-  return substanceFile.replace(/\.md$/, "-publish.json");
-}
-function captionContext(ctx) {
-  const groups = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal })));
-  const caption2 = (g3) => g3 === void 0 ? null : g3.names.map((n3) => n3.toUpperCase()).join("\n");
-  const role = (g3) => g3 === void 0 ? null : pluralizeRole(g3.role, g3.names.length);
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? client;
-  const served = ctx.parties.filter((p3) => p3.to_be_served === 1).map((p3) => p3.name);
+  const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_book");
+  if (refusal2) return refusal2;
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
   return {
-    court_file_number: ctx.proceeding.file_number,
-    // The registry is read here and nowhere else in the caption: the one place the proceeding's
-    // registry name reaches asm32/asm33 (see the Form 32 registry-name spec of 2026-10-09).
-    registry: ctx.proceeding.registry,
-    court_location: ctx.proceeding.courthouse_address,
-    plaintiff_caption: caption2(groups[0]),
-    plaintiff_role: role(groups[0]),
-    defendant_caption: caption2(groups[1]),
-    defendant_role: role(groups[1]),
-    additional_captions: groups.slice(2).map((g3) => ({ caption: caption2(g3), role_label: role(g3) })),
-    correction_required: [],
-    client_name: client?.name ?? null,
-    lawyer_name: client?.counsel_name ?? null,
-    applicant_names: applicant?.name ?? null,
-    to_affected_parties: served.length > 0 ? served.join(", ") : null,
-    // The .docx is named from it, so no character Windows forbids in a file name survives.
-    title: ctx.filing.title.replace(/[\\/:*?"<>|]/g, "_").trim()
+    filing_id: filingId,
+    revision,
+    file_name: "bcca-book.md",
+    markdown: renderBccaBookFiledFace(ctx)
   };
 }
-function boardWarnings(ctx) {
-  const section2 = filingBoardData(ctx.dbPath, ctx.filing, ctx.proceeding, {}, ctx.rendered, ctx.revision);
-  const criteria = section2.criteria ?? [];
-  const warnings = [];
-  for (const c3 of criteria) {
-    if (c3.state !== "met") {
-      warnings.push({ kind: "unmet_criterion", field_or_id: c3.id, message: criterionLine(c3, criteria, false).replace(/^- /, "") });
-      if (c3.id === "gate") for (const item of c3.items) warnings.push({ kind: "unmet_criterion", field_or_id: "gate", message: `Pre-filing gate: ${item}` });
-    }
-    for (const item of c3.items) {
-      if (item.startsWith("\u{1F92B} ")) warnings.push({ kind: "other", field_or_id: c3.id, message: `Suppressed: ${item.slice("\u{1F92B} ".length)}` });
-    }
+function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
+  const schemaVersion = readSchemaVersion(dbPath);
+  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion) {
+    return {
+      filing_id: filingId,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      bundle_outdated: true,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_factum again.`
+    };
   }
-  return warnings;
-}
-function publishSidecar(ctx, emitterWarnings, coverNotes) {
-  const warnings = [
-    ...emitterWarnings,
-    ...boardWarnings(ctx),
-    ...coverNotes.map((message) => ({ kind: "other", field_or_id: "session", message }))
-  ];
-  return { json: JSON.stringify({ caption: captionContext(ctx), warnings }, null, 2) + "\n", warnings };
-}
-
-// src/submission/forms/emit-affidavit.ts
-function rows19(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function renderAffidavitFiledFace(ctx, a3) {
-  const gaps = renderAffidavit(ctx, a3).split("\n").filter((l3) => l3.includes("\u{1F9E9}")).map((l3) => l3.replace(/<!--.*?-->/g, "").trim());
-  if (gaps.length > 0) {
-    throw new ValidationError(
-      `Affidavit ${a3.id} (${a3.label}): its mockup still shows \u{1F9E9}, so its filed face is withheld:
-${gaps.join("\n")}
-Resolve each through /drafting-data, re-render the mockup, then emit again.`
-    );
-  }
-  if (a3.affidavit_number === null) {
-    throw new ValidationError(`${a3.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
-  }
-  const paragraphs = rows19(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
-  if (paragraphs.length === 0) {
-    throw new ValidationError(`Affidavit ${a3.id} (${a3.label}): no paragraphs are stored, so there is no text to emit.`);
-  }
-  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
-  const ids = [...letters.keys()];
-  const docs = new Map(
-    ids.length === 0 ? [] : rows19(
-      ctx.dbPath,
-      `SELECT id, label, file_path FROM documents WHERE id IN (${ids.map(() => "?").join(",")})`,
-      ids
-    ).map((d3) => [d3.id, d3])
-  );
-  const exhibits = ids.map((id) => ({ letter: letters.get(id), label: docs.get(id).label, file_path: docs.get(id).file_path }));
-  const lines2 = [];
-  lines2.push("---");
-  lines2.push(`deponent: ${a3.deponent_name}`);
-  lines2.push(`affidavit_number: ${a3.affidavit_number}`);
-  lines2.push(`exhibits: ${JSON.stringify(exhibits)}`);
-  lines2.push("---");
-  lines2.push("");
-  paragraphs.forEach((p3, i3) => lines2.push(`${i3 + 1}. ${withExhibitLetters(p3.text, letters)}`));
-  return lines2.join("\n") + "\n";
-}
-
-// src/submission/forms/filed-face.ts
-var FRONTMATTER_RE = /^---\n[\s\S]*?\n---\n?/;
-var HTML_COMMENT_RE = /[ \t]*<!--[\s\S]*?-->/g;
-var MOCKUP_ONLY_LINE_RE = new RegExp(`^.*${MOCKUP_ONLY_TAG}[ \\t]*\\n?`, "gm");
-var GAP_LINE_RE = /^🧩 _+ <!-- .* -->[ \t]*\n?/gm;
-var MOCKUP_ONLY_HEADINGS = [
-  "Source trace",
-  "Facts attributed to this witness, not yet in this statement",
-  "Opposing points",
-  // Application Response (build #386): opposing_orders with no filing_positions row for this
-  // filing -- belt-and-suspenders, since Form 33's real filed face comes from the separate
-  // assembly-mode emitter (assembly-application-response.ts), not this transform. BCCA stay
-  // response (renderer compliance fix following #436): emitted as #### inside "### Part 2:
-  // Issues" -- stripSections' level-aware matching handles both without a kind-specific branch.
-  "Positions not yet taken",
-  // BCCA factum (#648): opposing points no submission answers yet, the Enactments appendix's
-  // held-back court rules, and the page budget estimate.
-  "Points not yet answered",
-  "Court rules not in this appendix",
-  "Page budget",
-  // The general renderer's Layout confirmation, Blind copies, Authorities cited and Page budget are
-  // optional header fields (render-general.ts), which FRONTMATTER_RE drops with the header.
-  // The legend of the symbols on a mockup, its last section (forms/legend.ts).
-  "Legend"
-];
-var INLINE_TAG_RES = [
-  / \(quoting .*?\)(?= \(|\r?$)/gm,
-  / \[facts [^\]]*\]/g,
-  / 🧩 \[GAP -- no fact linked\]/g,
-  / \[PRACTITIONER — total exceeds the Rule 24\(j\) cap; Rule 24\(h\) consent position required\]/g,
-  / \[unverified: [^\]]*\]/g,
-  / \[source changed: [^\]]*\]/g,
-  / \(killed \d{4}-\d{2}-\d{2}\)/g,
-  / \(settled by counsel \d{4}-\d{2}-\d{2} over scrutiny finding\)/g,
-  / \(no stated fact needed, per counsel \d{4}-\d{2}-\d{2}\)/g,
-  / \(no stated law needed, per counsel \d{4}-\d{2}-\d{2}\)/g,
-  / \[currency: [^\]]*\]/g,
-  / \(overruled: .*?\)(?= ⛔)/g,
-  / \(scrutiny failed: .*\)/g,
-  / \(note-up: .*\)/g,
-  / \(rhetorical\)/g,
-  / \(states law, no authority linked\)/g,
-  / \(states fact beyond its record\)/g
-];
-var MESSAGE_LINE_RES = [
-  /^🧩 no facts attributed to this witness$/m
-];
-var STRUCK_LINE_RE = /^[ \t]*~~.*~~[ \t]*\n?/gm;
-function stripSections(markdown) {
-  let out = markdown;
-  for (const heading of MOCKUP_ONLY_HEADINGS) {
-    const startRe = new RegExp(`\\n(#{2,6}) ${heading}\\n`);
-    for (; ; ) {
-      const start2 = out.match(startRe);
-      if (!start2 || start2.index === void 0) break;
-      const level = start2[1].length;
-      const afterHeadingStart = start2.index + start2[0].length;
-      const nextRe = new RegExp(`\\n#{1,${level}} `, "g");
-      nextRe.lastIndex = afterHeadingStart;
-      const next = nextRe.exec(out);
-      const end = next ? next.index : out.length;
-      out = out.slice(0, start2.index) + out.slice(end);
-    }
-  }
-  return out;
-}
-function stripGlyphs(markdown) {
-  let out = markdown;
-  for (const glyph2 of ALL_MARKER_GLYPHS) {
-    out = out.split(glyph2).join("");
-  }
-  return out;
-}
-function isFenceLine(line) {
-  return line.trim().startsWith("```");
-}
-function tidy(markdown) {
-  let inFence = false;
-  const lines2 = markdown.split("\n").map((line) => {
-    if (isFenceLine(line)) {
-      inFence = !inFence;
-      return line;
-    }
-    if (inFence || line.trim() === "") return inFence ? line : "";
-    const match = line.match(/^(\s*)(.*)$/s);
-    const [, lead, rest] = match ?? ["", "", line];
-    const collapsedRest = rest.replace(/[ \t]{2,}/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")").replace(/[ \t]+$/, "");
-    return lead + collapsedRest;
-  });
-  return lines2.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
-}
-function toFiledFace(markdown) {
-  let out = markdown.replace(FRONTMATTER_RE, "");
-  out = out.replace(MOCKUP_ONLY_LINE_RE, "");
-  out = out.replace(GAP_LINE_RE, "");
-  out = out.replace(HTML_COMMENT_RE, "");
-  out = stripSections(out);
-  for (const re3 of INLINE_TAG_RES) out = out.replace(re3, "");
-  for (const re3 of MESSAGE_LINE_RES) out = out.replace(re3, "");
-  out = out.replace(STRUCK_LINE_RE, "");
-  out = stripGlyphs(out);
-  return tidy(out);
-}
-
-// src/submission/forms/legend.ts
-var LEGEND_HEADING = "## Legend";
-var GLYPH_ALTERNATIVES = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length).map((g3) => g3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-var RUN_RE = new RegExp(`(?:${GLYPH_ALTERNATIVES.join("|")})+`, "g");
-function scannedText(markdown) {
-  let inFence = false;
-  const kept = markdown.split("\n").filter((line) => {
-    if (line.trim().startsWith("```")) {
-      inFence = !inFence;
-      return false;
-    }
-    return !inFence;
-  });
-  return kept.join("\n").replace(/<!--[\s\S]*?-->/g, " ");
-}
-function row(cells) {
-  return `|${cells.map((cell) => cell ? ` ${cell} ` : " ").join("|")}|`;
-}
-function buildLegend(markdown, documentType) {
-  const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
-  const present3 = new Set(sets.flat());
-  const rows22 = [];
-  const notes = [];
-  for (const symbol of SYMBOLS) {
-    if (!present3.has(symbol.glyph)) continue;
-    const work = symbol.work && symbol.actor ? `${symbol.work} (${symbol.actor})` : symbol.work;
-    rows22.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
-    if (symbol.modelNote) notes.push(`${symbol.glyph}: ${symbol.modelNote}`);
-    for (const placement of PLACEMENTS) {
-      if (placement.glyph !== symbol.glyph || !(placement.documents?.includes(documentType) ?? true)) continue;
-      rows22.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
-      if (placement.modelNote) notes.push(`${placement.glyph} (${placement.line ?? documentType}): ${placement.modelNote}`);
-    }
-  }
-  for (const combination of COMBINATIONS) {
-    const glyphs = splitGlyphs(combination.key);
-    if (!sets.some((set) => glyphs.every((g3) => set.includes(g3)))) continue;
-    rows22.push(row([combination.key, "", combination.meaning, combination.work]));
-    if (combination.modelNote) notes.push(`${combination.key}: ${combination.modelNote}`);
-  }
-  if (rows22.length === 0) return { text: "", notes: [] };
-  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows22].join("\n") + "\n", notes };
-}
-function withLegend(markdown, documentType) {
-  const legend = buildLegend(markdown, documentType);
-  return { markdown: legend.text ? `${markdown.trimEnd()}
-
-${legend.text}` : markdown, symbolNotes: legend.notes };
-}
-function legendNotes(mockup, documentType) {
-  const at = mockup.lastIndexOf(`
-${LEGEND_HEADING}
-`);
-  return buildLegend(at === -1 ? mockup : mockup.slice(0, at), documentType).notes;
-}
-
-// src/submission/form-currency.ts
-var KIND_FORM_KEYS = { notice_of_application: "form-32", application_response: "form-33" };
-var UPDATE_DOC = "publish/subskills/publish-bcsc-form/references/form-update.md";
-var STEMS = {
-  "form-17": ["requisition-consent", "requisition-default-judgment"],
-  "form-32": ["notice-of-application"],
-  "form-33": ["application-response"]
-};
-function formCurrency(formKey, today4, seams = {}) {
-  const read3 = (path) => skillSourceRead(path, seams.env, void 0, void 0, seams.installRoot).content;
-  const record2 = JSON.parse(read3("shared/docket-clerk/references/rule-freshness.json"));
-  const identityFiles = [];
-  const lists = [];
-  let front = null;
-  for (const stem3 of STEMS[formKey] ?? [formKey]) {
-    const identityFile = `publish/CAN/BC/BCSC/Documents/${stem3}.md`;
-    let file;
-    try {
-      file = readFrontMatter(read3(`publish/references/CAN/BC/BCSC/Documents/${stem3}.md`), identityFile) ?? {};
-    } catch (err) {
-      if (!(err instanceof DataServerError && err.code === "not_found")) throw err;
-      lists.push([]);
-      continue;
-    }
-    identityFiles.push(identityFile);
-    front ??= file;
-    const listed = file.conformed_to;
-    lists.push(Array.isArray(listed) ? listed.filter((reg) => typeof reg === "string") : []);
-  }
-  let formNumber;
-  if (front === null) formNumber = /^form-(\d+(?:\.\d+)?)$/.exec(formKey)?.[1] ?? null;
-  else formNumber = typeof front.form_number === "string" ? front.form_number : null;
-  const conformedTo = lists[0].filter((reg) => lists.every((list) => list.includes(reg)));
-  const unconformed = [];
-  for (const enactment of record2.enactments) {
-    for (const change of enactment.pending_changes ?? []) {
-      if (formNumber === null || !change.forms?.includes(formNumber)) continue;
-      if (!change.amending_reg || !change.commencement_date || change.commencement_date > today4) continue;
-      if (conformedTo.includes(change.amending_reg)) continue;
-      unconformed.push({
-        amending_reg: change.amending_reg,
-        amending_oic: change.amending_oic ?? null,
-        commencement_date: change.commencement_date,
-        enactment: enactment.name
-      });
-    }
-  }
-  const label2 = formNumber === null ? formKey : `Form ${formNumber}`;
-  let warning = null;
-  if (unconformed.length > 0) {
-    const clauses = unconformed.map(
-      (c3) => `${c3.amending_reg}${c3.amending_oic ? ` (${c3.amending_oic})` : ""}, in force ${c3.commencement_date}, is recorded as amending this form, and the shipped ${label2} template, emitter and type file are not recorded as conformed to it`
-    );
-    warning = `${label2}: ${clauses.join("; ")}.`;
-  } else if (front === null) {
-    warning = `${label2}: no identity file ships for this form, so its conformance to the enactment changes on record cannot be read.`;
-  }
+  const filing = fetchFilingById(dbPath, filingId);
+  refuseJobOnlyBoard(filing);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_factum");
+  if (refusal2) return refusal2;
+  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
   return {
-    form_key: formKey,
-    form_number: formNumber,
-    today: today4,
-    identity_file: front === null ? null : identityFiles.join(", "),
-    conformed_to: conformedTo,
-    unconformed,
-    warning,
-    update_doc: UPDATE_DOC
+    filing_id: filingId,
+    revision,
+    file_name: "bcca-factum.md",
+    markdown: renderBccaFactumFiledFace(ctx, datedOn)
   };
-}
-
-// src/submission/forms/citation-scan.ts
-var UNTRACKED_CITATION_TABLE = "untracked_citations";
-var YEAR = String.raw`(?:1[6-9]|20)\d{2}`;
-var NEUTRAL = String.raw`\b${YEAR}\s+(?=[A-Za-z]*[A-Z][A-Za-z]*[A-Z])[A-Z][A-Za-z]{1,7}\s+\d+\b`;
-var REPORTER = String.raw`[[(]${YEAR}[\])],?\s+(?:\d+\s+)?[A-Z][A-Za-z.&]*(?:\s+[A-Z][A-Za-z.&]*){0,2}(?:\s+\(\d+(?:st|nd|rd|th|d)\))?\s+\d+\b`;
-var STATUTE = String.raw`\b(?:R\.?\s?)?S\.?\s?(?:[A-Z]\.?){1,3}\s+${YEAR},?\s+c\.?\s*[A-Z]?-?\d+(?:\.\d+)?\b|\b[A-Z][A-Za-z]{0,3}\.?\s?Reg\.?\s+\d+\/\d{2,4}\b|\bSOR\/\d{2,4}-\d+\b`;
-var CITATION_RE = new RegExp(`${NEUTRAL}|${REPORTER}|${STATUTE}`, "g");
-var ITALIC_NAME_RE = /(?<![*_\w])([*_])(?![*_\s])((?:[^*_\n]+?\sv\.?\s[^*_\n]+?)|(?:(?:Re|Reference re)\s[^*_\n]+?))\1(?![*_\w])/g;
-function normalCitation(s3) {
-  return s3.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim();
-}
-function normalName(s3) {
-  return s3.toLowerCase().replace(/\bv\./g, "v").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
-}
-function lineHits(line) {
-  const names = [...line.matchAll(ITALIC_NAME_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, name: m3[2].trim() }));
-  const citations = [...line.matchAll(CITATION_RE)].map((m3) => ({ start: m3.index ?? 0, end: (m3.index ?? 0) + m3[0].length, citation: m3[0].trim() }));
-  const hits = [];
-  const joined = /* @__PURE__ */ new Set();
-  for (const n3 of names) {
-    const next = citations.findIndex((c3) => c3.start >= n3.end && /^[\s,]*$/.test(line.slice(n3.end, c3.start)));
-    if (next >= 0) {
-      joined.add(next);
-      hits.push({ text: `${n3.name}, ${citations[next].citation}`, name: n3.name, citation: citations[next].citation });
-    } else {
-      hits.push({ text: n3.name, name: n3.name, citation: null });
-    }
-  }
-  citations.forEach((c3, i3) => {
-    if (!joined.has(i3)) hits.push({ text: c3.citation, name: null, citation: c3.citation });
-  });
-  return hits;
-}
-function textHits(filedFace) {
-  const hits = [];
-  let fenced = false;
-  for (const line of filedFace.split("\n")) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      fenced = !fenced;
-      continue;
-    }
-    if (fenced || /^\s*>/.test(line)) continue;
-    hits.push(...lineHits(line));
-  }
-  return hits;
-}
-function tracked(hit, rows22) {
-  if (hit.citation !== null) {
-    const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
-    if (rows22.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
-  }
-  if (hit.name !== null) {
-    const wanted = normalName(hit.name);
-    if (rows22.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
-  }
-  return false;
-}
-function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
-  const rows22 = submissionDataQuery(
-    dbPath,
-    "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
-    [proceedingId]
-  ).rows;
-  const seen = /* @__PURE__ */ new Set();
-  const lines2 = [];
-  for (const doc of docs) {
-    for (const hit of textHits(toFiledFace(doc.markdown))) {
-      const keys = [...hit.citation === null ? [] : [`c:${normalCitation(hit.citation)}`], ...hit.name === null ? [] : [`n:${normalName(hit.name)}`]];
-      const repeat = keys.some((k3) => seen.has(k3));
-      keys.forEach((k3) => seen.add(k3));
-      if (repeat) continue;
-      if (tracked(hit, rows22)) continue;
-      const item = `cited but not tracked: ${hit.text}`;
-      inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
-      lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
-    }
-  }
-  return lines2;
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync32, readdirSync as readdirSync18, realpathSync as realpathSync7, statSync as statSync15 } from "node:fs";
-import { basename as basename7, dirname as dirname19, isAbsolute as isAbsolute6, join as join36, resolve as resolve7 } from "node:path";
+import { existsSync as existsSync35, readdirSync as readdirSync18, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
+import { basename as basename10, dirname as dirname23, isAbsolute as isAbsolute7, join as join38, resolve as resolve8 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -101325,22 +102214,22 @@ function queryRows(dbPath, sql, params) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function resolvePackageDir(packageDir) {
-  if (!isAbsolute6(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
-  const dir = resolve7(packageDir);
+  if (!isAbsolute7(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
+  const dir = resolve8(packageDir);
   const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync32(dir) || !statSync15(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
-  const real = realpathSync7.native(dir);
+  if (!existsSync35(dir) || !statSync15(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
+  const real = realpathSync9.native(dir);
   const parts = real.split(/[\\/]/);
   if (zoneProblem("read", real)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   const draftIdx = parts.findIndex((p3) => /^0\. DRAFT/i.test(p3));
   if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse2("it must lie beneath the matter's 0. DRAFT folder");
-  if (basename7(real).toLowerCase() !== basename7(dir).toLowerCase() || dirname19(real).toLowerCase() !== realpathSync7.native(dirname19(dir)).toLowerCase()) {
+  if (basename10(real).toLowerCase() !== basename10(dir).toLowerCase() || dirname23(real).toLowerCase() !== realpathSync9.native(dirname23(dir)).toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync18(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join36(dir, e3.name)).sort((a3, b3) => basename7(a3).localeCompare(basename7(b3)));
+  return readdirSync18(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join38(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -101401,880 +102290,7 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
   };
 }
 
-// src/submission/substance-file.ts
-import { existsSync as existsSync33, mkdirSync as mkdirSync16, realpathSync as realpathSync8, writeFileSync as writeFileSync9 } from "node:fs";
-import { win32 as pathWin3215 } from "node:path";
-var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
-function confineCaseDataFolder(dbPath, caseDataFolder2) {
-  if (!pathWin3215.isAbsolute(caseDataFolder2)) {
-    throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder2}`);
-  }
-  const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /matter-data initialize on this matter first.`, "case_data_missing");
-  const dbFolder = canonicalRoot(pathWin3215.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
-  if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
-    throw new PathOutOfScopeError(
-      `case_data_folder must be the matter's matter-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder2} (${folder})`
-    );
-  }
-  return folder;
-}
-function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTANCE_FOLDER]) {
-  const dirs = folders.map((_3, i3) => pathWin3215.join(caseData, ...folders.slice(0, i3 + 1)));
-  const path = pathWin3215.join(dirs[dirs.length - 1], fileName);
-  for (const p3 of [...dirs, path]) {
-    if (existsSync33(p3) && realpathSync8.native(p3).toLowerCase() !== p3.toLowerCase()) {
-      throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync8.native(p3)})`);
-    }
-  }
-  for (const dir of dirs) if (!existsSync33(dir)) mkdirSync16(dir);
-  writeFileSync9(path, markdown, "utf-8");
-  return path;
-}
-
-// src/submission/forms.ts
-function existingMockupPaths(dbPath, filingId) {
-  const manifest = readManifest(dbPath, filingId);
-  if (manifest === null) return [];
-  const dir = manifestDir(dbPath, manifest);
-  return manifest.files.map((f3) => join37(dir, f3.file_name)).filter((p3) => existsSync34(p3));
-}
-function elapsedMs(start2) {
-  return Math.round((performance.now() - start2) * 10) / 10;
-}
-function timed(timings, phase, fn2) {
-  const start2 = performance.now();
-  const value = fn2();
-  timings.push({ phase, ms: elapsedMs(start2) });
-  return value;
-}
-function withTotal(timings, start2) {
-  timings.push({ phase: "total", ms: elapsedMs(start2) });
-  return timings;
-}
-function nowStamp() {
-  const d3 = /* @__PURE__ */ new Date();
-  const pad = (n3) => String(n3).padStart(2, "0");
-  return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())} ${pad(d3.getHours())}:${pad(d3.getMinutes())}`;
-}
-function newSessionToken(unattended) {
-  return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
-}
-function fileStem(fileName) {
-  return fileName.slice(0, fileName.length - extname3(fileName).length);
-}
-function archiveIfStale(filePath, formLabel, currentRevision) {
-  const existingRevision = readExistingRevision(filePath);
-  if (existingRevision === void 0 || existingRevision === currentRevision) return;
-  archiveFile(filePath, formLabel, existingRevision);
-}
-function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join37(dirname20(filePath), "archive");
-  mkdirSync17(archiveDir, { recursive: true });
-  const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join37(archiveDir, `${name}${extname3(filePath)}`);
-  for (let n3 = 2; existsSync34(archivePath); n3++) archivePath = join37(archiveDir, `${name} (${n3})${extname3(filePath)}`);
-  renameSync7(filePath, archivePath);
-}
-function archiveDroppedFiles(dbPath, previous, written) {
-  if (!previous) return;
-  const dir = manifestDir(dbPath, previous);
-  for (const file of previous.files) {
-    if (written.some((doc) => doc.fileName === file.file_name) || basename8(file.file_name) !== file.file_name) continue;
-    const sameType = written.filter((doc) => doc.documentType === file.document_type);
-    const single = sameType.length === 1 && previous.files.filter((f3) => f3.document_type === file.document_type).length === 1;
-    const renamed = single ? sameType[0] : void 0;
-    try {
-      archiveFile(join37(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
-    } catch (err) {
-      if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
-    }
-  }
-}
-function writeDocument2(baseDir, output, revision) {
-  mkdirSync17(baseDir, { recursive: true });
-  const filePath = join37(baseDir, output.fileName);
-  archiveIfStale(filePath, fileStem(output.fileName), revision);
-  const code = writeStatusFile(filePath, output.markdown);
-  if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
-  return filePath;
-}
-var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
-function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
-  for (const name of names) {
-    const file = join37(dir, name);
-    try {
-      if (existsSync34(file)) unlinkSync8(file);
-    } catch (err) {
-      if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
-    }
-  }
-}
-var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
-function removeOldBoardFiles(dir) {
-  const stale = readExistingRevision(join37(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
-  removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
-  removeRetiredBoardFiles(dirname20(dir));
-}
-function refuseForeignTargets(dir, fileNames2) {
-  for (const name of fileNames2) {
-    const target = join37(dir, name);
-    if (existsSync34(target) && readExistingRevision(target) === void 0) {
-      throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
-    }
-  }
-}
-function partiesFor(dbPath, proceeding, filing) {
-  if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
-  return draftingParties(dirname20(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
-}
-function partiesDigest({ parties: parties2, drift }) {
-  return sha256(
-    JSON.stringify({
-      rows: drift.rows,
-      parties: parties2.map((p3) => [p3.id, p3.counsel_name, p3.counsel_firm, p3.counsel_email, p3.counsel_phone, p3.address_for_service])
-    })
-  );
-}
-function driftReport(drift) {
-  return {
-    ...drift.rows.length > 0 ? { parties_drift: drift.rows } : {},
-    ...drift.unchecked ? { parties_drift_note: drift.unchecked.note } : {}
-  };
-}
-function partiesDriftRefusal(filingId, revision, drift, tool) {
-  if (drift.rows.length === 0) return null;
-  return {
-    filing_id: filingId,
-    revision,
-    parties_drift_gate_failed: true,
-    ...driftReport(drift),
-    note: "Refusing to render the filed face: counsel of record and the address for service, which case data owns, could not be read for party row(s): " + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + `. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again.`
-  };
-}
-function buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now = nowStamp()) {
-  const rendered = now;
-  return {
-    dbPath,
-    proceeding: requireForum(proceeding, filing.needs_forum_parts === 1),
-    parties: parties2,
-    filing,
-    revision,
-    rendered,
-    // Lifecycle (schema v17): derived here, once per render, from the filing's own dates, its
-    // hearing_details row, and the caller-supplied appeal deadline -- `today` is `rendered`'s own
-    // date part, so the board's state and its Rendered stamp can never disagree.
-    lifecycle: deriveLifecycle(filing, fetchHearingDate(dbPath, filing.id), rendered.slice(0, 10), appealDeadline),
-    clientName: client.clientName ?? proceeding.matter_reference,
-    clientNo: client.clientNo ?? "",
-    matterNo: client.matterNo ?? "",
-    matterDescription: client.matterDescription ?? "",
-    // Fresh per filing: every renderSubmissionParagraphs call site fills it, recordReserveInventory
-    // reads it back. See the field's own doc comment on RenderContext.
-    paragraphLedger: /* @__PURE__ */ new Map(),
-    // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
-    // Job Board reads it back last. See the field's own doc comment on RenderContext. The
-    // filed-face emitters and the pre-filing check build a context through here too and simply
-    // carry the empty array -- neither renders the board.
-    inventory: [],
-    // Read once per render; the forum emit sites print 🧐 from it. The filed-face emitters and the
-    // pre-filing check carry it too and never read it.
-    review: fetchReviewState(dbPath, proceeding.id)
-  };
-}
-function fetchApprovalsMark(dbPath) {
-  const found = submissionDataQuery(dbPath, "SELECT COALESCE(MAX(id), 0) AS mark FROM review_approvals", []).rows;
-  return found[0].mark;
-}
-function stampFor(filingId, proceeding, client, now, revision, schemaVersion, buildStamp, approvals) {
-  return {
-    filing_id: filingId,
-    revision,
-    approvals,
-    schema_version: schemaVersion,
-    build_stamp: buildStamp,
-    client_name: client.clientName ?? proceeding.matter_reference,
-    client_no: client.clientNo ?? "",
-    matter_no: client.matterNo ?? "",
-    date: now.slice(0, 10)
-  };
-}
-function renderDocument(ctx, timings, documentType, fileName, render, label2 = typeLabel(documentType, fileName)) {
-  const from = ctx.inventory.length;
-  const markdown = timed(timings, `render ${fileName}`, render);
-  stampDoc(ctx.inventory, from, documentType);
-  return { documentType, fileName, markdown, label: label2 };
-}
-function layoutFor(filing) {
-  return filing.layout_snapshot === null ? null : storedLayout(filing);
-}
-function generalLayoutFor(filing) {
-  const stored = layoutFor(filing);
-  return stored !== null && stored.layout.renderer === "general" ? stored : null;
-}
-function hasLiveTags(general) {
-  return general !== null && Object.keys(general.passage_hashes).length > 0;
-}
-function renderStateFor(dbPath, stamp2, filing, digest) {
-  const state = renderState(dbPath, filing.id, stamp2, digest);
-  return state === "fresh" && hasLiveTags(generalLayoutFor(filing)) ? "stale" : state;
-}
-function venueDocumentsForFiling(ctx, timings, general, cited2) {
-  if (general !== null) {
-    const name = generalDocumentName(String(scalarValue(general.layout.title)), ctx.filing.title);
-    const fileName = `${sanitizeForPath(name)}.md`;
-    let unwritten = [];
-    let currencyWithheld2 = [];
-    let proseFormat = [];
-    const doc = renderDocument(
-      ctx,
-      timings,
-      GENERAL_DOCUMENT_TYPE,
-      fileName,
-      () => {
-        const rendered = renderGeneral(ctx, general, cited2);
-        unwritten = rendered.unwritten;
-        currencyWithheld2 = rendered.currency_withheld;
-        proseFormat = rendered.prose_format;
-        return rendered.markdown;
-      },
-      { short: name, long: name }
-    );
-    return {
-      docs: [{ ...doc, unwritten, currency_withheld: currencyWithheld2, prose_format: proseFormat }],
-      companions: general.layout.companions ?? []
-    };
-  }
-  const { filler, block: block2 } = composeFiller(requireForum(ctx.proceeding, true).forum, ctx.filing.kind);
-  const docs = filler(ctx, {
-    document: (documentType, fileName, render, label2) => renderDocument(ctx, timings, documentType, fileName, render, label2),
-    witnessStatements: () => {
-      const from = ctx.inventory.length;
-      const statements = timed(timings, "render Witness statements", () => renderWitnessStatements(ctx));
-      stampDoc(ctx.inventory, from, "Witness_statement");
-      return statements.map((ws2) => ({
-        documentType: "Witness_statement",
-        fileName: `Witness Statement - ${sanitizeForPath(ws2.witnessName)}.md`,
-        markdown: ws2.markdown,
-        label: witnessStatementLabel(ws2.witnessName)
-      }));
-    }
-  });
-  return { docs, companions: block2.companions ?? [] };
-}
-function documentsForFiling(ctx, timings, general, cited2) {
-  const { docs, companions } = venueDocumentsForFiling(ctx, timings, general, cited2);
-  docs[0] = { ...docs[0], label: withSubject(docs[0].label, ctx.filing.title) };
-  if (companions.includes("written-arguments")) {
-    docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));
-  }
-  const from = ctx.inventory.length;
-  recordReserveInventory(ctx);
-  stampDoc(ctx.inventory, from, RESERVE_INVENTORY_DOC);
-  return docs;
-}
-function findMissingLawCitations(markdown) {
-  const ids = [];
-  const lines2 = markdown.split("\n");
-  lines2.forEach((line, i3) => {
-    if (!line.includes(CITATION_MISSING)) return;
-    for (let j3 = i3; j3 <= i3 + 1 && j3 < lines2.length; j3++) {
-      const m3 = lines2[j3].match(/<!-- statement_of_law_id (\d+) -->/);
-      if (m3) {
-        ids.push(Number(m3[1]));
-        break;
-      }
-    }
-  });
-  return ids;
-}
-function findUnrenderableOrders(markdown) {
-  const ids = [];
-  for (const line of markdown.split("\n")) {
-    if (!line.includes(TEMPLATE_NOT_CHOSEN) && !line.includes(UNRECOGNIZED_TEMPLATE_KEY)) continue;
-    const m3 = line.match(/<!-- order_sought_id (\d+) -->/);
-    if (m3) ids.push(Number(m3[1]));
-  }
-  return ids;
-}
-function selectDocuments(documents, wanted) {
-  if (!wanted || wanted.length === 0) return documents;
-  const available = [...new Set(documents.map((doc) => doc.document_type))];
-  const unknown2 = wanted.filter((name) => !available.includes(name));
-  if (unknown2.length > 0) {
-    throw new ValidationError(
-      `This Writing has no ${unknown2.join(", ")} (it has: ${available.join(", ")})`
-    );
-  }
-  return documents.filter((doc) => wanted.includes(doc.document_type));
-}
-function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCause) {
-  if (!isAbsolute7(presentationDir)) {
-    throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
-  }
-  const dir = resolve8(presentationDir);
-  const refuse2 = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
-  let parent;
-  try {
-    parent = realpathSync9.native(dirname20(dir));
-  } catch {
-    throw refuse2("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
-  }
-  if (!/^0\. DRAFT/i.test(basename8(parent))) throw refuse2("its parent must be the matter's 0. DRAFT folder");
-  if (zoneProblem("write", parent)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
-  if (parent.toLowerCase() !== realpathSync9.native(draftDirOf(dbPath)).toLowerCase()) throw refuse2("its parent must be the 0. DRAFT folder of this database's matter");
-  const titles = [filingTitle, ...styleOfCause ? [`${filingTitle} - ${styleOfCause}`] : []].map((t3) => sanitizeForPath(t3).toLowerCase());
-  const name = basename8(dir).replace(/^\d{4}-\d{2}-\d{2} /, "").toLowerCase();
-  if (!titles.includes(name)) {
-    throw refuse2(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
-  }
-  if (existsSync34(dir) && dirname20(realpathSync9.native(dir)).toLowerCase() !== parent.toLowerCase()) {
-    throw refuse2("it resolves outside its 0. DRAFT folder");
-  }
-  return dir;
-}
-function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.draft_dir") {
-  const draft = resolveDraftDir(draftDir, param2);
-  if (realpathSync9.native(draft).toLowerCase() !== realpathSync9.native(draftDirOf(dbPath)).toLowerCase()) {
-    throw new ValidationError(`${param2} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
-  }
-  return draft;
-}
-function symbolNotes(notes) {
-  return notes.length > 0 ? { symbol_notes: notes } : {};
-}
-function listDocuments(documents, wanted) {
-  return documents.map((doc) => ({
-    document_type: doc.document_type,
-    ...doc.path ? { path: doc.path } : {},
-    file_name: doc.file_name,
-    markdown_chars: doc.markdown.length,
-    ...wanted?.includes(doc.document_type) ? { markdown: doc.markdown, ...symbolNotes(doc.symbol_notes ?? []) } : {}
-  }));
-}
-var HEARING_WITHHELD = "[withheld from drafting context]";
-var NOA_HEARING = /^(The applicant proposes that the matter will be heard on )(.*?)(\.)$/m;
-var BCCA_HEARING = /^(THIS IS A RESPONSE TO the stay application .*, returnable )(.*?)(?: at (.*?))?\.$/m;
-function withholdHearing(doc) {
-  if (doc.markdown === void 0) return doc;
-  const unlessBlank = (value, blank) => value === blank ? value : HEARING_WITHHELD;
-  const markdown = doc.markdown.replace(NOA_HEARING, (_m, head, proposed, tail) => `${head}${unlessBlank(proposed, "________________")}${tail}`).replace(
-    BCCA_HEARING,
-    (_m, head, date3, time3) => `${head}${unlessBlank(date3, gapMarker("gap"))}${time3 === void 0 ? "" : ` at ${HEARING_WITHHELD}`}.`
-  );
-  return { ...doc, markdown };
-}
-function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mockup", documentTypes2, appealDeadline, presentationDir, now = nowStamp(), sessionToken, draftDir, todos = TODOS_NOT_READ, dates = DATES_NOT_READ, onPages, seams = {}) {
-  if (presentationDir !== void 0 && renderMode !== "mockup") {
-    throw new ValidationError("drafting_forms__render.presentation_dir is mockup mode only -- a filed-face render writes nothing to disk");
-  }
-  if (draftDir !== void 0 && renderMode !== "mockup") {
-    throw new ValidationError("drafting_forms__render.draft_dir is mockup mode only -- a filed-face render writes nothing to disk");
-  }
-  if (draftDir !== void 0 && presentationDir !== void 0) {
-    throw new ValidationError("drafting_forms__render takes draft_dir or presentation_dir, never both");
-  }
-  const timings = [];
-  const started = performance.now();
-  const schemaVersion = timed(timings, "schema_check", () => readSchemaVersion(dbPath));
-  const currentVersion = timed(timings, "schema_target", () => renderableSchemaVersion(currentSchemaVersion()));
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      documents: [],
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__render again.`,
-      timings: withTotal(timings, started)
-    };
-  }
-  const loadStart = performance.now();
-  const filing = fetchFilingById(dbPath, filingId);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const jobOnly = isJobOnlyBoard(filing);
-  if (jobOnly && (renderMode !== "mockup" || presentationDir !== void 0)) {
-    throw new ValidationError(
-      `Job Board ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; render only its board and the matter's pages`,
-      "job_board_only"
-    );
-  }
-  const chosenDir = presentationDir === void 0 ? void 0 : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding.style_of_cause);
-  const pagesDir = draftDir !== void 0 ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== void 0 ? dirname20(chosenDir) : void 0;
-  const moved = renderMode === "mockup" ? timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath)) : [];
-  const movedReport = moved.length > 0 ? { mockups_moved: moved } : {};
-  const revision = fetchRevision(dbPath);
-  const approvals = fetchApprovalsMark(dbPath);
-  const loadMs = elapsedMs(loadStart);
-  const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);
-  const { parties: parties2, drift } = retiredMockup || jobOnly ? { parties: [], drift: { rows: [] } } : timed(timings, "parties_drift", () => partiesFor(dbPath, proceeding, filing));
-  const contextStart = performance.now();
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now);
-  timings.push({ phase: "load_filing", ms: loadMs + elapsedMs(contextStart) });
-  const writePages = (section3) => {
-    if (!pagesDir) return void 0;
-    const pages = writeMatterPages(dbPath, pagesDir, client, now, revision, todos, dates, timings, { section: section3 });
-    onPages?.(pages);
-    return { pages, change: recordPagesState(dbPath, todos, section3, sessionToken) };
-  };
-  const boardDocument = (section3, written, withSummary) => {
-    const path = written ? pagePathFor(written.pages, section3.meta) : void 0;
-    return {
-      document_type: "Work_board",
-      ...path !== void 0 ? { path } : {},
-      file_name: path !== void 0 ? basename8(path) : "Job Board.html",
-      // On a merged board the summary reads the whole board, as its page draws it.
-      ...withSummary ? { board_summary: renderBoardSummary(boardSectionOf(dbPath, section3, client, ctx.rendered, revision, dates), client, todos) } : {},
-      ...written?.change ?? {},
-      pages_written: written !== void 0,
-      ...section3.meta.ingest_inputs ? { ingest_inputs: section3.meta.ingest_inputs } : {}
-    };
-  };
-  const trashReport2 = (written) => ({
-    ...written?.pages.moved_to_trash ? { moved_to_trash: written.pages.moved_to_trash } : {},
-    ...written?.pages.trash_skipped ? { trash_skipped: written.pages.trash_skipped } : {}
-  });
-  const deadlines = deadlineCriteria(dates, filingId);
-  if (jobOnly) {
-    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx));
-    selectDocuments([{ document_type: "Work_board" }], documentTypes2);
-    const written = writePages(section3);
-    return {
-      filing_id: filingId,
-      revision,
-      job_board_only: true,
-      documents: [boardDocument(section3, written, true)],
-      ...written ? { view_page_paths: written.pages.view_page_paths } : {},
-      ...trashReport2(written),
-      ...movedReport,
-      ...filing.retired_on ? {
-        filing_retired: true,
-        note: `Job Board ${filingId} was closed on ${filing.retired_on}, so it has no page. Recover it (clear filings.retired_on and retirement_reason) before working it again.`
-      } : {},
-      ...sessionToken ? { session_token: sessionToken } : {},
-      rendered_at: ctx.rendered,
-      timings: withTotal(timings, started)
-    };
-  }
-  if (retiredMockup) {
-    const section3 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
-    if (pagesDir) selectDocuments([{ document_type: "Work_board" }], documentTypes2);
-    const written = writePages(section3);
-    return {
-      filing_id: filingId,
-      filing_retired: true,
-      documents: [boardDocument(section3, written, true)],
-      ...written ? { view_page_paths: written.pages.view_page_paths } : {},
-      ...trashReport2(written),
-      ...movedReport,
-      note: `"${filing.title}" was retired on ${filing.retired_on}` + (filing.retirement_reason ? ` (${filing.retirement_reason})` : "") + `. Nothing was rendered and no mockup was written -- a retired Writing's mockups stay as they were at retirement. Recover the Writing before rendering it again.`,
-      timings: withTotal(timings, started)
-    };
-  }
-  const report = driftReport(drift);
-  const refusal2 = renderMode === "filed" ? partiesDriftRefusal(filingId, revision, drift, "drafting_forms__render") : null;
-  if (refusal2) return { ...refusal2, documents: [], timings: withTotal(timings, started) };
-  const driftDigest = partiesDigest({ parties: parties2, drift });
-  const formKey = KIND_FORM_KEYS[filing.kind];
-  const currency = formKey === void 0 ? void 0 : timed(timings, "form_currency", () => formCurrency(formKey, now.slice(0, 10), seams));
-  const folder = renderMode !== "mockup" ? void 0 : chosenDir !== void 0 ? { dir: chosenDir } : writingFolderForRender(dbPath, filingId, filing.title);
-  const baseDir = folder?.dir;
-  const general = generalLayoutFor(filing);
-  const liveTags = hasLiveTags(general);
-  const stamp2 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
-  const fresh = stamp2 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp2, driftDigest));
-  const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
-  const finishMockup = (documents2, section3, renderedAt) => {
-    const due = noteUpDue(section3.proposals);
-    const tail = {
-      ...report,
-      ...sessionToken ? { session_token: sessionToken } : {},
-      rendered_at: renderedAt,
-      ...currency ? { form_currency: currency } : {},
-      ...due.length > 0 ? { note_up_due: due } : {},
-      ...movedReport,
-      ...folder?.rename ? { writing_folder_rename: folder.rename } : {}
-    };
-    if (pagesDir) {
-      selectDocuments([...documents2, { document_type: "Work_board" }], documentTypes2);
-      refuseForeignMatterPages(pagesDir, dbPath);
-      const projected = listDocuments(documents2, documentTypes2);
-      const written = writePages(section3);
-      const board = boardDocument(section3, written, documentTypes2?.includes("Work_board") ?? false);
-      const views = written ? { view_page_paths: written.pages.view_page_paths } : {};
-      return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...views, ...trashReport2(written), ...tail, timings: withTotal(timings, started) };
-    }
-    const inline = [...documents2, boardDocument(section3, void 0, documentTypes2?.includes("Work_board") ?? false)];
-    return { filing_id: filingId, revision, documents: selectDocuments(inline, documentTypes2).map(withholdHearing), ...tail, timings: withTotal(timings, started) };
-  };
-  if (hit) {
-    timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
-    const section3 = timed(timings, "board_section", () => buildWorkBoardData({ ...ctx, inventory: hit.manifest.inventory }, deadlines));
-    const documents2 = hit.manifest.files.map((f3) => {
-      const markdown = hit.contents.get(f3.file_name);
-      return {
-        document_type: f3.document_type,
-        path: join37(hit.dir, f3.file_name),
-        file_name: f3.file_name,
-        markdown,
-        ...symbolNotes(legendNotes(markdown, f3.document_type))
-      };
-    });
-    return finishMockup(documents2, section3, hit.manifest.rendered_at);
-  }
-  const cited2 = general === null ? [] : timed(timings, "layout_status", () => citedStates(general, filing));
-  const built = documentsForFiling(ctx, timings, general, cited2);
-  if (drift.rows.length > 0) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
-  if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };
-  if (renderMode === "filed") {
-    const deliverable = built;
-    const missing = deliverable.map((doc) => ({ doc, ids: findMissingLawCitations(doc.markdown) })).filter((r3) => r3.ids.length > 0);
-    if (missing.length > 0) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        citation_gate_failed: true,
-        note: `Refusing to render the filed face: statement(s) of law with no authorities.citation would print "${CITATION_MISSING}". ` + missing.map((r3) => `${r3.doc.documentType}: statement_of_law id(s) ${r3.ids.join(", ")}`).join("; ") + ". Add the missing citation(s), or remove those statements from this filing's deployed submissions, then call drafting_forms__render again.",
-        timings: withTotal(timings, started)
-      };
-    }
-    if (deliverable.some((doc) => doc.markdown.includes(ASSOCIATE_JUDGE_UNDETERMINED_LINE))) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        associate_judge_gate_failed: true,
-        note: "Refusing to render the filed face: hearing_details.associate_judge is not yet determined, so neither Form 32 jurisdiction sentence can be printed. Set it to 1 (within the jurisdiction of an associate judge) or 0 (not within), then call drafting_forms__render again.",
-        timings: withTotal(timings, started)
-      };
-    }
-    const unrenderable = deliverable.map((doc) => ({ doc, ids: findUnrenderableOrders(doc.markdown) })).filter((r3) => r3.ids.length > 0);
-    if (unrenderable.length > 0) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        template_key_gate_failed: true,
-        note: "Refusing to render the filed face: deployed order(s) with no usable order_sought.template_key would print an operative sentence that orders nothing. " + unrenderable.map((r3) => `${r3.doc.documentType}: order_sought id(s) ${r3.ids.join(", ")}`).join("; ") + ". Set each template_key to one of renderTemplate's eight values, or remove those orders from this filing's deployed orders, then call drafting_forms__render again.",
-        timings: withTotal(timings, started)
-      };
-    }
-    const gate = confirmationGate(cited2);
-    const changed = gate.changed_since_snapshot.length > 0 ? { changed_since_snapshot: gate.changed_since_snapshot } : {};
-    if (gate.unconfirmed.length > 0) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        confirmation_gate_failed: true,
-        unconfirmed: gate.unconfirmed,
-        ...changed,
-        note: `Refusing to render the filed face: the stored layout cites item(s) no roster lawyer has confirmed: ${gate.unconfirmed.join(", ")}. The mockup tags each one [unverified: ...]; confirm each through /localize at mockup review, then call drafting_forms__render again.` + (gate.changed_since_snapshot.length > 0 ? ` Changed since the snapshot: ${gate.changed_since_snapshot.map((c3) => c3.rule_ref).join(", ")}; re-snapshot the Writing, then confirm.` : ""),
-        timings: withTotal(timings, started)
-      };
-    }
-    const unwritten = deliverable.flatMap((doc) => doc.unwritten ?? []);
-    if (unwritten.length > 0) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        unwritten_gate_failed: true,
-        unwritten,
-        ...changed,
-        note: `Refusing to render the filed face: part(s) of the stored layout have no content: ${unwritten.join(", ")}. The mockup shows each as a \u{1F9E9} line; write each slot's filing_prose row, or add the rows each projection reads, then call drafting_forms__render again.`,
-        timings: withTotal(timings, started)
-      };
-    }
-    const proseFormat = deliverable.flatMap((doc) => doc.prose_format ?? []);
-    if (proseFormat.length > 0) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        prose_format_gate_failed: true,
-        prose_format: proseFormat,
-        ...changed,
-        note: "Refusing to render the filed face: prose line(s) hold text that is not printed wording: " + proseFormat.map((h3) => `${h3.slot} (${h3.rules.join(", ")}): "${h3.line}"`).join("; ") + ". The mockup flags each with `\u{1F9E9} <!-- format: ... -->`; rewrite each line as printed wording, a blank as ________, then call drafting_forms__render again.",
-        timings: withTotal(timings, started)
-      };
-    }
-    const currencyWithheld2 = deliverable.flatMap((doc) => doc.currency_withheld ?? []);
-    if (currencyWithheld2.length > 0 && !filing.filed_on) {
-      return {
-        filing_id: filingId,
-        revision,
-        documents: [],
-        currency_gate_failed: true,
-        currency_withheld: currencyWithheld2,
-        ...changed,
-        note: "Refusing to render the filed face: implied clause(s) name an enactment whose statute-currency result is not `current`: " + currencyWithheld2.map((w3) => `clause_id ${w3.clause_id} (${currencyLabel(w3)})`).join(", ") + ". Reword each clause without the enactment, or record `current` results for the enactment and its cited provision, relayed by /legal-research, through /drafting-data, then call drafting_forms__render again.",
-        timings: withTotal(timings, started)
-      };
-    }
-    refuseUnplacedFacts(dbPath, filing, "drafting_forms__render");
-    const documents2 = deliverable.map((doc) => ({
-      document_type: doc.documentType,
-      file_name: doc.fileName,
-      markdown: toFiledFace(doc.markdown)
-    }));
-    const layout = layoutFor(filing);
-    return { filing_id: filingId, revision, documents: selectDocuments(documents2, documentTypes2), ...changed, ...layout ? { stored_layout: layout } : {}, timings: withTotal(timings, started) };
-  }
-  const untracked = timed(
-    timings,
-    "citation_scan",
-    () => scanUntrackedCitations(dbPath, ctx.proceeding.id, built, ctx.inventory)
-  );
-  if (untracked.length > 0) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, untracked) };
-  refuseForeignTargets(baseDir, built.map((doc) => doc.fileName));
-  timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
-  timed(timings, "archive dropped files", () => archiveDroppedFiles(dbPath, readManifest(dbPath, filingId), built));
-  const finished = built.map((doc) => ({ ...doc, ...withLegend(doc.markdown, doc.documentType) }));
-  const documents = finished.map((doc) => ({
-    document_type: doc.documentType,
-    path: timed(timings, `write ${doc.fileName}`, () => writeDocument2(baseDir, doc, revision)),
-    file_name: doc.fileName,
-    markdown: doc.markdown,
-    ...symbolNotes(doc.symbolNotes)
-  }));
-  if (stamp2) {
-    timed(
-      timings,
-      "manifest_write",
-      () => writeManifest(dbPath, filingId, {
-        stamp: stamp2,
-        folder: basename8(baseDir),
-        rendered_at: ctx.rendered,
-        files: finished.map((doc) => ({ document_type: doc.documentType, file_name: doc.fileName, sha256: sha256(doc.markdown), label: doc.label })),
-        inventory: ctx.inventory,
-        parties_drift: driftDigest
-      })
-    );
-  }
-  const section2 = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
-  return finishMockup(documents, section2, ctx.rendered);
-}
-function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {}, now = nowStamp(), sessionToken, draftDir, todos = TODOS_NOT_READ, dates = DATES_NOT_READ) {
-  const timings = [];
-  const started = performance.now();
-  const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir);
-  const proceeding = fetchProceeding(dbPath, proceedingId);
-  if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
-    throw new ValidationError(
-      "This proceeding has a Writing, so its jobs are on each Writing's Job Board -- render a Writing instead"
-    );
-  }
-  const revision = fetchRevision(dbPath);
-  const section2 = timed(
-    timings,
-    "board_section",
-    () => buildPreFilingBoardData(dbPath, proceeding, {
-      revision,
-      matter: client.matterNo ?? "",
-      client: client.clientName ?? proceeding.matter_reference,
-      rendered: now
-    })
-  );
-  let pages;
-  let change;
-  if (draft !== void 0) {
-    pages = writeMatterPages(dbPath, draft, client, now, revision, todos, dates, timings, { section: section2 });
-    change = recordPagesState(dbPath, todos, section2, sessionToken);
-  }
-  return {
-    proceeding_id: proceedingId,
-    revision,
-    board_summary: renderBoardSummary(boardSectionOf(dbPath, section2, client, now, revision, dates), client, todos),
-    ...pages ?? {},
-    ...pages !== void 0 ? { job_board_path: pagePathFor(pages, section2.meta) } : {},
-    pages_written: pages !== void 0,
-    ...change ?? {},
-    ...sessionToken ? { session_token: sessionToken } : {},
-    rendered_at: now,
-    timings: withTotal(timings, started)
-  };
-}
-function unplacedFactWarnings(dbPath, filing) {
-  return fetchUnplacedFacts(dbPath, filing).map((u3) => ({
-    kind: "other",
-    field_or_id: `fact ${u3.fact_id}`,
-    message: `A submission rests on a fact the facts Part does not hold, so the form leaves it out: ${JSON.stringify(u3.postulate)}.`
-  }));
-}
-function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
-  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
-  const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form32 again.`
-    };
-  }
-  const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
-  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form32");
-  if (refusal2) return refusal2;
-  const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
-  if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form32");
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
-  const markdown = renderForm32FiledFace(ctx, lenient);
-  const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
-  const publishName = publishFileName("form-32.md");
-  return {
-    filing_id: filingId,
-    revision,
-    file_name: "form-32.md",
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-32.md", markdown) },
-    publish_file_name: publishName,
-    publish_json: sidecar2.json,
-    ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
-    warnings: sidecar2.warnings,
-    form_currency: formCurrency("form-32", nowStamp().slice(0, 10), seams)
-  };
-}
-function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
-  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
-  const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form33 again.`
-    };
-  }
-  const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
-  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form33");
-  if (refusal2) return refusal2;
-  const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
-  if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form33");
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
-  const markdown = renderForm33FiledFace(ctx, lenient);
-  const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
-  const publishName = publishFileName("form-33.md");
-  return {
-    filing_id: filingId,
-    revision,
-    file_name: "form-33.md",
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-33.md", markdown) },
-    publish_file_name: publishName,
-    publish_json: sidecar2.json,
-    ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
-    warnings: sidecar2.warnings,
-    form_currency: formCurrency("form-33", nowStamp().slice(0, 10), seams)
-  };
-}
-function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFolder2) {
-  const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
-  const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_affidavit again.`
-    };
-  }
-  const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
-  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_affidavit");
-  if (refusal2) return refusal2;
-  if (filing.kind !== "notice_of_application" && filing.kind !== "application_response") {
-    throw new ValidationError(
-      `"${filing.title}" is not a notice of application or an application response, the only Writings whose supporting affidavits are made here.`
-    );
-  }
-  const affidavit = fetchAffidavits(dbPath, filingId).find((a3) => a3.id === documentId);
-  if (affidavit === void 0) {
-    throw new ValidationError(`That document is not an affidavit listed as supporting "${filing.title}".`);
-  }
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
-  const markdown = renderAffidavitFiledFace(ctx, affidavit);
-  const fileName = `affidavit-${documentId}.md`;
-  return {
-    filing_id: filingId,
-    document_id: documentId,
-    revision,
-    file_name: fileName,
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, fileName, markdown) }
-  };
-}
-function submissionFormsEmitBccaBook(dbPath, filingId) {
-  const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_book again.`
-    };
-  }
-  const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
-  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_book");
-  if (refusal2) return refusal2;
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
-  return {
-    filing_id: filingId,
-    revision,
-    file_name: "bcca-book.md",
-    markdown: renderBccaBookFiledFace(ctx)
-  };
-}
-function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
-  const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
-    return {
-      filing_id: filingId,
-      schema_version: schemaVersion,
-      current_schema_version: currentVersion,
-      bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_factum again.`
-    };
-  }
-  const filing = fetchFilingById(dbPath, filingId);
-  refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
-  const refusal2 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_factum");
-  if (refusal2) return refusal2;
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
-  return {
-    filing_id: filingId,
-    revision,
-    file_name: "bcca-factum.md",
-    markdown: renderBccaFactumFiledFace(ctx, datedOn)
-  };
-}
+// src/submission/forms/pre-filing-check.ts
 function submissionFormsPreFilingCheck(dbPath, filingId, packageDir) {
   const schemaVersion = readSchemaVersion(dbPath);
   const currentVersion = renderableSchemaVersion(currentSchemaVersion());
@@ -102293,24 +102309,49 @@ function submissionFormsPreFilingCheck(dbPath, filingId, packageDir) {
   const revision = fetchRevision(dbPath);
   return { filing_id: filingId, revision, ...runPreFilingChecks(dbPath, filingId, packageDir) };
 }
-function fetchFilingById(dbPath, filingId) {
-  const found = submissionDataQuery(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]).rows;
-  if (found.length === 0) throw new ValidationError(`No filing found with id ${filingId}`);
-  return found[0];
+
+// src/submission/filing-order.ts
+var DAY_MS = 864e5;
+var HOUR_MS = 36e5;
+function localMs(date3, hours = 0, minutes = 0) {
+  const [y3, m3, d3] = date3.split("-").map(Number);
+  return new Date(y3, m3 - 1, d3, hours, minutes, 0, 0).getTime();
 }
-function refuseJobOnlyBoard(filing) {
-  if (isJobOnlyBoard(filing)) {
-    throw new ValidationError(`Job Board ${filing.id} has no Writing, so it has no document`, "job_board_only");
-  }
+function stampMs(stamp2) {
+  const [date3, time3] = stamp2.split(" ");
+  const [hh, mm] = (time3 ?? "00:00").split(":").map(Number);
+  return localMs(date3, hh, mm);
 }
-function readDbMetaValue(dbPath, key) {
-  const rows22 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
-  return rows22.length > 0 ? rows22[0].value : null;
+function isImminent(hearingDate, now) {
+  if (hearingDate === null) return false;
+  const hearing = localMs(hearingDate);
+  if (hearing - localMs(now.slice(0, 10)) > 7 * DAY_MS) return false;
+  const endOfHearingDay = localMs(hearingDate, 23, 59);
+  return stampMs(now) - endOfHearingDay <= 12 * HOUR_MS;
 }
-function readSchemaVersion(dbPath) {
-  const value = readDbMetaValue(dbPath, "schema_version");
-  return value === null ? null : Number(value);
+function orderFilings(filings, now) {
+  const band = (f3) => f3.retired ? 3 : isImminent(f3.hearing_date, now) ? 0 : f3.latest_activity === null ? 2 : 1;
+  return [...filings].sort((a3, b3) => {
+    const bandA = band(a3);
+    const bandB = band(b3);
+    if (bandA !== bandB) return bandA - bandB;
+    if (bandA === 0 && a3.hearing_date !== b3.hearing_date) return a3.hearing_date < b3.hearing_date ? -1 : 1;
+    if (bandA === 1 && a3.latest_activity !== b3.latest_activity) return a3.latest_activity > b3.latest_activity ? -1 : 1;
+    return a3.filing_id - b3.filing_id;
+  });
 }
+function orderByRecency(filings) {
+  const band = (f3) => f3.retired ? 2 : f3.latest_activity === null ? 1 : 0;
+  return [...filings].sort((a3, b3) => {
+    const bandA = band(a3);
+    const bandB = band(b3);
+    if (bandA !== bandB) return bandA - bandB;
+    if (bandA === 0 && a3.latest_activity !== b3.latest_activity) return a3.latest_activity > b3.latest_activity ? -1 : 1;
+    return a3.filing_id - b3.filing_id;
+  });
+}
+
+// src/submission/forms/rank-filings.ts
 function rankFilings(dbPath, client, now, stamp2, timings) {
   const listed = timed(
     timings,
@@ -102422,9 +102463,16 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
   );
   return timed(timings, "order", () => orderFilings(ranked, now));
 }
+
+// src/submission/forms/bootstrap.ts
+import { randomBytes as randomBytes4 } from "node:crypto";
+import { existsSync as existsSync36 } from "node:fs";
+function newSessionToken(unattended) {
+  return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
+}
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync34(dbPath)) {
+  if (!existsSync36(dbPath)) {
     throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
@@ -102509,6 +102557,9 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
     timings: withTotal(timings, started)
   };
 }
+
+// src/submission/forms/bootstrap-job.ts
+import { dirname as dirname24 } from "node:path";
 function renderStateOf(dbPath, filingId, client) {
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
@@ -102520,10 +102571,10 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== void 0 && client.clientNo !== void 0 && client.matterNo !== void 0;
   const queue = complete ? result.filings.filter((f3) => !f3.retired_on && !f3.job_board_only && f3.render_state !== "fresh").map((f3) => f3.filing_id) : [];
-  const pages = (only) => writeMatterPages(dbPath, dirname20(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
+  const pages = (only) => writeMatterPages(dbPath, dirname24(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
   return startRenderJob({
     dbPath,
-    ...result.matter_board_path ? { draftDir: dirname20(result.matter_board_path) } : {},
+    ...result.matter_board_path ? { draftDir: dirname24(result.matter_board_path) } : {},
     queue,
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
@@ -102861,12 +102912,12 @@ async function submissionDataMergeJobs(args, env = process.env) {
 }
 
 // src/submission/open-session.ts
-import { existsSync as existsSync36, readdirSync as readdirSync19 } from "node:fs";
-import { basename as basename9, dirname as dirname21, join as join39 } from "node:path";
+import { existsSync as existsSync38, readdirSync as readdirSync19 } from "node:fs";
+import { basename as basename11, dirname as dirname25, join as join40 } from "node:path";
 
 // src/case/ingest-coverage.ts
-import { existsSync as existsSync35 } from "node:fs";
-import { join as join38 } from "node:path";
+import { existsSync as existsSync37 } from "node:fs";
+import { join as join39 } from "node:path";
 var DRIVER5 = String.raw`
 import json, sys
 
@@ -102884,7 +102935,7 @@ main()
 `.trim();
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs, correspondenceGlobs, env = process.env) {
-  if (!existsSync35(join38(caseDataDir, "main.sqlite"))) {
+  if (!existsSync37(join39(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
@@ -102936,7 +102987,7 @@ async function readMatterTodos(practiceDb2, matterNo) {
 // src/submission/open-session.ts
 var MATTER_TOKEN = /^\s*((?:\d+\.)?[A-Za-z]?\d+(?:[A-Za-z0-9.-]*[A-Za-z0-9])?)[.-]*\s+/;
 function matterToken(matterRoot) {
-  return MATTER_TOKEN.exec(basename9(matterRoot))?.[1] ?? null;
+  return MATTER_TOKEN.exec(basename11(matterRoot))?.[1] ?? null;
 }
 function trashReport(written) {
   return {
@@ -102970,7 +103021,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join39(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join40(draftDir, MATTER_BOARD_FILE),
         job_board_path: board.path,
         ...written.pages ? { job_board_paths: written.pages.job_board_paths, view_page_paths: written.pages.view_page_paths } : {},
         ...trashReport(rendered)
@@ -103025,7 +103076,7 @@ function openedIngestCoverage(opened, dbPath, root) {
     return { status: "unavailable", reason: `the filing's stored layout names ${unknown2.join(", ")}, which is not a document type; re-snapshot the Writing` };
   }
   const correspondence = types.filter((t3) => t3.id.startsWith("correspondence_") || t3.id === "client_communications").map((t3) => t3.id);
-  return readIngestCoverage(dirname21(dbPath), root, globsFor(map.entries, declared), globsFor(map.entries, correspondence));
+  return readIngestCoverage(dirname25(dbPath), root, globsFor(map.entries, declared), globsFor(map.entries, correspondence));
 }
 function openedFormCurrency(opened, dbPath) {
   if (opened?.filing_id === void 0) return void 0;
@@ -103039,7 +103090,7 @@ async function lookUpMatter(root, practiceDb2, client) {
   const token = matterToken(root);
   if (token === null) {
     return {
-      lookup: { matt_num: null, found: false, note: `No matter number at the start of the folder name "${basename9(root)}"; client identity not looked up.` },
+      lookup: { matt_num: null, found: false, note: `No matter number at the start of the folder name "${basename11(root)}"; client identity not looked up.` },
       client
     };
   }
@@ -103083,9 +103134,9 @@ function practiceConfigBlocking(dbPath) {
   }
 }
 function backups(dbPath) {
-  const dir = dirname21(dbPath);
-  const prefix = `${basename9(dbPath)}.bak-`;
-  return new Set(existsSync36(dir) ? readdirSync19(dir).filter((name) => name.startsWith(prefix)) : []);
+  const dir = dirname25(dbPath);
+  const prefix = `${basename11(dbPath)}.bak-`;
+  return new Set(existsSync38(dir) ? readdirSync19(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
   const started = performance.now();
@@ -103129,7 +103180,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
     if (to2 !== null && to2 !== from) {
-      migrated = { from, to: to2, backup: written.length > 0 ? join39(dirname21(dbPath), written[0]) : null };
+      migrated = { from, to: to2, backup: written.length > 0 ? join40(dirname25(dbPath), written[0]) : null };
       if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
     }
   }
@@ -103172,7 +103223,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync37, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, statSync as statSync16 } from "node:fs";
+import { existsSync as existsSync39, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, statSync as statSync16 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -103208,7 +103259,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3216.join(shipped.root, ...rel);
-  if (!existsSync37(path)) {
+  if (!existsSync39(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -103273,7 +103324,7 @@ function assertSegment(value, label2) {
 }
 function confinedSessionsDir(caseData) {
   const dir = pathWin3216.join(caseData, "form-sessions");
-  if (existsSync37(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync39(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync10.native(dir)})`);
   }
   return dir;
@@ -103281,7 +103332,7 @@ function confinedSessionsDir(caseData) {
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
   const dir = pathWin3216.join(sessions, sessionId);
-  if (existsSync37(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync39(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync10.native(dir)})`);
   }
   return dir;
@@ -103297,12 +103348,12 @@ function confineWritingFolder(root, writingFolder) {
 }
 function checkSession(root, caseData, sessions, sessionId) {
   const ctxPath = pathWin3216.join(confineSessionDir(sessions, sessionId), "ctx.json");
-  if (!existsSync37(ctxPath)) {
+  if (!existsSync39(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
   const ctx = JSON.parse(readFileSync26(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
-    if (typeof stored !== "string" || stored === "" || !existsSync37(stored)) return false;
+    if (typeof stored !== "string" || stored === "" || !existsSync39(stored)) return false;
     return realpathSync10.native(stored).toLowerCase() === expected.toLowerCase() && statSync16(stored).isDirectory();
   };
   if (!same2(ctx.matter_path, root) || !same2(ctx.case_data_folder, caseData)) {
@@ -103334,7 +103385,7 @@ function confineLocatePaths(caseData, resultJson) {
     if (typeof value !== "string" || !pathWin3216.isAbsolute(value)) {
       throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
-    const resolved = existsSync37(value) ? realpathSync10.native(value) : pathWin3216.resolve(value);
+    const resolved = existsSync39(value) ? realpathSync10.native(value) : pathWin3216.resolve(value);
     assertContained(caseData, resolved, label2, value);
   }
 }
@@ -103356,11 +103407,11 @@ function timeoutAdvice(command, sessionId) {
 }
 
 // src/submission/publish-tools.ts
-import { existsSync as existsSync39, readdirSync as readdirSync22 } from "node:fs";
+import { existsSync as existsSync41, readdirSync as readdirSync22 } from "node:fs";
 import { win32 as pathWin3218 } from "node:path";
 
 // src/submission/publish-host.ts
-import { existsSync as existsSync38, readdirSync as readdirSync21 } from "node:fs";
+import { existsSync as existsSync40, readdirSync as readdirSync21 } from "node:fs";
 import { win32 as pathWin3217 } from "node:path";
 var DRIVER7 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -103426,7 +103477,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
     installRoot
   });
   const path = pathWin3217.join(shipped.root, ...rel);
-  if (!existsSync38(path)) {
+  if (!existsSync40(path)) {
     throw new DataServerError(
       `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -103511,7 +103562,7 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
   const target = publishTarget(args.matter_root, args.db_path, args.writing_folder, env);
   const dataFolders = ["vaniac-submissions", vaniacFilingFolder(args.writing_folder)];
   const pkg = writingSubfolder(target, "Package");
-  const previous = existsSync39(pkg) ? readdirSync22(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
+  const previous = existsSync41(pkg) ? readdirSync22(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
   if (previous.length > 0) {
     return {
       success: false,
@@ -103572,11 +103623,11 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync41, mkdirSync as mkdirSync19, readdirSync as readdirSync24, realpathSync as realpathSync12 } from "node:fs";
+import { existsSync as existsSync43, mkdirSync as mkdirSync19, readdirSync as readdirSync24, realpathSync as realpathSync12 } from "node:fs";
 import { win32 as pathWin3222 } from "node:path";
 
 // src/submission/email-recipients.ts
-import { dirname as dirname22 } from "node:path";
+import { dirname as dirname26 } from "node:path";
 function named(name, address2) {
   return name ? `"${name.replace(/["\\]/g, "\\$&")}" <${address2}>` : address2;
 }
@@ -103614,7 +103665,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
   let note;
   if ("filing_id" in source) {
     const filing = fetchFiling(dbPath, source.filing_id);
-    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname22(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
+    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname26(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
     const recipients = mergeSharedRecipients(fetchFilingRecipients(dbPath, filing, parties2));
     if (recipients.some((r3) => r3.role === "bcc")) {
       throw new DataServerError(
@@ -103628,7 +103679,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     const rows22 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
-      const { parties: parties2, drift } = draftingParties(dirname22(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+      const { parties: parties2, drift } = draftingParties(dirname26(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
       const counsel = fetchServiceListCounsel(dbPath, proceeding.id, parties2);
       for (const d3 of drift.rows) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
@@ -103658,7 +103709,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync3, existsSync as existsSync40, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync27, realpathSync as realpathSync11, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync42, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync27, realpathSync as realpathSync11, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3221 } from "node:path";
 
@@ -103879,7 +103930,7 @@ function findingParas(finding, pinpoint) {
   return [...found].sort((x3, y3) => x3 - y3);
 }
 function foreignEntries(folder) {
-  if (!existsSync40(folder)) return [];
+  if (!existsSync42(folder)) return [];
   return readdirSync23(folder, { withFileTypes: true }).filter((entry) => !(entry.isFile() && OWN_FILE.test(entry.name))).map((entry) => entry.name);
 }
 function confineMatterFile(root, given, label2) {
@@ -103903,12 +103954,12 @@ function confineMatterFile(root, given, label2) {
 function answerFile(root, named2) {
   if (named2 === null) return null;
   const path = confineMatterFile(root, named2, "the answer file the finding names");
-  return { named: named2, path, exists: existsSync40(path) };
+  return { named: named2, path, exists: existsSync42(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
   const path = pathWin3221.join(shipped.root, ...rel);
-  if (!existsSync40(path)) {
+  if (!existsSync42(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -104305,7 +104356,7 @@ function writeEmlPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3222.join(shipped.root, ...rel);
-  if (!existsSync41(path)) {
+  if (!existsSync43(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -105283,7 +105334,7 @@ function readMessage(args) {
 
 // src/correspondence/reply-draft.ts
 import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync29, realpathSync as realpathSync14, writeSync as writeSync7 } from "node:fs";
-import { basename as basename10, extname as extname5, win32 as pathWin3224 } from "node:path";
+import { basename as basename12, extname as extname5, win32 as pathWin3224 } from "node:path";
 
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
@@ -105539,7 +105590,7 @@ function exportDocx(args, root) {
     throw new PathOutOfScopeError(`path must be a .md at the top of the 0. DRAFT folder: ${given}`);
   }
   if (extname5(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
-  const stem3 = basename10(source, extname5(source));
+  const stem3 = basename12(source, extname5(source));
   const docx = markdownToDocx(readFileSync29(source, "utf-8"));
   const written = writeNextFree(dir, stem3, ".docx", docx);
   const wanted = pathWin3224.join(dir, `${stem3}.docx`);
@@ -106703,8 +106754,8 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID9 } from "node:crypto";
-import { existsSync as existsSync42, readFileSync as readFileSync30 } from "node:fs";
-import { dirname as dirname23, join as join40 } from "node:path";
+import { existsSync as existsSync44, readFileSync as readFileSync30 } from "node:fs";
+import { dirname as dirname27, join as join41 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -106777,7 +106828,7 @@ function readJson2(file) {
 }
 function person(env) {
   const config2 = configPath(env);
-  const raw = existsSync42(config2) ? readJson2(config2).person : void 0;
+  const raw = existsSync44(config2) ? readJson2(config2).person : void 0;
   if (raw === void 0 || raw === null || raw === "") {
     throw new DataServerError(
       `person is not set: this machine's probanda.json names no firm roster key ("person"), so a preference has no owner. Set it with practice_data__upsert_firm_profile, then retry.`,
@@ -106791,10 +106842,10 @@ function person(env) {
 }
 function preferencesFile(env) {
   const key = person(env);
-  return { file: join40(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
+  return { file: join41(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
-  if (!existsSync42(file)) return [];
+  if (!existsSync44(file)) return [];
   const entries = readJson2(file).entries;
   if (!Array.isArray(entries)) throw new DataServerError(`${file} has no "entries" list`, "invalid_file");
   return entries;
@@ -106851,10 +106902,10 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
   throw new ValidationError(`op must be "add" or "retire"`);
 }
 function suggestionLogPath(env) {
-  return join40(dirname23(configPath(env)), "suggestions.local.json");
+  return join41(dirname27(configPath(env)), "suggestions.local.json");
 }
 function readLog(file) {
-  if (!existsSync42(file)) return { suggestions: [], held: [] };
+  if (!existsSync44(file)) return { suggestions: [], held: [] };
   const { suggestions, held = [] } = readJson2(file);
   if (!Array.isArray(suggestions)) throw new DataServerError(`${file} has no "suggestions" list`, "invalid_file");
   if (!Array.isArray(held)) throw new DataServerError(`${file} has a "held" entry that is not a list`, "invalid_file");
@@ -106925,7 +106976,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync43, mkdirSync as mkdirSync20, readFileSync as readFileSync31, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync45, mkdirSync as mkdirSync20, readFileSync as readFileSync31, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3225 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -106948,7 +106999,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative5, "path");
   const resolved = resolveWithin(root, relative5, "path", false);
-  const exists = existsSync43(resolved);
+  const exists = existsSync45(resolved);
   if (exists && statSync18(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5}`,
@@ -106986,7 +107037,7 @@ function repoDocsRead(relative5, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename11, dirname as dirname24, join as join42, relative as relative4 } from "node:path";
+import { basename as basename13, dirname as dirname28, join as join43, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -108400,10 +108451,10 @@ var RAW_RESEARCH_FIXTURE = {
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync21, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
-import { join as join41 } from "node:path";
+import { join as join42 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join41(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
+  return join42(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -108420,7 +108471,7 @@ function writePreview(dir, base, html, fixture) {
   const text5 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
-    const path = join41(dir, `${base} preview ${n3}.html`);
+    const path = join42(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync12(path, text5, { flag: "wx" });
       return path;
@@ -108480,7 +108531,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname24(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname28(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if (page2 === "Litigation Strategy" && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -108510,14 +108561,14 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     viewPage ? { views: { [page2]: page2 === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page2 === "Job Board" ? { jobBoard: composed } : { matterBoard: composed }
   );
-  const target = page2 === "Litigation Strategy" ? join42(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = page2 === "Litigation Strategy" ? join43(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
     const which = ids.filing_id !== void 0 ? `Job Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname24(target), stem2(basename11(target)), html, false) };
+  return { path: writePreview(dirname28(target), stem2(basename13(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -108536,7 +108587,7 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync45,
+  existsSync as existsSync47,
   mkdirSync as mkdirSync22,
   readdirSync as readdirSync28,
   readFileSync as readFileSync37,
@@ -108848,9 +108899,9 @@ function docxText(path) {
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync44, mkdtempSync as mkdtempSync2, readFileSync as readFileSync34, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync46, mkdtempSync as mkdtempSync2, readFileSync as readFileSync34, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { extname as extname6, isAbsolute as isAbsolute8, join as join43 } from "node:path";
+import { extname as extname6, isAbsolute as isAbsolute8, join as join44 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -108878,11 +108929,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname26 = import.meta.url;
-      if (dirname26.startsWith("data:")) {
-        dirname26 = "/";
+      let dirname30 = import.meta.url;
+      if (dirname30.startsWith("data:")) {
+        dirname30 = "/";
       }
-      var require2 = createRequire(dirname26);
+      var require2 = createRequire(dirname30);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -114539,7 +114590,7 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute8(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync44(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync46(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync34(path);
   const pending3 = loadPdfium(wasm);
@@ -114609,13 +114660,13 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         continue;
       }
       const { width, height, tiles } = plan;
-      renderDir ??= mkdtempSync2(join43(tmpdir5(), "probanda-pages-"));
+      renderDir ??= mkdtempSync2(join44(tmpdir5(), "probanda-pages-"));
       const images = [];
       for (const [i3, [top, rows22]] of tiles.entries()) {
         await nextTurn();
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows22));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-        const file = join43(renderDir, `${name}.png`);
+        const file = join44(renderDir, `${name}.png`);
         writeFileSync13(file, png);
         const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows22 };
         if (tiles.length > 1) image.tile = i3 + 1;
@@ -114966,14 +115017,14 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3228.join(downloadsDir(env), sourceFilename);
-  if (!existsSync45(source) || !statSync21(source).isFile()) {
+  if (!existsSync47(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3228.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3228.join(dir, destName);
-  if (existsSync45(dest)) {
+  if (existsSync47(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync21(source).size;
@@ -115017,7 +115068,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3228.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync45(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3228.dirname(destinationDir));
+  let law = existsSync47(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3228.dirname(destinationDir));
   while (pathWin3228.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3228.dirname(law);
   const root = validateMatterRoot(pathWin3228.dirname(law));
   const draft = findDraftDir(root);
@@ -115142,7 +115193,7 @@ function nonNegativeInt(value, label2, fallback, min) {
 }
 function manifestMarker(law, file) {
   const path = pathWin3228.join(law, MANIFEST);
-  if (!existsSync45(path)) return null;
+  if (!existsSync47(path)) return null;
   let marker = null;
   for (const line of readFileSync37(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
@@ -115381,7 +115432,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync45(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync47(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3228.dirname(destinationDir));
   if (zoneProblem("write", pathWin3228.join(parent, pathWin3228.basename(destinationDir)))) {
@@ -115421,8 +115472,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join44 } from "node:path";
-var PROBE_STEM = join44(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join45 } from "node:path";
+var PROBE_STEM = join45(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -115810,7 +115861,7 @@ function sectionBlocks(chunks) {
 import { createHash as createHash13 } from "node:crypto";
 import { mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir7 } from "node:os";
-import { join as join45 } from "node:path";
+import { join as join46 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -115836,13 +115887,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged = [];
         let workDir = null;
         const write = (side, n3, facts) => {
-          workDir ??= mkdtempSync3(join45(tmpdir7(), "probanda-compare-"));
-          const dir = join45(workDir, side);
+          workDir ??= mkdtempSync3(join46(tmpdir7(), "probanda-compare-"));
+          const dir = join46(workDir, side);
           mkdirSync23(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows22], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join45(dir, `${name}.png`);
+            const file = join46(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows22) * facts.width * 3);
             writeFileSync15(file, encodePng(rgb, facts.width, rows22));
             return file;
@@ -116056,7 +116107,7 @@ async function saveAnswerTool(args, env = process.env) {
 // src/key-request/tools.ts
 import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
 import { createServer as createServer2 } from "node:http";
-import { join as join46 } from "node:path";
+import { join as join47 } from "node:path";
 
 // src/key-request/page.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
@@ -116201,7 +116252,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join46(defaultStateDir(env), "key-request.json.dpapi");
+  return join47(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -116847,9 +116898,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname25(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname25(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname25(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname29(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname29(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname29(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
@@ -116900,7 +116951,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync46 } from "node:fs";
+import { existsSync as existsSync48 } from "node:fs";
 import { createServer as createServer3 } from "node:http";
 import { isAbsolute as isAbsolute9 } from "node:path";
 
@@ -117019,7 +117070,7 @@ async function handle3(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute9(dbPath) || !existsSync46(dbPath)) {
+  if (!isAbsolute9(dbPath) || !existsSync48(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);
