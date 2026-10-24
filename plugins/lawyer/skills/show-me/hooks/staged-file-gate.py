@@ -66,7 +66,7 @@ def deny(reason):
 def main():
     if os.environ.get("COCLERK_SENDFILE_ANY") == "1" or not os.path.isdir(CONTAINER_ROOT):
         return 0
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     tool_input = payload.get("tool_input") or {}
     for path in strings(tool_input.get("files")):
         if refused(path):

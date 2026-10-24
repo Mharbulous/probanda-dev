@@ -52,7 +52,7 @@ The CanLII citator (get_case_citator, get_case_citator_tease) runs only inside c
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     match = CANLII_TOOL_RE.match(payload.get("tool_name") or "")
     if match is None or match.group(1) in SETUP_TOOLS or match.group(1) == CURRENCY_TOOL:
         return 0

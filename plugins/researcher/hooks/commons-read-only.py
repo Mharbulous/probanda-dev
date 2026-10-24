@@ -8,7 +8,7 @@ be done, so every write tool is refused here.
 import json
 import sys
 
-json.load(sys.stdin)
+json.loads(sys.stdin.buffer.read().decode("utf-8"))
 print(json.dumps({
     "hookSpecificOutput": {
         "hookEventName": "PreToolUse",

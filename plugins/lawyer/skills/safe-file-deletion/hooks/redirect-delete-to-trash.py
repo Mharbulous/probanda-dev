@@ -933,7 +933,7 @@ def emit(decision, reason, updated_input=None):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     tool_name = payload.get("tool_name") or ""
     if not TOOL_RE.fullmatch(tool_name):
         return 0

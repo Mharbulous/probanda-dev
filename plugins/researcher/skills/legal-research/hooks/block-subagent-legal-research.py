@@ -30,7 +30,7 @@ Stop and return this item to the main session, which runs /legal-research itself
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     if payload.get("tool_name") != "Skill":
         return 0
     tool_input = payload.get("tool_input") or {}

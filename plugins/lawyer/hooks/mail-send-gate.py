@@ -47,7 +47,7 @@ def allowed(tool_input):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     tool_input = payload.get("tool_input") or {}
     if not allowed(tool_input):
         sys.stdout.write(json.dumps({"hookSpecificOutput": {

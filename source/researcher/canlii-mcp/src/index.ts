@@ -2,6 +2,7 @@
 // REGRESSION-PRONE: CanLII-first research has recurred repeatedly. See docs/design/2026-09-24 research-lawyer Westlaw-first fix plan.md before editing. Tests: legal-research/tests/.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { pathToFileURL } from "node:url";
 import { z } from "zod";
 import {
 	CitedCasesResponseSchema,
@@ -127,8 +128,8 @@ function sanitizeError(message: string): string {
 	return message.replace(/api_key=[^&\s]*/gi, "api_key=REDACTED");
 }
 
-function errorResponse(message: string) {
-	return textResponse(sanitizeError(message));
+export function errorResponse(message: string) {
+	return { ...textResponse(sanitizeError(message)), isError: true };
 }
 
 const dateParametersSchema = {
@@ -545,7 +546,10 @@ async function main() {
 	await server.connect(transport);
 }
 
-main().catch((error) => {
-	console.error("Fatal error:", error);
-	process.exit(1);
-});
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+	main().catch((error) => {
+		console.error("Fatal error:", error);
+		process.exit(1);
+	});
+}

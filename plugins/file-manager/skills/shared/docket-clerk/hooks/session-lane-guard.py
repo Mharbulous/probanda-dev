@@ -73,7 +73,7 @@ def lane_from_transcript(path):
 
 
 def main():
-    payload = json.load(sys.stdin)
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     session = re.sub(r"[^\w-]", "", payload.get("session_id") or "")
     if not session:
         return 0
