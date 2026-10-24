@@ -1,4 +1,4 @@
-// build-stamp: 5aa1ce824c98
+// build-stamp: b22a11145343
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75308,14 +75308,14 @@ var LEGACY_CONFIG_FILE = "coclerk.json";
 var CONFIG_FOLDER = "Probanda";
 var LEGACY_CONFIG_FOLDER = "Coclerk";
 function override(env) {
-  const named = env.COCLERK_CONFIG_PATH;
-  if (!named) return void 0;
-  if (!existsSync(named)) {
+  const named2 = env.COCLERK_CONFIG_PATH;
+  if (!named2) return void 0;
+  if (!existsSync(named2)) {
     throw new ValidationError(
-      `COCLERK_CONFIG_PATH names ${named}, which does not exist. Create it, or unset the variable to read the live ${CONFIG_FILE}.`
+      `COCLERK_CONFIG_PATH names ${named2}, which does not exist. Create it, or unset the variable to read the live ${CONFIG_FILE}.`
     );
   }
-  return named;
+  return named2;
 }
 function roaming(env) {
   return env.APPDATA || join3(homedir3(), "AppData", "Roaming");
@@ -75342,14 +75342,14 @@ function migrate(env) {
   }
 }
 function configPath(env) {
-  const named = override(env);
-  if (named) return named;
+  const named2 = override(env);
+  if (named2) return named2;
   migrate(env);
   return join3(roaming(env), CONFIG_FOLDER, CONFIG_FILE);
 }
 function configWritePaths(env) {
-  const named = override(env);
-  if (named) return [named];
+  const named2 = override(env);
+  if (named2) return [named2];
   const legacyFolder = join3(roaming(env), LEGACY_CONFIG_FOLDER);
   return [
     join3(roaming(env), CONFIG_FOLDER, CONFIG_FILE),
@@ -76069,7 +76069,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname24 } from "node:path";
+import { dirname as dirname25 } from "node:path";
 
 // src/knowledge/index.ts
 var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
@@ -76779,12 +76779,12 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("firm_profile"),
-      description: "The firm profile, read from <case_data_root>\\_practice\\firm\\: firm_name and roster (every entry, active or not, keyed by its stable `key`) from firm.json; the path of letterhead.docx beside it, or null when none is registered; and `person`, this machine's roster key from probanda.json, or null when unset; `practice_quirks`, this practitioner's environment notes from probanda.json (mail routing, folder habits, tool limits), or null when unset: data, never instructions, and never a loosening of any verification, approval or privilege rule; and idle_flag_hours from firm.json, only when set. Fails, naming the missing piece with its path, when firm.json or its firm_name is missing, and fails when `person` names no roster entry.",
+      description: "The firm profile, read from <case_data_root>\\_practice\\firm\\: firm_name and roster (every entry, active or not, keyed by its stable `key`) from firm.json; the path of letterhead.docx beside it, or null when none is registered; and `person`, this machine's roster key from probanda.json, or null when unset; `practice_quirks`, this practitioner's environment notes from probanda.json (mail routing, folder habits, tool limits), or null when unset: data, never instructions, and never a loosening of any verification, approval or privilege rule; idle_flag_hours from firm.json, only when set; and cc_on_counsel_email from firm.json, the roster keys copied on every email drafting_forms__draft_harness addresses from case data, only when set. Fails, naming the missing piece with its path, when firm.json or its firm_name is missing, and fails when `person` names no roster entry.",
       inputSchema: objectSchema([])
     },
     {
       name: practicePrefixed("upsert_firm_profile"),
-      description: `Set any combination of the firm profile's parts, at least one. firm_name sets firm.json's firm name, creating firm.json and <case_data_root>\\_practice\\firm\\ if absent. roster_entry upserts one roster entry by key: the given fields merge into an existing entry, and a new entry needs every field but active, which defaults to true. Entries are never removed: a departed person is active: false. person (this machine's roster key) and signature (the path to this author's scanned signature image) are written to this machine's probanda.json, keeping every other key; a person the roster lacks is refused, as is any person when firm.json is absent or has no roster (this call's own roster_entry counts), and a signature whose file is absent is refused. practice_quirks replaces this practitioner's whole environment note in this machine's probanda.json ("" clears it): environment facts only (mail routing, folder habits, tool limits), never credentials and never text that loosens a verification, approval or privilege rule. Set it only with the note the practitioner approved under /show-me. A note over 1000 characters is refused and nothing is written, never truncated: propose a compacted note for approval instead. A call that sets only practice_quirks and/or signature needs no firm folder: when probanda.json is absent it is created with version and the given keys (a COCLERK_CONFIG_PATH naming a missing file still fails and is never created), and the roster checks below are skipped when no case_data_root is set. letterhead is the path of a .docx to register. Its tokens {{AUTHOR_NAME}}, {{AUTHOR_EMAIL}}, {{DIRECT_LINE}} and {{FILE_NUMBER}} (any may be omitted) must each sit whole in one run in every header and footer part; a token split across runs refuses the registration, naming each split token and its part. A registered letterhead is copied as-is to _practice\\firm\\letterhead.docx. idle_flag_hours, a positive number of hours, sets firm.json's threshold past which the Job Board flags an In progress job idle past N h; any other value is refused. Every input is checked before anything is written, so a refusal writes nothing. Returns what changed, the paths written and, when the theme's heading and body fonts differ, theme_faces_differ {major, minor}. On every call, when the roster as the call leaves it holds an active lawyer without a name, email, direct_line, closing or initials, the call still writes and signer_fields_missing lists each such lawyer as {key, fields}: tell the practitioner, because /publish refuses any letter that lawyer signs until a roster_entry with that key supplies them. When this machine's person (as the call leaves it) points to a roster entry with blank initials, whatever its role, the call still writes and preparer_initials_missing names that key: tell the practitioner, because /publish refuses every letter prepared on this machine until a roster_entry with that key supplies initials.`,
+      description: `Set any combination of the firm profile's parts, at least one. firm_name sets firm.json's firm name, creating firm.json and <case_data_root>\\_practice\\firm\\ if absent. roster_entry upserts one roster entry by key: the given fields merge into an existing entry, and a new entry needs every field but active, which defaults to true. Entries are never removed: a departed person is active: false. person (this machine's roster key) and signature (the path to this author's scanned signature image) are written to this machine's probanda.json, keeping every other key; a person the roster lacks is refused, as is any person when firm.json is absent or has no roster (this call's own roster_entry counts), and a signature whose file is absent is refused. practice_quirks replaces this practitioner's whole environment note in this machine's probanda.json ("" clears it): environment facts only (mail routing, folder habits, tool limits), never credentials and never text that loosens a verification, approval or privilege rule. Set it only with the note the practitioner approved under /show-me. A note over 1000 characters is refused and nothing is written, never truncated: propose a compacted note for approval instead. A call that sets only practice_quirks and/or signature needs no firm folder: when probanda.json is absent it is created with version and the given keys (a COCLERK_CONFIG_PATH naming a missing file still fails and is never created), and the roster checks below are skipped when no case_data_root is set. letterhead is the path of a .docx to register. Its tokens {{AUTHOR_NAME}}, {{AUTHOR_EMAIL}}, {{DIRECT_LINE}} and {{FILE_NUMBER}} (any may be omitted) must each sit whole in one run in every header and footer part; a token split across runs refuses the registration, naming each split token and its part. A registered letterhead is copied as-is to _practice\\firm\\letterhead.docx. idle_flag_hours, a positive number of hours, sets firm.json's threshold past which the Job Board flags an In progress job idle past N h; any other value is refused. cc_on_counsel_email, a list of roster keys, replaces firm.json's list of people copied on every email drafting_forms__draft_harness's write_email addresses from case data (the service list or a saved Writing), such as the firm's legal assistant; [] clears it, and a key the roster (as this call leaves it) lacks is refused. Set it only as the practitioner states the firm's practice, never by inference. Every input is checked before anything is written, so a refusal writes nothing. Returns what changed, the paths written and, when the theme's heading and body fonts differ, theme_faces_differ {major, minor}. On every call, when the roster as the call leaves it holds an active lawyer without a name, email, direct_line, closing or initials, the call still writes and signer_fields_missing lists each such lawyer as {key, fields}: tell the practitioner, because /publish refuses any letter that lawyer signs until a roster_entry with that key supplies them. When this machine's person (as the call leaves it) points to a roster entry with blank initials, whatever its role, the call still writes and preparer_initials_missing names that key: tell the practitioner, because /publish refuses every letter prepared on this machine until a roster_entry with that key supplies initials.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -76809,7 +76809,8 @@ function practiceToolDefinitions() {
           signature: { type: "string" },
           practice_quirks: { type: "string" },
           letterhead: { type: "string" },
-          idle_flag_hours: { type: "number" }
+          idle_flag_hours: { type: "number" },
+          cc_on_counsel_email: { type: "array", items: { type: "string" } }
         },
         additionalProperties: false
       }
@@ -77048,7 +77049,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("upsert_matter_role"),
-      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id), so proposing the same role twice returns the one already recorded. An ended role keeps its row with to set; nothing is deleted when a matter closes. Returns the role row.",
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id, case_party_id, from), so proposing the same role twice returns the one already recorded, while one lawyer acting for two parties, or coming back on record after leaving, gets a role for each. An ended role keeps its row with to set; nothing is deleted when a matter closes. For counsel of record, from and to are the on-record and off-record dates, from_source_id and to_source_id the matter-data source_id of the instrument that dated each, and unfiled true while from is the signed date of a notice not yet filed; change an existing role's dates by id, never by a second upsert. Returns the role row.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         ...matterRef,
@@ -77058,15 +77059,19 @@ function practiceToolDefinitions() {
         { name: "to", type: "str" },
         { name: "note", type: "str" },
         { name: "case_party_id", type: "num" },
-        { name: "case_proceeding_id", type: "num" }
+        { name: "case_proceeding_id", type: "num" },
+        { name: "from_source_id", type: "num" },
+        { name: "to_source_id", type: "num" },
+        { name: "unfiled", type: "bool" }
       ])
     },
     {
       name: practicePrefixed("contact_lookup"),
-      description: "Find contacts, locally and offline, by id or by query (a case-insensitive substring of a name, another name, an email or a phone). Returns {contacts, near}: each contact with its affiliations and its matter roles (with matt_num), and near, the other contacts that may be the same person or organization (the same name once case, punctuation and a corporate suffix such as Ltd., Inc. or LLP are ignored, or a shared email or phone), each with its reason. limit caps contacts (default 25). Whether a near contact is the same one is the practitioner's decision.",
+      description: "Find contacts, locally and offline, by id or by query (a case-insensitive substring of a name, another name, an email or a phone), or by a matter ref (matt_num or matter_id) alone. Returns {contacts, near}: each contact with its affiliations and its matter roles (with matt_num), and near, the other contacts that may be the same person or organization (the same name once case, punctuation and a corporate suffix such as Ltd., Inc. or LLP are ignored, or a shared email or phone), each with its reason. With a matter ref, only the contacts holding a role on that matter are returned, each with that matter's roles only, so a party's counsel history is its roles' from and to; near is empty when no id or query is given. limit caps contacts (default 25). Whether a near contact is the same one is the practitioner's decision.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         { name: "query", type: "str" },
+        ...matterRef,
         { name: "limit", type: "num" }
       ])
     },
@@ -77081,7 +77086,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("merge_contact"),
-      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role and case_proceeding_id) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, or a combined role's or affiliation's from, to, title, note or case_party_id), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
+      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role, case_proceeding_id, case_party_id and from) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, a combined role's to, note, from_source_id, to_source_id or unfiled, or a combined affiliation's to or title), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
       inputSchema: objectSchema([
         { name: "keep_id", type: "str" },
         { name: "spare_id", type: "str" }
@@ -78498,7 +78503,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("draft_harness"),
-      description: `/draft's host steps (issue #1453, ADR 0031), for a Cowork session, whose sandbox cannot reach the matter folder or Outlook: one step per call, named by step, with that step's arguments. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json); write_email opens no database. step write_email is the only route for any outgoing email, in /draft or not (skills/shared/email.md): never a mail send tool. It (output_name, to, subject, body; optional folder, cc, attachments) writes an unsent Outlook draft, <output_name>.eml with X-Unsent: 1, which Outlook opens as a new message ready to send; nothing is sent. It goes at the top of the matter's one 0. DRAFT folder (never created), or in folder, one folder name under it, created when absent. output_name is a bare file name stem, no extension, that the caller composed under the firm's naming convention; a taken name gets the next " vN", reported as versioned_from, and nothing is ever overwritten. to (at least one) and cc are address strings, "Name <a@b>" or "a@b"; body is plain text; attachments are any host files, absolute or relative to the matter folder. From is this machine's person in the firm roster, its name and email: with no person set, or no email on its entry, the step refuses with { success: false, error: from_unresolved } and writes nothing; set them with practice_data__upsert_firm_profile. The signature is the roster person's template, <case_data_root>\\_practice\\firm\\email-signatures\\<key>.htm, when present, else Outlook's own default new-message signature for that address on this PC, with its images inline; with neither, a plain-text draft with signature null and signature_note saying why. body is the message only, with no closing and no name: while a signature applies, a body whose last lines repeat the roster closing or name is refused (signoff_duplicates_signature) and nothing is written. Returns the script's JSON line unchanged: success with path, signature, signature_source (template, outlook or null) and attachments [{name, size}], or error and detail (attachment_unresolved names every attachment it cannot find, before anything is written; bad_address; signature_image_missing; signature_registry_error; signoff_duplicates_signature). It returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; and any other step. 55 s budget (code python_timeout). step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the highlight script cannot find dropped and returned as context_paras_not_found; source_path, a file the practitioner named; proposed {authority_id?, pinpoint?, span? {start, end}}) assembles a "Review scrutiny finding: " job's review in one call, reading the database without writing it: the statement and finding, with the answer file the finding names (when it names none, the finding is written beside the extracts as plain text, "3 finding - ....txt", and its path returned as finding.file); the authority's own file, found by its recorded path, else a hash search of 6. LAW then the matter, else source_path, and converted to PDF by Word into %LOCALAPPDATA%\\Coclerk\\scrutiny-review; verbatim, the word-level check of the stored excerpt; and two highlighted extracts, each a PDF and a PNG per page, "1 cited - ..." and "2 context - ...", written into 0. DRAFT\\Scrutiny review\\statement <id>\\ (created when absent; only this step's own files are replaced, and any other file there is left as it is and listed in foreign_files), with proposed adding the same for a proposed authority, pinpoint or excerpt span, and model_only.proposed_excerpt, the span's text for the gatekeeper write and never for chat. It never returns the stored excerpt, and refuses with { success: false, error, detail, partial? }: statement_not_found, proposed_authority_not_found, no_excerpt, authority_ambiguous, source_unresolved (partial: statement, finding, and the paths tried and folders searched), converter_missing, conversion_failed, highlight_failed, budget_exceeded (the conversion is cached: call again).`,
+      description: `/draft's host steps (issue #1453, ADR 0031), for a Cowork session, whose sandbox cannot reach the matter folder or Outlook: one step per call, named by step, with that step's arguments. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json); write_email opens a database only to read recipients (below). step write_email is the only route for any outgoing email, in /draft or not (skills/shared/email.md): never a mail send tool. It (output_name, subject, and to or a recipient source; optional body, folder, cc, attachments) writes an unsent Outlook draft, <output_name>.eml with X-Unsent: 1, which Outlook opens as a new message ready to send; nothing is sent. It goes at the top of the matter's one 0. DRAFT folder (never created), or in folder, one folder name under it, created when absent. For an email that belongs to no matter, omit matter_root: the draft goes under <case_data_root>\\_practice\\drafts (or folder under it), created when absent, and every attachment must be absolute. output_name is a bare file name stem, no extension, that the caller composed under the firm's naming convention; a taken name gets the next " vN", reported as versioned_from, and nothing is ever overwritten. to (at least one) and cc are address strings, "Name <a@b>" or "a@b". Instead of to, the step can address the email itself from case data, so no address is typed: to_service_list: true (optional proceeding_id) is counsel of record for every party on the proceeding's service list, read live from case data as the mockup reads it, the client's side and the forum's own addressees left out; with no proceeding_id it is counsel across all the matter's proceedings, and the result's addressed.note says so. filing_id is that saved Writing's own to and cc recipients; one with a bcc recipient is refused (bcc_unsupported), because the step writes no Bcc. Either needs matter_root and db_path (the matter's drafting database), and to with either is refused. Each lawyer is addressed once. Case data holds each lawyer's email as one value that may list several addresses (split on ; and ,) with no role per address, so the first address goes in To and the rest (a paralegal, an assistant) in Cc; a cc recipient's all go in Cc. The firm's cc_on_counsel_email people (firm profile roster keys) are added to Cc, the sender left out. cc, when given, is added after them. A recipient with no email (withdrawn counsel, a party not linked to case data) is never guessed: it is listed in addressed.not_addressed with the reason, to tell the practitioner; when no To address is left the step refuses (no_recipients) and writes nothing. body is plain text, and omitted or empty writes a blank draft; attachments are any host files, absolute or relative to the matter folder. From is this machine's person in the firm roster, its name and email: with no person set, or no email on its entry, the step refuses with { success: false, error: from_unresolved } and writes nothing; set them with practice_data__upsert_firm_profile. The signature is the roster person's template, <case_data_root>\\_practice\\firm\\email-signatures\\<key>.htm, when present, else Outlook's own default new-message signature for that address on this PC, with its images inline; with neither, a plain-text draft with signature null and signature_note saying why. body is the message only, with no closing and no name: while a signature applies, a body whose last lines repeat the roster closing or name is refused (signoff_duplicates_signature) and nothing is written. Returns the script's JSON line, with addressed {to, cc, not_addressed, note?} added when a recipient source was used: success with path, signature, signature_source (template, outlook or null) and attachments [{name, size}], or error and detail (attachment_unresolved names every attachment it cannot find, before anything is written; bad_address; signature_image_missing; signature_registry_error; signoff_duplicates_signature). It returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; and any other step. 55 s budget (code python_timeout). step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the highlight script cannot find dropped and returned as context_paras_not_found; source_path, a file the practitioner named; proposed {authority_id?, pinpoint?, span? {start, end}}) assembles a "Review scrutiny finding: " job's review in one call, reading the database without writing it: the statement and finding, with the answer file the finding names (when it names none, the finding is written beside the extracts as plain text, "3 finding - ....txt", and its path returned as finding.file); the authority's own file, found by its recorded path, else a hash search of 6. LAW then the matter, else source_path, and converted to PDF by Word into %LOCALAPPDATA%\\Coclerk\\scrutiny-review; verbatim, the word-level check of the stored excerpt; and two highlighted extracts, each a PDF and a PNG per page, "1 cited - ..." and "2 context - ...", written into 0. DRAFT\\Scrutiny review\\statement <id>\\ (created when absent; only this step's own files are replaced, and any other file there is left as it is and listed in foreign_files), with proposed adding the same for a proposed authority, pinpoint or excerpt span, and model_only.proposed_excerpt, the span's text for the gatekeeper write and never for chat. It never returns the stored excerpt, and refuses with { success: false, error, detail, partial? }: statement_not_found, proposed_authority_not_found, no_excerpt, authority_ambiguous, source_unresolved (partial: statement, finding, and the paths tried and folders searched), converter_missing, conversion_failed, highlight_failed, budget_exceeded (the conversion is cached: call again).`,
       inputSchema: {
         type: "object",
         properties: {
@@ -78508,6 +78513,9 @@ function submissionFormsToolDefinitions() {
           folder: { type: "string" },
           to: { type: "array", items: { type: "string" } },
           cc: { type: "array", items: { type: "string" } },
+          to_service_list: { type: "boolean" },
+          proceeding_id: { type: "number" },
+          filing_id: { type: "number" },
           subject: { type: "string" },
           body: { type: "string" },
           attachments: { type: "array", items: { type: "string" } },
@@ -78530,7 +78538,7 @@ function submissionFormsToolDefinitions() {
             additionalProperties: false
           }
         },
-        required: ["step", "matter_root"],
+        required: ["step"],
         additionalProperties: false
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
@@ -80155,7 +80163,10 @@ async function upsert_matter_role(store, args) {
       to: args.to,
       note: args.note,
       case_party_id: args.case_party_id,
-      case_proceeding_id: creating ? args.case_proceeding_id ?? null : args.case_proceeding_id
+      case_proceeding_id: creating ? args.case_proceeding_id ?? null : args.case_proceeding_id,
+      from_source_id: args.from_source_id,
+      to_source_id: args.to_source_id,
+      unfiled: args.unfiled
     }
   }]);
   return rowOf(items, ops[0].as);
@@ -80174,16 +80185,19 @@ function listOf(value) {
   return Array.isArray(value) ? value.filter((entry) => typeof entry === "string") : [];
 }
 async function contact_lookup(store, args) {
-  if (!args.id && !args.query) throw new ValidationError("contact_lookup requires id or query");
+  const byMatter = Boolean(args.matt_num || args.matter_id);
+  if (!args.id && !args.query && !byMatter) throw new ValidationError("contact_lookup requires id, query or a matter ref");
   const items = store.items();
   const contacts = rowsOf(items, "contact");
   const affiliations = rowsOf(items, "affiliation");
-  const roles = rowsOf(items, "matter_role");
+  const matterId = byMatter ? requireMatter(items, args).id : null;
+  const roles = rowsOf(items, "matter_role").filter((row2) => matterId === null || row2.matter_id === matterId);
   const matters = new Map(rowsOf(items, "matter").map((row2) => [String(row2.id), row2]));
   const limit = typeof args.limit === "number" && args.limit > 0 ? Math.floor(args.limit) : 25;
   const query = String(args.query ?? "").toLowerCase();
   const queryDigits = query.replace(/\D/g, "");
-  const found = (args.id ? contacts.filter((contact) => contact.id === String(args.id)) : contacts.filter((contact) => [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)].some((value) => typeof value === "string" && value.toLowerCase().includes(query)) || queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits)))).slice(0, limit);
+  const found = (args.id ? contacts.filter((contact) => contact.id === String(args.id)) : contacts.filter((contact) => !query || [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)].some((value) => typeof value === "string" && value.toLowerCase().includes(query)) || queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits)))).filter((contact) => matterId === null || roles.some((row2) => row2.contact_id === contact.id)).slice(0, limit);
+  if (!args.id && !query) return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
   const names = new Set(found.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName2)));
   const emails = new Set(found.flatMap((contact) => listOf(contact.emails).map((email2) => email2.toLowerCase())));
   const phones = new Set(found.flatMap((contact) => listOf(contact.phones).map(phoneDigits)));
@@ -80204,13 +80218,13 @@ async function contact_lookup(store, args) {
     if (listOf(contact.phones).some((phone) => phones.has(phoneDigits(phone)))) reasons.push("shared phone");
     if (reasons.length) near.push({ id: contact.id, name: contact.name, entity: contact.entity, reasons });
   }
+  return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near };
+}
+function withTies(contact, affiliations, roles, matters) {
   return {
-    contacts: found.map((contact) => ({
-      ...contact,
-      affiliations: affiliations.filter((row2) => row2.person_id === contact.id || row2.organization_id === contact.id),
-      roles: roles.filter((row2) => row2.contact_id === contact.id).map((row2) => ({ ...row2, matt_num: matters.get(String(row2.matter_id))?.matt_num ?? null }))
-    })),
-    near
+    ...contact,
+    affiliations: affiliations.filter((row2) => row2.person_id === contact.id || row2.organization_id === contact.id),
+    roles: roles.filter((row2) => row2.contact_id === contact.id).map((row2) => ({ ...row2, matt_num: matters.get(String(row2.matter_id))?.matt_num ?? null }))
   };
 }
 function folderMatterNum(name) {
@@ -80260,9 +80274,9 @@ async function contact_checks(store, args) {
         }
         const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
         const own = inMatter.filter((entry) => folderMatterNum(entry.name) === wanted);
-        const named = own.length ? own : children2.filter((entry) => folderMatterNum(entry.name) === wanted);
-        if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.map((entry) => entry.folder).join(", ")}`);
-        else if (named.length === 1) folders.push([matter, named[0].folder]);
+        const named2 = own.length ? own : children2.filter((entry) => folderMatterNum(entry.name) === wanted);
+        if (named2.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named2.map((entry) => entry.folder).join(", ")}`);
+        else if (named2.length === 1) folders.push([matter, named2[0].folder]);
       }
     }
   }
@@ -80343,7 +80357,7 @@ async function merge_contact(store, args) {
   const shift = (kind, keyLinks, keyData, fields) => {
     for (const [spareItemId, item] of linked(kind, keyLinks)) {
       const role = keyLinks.find((name) => item.links[name] === spareId);
-      const twin = [...items].find(([, other]) => other.kind === kind && other.links[role] === keepId && same(other.tags, item.tags) && keyLinks.every((name) => name === role || other.links[name] === item.links[name]) && same(other.data[keyData], item.data[keyData]));
+      const twin = [...items].find(([, other]) => other.kind === kind && other.links[role] === keepId && same(other.tags, item.tags) && keyLinks.every((name) => name === role || other.links[name] === item.links[name]) && keyData.every((name) => same(other.data[name], item.data[name])));
       if (!twin) {
         ops.push({ op: "update", id: spareItemId, kind, links: { [role]: keepId } });
         moved++;
@@ -80355,8 +80369,13 @@ async function merge_contact(store, args) {
       combined++;
     }
   };
-  shift("matter_role", ["contact", "matter"], "case_proceeding_id", ["from", "to", "note", "case_party_id"]);
-  shift("affiliation", ["person", "organization"], "from", ["to", "title"]);
+  shift(
+    "matter_role",
+    ["contact", "matter"],
+    ["case_proceeding_id", "case_party_id", "from"],
+    ["to", "note", "from_source_id", "to_source_id", "unfiled"]
+  );
+  shift("affiliation", ["person", "organization"], ["from"], ["to", "title"]);
   if (conflicts.length) return { merged: false, conflicts };
   ops.push({ op: "delete", id: spareId, kind: "contact" });
   await store.write("merge_contact", {}, ops);
@@ -80957,6 +80976,9 @@ function rosterOf(firm, firmPath) {
   if (!Array.isArray(firm.roster)) throw new ValidationError(`roster in ${firmPath} is not an array`);
   return firm.roster;
 }
+function isKeyList(value) {
+  return Array.isArray(value) && value.every((key) => typeof key === "string" && key !== "");
+}
 function isPositiveHours(value) {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
@@ -81004,7 +81026,8 @@ function readFirmProfile(env = process.env, fallback) {
     letterhead: existsSync8(paths.letterhead) ? paths.letterhead : null,
     person: person2,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
-    ...isPositiveHours(firm.idle_flag_hours) ? { idle_flag_hours: firm.idle_flag_hours } : {}
+    ...isPositiveHours(firm.idle_flag_hours) ? { idle_flag_hours: firm.idle_flag_hours } : {},
+    ...isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}
   };
 }
 function upsertRosterEntry(roster, input) {
@@ -81098,11 +81121,11 @@ function checkLetterhead(zip, source) {
 }
 var PRACTICE_QUIRKS_MAX = 1e3;
 async function upsert_firm_profile(args, env = process.env) {
-  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "idle_flag_hours"];
+  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "idle_flag_hours", "cc_on_counsel_email"];
   if (inputs.every((input) => args[input] === void 0)) {
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
-  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "idle_flag_hours"].some((input) => args[input] !== void 0);
+  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "idle_flag_hours", "cc_on_counsel_email"].some((input) => args[input] !== void 0);
   let resolved;
   try {
     resolved = firmPaths(env);
@@ -81113,7 +81136,7 @@ async function upsert_firm_profile(args, env = process.env) {
   const result = { changed: [], written: [] };
   const current = resolved && existsSync8(paths.firm) ? readJson(paths.firm) : void 0;
   let firm;
-  if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.idle_flag_hours !== void 0) {
+  if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.idle_flag_hours !== void 0 || args.cc_on_counsel_email !== void 0) {
     firm = { firm_name: void 0, roster: [], ...current };
     if (args.firm_name !== void 0) {
       firm.firm_name = asString(args.firm_name, "firm_name");
@@ -81128,6 +81151,18 @@ async function upsert_firm_profile(args, env = process.env) {
       if (!isPositiveHours(args.idle_flag_hours)) throw new ValidationError("idle_flag_hours must be a positive number of hours");
       firm.idle_flag_hours = args.idle_flag_hours;
       result.changed.push("idle_flag_hours");
+    }
+    if (args.cc_on_counsel_email !== void 0) {
+      const keys = args.cc_on_counsel_email;
+      if (!isKeyList(keys)) throw new ValidationError("cc_on_counsel_email must be a list of roster keys");
+      const roster2 = rosterOf(firm, paths.firm);
+      const unknown2 = keys.filter((key) => !roster2.some((entry) => entry.key === key));
+      if (unknown2.length > 0) {
+        throw new ValidationError(`cc_on_counsel_email names key(s) not in the firm roster (${paths.firm}): ${unknown2.join(", ")}. Nothing was written.`);
+      }
+      if (keys.length === 0) delete firm.cc_on_counsel_email;
+      else firm.cc_on_counsel_email = [...new Set(keys)];
+      result.changed.push("cc_on_counsel_email");
     }
   }
   const config2 = args.person !== void 0 || args.signature !== void 0 || args.practice_quirks !== void 0 ? readConfig(env) : void 0;
@@ -81529,8 +81564,8 @@ function caseDataRootFromCaseDataDir(dir, env) {
   const inMatter = basename2(normal).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
   const parent = inMatter ? join13(dirname7(dirname7(normal)), CASE_DATA_FOLDER) : dirname7(normal);
   const override2 = env.COCLERK_CASE_DATA_ROOT;
-  const named = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
-  if (!named) return null;
+  const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
+  if (!named2) return null;
   let canon;
   try {
     canon = canonicalRoot(parent, `case data root not found: ${parent}`);
@@ -82916,7 +82951,7 @@ async function ingestAuthority(request2, env = process.env) {
   const done = await caseDataExecuteStatements(request2.matter_root, plan.statements, plan.params, env);
   if (!done.ok) return { ok: false, problems: done.refused.map(String) };
   const counts2 = {};
-  const named = {};
+  const named2 = {};
   plan.statements.forEach((statement, i3) => {
     const { rowcount, rows: rows22 } = done.results[i3];
     if (statement.count) {
@@ -82924,12 +82959,12 @@ async function ingestAuthority(request2, env = process.env) {
       count.inserted += rowcount;
       count.skipped += statement.count.of - rowcount;
     }
-    if (statement.value_as) named[statement.value_as] = Object.values(rows22[0])[0];
-    if (statement.rows_as) named[statement.rows_as] = rows22;
+    if (statement.value_as) named2[statement.value_as] = Object.values(rows22[0])[0];
+    if (statement.rows_as) named2[statement.rows_as] = rows22;
   });
   return {
     ok: true,
-    ...named,
+    ...named2,
     counts: counts2,
     treats_prior: plan.treats_prior ?? null,
     held_back: plan.held_back ?? [],
@@ -84670,9 +84705,9 @@ function exhibitLetterItem(item) {
 function exhibitLetterList(list) {
   const letters = [];
   for (const item of list.split(",")) {
-    const named = exhibitLetterItem(item.trim());
-    if (named === null) return null;
-    letters.push(...named);
+    const named2 = exhibitLetterItem(item.trim());
+    if (named2 === null) return null;
+    letters.push(...named2);
   }
   return letters;
 }
@@ -85859,6 +85894,55 @@ function fetchFilingRecipients(dbPath, filing, parties2) {
     return { ...r3, name: null, email: null, address: null, unrecorded: true };
   });
 }
+function fetchServiceListCounsel(dbPath, proceedingId, parties2) {
+  const byId2 = new Map(parties2.map((p3) => [p3.id, p3]));
+  return rows(
+    dbPath,
+    "SELECT id, capacity, party_id, ordinal FROM recipients WHERE proceeding_id = ? AND forum_default = 1 AND party_id IS NOT NULL ORDER BY ordinal, id",
+    [proceedingId]
+  ).flatMap((r3) => {
+    const party = byId2.get(r3.party_id);
+    if (party === void 0) {
+      throw new DataServerError(
+        `a service-list entry${r3.capacity ? ` (${r3.capacity})` : ""} is linked to a party that is not a party of proceeding ${proceedingId}; link it to one of its parties, or unlink it`,
+        "recipient_party_missing"
+      );
+    }
+    if (party.is_client === 1) return [];
+    return [{ ...r3, role: "to", name: party.counsel_name ?? party.name, email: party.counsel_email, address: party.address_for_service }];
+  });
+}
+function joinWords(items) {
+  return items.length <= 1 ? items[0] ?? "" : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+function joinCapacities(capacities) {
+  const distinct2 = [...new Set(capacities.filter((c3) => c3 !== null && c3.trim() !== "").map((c3) => c3.trim()))];
+  if (distinct2.length <= 1) return distinct2[0] ?? null;
+  const words = distinct2.map((c3) => c3.split(/\s+/));
+  let lead = 0;
+  for (let i3 = 0; i3 < Math.min(...words.map((w3) => w3.length)) - 1; i3++) {
+    if (!words.every((w3) => w3[i3] === words[0][i3])) break;
+    if (words[0][i3].toLowerCase() === "for") lead = i3 + 1;
+  }
+  if (lead === 0) return joinWords(distinct2);
+  return `${words[0].slice(0, lead).join(" ")} ${joinWords(words.map((w3) => w3.slice(lead).join(" ")))}`;
+}
+function mergeSharedRecipients(recipients) {
+  const groups = /* @__PURE__ */ new Map();
+  const order = [];
+  for (const r3 of recipients) {
+    const key = r3.unrecorded ? null : JSON.stringify([r3.role, r3.name, r3.email?.trim().toLowerCase() ?? null, r3.address ?? null]);
+    const group = key === null ? void 0 : groups.get(key);
+    if (group !== void 0) {
+      group.push(r3);
+      continue;
+    }
+    const fresh = [r3];
+    if (key !== null) groups.set(key, fresh);
+    order.push(fresh);
+  }
+  return order.map((group) => group.length === 1 ? group[0] : { ...group[0], capacity: joinCapacities(group.map((r3) => r3.capacity)) });
+}
 function fetchProse(dbPath, filingId) {
   return new Map(
     rows(dbPath, "SELECT id, slot, text FROM filing_prose WHERE filing_id = ?", [filingId]).map((r3) => [r3.slot, { id: r3.id, text: r3.text }])
@@ -86227,7 +86311,7 @@ function withPartiesDriftLines(markdown, rows22) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "5aa1ce824c98";
+var BUILD_STAMP = false ? null : "b22a11145343";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -91496,7 +91580,7 @@ function renderGeneral(ctx, stored, cited2) {
       body.push(...partLines);
     }
   });
-  const recipients = fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties);
+  const recipients = mergeSharedRecipients(fetchFilingRecipients(ctx.dbPath, ctx.filing, ctx.parties));
   const sent2 = recipients.filter((r3) => r3.role !== "bcc");
   const declaresRecipients = Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("recipients");
   const noTo = declaresRecipients && !sent2.some((r3) => r3.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];
@@ -99071,10 +99155,10 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const board = combineSections(dbPath, raw, true);
     const sections = [board];
     const { proceeding, filing } = group.members[0];
-    const named = group.members.length > 1 || !sameBoard(group.board, { filing_id: filing?.id ?? null, proceeding_id: proceeding.id });
+    const named2 = group.members.length > 1 || !sameBoard(group.board, { filing_id: filing?.id ?? null, proceeding_id: proceeding.id });
     return renderWorkBoardHtml({
       meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
-      ...named ? { board: group.board } : {},
+      ...named2 ? { board: group.board } : {},
       sections,
       dates: combinedPageDates(dates, raw, board),
       // The viewed thumbnails first, most recently viewed first, then the rest in their own order.
@@ -103438,8 +103522,90 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync41, readdirSync as readdirSync24 } from "node:fs";
+import { existsSync as existsSync41, mkdirSync as mkdirSync19, readdirSync as readdirSync24, realpathSync as realpathSync12 } from "node:fs";
 import { win32 as pathWin3221 } from "node:path";
+
+// src/submission/email-recipients.ts
+import { dirname as dirname22 } from "node:path";
+function named(name, address2) {
+  return name ? `"${name.replace(/["\\]/g, "\\$&")}" <${address2}>` : address2;
+}
+function addressesOf(email2) {
+  return (email2 ?? "").split(/[;,]/).map((a3) => a3.trim()).filter((a3) => a3 !== "");
+}
+var Lists = class {
+  to = [];
+  cc = [];
+  not_addressed = [];
+  seen = /* @__PURE__ */ new Set();
+  add(list, name, address2) {
+    const key = address2.toLowerCase();
+    if (this.seen.has(key)) return;
+    this.seen.add(key);
+    this[list].push(named(name, address2));
+  }
+  recipient(r3, why) {
+    const addresses = addressesOf(r3.email);
+    if (addresses.length === 0) {
+      const reason = r3.unrecorded ? "no name or address was recorded for it when the Writing was sent" : why ?? "case data holds no email for it";
+      this.not_addressed.push({ name: r3.name, capacity: r3.capacity, reason });
+      return;
+    }
+    const [first, ...rest] = addresses;
+    this.add(r3.role === "to" ? "to" : "cc", r3.name, first);
+    for (const address2 of rest) this.add("cc", null, address2);
+  }
+  result(note) {
+    return { to: this.to, cc: this.cc, not_addressed: this.not_addressed, ...note ? { note } : {} };
+  }
+};
+function emailRecipients(dbPath, source, senderKey, env) {
+  const lists = new Lists();
+  let note;
+  if ("filing_id" in source) {
+    const filing = fetchFiling(dbPath, source.filing_id);
+    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname22(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
+    const recipients = mergeSharedRecipients(fetchFilingRecipients(dbPath, filing, parties2));
+    if (recipients.some((r3) => r3.role === "bcc")) {
+      throw new DataServerError(
+        `"${filing.title}" has a blind copy recipient, and this step writes no Bcc. Move that recipient to cc, or address the email with to and cc. Nothing was written.`,
+        "bcc_unsupported"
+      );
+    }
+    for (const r3 of recipients) lists.recipient(r3);
+  } else {
+    const proceedings = source.proceeding_id === void 0 ? fetchAllProceedings(dbPath) : [fetchProceeding(dbPath, source.proceeding_id)];
+    const rows22 = [];
+    const drifted = /* @__PURE__ */ new Map();
+    for (const proceeding of proceedings) {
+      const { parties: parties2, drift } = draftingParties(dirname22(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+      const counsel = fetchServiceListCounsel(dbPath, proceeding.id, parties2);
+      for (const d3 of drift.rows) {
+        const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
+        for (const r3 of counsel) if (r3.party_id === d3.party_id) drifted.set(r3.id, why);
+      }
+      rows22.push(...counsel);
+    }
+    for (const r3 of mergeSharedRecipients(rows22)) lists.recipient(r3, drifted.get(r3.id));
+    if (source.proceeding_id === void 0 && proceedings.length > 1) {
+      note = `No proceeding was named, so this addresses counsel on the service lists of all ${proceedings.length} proceedings, each once.`;
+    }
+  }
+  const profile = readFirmProfile(env);
+  for (const key of profile.cc_on_counsel_email ?? []) {
+    if (key === senderKey) continue;
+    const entry = profile.roster.find((e3) => e3.key === key);
+    const name = typeof entry?.name === "string" ? entry.name : key;
+    if (entry === void 0 || entry.active === false) {
+      lists.not_addressed.push({ name, capacity: "firm copy", reason: "not an active person on the firm roster" });
+    } else if (typeof entry.email !== "string" || entry.email.trim() === "") {
+      lists.not_addressed.push({ name, capacity: "firm copy", reason: "the firm roster holds no email for them" });
+    } else {
+      lists.add("cc", name, entry.email.trim());
+    }
+  }
+  return lists.result(note);
+}
 
 // src/submission/scrutiny-review.ts
 import { copyFileSync as copyFileSync3, existsSync as existsSync40, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync27, realpathSync as realpathSync11, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
@@ -103686,10 +103852,10 @@ function confineMatterFile(root, given, label2) {
   }
   return resolved;
 }
-function answerFile(root, named) {
-  if (named === null) return null;
-  const path = confineMatterFile(root, named, "the answer file the finding names");
-  return { named, path, exists: existsSync40(path) };
+function answerFile(root, named2) {
+  if (named2 === null) return null;
+  const path = confineMatterFile(root, named2, "the answer file the finding names");
+  return { named: named2, path, exists: existsSync40(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
@@ -103940,17 +104106,47 @@ function draftHarness(args, env = process.env, installRoot) {
 function writeEmail(args, env, installRoot) {
   const outputName = requireString2(args, "output_name");
   const subject = requireString2(args, "subject");
-  const body = requireString2(args, "body");
-  const to2 = stringList3(args, "to", 1);
+  if (args.body !== void 0 && typeof args.body !== "string") {
+    throw new ValidationError(`drafting_forms__draft_harness.body must be a string for step ${args.step}`);
+  }
+  const body = args.body ?? "";
+  const source = recipientSource(args);
+  const to2 = stringList3(args, "to", source === null ? 1 : 0);
   const cc2 = stringList3(args, "cc", 0);
   const attachments = stringList3(args, "attachments", 0);
   assertSegment(outputName, "output_name");
   if (args.folder !== void 0) assertSegment(args.folder, "folder");
-  const root = validateMatterRoot(args.matter_root);
-  const outDir = args.folder === void 0 ? oneDraftFolder2(root, draftFolders(root)) : oneDraftFolder2(root, confineWritingFolder(root, args.folder));
+  let root;
+  let outDir;
+  if (args.matter_root === void 0) {
+    const relative5 = attachments.filter((path) => !pathWin3221.isAbsolute(path));
+    if (relative5.length) {
+      throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative5.join(", ")}`);
+    }
+    root = realpathSync12.native(resolveCaseDataRoot(env));
+    const drafts = pathWin3221.join("_practice", "drafts");
+    outDir = resolveWithin(root, args.folder === void 0 ? drafts : pathWin3221.join(drafts, args.folder), "the firm drafts folder", false);
+  } else {
+    root = validateMatterRoot(args.matter_root);
+    outDir = args.folder === void 0 ? oneDraftFolder2(root, draftFolders(root)) : oneDraftFolder2(root, confineWritingFolder(root, args.folder));
+  }
   const from = sender(env);
   if ("error" in from) return from;
-  return runPythonDriver({
+  let addressed;
+  if (source !== null) {
+    const found = emailRecipients(args.db_path, source, from.key, env);
+    addressed = { ...found, cc: [...found.cc, ...cc2.filter((a3) => !found.cc.includes(a3))] };
+    if (addressed.to.length === 0) {
+      return {
+        success: false,
+        error: "no_recipients",
+        detail: "Case data holds no email for anyone this email would go to, so it has no To address. Nothing was written.",
+        not_addressed: addressed.not_addressed
+      };
+    }
+  }
+  if (args.matter_root === void 0) mkdirSync19(pathWin3221.join(root, "_practice", "drafts"), { recursive: true });
+  const result = runPythonDriver({
     label: "draft write_email (write_eml.py)",
     driver: writeEmlPath(env, installRoot),
     payload: JSON.stringify({
@@ -103958,8 +104154,8 @@ function writeEmail(args, env, installRoot) {
       from_address: from.email,
       closing: from.closing,
       signature_template: emailSignaturePath(env, from.key),
-      to: to2,
-      cc: cc2,
+      to: addressed ? addressed.to : to2,
+      cc: addressed ? addressed.cc : cc2,
       subject,
       body,
       // A relative attachment is read against the matter folder; every path goes in absolute.
@@ -103972,6 +104168,34 @@ function writeEmail(args, env, installRoot) {
     extraEnv: { PYTHONDONTWRITEBYTECODE: "1" },
     timeoutAdvice: "The script writes through a temporary file, so a killed run leaves no draft at the output name: call this tool again. A ~<output_name>.<number>.tmp file may be left beside it: tell the practitioner."
   });
+  return addressed === void 0 ? result : { ...result, addressed };
+}
+function recipientSource(args) {
+  const field = (key) => `drafting_forms__draft_harness.${key}`;
+  if (args.to_service_list !== void 0 && typeof args.to_service_list !== "boolean") {
+    throw new ValidationError(`${field("to_service_list")} must be true or false`);
+  }
+  const serviceList = args.to_service_list === true;
+  if (args.proceeding_id !== void 0 && !serviceList) {
+    throw new ValidationError(`${field("proceeding_id")} is read only with to_service_list: true`);
+  }
+  if (!serviceList && args.filing_id === void 0) return null;
+  if (serviceList && args.filing_id !== void 0) {
+    throw new ValidationError("give either to_service_list or filing_id for step write_email, not both");
+  }
+  for (const key of ["proceeding_id", "filing_id"]) {
+    if (args[key] !== void 0 && !Number.isInteger(args[key])) throw new ValidationError(`${field(key)} must be a whole number`);
+  }
+  if (args.to !== void 0) {
+    throw new ValidationError(`${field("to")} cannot be given with ${serviceList ? "to_service_list" : "filing_id"}: the recipients come from case data`);
+  }
+  if (args.matter_root === void 0) {
+    throw new ValidationError(`${serviceList ? "to_service_list" : "filing_id"} needs the matter: give matter_root`);
+  }
+  if (typeof args.db_path !== "string" || args.db_path === "") {
+    throw new ValidationError(`${field("db_path")}, the matter's drafting database, is required with ${serviceList ? "to_service_list" : "filing_id"}`);
+  }
+  return serviceList ? { proceeding_id: args.proceeding_id } : { filing_id: args.filing_id };
 }
 function requireString2(args, key) {
   const value = args[key];
@@ -104043,7 +104267,7 @@ function writeEmlPath(env = process.env, installRoot) {
 }
 
 // src/correspondence/message.ts
-import { readdirSync as readdirSync25, readFileSync as readFileSync28, realpathSync as realpathSync12, statSync as statSync17 } from "node:fs";
+import { readdirSync as readdirSync25, readFileSync as readFileSync28, realpathSync as realpathSync13, statSync as statSync17 } from "node:fs";
 import { extname as extname4, win32 as pathWin3222 } from "node:path";
 
 // src/correspondence/cfb.ts
@@ -104935,7 +105159,7 @@ function scanMessageHeaders(root) {
         if (EXCLUDED_DIR.test(entry.name)) continue;
         let real;
         try {
-          real = realpathSync12.native(full);
+          real = realpathSync13.native(full);
           assertContained(root, real, "folder", relPath);
           if (!statSync17(real).isDirectory()) continue;
         } catch {
@@ -104976,7 +105200,7 @@ function readMessage(args) {
     let full2;
     if (pathWin3222.isAbsolute(given)) {
       try {
-        full2 = realpathSync12.native(given);
+        full2 = realpathSync13.native(given);
       } catch {
         throw new DataServerError(`path not found: ${given}`, "not_found");
       }
@@ -105012,7 +105236,7 @@ function readMessage(args) {
 }
 
 // src/correspondence/reply-draft.ts
-import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync29, realpathSync as realpathSync13, writeSync as writeSync7 } from "node:fs";
+import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync29, realpathSync as realpathSync14, writeSync as writeSync7 } from "node:fs";
 import { basename as basename10, extname as extname5, win32 as pathWin3223 } from "node:path";
 
 // src/correspondence/zip.ts
@@ -105238,7 +105462,7 @@ function writeNextFree(dir, stem3, ext, data) {
 }
 function realpathOrMissing(path) {
   try {
-    return realpathSync13.native(path);
+    return realpathSync14.native(path);
   } catch {
     throw new DataServerError(`path not found: ${path}`, "not_found");
   }
@@ -106434,7 +106658,7 @@ function rulesLifecycle(dbPath, since) {
 // src/preferences/tools.ts
 import { randomUUID as randomUUID9 } from "node:crypto";
 import { existsSync as existsSync42, readFileSync as readFileSync30 } from "node:fs";
-import { dirname as dirname22, join as join40 } from "node:path";
+import { dirname as dirname23, join as join40 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -106581,7 +106805,7 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
   throw new ValidationError(`op must be "add" or "retire"`);
 }
 function suggestionLogPath(env) {
-  return join40(dirname22(configPath(env)), "suggestions.local.json");
+  return join40(dirname23(configPath(env)), "suggestions.local.json");
 }
 function readLog(file) {
   if (!existsSync42(file)) return { suggestions: [], held: [] };
@@ -106655,7 +106879,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync43, mkdirSync as mkdirSync19, readFileSync as readFileSync31, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync43, mkdirSync as mkdirSync20, readFileSync as readFileSync31, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3224 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -106691,7 +106915,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
       "exists"
     );
   }
-  mkdirSync19(pathWin3224.dirname(resolved), { recursive: true });
+  mkdirSync20(pathWin3224.dirname(resolved), { recursive: true });
   writeFileSync11(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
@@ -106716,7 +106940,7 @@ function repoDocsRead(relative5, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename11, dirname as dirname23, join as join42, relative as relative4 } from "node:path";
+import { basename as basename11, dirname as dirname24, join as join42, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -108128,7 +108352,7 @@ var RAW_RESEARCH_FIXTURE = {
 };
 
 // src/pages/preview-file.ts
-import { mkdirSync as mkdirSync20, writeFileSync as writeFileSync12 } from "node:fs";
+import { mkdirSync as mkdirSync21, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
 import { join as join41 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
@@ -108146,7 +108370,7 @@ function composeWithOverrides(set, overrides = {}) {
   return composeTemplate(set.entry, { ...set.files, ...overrides });
 }
 function writePreview(dir, base, html, fixture) {
-  mkdirSync20(dir, { recursive: true });
+  mkdirSync21(dir, { recursive: true });
   const text5 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
@@ -108210,7 +108434,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname23(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname24(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if (page2 === "Litigation Strategy" && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -108247,7 +108471,7 @@ async function pagesPreview(args, store) {
     const which = ids.filing_id !== void 0 ? `Job Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname23(target), stem2(basename11(target)), html, false) };
+  return { path: writePreview(dirname24(target), stem2(basename11(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -108267,7 +108491,7 @@ import {
   constants,
   copyFileSync as copyFileSync4,
   existsSync as existsSync45,
-  mkdirSync as mkdirSync21,
+  mkdirSync as mkdirSync22,
   readdirSync as readdirSync28,
   readFileSync as readFileSync37,
   statSync as statSync21,
@@ -108608,11 +108832,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname25 = import.meta.url;
-      if (dirname25.startsWith("data:")) {
-        dirname25 = "/";
+      let dirname26 = import.meta.url;
+      if (dirname26.startsWith("data:")) {
+        dirname26 = "/";
       }
-      var require2 = createRequire(dirname25);
+      var require2 = createRequire(dirname26);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -114800,7 +115024,7 @@ function researchScratchDir(root) {
   for (const name of SCRATCH_SUBFOLDERS) {
     dir = pathWin3227.join(dir, name);
     try {
-      mkdirSync21(dir);
+      mkdirSync22(dir);
       created = true;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -114832,13 +115056,13 @@ async function cachedExtract(path) {
 function pickLawFile(files, wanted) {
   const lower = wanted.toLowerCase();
   const exact = files.filter((name) => name.toLowerCase() === lower);
-  const named = exact.length > 0 ? exact : files.filter((name) => name.toLowerCase().includes(lower));
-  if (named.length === 0) {
+  const named2 = exact.length > 0 ? exact : files.filter((name) => name.toLowerCase().includes(lower));
+  if (named2.length === 0) {
     throw new DataServerError(`no file in this folder matches ${JSON.stringify(wanted)}`, "not_found");
   }
   const picked = /* @__PURE__ */ new Set();
   const htmlOnly = [];
-  for (const name of named) {
+  for (const name of named2) {
     if (!HTML_EXTENSIONS.has(pathWin3227.extname(name).toLowerCase())) {
       picked.add(name);
       continue;
@@ -114977,7 +115201,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
     outDir = pathWin3227.join(outDir, name);
-    mkdirSync21(outDir, { recursive: true });
+    mkdirSync22(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
   const rows22 = [];
@@ -115120,7 +115344,7 @@ function resolveOrCreateLawDir(destinationDir) {
   }
   let created = true;
   try {
-    mkdirSync21(pathWin3227.join(parent, pathWin3227.basename(destinationDir)));
+    mkdirSync22(pathWin3227.join(parent, pathWin3227.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -115540,7 +115764,7 @@ function sectionBlocks(chunks) {
 
 // src/files/extract/page-compare.ts
 import { createHash as createHash13 } from "node:crypto";
-import { mkdirSync as mkdirSync22, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
+import { mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir7 } from "node:os";
 import { join as join45 } from "node:path";
 var FPDF_ANNOT = 1;
@@ -115570,7 +115794,7 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const write = (side, n3, facts) => {
           workDir ??= mkdtempSync3(join45(tmpdir7(), "probanda-compare-"));
           const dir = join45(workDir, side);
-          mkdirSync22(dir, { recursive: true });
+          mkdirSync23(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows22], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
@@ -115739,9 +115963,9 @@ function lawRelativePath(path) {
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
 }
 async function saveAnswerTool(args, env = process.env) {
-  const named = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
-  if (named === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named < 3) throw new ValidationError(`${TOOL17} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  const named2 = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
+  if (named2 === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
+  if (named2 < 3) throw new ValidationError(`${TOOL17} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
@@ -116579,9 +116803,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname24(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname24(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname24(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname25(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname25(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname25(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };

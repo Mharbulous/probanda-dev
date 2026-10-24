@@ -16,7 +16,8 @@ NOTE = (
     "Every letter, email or memo that leaves the firm is drafted only through /litigator:draft, "
     "never written in chat or a document: a reply, a report to a client, an email the practitioner "
     "asks you to supplement, add to or fill in from their mail or files. Invoke it before reading "
-    "the mail for that purpose. A letter can be used as evidence of what it states, so it states no "
+    "the mail for that purpose. An email is never drafted in chat: it is written as an unsent .eml "
+    "file and shown as a file card before any other drafting work. A letter can be used as evidence of what it states, so it states no "
     "fact on another person's say-so: what other counsel or a third party reports is attributed to "
     "them or checked against the primary record."
 )
