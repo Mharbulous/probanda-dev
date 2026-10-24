@@ -12,7 +12,6 @@ Read when: the recipient is the lawyer on the other side of a file. Every item i
 - Handling Uncooperative or Bad-Faith Counsel
 - Specific Contexts
 - Examples
-- Quick Reference Checklist
 
 ---
 
@@ -144,7 +143,7 @@ When opposing counsel is obstructive, unresponsive or acting in bad faith, the g
 - When serving documents, the covering letter identifies what is being served, the method of service, and the deemed date of service as the request gives it.
 - Keep it short: list the documents by their identifying features, not their contents. Close with "Kindly acknowledge receipt in your usual way."
 
-Settlement correspondence is worded by `../capacity/without-prejudice.md`.
+Settlement correspondence is written in the scrivener's without-prejudice mode.
 
 ---
 
@@ -209,17 +208,3 @@ These are patterns to adapt, not fixed text.
 > Yours truly,
 
 **Why this works:** Addresses each point directly without adopting the aggressive tone. Pushes back firmly on the unfounded allegation (one sentence, no more). Reframes overbroad demands by placing the burden back on opposing counsel to justify them. Closes with an offer to discuss, signalling reasonableness without conceding anything. Note that point-by-point response is right *here* because each of the three points would read as conceded if ignored: it is not the default. Where the other side's letter mixes substantive points with jabs, answer the former and let the latter die in silence (see "Not every point deserves a reply").
-
----
-
-## Quick Reference Checklist
-
-Before returning correspondence to opposing counsel, confirm:
-
-- [ ] The file reference and context are stated up front
-- [ ] The purpose of the letter is clear within the first two sentences
-- [ ] Each request has a specific deadline (calendar date) from the request
-- [ ] Consequences of non-compliance are stated if applicable
-- [ ] Tone is professional regardless of how the other side has behaved
-- [ ] Nothing in the letter would embarrass you if read aloud in court
-- [ ] The letter does not disclose privileged strategy or client instructions

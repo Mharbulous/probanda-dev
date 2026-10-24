@@ -9,7 +9,6 @@ Read when: the recipient is an expert witness retained to give opinion evidence.
 - What to Avoid
 - BC-Specific Requirements: Rule 11-2
 - Examples
-- Quick-Reference Checklist
 
 ## Audience Profile
 
@@ -99,7 +98,7 @@ Under the BC Supreme Court Civil Rules, Rule 11-2:
 - The expert must disclose the instructions provided to them (the substance of the questions asked and the facts and assumptions they were given).
 - The report must include the expert's qualifications, the facts and assumptions relied upon, their opinion, and the reasons for it.
 
-**Practical implication:** Every letter of instruction you write to an expert should be written with the assumption that opposing counsel and the court will read it. If you would not want to read it aloud in a courtroom, do not write it.
+**Practical implication:** the instructions are disclosed, so every letter of instruction is written for its other readers (`../audience/judge-as-exhibit.md`).
 
 ---
 
@@ -192,17 +191,3 @@ These are patterns to adapt, not fixed text.
 >
 > [Lawyer Name]
 > [Firm Name]
-
----
-
-## Quick-Reference Checklist
-
-Before returning any correspondence to an expert, confirm:
-
-- [ ] The letter does not suggest, imply, or direct any conclusion.
-- [ ] The letter does not contain privileged litigation strategy or counsel's assessment of the case.
-- [ ] The question(s) are stated neutrally and clearly.
-- [ ] Factual assumptions are labelled as assumptions.
-- [ ] You would be comfortable with opposing counsel and the court reading this letter.
-- [ ] The letter refers to the expert's duty to the court (in initial retainer letters).
-- [ ] Documents enclosed are listed and indexed.

@@ -28,7 +28,7 @@ Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_fo
 
 ## 3. Draft and save
 
-1. **Write from the practitioner's words.** A reply the practitioner dictates is transcribed in their words, in the order they direct, with only its spelling, punctuation, grammar or word choice corrected: the dictation exception (`shared/correspondence-isolation.md`). No sentence, fact, position, deadline or tone is added, removed or changed. Any other wording, and any change beyond those four, is the `lawyer:scrivener` agent's: spawn it as `references/letters.md` section 3 says, the message being answered among its `facts`, and save its text verbatim. If the agent is absent, say so and stop.
+1. **Write from the practitioner's words.** A reply counts as dictation only when the practitioner supplies its sentences. A rough instruction, such as "tell her we agree, but not to the costs", is not dictation and goes to the scrivener. A reply the practitioner dictates is transcribed in their words, in the order they direct, with only its spelling, punctuation, grammar or word choice corrected: the dictation exception (`shared/correspondence-isolation.md`). No sentence, fact, position, deadline or tone is added, removed or changed. Any other wording, and any change beyond those four, is the `lawyer:scrivener` agent's: spawn it as `references/letters.md` section 3 says, the message being answered among its `facts`, and save its text verbatim. If the agent is absent, say so and stop.
 2. **Name the draft by `/file-naming`'s grammar:** `YYYY-MM-DD ET <recipient> re <subject>`.
    - Use today's date and `ET` (email to).
    - The recipient token follows the grammar's author/recipient rules.

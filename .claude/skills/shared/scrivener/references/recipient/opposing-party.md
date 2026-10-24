@@ -9,7 +9,6 @@ Read when: the recipient is the person or entity on the other side of a dispute,
 - Pre-Litigation Correspondence
 - Notices of Default
 - Examples
-- Checklist Before Returning the Text
 
 ---
 
@@ -33,7 +32,7 @@ To a **formerly represented** party:
 
 - **Formal and firm.** You represent your client's interests. Be direct about what is owed, what is required, and what happens next.
 - **Authoritative, not aggressive.** State the position plainly. Let the facts do the work: do not editorialize or moralize.
-- **Professional restraint.** Never write anything you would not want a judge to read. Assume every letter will become an exhibit.
+- **Professional restraint** (`../audience/judge-as-exhibit.md`).
 
 ### What to Avoid
 
@@ -52,7 +51,7 @@ To a **formerly represented** party:
 A demand letter to an opposing party follows this order:
 
 1. **Identification.** Who you are, who you act for, what the matter concerns.
-2. **Factual background.** Brief, accurate summary of the relevant facts. Do not overstate your case: this letter may be an exhibit at trial.
+2. **Factual background.** Brief, accurate summary of the relevant facts. Do not overstate your case.
 3. **Legal basis.** The cause of action or legal right your client relies on, as the request states it. Keep it concise: you are putting them on notice, not writing a legal memo.
 4. **The demand.** Specific, clear, and quantified where possible. "Our client demands payment of $47,250.00, representing the unpaid balance under the Agreement dated March 15, 2024."
 5. **Deadline.** The calendar date the request gives, not just "14 days." (14 days is standard for most civil demands, and 7 days may be appropriate for urgent matters: the practitioner sets it.)
@@ -178,18 +177,3 @@ These are patterns to adapt, not fixed text.
 >
 > **[Lawyer Name]**
 > [Firm Name]
-
----
-
-## Checklist Before Returning the Text
-
-- [ ] Tone is firm and professional: no personal attacks, no threats beyond what you can legally pursue
-- [ ] Factual statements are accurate and supportable
-- [ ] Demand is specific and quantified
-- [ ] Deadline is the specific calendar date the request gives
-- [ ] Consequences of non-compliance are lawful and within your client's actual intended course of action
-- [ ] No legal advice given to the opposing party
-- [ ] Includes recommendation to seek independent legal advice (for unrepresented parties)
-- [ ] Reservation of rights included
-- [ ] Key documents enclosed or referred to with sufficient particularity
-- [ ] Letter reviewed for anything you would not want a judge to see

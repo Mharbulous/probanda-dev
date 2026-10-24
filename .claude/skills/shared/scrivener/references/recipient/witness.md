@@ -12,7 +12,6 @@ Read when: the recipient is a non-party, non-expert witness with factual knowled
 - What NOT to Do
 - Ethical Guardrails
 - Examples
-- Quick-Reference Checklist
 
 ---
 
@@ -165,17 +164,3 @@ These are patterns to adapt, not fixed text.
 > If we cannot arrange a voluntary interview, we may need to have a subpoena issued to secure your attendance. We would much prefer to avoid that step and work with your schedule directly.
 >
 > Please contact us at your earliest convenience at [phone] or [email].
-
----
-
-## Quick-Reference Checklist
-
-Before returning any letter to an independent witness, confirm:
-
-- [ ] You have identified yourself and your client clearly
-- [ ] You have stated the purpose of the letter in plain language
-- [ ] You have not characterized the evidence or suggested what they should say
-- [ ] You have not offered anything beyond what the Rules require
-- [ ] You have reminded them of their right to independent legal advice
-- [ ] You have provided clear contact information and next steps
-- [ ] The tone is appropriate to the stage of engagement (warm on first contact, firmer if follow-up is needed, always professional)
