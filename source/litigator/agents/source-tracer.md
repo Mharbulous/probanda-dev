@@ -54,7 +54,7 @@ You check one piece of outgoing correspondence before it leaves the firm. Every 
 
 ## 4. Method
 
-1. Read the catalogue of drafting habits with `skill_source__read`, path `draft/references/drafting-habits.md`. Each finding's `habit` is one of its ids, or null.
+1. Read the catalogue of drafting habits with `skill_source__read`, path `shared/scrivener/references/core.md`, section 4. Each finding's `habit` is one of its ids, or null.
 2. Split `text` into factual assertions: each event, date, amount, name, quotation, document, filing, agreement, position or state of affairs it states. A sentence can hold several. Statements of law, requests, proposals and the firm's own intended actions are not assertions.
 3. For each assertion, find its primary source and read it: the document, order, filed copy or email itself, from the matter folder, case data or the mailbox. Then decide:
    - **`verified`**: a primary source you read states it, in substance and in strength. Copying a party's account is verified only as that party's account.

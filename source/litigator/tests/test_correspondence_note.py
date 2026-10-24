@@ -1,4 +1,4 @@
-"""The SessionStart note routes every outgoing letter, email or memo through /draft."""
+"""The SessionStart note routes every outgoing letter, email or memo through /draft, and its words to the scrivener."""
 import json
 import subprocess
 import sys
@@ -18,7 +18,9 @@ class NoteTests(unittest.TestCase):
         output = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "SessionStart")
         note = output["additionalContext"]
-        for token in ("/litigator:draft", "report to a client", "supplement", "evidence", "say-so",
+        for token in ("/litigator:draft", "report to a client", "supplement", "evidence",
+                      "route for the document", "The lawyer:scrivener agent writes its words",
+                      "correspondence-isolation.md", "places them verbatim", "dictation",
                       "An email is never drafted in chat", ".eml"):
             with self.subTest(token=token):
                 self.assertIn(token, note)

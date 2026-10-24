@@ -11,7 +11,7 @@ description: >
 ## 1. What this skill is
 
 <!-- atom id=work.what ops=always -->
-The Job Board's entry. It enters the session, opens the matter's Job Board, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself.
+The Job Board's entry. It enters the session, opens the matter's Job Board, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself. It never calls the `lawyer:scrivener` agent either, because the words of a letter or email reach a job only through `/draft` (`shared/correspondence-isolation.md`).
 
 These rules moved from `/draft` verbatim. A file, section or part of SKILL.md they name that this skill does not hold is `/draft`'s, in its file of the same name: section 14 is this skill's `references/dispatch.md`, sections 6 and 7 its `references/procedure.md`, and every other section number is `/draft`'s.
 

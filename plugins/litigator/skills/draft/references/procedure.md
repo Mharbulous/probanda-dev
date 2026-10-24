@@ -109,13 +109,13 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.overstatement ops=overstatement -->
 | The pre-review passes run, or a revision adds or changes an assertion after the overstatement review has run | `references/overstatement.md` |
 <!-- atom id=draft.ref.letters ops=letter -->
-| The Writing is a letter, a job calls for one, or the practitioner asks for a letter to their own client | `references/letters.md` |
+| The Writing is a letter or email, a job calls for one, the practitioner asks for a letter to their own client, or the words of any letter, email or covering note are to be drafted or revised, whose words the scrivener writes | `references/letters.md` |
 <!-- atom id=draft.ref.delivery-check ops=open,letter -->
 | A letter's `Deliver` job is open at the opening, the Sent write refuses with `sent_copy_mismatch`, or whether a letter went out or arrived is in question | `references/delivery-check.md` |
 <!-- atom id=draft.ref.reply ops=reply_route -->
 | The practitioner asks to reply to a message from the tribunal, a registry or another party's counsel, and not for a letter (section 1) | `references/reply.md` |
 <!-- atom id=draft.ref.source-trace ops=letter,reply_route,present_file -->
-| A letter, email or memo mockup is about to be presented, or any email is about to be written (SKILL.md ban 20) | `references/source-trace.md` |
+| A letter, email or memo mockup is about to be presented, or any email is about to be written, after the scrivener has returned its text (SKILL.md ban 20) | `references/source-trace.md` |
 <!-- atom id=draft.ref.unstructured ops=unstructured -->
 | The Writing's kind is `unstructured` or `unstructured-<recipient>`, the venue and kind lookup creates an Unstructured Writing (section 1), the Sent write succeeds on one, or the assigned job is `Keep the layout of <title> for next time` (a job written before 2026-10-22 has the old title `Make <title> a Structured Writing`) | `references/unstructured.md` |
 <!-- atom id=draft.ref.court-oral ops=court_oral -->

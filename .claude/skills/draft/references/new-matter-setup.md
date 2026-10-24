@@ -23,7 +23,7 @@ Two things happen before eliciting:
    | Incoming | Answering kind |
    |---|---|
    | A letter from opposing counsel | Letter to opposing counsel |
-   | A registry request | That venue's `letter` kind (`references/letters.md`, "Responding to a Registry Request") |
+   | A registry request | That venue's `letter` kind (`references/letters.md` section 9) |
 
    A kind whose type file names the incoming document it answers is offered the same way, and its type file says what to capture before responding. Any other incoming document gets no offer: the practitioner names the type as for any Writing. The offer creates nothing. The answering Writing is created only by the save above, on the practitioner's confirmation, never because an incoming document exists. A date the incoming document sets is recorded through `lawyer:docket-clerk`. If the practitioner states it anyway, `shared/deadline-isolation.md` "If the practitioner states a deadline anyway" governs.
 

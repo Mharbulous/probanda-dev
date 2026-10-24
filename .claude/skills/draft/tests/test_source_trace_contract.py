@@ -8,7 +8,7 @@ REPO = SKILL_ROOT.parents[2]
 SKILL = SKILL_ROOT / "SKILL.md"
 REFS = SKILL_ROOT / "references"
 STAGE = REFS / "source-trace.md"
-HABITS = REFS / "drafting-habits.md"
+HABITS = REPO / ".claude" / "skills" / "shared" / "scrivener" / "references" / "core.md"
 AGENT = REPO / "source" / "litigator" / "agents" / "source-tracer.md"
 
 HABIT_IDS = (

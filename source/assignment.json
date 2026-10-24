@@ -46,6 +46,7 @@
         "extract-sought-orders",
         "localize-helper",
         "migration-runner",
+        "scrivener",
         "verify-caselaw",
         "verify-edges",
         "verify-source"

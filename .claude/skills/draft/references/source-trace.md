@@ -17,13 +17,13 @@ Spawn the `litigator:source-tracer` agent once for the text, from the main sessi
 - `kind` and `audience`.
 - `matter_root`.
 - `text`: the exact text that will go out. For an email, the exact `body` the `write_email` call will pass, character for character. For a letter or memo, the mockup's text as rendered.
-- `sources`: the locators of what the draft was written from (paths, mail uids, Message-IDs). Locators only: never a summary of what a source says.
+- `sources`: the locators of what the draft was written from (paths, mail uids, Message-IDs), the scrivener's `sources` lines among them. Locators only: never a summary of what a source says.
 - `accepted`: the assertions the practitioner has accepted in an earlier round on this text, with their words.
 
 ## 3. Resolve each finding
 
 - **`verified`.** Nothing to do.
-- **`attribute`** and **`cut`.** Apply `proposed_text` as an ordinary revision. These need no question: the text then says only what a source supports.
+- **`attribute`** and **`cut`.** Revise the text to `proposed_text`. These need no question: the text then says only what a source supports. The revision is the scrivener's: spawn it with the finding and its `proposed_text` as its `instruction` (`references/letters.md` section 5, `shared/correspondence-isolation.md`).
 - **`trace_needed`.** Ask the practitioner, one finding at a time, by `/show-me`: the draft's words, what was checked, and the record that would settle it, with the file card of the source the claim came from. Their choices: point to a source (re-review), attribute it, leave it out of the text, or accept it as their own knowledge. An accepted assertion goes into `accepted` for the next round.
 - **`unanswered`.** Ask, one at a time, by `/show-me`, whether the text should answer the characterization. Never answer it on the practitioner's behalf.
 - **`unread_sources`.** Say in one line which sources could not be opened.

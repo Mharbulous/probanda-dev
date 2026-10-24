@@ -28,7 +28,7 @@ The review job is a one-step job whose step is the practitioner's. Assigning it 
 
 - **It stands:** write the unit's approval.
 - **A comment:** record it verbatim as a discussion point on the unit. At the end, move on. Per paragraph, discuss it now and resolve it before moving on.
-- **A dictated wording change:** an ordinary revision (SKILL.md section 12), which re-raises 🧐 on the unit. Re-render, show the new wording, and ask again. After a change to a unit's excerpt or pinpoint, re-run the script for that unit before showing it.
+- **A dictated wording change:** an ordinary revision (SKILL.md section 12), in the practitioner's words, which re-raises 🧐 on the unit. On a letter, email or memo it is the dictation exception (`shared/correspondence-isolation.md`): only its spelling, punctuation, grammar or word choice is corrected, and a change the practitioner asks for without dictating it is the scrivener's (`references/letters.md` section 5). Re-render, show the new wording, and ask again. After a change to a unit's excerpt or pinpoint, re-run the script for that unit before showing it.
 - **A question:** answer it in conversation. Nothing is recorded.
 
 **Review changed** takes the units whose 🧐 carries an earlier approval, which the gatekeeper's latest-approval read shows. A diff alone hides context, so show each with its neighbouring units and any paragraph that cross-references it. A unit that was never approved is still shown as in a full review, because the job cannot complete while its 🧐 stands.
