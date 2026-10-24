@@ -121,6 +121,11 @@ class PostToolUseTest(unittest.TestCase):
         self.assertIn("tool list", context)
         self.assertLess(context.index("connectedFolders"), context.index("device_stage_files"))
 
+    def test_staging_route_reloads_the_stage_tool_and_never_sends_the_pc_path(self):
+        context = self.post(OPEN, mcp_text({"job_board_path": PAGE}))
+        self.assertIn("never the PC path", context)
+        self.assertIn("select: ToolSearch", context)
+
     def test_response_given_as_object_or_content_dict(self):
         self.assertIn(PAGE, self.post(COMPLETE, {"pages_written": True, "board_changed": True, "job_board_path": PAGE}))
         self.assertIn(PAGE, self.post(RENDER, {"content": mcp_text(filing_render(True, True))}))
