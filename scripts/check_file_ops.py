@@ -49,6 +49,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_layout  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 RULINGS = Path("source") / "file-ops.json"
 WHYS = ("own-output", "temp", "own-database", "own-overlay", "own-run", "conditional", "mention")
@@ -118,7 +121,7 @@ def import_closure(repo, entry):
 def shipped_files(repo):
     """[(plugin, path)] for every file shipped by a plugin other than file-manager.
     shared/ is listed under the plugin "shared"."""
-    assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
+    assignment = plugin_layout.load(repo)
     plugins = assignment["plugins"]
     owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
     files = []

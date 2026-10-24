@@ -53,7 +53,7 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
               text="A Writing on its Job Board, with its Loose Threads.",
               name='`${id} Notice of Application`', leaf='"Notice of Application.md"',
               err='`"${title}" was not written`', mockup='`Order 1 <!-- order_sought_id ${r.id} -->`'):
-    assignment = {"plugins": {
+    assignment = {"status": "cutover", "plugins": {
         "lawyer": {"requires": [], "skills": [], "agents": [], "servers": [],
                    "hooks": {"gate": "source/lawyer/hooks/gate.py", "note": "source/lawyer/hooks/note.py"}},
         "developer": {"requires": ["lawyer"], "skills": [], "agents": [], "servers": [],

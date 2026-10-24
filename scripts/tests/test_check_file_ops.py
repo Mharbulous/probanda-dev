@@ -26,7 +26,7 @@ PLUGINS = {
 
 def make_repo(root, files, plugins=PLUGINS):
     (root / "source").mkdir(parents=True, exist_ok=True)
-    (root / "source" / "assignment.json").write_text(json.dumps({"plugins": plugins}), encoding="utf-8")
+    (root / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
     for rel, text in files.items():
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)

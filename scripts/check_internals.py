@@ -43,6 +43,9 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_layout  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 EXEMPT = "internals-ok"
 TEMPLATES = Path("source/lawyer/mcp/src/templates")
@@ -95,7 +98,7 @@ def wired_beyond_session_start(repo):
 
 
 def hook_scripts(repo):
-    assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
+    assignment = plugin_layout.load(repo)
     wired = wired_beyond_session_start(repo)
     return sorted({repo / path for plugin, spec in assignment["plugins"].items() if plugin not in NOT_CHECKED
                    for path in spec.get("hooks", {}).values() if Path(path).name in wired})

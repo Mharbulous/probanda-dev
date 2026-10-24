@@ -35,6 +35,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_layout  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 
 SCAN_EXTS = (".md", ".py", ".json", ".sql")
@@ -57,13 +60,13 @@ FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"
 def agent_files(repo):
     """Every agent file: under source/probanda/agents/ until the assignment's status
     is "cutover", then under each plugin's source/<plugin>/agents/."""
-    assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
-    owners = assignment["plugins"] if assignment.get("status") == "cutover" else ("probanda",)
+    assignment = plugin_layout.load(repo)
+    owners = assignment["plugins"] if assignment["status"] == "cutover" else ("probanda",)
     return sorted(path for owner in owners for path in (repo / "source" / owner / "agents").glob("*.md"))
 
 
 def load(repo):
-    assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
+    assignment = plugin_layout.load(repo)
     rulings_path = repo / "source" / "layering.json"
     rulings = json.loads(rulings_path.read_text(encoding="utf-8")) if rulings_path.is_file() \
         else {"allowed": [], "todo": []}

@@ -32,7 +32,7 @@ def make_repo(root, skills, agents=None, hooks=None):
     for plugin, mapping in (hooks or {}).items():
         plugins[plugin]["hooks"] = mapping
     (root / "source" / "probanda" / "agents").mkdir(parents=True)
-    (root / "source" / "assignment.json").write_text(json.dumps({"plugins": plugins}), encoding="utf-8")
+    (root / "source" / "assignment.json").write_text(json.dumps({"status": "planned", "plugins": plugins}), encoding="utf-8")
     for name, text in skills.items():
         path = root / ".claude" / "skills" / name
         path.parent.mkdir(parents=True, exist_ok=True)
